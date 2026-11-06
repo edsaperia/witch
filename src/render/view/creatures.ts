@@ -30,7 +30,7 @@ import { STATUE_TINT, setStatueTint, statueLook } from "../statues";
 import { cellKey } from "../../rules/party";
 import { legendRings } from "../../rules/slowTime";
 import { flightHeight } from "../../rules/movement";
-import { inView } from "./culling";
+import { focusOf, inView } from "./culling";
 import { mark } from "./pops";
 import { attackFeel, newFeel } from "../attackFeel";
 import { impactOf } from "../impact";
@@ -130,7 +130,7 @@ export function drawBerries(v: View, time: number): void {
 }
 
 export function drawCreatures(v: View, time = 0): void {
-  const g = v.game, R = g.tuning.haze.far + 20;
+  const g = v.game, R = g.tuning.haze.far + 20, fo = focusOf(v);
   const stilts = stiltwalkerShape(potionStrength(g, 'stiltwalkers'));
   const per = PER, arts = ARTS, legendKeys = LEGEND_KEYS; // (kept and refilled)
   if (v !== LAST_VIEW) { LAST_VIEW = v; per.clear(); arts.clear(); legendKeys.clear(); RING_OF.clear(); }
@@ -147,7 +147,7 @@ export function drawCreatures(v: View, time = 0): void {
   const U = SPRITE_UNIFORMS.uUp.value, F = v.camera.getWorldDirection(FWD), toward = U.dot(CAM_UP.set(0, 1, 0).applyQuaternion(v.camera.quaternion)) / Math.max(0.2, -F.y);
   for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
     const c = g.creatures[i];
-    if ((c.gone && !c.beached) || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
+    if ((c.gone && !c.beached) || Math.abs(c.x - fo.x) > R || Math.abs(c.z - fo.z) > R) continue; // (round the view's focus: her, or a sail's dive's aim)
     if (c.burrow) continue; // under the ground (Stage 5: the mole), a mound shows where (leash view)
     // Up the trees, underground or under water in a pack's lull (rules/combat/packs.ts; Ed, 2026-10-29: "'hiding' maybe should look like
     // the animal becoming a shadow (dark and transparent), rather than teleporting"): a shadow of itself running round to where it comes

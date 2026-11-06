@@ -175,6 +175,50 @@
         "rules/arrive.ts"
       ]
     },
+    "arrive.low": {
+      "what": "The dive's low leg over the sea and the forest: angle degrees down to its aim, distance metres back (the camera about 110 m up), aimed offshore metres past the south coast at first.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-06",
+          "quote": "Dive: sounds good.",
+          "rest": "his approval of the dive plan's step 6, \"Fly higher: for example ~30° at 220 m on the low leg, so the camera is ~110 m up and small things are half the size\" (it was 20° at 110 m, ~38 m up)"
+        }
+      ],
+      "links": [
+        "rules/arrive.ts"
+      ]
+    },
+    "arrive.frame": {
+      "what": "The dive's rise: up to frame the dancefloor and the treehouse together, angle degrees down, distance metres back, aimed lift metres over the ground (about 156 m up).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-06",
+          "quote": "Dive: sounds good.",
+          "rest": "the dive plan's step 6, \"Leg 3 higher too\" (it was 34° at 170 m, ~103 m up); the landing into her bed as smooth as before (rules/arrive.test.ts)"
+        }
+      ],
+      "links": [
+        "rules/arrive.ts"
+      ]
+    },
+    "arrive.mood": {
+      "what": "The dive's own moodier light: what nothing lights darker and the haze nearer while it flies, back to the night's own as it lands; strength 0 is the night's light as before.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-06",
+          "quote": "Dive: sounds good.",
+          "rest": "the dive plan's step 7, \"a dive-only blend toward darker ambient light and nearer haze (e.g. full by 140 m), easing back to the night's light over the last leg. Glowing things (the mist, the crown's lights, the runestones, the soundsystems) still read.\""
+        }
+      ],
+      "links": [
+        "rules/arrive.ts",
+        "render/view/frameUniforms.ts"
+      ],
+      "notes": "strength: how much of it (0 to 1; 0 the night's own light); dark: the ambient and the moonlight times this at its fullest (the lights, her glow, the campfires, the runestones, the soundsystems, the crown's lights and the loading mist's glow are added after and read as ever); the haze from hazeNear metres from the camera's aim, full by hazeFar (the spooky night's own: 60, 200). Grown in from the hand-off with the bend (bend.grow seconds), full through the sea, the low leg and the rise, eased back to none over the last leg down into her room. Read every frame; ?set=arrive.mood.strength=0.5 for one load."
+    },
     "arrive.handoff": {
       "what": "where the chart hands over, sea metres out to sea off the south coast below the dancefloor (negative: inland), its camera dist metres back and pitchDeg degrees down (the first flight's: -40, 600, 50); ?dive=near|far|skim for one load (app/chartView.ts DIVES).",
       "links": [
@@ -627,6 +671,24 @@
           "quote": "the pixels are just hard to read",
           "rest": "via the coordinator: measured at his 1.25 DPR as 3.75 device pixels a pixel, drawn 3 and 4 wide by turns (previews/ed/blur/); Ed picked rounding to the nearest"
         }
+      ]
+    },
+    "arrive.buildSlice": {
+      "what": "How many milliseconds of each frame the next island's build may take while the sea chart's zoom plays over it.",
+      "notes": "From the zoom's commit (the end of its first leg) the next night is made under the chart (app/night.ts buildSlice, main.ts makeSailNight): its map in a worker, then the View's build on the main thread a slice at a time (render/slices.ts), a slice of up to this many milliseconds each frame, the chart's own frame drawn between; it keeps it through the chart's hold short of the hand-off, till the night is made. Everywhere else a build is sliced (the first load, the bed's next night, a sail with no zoom, the dive's own preparation) it's 8 ms (SLICE_MS). A single step of the build longer than this still runs whole (docs/notes/performance.md).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-06",
+          "quote": [
+            "Give the scene build more time per frame while the zoom is playing, since nothing else is happening then. For example 14 ms instead of 8 ms.",
+            "this we should do"
+          ]
+        }
+      ],
+      "links": [
+        "app/night.ts",
+        "render/slices.ts"
       ]
     }
   }

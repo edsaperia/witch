@@ -15,7 +15,7 @@ import { localView } from "./localView";
 import { otherWitches } from "./otherWitches";
 import { replayGuest, replayHostStep, replayStart, type ReplayFrame, type ReplayStart } from "./replay";
 import { snapshotGame } from "../../rules/nightSnapshot";
-import { nextFrame, runSliced, sliceLog, type Steps } from "../../render/slices";
+import { nextFrame, runSliced, sliceLog, SLICE_MS, type Steps } from "../../render/slices";
 import { buildProgress } from "./buildProgress";
 import { prepareJoin } from "./joinPreparation";
 import { sessionDeparture } from "./departure";
@@ -78,7 +78,7 @@ async function prepare(source: Game, player: number, signal?: AbortSignal) {
     await nextFrame();
     view = new View(document.getElementById("game") as HTMLCanvasElement, presentation.game, gameStyle(style, game.tuning), null, true);
     const steps = (view as unknown as { build(): Steps }).build();
-    await runSliced(buildProgress(steps, () => { loadingProgress++; reportProgress(); }), "view", 8);
+    await runSliced(buildProgress(steps, () => { loadingProgress++; reportProgress(); }), "view", SLICE_MS);
   }
   catch (error) { clearMonitor(); throw error; }
   signal?.throwIfAborted();

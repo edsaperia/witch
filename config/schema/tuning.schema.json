@@ -10981,6 +10981,11 @@
           "minimum": 0,
           "description": "How many seconds the dive from the chart's hand-off down to her bed takes; 0 leaves it to its legs."
         },
+        "buildSlice": {
+          "type": "number",
+          "minimum": 1,
+          "description": "How many milliseconds of each frame the next island's build may take while the sea chart's zoom plays over it."
+        },
         "warm": {
           "type": "object",
           "properties": {
@@ -11041,7 +11046,8 @@
             "distance",
             "offshore"
           ],
-          "additionalProperties": false
+          "additionalProperties": false,
+          "description": "The dive's low leg over the sea and the forest: angle degrees down to its aim, distance metres back (the camera about 110 m up), aimed offshore metres past the south coast at first."
         },
         "frame": {
           "type": "object",
@@ -11064,7 +11070,8 @@
             "distance",
             "lift"
           ],
-          "additionalProperties": false
+          "additionalProperties": false,
+          "description": "The dive's rise: up to frame the dancefloor and the treehouse together, angle degrees down, distance metres back, aimed lift metres over the ground (about 156 m up)."
         },
         "rise": {
           "type": "number",
@@ -11143,11 +11150,41 @@
           ],
           "additionalProperties": false,
           "description": "The dive's bend: the world curving away so the treehouse crown comes up over the horizon as the camera flies in."
+        },
+        "mood": {
+          "type": "object",
+          "properties": {
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            },
+            "dark": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hazeNear": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hazeFar": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "strength",
+            "dark",
+            "hazeNear",
+            "hazeFar"
+          ],
+          "additionalProperties": false,
+          "description": "The dive's own moodier light: what nothing lights darker and the haze nearer while it flies, back to the night's own as it lands; strength 0 is the night's light as before."
         }
       },
       "required": [
         "zoom",
         "dive",
+        "buildSlice",
         "warm",
         "maxStep",
         "fade",
@@ -11159,7 +11196,8 @@
         "settle",
         "hold",
         "handoff",
-        "bend"
+        "bend",
+        "mood"
       ],
       "additionalProperties": false,
       "description": "Arriving on an island from the sea chart: the camera flies in over the sea, frames the dancefloor and the treehouse, its crown coming up over the bent horizon, and into her bedroom."
@@ -14334,6 +14372,11 @@
           "type": "number",
           "minimum": 0
         },
+        "fade": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Seconds an area's loading mist takes to thin away once its contents are drawn (never in one frame)."
+        },
         "soft": {
           "type": "number",
           "minimum": 0,
@@ -14346,7 +14389,7 @@
         "sea": {
           "type": "number",
           "minimum": 0,
-          "description": "The loading mist lies over the sea too and burns off last, once all the land is in."
+          "description": "The loading mist lies over the sea too (and any ground not filled in yet), and goes once the ground's own program is drawn."
         }
       },
       "required": [
@@ -14357,12 +14400,13 @@
         "glow",
         "speed",
         "cap",
+        "fade",
         "soft",
         "size",
         "sea"
       ],
       "additionalProperties": false,
-      "description": "A glowing mist over the parts of the island still loading, rolling back from the treehouse as their trees arrive."
+      "description": "A glowing mist over the parts of the island still loading, each area's held till its trees, stumps, campfires and creatures are drawn, then rolling back from the treehouse and fading away."
     },
     "lightRings": {
       "type": "object",

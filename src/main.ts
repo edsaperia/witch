@@ -55,7 +55,7 @@ import { musicCue } from "./rules/musicPlan";
 import { areaUnderWitch, interpolated, newWitchPlayer, STEP, type Game } from "./rules/game";
 import { enableCauldron, homeMushroomPickups } from "./rules/cauldronNight";
 import { TUNING } from "./rules/tuning";
-import { diveReach, diveTrack } from "./rules/arrive";
+import { diveReach, diveShare, diveTrack } from "./rules/arrive";
 import { compareKey, rendererOf, sceneMode } from "./app/compareKey";
 import { debugText, machineLines, precisionLines, reproLine, reproQuery, reproState, tuningDiff } from "./app/repro";
 import { currentValue, DECISION_LIST, valuesText } from "./ui/decisions";
@@ -1452,13 +1452,13 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
   endNight(page, params.get("debug") === "sail");
   backGuard.sailed("?" + p.toString() + location.hash);
   armBack();
-  const n = await startNight(page, { how: "sail", island: to.island, seed: to.seed, world: to.world, arrival, params: p });
+  const n = await startNight(page, { how: "sail", island: to.island, seed: to.seed, world: to.world, arrival, params: p, underChart: at !== undefined }); // (under the chart's zoom: its build given more of each frame, app/night.ts buildSlice)
   seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
   bedFirst(n); // (the flight in ends on her asleep in her bedroom, rules/opening.ts)
   worldDraw = new WorldDrawGate();
   displayedStep = -1;
   const A = n.tuning.arrive, underChart = !!A && at !== undefined;
-  const prep = view.prepare({ sail: true, ...(underChart ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A), underDive: true } : {}) });
+  const prep = view.prepare({ sail: true, ...(underChart ? { dive: diveReach(n.game.map, A), share: diveShare(n.game.map, A), track: diveTrack(n.game.map, A), underDive: true } : {}) });
   if (underChart) {
     // Made under the chart's flight: it hands over as soon as the night is (its map, and the island's layers the view draws), and
     // the rest is built on under the dive: the shaders, the house, the forest, the ground along its track, shown as they're

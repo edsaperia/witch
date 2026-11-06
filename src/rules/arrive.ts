@@ -18,7 +18,9 @@ export interface Handoff { cam: { x: number; z: number; height: number; pitch: n
  *  degrees above it and distance metres back; ty in the world's heights (not over the ground); fov degrees, vertical. */
 export interface Shot { tx: number; ty: number; tz: number; angle: number; distance: number; fov: number;
   /** the dive's own bend (diveBend: curvature per metre), on top of the night's; none if absent */ bend?: number;
-  /** the dive on its way down into her room (diveIndoors): the house drawn as from inside; absent or false, the oak from outside */ indoors?: boolean }
+  /** the dive on its way down into her room (diveIndoors): the house drawn as from inside; absent or false, the oak from outside */ indoors?: boolean;
+  /** where the aim is heading (m a second of the flight's own clock, aimVelocity): the view's work ahead goes that way, not hers (she's in bed) */ vx?: number; vz?: number;
+  /** the dive's own light (diveMood: 0 the night's, 1 its darkest), from the hand-off easing back to none as it lands */ mood?: number }
 
 /** The flight: its shots and the seconds at which it passes each (times[0] = 0). */
 export interface ArrivePlan { keys: Shot[]; times: number[]; /** the target's speed north at the start (m/s): the chart's, carried on */ v0: number }
@@ -88,6 +90,18 @@ export function diveBend(p: ArrivePlan, s: number, B: ArriveTuning["bend"]): num
   const grow = B.grow > 0 ? smooth(s / B.grow) : 1, relax = B.relax > 0 ? 1 - smooth((s - (T - B.relax)) / B.relax) : 1;
   return B.curve * grow * relax;
 }
+/** How much of the dive's own light there is (0 the night's own, 1 its fullest), `s` seconds into plan `p` (Ed's dive plan, 6 Nov,
+ *  its step 7: "a dive-only blend toward darker ambient light and nearer haze, easing back to the night's light over the last leg";
+ *  render/view/frameUniforms.ts applies it, times arrive.mood.strength): grown in from the hand-off over `grow` seconds (the bend's: the
+ *  chart's still fades meanwhile), full through the sea and the low leg and the rise, eased back to none over the last leg, down into
+ *  her room, so it lands on exactly the night's own light. */
+export function diveMood(p: ArrivePlan, s: number, grow = 0): number {
+  const T = planLength(p), from = p.times[Math.max(0, p.times.length - 2)];
+  if (!(s > 0) && grow > 0) return 0;
+  if (s >= T) return 0;
+  const inn = grow > 0 ? smooth(s / grow) : 1, out = T > from ? 1 - smooth((s - from) / (T - from)) : 1;
+  return inn * out;
+}
 /** Whether the dive's camera is on its way down into her room, `s` seconds into plan `p`: its last leg, from the frame over the
  *  dancefloor and the treehouse down into her bedroom. From there the house is drawn as from inside (its rooms, the crown laid open
  *  over them), as when she walks in; before it, the oak as from outside, standing in the world and bent with it, so its crown can come
@@ -110,6 +124,27 @@ export function diveReach(map: ForestMap, A: ArriveTuning): (x: number, z: numbe
     }
     return best;
   };
+}
+
+/** How much of the dive's view each area type fills (Ed, 2026-11-06, the art's order: the trees "by largest share of the dive's
+ *  view"): along its track (diveTrack), a point every `step` metres, each of the map's areas (but home's) within `reach` metres of
+ *  the point counted, nearer more (1 at the track, 0 at `reach`), so a type that covers the land the dive flies over, near and
+ *  long, comes first. Each type's sum, by type. */
+export function diveShare(map: ForestMap, A: ArriveTuning, reach = 240, step = 20): Map<number, number> {
+  const out = new Map<number, number>(), pts: [number, number][] = [];
+  for (const [ax, az, bx, bz] of diveTrack(map, A)) {
+    const L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(L / step));
+    for (let i = 0; i < n; i++) pts.push([ax + ((bx - ax) * i) / n, az + ((bz - az) * i) / n]);
+  }
+  const [hx, hy] = map.centreCell;
+  for (const [x, y] of map.cells) {
+    if (x === hx && y === hy) continue;
+    const s = map.siteOf(x, y), t = map.typeOf(x, y);
+    let w = 0;
+    for (const [px, pz] of pts) { const d = Math.hypot(s.x - px, s.z - pz); if (d < reach) w += 1 - d / reach; }
+    out.set(t, (out.get(t) ?? 0) + w);
+  }
+  return out;
 }
 
 /** The dive's track over the land (diveReach's): its legs, [x0, z0, x1, z1], from the sea off the south coast below the dancefloor
@@ -162,6 +197,14 @@ export function shotAt(p: ArrivePlan, s: number): Shot {
   const slope = (j: number, f: (k: Shot) => number, v0 = 0) => (j <= 0 ? v0 : j >= n - 1 ? 0 : (f(K[j + 1]) - f(K[j - 1])) / (T[j + 1] - T[j - 1]));
   const at = (f: (k: Shot) => number, v0 = 0) => h00 * f(K[i]) + h10 * h * slope(i, f, v0) + h01 * f(K[i + 1]) + h11 * h * slope(i + 1, f, v0);
   return { tx: at(k => k.tx), ty: at(k => k.ty), tz: at(k => k.tz, -p.v0), angle: at(k => k.angle), distance: Math.max(1, at(k => k.distance)), fov: at(k => k.fov) };
+}
+
+/** How fast the flight's aim is moving, `s` seconds into plan `p` (m a second of its own clock: a stalled frame holds it, as the
+ *  flight): over the next `ahead` seconds, so the work done ahead (render/view/ahead.ts) goes where the camera's going, not where she
+ *  is (Ed's dive plan, 2026-11-06, its step 8: the forest and the hills ahead were made along her movement, none in bed). */
+export function aimVelocity(p: ArrivePlan, s: number, ahead = 0.25): { vx: number; vz: number } {
+  const a = shotAt(p, s), b = shotAt(p, s + ahead);
+  return { vx: (b.tx - a.tx) / ahead, vz: (b.tz - a.tz) / ahead };
 }
 
 /** Where a shot's camera is (the world's metres): `distance` back from its target, `angle` up. */

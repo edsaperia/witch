@@ -69,6 +69,11 @@ type Stamped = ArtJob & { gen?: number };
 /** The treehouse's stand-in till its art arrives. */
 const noTreehouse = () => ({ atlas: placeholderAtlas(8), base: { x: 0, y: 1 }, seat: { x: 0, y: 0 }, camera: { x: 0, y: 0 }, hasFore: false, lights: [], foreFrames: 0, foreBox: { x: 0, y: 0 }, candle0: 0, candleRed: 0, candleLevels: 0, candleFlicker: 1, candleRow: [] });
 
+/** The sets that wait their turn under a sail's dive however they're asked for (AssetLibrary.diving): the small dressing and the
+ *  creatures' other looks, behind the island's trees, stumps and plain creatures (render/islandNeeds.ts ART_ORDER); and her own
+ *  lying-down art (a partyWitch job for her: AssetLibrary.ask). */
+export const DIVE_LATE: ReadonlySet<ArtJob["kind"]> = new Set<ArtJob["kind"]>(["beach", "lakeShore", "rig", "nap", "woken", "glide", "face", "party", "decor", "relics", "scenes", "pathPieces", "find", "partyObjects"]);
+
 export class AssetLibrary {
   private types = new Map<number, TypeArt>();
   /** The night's own area-type sets (the night's seed), found kept (app/landingBake.ts drew them ahead), waiting to be swapped in
@@ -227,6 +232,7 @@ export class AssetLibrary {
   /** Where an urgent job goes in the queue: after the start's own (`home`) still waiting, ahead of the rest. */
   private get front(): number { const i = this.queue.findIndex(q => !(q as ArtJob & { home?: boolean }).home); return i < 0 ? this.queue.length : i; }
   private ask(job: ArtJob, urgent = false, home = false): void {
+    if (urgent && !home && this.diving && (DIVE_LATE.has(job.kind) || (job.kind === "partyWitch" && job.seed === null))) urgent = false; // (the dive: in the island's order, render/islandNeeds.ts ART_ORDER; her own lying-down art too, not the party's witches dancing at home)
     if ((job.kind === "treehouse" || job.kind === "housePiece") && HOUSE_ROOMS.layout && !job.layout) job = { ...job, layout: houseArtLayout(HOUSE_ROOMS) };
     const k = this.key(job);
     this.asked?.add(k); // (whenAsked's)
@@ -256,6 +262,11 @@ export class AssetLibrary {
     if (home || urgent || this.promoted.has(k)) this.queue.splice(this.front, 0, job); else this.queue.push(job);
     this.dispatch();
   }
+  /** A sail's dive under way (render/view.ts, while the flight's camera is up): the small things the view asks for as they come
+   *  into view (DIVE_LATE: the beach's shells and starfish, the lakes' shores, the creatures' other looks...) wait their turn in the
+   *  island's order instead of jumping the queue ahead of its trees, stumps and creatures (Ed, 2026-11-06: "coast decorations
+   *  (starfish) are tiny and can wait"). */
+  diving = false;
   /** The night is playing (the party spell cast): the art drawn ahead of need keeps to half the workers, so the audio thread
    *  and the GPU's keep a core among them (Ed's log, 2026-10-14: the device under-ran in bursts, seconds of the audio clock lost
    *  at a time, while the workers baked on every core but the page's). What the view needs now (an urgent ask) takes them all. */
@@ -430,16 +441,16 @@ export class AssetLibrary {
     return a;
   }
   /** The beach's edge of the woods (palms, shrubs, grass clumps), or undefined (and asked for). */
-  beachEdgeArt(): (BeachEdgeArt & { atlas: Atlas }) | undefined {
-    if (!this.beachEdge) this.ask({ kind: "beachEdge", id: "all", style: this.style, K: this.K }, true);
+  beachEdgeArt(urgent = true): (BeachEdgeArt & { atlas: Atlas }) | undefined {
+    if (!this.beachEdge) this.ask({ kind: "beachEdge", id: "all", style: this.style, K: this.K }, urgent);
     return this.beachEdge;
   }
   /** The biome lakes' shore dressing (render/lakeShore.ts), or undefined (and asked for). */
-  lakeShoreArt(): (LakeShoreArt & { atlas: Atlas }) | undefined {
+  lakeShoreArt(urgent = true): (LakeShoreArt & { atlas: Atlas }) | undefined {
     // (in the island's biome look, art/flora/biomes.js: drawn again for an island in another; the view lets go of its batch on the
     // old one when this comes back undefined, render/lakeShore.ts, before it's freed as the new one lands)
-    if (this.lakeShore && this.lakeShore.biome !== this.typeBiome) return this.ask({ kind: "lakeShore", id: this.typeBiome ?? "all", style: this.style, K: this.K, biome: this.typeBiome }, true), undefined;
-    if (!this.lakeShore) this.ask({ kind: "lakeShore", id: this.typeBiome ?? "all", style: this.style, K: this.K, biome: this.typeBiome }, true);
+    if (this.lakeShore && this.lakeShore.biome !== this.typeBiome) return this.ask({ kind: "lakeShore", id: this.typeBiome ?? "all", style: this.style, K: this.K, biome: this.typeBiome }, urgent), undefined;
+    if (!this.lakeShore) this.ask({ kind: "lakeShore", id: this.typeBiome ?? "all", style: this.style, K: this.K, biome: this.typeBiome }, urgent);
     return this.lakeShore;
   }
   /** The decorations' art (ruins, rocks, freak trees), or undefined (and asked for). */
@@ -459,8 +470,8 @@ export class AssetLibrary {
     return this.relicSet;
   }
   /** The beach's decorations (art/beach.js), or undefined (and asked for): only once she's near the beach (render/beach.ts). */
-  beachArt(): (BeachArt & { atlas: Atlas }) | undefined {
-    if (!this.beach) this.ask({ kind: "beach", id: "all", style: this.style }, true); // (small, and asked for only once she's at the beach: ahead of the scenery queued)
+  beachArt(urgent = true): (BeachArt & { atlas: Atlas }) | undefined {
+    if (!this.beach) this.ask({ kind: "beach", id: "all", style: this.style }, urgent); // (small, and asked for only once she's at the beach: ahead of the scenery queued)
     return this.beach;
   }
   /** The scenes' pieces and layouts, or undefined (and asked for). */
@@ -482,7 +493,7 @@ export class AssetLibrary {
    *  hash so a changed record bakes afresh), or undefined (and asked for). */
   /** Each species' genome hash (rigArt's page key), worked out once. */
   private genomeHashes = new Map<string, string>();
-  rigArt(species: string, level: number, gear?: RigGear): RigArt | undefined { // gear: a party animal's, baked on (a page per species, level and gear)
+  rigArt(species: string, level: number, gear?: RigGear, urgent = true): RigArt | undefined { // gear: a party animal's, baked on (a page per species, level and gear)
     const base = (Art.GENOME_BY_ID as Record<string, unknown>)[species];
     if (!base) return undefined;
     const g = Art.selectedCreatureGenome(base, this.style, level);
@@ -495,7 +506,7 @@ export class AssetLibrary {
     // mole's, say) was asked for again every frame, a job at the head of the queue each round for the whole night (2026-10-14).
     const template = (g as { template?: string }).template;
     if ((!gear?.stilt && template !== "quadruped" && template !== "serpent") || this.noRig.has(k)) return undefined;
-    this.ask({ kind: "rig", id: k, species, level, style: this.style, ...(gear ? { gear } : {}), ...(faces ? { faces } : {}) }, true); // gameplay: ahead of the scenery
+    this.ask({ kind: "rig", id: k, species, level, style: this.style, ...(gear ? { gear } : {}), ...(faces ? { faces } : {}) }, urgent); // gameplay: ahead of the scenery (but not asked ahead: render/islandNeeds.ts)
     return undefined;
   }
   /** Rig pages asked for that came back empty (no rig parts for the species): never asked for again. */
@@ -715,11 +726,11 @@ export class AssetLibrary {
 
   /** A party witch's art (#37: her look from partyWitch(seed), or seed null for our witch's own),
    *  or undefined (and asked for). Looks repeat after a few, so there are only so many to draw. */
-  partyWitchArt(seed: number | null): (PartyWitchArt & { atlas: Atlas }) | undefined {
+  partyWitchArt(seed: number | null, urgent = true): (PartyWitchArt & { atlas: Atlas }) | undefined {
     // (hers keyed by her genome, so a new look is drawn afresh, never a cached old one)
     const id = seed === null ? `her-${hashText(JSON.stringify(this.witchGenome))}` : `pw-${seed}`, a = this.partyWitches.get(id);
     // (urgent: they dance at home, in view from the start, so not behind every area type's prefetch)
-    if (!a) this.ask({ kind: "partyWitch", id, seed, style: this.style, genome: seed === null ? this.witchGenome : undefined }, true);
+    if (!a) this.ask({ kind: "partyWitch", id, seed, style: this.style, genome: seed === null ? this.witchGenome : undefined }, urgent);
     return a;
   }
   /** An area's generated soundsystem (art/soundsystemGen.js), baked at its yaw and size, or undefined (and asked for; urgent when
@@ -735,6 +746,8 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "stump", id, style: this.style, stump: spec }, urgent);
     return a;
   }
+  /** Whether a great stump is baked (nothing asked for). */
+  hasStump(spec: StumpSpec): boolean { return this.stumps.has(stumpId(spec)); }
   /** Ask for a set ahead of need, without using it. */
   prefetchType(t: number): void { if (!this.types.has(t)) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K, biome: this.typeBiome }); }
   /** Tonight's own trees (the night's seed), for the area types `types`, if they were drawn ahead and kept (app/landingBake.ts):
