@@ -268,9 +268,6 @@ function nightState(t: Tuning) {
     /** The crowns' reach now (metres; 0 on the ground): eased toward the tuning's scenery.canopyReach in the air (render/view/scenery.ts). */
     canopyNow: 0,
     lastBuild: { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1, relics: -1 } as { x: number; y: number; z: number; version: number; radius: number; canopy?: number; relics: number; cap?: number },
-    /** The art's version the last whole scenery listing started from (render/view/scenery.ts rebuild, as it ends): the loading mist's
-     *  readiness, render/view/mistReady.ts. */
-    sceneryListed: -1,
     /** The loading mist's log (render/view/mistReady.ts): each area type's (the sea's, -1) parts first ready and its mist's going. */
     mistLog: new Map<number, MistLogEntry>(),
     /** The scenery budget: how far round the witch scenery is drawn (rules/budget.ts). */
@@ -796,7 +793,7 @@ export class View {
   private get mistSource(): MistSource {
     const v = this;
     return { assets: this.assets, typeBatches: this.typeBatches, creatureBatches: this.creatureBatches, propBatch: this.propBatch, markerBatch: this.markerBatch, stumpBatches: this.island.stumpBatches,
-      sceneryListed: this.sceneryListed, stumpsOf: t => v.stumpsOf(t), stumps: !!this.markerArt.stumps, partyFires: this.partyObjects.ready };
+      stumpsOf: t => v.stumpsOf(t), stumps: !!this.markerArt.stumps, partyFires: this.partyObjects.ready };
   }
   /** The loading mist this frame (render/loadingMist.ts): each area type's held till its parts are drawn (render/view/mistReady.ts),
    *  the sea's till the ground's own program is drawn and the ground in view filled; logged (mistLog). `time`: the page's clock. */
