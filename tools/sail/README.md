@@ -15,7 +15,7 @@ npm run build && node tools/sail/bed-shots.cjs [out] [dist]
 A sail from the map table as Ed sails: serves the built game, loads it, opens the table's sea chart, chooses ISLAND and holds Enter as a person does till the table's hold has sailed and HOLD ms more, then lets go; the page's frames recorded as they're…
 
 ```
-npm run build && node tools/sail/hold.cjs [out] [dist]   ISLAND=fox HOLD=1000 SECONDS=60 BASE=<url> EXTRA=<more of the link>
+npm run build && node tools/sail/hold.cjs [out] [dist]   ISLAND=fox HOLD=1000 SECONDS=60 PRESS=1 CANCEL=key|pad|late BASE=<url> EXTRA=<more of the link>
 ```
 
 ## `leak.cjs`

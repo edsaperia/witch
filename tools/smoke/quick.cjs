@@ -5,7 +5,7 @@
 // rise or descend, or a page's thread held over 15 s while it loads (QUICK_STALL_MS), or a frame's drawing in the treehouse over 150 ms
 // as she walks its rooms (QUICK_HOUSE_MS). Saves one screenshot (QUICK_OUT, default previews/quick.png). The full smoke
 // test (smoke.cjs) still covers pops, floating, big windows and the rest. Then it sails in place to another island (the tuning's
-// sail.inPlace; window.witch.sail, as the map table's chart sails: docs/plans/sail-without-reload.md), skips the flight in and
+// sail.inPlace; window.witch.sail, as the map table's chart sails: docs/plans/sail-without-reload.md), lands the flight in (window.witch.land) and
 // checks the night is the island's, its link pushed and play running; the chart over it, its own island chosen, closes back to
 // the same night (no sail); Back opens the pause menu on the same night; and, the party over, the treehouse's bed (E held at it,
 // where the afterparty's 💤 pin leads her: Ed, 2026-10-21) starts the next night in place (the same island, a new seed, a new game). QUICK_SAIL=0 skips those
@@ -132,7 +132,7 @@ async function main() {
     if (process.env.QUICK_SAIL !== "0") {
       const ts = Date.now(), inPlace = await page.evaluate(() => window.witch.sail("fox", 4242));
       await page.waitForFunction(() => window.witch.ready && window.witch.game.seed === 4242, null, { timeout: 600000, polling: 500 });
-      await page.keyboard.press("Shift"); // (skips the flight in, as any key does)
+      await page.evaluate(() => window.witch.land()); // (past the flight in: the tools' own way, no key does since Ed, 2026-11-06)
       await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 120000, polling: 100 }).catch(() => {});
       const n = await page.evaluate(() => ({ island: window.witch.game.tuning.map?.island, url: location.search, t: window.witch.game.clock.time, paused: window.witch.game.clock.paused }));
       check(inPlace && n.island === "fox" && /^\?island=fox&seed=4242&/.test(n.url) && !n.paused, `sails in place to another island (${n.island}, ${n.url}, in ${((Date.now() - ts) / 1000).toFixed(0)} s)`);

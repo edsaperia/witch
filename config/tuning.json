@@ -2448,6 +2448,8 @@
     }
   },
   "arrive": {
+    "zoom": 5.6,
+    "dive": 0,
     "warm": {
       "frames": 3,
       "ms": 120,
