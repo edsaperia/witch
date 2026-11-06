@@ -74,7 +74,7 @@
           "by": "Ed",
           "date": "2026-11-06",
           "quote": "I think we should change this process to more evenly distribute patches in the area, and also increase the clearance from the stump (not the middle).",
-          "rest": "measured from the stump (map.soundsystemSpot), which since the 50 m site gaps stands off the area's middle; before, the only clearance was the stump's 17 m roots clearing (runeMarkers.stump.clear), and patch centres kept 0.15 of the area from its middle, not the stump"
+          "rest": "measured from the stump (rules/map.ts soundsystemSpot), which since the 50 m site gaps stands off the area's middle; before, the only clearance was the stump's 17 m roots clearing (runeMarkers.stump.clear), and patch centres kept 0.15 of the area from its middle, not the stump"
         },
         {
           "by": "Ed",
@@ -93,7 +93,7 @@
         "src/rules/berries.ts",
         "src/rules/mushrooms.ts"
       ],
-      "notes": "rules/map.ts stumpClearance: (arena.radius + arena.band) × fight.scale + stumpClear, never below 0, from the nearest stump (map.stoneGap: its own area's or a neighbour's). The arena (map.arenaOpen) is open round both the area's middle and its stump; only the stump's counts here. A berry patch's centre keeps stumpClearance + patch.radius, so no bush grows nearer. An area with too little ground beyond it keeps fewer bushes rather than grow them in the arena: measured at 55 m with spacing 16, every fox area has all 61 bushes, and one of the bear island's 30 areas has 53 of 61 (87%). Below 0 lets bushes and mushrooms into the arena's outer band (e.g. −10: 45 m)."
+      "notes": "rules/map.ts stumpClearance: (arena.radius + arena.band) × fight.scale + stumpClear, never below 0, from the nearest stump (rules/map.ts stoneGap: its own area's or a neighbour's). The arena (rules/map.ts arenaOpen) is open round both the area's middle and its stump; only the stump's counts here. A berry patch's centre keeps stumpClearance + patch.radius, so no bush grows nearer. An area with too little ground beyond it keeps fewer bushes rather than grow them in the arena: measured at 55 m with spacing 16, every fox area has all 61 bushes, and one of the bear island's 30 areas has 53 of 61 (87%). Below 0 lets bushes and mushrooms into the arena's outer band (e.g. −10: 45 m)."
     },
     "berries.colour": {
       "what": "The berries' colour: a deep berry pink.",
