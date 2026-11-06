@@ -1065,6 +1065,9 @@ export class Ground {
    *  and the coast left off, so the view's compileAll links, uploads and warm-draws them with the rest and the first coast drawn finds
    *  its program linked (prepareCoast: no stand-in, no first-use compile). Nothing drawn changes; once made, never again. */
   coastAhead(b: Beach): void { if (this.beach) return; this.setBeach(b); this.setBeach(null); }
+  /** The ground's own material now: the coast's (the sand and the waves) while a coast is asked for, else the plain one; never the
+   *  loading stand-in (the sea's loading mist waits for this one drawn: render/view/mistReady.ts). */
+  get ownMaterial(): THREE.Material { return this.coastReadiness.requested && this.beach ? this.beach : this.plain; }
   /** Called after BeachView.update, before scene submission. No unfinished coast program reaches a draw. */
   prepareCoast(renderer: THREE.WebGLRenderer, camera: THREE.Camera, scene: THREE.Scene): void {
     const surface = this.coastSurface, coast = this.coastReadiness;

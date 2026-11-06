@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleared, fadeAt, FADE, frontAt, FRONT_CLEAR, FRONT_FULL, typeReaches } from "./loadingFront";
+import { cleared, frontAt, FRONT_CLEAR, FRONT_FULL, goneAt, mistLeft, typeReaches } from "./loadingFront";
 import tuning from "../../config/tuning.json";
 
 const T = tuning.loadingMist; // (as built: the tuning's numbers)
@@ -23,17 +23,42 @@ describe("the loading mist's front (render/loadingFront.ts)", () => {
     expect(clearsAt(200)).toBeLessThan(clearsAt(900));
     expect(at(1)).toBeGreaterThan(at(0.5));
   });
-  it("clears a nearby area within a couple of seconds", () => {
+  it("clears a nearby area within a couple of seconds and its fade", () => {
     const near = typeReaches([{ type: 3, x: 150, z: 0 }], house, 168).get(3)!;
     let s = 0; while (!cleared(frontAt(near, s, T))) s += 0.05;
-    expect(s).toBeLessThanOrEqual(3);
+    expect(s).toBeLessThanOrEqual(3 + T.fade);
+    expect(s).toBeGreaterThanOrEqual(T.fade); // (never sooner than its fade)
   });
-  it("never hangs on past the cap: what the front hasn't reached fades out, however far the type reaches", () => {
+  it("never hangs on past the cap: what the front hasn't reached thins away all the same, however far the type reaches", () => {
     const far = typeReaches([{ type: 4, x: 50, z: 0 }, { type: 4, x: 4000, z: 0 }], house, 160).get(4)!;
     expect(cleared(frontAt(far, T.cap - 0.5, T))).toBe(false);
-    expect(fadeAt(T.cap - 0.5, T)).toBe(1);
-    expect(fadeAt(T.cap + FADE / 2, T)).toBeCloseTo(0.5, 6);
-    expect(cleared(frontAt(far, T.cap + FADE, T))).toBe(true);
+    expect(mistLeft(far, T.cap - 0.5, 3900, T)).toBe(1); // (the far rim: its wait is the cap)
+    expect(mistLeft(far, T.cap + T.fade / 2, 3900, T)).toBeCloseTo(0.5, 6);
+    expect(mistLeft(far, T.cap + T.fade, 3900, T)).toBe(0);
+    expect(cleared(frontAt(far, goneAt(far, T), T))).toBe(true);
+    expect(goneAt(far, T)).toBe(T.cap + T.fade);
+  });
+  // Ed, 2026-11-06: "mist should fade away smoothly over a few seconds not vanish"
+  it("thins away over the fade knob's seconds wherever the front passes, never in one frame, and takes the knob's time", () => {
+    const r = reaches.get(2)!;
+    for (const fade of [T.fade, 1.5, 5]) {
+      const K = { ...T, fade };
+      for (const d of [r.near, (r.near + r.far) / 2, r.far]) {
+        let from = -1, to = -1, last = 1;
+        for (let s = 0; s < 30; s += 1 / 60) { // (a frame at a time, 60 a second)
+          const left = mistLeft(r, s, d, K);
+          expect(last - left).toBeLessThanOrEqual(1 / 60 / fade + 1e-9); // (never more than a frame's share of the fade in a frame)
+          if (left < 1 && from < 0) from = s;
+          if (left <= 0 && to < 0) to = s;
+          last = left;
+        }
+        expect(to - from).toBeCloseTo(fade, 1); // (the knob's seconds, start to gone)
+      }
+    }
+    expect(T.fade).toBeGreaterThanOrEqual(2); expect(T.fade).toBeLessThanOrEqual(5); // ("a few seconds")
+  });
+  it("leaves all of it while its areas aren't ready", () => {
+    expect(mistLeft(reaches.get(1), undefined, 100, T)).toBe(1);
   });
   it("keeps its speed for a near area whatever else of its type lies far off", () => {
     const near = typeReaches([{ type: 5, x: 150, z: 0 }], house, 168).get(5)!, both = typeReaches([{ type: 5, x: 150, z: 0 }, { type: 5, x: 2000, z: 0 }], house, 168).get(5)!;

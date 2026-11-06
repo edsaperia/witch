@@ -4830,17 +4830,22 @@ a low drifting mist (height in metres above the ground). Each has on and strengt
 
 ### `loadingMist`
 
-A glowing mist over the parts of the island still loading, rolling back from the treehouse as their trees arrive.
+A glowing mist over the parts of the island still loading, each area's held till its trees, stumps, campfires and creatures are drawn, then rolling back from the treehouse and fading away.
 
 1. Ed, 2026-10-24: "Mist sounds ideal, which rolls away when loading finishes. If loading starts with areas closer to the treehouse, this will look fine"
 2. "make the mist roll away progressively away from the treehouse instead of all at once" (render/loadingMist.ts)
-The loading mist [1][2]: while the island is still being drawn (its trees one set an area type, nearest the treehouse first), every area whose trees aren't in yet lies under a low glowing night mist, in layers sheets up to height metres over the ground, each at most density opaque (the low ones thickest), in hard steps, glow times as bright as the night's mist. When a type's trees land, its mist rolls back off its areas as a front moving out from the treehouse at speed m/s, and what it hasn't reached cap seconds after the trees landed (the far rim) fades out over a second.
+3. Ed, 2026-11-06: "Make sure things load and render before the mist disappears, and mist should fade away smoothly over a few seconds not vanish." (render/view.ts mistReady)
+The loading mist [1][2][3]: while the island is still being drawn, every area type's areas lie under a low glowing night mist, in layers sheets up to height metres over the ground, each at most density opaque (the low ones thickest), in hard steps, glow times as bright as the night's mist. A type's mist holds till its areas' trees, great stumps (or rune stones), the campfires and its creatures' plain look are loaded and drawn (its shader linked and a frame drawn with it); then it rolls back off its areas as a front moving out from the treehouse at speed m/s (whatever the front hasn't reached cap seconds later goes all the same), and where the front passes the mist thins away over fade seconds, dithered, never in one frame.
 Code: `render/loadingMist.ts`
 
+- **`loadingMist.fade`**: Seconds an area's loading mist takes to thin away once its contents are drawn (never in one frame).
+  1. Ed, 2026-11-06: "mist should fade away smoothly over a few seconds not vanish"
+  Code: `render/loadingFront.ts`
 - **`loadingMist.soft`**: the front's soft edge (m either side), size: its rolling noise (m).
-- **`loadingMist.sea`**: The loading mist lies over the sea too and burns off last, once all the land is in.
+- **`loadingMist.sea`**: The loading mist lies over the sea too (and any ground not filled in yet), and goes once the ground's own program is drawn.
   1. Ed: "Maybe it should also appear over the water and burn off there too"
-  it lies over the water too, out to sea metres past the island's furthest ground, thinning, and burns off last, as its own front from the treehouse once the land's all in [1]; 0 none. Areas drawn before the first frame (a revisit's, from the art cache) never have any. Off under ?quick=1; ?loadmist=1\|0 for one load, ?artdelay=<s> to land the trees drawn ahead of need one every that many seconds and watch it.
+  2. Ed, 2026-11-06: "Coast (waves, sand) is urgent because we cross it first but coast decorations (starfish) are tiny and can wait."
+  it lies over the water too, out to sea metres past the island's furthest ground, thinning, and over any ground not filled in yet; it holds till the ground's own program (the coast's sand and waves) is drawn and the ground in view is filled, then goes as a type's does (it used to wait for all the land: Ed, 2026-11-06, "Coast (waves, sand) is urgent because we cross it first"); 0 none. Areas drawn before the first frame of a load (not a sail's) never have any. Off under ?quick=1; ?loadmist=1\|0 for one load, ?artdelay=<s> to land the trees drawn ahead of need one every that many seconds and watch it.
 
 | knob | type | range |
 |---|---|---|
@@ -4851,6 +4856,7 @@ Code: `render/loadingMist.ts`
 | `loadingMist.glow` | number | 0 to … |
 | `loadingMist.speed` | number | 0 to … |
 | `loadingMist.cap` | number | 0 to … |
+| `loadingMist.fade` | number | 0 to … |
 | `loadingMist.soft` | number | 0 to … |
 | `loadingMist.size` | number | 0 to … |
 | `loadingMist.sea` | number | 0 to … |

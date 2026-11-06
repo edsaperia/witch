@@ -741,6 +741,8 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "stump", id, style: this.style, stump: spec }, urgent);
     return a;
   }
+  /** Whether a great stump is baked (nothing asked for). */
+  hasStump(spec: StumpSpec): boolean { return this.stumps.has(stumpId(spec)); }
   /** Ask for a set ahead of need, without using it. */
   prefetchType(t: number): void { if (!this.types.has(t)) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K, biome: this.typeBiome }); }
   /** Tonight's own trees (the night's seed), for the area types `types`, if they were drawn ahead and kept (app/landingBake.ts):

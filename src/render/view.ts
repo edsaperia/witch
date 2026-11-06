@@ -14,7 +14,8 @@ import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { renderDelta, easeCanopyReach } from "./renderEasing";
 import { monitorProgramLink, waitForPrograms, type ReadyProgram } from "./programReadiness";
-import { installShaderDrawGate, materialProgramsReady, type ShaderDrawStatus } from "./shaderDrawGate";
+import { installShaderDrawGate, instancesOf, materialProgramsReady, type ShaderDrawStatus } from "./shaderDrawGate";
+import { areaParts, areaReady, noteParts, seaReady, type MistLogEntry, type MistSource } from "./view/mistReady";
 import { LandingArtFade, lateLandingReady } from './landingReadiness';
 import { captureProgramUses, mapProgramUses } from "./programInventory";
 import { deckOf } from "../rules/treehouse";
@@ -267,6 +268,11 @@ function nightState(t: Tuning) {
     /** The crowns' reach now (metres; 0 on the ground): eased toward the tuning's scenery.canopyReach in the air (render/view/scenery.ts). */
     canopyNow: 0,
     lastBuild: { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1, relics: -1 } as { x: number; y: number; z: number; version: number; radius: number; canopy?: number; relics: number; cap?: number },
+    /** The art's version the last whole scenery listing started from (render/view/scenery.ts rebuild, as it ends): the loading mist's
+     *  readiness, render/view/mistReady.ts. */
+    sceneryListed: -1,
+    /** The loading mist's log (render/view/mistReady.ts): each area type's (the sea's, -1) parts first ready and its mist's going. */
+    mistLog: new Map<number, MistLogEntry>(),
     /** The scenery budget: how far round the witch scenery is drawn (rules/budget.ts). */
     budget: newBudget(t) as SceneryBudget,
     /** The last drawn frame's real time (ms), for the budget. */
@@ -763,6 +769,40 @@ export class View {
   mist: Mist | null = null;
   /** Faint rings of moonlight on the crowns, seen from the treetops (render/lightRings.ts). */
   lightRings: LightRings | null = null;
+  /** Materials drawn with their own program at least once (the draw gate's hook): the ground's, for the sea's loading mist. */
+  private drawnMats = new WeakSet<THREE.Material>();
+  /** Each area type's great stumps (render/view/mistReady.ts), for the map they were worked out on. */
+  private stumpsBy: { map: object; by: Map<number, StumpSpec[]> } | null = null;
+  /** Area type `t`'s great stumps (none with the rune stones). */
+  stumpsOf(t: number): StumpSpec[] {
+    const m = this.game.map;
+    if (this.stumpsBy?.map !== m) {
+      const by = new Map<number, StumpSpec[]>(), [hx, hy] = m.centreCell, M = this.markerArt;
+      if (M?.stumps) for (const [cx, cy] of m.cells) {
+        if ((cx === hx && cy === hy) || !m.playable(cx, cy)) continue;
+        const s = M.stump([cx, cy]), t = m.typeOf(cx, cy);
+        if (s) { let l = by.get(t); if (!l) by.set(t, (l = [])); l.push(s.spec); }
+      }
+      this.stumpsBy = { map: m, by };
+    }
+    return this.stumpsBy.by.get(t) ?? [];
+  }
+  /** What the loading mist's readiness reads (render/view/mistReady.ts). */
+  private get mistSource(): MistSource {
+    const v = this;
+    return { assets: this.assets, typeBatches: this.typeBatches, creatureBatches: this.creatureBatches, propBatch: this.propBatch, markerBatch: this.markerBatch, stumpBatches: this.island.stumpBatches,
+      sceneryListed: this.sceneryListed, stumpsOf: t => v.stumpsOf(t), stumps: !!this.markerArt.stumps };
+  }
+  /** The loading mist this frame (render/loadingMist.ts): each area type's held till its parts are drawn (render/view/mistReady.ts),
+   *  the sea's till the ground's own program is drawn and the ground in view filled; logged (mistLog). `time`: the page's clock. */
+  private updateLoadingMist(time: number): void {
+    const M = this.loadingMist!, log = this.mistLog, now = performance.now(), src = this.mistSource;
+    const ready = (t: number) => { const p = areaParts(src, t), e = noteParts(log, t, p, now), r = areaReady(p); if (r && e.ready === undefined) e.ready = now; return r; };
+    const sea = () => { const ok = seaReady(this.drawnMats.has(this.ground.ownMaterial), this.stats.pendingGround), e = noteParts(log, -1, { ground: ok }, now); if (ok && e.ready === undefined) e.ready = now; return ok; };
+    const gated = this.shaderDrawStatus.active; // (a sail's: nothing counts as there before it's drawn)
+    M.update(time, ready, sea, t => !gated && (t < 0 || this.assets.hasType(t)));
+    for (const [t, e] of log) if (e.fade === undefined && (t < 0 ? M.seaBeganAt : M.beganAt(t)) !== undefined) e.fade = now;
+  }
   /** The loading mist over the areas whose trees aren't drawn yet (render/loadingMist.ts), made each night by prepare; null once off. */
   loadingMist: LoadingMist | null = null;
   /** ?loadmist=1|0 (app/viewParams.ts): the loading mist on or off whatever the tuning and ?quick=1 say; null as they say. */
@@ -800,7 +840,12 @@ export class View {
     this.ledger = new GpuLedger(this.renderer.getContext(), () => canvas.width * canvas.height * 12); // (the canvas's back and front buffers and its depth: preserveDrawingBuffer)
     canvas.addEventListener("webglcontextlost", () => { this.ledger.reset(); this.onGpuEvent?.("context lost"); });
     this.renderer.setPixelRatio(1);
-    installShaderDrawGate(this.renderer, this.shaderDrawStatus, object => object === this.island?.ground.mesh ? this.ground.loadingFallback : null);
+    installShaderDrawGate(this.renderer, this.shaderDrawStatus, object => object === this.island?.ground.mesh ? this.ground.loadingFallback : null, (object, material, geometry) => {
+      // (what's been drawn with its own program: the loading mist waits for it, render/view/mistReady.ts)
+      if (instancesOf(object, geometry) <= 0) return;
+      this.drawnMats.add(material);
+      if (object.userData.drawn === undefined) object.userData.drawn = performance.now();
+    });
     this.renderer.info.autoReset = false; // count every pass of a frame, reset in render()
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // colours are the art's own sRGB values, untouched
     this.mpp = metresPerArtPixel(t);
@@ -1202,6 +1247,7 @@ export class View {
     }
     const A = this.ground.areaUniforms;
     this.loadingMist = new LoadingMist(T, typeReaches(cells, m.treehouse, m.areaSize), m.treehouse, m.extent, A.uniforms, this.post.scene.depthTexture, this.post.fxSize, A.slots);
+    this.mistLog = new Map();
     (this.post.fxScene ??= new THREE.Scene()).add(this.loadingMist.mesh);
   }
 
@@ -2037,7 +2083,7 @@ export class View {
     this.time("grass+lights");
     this.mist?.follow(pose.tx, pose.tz);
     if (this.loadingMist && draw) { // (on the page's own clock, a frame counting at most a tenth of a second: not the house's slowed time)
-      this.loadingMist.update(time, ty => this.assets.hasType(ty));
+      this.updateLoadingMist(time);
     }
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse, repaintHeld);

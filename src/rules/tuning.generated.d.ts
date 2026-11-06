@@ -2809,6 +2809,7 @@ export type SchemaTuning = {
     "glow": number;
     "speed": number;
     "cap": number;
+    "fade": number;
     "soft": number;
     "size": number;
     "sea": number;

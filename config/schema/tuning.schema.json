@@ -14334,6 +14334,11 @@
           "type": "number",
           "minimum": 0
         },
+        "fade": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Seconds an area's loading mist takes to thin away once its contents are drawn (never in one frame)."
+        },
         "soft": {
           "type": "number",
           "minimum": 0,
@@ -14346,7 +14351,7 @@
         "sea": {
           "type": "number",
           "minimum": 0,
-          "description": "The loading mist lies over the sea too and burns off last, once all the land is in."
+          "description": "The loading mist lies over the sea too (and any ground not filled in yet), and goes once the ground's own program is drawn."
         }
       },
       "required": [
@@ -14357,12 +14362,13 @@
         "glow",
         "speed",
         "cap",
+        "fade",
         "soft",
         "size",
         "sea"
       ],
       "additionalProperties": false,
-      "description": "A glowing mist over the parts of the island still loading, rolling back from the treehouse as their trees arrive."
+      "description": "A glowing mist over the parts of the island still loading, each area's held till its trees, stumps, campfires and creatures are drawn, then rolling back from the treehouse and fading away."
     },
     "lightRings": {
       "type": "object",

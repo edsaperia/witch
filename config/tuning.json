@@ -3127,6 +3127,7 @@
     "glow": 1.4,
     "speed": 140,
     "cap": 6,
+    "fade": 3,
     "soft": 24,
     "size": 34,
     "sea": 600

@@ -133,6 +133,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   const g = v.game, t = g.tuning;
   potionBuild.set(v, bendPotionKey(v));
   v.lastBuild = { ...key, version: v.assets.version, radius, canopy, relics: lyingRelics(v.game), cap: treeCapKey(t) };
+  const listedFrom = v.assets.version;
   v.lastPose = { distance: pose.distance, angle: pose.angle, zoomStep: g.camera.zoomStep, lift, tele };
   // Through the telescope, the whole circle round her at once (it pans with nothing listed again; inView passes all within reach).
   const round = (far: number) => { const f = focusOf(v); return { minX: f.x - far - margin, maxX: f.x + far + margin, minZ: f.z - far - margin, maxZ: f.z + far + margin }; };
@@ -396,4 +397,5 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   v.sources = g.forest.lightsNear(fo.x, fo.z, t.haze.far + margin);
   v.stats.trees = nt; v.stats.bushes = nb;
   v.shadowList = shadows;
+  v.sceneryListed = listedFrom; // (a whole listing from that art: the loading mist's readiness, render/view/mistReady.ts)
 }
