@@ -1,5 +1,7 @@
 # Art-check sharding
 
+**Audit status (2026-11-05): Partly built: nightly/manual scheduling and three-shard sharding are in source; controlled cold validation is not built.** (1 Nov audit: Partly built / parked, sharding withdrawn.) #1834 merged 2026-11-05 and was released with #1861 (whose fragment carries v7564): `.github/workflows/art-check.yml` plan job, three-way shard matrix and `tools/art-check/shards.mjs`. Real nightly execution and the speed gain are not yet verified.
+
 **4 November follow-up — source implementation in draft [#1834](https://github.com/edsaperia/witch/pull/1834).** Ed: “split, keep nightly” (coordinator1476#6643311785 item5; routing6643908630). The advisory workflow now has an exact-source planning job, three duration-balanced task shards and strict final coverage/proof validation. It retains the nightly03:17UTC/manual-only triggers, task fingerprints/cache and exact-tree reuse, every named task and the atomic auxiliary/lab unit. Unknown analysis still runs the whole check once. No PR/push/build/release dependency was added. Focused orchestration tests use fake executors; actual nightly/browser execution and speed acceptance remain unverified. No cold run or auxiliary decomposition is requested.
 
 ## Historical parked checkpoint (1 November)
@@ -9,7 +11,7 @@
 | Request / feature group | Status | Evidence and remaining gap |
 |---|---|---|
 | Nightly/manual scheduling, no PR/push triggers or release dependency | **Built** | #1583 via #1619/publish #1624; canonical #1476 comment6562592823 confirms release1101k LIVE. Exact first numeric live version unverified. Current `.github/workflows/art-check.yml` confirms nightly03:17 UTC/manual triggers and standing status report. |
-| Art-task sharding | **Partly built** | Source and measurements preserved at owner checkpoint7c7e6b513, but sharding was withdrawn from production and parked. No sharded release or cold-validation success claimed. |
+| Art-task sharding | **Built** (since 5 Nov; was Partly built / parked) | #1834, released with #1861 (v7564): plan job, three duration-balanced shards, final coverage/proof validation; nightly 03:17 UTC/manual only, no build dependency. The 1 Nov parked checkpoint below is history. Real nightly runs and speed acceptance unverified. |
 | Controlled cold validation and decomposition of auxiliary floor | — | Owner note says no controlled cold result exists or is currently required; new investigation requires explicit authorisation. |
 
 

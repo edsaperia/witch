@@ -375,6 +375,17 @@ export function alongRay(v: View, p: { x: number; y: number; z: number }, d: num
   return { ...q, scale: Math.max(0.05, (l - d) / l) };
 }
 
+/** A point `p` of a flat picture whose anchor `a` is laid `d` metres nearer the camera: moved toward the camera by the share of its
+ *  ray that `a`'s `d` is of `a`'s (not by `d` itself), so every point of the picture lands on its own pixel and the picture stays flat,
+ *  parallel to its plane. Each corner pushed by `d` along its own ray (alongRay) bends a picture: the far corners go a smaller share
+ *  of the way than the near ones, the GPU's interpolation inside it no longer matches its plane, and what's drawn inside it lands off
+ *  its pixel by an amount that changes as the camera moves: a room's dressing, a picture across the house in Ed's layout, slid over
+ *  the floor as she walked (Ed, 2026-11-05: "Some scenery items in the treehouse move around the floor when you walk around"). */
+export function alongRayFlat(v: { camera: { position: { x: number; y: number; z: number } } }, p: { x: number; y: number; z: number }, a: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number } {
+  const c = v.camera.position, k = d / (Math.hypot(a.x - c.x, a.y - c.y, a.z - c.z) || 1);
+  return { x: p.x - (p.x - c.x) * k, y: p.y - (p.y - c.y) * k, z: p.z - (p.z - c.z) * k };
+}
+
 /** The knockdown candles last shown, per view: their count, how many red, and (once she's free) when their smoke is done. */
 const candlesSeen = new WeakMap<View, { n: number; red: number; until: number }>();
 /** Another night in the view (View.setGame): no candles burning down. */

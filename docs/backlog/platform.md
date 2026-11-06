@@ -1,26 +1,26 @@
 # Platforms, the port and multiplayer
 
-**Audit status (2026-11-01): Partly built: save/resume and multiplayer foundations exist; ordinary calls, platform ports and several cleanup requests remain incomplete.**
+**Audit status (2026-11-05): Partly built: save/resume and multiplayer foundations exist, calls now use a dedicated relay and reconnect; ordinary calls are still opt-in only; platform ports (not now, Ed 4 Nov) and several cleanup requests remain incomplete.** (1 Nov audit: same counts)
 
-The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+The status index checks the requests below against prototype `ab06904b` and cited history; re-checked on 2026-11-05 against prototype `26d69880` (live as v7569). **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
 
 | Request / feature group | Status | Evidence and remaining gap |
 |---|---|---|
 | Steam PC/Mac and console releases | — | No implementation found for this request; original proposal remains unmarked. |
-| Godot port after design settles | — | No implementation found for this request; original proposal remains unmarked. |
+| Godot port after design settles | — | No implementation found. Ed, 2026-11-04: the engine port, not now. |
 | BRUTAL feasibility investigation beyond README review | — | No implementation found for this request; original proposal remains unmarked. |
 | Rules trace-equivalent port, offline-art port integration and rebuilt/pre-rendered synth | — | Browser deterministic rules and JS bake tools exist; no second-engine port/trace comparison or port audio implementation found. |
-| Browser co-op before port | **Partly built** | Rules groundwork #1457 and opt-in prototype/integration #1538 exist; normal calls are disabled and broader runtime acceptance is incomplete. `app/telephoneSwitch.ts`, online/; first shipped version unverified. |
+| Browser co-op before port | **Partly built** | Rules groundwork #1457, opt-in prototype/integration #1538, calls-on readiness #1609 (released in #1800). `app/telephoneSwitch.ts` still needs `telephone=1` and `telephoneCalls=1`: no ordinary calls. Broader runtime acceptance incomplete. |
 | Telephone rotary UI, identity, address book, sounds and consent | **Partly built** | Opt-in telephone source #1538 exists, `telephone=1` and separate `telephoneCalls=1` gates; ordinary telephone retains placeholder/default behaviour. Full three-player accepted social-play flow not delivered. Version unverified. |
 | Guest wake, own dressing, shared hats/bags/parts | **Partly built** | Guest room rules #1553 and typed online equipment helpers exist; #1538/#1609 acceptance remains incomplete and calls stay off. Source is not a passed end-to-end visit. First version unverified. |
-| Kick/leave/drop return and redial | **Partly built** | Lifecycle/return helpers exist in #1538 source; complete accepted two/three-client drop/return and redial not established. Not a shipping-call claim; version unverified. |
+| Kick/leave/drop return and redial | **Partly built** | Lifecycle/return helpers in #1538; since 2 Nov a call tries to reconnect for 20 s with a countdown and keeps the visit while it does (fragments telephone-reconnect, telephone-close-recovery, v7390). Accepted two/three-client drop/return and redial not established. |
 | Shared clock, treehouse slow and all-player pause | **Partly built** | Rules groundwork #1457 supports per-witch state/controls, integration has clock policies. Full network/runtime acceptance remains with #1538/#1609; old solo/legend-circle wording is historical. Version unverified. |
 | Shared permanent rewards and guest save isolation | **Partly built** | Online rewards/borrowed-slot helpers are in source; successful complete visit settlement still needs integration proof. #1538; version unverified. |
 | Shared sigils and departing witch releases | **Partly built** | Multi-witch rules and departure helpers exist; full transported client lifecycle remains unaccepted. #1457/#1538; version unverified. |
 | Every witch in bed to end night | **Partly built** | Rules support multiple witches/bed coordination; complete network second-night proof not established. #1457/#1538; version unverified. |
 | Portable bedroom custom furniture, hot tub and trophies | — | No implementation found for this request; original proposal remains unmarked. |
-| Introductions/relay server | **Partly built** | Node relay server and session protocol are implemented for opt-in proof pages; publicly enabled ordinary calls/playtest service acceptance remains incomplete. #1538, no shipped enabled-call version. |
-| Remove dead knobs | **Partly built** | Individual retired settings removed; no evidence of completion of the whole cleanup sprint. Config registry/schema exists, not a blanket proof all knobs are live. |
+| Introductions/relay server | **Partly built** | Node relay and session protocol; calls use the dedicated Witch server since v7390 (fragment telephone-relay). Still opt-in proof pages only; no publicly enabled calls. |
+| Remove dead knobs | **Partly built** | Individual retired settings removed; #1788 removed unused helpers and narrowed CLI exports, #1795 makes config read-only at run time (4 Nov). No evidence the whole cleanup sprint is complete. |
 | Move config history out of configs | **Built** | #1344-related docs pass and config-history notes, data-only tuning/config files with history pointers; exact first version unverified. |
 | Retire copied balance sims for real rules | **Partly built** | Real-rules report #1475 exists; balance.ts/states.ts retained intentionally, not removed. `docs/notes/balance-report-coverage.md`; first report version v5655. |
 | Refresh HOW-THE-GAME-WORKS | **Built** | Current docs/HOW-THE-GAME-WORKS.md and #1344 docs pass/history; first refresh build version unverified. This does not mean future updates are complete forever. |

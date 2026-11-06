@@ -2,6 +2,17 @@
 
 Lessons from the paused-means-still fix (#1598, shipped in v6887 on 1 Nov 2026). The fix itself was small. The loop around it took about two hours: eight proof runs, 10:36 to 12:34 UTC. This page lists what slowed it down and what to change. Item 1 has an inbox (see below). The other items are process changes for the coordinator and builders.
 
+**Audit status (2026-11-05): Partly built: proofs run in CI with a cached baseline and saved diffs; the other items are process rules or not built.** (1 Nov audit: index line only, no table.) **Built** means code is present.
+
+| Request / feature group | Status | Evidence and remaining gap |
+|---|---|---|
+| 1. Run headless proof scripts in CI | **Partly built** | #1614 (released as 1101l, #1625): `tools/ci/run-proofs.cjs`, `tools/ci/proofs.json`; fast pause/Settings holds on PR builds, settled pixel comparisons in `.github/workflows/proofs-nightly.yml`. Only `paused-world` is declared CI-safe so far; other headless proofs are not CI jobs. |
+| 2. Agree the acceptance bar before the first run | — | Process rule for the coordinator and builders, not code. Unbuilt context. |
+| 3. Tracing built into proofs (images, diff, pixel trace) | **Partly built** | #1614: the nightly repaint proof keeps PNGs, the diff and a pixel trace (`PAUSE_TRACE_PIXELS`) as artifacts. Not yet every proof. |
+| 4. Hunt the whole class when a proof finds one cause | — | Process rule, not code. Unbuilt context. |
+| 5. Measure the baseline once, cached by SHA | **Built** | #1614: `tools/ci/build-proof-baseline.cjs` builds and caches the baseline by exact SHA and reuses its result; the fast PR mode needs no baseline. Related: #1835 (release v7564) reuses a whole successful release validation for an identical tree; #1857 fixes the bench base. |
+| 6. Safe reusable proof runner for the coordinator (own PID files, refuses a second run) | — | The CI runner exists; no local runner with PID files and a single-run lock found in `tools/`. |
+
 ## What slowed it down
 
 1. **Every proof went through the coordinator.** Builders on Windows couldn't run the headless browser proof (`tools/smoke/paused-world.cjs`). Each round was: builder pushes, coordinator rebuilds and runs (4–5 min), coordinator posts results, builder fixes. That's 10–15 minutes a round, mostly spent waiting on messages.

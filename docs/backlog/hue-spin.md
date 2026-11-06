@@ -1,8 +1,8 @@
 # Hue Spin — recipe 108
 
-**Audit status (2026-11-01): Built in source: recipe 108 colour/audio rotation; subjective play review remains separate.**
+**Audit status (2026-11-05): Built in source: recipe 108 colour/audio rotation; subjective play review remains separate.** (1 Nov audit: unchanged since 1 Nov)
 
-The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+The status index checks the requests below against prototype `ab06904b` and cited history; re-checked on 2026-11-05 against prototype `26d69880` (live as v7569). **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
 
 | Request / feature group | Status | Evidence and remaining gap |
 |---|---|---|
