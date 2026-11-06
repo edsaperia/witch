@@ -54,11 +54,12 @@ describe("the island made under the loading screen", () => {
     askIslandArt(rec, n, { legendNap: false, coast: true, beachDecor: true, lakes: true });
     for (const sp of n.kinds) {
       for (const want of [`creatureArt:${sp}`, `wokenArt:${sp}`, `napArt:${sp}`]) expect(asked).toContain(want);
-      for (const l of [0, 1, 2]) if (!hasOverride(sp, l)) expect(asked).toContain(`rigArt:${sp},${l}`); // (rigArt itself asks only for the kinds with rig parts)
+      for (const l of [0, 1, 2]) if (!hasOverride(sp, l)) expect(asked).toContain(`rigArt:${sp},${l},,false`); // (rigArt itself asks only for the kinds with rig parts; not urgent: in the island's order)
     }
-    for (const sp of n.legends) { expect(asked).toContain(`sleepArt:${sp}`); if (!hasOverride(sp, 3)) expect(asked).toContain(`rigArt:${sp},3`); }
+    for (const sp of n.legends) { expect(asked).toContain(`sleepArt:${sp}`); if (!hasOverride(sp, 3)) expect(asked).toContain(`rigArt:${sp},3,,false`); }
     for (const a of asked) { const sp = /^(?:creature|woken|nap|face|idle|glide|sleep|rig)Art:([^,]+)/.exec(a)?.[1]; if (sp) expect(n.kinds, a).toContain(sp); }
-    for (const want of ["beachEdgeArt:", "beachArt:", "lakeShoreArt:", "partyWitchArt:"]) expect(asked).toContain(want);
+    for (const want of ["beachEdgeArt:false", "beachArt:false", "lakeShoreArt:false", "partyWitchArt:,false"]) expect(asked).toContain(want); // (none urgent: none jumps the queue)
+    expect(asked.some(a => /^(decorArt|pathPieceArt):/.test(a))).toBe(false); // (asked ahead only under a dive)
     expect(asked.some(a => a.startsWith("faceArt:"))).toBe(false); // (the faces: askIslandFaces, not waited for)
     const faces: string[] = []; askIslandFaces({ faceArt: (sp, f) => { faces.push(`${sp},${f}`); } }, n);
     expect(faces.sort()).toEqual(n.kinds.flatMap(sp => ISLAND_FACES.map(f => `${sp},${f}`)).sort());

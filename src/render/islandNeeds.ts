@@ -10,6 +10,7 @@ import { LEGEND, type Level } from "../rules/creatureLevels";
 import { glideOf } from "../rules/movement";
 import { characterOf } from "./character";
 import { hasOverride } from "./overrides";
+import type { StumpSpec } from "../rules/stumps";
 
 /** The faces drawn as sets of their own (render/looks.ts expression: neutral is the plain look). Not waited for (Ed, 2026-11-05: "Skip
  *  the animal faces"): till one's in, render/view/creatures.ts draws the plain look (the rig its own head piece's face). */
@@ -29,33 +30,59 @@ export function islandNeeds(map: ForestMap, near: ReadonlyMap<number, number>): 
   return { types, kinds: [...kinds], legends };
 }
 
-/** What askIslandArt asks of the art (render/assets.ts AssetLibrary): each asks for its set if it isn't held. */
+/** What askIslandArt asks of the art (render/assets.ts AssetLibrary): each asks for its set if it isn't held; `urgent` false: in
+ *  the order asked, behind what's asked already (the ask ahead keeps its order: none of it jumps the queue). */
 export interface IslandArtAsks {
   prefetchType(t: number): void;
   creatureArt(sp: string): unknown; wokenArt(sp: string): unknown; napArt(sp: string): unknown; faceArt(sp: string, face: string): unknown;
-  idleArt(sp: string): unknown; glideArt(sp: string): unknown; sleepArt(sp: string): unknown; rigArt(sp: string, level: number): unknown;
-  beachEdgeArt(): unknown; beachArt(): unknown; lakeShoreArt(): unknown; partyWitchArt(seed: number | null): unknown;
+  idleArt(sp: string): unknown; glideArt(sp: string): unknown; sleepArt(sp: string): unknown; rigArt(sp: string, level: number, gear?: undefined, urgent?: boolean): unknown;
+  beachEdgeArt(urgent?: boolean): unknown; beachArt(urgent?: boolean): unknown; lakeShoreArt(urgent?: boolean): unknown; partyWitchArt(seed: number | null, urgent?: boolean): unknown;
+  stumpArt(spec: StumpSpec, urgent?: boolean): unknown; decorArt(): unknown; pathPieceArt(): unknown;
 }
 /** How the island's drawn: a legend asleep as its nap (wildLegends.seen.nap) or its mound (sleepArt); a coast (and its decorations
- *  on); lakes. */
-export interface IslandLooks { legendNap: boolean; coast: boolean; beachDecor: boolean; lakes: boolean }
+ *  on); lakes; its areas' great stumps (render/markers.ts stumpDeal: none with the rune stones); `dive`: a sail's, under its dive, the
+ *  decorations and the path pieces asked ahead too (else when they may be on screen: render/view/scenery.ts). */
+export interface IslandLooks { legendNap: boolean; coast: boolean; beachDecor: boolean; lakes: boolean; stumps?: readonly StumpSpec[]; dive?: boolean }
 
-/** Ask for everything `n` can show (render/view/creatures.ts's looks, the rig's pages, the coast's and lakes' dressing), the trees
- *  first, then each kind's plain look, then the rest. Not the faces (askIslandFaces), a party animal's own outfit (by its id, once
- *  it's invited) or a stilted rig. */
+/** The order the island's art is asked for (Ed, 2026-11-06, the dive: "Coast (waves, sand) is urgent because we cross it first but
+ *  coast decorations (starfish) are tiny and can wait. Campfires are nice to see, as are stumps."). Ahead of all of it, the start's own
+ *  (the house, her, the soundsystems and the props, the campfires among them: render/assets.ts `home`); the coast's sand and waves are
+ *  the ground's program, made at the top of prepare (Ground.coastAhead). */
+export const ART_ORDER = [
+  "palms", // the coast's palms and shrubs: big, and the first land the dive crosses
+  "trees", // each area type's, in `n.types`' order (a sail's: by their share of the dive's view, rules/arrive.ts diveShare)
+  "stumps", // the areas' great stumps (the campfires came with the props)
+  "creatures", // each kind's plain look
+  "legends", // the sleeping legends
+  "coast", // the beach's decorations (shells, starfish), her lying-down art
+  "lakes", // the lakes' shore dressing
+  "looks", // every other look the kinds can wear: woken, asleep, idle, gliding, their rig pages
+  "decor", // the decorations and the path pieces (a dive's only: else as they come into view)
+] as const;
+
+/** Ask for everything `n` can show (render/view/creatures.ts's looks, the rig's pages, the coast's and lakes' dressing), in ART_ORDER,
+ *  none of it urgent. Not the faces (askIslandFaces), a party animal's own outfit (by its id, once it's invited) or a stilted rig. */
 export function askIslandArt(a: IslandArtAsks, n: IslandNeeds, o: IslandLooks): void {
-  for (const t of n.types) a.prefetchType(t);
-  for (const sp of n.kinds) a.creatureArt(sp);
-  for (const sp of n.kinds) {
-    a.wokenArt(sp); a.napArt(sp);
-    const q = characterOf(sp).quirk;
-    if (q === "sentinel" || q === "rattle") a.idleArt(sp); // (its idle pose: render/view/creatures.ts)
-    if (glideOf(sp)) a.glideArt(sp);
-    for (const level of WILD_LEVELS) if (!hasOverride(sp, level)) a.rigArt(sp, level); // (only the four-legged and the snakes have rig pages: rigArt asks for no other)
+  for (const step of ART_ORDER) switch (step) {
+    case "palms": if (o.coast) a.beachEdgeArt(false); break;
+    case "trees": for (const t of n.types) a.prefetchType(t); break;
+    case "stumps": for (const s of o.stumps ?? []) a.stumpArt(s, false); break;
+    case "creatures": for (const sp of n.kinds) a.creatureArt(sp); break;
+    case "legends": for (const sp of n.legends) if (o.legendNap) a.napArt(sp); else a.sleepArt(sp); break;
+    case "coast": if (o.coast) { if (o.beachDecor) a.beachArt(false); a.partyWitchArt(null, false); } break; // (her lying-down art: render/beach.ts)
+    case "lakes": if (o.lakes) a.lakeShoreArt(false); break;
+    case "looks":
+      for (const sp of n.kinds) {
+        a.wokenArt(sp); a.napArt(sp);
+        const q = characterOf(sp).quirk;
+        if (q === "sentinel" || q === "rattle") a.idleArt(sp); // (its idle pose: render/view/creatures.ts)
+        if (glideOf(sp)) a.glideArt(sp);
+        for (const level of WILD_LEVELS) if (!hasOverride(sp, level)) a.rigArt(sp, level, undefined, false); // (only the four-legged and the snakes have rig pages: rigArt asks for no other)
+      }
+      for (const sp of n.legends) if (!hasOverride(sp, LEGEND)) a.rigArt(sp, LEGEND, undefined, false);
+      break;
+    case "decor": if (o.dive) { a.decorArt(); a.pathPieceArt(); } break;
   }
-  for (const sp of n.legends) { if (!o.legendNap) a.sleepArt(sp); if (!hasOverride(sp, LEGEND)) a.rigArt(sp, LEGEND); }
-  if (o.coast) { a.beachEdgeArt(); if (o.beachDecor) a.beachArt(); a.partyWitchArt(null); } // (her lying-down art: render/beach.ts)
-  if (o.lakes) a.lakeShoreArt();
 }
 /** The island's kinds' faces, asked for in the background (not waited for): as the loading screen fades, or with a sail's dive. With
  *  the faces off (tuning looks.expressions: off for now, #1860), faceArt asks for nothing. */

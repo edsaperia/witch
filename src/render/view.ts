@@ -9,7 +9,7 @@ import { bridgeNativeObject } from "./fx/native";
 const FX_MOCK_MODE = new URLSearchParams(globalThis.location?.search ?? "").get("fxmock");
 import type { RigGear } from "./rig/rigBuild";
 import type { Creature } from "../rules/creatures";
-import { partyGearOf } from "./artBuild";
+import { partyGearOf, stumpId, type StumpSpec } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { renderDelta, easeCanopyReach } from "./renderEasing";
@@ -73,7 +73,7 @@ import { applyStyleLight, LIGHT_UNIFORMS } from "./lighting";
 import { AreaMoods, hsvInto, moodOf } from "./mood";
 import { hsv2rgb } from "../../art/generator.js";
 import { Post } from "./post";
-import { GrassView } from "./grass";
+import { GrassView, type TuftArt } from "./grass";
 import { SpellFx } from "./spellfx";
 import { updateRefraction, resetRefraction, captureRefractionCast } from "./view/refraction";
 import { PartyStartFx } from "./partyStart";
@@ -422,6 +422,8 @@ export class View {
     return programs;
   }
   private shaderEpoch = 0;
+  /** Bumped by every setGame (compileAll bumps shaderEpoch too): what's made for one night under way, the tufts, stops for the next. */
+  private nightEpoch = 0;
   private shaderLandingDeadline = Infinity;
   private shaderChartLanding = false;
   shaderLandingLimited = false;
@@ -547,6 +549,10 @@ export class View {
   decorBatches = new Map<string, SpriteBatch>();
   /** The biome the ground cover's tufts were drawn in (none: temperate): drawn again for a night on an island in another. */
   private tuftBiome: string | undefined;
+  /** This island's tufts still to draw (setGame: another biome's), for bakeTufts; null once drawn (or none due). */
+  private tuftsDue: { biome: string | undefined; epoch: number } | null = null;
+  /** The tufts drawn under way (bakeTufts), resolving once they're in. */
+  private tuftsBaking: Promise<void> | null = null;
   creatureBatches = new Map<string, SpriteBatch>();
   witchBatch!: SpriteBatch;
   /** Her with her hat knocked off, and the hat where it lies (rules/hat.ts): made once the game is up. */
@@ -1049,7 +1055,9 @@ export class View {
    *  forest round it are made from the start, alongside them, and on through the dive if they're not done by its hand-off (`homeDone`;
    *  app/arrive.ts eases the dive if they're due in view before then). */
   /** `underDive` (with `dive`): the chart hands over at once, this going on under the dive (compileAll's `underDive`). */
-  async prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][]; underDive?: boolean } = {}): Promise<void> {
+  /** `share` (with `dive`): each area type's share of the dive's view (rules/arrive.ts diveShare): its trees asked for in that order,
+   *  the largest first (Ed, 2026-11-06), ties by `dive`'s distance. */
+  async prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; share?: ReadonlyMap<number, number>; track?: [number, number, number, number][]; underDive?: boolean } = {}): Promise<void> {
     performance.mark("witch:prep-start");
     if (o.sail) { this.homeDone = false; this.shaderDrawStatus.active = true; this.shaderDrawStatus.skipped = {}; this.shaderDrawStatus.fallback = {}; this.shaderDrawStatus.submitted = {}; if (!this.shaderChartLanding) this.startLandingShaderGrace(); }
     this.makeLoadingMist();
@@ -1070,17 +1078,21 @@ export class View {
       const s = m.siteOf(x, y), t = m.typeOf(x, y), d = o.dive ? o.dive(s.x, s.z) : Math.hypot(s.x - h.x, s.z - h.z);
       if (!(near.get(t)! <= d)) near.set(t, d);
     }
+    // This island's tufts (when it's in another biome: setGame held them back), nearest the dive's track first (or the house).
+    const tuftOrder = [...near, [HOME_LOOK, o.dive ? o.dive(h.x, h.z) : 0] as [number, number]].sort((a, b) => a[1] - b[1]).map(([t]) => t);
     if (o.dive) {
       this.homeDone = false;
       this.prepared = true;
-      this.askIsland(near); // (the workers drawing the dive's areas while the shaders link)
-      void this.islandAhead(near); this.islandFaces(near); // (the rest of the island's own asked too, not waited for: the dive shows what's built, Ed 2026-11-03)
+      // (the workers drawing the dive's areas while the shaders link, in the island's order, render/islandNeeds.ts ART_ORDER: its
+      // trees by their share of the dive's view, the largest first; not waited for: the dive shows what's built, Ed 2026-11-03)
+      const S = o.share, byView = S ? new Map([...near].sort((a, b) => (S.get(b[0]) ?? 0) - (S.get(a[0]) ?? 0) || a[1] - b[1]).map(([t], i) => [t, i])) : near;
+      void this.islandAhead(byView, true); this.askIsland(byView); this.islandFaces(byView);
       // The house, the forest round it and the legends' carvings made from here on, while the shaders link and the chart flies on
       // down to the water (Ed, 2026-11-03: "The zoom into the sea chart can be quite a few seconds long, the idea is to build the
       // island during this time"): made only once the dive began, a slice a dive frame, they took 14.5 s of his laptop's dive for
       // what the boot makes in 0.6 s, the dive flying over a forest not there. What's left as it hands over goes on through the dive.
       const compiled = this.compileAll(o.sail, !!o.underDive), homeEpoch = this.shaderEpoch; // (compileAll's epoch: buildHome stops only for a newer night)
-      void this.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === this.shaderEpoch) { this.homeDone = true; performance.mark('landing:house-complete'); } });
+      void this.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === this.shaderEpoch) { this.homeDone = true; performance.mark('landing:house-complete'); } void this.bakeTufts(tuftOrder); }); // (the tufts after the house, Ed's order: the house first; bakeTufts itself stops for a newer night)
       await compiled;
       // The ground where the dive first sees the island (Ed, 2026-10-24: the dive's view needs the ground; Echo's island black through
       // the descent, its tiles not drawn yet): the first TRACK_AHEAD metres of its track in from the sea, TRACK_REACH each side, a few
@@ -1093,6 +1105,7 @@ export class View {
       performance.mark("witch:prep-track");
       return;
     }
+    const tufts = this.bakeTufts(tuftOrder); // (waited for below: the start shows them)
     await runSliced(this.warmSteps(), "warm"); // (the first frame's own lazy work made ahead, a slice at a time)
     performance.mark("witch:prep-warm");
     this.render(0, false);
@@ -1106,7 +1119,7 @@ export class View {
         this.armLimitedLanding(); this.prepared = true; await this.compileAll(true);
         const homeEpoch = this.shaderEpoch;
         void this.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === this.shaderEpoch) { this.homeDone = true; performance.mark('landing:house-complete'); } });
-        this.askIsland(near); void this.islandAhead(near); this.islandFaces(near); return;
+        this.askIsland(near); void this.islandAhead(near); this.islandFaces(near); void tufts; return;
       }
     } else await this.assets.homeArt(); // initial boot still waits for all home art
     performance.mark("witch:prep-home");
@@ -1123,6 +1136,7 @@ export class View {
     if (!o.sail) await island;
     performance.mark("witch:prep-idle");
     await house;
+    await tufts;
     performance.mark("witch:prep-rooms");
     this.render(0, false);
     await runSliced(refreshSteps(this), "refresh"); // (refresh(this, true), a slice at a time)
@@ -1131,6 +1145,25 @@ export class View {
     this.askIsland(near);
     this.islandFaces(near); // (as the loading screen fades: main.ts finishes it as prepare ends)
     this.homeDone = true;
+  }
+
+  /** This island's tufts drawn (setGame held them back: another biome's), a type at a time, `order`'s first (prepare's: nearest the
+   *  dive's track, else the house), off the hand-off (Ed, 2026-11-06: "Make sure things load and render before the mist disappears";
+   *  they were most of the bear's wait under the chart), then handed to the grass at once. Resolves once they're in (or a newer night
+   *  took over); at once with none due. */
+  private bakeTufts(order: readonly number[]): Promise<void> {
+    const due = this.tuftsDue;
+    if (!due) return this.tuftsBaking ?? Promise.resolve();
+    this.tuftsDue = null;
+    const view = this, epoch = due.epoch, style = due.biome ? { ...this.style, biome: due.biome } : this.style;
+    const steps = GrassView.tufts(style, islandTypes(this.game.map), order);
+    const run = runSliced((function* (): Steps<TuftArt | null> { for (;;) { if (epoch !== view.nightEpoch) return null; const s = steps.next(); if (s.done) return s.value; yield s.value; } })(), "tufts", 4);
+    const p = this.tuftsBaking = run.then(made => {
+      if (!made || epoch !== this.nightEpoch) return;
+      this.grass.setArt(made); this.tuftBiome = due.biome;
+      performance.mark("witch:tufts-in");
+    }, e => { console.error("the tufts went wrong", e); }).finally(() => { if (this.tuftsBaking === p) this.tuftsBaking = null; });
+    return p;
   }
 
   /** Whether the start's house is made: its art (her, home, the soundsystems, the treehouse), the ground and the forest round it.
@@ -1175,11 +1208,25 @@ export class View {
   /** The island's own asked for ahead (prepare; Ed, 2026-11-05: "Load the trees, creature art, and coast and lakes, during the
    *  loading screen."): its area types' trees, every look its creatures can wear and the coast's and lakes' dressing (render/
    *  islandNeeds.ts); resolves once they've landed. Not under ?quick=1 (only what's needed, as it's needed) or in the zoo (askIsland's). */
-  private islandAhead(near: Map<number, number>): Promise<void> {
+  private islandAhead(near: Map<number, number>, dive = false): Promise<void> {
     const g = this.game;
     if (this.quick || g.map.zoo?.layout) return Promise.resolve();
-    const needs = islandNeeds(g.map, near), looks = { legendNap: !!g.tuning.wildLegends.seen?.nap, coast: !!beachOf(g.map.bounds, g.tuning), beachDecor: !!g.tuning.beach?.decor?.on, lakes: !!g.map.bounds.lakes };
+    const needs = islandNeeds(g.map, near), looks = { legendNap: !!g.tuning.wildLegends.seen?.nap, coast: !!beachOf(g.map.bounds, g.tuning), beachDecor: !!g.tuning.beach?.decor?.on, lakes: !!g.map.bounds.lakes, stumps: this.stumpSpecs(near), dive };
     return this.assets.whenAsked(() => askIslandArt(this.assets, needs, looks)).then(() => { performance.mark("witch:prep-island"); });
+  }
+  /** Every area's great stump (render/markers.ts stumpDeal; none with the rune stones), each baked once: its areas' types' in `near`'s
+   *  order, the nearest first. */
+  private stumpSpecs(near: ReadonlyMap<number, number>): StumpSpec[] {
+    const m = this.game.map, [hx, hy] = m.centreCell, out = new Map<string, { spec: StumpSpec; at: number }>();
+    const M = (this.island as IslandLayers | undefined)?.markerArt; // (none in the tests' stand-in views)
+    if (!M?.stumps) return [];
+    for (const [cx, cy] of m.cells) {
+      if ((cx === hx && cy === hy) || !m.playable(cx, cy)) continue;
+      const s = M.stump([cx, cy]), id = s && stumpId(s.spec), at = near.get(m.typeOf(cx, cy)) ?? Infinity;
+      const was = id ? out.get(id) : undefined;
+      if (s && id && !(was && was.at <= at)) out.set(id, { spec: s.spec, at });
+    }
+    return [...out.values()].sort((a, b) => a.at - b.at).map(v => v.spec);
   }
   /** The island's creatures' faces asked for in the background, not waited for (Ed, 2026-11-05: "Skip the animal faces"; render/
    *  islandNeeds.ts askIslandFaces): till one's in, a creature making that face shows its plain look. Not under ?quick=1 or in the zoo. */
@@ -1413,6 +1460,7 @@ export class View {
   }
   private *setGameSteps(game: Game): Steps {
     this.shaderEpoch++; // a previous island's background completion cannot release this island's gate
+    this.nightEpoch++;
     const t = game.tuning, old = this.island;
     // The last night's: the scenery's rebuild under way, the creatures' caches, the candles; its area types' batches and their
     // shadows, and its soundsystems' (their atlases the art's: freed once, by reseat).
@@ -1435,15 +1483,18 @@ export class View {
     const island = new IslandLayers(this.scene, { game, style: this.style, mpp: this.mpp, maxTexture: this.renderer.capabilities.maxTextureSize, assets: this.assets, deck: deckOf(game.map, t) }, false);
     yield* island.groundSteps(); yield "paths"; yield* island.pathSteps(); yield; island.buildTreehouse(); yield* island.markerSteps(); yield "ley"; island.buildLey(); yield; island.buildDancefloor();
     yield* island.finishSteps();
-    const tb = this.style.biome ?? this.assets.typeBiome, tufts = tb !== this.tuftBiome ? yield* GrassView.tufts(tb ? { ...this.style, biome: tb } : this.style, islandTypes(game.map)) : null; // (another biome's: drawn again, a step an area type)
+    // (another biome's tufts: drawn under the dive, not here, Ed 2026-11-06 "Make sure things load and render before the mist
+    // disappears"; on the bear they were 73 of the cloud's 84 s before the hand-off. Till then this island's are held back: bakeTufts)
+    const tb = this.style.biome ?? this.assets.typeBiome, tuftsDue = tb !== this.tuftBiome;
     yield "swap";
     island.minimap.on = old.minimap.on;
     { const cs = t.canopyShadow; island.ground.setCanopyShadow(cs.on ? cs.strength : 0, cs.height, cs.cover, cs.wind); }
     island.ley.scale(this.leyBase);
     // What draws on the ground re-pointed at the new one before the old is let go.
     this.beachView.setGround(island.ground);
-    if (tufts) { this.grass.setArt(tufts); this.tuftBiome = tb; }
     this.grass.setMap(game.map, game.forest, (island.ground.mesh.material as THREE.ShaderMaterial).uniforms);
+    this.tuftsDue = tuftsDue ? { biome: tb, epoch: this.nightEpoch } : null;
+    if (tuftsDue) this.grass.hold(islandTypes(game.map));
     // The swap: the new island in (its hills the field in use), then the old let go.
     this.island = island;
     island.attach();
@@ -1762,6 +1813,7 @@ export class View {
     // Late art may introduce programs after compileAll's background pass has ended.
     for (const p of this.readyPrograms()) p.isReady();
     this.assets.playing = this.game.party.spellAt !== null; // (the night playing: the art ahead of need shares the workers, render/assets.ts dispatch)
+    this.assets.diving = !!this.fly; // (a sail's dive: the small things wait their turn, render/assets.ts DIVE_LATE)
     this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, P0 = poseOf(g), F = this.fly;
     if (this.magic.galleryCamera !== null) { g.witch.mode=this.magic.galleryCamera?"treetop":"ground"; g.witch.lift=this.magic.galleryCamera?1:0; }

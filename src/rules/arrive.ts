@@ -112,6 +112,27 @@ export function diveReach(map: ForestMap, A: ArriveTuning): (x: number, z: numbe
   };
 }
 
+/** How much of the dive's view each area type fills (Ed, 2026-11-06, the art's order: the trees "by largest share of the dive's
+ *  view"): along its track (diveTrack), a point every `step` metres, each of the map's areas (but home's) within `reach` metres of
+ *  the point counted, nearer more (1 at the track, 0 at `reach`), so a type that covers the land the dive flies over, near and
+ *  long, comes first. Each type's sum, by type. */
+export function diveShare(map: ForestMap, A: ArriveTuning, reach = 240, step = 20): Map<number, number> {
+  const out = new Map<number, number>(), pts: [number, number][] = [];
+  for (const [ax, az, bx, bz] of diveTrack(map, A)) {
+    const L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(L / step));
+    for (let i = 0; i < n; i++) pts.push([ax + ((bx - ax) * i) / n, az + ((bz - az) * i) / n]);
+  }
+  const [hx, hy] = map.centreCell;
+  for (const [x, y] of map.cells) {
+    if (x === hx && y === hy) continue;
+    const s = map.siteOf(x, y), t = map.typeOf(x, y);
+    let w = 0;
+    for (const [px, pz] of pts) { const d = Math.hypot(s.x - px, s.z - pz); if (d < reach) w += 1 - d / reach; }
+    out.set(t, (out.get(t) ?? 0) + w);
+  }
+  return out;
+}
+
 /** The dive's track over the land (diveReach's): its legs, [x0, z0, x1, z1], from the sea off the south coast below the dancefloor
  *  north to the frame over the dancefloor and the treehouse, and on to the treehouse; the first seen first. */
 export function diveTrack(map: ForestMap, A: ArriveTuning): [number, number, number, number][] {
