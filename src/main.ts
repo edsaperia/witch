@@ -39,7 +39,7 @@ import { sharedFindLoan, withSharedFind, type PersonalKit } from "./app/sharedFi
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
 import { openingWay, opensDirectly, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
-import { endDream, firstMorning, morningAfter, startParty, startWake, tuckIn } from "./rules/wakeUp";
+import { endDream, fallAsleep, firstMorning, morningAfter, startParty, startWake, tuckIn } from "./rules/wakeUp";
 import { replayWanted } from "./rules/partyStart";
 import { WorldDrawGate } from "./app/worldDrawGate";
 import { LandingSleep } from './app/landingSleep';
@@ -1520,6 +1520,11 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   startEl.classList.add("loading");
   startEl.style.display = "none";
   if (room) { dressCreator(); creator.show(); }
+  // (asleep in her bed as the veil comes down, the camera settled on her there, and that drawn now: the picture held under the veil
+  // while the next night's made is framed as its first, tucked in at the same spot, so nothing moves as the wake-up starts; Ed's
+  // "Fix 2", 2026-11-06: it held her standing beside the bed, and the wake-up's first frame jumped to the bed's framing). Drawn twice:
+  // the camera aims by the house offset the last draw left (render/view/camera.ts houseCamInput), her place beside the bed's till then.
+  if (wakes && mutate("wake: asleep in bed", () => fallAsleep(N().game))) { view.asleepInBed = true; drawFrame(displayedTime); drawFrame(displayedTime); shake.apply(); }
   if (wakes) (wakeCard ??= new WakeCard()).sleep();
   if (wakes && dreamNext) startDream(dreamNext);
   dreamNext = null;
