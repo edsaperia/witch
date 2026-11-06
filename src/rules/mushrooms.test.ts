@@ -1,7 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { newGame, stepGame, STEP, coastOf, type Game } from './game';
 import { TUNING } from './tuning';
-import { basketFill, basketNear, kitchenLayout, mushroomButton, newMushrooms, potionPhase, recipeKey, stepMushrooms } from './mushrooms';
+import { MUSHROOM_BUSH_MARGIN, basketFill, basketNear, kitchenLayout, mushroomButton, newMushrooms, placeMushrooms, potionPhase, recipeKey, stepMushrooms } from './mushrooms';
+import { stumpClearance, type ForestMap } from './map';
+import { vi } from 'vitest';
 import { isInside, beachOf } from './mapShape';
 import { onLake } from './lakes';
 let base: Game;
@@ -28,7 +30,7 @@ describe('mushrooms and brewing', () => {
   it('places exactly one reachable seeded patch per non-home area', () => {
     const s = base.mushrooms;
     expect(s.patches).toHaveLength(base.map.cells.length - 1);
-    expect(newMushrooms(base.map, base.forest).patches).toEqual(s.patches);
+    expect(newMushrooms(base.map, base.forest, base.berries.bushes).patches).toEqual(s.patches);
     for (const p of s.patches) {
       expect(p.id).not.toBe(base.map.centreCell.join(','));
       expect(base.map.cellSafe(p.x, p.z).cell.join(',')).toBe(p.id);
@@ -93,5 +95,32 @@ describe('mushrooms and brewing', () => {
     g.clock.paused = false; const before = { x: g.witch.x, z: g.witch.z };
     stepGame(g, { moveX: 1, moveZ: 1, toggleMode: true, dash: true, place: true, zoom: 0 }, STEP);
     expect(g.witch.x).toBe(before.x); expect(g.witch.z).toBe(before.z); expect(g.witch.stargazing).toBe(true);
+  });
+  // Ed, 2026-11-06: "Mushrooms shouldn't grow on berry patches, paths, stump fight areas, etc."
+  it('grows no mushroom in a stump\'s arena, by a berry bush, on a path or on kept ground', () => {
+    const { map } = base, clear = stumpClearance(map.tuning), bushGap = map.tuning.berries.patch.radius + MUSHROOM_BUSH_MARGIN;
+    expect(clear).toBe(55);
+    for (const p of base.mushrooms.patches) {
+      expect(map.stoneGap(p.x, p.z)).toBeGreaterThanOrEqual(clear);
+      for (const b of base.berries.bushes) expect(Math.hypot(b.x - p.x, b.z - p.z)).toBeGreaterThanOrEqual(bushGap);
+      expect(map.paths.at(p.x, p.z, 2)).toBeNull();
+      expect(map.hardClear(p.x, p.z)).toBe(false); // (beach sand, lake shores, legends' and the challenge's circles, stumps' roots...)
+      expect(map.reserved(p.x, p.z, 2)).toBe(false);
+    }
+  });
+  it('with no ground off the paths, grows on a path (Ed, 2026-11-06: "If no valid spot, on a path is ok."); with none at all, skips the area and says so', () => {
+    // (four areas of the night's map: each search here sweeps an area's whole vicinity, twice)
+    const { forest } = base, bushes = base.berries.bushes, map = Object.assign(Object.create(base.map) as ForestMap, { cells: base.map.cells.slice(0, 5) });
+    const everywhere = Object.assign(Object.create(map) as ForestMap, { paths: Object.assign(Object.create(map.paths), { at: () => ({ kind: 'path', line: 0, d: 0, seg: 0 }) }) });
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {}), warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const onPaths = placeMushrooms(everywhere, forest, bushes);
+      expect(onPaths).toHaveLength(map.cells.filter(c => c.join() !== map.centreCell.join()).length);
+      for (const p of onPaths) { expect(map.stoneGap(p.x, p.z)).toBeGreaterThanOrEqual(stumpClearance(map.tuning)); expect(map.hardClear(p.x, p.z)).toBe(false); }
+      expect(info.mock.calls.filter(c => String(c[0]).includes('on or by a path'))).toHaveLength(onPaths.length);
+      const nowhere = Object.assign(Object.create(map) as ForestMap, { hardClear: () => true });
+      expect(placeMushrooms(nowhere, forest, bushes)).toEqual([]);
+      expect(warn.mock.calls.filter(c => String(c[0]).includes('no ground'))).toHaveLength(onPaths.length);
+    } finally { info.mockRestore(); warn.mockRestore(); }
   });
 });

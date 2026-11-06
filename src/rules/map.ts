@@ -253,6 +253,16 @@ export function siteRules(t: Tuning): { stoneClear: number; siteGap: number; lak
   const SM = t.runeMarkers?.stump, stoneClear = SM?.on ? SM.clear : t.soundsystemFootprint + t.treeMarginFromSoundsystem + 4, siteGap = t.siteGap ?? 0;
   return { stoneClear, siteGap, lakeGap: t.siteLakeGap ?? 0, stoneSpacing: 2 * stoneClear + siteGap };
 }
+/** How far round every stump nothing is grown into its fight (m; Ed, 2026-11-06: berries outside the stump's fight zone; "Mushrooms
+ *  shouldn't grow on berry patches, paths, stump fight areas, etc."): the stump's fighting arena's whole extent, arena.radius +
+ *  arena.band (both times fight.scale, as arenaOpen has them), plus berries.stumpClear metres (0: the arena's edge; below 0 lets
+ *  bushes and mushrooms into its outer band). Measured from the stump (soundsystemSpot: stoneGap), not the area's middle; no berry
+ *  bush (rules/berries.ts) or mushroom (rules/mushrooms.ts) grows nearer any stump than this. Never less than nothing: the stump's
+ *  roots clearing (hardClear) is kept anyway. */
+export function stumpClearance(t: Tuning): number {
+  const R = t.arena, arena = R && R.radius > 0 ? (R.radius + R.band) * (t.fight?.scale ?? 1) : 0;
+  return Math.max(0, arena + (t.berries?.stumpClear ?? 0));
+}
 /** A claimed map's neighbours as the partition first cut them (by the map's neighbours), for its prep (prepOf: the island grows
  *  from those, the claim made again from them). */
 const BASE_NEIGHBOURS = new WeakMap<object, [string, string[]][]>();
