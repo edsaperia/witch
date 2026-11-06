@@ -2179,6 +2179,12 @@ export type SchemaTuning = {
       "grow": number;
       "relax": number;
     };
+    "mood": {
+      "strength": number;
+      "dark": number;
+      "hazeNear": number;
+      "hazeFar": number;
+    };
   };
   "camera": {
     "fov": number;
@@ -2810,6 +2816,7 @@ export type SchemaTuning = {
     "glow": number;
     "speed": number;
     "cap": number;
+    "fade": number;
     "soft": number;
     "size": number;
     "sea": number;
