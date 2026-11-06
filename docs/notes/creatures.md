@@ -43,6 +43,10 @@ Review plan, anatomy notes and pending acceptance conditions are in
 `docs/plans/body-graph-acceptance.md`; canonical cloud comparison tool is
 `tools/body-graph/acceptance-review.mjs`. Six-species sheets, walk strips, cost
 evidence, green CI/unchanged bench and Ed's verdict gate activation and expansion.
+The 6 November shared preset controls and bear demonstration candidate are listed
+in `docs/plans/body-graph-parameters.md`. `tools/body-graph/iterate.mjs` prepares
+one-species native/4x shipped-mask overlays and scores in canonical cloud only;
+its time budget and bear likeness acceptance require actual execution/review.
 
 Ed resolved the size-range hold: small adults must remain readable, babies and
 youths distinguishable, adults larger where useful, and legends notably larger

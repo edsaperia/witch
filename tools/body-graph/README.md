@@ -38,6 +38,10 @@ CLOUD ONLY after coordinator assignment.
 
 Source-only numeric allocation audit.
 
+## `iterate.mjs`
+
+One-species native/4x and shipped-mask overlay.
+
 ## `size-candidate-audit.mjs`
 
 Canonical runner: full numerical coverage; no browser or screenshot job.
