@@ -135,6 +135,7 @@ import { hydrateMs, prepUsed, startBootMapPrep } from "./app/mapPrep";
 import { endNight, flyIn, startNight, wearHat as wear, type Night, type NightSpec, type Page } from "./app/night";
 import { BackGuard, chartIsland, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, stayLabel, type NightWay } from "./app/sail";
 import { hudFade, showStill } from "./app/arrive";
+import { keySkipsFlight } from "./app/flightSkip";
 import { forgetArrival, type Arrival } from "./app/arrival";
 import { shotParams } from "./app/shot";
 import type { FlightEnd } from "./render/chart/seaChart";
@@ -588,12 +589,13 @@ const soundNote = () => {
   const go = () => { gestured = true; sound.wake(); el.remove(); removeEventListener("keydown", go); removeEventListener("pointerdown", go); };
   addEventListener("keydown", go); addEventListener("pointerdown", go);
 };
-/** Any key or tap skips an arrival's flight (once a page: the boot's arrival, or the first sail in place). */
+/** Any key or tap skips an arrival's flight (once a page: the boot's arrival, or the first sail in place); not the repeats of a key
+ *  still held from the sail (app/flightSkip.ts: the map table's hold). */
 let skipArmed = false;
 const armSkip = () => {
   if (skipArmed) return;
   skipArmed = true;
-  for (const ev of ["keydown", "pointerdown"]) addEventListener(ev, () => { gestured = true; const a = N().arrival; if (a && !a.done) a.skip(); }, { capture: true });
+  for (const ev of ["keydown", "pointerdown"]) addEventListener(ev, e => { gestured = true; if (e instanceof KeyboardEvent && !keySkipsFlight(e)) return; const a = N().arrival; if (a && !a.done) a.skip(); }, { capture: true });
 };
 if (bootArrival) armSkip();
 /** The swap point (the transition review, 2026-10-19; Ed: "revisits can draw instantly then redraw during the bedroom sequence"):
@@ -1953,8 +1955,9 @@ if (params.get("debug") === "sail") (window as unknown as { witch: Record<string
 // on the chart, the way by sail.inPlace or ?sail=, in place the fallback), for tools/sail/leak.cjs and swap.cjs; `end` the
 // chart's flight end (a plain one out at sea south of the island if not given: its still a dark screen; null, none), `fail`
 // (?debug=sail only) the sail in place made to throw, to see the fallback. Resolves once the night's start is ready.
-// window.witch.chart(): the sea chart over the night, as the map table opens it (tools/smoke/quick.cjs: choosing her own island).
-(window as unknown as { witch: Record<string, unknown> }).witch.chart = () => chartOverNight();
+// window.witch.chart(): the sea chart over the night, as the map table opens it (tools/smoke/quick.cjs: choosing her own island);
+// window.witch.chart("mapTable"), as the table's own, sailing on a hold (tools/sail/hold.cjs).
+(window as unknown as { witch: Record<string, unknown> }).witch.chart = (table?: string) => chartOverNight(table);
 // The bestiary book's zoo over the night, for the tools (tools/zoo/perf.cjs): open and close it as the book and its × do.
 (window as unknown as { witch: Record<string, unknown> }).witch.zooOverlay = zoo;
 // The Studio's instruments for the tools (tools/studio/check.cjs): where she's at and what it plays (its meter).
