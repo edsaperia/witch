@@ -1452,7 +1452,7 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
   endNight(page, params.get("debug") === "sail");
   backGuard.sailed("?" + p.toString() + location.hash);
   armBack();
-  const n = await startNight(page, { how: "sail", island: to.island, seed: to.seed, world: to.world, arrival, params: p });
+  const n = await startNight(page, { how: "sail", island: to.island, seed: to.seed, world: to.world, arrival, params: p, underChart: at !== undefined }); // (under the chart's zoom: its build given more of each frame, app/night.ts buildSlice)
   seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
   bedFirst(n); // (the flight in ends on her asleep in her bedroom, rules/opening.ts)
   worldDraw = new WorldDrawGate();
