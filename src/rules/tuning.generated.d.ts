@@ -2142,6 +2142,7 @@ export type SchemaTuning = {
   "arrive": {
     "zoom": number;
     "dive": number;
+    "buildSlice": number;
     "warm": {
       "frames": number;
       "ms": number;
@@ -2177,6 +2178,12 @@ export type SchemaTuning = {
       "curve": number;
       "grow": number;
       "relax": number;
+    };
+    "mood": {
+      "strength": number;
+      "dark": number;
+      "hazeNear": number;
+      "hazeFar": number;
     };
   };
   "camera": {
@@ -2809,6 +2816,7 @@ export type SchemaTuning = {
     "glow": number;
     "speed": number;
     "cap": number;
+    "fade": number;
     "soft": number;
     "size": number;
     "sea": number;

@@ -30,7 +30,8 @@ it("a sail's dive: the house and forest are built while the shaders link, all of
   const prepared = v.prepare({ sail: true, dive: () => 0, track: [], underDive: true }); // (main.ts makeSailNight: not waited for)
   await Promise.resolve(); await Promise.resolve();
   // (the coast's program made with the rest, and the island's own art asked too, not waited for: Ed, 2026-11-05)
-  expect(log).toEqual(["coast program made", "island art asked", "the rest of the island's art asked", "faces asked", "shaders linking under the dive", "house and forest building (epoch current)"]); // (before the shaders are linked)
+  // (the island's art asked in its own order first, render/islandNeeds.ts ART_ORDER: Ed, 2026-11-06; then the carvings and the rest)
+  expect(log).toEqual(["coast program made", "the rest of the island's art asked", "island art asked", "faces asked", "shaders linking under the dive", "house and forest building (epoch current)"]); // (before the shaders are linked)
   expect(v.homeDone).toBe(false);
   let done = false; void prepared.then(() => { done = true; });
   await Promise.resolve();

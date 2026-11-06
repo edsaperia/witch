@@ -442,7 +442,7 @@ export interface Tuning {
   /** Faint rings of moonlight on the crowns, seen from the treetops (render/lightRings.ts; Ed, 2026-10-07). */
   /** The loading mist over the areas whose trees aren't drawn yet, rolling back out from the treehouse as each type lands
    *  (render/loadingMist.ts, render/loadingFront.ts; Ed, 2026-10-24). */
-  loadingMist?: { on: boolean; layers: number; height: number; density: number; glow: number; speed: number; cap: number; soft: number; size: number; sea: number };
+  loadingMist?: { on: boolean; layers: number; height: number; density: number; glow: number; speed: number; cap: number; fade: number; soft: number; size: number; sea: number };
   lightRings?: { on: boolean; strength: number; radius: number; count: number; spacing: number; share: number; above: number; speed: number; plane: number; glory: number; gloryStrength: number; fadeNear: number; fadeFar: number };
   /** The soundsystems' sky sigils (render/hologram.ts; Ed, 2026-10-08): in place of their laser shows. */
   holograms: { on: boolean; size: number; lift: number; glyph: number; cone: number; powerUp: number; collapse: number; turn: number; bob: number; fadeFar: number };
@@ -489,13 +489,17 @@ export interface Tuning {
   opening?: { bedroom: boolean; wake?: { snooze: number; stretch: number; alarmMin: number } };
   /** The forests' biome looks by ring (rules/lakeLooks.ts biomeStrength): strength[0] for phase from, the next ring the next, the last further out. */
   biomeLooks?: { from: number; strength: number[] };
-  arrive?: { /** the sea chart's zoom in to the island, its whole length in seconds (render/chart/seaChart.ts flyLegs; 5.6 its legs' own) */ zoom?: number; /** the dive's whole length in seconds, every leg scaled to it; 0: as its legs set it (rules/arrive.ts arrivePlan) */ dive?: number; warm: { frames: number; ms: number; max: number }; maxStep: number; fade: number; speed: number; minLeg: number; low: { angle: number; distance: number; offshore: number }; frame: { angle: number; distance: number; lift: number }; rise: number; settle: number;
+  arrive?: { /** the sea chart's zoom in to the island, its whole length in seconds (render/chart/seaChart.ts flyLegs; 5.6 its legs' own) */ zoom?: number; /** the dive's whole length in seconds, every leg scaled to it; 0: as its legs set it (rules/arrive.ts arrivePlan) */ dive?: number; /** a sail's view build's budget, ms a frame, while the sea chart's zoom plays (and holds short of the hand-off) over it, nothing else happening then (app/night.ts buildSlice; render/slices.ts SLICE_MS, 8, everywhere else) */ buildSlice?: number; warm: { frames: number; ms: number; max: number }; maxStep: number; fade: number; speed: number; minLeg: number; low: { angle: number; distance: number; offshore: number }; frame: { angle: number; distance: number; lift: number }; rise: number; settle: number;
     /** the sea chart's flight waiting for a sail's night (app/chartView.ts, render/chart/seaChart.ts FlyOptions): its pace down to rate, eased over ease seconds, for at most cap seconds */
     hold?: { rate: number; ease: number; cap: number };
     /** where the chart's flight hands over: sea metres out to sea off the south coast, its camera dist metres back, pitchDeg down */
     handoff?: { sea: number; dist: number; pitchDeg: number };
     /** the dive's bend (rules/arrive.ts diveBend): the world's curvature at its strongest (per metre) on top of the night's, grown over grow seconds from the hand-off, eased back to none over the flight's last relax seconds */
-    bend?: { curve: number; grow: number; relax: number } };
+    bend?: { curve: number; grow: number; relax: number };
+    /** the dive's own light (rules/arrive.ts diveMood): strength of the blend (0 the night's own light), the ambient and moonlight times
+     *  dark at its fullest, and the haze from hazeNear metres, full by hazeFar; grown in with the bend, eased back to the night's over
+     *  the last leg */
+    mood?: { strength: number; dark: number; hazeNear: number; hazeFar: number } };
   treehouse: { /** metres from the speaker ring's outer edge to its footprint's nearest edge */ gap: number; angle: number; clear: number; lightReach: number; lightStrength: number;
     /** Seconds after she leaves a treehouse floor before she can land on one, and after she lands before she can leave (Ed, 2026-11-03; rules/witch.ts perchCool; 0 or absent: none). */
     landCooldown?: number;

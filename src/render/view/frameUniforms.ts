@@ -156,6 +156,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   const w = g.witch, h = witchHeight(w, t);
   LIGHT_UNIFORMS.uGlowPos.value.set(w.x, groundHeight(w.x, w.z) + v.rideOff + h + t.glowHeight, w.z);
   { const fo = focusOf(v); LIGHT_UNIFORMS.uHazeCentre.value.set(fo.x, fo.z); } // (her, or the arrival's flight's aim: app/arrive.ts)
+  diveLight(v);
   // The mood where she is (render/mood.ts): each area's own fog, grade tint and mist, eased across;
   // which area, looked up four times a second.
   if (v.areaMoods) {
@@ -167,4 +168,19 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
     v.areaMoods.update(v.moodArea, Number.isNaN(v.moodTime) ? 0 : time - v.moodTime, LIGHT_UNIFORMS.uHazeColour.value, v.post.gradeTint, v.mist && { setStrength: (k: number) => v.mist!.setStrength(k * (t.mist.gain ?? 1)) }); // (mist.gain: the pause page's Low mist slider, Ed 2026-10-14)
     v.moodTime = time;
   }
+}
+
+/** The dive's own light (Ed's dive plan, 6 Nov, its step 7; rules/arrive.ts diveMood, arrive.mood): while a sail's dive flies, what
+ *  nothing lights darker (the ambient and the moonlight times `dark` at its fullest: the lights, her glow, the fires, the runestones,
+ *  the soundsystems, the crown's and the loading mist's own glow, are added after it and read as ever) and the haze nearer (from
+ *  `hazeNear` m, full by `hazeFar`), by `strength` (0: the night's own light) times the flight's share; back to the night's as it
+ *  lands. Read each frame: live from the tuning. */
+export function diveLight(v: Pick<View, "game" | "fly" | "diveHaze">): void {
+  const K = v.game.tuning.arrive?.mood, H = LIGHT_UNIFORMS.uHazeRange.value;
+  const k = K && v.fly ? Math.min(1, Math.max(0, K.strength)) * Math.min(1, Math.max(0, v.fly.mood ?? 0)) : 0;
+  if (k > 0 && K) {
+    const base = (v.diveHaze ??= H.clone());
+    H.set(base.x + (K.hazeNear - base.x) * k, base.y + (K.hazeFar - base.y) * k);
+    LIGHT_UNIFORMS.uUnlitDim.value *= 1 - k * (1 - Math.min(1, Math.max(0, K.dark)));
+  } else if (v.diveHaze) { H.copy(v.diveHaze); v.diveHaze = null; }
 }

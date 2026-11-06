@@ -10,7 +10,7 @@ import { smallWorld } from "../test/worlds";
 import { TUNING } from "../rules/tuning";
 import { fallAsleep, startWake, tuckIn } from "../rules/wakeUp";
 import { bedside, wakeInBedroom } from "../rules/opening";
-import { seatShare } from "../render/view/witch";
+import { footShare, seatShare } from "../render/view/witch";
 const newGame = smallWorld(fullGame, "The first morning's wake-up: only the treehouse matters.");
 
 it("the first load wakes her where she was tucked in: in bed from the first frame, the camera already on her, nothing moving", () => {
@@ -90,4 +90,21 @@ it("main.ts puts her to sleep in her bed, drawn, before the veil comes down", ()
   expect(asleep).toBeGreaterThan(0);
   expect(veil).toBeGreaterThan(asleep);
   expect(night.slice(asleep, veil)).toMatch(/view\.asleepInBed = true; drawFrame\(displayedTime\)/);
+});
+
+// Ed, 2026-11-06: the wake-up's first frame drew her in her flying frame for one frame before she sat up in bed (the bed's next night,
+// a sail's landing, the first load). A new night starts the view's on-foot share at 0 (View.setGame), and that frame comes with her
+// clock still, so it hadn't eased. In bed she's on foot at once; the take-off and landing eases are as they were.
+it("the first frame of a night woken in bed draws her on foot (the sit pose), not flying", () => {
+  const SIT = 0.6; // (render/view/witch.ts: over this share she takes her foot poses, the sit in bed among them; under it, flying)
+  expect(footShare(1, true, 0, 0)).toBeGreaterThan(SIT); // (a new night's view: 0; the first frame: no time gone)
+  expect(footShare(1, true, 0, 0)).toBe(1);
+  // landing and taking off ease as before
+  expect(footShare(1, false, 0, 0)).toBe(0);
+  expect(footShare(1, false, 0, 0.05)).toBeCloseTo(0.4);
+  expect(footShare(0, false, 1, 0.05)).toBeCloseTo(0.6);
+  expect(footShare(1, false, 0.995, 0.01)).toBe(1);
+  const witch = readFileSync("src/render/view/witch.ts", "utf8");
+  expect(witch).toMatch(/v\.foot = footShare\(wantFoot, !!bedPose, v\.foot, fdt\);/);
+  expect(readFileSync("src/render/view.ts", "utf8")).toMatch(/foot: 0,/); // (what a new night's view starts at, View.setGame's nightState)
 });
