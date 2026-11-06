@@ -99,8 +99,9 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const still = Math.hypot(w.vx, w.vz) < 0.6;
   // Waking up in her bedroom (the new opening, rules/wakeUp.ts): sitting up in bed while the alarm rings and she snoozes, her arms
   // up in a stretch as she gets up.
-  // (put to bed for a morning still to come, a sail's dive: asleep there as the wake-up's first beats have her, View.asleepInBed)
-  const wk = g.wake, bedPose = wk && !wk.open && wk.beat !== "up" ? (wk.beat === "stretch" ? "liftSigil" : "sit") : !wk && v.asleepInBed ? "sit" : null;
+  // (put to bed for a morning still to come, a sail's dive, or asleep at the night's end, its wake-up long over: asleep there as the
+  // wake-up's first beats have her, View.asleepInBed)
+  const wk = g.wake, bedPose = wk && !wk.open && wk.beat !== "up" ? (wk.beat === "stretch" ? "liftSigil" : "sit") : v.asleepInBed ? "sit" : null;
   // In the house (Ed, 2026-10-21: "she shouldn't use her broom until she steps off the balcony, and stop using it when she steps
   // on"): landed on its floor she's on foot, standing (idle) or walking, no broom; stepping off the balcony's rim she takes off
   // (the takeoff frames, as she rises), and coming down onto it she lands (the land frames) and walks.
@@ -140,10 +141,10 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const deck = deckOf(g.map, t), floor = w.perch && deck ? deck.h : 0;
   const footEase = v.foot * v.foot * (3 - 2 * v.foot), wy = floor + (h - floor + bob - 0.4) * (1 - footEase) + spinUp;
   // At the start she sits on the treehouse terrace (the sit pose, swinging her legs), and eases
-  // off it into the air when she first moves.
+  // off it into the air when she first moves; put in her bed (the wake-up), she's there at once (seatShare).
   const sdt = Math.min(0.1, Math.max(0, ht - v.seatTime));
   v.seatTime = ht;
-  v.seatK = w.seated ? 1 : Math.max(0, v.seatK - sdt / 1.0); // down from the studio (some 7 m up) over a second
+  v.seatK = seatShare(!!w.seated, !!bedPose, v.seatK, sdt);
   let wx = w.x, wz = w.z, wyy = wy, djUpper = -1, herScale = 1;
   // On the treehouse Ent's deck (art/ent.js): drawn on its own floor, her place on the deck taken into the art's pixels (its floor's
   // ellipse is the art's view, not the camera's) in the plane through the deck's middle, then moved along the ray from the camera
@@ -417,3 +418,9 @@ export function houseShiftOf(v: View): number {
  *  drawn, on a fresh game's first sail before its background bake is done, main.ts keepNightie): she's under her covers, not drawn,
  *  rather than seen in last night's clothes, and nothing waits for it (Ed, 2026-11-03: no hold for the nightie). */
 export const inCovers = (bedPose: string | null, lookDrawn: boolean): boolean => !!bedPose && !lookDrawn;
+/** Her share of the decks' seat as drawn (View.seatK): 1 while she sits there, easing to 0 over a second as she takes off (down
+ *  from the studio, some 7 m up); 0 at once in her bed (`inBed`, the wake-up's pose). A night's game starts her seated at the decks
+ *  and the wake-up moves her into her bed, so the ease drew her at the decks (out over the forest since the one-room treehouse)
+ *  and slid her into bed over the loading screen's fade, the camera following (Ed, 2026-11-05, v7569: "I think the witch spawns
+ *  in the wrong place and is then moved to the bed"). */
+export const seatShare = (seated: boolean, inBed: boolean, was: number, dt: number): number => (seated ? 1 : inBed ? 0 : Math.max(0, was - dt / 1.0));

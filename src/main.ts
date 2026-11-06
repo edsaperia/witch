@@ -39,7 +39,7 @@ import { sharedFindLoan, withSharedFind, type PersonalKit } from "./app/sharedFi
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
 import { openingWay, opensDirectly, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
-import { endDream, firstMorning, morningAfter, startParty, startWake, tuckIn } from "./rules/wakeUp";
+import { endDream, fallAsleep, firstMorning, morningAfter, startParty, startWake, tuckIn } from "./rules/wakeUp";
 import { replayWanted } from "./rules/partyStart";
 import { WorldDrawGate } from "./app/worldDrawGate";
 import { LandingSleep } from './app/landingSleep';
@@ -135,6 +135,7 @@ import { hydrateMs, prepUsed, startBootMapPrep } from "./app/mapPrep";
 import { endNight, flyIn, startNight, wearHat as wear, type Night, type NightSpec, type Page } from "./app/night";
 import { BackGuard, chartIsland, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, stayLabel, type NightWay } from "./app/sail";
 import { hudFade, showStill } from "./app/arrive";
+import { keySkipsFlight } from "./app/flightSkip";
 import { forgetArrival, type Arrival } from "./app/arrival";
 import { shotParams } from "./app/shot";
 import type { FlightEnd } from "./render/chart/seaChart";
@@ -427,6 +428,7 @@ function updateChartWarm(): void {
 requestAnimationFrame(() => setTimeout(async () => {
   const night = N();
   if (night.arrival) bedFirst(night); // (the island's link loaded anew, &arrive=1: in bed before the dive, as a sail in place)
+  else if (inBedroom) view.asleepInBed = mutate("wake: first bed", () => tuckIn(night.game)); // (in her bed, the camera on her, before the start's made round her, as the bed's next night: nightInPlace; drawn there under the loading screen, never at her decks first)
   await view.prepare();
   night.flags.ready = true;
   // The sea chart's renderer and shaders made ahead, while the start screen shows (ui/chartOverlay.ts prepareChart): E at the map
@@ -587,12 +589,13 @@ const soundNote = () => {
   const go = () => { gestured = true; sound.wake(); el.remove(); removeEventListener("keydown", go); removeEventListener("pointerdown", go); };
   addEventListener("keydown", go); addEventListener("pointerdown", go);
 };
-/** Any key or tap skips an arrival's flight (once a page: the boot's arrival, or the first sail in place). */
+/** Any key or tap skips an arrival's flight (once a page: the boot's arrival, or the first sail in place); not the repeats of a key
+ *  still held from the sail (app/flightSkip.ts: the map table's hold). */
 let skipArmed = false;
 const armSkip = () => {
   if (skipArmed) return;
   skipArmed = true;
-  for (const ev of ["keydown", "pointerdown"]) addEventListener(ev, () => { gestured = true; const a = N().arrival; if (a && !a.done) a.skip(); }, { capture: true });
+  for (const ev of ["keydown", "pointerdown"]) addEventListener(ev, e => { gestured = true; if (e instanceof KeyboardEvent && !keySkipsFlight(e)) return; const a = N().arrival; if (a && !a.done) a.skip(); }, { capture: true });
 };
 if (bootArrival) armSkip();
 /** The swap point (the transition review, 2026-10-19; Ed: "revisits can draw instantly then redraw during the bedroom sequence"):
@@ -1399,9 +1402,10 @@ function wakeFirst(): void {
 }
 function wakeFirstNow(): void {
   const n = N();
-  bootAsleep = false; morningAhead = null; // (the morning itself from here on: its wake-up's pile)
+  bootAsleep = false; morningAhead = null; view.asleepInBed = false; // (the morning itself from here on: its wake-up's pile; the wake-up has her in bed)
   firstEver = !wokenBefore();
-  if (!wakeInBedroom(n.game) || !startWake(n.game, n.game.herTime, { mirrored: mirrored() })) { wakeCard?.hide(); dressCreator(); creator.show(); return; }
+  // (tucked in, not beside her bed: the camera settled on her in it, so nothing moves as the loading screen fades; Ed, 2026-11-05)
+  if (!tuckIn(n.game) || !startWake(n.game, n.game.herTime, { mirrored: mirrored() })) { wakeCard?.hide(); dressCreator(); creator.show(); return; }
   mark("opening:wake");
   start();
   if (!gestured) soundNote(); else sound.wake(); // (the alarm heard once she's pressed something: browsers keep sound off till then)
@@ -1518,6 +1522,11 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   startEl.classList.add("loading");
   startEl.style.display = "none";
   if (room) { dressCreator(); creator.show(); }
+  // (asleep in her bed as the veil comes down, the camera settled on her there, and that drawn now: the picture held under the veil
+  // while the next night's made is framed as its first, tucked in at the same spot, so nothing moves as the wake-up starts; Ed's
+  // "Fix 2", 2026-11-06: it held her standing beside the bed, and the wake-up's first frame jumped to the bed's framing). Drawn twice:
+  // the camera aims by the house offset the last draw left (render/view/camera.ts houseCamInput), her place beside the bed's till then.
+  if (wakes && mutate("wake: asleep in bed", () => fallAsleep(N().game))) { view.asleepInBed = true; drawFrame(displayedTime); drawFrame(displayedTime); shake.apply(); }
   if (wakes) (wakeCard ??= new WakeCard()).sleep();
   if (wakes && dreamNext) startDream(dreamNext);
   dreamNext = null;
@@ -1526,7 +1535,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   creator.loadout = { hat: n.game.spells.hat }; creator.hats = unlockAll() ? undefined : n.game.spells.hats;
   worldDraw = new WorldDrawGate();
   displayedStep = -1;
-  if (wakes) tuckIn(n.game); // (in her bed before the start's made round her: its first frames have her drawn there, and the camera on her, as the wake-up will)
+  if (wakes) view.asleepInBed = tuckIn(n.game); // (in her bed before the start's made round her: its first frames have her drawn there, asleep under the sleep's veil, and the camera on her, as the wake-up will)
   await view.prepare();
   n.flags.ready = true;
   startEl.classList.remove("loading");
@@ -1540,6 +1549,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   else if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, { dreaming: !!dream && !dream.over, mirrored: mirrored(), yesterday: true })) { mark("opening:bed"); start(); } // (after the bed: last night's clothes in their pile)
   else if (!room && !wakes) startDirect();
   if (wakes && n.game.wake) tuckIn(n.game); // (the camera settled on her in her bed again, where the wake-up has her: wakeInBedroom put it beside the bed)
+  view.asleepInBed = false; // (the wake-up has her in bed from here, or there's none)
   aheadMorning(false); // (woken, the morning's own pile from here: the look read ahead, so nothing's redrawn)
 }
 /** The bot game left (its exit in place): the bot and its tag gone, her own look back (the creator's, as a fresh page has it). */
@@ -1945,8 +1955,9 @@ if (params.get("debug") === "sail") (window as unknown as { witch: Record<string
 // on the chart, the way by sail.inPlace or ?sail=, in place the fallback), for tools/sail/leak.cjs and swap.cjs; `end` the
 // chart's flight end (a plain one out at sea south of the island if not given: its still a dark screen; null, none), `fail`
 // (?debug=sail only) the sail in place made to throw, to see the fallback. Resolves once the night's start is ready.
-// window.witch.chart(): the sea chart over the night, as the map table opens it (tools/smoke/quick.cjs: choosing her own island).
-(window as unknown as { witch: Record<string, unknown> }).witch.chart = () => chartOverNight();
+// window.witch.chart(): the sea chart over the night, as the map table opens it (tools/smoke/quick.cjs: choosing her own island);
+// window.witch.chart("mapTable"), as the table's own, sailing on a hold (tools/sail/hold.cjs).
+(window as unknown as { witch: Record<string, unknown> }).witch.chart = (table?: string) => chartOverNight(table);
 // The bestiary book's zoo over the night, for the tools (tools/zoo/perf.cjs): open and close it as the book and its × do.
 (window as unknown as { witch: Record<string, unknown> }).witch.zooOverlay = zoo;
 // The Studio's instruments for the tools (tools/studio/check.cjs): where she's at and what it plays (its meter).

@@ -10,6 +10,14 @@ A sail ending in bed: the built game loaded at home, then sailed in place to ano
 npm run build && node tools/sail/bed-shots.cjs [out] [dist]
 ```
 
+## `hold.cjs`
+
+A sail from the map table as Ed sails: serves the built game, loads it, opens the table's sea chart, chooses ISLAND and holds Enter as a person does till the table's hold has sailed and HOLD ms more, then lets go; the page's frames recorded as they're…
+
+```
+npm run build && node tools/sail/hold.cjs [out] [dist]   ISLAND=fox HOLD=1000 SECONDS=60 BASE=<url> EXTRA=<more of the link>
+```
+
 ## `leak.cjs`
 
 Sails in place without growing: serves the built game, loads island A with ?quick=1&creator=0&debug=sail, starts it, then sails A→B→C→A… fifteen times through the real sail path, each landing, its art let in, then a few drawn frames and about 5 s of play…
