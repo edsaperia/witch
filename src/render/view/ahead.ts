@@ -31,10 +31,11 @@ export function workAhead(v: View): void {
   took(t0); v.time("art");
   // The ground's area tiles: everything the cameras can see, plus a band ahead.
   // (round the view's focus, where the haze is centred: her, or the arrival's flight's aim; render/areaWindow.ts)
-  // (and, flying in, the band the view's heading into: two seconds on along the aim's way)
-  { const f = focusOf(v), r = viewRect(v, t.haze.far, 40), ax = hx * 2, az = hz * 2;
-    if (F) { r.minX = Math.min(r.minX, r.minX + ax); r.maxX = Math.max(r.maxX, r.maxX + ax); r.minZ = Math.min(r.minZ, r.minZ + az); r.maxZ = Math.max(r.maxZ, r.maxZ + az); }
-    v.stats.pendingGround = v.ground.fill(v.renderer, r, f.x, f.z, give(4, 1)); }
+  // (and then, flying in, with what's left, the band the view's heading into, two seconds on along the aim's way; what's left of the
+  // view's own counted: the sea's loading mist waits for it, render/view/mistReady.ts)
+  { const f = focusOf(v), r = viewRect(v, t.haze.far, 40), t1 = performance.now();
+    v.stats.pendingGround = v.ground.fill(v.renderer, r, f.x, f.z, give(4, 1));
+    if (F && !v.stats.pendingGround) { const ax = hx * 2, az = hz * 2, b = { minX: r.minX + Math.min(0, ax), maxX: r.maxX + Math.max(0, ax), minZ: r.minZ + Math.min(0, az), maxZ: r.maxZ + Math.max(0, az) }; v.ground.fill(v.renderer, b, f.x + ax, f.z + az, give(4, 1) - (performance.now() - t1)); } }
   v.stats.pendingArt = v.assets.pending;
   v.time("groundTiles");
 }

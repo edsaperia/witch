@@ -63,13 +63,13 @@ describe("the loading mist waits for its areas to be drawn", () => {
 describe("an area's contents: loaded is not enough, they must be drawn", () => {
   const batch = (count: number, drawn?: number): Shown => ({ count, meshes: [{ userData: drawn === undefined ? {} : { drawn } } as unknown as THREE.Object3D] });
   const t = AREA_TYPES.findIndex(a => a.creature), sp = AREA_TYPES[t].creature!;
-  const source = (o: Partial<{ trees: boolean; treesDrawn: boolean; listed: number; creature: boolean; creatureDrawn: boolean; stump: boolean; stumpDrawn: boolean; props: boolean; fireDrawn: boolean }>): MistSource => ({
+  const source = (o: Partial<{ trees: boolean; treesDrawn: boolean; listed: number; creature: boolean; creatureDrawn: boolean; stump: boolean; stumpDrawn: boolean; props: boolean; fireDrawn: boolean; partyFires: boolean }>): MistSource => ({
     assets: { hasType: () => !!o.trees, hasCreature: () => !!o.creature, hasStump: () => !!o.stump, version: 5, home: { props: o.props ?? true } },
     typeBatches: new Map([[t, batch(10, o.treesDrawn ? 1 : undefined)]]), creatureBatches: new Map([[sp, batch(3, o.creatureDrawn ? 1 : undefined)]]),
     propBatch: batch(2, o.fireDrawn ?? true ? 1 : undefined), markerBatch: batch(0), stumpBatches: new Map([["s", batch(1, o.stumpDrawn ? 1 : undefined)]]),
-    sceneryListed: o.listed ?? 9, stumpsOf: () => [{} as never], stumps: true,
+    sceneryListed: o.listed ?? 9, stumpsOf: () => [{} as never], stumps: true, partyFires: o.partyFires ?? true,
   });
-  const all = { trees: true, treesDrawn: true, creature: true, creatureDrawn: true, stump: true, stumpDrawn: true, props: true, fireDrawn: true };
+  const all = { trees: true, treesDrawn: true, creature: true, creatureDrawn: true, stump: true, stumpDrawn: true, props: true, fireDrawn: true, partyFires: true };
   it("is ready only with every part loaded and drawn", () => {
     expect(areaReady(areaParts(source(all), t))).toBe(true);
     for (const k of Object.keys(all) as (keyof typeof all)[]) expect(areaReady(areaParts(source({ ...all, [k]: false }), t)), k).toBe(false);

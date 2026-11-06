@@ -28,6 +28,9 @@ export interface MistSource {
   /** Each area type's great stumps (none with the rune stones). */
   stumpsOf(t: number): readonly StumpSpec[];
   stumps: boolean;
+  /** The party's campfire art in (render/partyObjects.ts: the campfires are party objects, lit as the party reaches an area; none
+   *  burn in the dormant forest the dive flies over, Ed 2026-10-04). */
+  partyFires: boolean;
 }
 
 /** One area type's parts, ready or not. */
@@ -53,8 +56,9 @@ export function areaParts(v: MistSource, t: number): AreaParts {
   }
   // Its stumps: every one of its areas' baked (asked ahead: render/islandNeeds.ts), and every stump on screen drawn; or the rune stones'.
   const stumps = v.stumps ? v.stumpsOf(t).every(s => A.hasStump(s)) && [...v.stumpBatches.values()].every(shownIfAny) : shownIfAny(v.markerBatch);
-  // The campfires (the props' art: the start's own, first of all), drawn where there are any in view.
-  const fires = A.home.props && shownIfAny(v.propBatch);
+  // The campfires: the props' art (the start's own, first of all: the old fires and the magic stones), drawn where there are any in
+  // view, and the party's campfire art, ready for when the party lights them (none burn in the dormant forest the dive flies over).
+  const fires = A.home.props && v.partyFires && shownIfAny(v.propBatch);
   // Its creatures' plain look, drawn where there are any in view.
   const sp = AREA_TYPES[t]?.creature;
   const creatures = !sp || (A.hasCreature(sp) && shownIfAny(v.creatureBatches.get(sp)));

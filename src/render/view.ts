@@ -771,6 +771,11 @@ export class View {
   lightRings: LightRings | null = null;
   /** Materials drawn with their own program at least once (the draw gate's hook): the ground's, for the sea's loading mist. */
   private drawnMats = new WeakSet<THREE.Material>();
+  /** This night's ground drawn with its own program (the coast's with a coast) on some frame: the sea's loading mist's (seaReady). */
+  private groundShown = false;
+  /** Whether a type in before the first frame is clear of the loading mist from the start (a load's: its loading screen drew it), or
+   *  misted till drawn as any other (a sail's: prepare). */
+  private mistStartClear = true;
   /** Each area type's great stumps (render/view/mistReady.ts), for the map they were worked out on. */
   private stumpsBy: { map: object; by: Map<number, StumpSpec[]> } | null = null;
   /** Area type `t`'s great stumps (none with the rune stones). */
@@ -791,16 +796,16 @@ export class View {
   private get mistSource(): MistSource {
     const v = this;
     return { assets: this.assets, typeBatches: this.typeBatches, creatureBatches: this.creatureBatches, propBatch: this.propBatch, markerBatch: this.markerBatch, stumpBatches: this.island.stumpBatches,
-      sceneryListed: this.sceneryListed, stumpsOf: t => v.stumpsOf(t), stumps: !!this.markerArt.stumps };
+      sceneryListed: this.sceneryListed, stumpsOf: t => v.stumpsOf(t), stumps: !!this.markerArt.stumps, partyFires: this.partyObjects.ready };
   }
   /** The loading mist this frame (render/loadingMist.ts): each area type's held till its parts are drawn (render/view/mistReady.ts),
    *  the sea's till the ground's own program is drawn and the ground in view filled; logged (mistLog). `time`: the page's clock. */
   private updateLoadingMist(time: number): void {
     const M = this.loadingMist!, log = this.mistLog, now = performance.now(), src = this.mistSource;
     const ready = (t: number) => { const p = areaParts(src, t), e = noteParts(log, t, p, now), r = areaReady(p); if (r && e.ready === undefined) e.ready = now; return r; };
-    const sea = () => { const ok = seaReady(this.drawnMats.has(this.ground.ownMaterial), this.stats.pendingGround), e = noteParts(log, -1, { ground: ok }, now); if (ok && e.ready === undefined) e.ready = now; return ok; };
-    const gated = this.shaderDrawStatus.active; // (a sail's: nothing counts as there before it's drawn)
-    M.update(time, ready, sea, t => !gated && (t < 0 || this.assets.hasType(t)));
+    if (this.drawnMats.has(this.ground.ownMaterial)) this.groundShown = true; // (once: from the house's rooms after the landing it isn't drawn)
+    const sea = () => { const ok = seaReady(this.groundShown, this.stats.pendingGround), e = noteParts(log, -1, { ground: ok }, now); if (ok && e.ready === undefined) e.ready = now; return ok; };
+    M.update(time, ready, sea, t => this.mistStartClear && (t < 0 || this.assets.hasType(t)));
     for (const [t, e] of log) if (e.fade === undefined && (t < 0 ? M.seaBeganAt : M.beganAt(t)) !== undefined) e.fade = now;
   }
   /** The loading mist over the areas whose trees aren't drawn yet (render/loadingMist.ts), made each night by prepare; null once off. */
@@ -1107,6 +1112,7 @@ export class View {
   async prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; share?: ReadonlyMap<number, number>; track?: [number, number, number, number][]; underDive?: boolean } = {}): Promise<void> {
     performance.mark("witch:prep-start");
     if (o.sail) { this.homeDone = false; this.shaderDrawStatus.active = true; this.shaderDrawStatus.skipped = {}; this.shaderDrawStatus.fallback = {}; this.shaderDrawStatus.submitted = {}; if (!this.shaderChartLanding) this.startLandingShaderGrace(); }
+    this.mistStartClear = !o.sail; // (a load's: drawn under its loading screen; a sail's: misted till drawn)
     this.makeLoadingMist();
     this.coastAhead();
     { // tonight's own trees, if drawn ahead and kept (app/landingBake.ts), for the swap before she sees the island (retype)
@@ -1249,7 +1255,7 @@ export class View {
     }
     const A = this.ground.areaUniforms;
     this.loadingMist = new LoadingMist(T, typeReaches(cells, m.treehouse, m.areaSize), m.treehouse, m.extent, A.uniforms, this.post.scene.depthTexture, this.post.fxSize, A.slots);
-    this.mistLog = new Map();
+    this.mistLog = new Map(); this.groundShown = false;
     (this.post.fxScene ??= new THREE.Scene()).add(this.loadingMist.mesh);
   }
 

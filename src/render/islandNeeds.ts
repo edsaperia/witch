@@ -37,7 +37,7 @@ export interface IslandArtAsks {
   creatureArt(sp: string): unknown; wokenArt(sp: string): unknown; napArt(sp: string): unknown; faceArt(sp: string, face: string): unknown;
   idleArt(sp: string): unknown; glideArt(sp: string): unknown; sleepArt(sp: string): unknown; rigArt(sp: string, level: number, gear?: undefined, urgent?: boolean): unknown;
   beachEdgeArt(urgent?: boolean): unknown; beachArt(urgent?: boolean): unknown; lakeShoreArt(urgent?: boolean): unknown; partyWitchArt(seed: number | null, urgent?: boolean): unknown;
-  stumpArt(spec: StumpSpec, urgent?: boolean): unknown; decorArt(): unknown; pathPieceArt(): unknown;
+  stumpArt(spec: StumpSpec, urgent?: boolean): unknown; partyObjectArt(): unknown; decorArt(): unknown; pathPieceArt(): unknown;
 }
 /** How the island's drawn: a legend asleep as its nap (wildLegends.seen.nap) or its mound (sleepArt); a coast (and its decorations
  *  on); lakes; its areas' great stumps (render/markers.ts stumpDeal: none with the rune stones); `dive`: a sail's, under its dive, the
@@ -51,7 +51,7 @@ export interface IslandLooks { legendNap: boolean; coast: boolean; beachDecor: b
 export const ART_ORDER = [
   "palms", // the coast's palms and shrubs: big, and the first land the dive crosses
   "trees", // each area type's, in `n.types`' order (a sail's: by their share of the dive's view, rules/arrive.ts diveShare)
-  "stumps", // the areas' great stumps (the campfires came with the props)
+  "stumps", // the areas' great stumps, and the party's campfires (the old fires and the magic stones came with the props)
   "creatures", // each kind's plain look
   "legends", // the sleeping legends
   "coast", // the beach's decorations (shells, starfish), her lying-down art
@@ -66,7 +66,7 @@ export function askIslandArt(a: IslandArtAsks, n: IslandNeeds, o: IslandLooks): 
   for (const step of ART_ORDER) switch (step) {
     case "palms": if (o.coast) a.beachEdgeArt(false); break;
     case "trees": for (const t of n.types) a.prefetchType(t); break;
-    case "stumps": for (const s of o.stumps ?? []) a.stumpArt(s, false); break;
+    case "stumps": for (const s of o.stumps ?? []) a.stumpArt(s, false); a.partyObjectArt(); break;
     case "creatures": for (const sp of n.kinds) a.creatureArt(sp); break;
     case "legends": for (const sp of n.legends) if (o.legendNap) a.napArt(sp); else a.sleepArt(sp); break;
     case "coast": if (o.coast) { if (o.beachDecor) a.beachArt(false); a.partyWitchArt(null, false); } break; // (her lying-down art: render/beach.ts)

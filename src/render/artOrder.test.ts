@@ -28,7 +28,7 @@ describe("the island's art under the dive, in Ed's order", () => {
     askIslandArt(rec, n, looks);
     const step = (a: string): number => {
       const k = a.split(":")[0];
-      return ART_ORDER.indexOf(k === "beachEdgeArt" ? "palms" : k === "prefetchType" ? "trees" : k === "stumpArt" ? "stumps" : k === "creatureArt" ? "creatures" : k === "sleepArt" ? "legends"
+      return ART_ORDER.indexOf(k === "beachEdgeArt" ? "palms" : k === "prefetchType" ? "trees" : k === "stumpArt" || k === "partyObjectArt" ? "stumps" : k === "creatureArt" ? "creatures" : k === "sleepArt" ? "legends"
         : k === "beachArt" || k === "partyWitchArt" ? "coast" : k === "lakeShoreArt" ? "lakes" : k === "decorArt" || k === "pathPieceArt" ? "decor" : "looks");
     };
     const steps = asked.map(step);
@@ -47,6 +47,7 @@ describe("the island's art under the dive, in Ed's order", () => {
     expect(first("beachEdge")).toBe(0);
     expect(last("type")).toBeLessThan(first("stump"));
     expect(last("stump")).toBeLessThan(first("creature"));
+    expect(first("partyObjects")).toBeGreaterThan(last("stump")); expect(first("partyObjects")).toBeLessThan(first("creature")); // (the party's campfires with the stumps)
     expect(last("creature")).toBeLessThan(first("sleep"));
     expect(last("sleep")).toBeLessThan(first("beach"));
     expect(first("beach")).toBeLessThan(first("lakeShore"));
