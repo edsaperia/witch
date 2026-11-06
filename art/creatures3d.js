@@ -6,6 +6,7 @@ import { faceUp, JAW_FACES } from "./genome/expressions.js";
 import { textureLumps } from "./genome/texture.js";
 import { compileGraph } from "./body-graph/graph.js";
 import { buildAcceptanceModel } from "./body-graph/acceptance.js";
+import { boundTreeBlendGroups } from "./body-graph/part-tree.js";
 import { quadrupedTorsoGraph, quadrupedEarSocket, triangularEarMask, triangularEarFaces, wrappedRosette, regionMarking, rosetteSizing, bibCoordinates } from "./body-graph/quadruped.js";
 import { mandiblePart } from "./body-graph/mandibles.js";
 import { paintTailParts } from "./body-graph/tail-markings.js";
@@ -1239,6 +1240,7 @@ function finish(m, S, level, st, k, facing, ref = null, scaleOverride = null) {
   const build = S.sizes.build?.[level] ?? 1;
   if (build !== 1) beef(m, build); // absent bulk curve means the authored model, as on shipped quadrupeds
   gearUp(m);
+  if(m.bodyGraph?.blendPolicy==="parent-tree")boundTreeBlendGroups(m);
   // ref: a model in the walk's first pose, its scale taken for every frame (a cycle's frames at one scale, not each fitted to its own height)
   let scale = scaleOverride ?? undefined;
   if (ref) { if (build !== 1) beef(ref, build); scale = render(ref, { height: drawHeight(level, st, k), facing, measure: true }).s; }

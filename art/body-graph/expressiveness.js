@@ -52,25 +52,30 @@ export function tailPoints(spec,defaultLength,defaultWidth,frame){
 }
 
 export function buildFamilyHead(m,at,r,spec={},legacy={}){
-  const h=headParameters(spec),o={part:"head"},mu=h.muzzle;
+  const h=headParameters(spec),group=spec.group??1,o={part:"head",group},mu=h.muzzle;
   const length=(legacy.muzzle??r)*mu[0],sn=v3.add(at,[r*h.skull[0]*.65+length*.5,-r*.18,0]);
   m.ell(sn,[length,r*mu[1],r*mu[2]],h.family==="beak"?M.ACCENT:M.BODY,o);
   const jaw=h.jaw??.2;
   if(jaw>0)m.ell(v3.add(sn,[-length*.1,-r*(mu[1]+jaw*.25),0]),[length*.8,r*jaw,r*mu[2]*.85],M.BODY,o);
   if(h.mouth)m.seg(v3.add(sn,[length*.1,-r*mu[1]*.6,-r*mu[2]]),v3.add(sn,[length*.85,-r*mu[1]*.6,r*mu[2]]),r*.025,r*.025,M.MOUTH,o);
   if(h.family==="reptile"||h.family==="insect")for(const side of [-1,1])m.ell(v3.add(sn,[length*.75,r*.15,side*r*mu[2]*.6]),[r*.05,r*.035,r*.04],M.NOSE,o);
-  else if(h.family!=="beak")m.ell(v3.add(sn,[length*.85,0,0]),[r*.16,r*.13,r*mu[2]*.5],M.NOSE,o);
+  else if(h.family!=="beak")m.ell(v3.add(sn,[length*.85,0,0]),[r*.16,r*.13,r*mu[2]*.5],M.NOSE,{...o,group:group+1});
   const ear={kind:legacy.ears??"point",size:1,angle:0,position:[-.25,.87,.65],...h.ears};
   const eye={size:.09,position:[.55,.2,.73],...h.eyes};
   for(const side of [-1,1]){
-    m.ell(v3.add(at,eye.position.map((v,i)=>r*v*(i===2?side:1))),[r*eye.size,r*eye.size,r*eye.size],M.EYE,o);
-    if(h.brow>0)m.ell(v3.add(at,[r*.48,r*.35,side*r*.6]),[r*.45,r*h.brow,r*.3],M.BODY,o);
+    const feature={...o,group:group+(side>0?4:2)};
+    m.ell(v3.add(at,eye.position.map((v,i)=>r*v*(i===2?side:1))),[r*eye.size,r*eye.size,r*eye.size],M.EYE,feature);
+    if(h.brow>0)m.ell(v3.add(at,[r*.48,r*.35,side*r*.6]),[r*.45,r*h.brow,r*.3],M.BODY,{...feature,group:feature.group+1});
     if(ear.kind==="none")continue;
     const c=v3.add(at,ear.position.map((v,i)=>r*v*(i===2?side:1))),size=r*ear.size;
     const tip=v3.add(c,[Math.sin(ear.angle)*size,size*(ear.kind==="bigbat"?1.8:.6),side*size*.12]);
-    if(ear.kind==="round")m.ell(c,[size*.25,size*.27,size*.14],M.BODY,o);
-    else if(ear.kind==="leaf"||ear.kind==="bigbat")m.ell(v3.lerp(c,tip,.5),[size*.17,size*(ear.kind==="bigbat"?.9:.4),size*.09],M.BODY,{...o,dir:[1,0,0],up:v3.sub(tip,c)});
-    else if(ear.kind==="point")m.chain([[...c,size*.22],[...tip,size*.015]],M.BODY,o);
+    const earOptions={...o,group:group+(side>0?7:6)};
+    if(ear.kind==="round")m.ell(c,[size*.25,size*.27,size*.14],M.BODY,earOptions);
+    else if(ear.kind==="leaf"||ear.kind==="bigbat")m.ell(v3.lerp(c,tip,.5),[size*.17,size*(ear.kind==="bigbat"?.9:.4),size*.09],M.BODY,{...earOptions,dir:[1,0,0],up:v3.sub(tip,c)});
+    else if(ear.kind==="point"){
+      const middle=v3.add(v3.lerp(c,tip,.5),[size*(ear.curl??0),0,0]);
+      m.chain([[...c,size*.22],...(ear.curl?[[...middle,size*.12]]:[]),[...tip,size*.015]],M.BODY,earOptions);
+    }
     else throw Error("Unknown ear family");
   }
   return {sn};

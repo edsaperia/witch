@@ -3,6 +3,10 @@
 Authority: coordinator1866#6687315285, 6 November. Six existing candidates only,
 all default off. Existing Current/shipped builders, selectors and gameplay remain.
 The normal merge from prototype c6934d66c is included; no rebase.
+The later6689311553 research direction changes the underlying geometry to family
+bean profiles and a parent tree; see `body-graph-part-tree.md`. The vocabulary
+below remains, but the15 attachment-guide stations no longer share one rendered
+blend group. Regional envelope falloff now shapes the three torso masses.
 
 ## Preset vocabulary
 

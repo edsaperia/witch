@@ -3,6 +3,7 @@
 // Parent sockets attach at neck tips; rotating spine frames remain future work.
 import { M } from "../core.js";
 import { Model, v3 } from "../model3d.js";
+import {uvrMount} from "./part-tree.js";
 
 export const LEG_FAMILIES = Object.freeze({
   plantigrade: { knee: .48, bend: .12, foot: [.16, .07, .11] },
@@ -35,10 +36,12 @@ export function validateGraph(graph) {
     assert(distance(a.at, b.at) < Math.min(...a.r) + Math.min(...b.r), `${b.id}: disconnected spine; insert a station`);
   }
   const sockets = new Set();
+  if(graph.bodyMasses){assert(graph.bodyMasses.length>0&&graph.bodyMasses.length<=4,"one to four torso masses required");for(const mass of graph.bodyMasses)assert(vec(mass.at)&&radii(mass.r),"finite torso mass required");}
   assert(Array.isArray(graph.sockets), "sockets array required");
   for (const s of graph.sockets) {
     assert(typeof s.id === "string" && s.id.length > 0 && !sockets.has(s.id), "unique socket ids required");
-    assert(vec(s.offset) && (s.parent ? sockets.has(s.parent) : ids.has(s.station)), `${s.id}: known station or preceding parent and finite offset required`);
+    const parent=s.attach?.parent??s.parent;
+    assert(vec(s.offset) && (s.attach?parent==="body"||sockets.has(parent):parent?sockets.has(parent):ids.has(s.station)), `${s.id}: known station or preceding parent and finite offset required`);
     assert(KINDS.has(s.kind), `${s.id}: unknown socket kind`);
     sockets.add(s.id);
     if (s.kind === "leg") {
@@ -70,12 +73,19 @@ export function compileGraph(graph, { blend = graph.blend ?? .07 } = {}) {
   const model = new Model({ blend }), stations = new Map(graph.spine.map(s => [s.id, s]));
   /** @type {Record<string, number[]>} */
   const sockets = {};
+  /** @type {Record<string, number>} */
+  const groups = {};
+  const guides=new Map([["body",graph.spine]]);
   const legs = [];
-  for (const s of graph.spine) model.ell(s.at.slice(), s.r.slice(), s.mat ?? M.BODY, { part: "body",rough:s.rough });
+  for (const s of graph.bodyMasses??graph.spine) model.ell(s.at.slice(), s.r.slice(), s.mat ?? M.BODY, { part: "body",rough:s.rough });
   for (const [index, s] of graph.sockets.entries()) {
-    const root = v3.add(s.parent ? sockets[s.parent] : stations.get(s.station).at, s.offset);
+    const mount=s.attach?uvrMount(guides.get(s.attach.parent),s.attach.u,s.attach.v,s.attach.r):s.parent?sockets[s.parent]:stations.get(s.station).at;
+    const root = v3.add(mount, s.offset);
     sockets[s.id] = root;
-    const options = { part: s.part ?? s.id, group: s.kind === "shell" || s.kind === "wing" || s.kind === "membrane" ? index + 2 : 1 };
+    const group=graph.blendPolicy==="parent-tree"?(index+2)*16:s.kind === "shell" || s.kind === "wing" || s.kind === "membrane"?index+2:1;
+    groups[s.id]=group;
+    const options = { part: s.part ?? s.id, group };
+    guides.set(s.id,[{at:root,r:s.r??[.05,.05,.05]},{at:root,r:s.r??[.05,.05,.05]}]);
     if (s.kind === "leg") {
       const f = LEG_FAMILIES[s.family], end = s.foot.slice();
       assert(distance(root, end) > s.radius * 2, `${s.id}: leg too short`);
@@ -90,11 +100,13 @@ export function compileGraph(graph, { blend = graph.blend ?? .07 } = {}) {
       else model.ell(foot, footR, s.family === "hoof" ? M.ACCENT : M.BODY, options);
       model.anchors.feet.push({ c: foot, r: footR[0], group: options.group, fit: s.family === "hoof" ? "hoof" : "paw" });
       legs.push({ id: s.id, family: s.family, root, knee, end, ...(heel?{heel}:{}), radii: profile });
+      guides.set(s.id,[root,knee,...(heel?[heel]:[]),end].map((at,i)=>({at,r:[profile[i],profile[i],profile[i]]})));
     } else if (s.kind === "tail" || s.kind === "neck") {
       const pts = s.points.map(p => [...v3.add(root, p.slice(0, 3)), p[3]]);
       assert(distance(pts[0].slice(0, 3), root) < 1e-8, `${s.id}: tail must begin at socket`);
       for (let i = 1; i < pts.length; i++) assert(distance(pts[i - 1].slice(0, 3), pts[i].slice(0, 3)) > Math.abs(pts[i - 1][3] - pts[i][3]), `${s.id}: degenerate tapered segment`);
       model.chain(pts, s.mat ?? M.BODY, options);
+      guides.set(s.id,pts.map(p=>({at:p.slice(0,3),r:[p[3],p[3],p[3]]})));
       if (s.kind === "neck") sockets[s.id] = pts.at(-1).slice(0,3);
     } else if (s.kind === "membrane") {
       const [a,b,c] = s.vertices.map(p=>v3.add(root,p)), u=v3.norm(v3.sub(b,a));
@@ -109,5 +121,5 @@ export function compileGraph(graph, { blend = graph.blend ?? .07 } = {}) {
       model.ell(root, s.r.slice(), s.mat ?? (s.kind === "shell" ? M.ACCENT : M.BODY), options);
     }
   }
-  return { model, sockets, legs };
+  return { model, sockets, legs,groups };
 }

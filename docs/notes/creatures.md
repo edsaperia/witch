@@ -47,6 +47,10 @@ The 6 November shared preset controls and bear demonstration candidate are liste
 in `docs/plans/body-graph-parameters.md`. `tools/body-graph/iterate.mjs` prepares
 one-species native/4x shipped-mask overlays and scores in canonical cloud only;
 its time budget and bear likeness acceptance require actual execution/review.
+The subsequent research-based parent-tree design, analytic u/v/r mounts,
+three-mass torso profiles, bounded classic-band blend groups and licence record
+are in `docs/plans/body-graph-part-tree.md`; they supersede the globally blended
+station geometry of the earlier parameter checkpoint. Six defaults remain off.
 
 Ed resolved the size-range hold: small adults must remain readable, babies and
 youths distinguishable, adults larger where useful, and legends notably larger
