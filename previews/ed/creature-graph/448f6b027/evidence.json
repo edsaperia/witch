@@ -1,0 +1,3133 @@
+{
+  "sha": "253b47f9095eb683edbcf989a6ab0d4fcf7f197b",
+  "servedSha": "253b47f9095eb683edbcf989a6ab0d4fcf7f197b",
+  "results": [
+    {
+      "id": "bear",
+      "cells": [
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 83,
+          "height": 79,
+          "fingerprint": "83x79:33dec98b",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 72,
+            "bodyHeight": 72
+          },
+          "coldConstructionAndBakeMs": 295.19999999995343
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 86,
+          "height": 79,
+          "fingerprint": "86x79:264aa320",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 72,
+            "bodyHeight": 71
+          },
+          "coldConstructionAndBakeMs": 228.69999999995343
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 89,
+          "height": 81,
+          "fingerprint": "89x81:5c1576f8",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 72,
+            "bodyHeight": 71
+          },
+          "coldConstructionAndBakeMs": 165.9000000001397
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 93,
+          "height": 81,
+          "fingerprint": "93x81:e7d14172",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 72,
+            "bodyHeight": 71
+          },
+          "coldConstructionAndBakeMs": 230.5999999998603
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 76,
+          "height": 79,
+          "fingerprint": "76x79:37d4947b",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 72,
+            "bodyHeight": 72
+          },
+          "coldConstructionAndBakeMs": 111.80000000004657
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 83,
+          "height": 79,
+          "fingerprint": "83x79:db93659a",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 72,
+            "bodyHeight": 72
+          },
+          "coldConstructionAndBakeMs": 156.0999999998603
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 78,
+          "height": 80,
+          "fingerprint": "78x80:c51adeda",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 72,
+            "bodyHeight": 72
+          },
+          "coldConstructionAndBakeMs": 163.5999999998603
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 81,
+          "height": 80,
+          "fingerprint": "81x80:c11726c7",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 72,
+            "bodyHeight": 72
+          },
+          "coldConstructionAndBakeMs": 144.70000000018626
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 165,
+          "height": 126,
+          "fingerprint": "165x126:31cbbb9",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 112,
+            "bodyHeight": 112
+          },
+          "coldConstructionAndBakeMs": 478.60000000009313
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 177,
+          "height": 126,
+          "fingerprint": "177x126:42596efd",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 112,
+            "bodyHeight": 111
+          },
+          "coldConstructionAndBakeMs": 316.0999999998603
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 154,
+          "height": 126,
+          "fingerprint": "154x126:998de26",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 112,
+            "bodyHeight": 112
+          },
+          "coldConstructionAndBakeMs": 310.4000000001397
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 162,
+          "height": 126,
+          "fingerprint": "162x126:f566d543",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 112,
+            "bodyHeight": 111
+          },
+          "coldConstructionAndBakeMs": 470
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 147,
+          "height": 122,
+          "fingerprint": "147x122:2a9a6e14",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 112,
+            "bodyHeight": 111
+          },
+          "coldConstructionAndBakeMs": 325.69999999995343
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 154,
+          "height": 123,
+          "fingerprint": "154x123:f3ee2698",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 112,
+            "bodyHeight": 112
+          },
+          "coldConstructionAndBakeMs": 223.89999999990687
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 130,
+          "height": 123,
+          "fingerprint": "130x123:85bc402e",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 112,
+            "bodyHeight": 111
+          },
+          "coldConstructionAndBakeMs": 180.30000000004657
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 132,
+          "height": 123,
+          "fingerprint": "132x123:749d10d7",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 112,
+            "bodyHeight": 111
+          },
+          "coldConstructionAndBakeMs": 180.9000000001397
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 226,
+          "height": 176,
+          "fingerprint": "226x176:7a86676f",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 160,
+            "bodyHeight": 160
+          },
+          "coldConstructionAndBakeMs": 709.6999999999534
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 236,
+          "height": 177,
+          "fingerprint": "236x177:a4222126",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 160,
+            "bodyHeight": 160
+          },
+          "coldConstructionAndBakeMs": 587.8999999999069
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 215,
+          "height": 178,
+          "fingerprint": "215x178:4fad1490",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 160,
+            "bodyHeight": 159
+          },
+          "coldConstructionAndBakeMs": 484.80000000004657
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 228,
+          "height": 179,
+          "fingerprint": "228x179:71c8b22",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 160,
+            "bodyHeight": 160
+          },
+          "coldConstructionAndBakeMs": 638.3999999999069
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 197,
+          "height": 173,
+          "fingerprint": "197x173:aab58372",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 160,
+            "bodyHeight": 159
+          },
+          "coldConstructionAndBakeMs": 521
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 215,
+          "height": 176,
+          "fingerprint": "215x176:9f132140",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 160,
+            "bodyHeight": 160
+          },
+          "coldConstructionAndBakeMs": 510.5
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 186,
+          "height": 176,
+          "fingerprint": "186x176:294c16ce",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 160,
+            "bodyHeight": 160
+          },
+          "coldConstructionAndBakeMs": 445.19999999995343
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 188,
+          "height": 176,
+          "fingerprint": "188x176:faf54b6a",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 160,
+            "bodyHeight": 160
+          },
+          "coldConstructionAndBakeMs": 371.79999999981374
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 351,
+          "height": 288,
+          "fingerprint": "351x288:ad42a433",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 265,
+            "bodyHeight": 265
+          },
+          "coldConstructionAndBakeMs": 1904
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 380,
+          "height": 290,
+          "fingerprint": "380x290:8071d66f",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 265,
+            "bodyHeight": 265
+          },
+          "coldConstructionAndBakeMs": 2333.8000000000466
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 354,
+          "height": 309,
+          "fingerprint": "354x309:b2db674c",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 265,
+            "bodyHeight": 265
+          },
+          "coldConstructionAndBakeMs": 2594.7999999998137
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 374,
+          "height": 310,
+          "fingerprint": "374x310:73ea222c",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 265,
+            "bodyHeight": 264
+          },
+          "coldConstructionAndBakeMs": 2664.3000000000466
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 327,
+          "height": 286,
+          "fingerprint": "327x286:213310d1",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 265,
+            "bodyHeight": 265
+          },
+          "coldConstructionAndBakeMs": 1811.6000000000931
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 347,
+          "height": 289,
+          "fingerprint": "347x289:c9f02f68",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 265,
+            "bodyHeight": 265
+          },
+          "coldConstructionAndBakeMs": 1741.8000000000466
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 306,
+          "height": 290,
+          "fingerprint": "306x290:72d0fc21",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 265,
+            "bodyHeight": 265
+          },
+          "coldConstructionAndBakeMs": 1234.6999999999534
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 310,
+          "height": 290,
+          "fingerprint": "310x290:62a76828",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 265,
+            "bodyHeight": 265
+          },
+          "coldConstructionAndBakeMs": 1334.8000000000466
+        }
+      ],
+      "style": {
+        "pixel": 3,
+        "artStyle": "bold"
+      }
+    },
+    {
+      "id": "wolf",
+      "cells": [
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 49,
+          "height": 61,
+          "fingerprint": "49x61:505fae8e",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 54,
+            "bodyHeight": 54
+          },
+          "coldConstructionAndBakeMs": 151.60000000009313
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 50,
+          "height": 61,
+          "fingerprint": "50x61:5eaaaeb4",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 54,
+            "bodyHeight": 54
+          },
+          "coldConstructionAndBakeMs": 90.69999999995343
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 86,
+          "height": 62,
+          "fingerprint": "86x62:23b7f4f0",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 54,
+            "bodyHeight": 54
+          },
+          "coldConstructionAndBakeMs": 101.10000000009313
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 93,
+          "height": 64,
+          "fingerprint": "93x64:6b01f922",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 54,
+            "bodyHeight": 55
+          },
+          "coldConstructionAndBakeMs": 82.5
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 45,
+          "height": 60,
+          "fingerprint": "45x60:53b78d51",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 54,
+            "bodyHeight": 54
+          },
+          "coldConstructionAndBakeMs": 71.19999999995343
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 49,
+          "height": 60,
+          "fingerprint": "49x60:f83faa28",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 54,
+            "bodyHeight": 54
+          },
+          "coldConstructionAndBakeMs": 97.5
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 76,
+          "height": 61,
+          "fingerprint": "76x61:9163aab3",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 54,
+            "bodyHeight": 53
+          },
+          "coldConstructionAndBakeMs": 62.0999999998603
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 75,
+          "height": 61,
+          "fingerprint": "75x61:7ef58eb",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 54,
+            "bodyHeight": 53
+          },
+          "coldConstructionAndBakeMs": 84.30000000004657
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 137,
+          "height": 96,
+          "fingerprint": "137x96:6c15f552",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 84,
+            "bodyHeight": 85
+          },
+          "coldConstructionAndBakeMs": 278.5
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 152,
+          "height": 94,
+          "fingerprint": "152x94:35dd7ab",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 5,
+            "bodyTarget": 84,
+            "bodyHeight": 84
+          },
+          "coldConstructionAndBakeMs": 217.89999999990687
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 134,
+          "height": 96,
+          "fingerprint": "134x96:e0aee276",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 84,
+            "bodyHeight": 85
+          },
+          "coldConstructionAndBakeMs": 134.80000000004657
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 141,
+          "height": 96,
+          "fingerprint": "141x96:7563a946",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 84,
+            "bodyHeight": 85
+          },
+          "coldConstructionAndBakeMs": 126
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 108,
+          "height": 90,
+          "fingerprint": "108x90:ea8c5ca8",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 84,
+            "bodyHeight": 83
+          },
+          "coldConstructionAndBakeMs": 108.30000000004657
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 115,
+          "height": 91,
+          "fingerprint": "115x91:d46cc820",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 84,
+            "bodyHeight": 85
+          },
+          "coldConstructionAndBakeMs": 158.5
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 114,
+          "height": 94,
+          "fingerprint": "114x94:b4099447",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 84,
+            "bodyHeight": 85
+          },
+          "coldConstructionAndBakeMs": 70.79999999981374
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 112,
+          "height": 93,
+          "fingerprint": "112x93:de3b56e4",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 84,
+            "bodyHeight": 83
+          },
+          "coldConstructionAndBakeMs": 76
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 176,
+          "height": 130,
+          "fingerprint": "176x130:9675647b",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 4,
+            "bodyTarget": 120,
+            "bodyHeight": 121
+          },
+          "coldConstructionAndBakeMs": 483.80000000004657
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 195,
+          "height": 130,
+          "fingerprint": "195x130:b0779fef",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 120,
+            "bodyHeight": 119
+          },
+          "coldConstructionAndBakeMs": 488.9000000001397
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 191,
+          "height": 142,
+          "fingerprint": "191x142:7ab36a9b",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 120,
+            "bodyHeight": 120
+          },
+          "coldConstructionAndBakeMs": 317.39999999990687
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 203,
+          "height": 143,
+          "fingerprint": "203x143:7947683d",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 120,
+            "bodyHeight": 120
+          },
+          "coldConstructionAndBakeMs": 345.69999999995343
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 147,
+          "height": 128,
+          "fingerprint": "147x128:16ec9d38",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 120,
+            "bodyHeight": 120
+          },
+          "coldConstructionAndBakeMs": 304.5
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 153,
+          "height": 128,
+          "fingerprint": "153x128:d3732819",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 120,
+            "bodyHeight": 120
+          },
+          "coldConstructionAndBakeMs": 302.20000000018626
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 160,
+          "height": 132,
+          "fingerprint": "160x132:8b672349",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 5,
+            "bodyTarget": 120,
+            "bodyHeight": 119
+          },
+          "coldConstructionAndBakeMs": 196.30000000004657
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 160,
+          "height": 134,
+          "fingerprint": "160x134:534c3740",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 120,
+            "bodyHeight": 121
+          },
+          "coldConstructionAndBakeMs": 180.80000000004657
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 451,
+          "height": 296,
+          "fingerprint": "451x296:efb1a08f",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 251,
+            "bodyHeight": 251
+          },
+          "coldConstructionAndBakeMs": 2948.8000000000466
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 502,
+          "height": 305,
+          "fingerprint": "502x305:1b3d52a0",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 251,
+            "bodyHeight": 251
+          },
+          "coldConstructionAndBakeMs": 3239.9000000001397
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 425,
+          "height": 326,
+          "fingerprint": "425x326:68861f48",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 251,
+            "bodyHeight": 251
+          },
+          "coldConstructionAndBakeMs": 1510.1999999999534
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 453,
+          "height": 337,
+          "fingerprint": "453x337:e5fe7f80",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 251,
+            "bodyHeight": 251
+          },
+          "coldConstructionAndBakeMs": 1485.3000000000466
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 366,
+          "height": 328,
+          "fingerprint": "366x328:7014b626",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 251,
+            "bodyHeight": 251
+          },
+          "coldConstructionAndBakeMs": 1756.3999999999069
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 385,
+          "height": 339,
+          "fingerprint": "385x339:c6e98073",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 251,
+            "bodyHeight": 251
+          },
+          "coldConstructionAndBakeMs": 1758.6999999999534
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 355,
+          "height": 351,
+          "fingerprint": "355x351:65a3d5c",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 251,
+            "bodyHeight": 252
+          },
+          "coldConstructionAndBakeMs": 896.3000000000466
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 357,
+          "height": 361,
+          "fingerprint": "357x361:23b48321",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 251,
+            "bodyHeight": 252
+          },
+          "coldConstructionAndBakeMs": 987.8999999999069
+        }
+      ],
+      "style": {
+        "pixel": 3,
+        "artStyle": "bold"
+      }
+    },
+    {
+      "id": "stag",
+      "cells": [
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 63,
+          "height": 71,
+          "fingerprint": "63x71:eb293bc7",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 63,
+            "bodyHeight": 64
+          },
+          "coldConstructionAndBakeMs": 144
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 64,
+          "height": 71,
+          "fingerprint": "64x71:611fb6b2",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 3,
+            "bodyTarget": 63,
+            "bodyHeight": 63
+          },
+          "coldConstructionAndBakeMs": 120
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 68,
+          "height": 71,
+          "fingerprint": "68x71:60a11da4",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 63,
+            "bodyHeight": 63
+          },
+          "coldConstructionAndBakeMs": 105.19999999995343
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 72,
+          "height": 71,
+          "fingerprint": "72x71:cd273ab6",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 63,
+            "bodyHeight": 63
+          },
+          "coldConstructionAndBakeMs": 88.10000000009313
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 51,
+          "height": 68,
+          "fingerprint": "51x68:5c26d925",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 63,
+            "bodyHeight": 62
+          },
+          "coldConstructionAndBakeMs": 47.299999999813735
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 56,
+          "height": 68,
+          "fingerprint": "56x68:dcf76725",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 63,
+            "bodyHeight": 62
+          },
+          "coldConstructionAndBakeMs": 54.800000000046566
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 61,
+          "height": 70,
+          "fingerprint": "61x70:3978ca14",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 63,
+            "bodyHeight": 63
+          },
+          "coldConstructionAndBakeMs": 65.0999999998603
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 60,
+          "height": 70,
+          "fingerprint": "60x70:e28a38ac",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 63,
+            "bodyHeight": 62
+          },
+          "coldConstructionAndBakeMs": 111.4000000001397
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 119,
+          "height": 163,
+          "fingerprint": "119x163:b7e76f01",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 4,
+            "bodyTarget": 98,
+            "bodyHeight": 98
+          },
+          "coldConstructionAndBakeMs": 233.10000000009313
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 135,
+          "height": 172,
+          "fingerprint": "135x172:69933644",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 98,
+            "bodyHeight": 98
+          },
+          "coldConstructionAndBakeMs": 312.29999999981374
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 108,
+          "height": 131,
+          "fingerprint": "108x131:f7db70dc",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 98,
+            "bodyHeight": 99
+          },
+          "coldConstructionAndBakeMs": 147
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 112,
+          "height": 130,
+          "fingerprint": "112x130:8b638506",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 98,
+            "bodyHeight": 98
+          },
+          "coldConstructionAndBakeMs": 136.30000000004657
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 98,
+          "height": 150,
+          "fingerprint": "98x150:8b9f3006",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 98,
+            "bodyHeight": 97
+          },
+          "coldConstructionAndBakeMs": 137.9000000001397
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 103,
+          "height": 154,
+          "fingerprint": "103x154:a7c4cd5c",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 98,
+            "bodyHeight": 98
+          },
+          "coldConstructionAndBakeMs": 150.60000000009313
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 93,
+          "height": 123,
+          "fingerprint": "93x123:f89c84e0",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 98,
+            "bodyHeight": 99
+          },
+          "coldConstructionAndBakeMs": 104.30000000004657
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 92,
+          "height": 123,
+          "fingerprint": "92x123:4875a7e2",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 98,
+            "bodyHeight": 99
+          },
+          "coldConstructionAndBakeMs": 81.5
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 167,
+          "height": 253,
+          "fingerprint": "167x253:5e829d1f",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 4,
+            "bodyTarget": 140,
+            "bodyHeight": 139
+          },
+          "coldConstructionAndBakeMs": 512.6000000000931
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 188,
+          "height": 269,
+          "fingerprint": "188x269:7af89636",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 140,
+            "bodyHeight": 139
+          },
+          "coldConstructionAndBakeMs": 643.8000000000466
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 157,
+          "height": 193,
+          "fingerprint": "157x193:5108a80a",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 140,
+            "bodyHeight": 141
+          },
+          "coldConstructionAndBakeMs": 240.5999999998603
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 165,
+          "height": 194,
+          "fingerprint": "165x194:7c604f52",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 140,
+            "bodyHeight": 141
+          },
+          "coldConstructionAndBakeMs": 256.20000000018626
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 139,
+          "height": 235,
+          "fingerprint": "139x235:df9b1c49",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 140,
+            "bodyHeight": 140
+          },
+          "coldConstructionAndBakeMs": 350.9000000001397
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 145,
+          "height": 238,
+          "fingerprint": "145x238:7bd2a501",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 140,
+            "bodyHeight": 140
+          },
+          "coldConstructionAndBakeMs": 381.80000000004657
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 133,
+          "height": 179,
+          "fingerprint": "133x179:4c65f847",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 140,
+            "bodyHeight": 139
+          },
+          "coldConstructionAndBakeMs": 164.0999999998603
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 131,
+          "height": 179,
+          "fingerprint": "131x179:808e1fca",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 140,
+            "bodyHeight": 139
+          },
+          "coldConstructionAndBakeMs": 167.19999999995343
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 319,
+          "height": 406,
+          "fingerprint": "319x406:db06bef6",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 258,
+            "bodyHeight": 259
+          },
+          "coldConstructionAndBakeMs": 1841
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 360,
+          "height": 425,
+          "fingerprint": "360x425:d226a1f",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 3,
+            "bodyTarget": 258,
+            "bodyHeight": 258
+          },
+          "coldConstructionAndBakeMs": 2540.3000000000466
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 284,
+          "height": 365,
+          "fingerprint": "284x365:8d63726e",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 258,
+            "bodyHeight": 258
+          },
+          "coldConstructionAndBakeMs": 823.1999999999534
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 300,
+          "height": 369,
+          "fingerprint": "300x369:961bff32",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 258,
+            "bodyHeight": 258
+          },
+          "coldConstructionAndBakeMs": 948.6999999999534
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 259,
+          "height": 295,
+          "fingerprint": "259x295:b38be857",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 258,
+            "bodyHeight": 259
+          },
+          "coldConstructionAndBakeMs": 1471.5
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 270,
+          "height": 296,
+          "fingerprint": "270x296:f46034d7",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 258,
+            "bodyHeight": 257
+          },
+          "coldConstructionAndBakeMs": 1335.3000000000466
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 243,
+          "height": 342,
+          "fingerprint": "243x342:a322c65d",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 258,
+            "bodyHeight": 258
+          },
+          "coldConstructionAndBakeMs": 698.3000000000466
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 240,
+          "height": 344,
+          "fingerprint": "240x344:9b2df021",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 258,
+            "bodyHeight": 259
+          },
+          "coldConstructionAndBakeMs": 677.4000000001397
+        }
+      ],
+      "style": {
+        "pixel": 3,
+        "artStyle": "bold"
+      }
+    },
+    {
+      "id": "bat",
+      "cells": [
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 46,
+          "height": 44,
+          "fingerprint": "46x44:1015dbc6",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 40,
+            "bodyHeight": 40
+          },
+          "coldConstructionAndBakeMs": 42.199999999953434
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 60,
+          "height": 45,
+          "fingerprint": "60x45:18e4b72b",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 40,
+            "bodyHeight": 40
+          },
+          "coldConstructionAndBakeMs": 48.4000000001397
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 75,
+          "height": 49,
+          "fingerprint": "75x49:3753840f",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 40,
+            "bodyHeight": 40
+          },
+          "coldConstructionAndBakeMs": 71.69999999995343
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 82,
+          "height": 47,
+          "fingerprint": "82x47:8f4e14e9",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 40,
+            "bodyHeight": 39
+          },
+          "coldConstructionAndBakeMs": 145.10000000009313
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 45,
+          "height": 44,
+          "fingerprint": "45x44:ad5b8027",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 40,
+            "bodyHeight": 40
+          },
+          "coldConstructionAndBakeMs": 32.39999999990687
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 53,
+          "height": 46,
+          "fingerprint": "53x46:5b613c5a",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 40,
+            "bodyHeight": 40
+          },
+          "coldConstructionAndBakeMs": 36.5
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 59,
+          "height": 47,
+          "fingerprint": "59x47:858eb7bb",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 40,
+            "bodyHeight": 39
+          },
+          "coldConstructionAndBakeMs": 55.5
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 60,
+          "height": 47,
+          "fingerprint": "60x47:ea2a65bb",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 40,
+            "bodyHeight": 40
+          },
+          "coldConstructionAndBakeMs": 54.5
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 69,
+          "height": 67,
+          "fingerprint": "69x67:3fff130f",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 62,
+            "bodyHeight": 62
+          },
+          "coldConstructionAndBakeMs": 23.199999999953434
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 95,
+          "height": 71,
+          "fingerprint": "95x71:91dc7c40",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 62,
+            "bodyHeight": 63
+          },
+          "coldConstructionAndBakeMs": 49.4000000001397
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 117,
+          "height": 71,
+          "fingerprint": "117x71:7533b003",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 62,
+            "bodyHeight": 61
+          },
+          "coldConstructionAndBakeMs": 129.39999999990687
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 118,
+          "height": 71,
+          "fingerprint": "118x71:dabd5d4e",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 62,
+            "bodyHeight": 62
+          },
+          "coldConstructionAndBakeMs": 148.30000000004657
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 68,
+          "height": 67,
+          "fingerprint": "68x67:b24c0417",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 62,
+            "bodyHeight": 63
+          },
+          "coldConstructionAndBakeMs": 29.100000000093132
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 80,
+          "height": 70,
+          "fingerprint": "80x70:5e92a6da",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 62,
+            "bodyHeight": 62
+          },
+          "coldConstructionAndBakeMs": 36.5
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 102,
+          "height": 74,
+          "fingerprint": "102x74:cbf3576b",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 62,
+            "bodyHeight": 63
+          },
+          "coldConstructionAndBakeMs": 102.69999999995343
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 100,
+          "height": 73,
+          "fingerprint": "100x73:af7781b7",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 62,
+            "bodyHeight": 61
+          },
+          "coldConstructionAndBakeMs": 102.89999999990687
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 96,
+          "height": 95,
+          "fingerprint": "96x95:5badf39",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 89,
+            "bodyHeight": 88
+          },
+          "coldConstructionAndBakeMs": 52.39999999990687
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 129,
+          "height": 101,
+          "fingerprint": "129x101:d716e8d",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 89,
+            "bodyHeight": 88
+          },
+          "coldConstructionAndBakeMs": 97.5
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 168,
+          "height": 103,
+          "fingerprint": "168x103:ffed0838",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 89,
+            "bodyHeight": 90
+          },
+          "coldConstructionAndBakeMs": 283.9000000001397
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 168,
+          "height": 102,
+          "fingerprint": "168x102:1ad0c712",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 89,
+            "bodyHeight": 89
+          },
+          "coldConstructionAndBakeMs": 283.30000000004657
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 93,
+          "height": 94,
+          "fingerprint": "93x94:b22efa88",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 89,
+            "bodyHeight": 89
+          },
+          "coldConstructionAndBakeMs": 55.199999999953434
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 113,
+          "height": 101,
+          "fingerprint": "113x101:d893acf4",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 89,
+            "bodyHeight": 89
+          },
+          "coldConstructionAndBakeMs": 91.69999999995343
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 144,
+          "height": 104,
+          "fingerprint": "144x104:3a244f9",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 89,
+            "bodyHeight": 89
+          },
+          "coldConstructionAndBakeMs": 192.9000000001397
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 142,
+          "height": 104,
+          "fingerprint": "142x104:c647cc61",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 89,
+            "bodyHeight": 89
+          },
+          "coldConstructionAndBakeMs": 187.39999999990687
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 238,
+          "height": 256,
+          "fingerprint": "238x256:c278cf9c",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 222,
+            "bodyHeight": 222
+          },
+          "coldConstructionAndBakeMs": 336.5
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 363,
+          "height": 397,
+          "fingerprint": "363x397:e211eb2c",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 222,
+            "bodyHeight": 222
+          },
+          "coldConstructionAndBakeMs": 798.3999999999069
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 413,
+          "height": 308,
+          "fingerprint": "413x308:eaa95fd1",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 222,
+            "bodyHeight": 222
+          },
+          "coldConstructionAndBakeMs": 1802.8000000000466
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 414,
+          "height": 252,
+          "fingerprint": "414x252:e4e14e47",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 222,
+            "bodyHeight": 221
+          },
+          "coldConstructionAndBakeMs": 1996.6000000000931
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 228,
+          "height": 253,
+          "fingerprint": "228x253:f49b6cb3",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 222,
+            "bodyHeight": 222
+          },
+          "coldConstructionAndBakeMs": 392.89999999990687
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 296,
+          "height": 359,
+          "fingerprint": "296x359:87eeda9f",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 222,
+            "bodyHeight": 221
+          },
+          "coldConstructionAndBakeMs": 566.4000000001397
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 353,
+          "height": 310,
+          "fingerprint": "353x310:50614d79",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 222,
+            "bodyHeight": 222
+          },
+          "coldConstructionAndBakeMs": 1328.3000000000466
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 350,
+          "height": 264,
+          "fingerprint": "350x264:e51e0eeb",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 222,
+            "bodyHeight": 223
+          },
+          "coldConstructionAndBakeMs": 1225.6000000000931
+        }
+      ],
+      "style": {
+        "pixel": 3,
+        "artStyle": "bold"
+      }
+    },
+    {
+      "id": "snail",
+      "cells": [
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 65,
+          "height": 35,
+          "fingerprint": "65x35:15c6c82e",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 29,
+            "bodyHeight": 28
+          },
+          "coldConstructionAndBakeMs": 25.9000000001397
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 67,
+          "height": 35,
+          "fingerprint": "67x35:b98caa10",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 29,
+            "bodyHeight": 29
+          },
+          "coldConstructionAndBakeMs": 18.199999999953434
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 50,
+          "height": 34,
+          "fingerprint": "50x34:1bf5ac27",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 29,
+            "bodyHeight": 28
+          },
+          "coldConstructionAndBakeMs": 34.199999999953434
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 50,
+          "height": 34,
+          "fingerprint": "50x34:1bf5ac27",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 29,
+            "bodyHeight": 28
+          },
+          "coldConstructionAndBakeMs": 31.699999999953434
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 44,
+          "height": 34,
+          "fingerprint": "44x34:45d222a0",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 29,
+            "bodyHeight": 29
+          },
+          "coldConstructionAndBakeMs": 8.599999999860302
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 45,
+          "height": 34,
+          "fingerprint": "45x34:6f89e2f",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 29,
+            "bodyHeight": 29
+          },
+          "coldConstructionAndBakeMs": 7.300000000046566
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 49,
+          "height": 34,
+          "fingerprint": "49x34:328cc9d7",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 29,
+            "bodyHeight": 28
+          },
+          "coldConstructionAndBakeMs": 50.5
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 49,
+          "height": 34,
+          "fingerprint": "49x34:328cc9d7",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 29,
+            "bodyHeight": 28
+          },
+          "coldConstructionAndBakeMs": 30.600000000093132
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 87,
+          "height": 54,
+          "fingerprint": "87x54:399bf227",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 46,
+            "bodyHeight": 46
+          },
+          "coldConstructionAndBakeMs": 42.799999999813735
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 90,
+          "height": 54,
+          "fingerprint": "90x54:b65d6ef7",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 46,
+            "bodyHeight": 46
+          },
+          "coldConstructionAndBakeMs": 41.200000000186265
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 72,
+          "height": 54,
+          "fingerprint": "72x54:f458e27b",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 46,
+            "bodyHeight": 46
+          },
+          "coldConstructionAndBakeMs": 81.5999999998603
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 72,
+          "height": 54,
+          "fingerprint": "72x54:f458e27b",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 46,
+            "bodyHeight": 46
+          },
+          "coldConstructionAndBakeMs": 100
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 73,
+          "height": 54,
+          "fingerprint": "73x54:55d6bde3",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 46,
+            "bodyHeight": 46
+          },
+          "coldConstructionAndBakeMs": 42.700000000186265
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 75,
+          "height": 54,
+          "fingerprint": "75x54:d0464335",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 46,
+            "bodyHeight": 46
+          },
+          "coldConstructionAndBakeMs": 42
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 74,
+          "height": 54,
+          "fingerprint": "74x54:23d14fa8",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 46,
+            "bodyHeight": 46
+          },
+          "coldConstructionAndBakeMs": 100.19999999995343
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 74,
+          "height": 54,
+          "fingerprint": "74x54:23d14fa8",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 46,
+            "bodyHeight": 46
+          },
+          "coldConstructionAndBakeMs": 99.5999999998603
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 85,
+          "height": 73,
+          "fingerprint": "85x73:d6ed009b",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 65,
+            "bodyHeight": 65
+          },
+          "coldConstructionAndBakeMs": 81.80000000004657
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 88,
+          "height": 73,
+          "fingerprint": "88x73:98012738",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 65,
+            "bodyHeight": 65
+          },
+          "coldConstructionAndBakeMs": 71.39999999990687
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 76,
+          "height": 73,
+          "fingerprint": "76x73:c8f542fb",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 65,
+            "bodyHeight": 65
+          },
+          "coldConstructionAndBakeMs": 92.60000000009313
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 76,
+          "height": 73,
+          "fingerprint": "76x73:c8f542fb",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 65,
+            "bodyHeight": 65
+          },
+          "coldConstructionAndBakeMs": 93.5999999998603
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 92,
+          "height": 73,
+          "fingerprint": "92x73:fbf01144",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 65,
+            "bodyHeight": 65
+          },
+          "coldConstructionAndBakeMs": 86.29999999981374
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 97,
+          "height": 74,
+          "fingerprint": "97x74:85c4dfc1",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 65,
+            "bodyHeight": 65
+          },
+          "coldConstructionAndBakeMs": 90.9000000001397
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 80,
+          "height": 74,
+          "fingerprint": "80x74:9e1d62bd",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 65,
+            "bodyHeight": 65
+          },
+          "coldConstructionAndBakeMs": 106.80000000004657
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 80,
+          "height": 74,
+          "fingerprint": "80x74:9e1d62bd",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 65,
+            "bodyHeight": 65
+          },
+          "coldConstructionAndBakeMs": 100.89999999990687
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 290,
+          "height": 222,
+          "fingerprint": "290x222:e47f60a5",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 200,
+            "bodyHeight": 200
+          },
+          "coldConstructionAndBakeMs": 2892.6999999999534
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 300,
+          "height": 222,
+          "fingerprint": "300x222:6b345c87",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 200,
+            "bodyHeight": 200
+          },
+          "coldConstructionAndBakeMs": 2908.100000000093
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 228,
+          "height": 222,
+          "fingerprint": "228x222:78c79453",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 200,
+            "bodyHeight": 200
+          },
+          "coldConstructionAndBakeMs": 2056.600000000093
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 228,
+          "height": 222,
+          "fingerprint": "228x222:78c79453",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 200,
+            "bodyHeight": 200
+          },
+          "coldConstructionAndBakeMs": 1994.8000000000466
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 253,
+          "height": 222,
+          "fingerprint": "253x222:acb3dd8",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 200,
+            "bodyHeight": 201
+          },
+          "coldConstructionAndBakeMs": 2111.6999999999534
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 260,
+          "height": 221,
+          "fingerprint": "260x221:219164bf",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 200,
+            "bodyHeight": 200
+          },
+          "coldConstructionAndBakeMs": 2093
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 229,
+          "height": 224,
+          "fingerprint": "229x224:1d9763d3",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 200,
+            "bodyHeight": 201
+          },
+          "coldConstructionAndBakeMs": 1805.0999999998603
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 229,
+          "height": 224,
+          "fingerprint": "229x224:1d9763d3",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 200,
+            "bodyHeight": 201
+          },
+          "coldConstructionAndBakeMs": 1845.1999999999534
+        }
+      ],
+      "style": {
+        "pixel": 3,
+        "artStyle": "bold"
+      }
+    },
+    {
+      "id": "hydra",
+      "cells": [
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 157,
+          "height": 106,
+          "fingerprint": "157x106:814c44bd",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 81,
+            "bodyHeight": 80
+          },
+          "coldConstructionAndBakeMs": 249.89999999990687
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 168,
+          "height": 106,
+          "fingerprint": "168x106:9e0c90de",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 81,
+            "bodyHeight": 81
+          },
+          "coldConstructionAndBakeMs": 180
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 228,
+          "height": 115,
+          "fingerprint": "228x115:96cf918b",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 81,
+            "bodyHeight": 81
+          },
+          "coldConstructionAndBakeMs": 443.80000000004657
+        },
+        {
+          "age": 0,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 228,
+          "height": 115,
+          "fingerprint": "228x115:96cf918b",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 81,
+            "bodyHeight": 81
+          },
+          "coldConstructionAndBakeMs": 460.5999999998603
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 95,
+          "height": 93,
+          "fingerprint": "95x93:6de3eb99",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 81,
+            "bodyHeight": 80
+          },
+          "coldConstructionAndBakeMs": 59.0999999998603
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 93,
+          "height": 93,
+          "fingerprint": "93x93:2dba7577",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 81,
+            "bodyHeight": 81
+          },
+          "coldConstructionAndBakeMs": 58.10000000009313
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 130,
+          "height": 98,
+          "fingerprint": "130x98:fed62923",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 81,
+            "bodyHeight": 82
+          },
+          "coldConstructionAndBakeMs": 132
+        },
+        {
+          "age": 0,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 130,
+          "height": 98,
+          "fingerprint": "130x98:fed62923",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 81,
+            "bodyHeight": 82
+          },
+          "coldConstructionAndBakeMs": 129
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 258,
+          "height": 157,
+          "fingerprint": "258x157:a8ed92e6",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 126,
+            "bodyHeight": 127
+          },
+          "coldConstructionAndBakeMs": 592.5999999998603
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 270,
+          "height": 156,
+          "fingerprint": "270x156:13e03e69",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 126,
+            "bodyHeight": 125
+          },
+          "coldConstructionAndBakeMs": 529.6000000000931
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 281,
+          "height": 160,
+          "fingerprint": "281x160:a9270db8",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 126,
+            "bodyHeight": 125
+          },
+          "coldConstructionAndBakeMs": 819.1999999999534
+        },
+        {
+          "age": 1,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 281,
+          "height": 160,
+          "fingerprint": "281x160:a9270db8",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 126,
+            "bodyHeight": 125
+          },
+          "coldConstructionAndBakeMs": 985.9000000001397
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 160,
+          "height": 143,
+          "fingerprint": "160x143:719765e9",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 126,
+            "bodyHeight": 126
+          },
+          "coldConstructionAndBakeMs": 271.0999999998603
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 154,
+          "height": 143,
+          "fingerprint": "154x143:6d71c8bb",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 126,
+            "bodyHeight": 126
+          },
+          "coldConstructionAndBakeMs": 192.9000000001397
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 199,
+          "height": 147,
+          "fingerprint": "199x147:309c85ca",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 126,
+            "bodyHeight": 126
+          },
+          "coldConstructionAndBakeMs": 345.5
+        },
+        {
+          "age": 1,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 199,
+          "height": 147,
+          "fingerprint": "199x147:309c85ca",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 126,
+            "bodyHeight": 126
+          },
+          "coldConstructionAndBakeMs": 409.5999999998603
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 362,
+          "height": 222,
+          "fingerprint": "362x222:47466dc0",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 180,
+            "bodyHeight": 181
+          },
+          "coldConstructionAndBakeMs": 1652.8999999999069
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 375,
+          "height": 222,
+          "fingerprint": "375x222:29bfb70f",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 180,
+            "bodyHeight": 181
+          },
+          "coldConstructionAndBakeMs": 1797
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 405,
+          "height": 227,
+          "fingerprint": "405x227:16b3500e",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 180,
+            "bodyHeight": 180
+          },
+          "coldConstructionAndBakeMs": 2665.899999999907
+        },
+        {
+          "age": 2,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 405,
+          "height": 227,
+          "fingerprint": "405x227:16b3500e",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 180,
+            "bodyHeight": 180
+          },
+          "coldConstructionAndBakeMs": 2494.9000000001397
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 225,
+          "height": 204,
+          "fingerprint": "225x204:e2838988",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 180,
+            "bodyHeight": 180
+          },
+          "coldConstructionAndBakeMs": 622.1999999999534
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 221,
+          "height": 204,
+          "fingerprint": "221x204:cc3cae9e",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 180,
+            "bodyHeight": 180
+          },
+          "coldConstructionAndBakeMs": 675
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 286,
+          "height": 208,
+          "fingerprint": "286x208:c1d03c6e",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 180,
+            "bodyHeight": 180
+          },
+          "coldConstructionAndBakeMs": 1295.0999999998603
+        },
+        {
+          "age": 2,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 286,
+          "height": 208,
+          "fingerprint": "286x208:c1d03c6e",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 180,
+            "bodyHeight": 180
+          },
+          "coldConstructionAndBakeMs": 1180.9000000001397
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 425,
+          "height": 310,
+          "fingerprint": "425x310:27a36b8d",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 6,
+            "bodyTarget": 273,
+            "bodyHeight": 273
+          },
+          "coldConstructionAndBakeMs": 3746.7999999998137
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 435,
+          "height": 311,
+          "fingerprint": "435x311:17b29c8e",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 3,
+            "bodyTarget": 273,
+            "bodyHeight": 274
+          },
+          "coldConstructionAndBakeMs": 3893.8000000000466
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 0,
+          "width": 611,
+          "height": 342,
+          "fingerprint": "611x342:afb3f4b0",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 273,
+            "bodyHeight": 273
+          },
+          "coldConstructionAndBakeMs": 9718.399999999907
+        },
+        {
+          "age": 3,
+          "facing": "towards",
+          "mode": "graph",
+          "frame": 1,
+          "width": 611,
+          "height": 342,
+          "fingerprint": "611x342:afb3f4b0",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 273,
+            "bodyHeight": 273
+          },
+          "coldConstructionAndBakeMs": 9954
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 0,
+          "width": 352,
+          "height": 305,
+          "fingerprint": "352x305:3e1111b9",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 273,
+            "bodyHeight": 273
+          },
+          "coldConstructionAndBakeMs": 2411.399999999907
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "shipped",
+          "frame": 1,
+          "width": 345,
+          "height": 306,
+          "fingerprint": "345x306:93d5bdb1",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 273,
+            "bodyHeight": 273
+          },
+          "coldConstructionAndBakeMs": 2516.7000000001863
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 0,
+          "width": 431,
+          "height": 315,
+          "fingerprint": "431x315:8ed7e6eb",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 273,
+            "bodyHeight": 273
+          },
+          "coldConstructionAndBakeMs": 4860.699999999953
+        },
+        {
+          "age": 3,
+          "facing": "away",
+          "mode": "graph",
+          "frame": 1,
+          "width": 431,
+          "height": 315,
+          "fingerprint": "431x315:8ed7e6eb",
+          "sizeFit": {
+            "rasters": 2,
+            "probes": 2,
+            "bodyTarget": 273,
+            "bodyHeight": 273
+          },
+          "coldConstructionAndBakeMs": 3963.5999999998603
+        }
+      ],
+      "style": {
+        "pixel": 3,
+        "artStyle": "bold"
+      }
+    }
+  ],
+  "costScope": "One cold construction+bake sample per cell, including selected native fitting; not steady-state live-rig frame time. Two baked walk frames, not turning/terrain proof."
+}
