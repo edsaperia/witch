@@ -51,7 +51,8 @@ export class ArrivalFlight {
   }
 
   /** Straight to her bed (or her decks), at once: only a sail not from the chart (window.witch.sail, the island's link's &arrive=1)
-   *  whose shader grace ran out (main.ts sailInPlace, view.shaderLandingLimited); never a key or tap (Ed, 2026-11-06). */
+   *  whose shader grace ran out (main.ts sailInPlace, view.shaderLandingLimited), and the tools' window.witch.land; never a key or
+   *  tap (Ed, 2026-11-06). */
   skip(): void { this.skipped = true; }
 
   /** When the house or the dancefloor first comes on screen (seconds into the flight; computed as it begins), for the log only

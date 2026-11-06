@@ -1952,6 +1952,10 @@ if (params.get("debug") === "sail") (window as unknown as { witch: Record<string
 // on the chart, the way by sail.inPlace or ?sail=, in place the fallback), for tools/sail/leak.cjs and swap.cjs; `end` the
 // chart's flight end (a plain one out at sea south of the island if not given: its still a dark screen; null, none), `fail`
 // (?debug=sail only) the sail in place made to throw, to see the fallback. Resolves once the night's start is ready.
+// window.witch.land(): the tools' own way past a sail's dive (the smoke run, tools/sail/leak.cjs), straight to her bed as a dive whose
+// shader grace ran out lands; no player can (Ed, 2026-11-06: "they shouldn't be skippable because loading must happen"). False if
+// there's no dive under way.
+(window as unknown as { witch: Record<string, unknown> }).witch.land = (): boolean => { const a = N().arrival; if (!a || a.done) return false; a.skip(); return true; };
 // window.witch.chart(): the sea chart over the night, as the map table opens it (tools/smoke/quick.cjs: choosing her own island);
 // window.witch.chart("mapTable"), as the table's own, sailing on a hold (tools/sail/hold.cjs).
 (window as unknown as { witch: Record<string, unknown> }).witch.chart = (table?: string) => chartOverNight(table);
