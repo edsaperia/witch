@@ -9576,6 +9576,131 @@ function genomeHash(g, context = {}, level = null) {
 // Parent sockets attach at neck tips; rotating spine frames remain future work.
 
 
+// ---- inlined from art/body-graph/part-tree.js ----
+// Original JS implementation of the architecture described in the Infinigen paper.
+// Provenance/licence and verified-vs-inferred choices: docs/plans/body-graph-part-tree.md.
+
+
+// Same convention as Model's existing polynomial union: B is BAND, bulge B/4.
+const BLEND_CONVENTION="classic-quadratic-band-width";
+function sminBand(a,b,band){
+  if(!(band>0))return Math.min(a,b);
+  const h=Math.max(band-Math.abs(a-b),0)/band;
+  return Math.min(a,b)-h*h*band*.25;
+}
+
+// Authored starting profiles, not imported animal data or Infinigen source/tables.
+// Three bean masses: rear, ribcage, shoulders; [axial radius, depth, width].
+const PART_FAMILIES=Object.freeze({
+  ursid:{profile:[[.36,.9,1],[.4,1,1],[.35,1.2,1.05]],curve:[0,-.02,.06]},
+  canid:{profile:[[.33,.8,.85],[.37,.9,.8],[.32,1.16,.95]],curve:[.02,-.03,0]},
+  cervid:{profile:[[.32,1,1],[.36,.95,.9],[.31,1.08,1]],curve:[.02,0,.04]},
+  chiropteran:{profile:[[.35,.8,.8],[.4,1,1],[.32,.9,.9]],curve:[0,0,.02]},
+  strigiform:{profile:[[.38,1,1],[.42,1.1,1],[.35,.95,.9]],curve:[-.03,0,.04]},
+  gastropod:{profile:[[.35,.7,.8],[.42,1,1],[.34,.8,.75]],curve:[0,0,.01]},
+  arachnid:{profile:[[.4,1.1,1.2],[.38,1,1],[.3,.8,.8]],curve:[.01,0,0]},
+  serpent:{profile:[[.32,.9,.9],[.38,1,1],[.33,1.05,1]],curve:[0,.01,0]},
+});
+
+function blendProfilePriors(family,priors=[{kind:"reference",weight:1}]){
+  const source=PART_FAMILIES[family];if(!source)throw Error("Unknown part-tree family");
+  const shapes={reference:[1,1,1],broad:[1,1.08,1.12],compact:[.92,1.04,1.04],lean:[1.04,.92,.88]};
+  let total=0;const result=source.profile.map(p=>p.map(()=>0));
+  for(const prior of priors){if(!(prior.weight>=0)||!Number.isFinite(prior.weight)||!shapes[prior.kind])throw Error("Invalid reference-profile prior");
+    total+=prior.weight;
+    source.profile.forEach((p,i)=>p.forEach((r,j)=>{result[i][j]+=r*shapes[prior.kind][j]*prior.weight;}));
+  }
+  if(!(total>0))throw Error("Profile prior weights must have a positive sum");
+  return result.map(p=>p.map(r=>r/total));
+}
+
+function familyBean(spine,spec={}){
+  const family=spec.template??"canid",template=PART_FAMILIES[family],profile=blendProfilePriors(family,spec.priors);
+  const length=spine.at(-1).at[0]-spine[0].at[0];
+  const amplitude=spec.profileVariation??0;if(!(amplitude>=0&&amplitude<=.08))throw Error("Profile variation must be0..0.08");
+  const masses=[0,.5,1].map((u,i)=>{
+    const station=spine[Math.round(u*(spine.length-1))],variation=j=>1+amplitude*(hash2(i,j,spec.seed??0)*2-1);
+    const region=i===1?spec.ribcage:i===0?spec.flank:null;
+    const depth=region?.depth??1,width=region?.width??1;
+    if(!(depth>0&&width>0)||!Number.isFinite(depth+width))throw Error("Invalid ribcage/flank profile");
+    return {at:[station.at[0]*.65,station.at[1]+template.curve[i],station.at[2]],r:[length*profile[i][0]*variation(0),station.r[1]*profile[i][1]*variation(1)*depth,station.r[2]*profile[i][2]*variation(2)*width],rough:station.rough};
+  });
+  return {masses,family,profile,convention:BLEND_CONVENTION};
+}
+
+const sampleGuide=(points,u)=>{
+  const t=Math.max(0,Math.min(1,u))*(points.length-1),i=Math.min(points.length-2,Math.floor(t)),f=t-i;
+  const delta=v3.sub(points[i+1].at,points[i].at),tangent=Math.hypot(...delta)>1e-9?v3.norm(delta):[1,0,0];
+  return {at:v3.lerp(points[i].at,points[i+1].at,f),r:v3.lerp(points[i].r,points[i+1].r,f),tangent};
+};
+
+/** Mount depth r interpolates skeleton->analytic cross-section, NEVER an inward
+ * ellipsoid-SDF offset. v is turns around the parent centre line, u along it. */
+function uvrMount(parent,u,v,r){
+  if(![u,v,r].every(Number.isFinite)||u<0||u>1||r<0||r>1)throw Error("Invalid uvr mount");
+  const point=sampleGuide(parent,u),angle=v*Math.PI*2;
+  const hint=Math.abs(point.tangent[1])<.95?[0,1,0]:[1,0,0];
+  const up=v3.norm(v3.sub(hint,v3.mul(point.tangent,v3.dot(hint,point.tangent)))),side=v3.norm(v3.cross(point.tangent,up));
+  return v3.add(point.at,v3.add(v3.mul(up,Math.cos(angle)*point.r[1]*r),v3.mul(side,Math.sin(angle)*point.r[2]*r)));
+}
+
+function acceptancePartTree(graph,spec={}){
+  const body=familyBean(graph.spine,spec);graph.bodyMasses=body.masses;
+  const curve=PART_FAMILIES[body.family].curve;
+  graph.spine.forEach((station,i)=>{
+    const t=i/(graph.spine.length-1)*2,k=Math.min(1,Math.floor(t)),f=t-k;
+    station.at[1]+=curve[k]*(1-f)+curve[k+1]*f;
+    station.r[1]*=body.profile[k][1]*(1-f)+body.profile[k+1][1]*f;
+    station.r[2]*=body.profile[k][2]*(1-f)+body.profile[k+1][2]*f;
+  });
+  graph.blendPolicy="parent-tree";graph.blendConvention=BLEND_CONVENTION;graph.blend=spec.blendBand??.035;
+  graph.partTree=[{id:"body",parent:null,family:body.family,profile:body.profile}];
+  for(const socket of graph.sockets){
+    if(socket.parent){socket.attach={parent:socket.parent,u:1,v:0,r:0};}
+    else {
+      const index=graph.spine.findIndex(s=>s.id===socket.station),offset=socket.offset;
+      socket.attach={parent:"body",u:index/(graph.spine.length-1),v:Math.atan2(offset[2],offset[1])/(Math.PI*2),r:socket.kind==="leg"?.6:0};
+      // Preserve authored head/arm lift; side mounts derive from the cross section.
+      socket.offset=socket.kind==="leg"?[offset[0],0,0]:offset.slice();
+    }
+    graph.partTree.push({id:socket.id,parent:socket.attach.parent,kind:socket.kind,mount:{...socket.attach}});
+  }
+  return graph;
+}
+
+/** Cap total primitives per group, stronger than just an overlap-point bound.
+ * Torso first, then each parent part and its features; siblings have unique groups. */
+function boundTreeBlendGroups(model,limit=3){
+  if(!Number.isInteger(limit)||limit<1||limit>4)throw Error("Blend-group limit must be1..4");
+  const counts=new Map(),chunks=new Map();let next=Math.max(1,...model.parts.map(p=>p.group),...model.flats.map(p=>p.group))+1;
+  for(const part of model.parts){
+    const original=part.group,chunk=chunks.get(original)??original,n=counts.get(chunk)??0;
+    if(n>=limit){const group=next++;chunks.set(original,group);part.group=group;counts.set(group,1);}
+    else {part.group=chunk;counts.set(chunk,n+1);}
+  }
+  // The sprite's group channel is eight-bit. Compact IDs preserve boundaries
+  // after splitting instead of silently wrapping distant feature IDs.
+  const compact=new Map();let id=1;
+  for(const part of [...model.parts,...model.flats]){
+    if(part.group===0)continue;
+    if(!compact.has(part.group))compact.set(part.group,id++);
+    part.group=compact.get(part.group);
+  }
+  if(id>256)throw Error("Part tree exceeds eight-bit group budget");
+  for(const anchor of model.anchors.feet)if(compact.has(anchor.group))anchor.group=compact.get(anchor.group);
+  model.blendAudit={convention:BLEND_CONVENTION,band:model.blend,maxParts:Math.max(0,...counts.values()),limit};
+  return model;
+}
+
+function partMuscles(model,graph,spec=[]){
+  for(const muscle of spec){
+    const a=uvrMount(graph.spine,muscle.from,muscle.angle??0,muscle.depth??.65),b=uvrMount(graph.spine,muscle.to,muscle.angle??0,muscle.depth??.65);
+    if(!(muscle.radius>0))throw Error("Muscle tube radius must be positive");
+    model.seg(a,b,muscle.radius,muscle.radius*.75,M.BODY,{part:"body",group:3000+model.parts.length});
+  }
+}
+
+
 const LEG_FAMILIES = Object.freeze({
   plantigrade: { knee: .48, bend: .12, foot: [.16, .07, .11] },
   digitigrade: { knee: .55, bend: -.16, foot: [.12, .06, .08] },
@@ -9607,10 +9732,12 @@ function validateGraph(graph) {
     assert(distance(a.at, b.at) < Math.min(...a.r) + Math.min(...b.r), `${b.id}: disconnected spine; insert a station`);
   }
   const sockets = new Set();
+  if(graph.bodyMasses){assert(graph.bodyMasses.length>0&&graph.bodyMasses.length<=4,"one to four torso masses required");for(const mass of graph.bodyMasses)assert(vec(mass.at)&&radii(mass.r),"finite torso mass required");}
   assert(Array.isArray(graph.sockets), "sockets array required");
   for (const s of graph.sockets) {
     assert(typeof s.id === "string" && s.id.length > 0 && !sockets.has(s.id), "unique socket ids required");
-    assert(vec(s.offset) && (s.parent ? sockets.has(s.parent) : ids.has(s.station)), `${s.id}: known station or preceding parent and finite offset required`);
+    const parent=s.attach?.parent??s.parent;
+    assert(vec(s.offset) && (s.attach?parent==="body"||sockets.has(parent):parent?sockets.has(parent):ids.has(s.station)), `${s.id}: known station or preceding parent and finite offset required`);
     assert(KINDS.has(s.kind), `${s.id}: unknown socket kind`);
     sockets.add(s.id);
     if (s.kind === "leg") {
@@ -9642,12 +9769,19 @@ function compileGraph(graph, { blend = graph.blend ?? .07 } = {}) {
   const model = new Model({ blend }), stations = new Map(graph.spine.map(s => [s.id, s]));
   /** @type {Record<string, number[]>} */
   const sockets = {};
+  /** @type {Record<string, number>} */
+  const groups = {};
+  const guides=new Map([["body",graph.spine]]);
   const legs = [];
-  for (const s of graph.spine) model.ell(s.at.slice(), s.r.slice(), s.mat ?? M.BODY, { part: "body",rough:s.rough });
+  for (const s of graph.bodyMasses??graph.spine) model.ell(s.at.slice(), s.r.slice(), s.mat ?? M.BODY, { part: "body",rough:s.rough });
   for (const [index, s] of graph.sockets.entries()) {
-    const root = v3.add(s.parent ? sockets[s.parent] : stations.get(s.station).at, s.offset);
+    const mount=s.attach?uvrMount(guides.get(s.attach.parent),s.attach.u,s.attach.v,s.attach.r):s.parent?sockets[s.parent]:stations.get(s.station).at;
+    const root = v3.add(mount, s.offset);
     sockets[s.id] = root;
-    const options = { part: s.part ?? s.id, group: s.kind === "shell" || s.kind === "wing" || s.kind === "membrane" ? index + 2 : 1 };
+    const group=graph.blendPolicy==="parent-tree"?(index+2)*16:s.kind === "shell" || s.kind === "wing" || s.kind === "membrane"?index+2:1;
+    groups[s.id]=group;
+    const options = { part: s.part ?? s.id, group };
+    guides.set(s.id,[{at:root,r:s.r??[.05,.05,.05]},{at:root,r:s.r??[.05,.05,.05]}]);
     if (s.kind === "leg") {
       const f = LEG_FAMILIES[s.family], end = s.foot.slice();
       assert(distance(root, end) > s.radius * 2, `${s.id}: leg too short`);
@@ -9662,11 +9796,13 @@ function compileGraph(graph, { blend = graph.blend ?? .07 } = {}) {
       else model.ell(foot, footR, s.family === "hoof" ? M.ACCENT : M.BODY, options);
       model.anchors.feet.push({ c: foot, r: footR[0], group: options.group, fit: s.family === "hoof" ? "hoof" : "paw" });
       legs.push({ id: s.id, family: s.family, root, knee, end, ...(heel?{heel}:{}), radii: profile });
+      guides.set(s.id,[root,knee,...(heel?[heel]:[]),end].map((at,i)=>({at,r:[profile[i],profile[i],profile[i]]})));
     } else if (s.kind === "tail" || s.kind === "neck") {
       const pts = s.points.map(p => [...v3.add(root, p.slice(0, 3)), p[3]]);
       assert(distance(pts[0].slice(0, 3), root) < 1e-8, `${s.id}: tail must begin at socket`);
       for (let i = 1; i < pts.length; i++) assert(distance(pts[i - 1].slice(0, 3), pts[i].slice(0, 3)) > Math.abs(pts[i - 1][3] - pts[i][3]), `${s.id}: degenerate tapered segment`);
       model.chain(pts, s.mat ?? M.BODY, options);
+      guides.set(s.id,pts.map(p=>({at:p.slice(0,3),r:[p[3],p[3],p[3]]})));
       if (s.kind === "neck") sockets[s.id] = pts.at(-1).slice(0,3);
     } else if (s.kind === "membrane") {
       const [a,b,c] = s.vertices.map(p=>v3.add(root,p)), u=v3.norm(v3.sub(b,a));
@@ -9681,7 +9817,7 @@ function compileGraph(graph, { blend = graph.blend ?? .07 } = {}) {
       model.ell(root, s.r.slice(), s.mat ?? (s.kind === "shell" ? M.ACCENT : M.BODY), options);
     }
   }
-  return { model, sockets, legs };
+  return { model, sockets, legs,groups };
 }
 
 
@@ -9828,25 +9964,30 @@ function tailPoints(spec,defaultLength,defaultWidth,frame){
 }
 
 function buildFamilyHead(m,at,r,spec={},legacy={}){
-  const h=headParameters(spec),o={part:"head"},mu=h.muzzle;
+  const h=headParameters(spec),group=spec.group??1,o={part:"head",group},mu=h.muzzle;
   const length=(legacy.muzzle??r)*mu[0],sn=v3.add(at,[r*h.skull[0]*.65+length*.5,-r*.18,0]);
   m.ell(sn,[length,r*mu[1],r*mu[2]],h.family==="beak"?M.ACCENT:M.BODY,o);
   const jaw=h.jaw??.2;
   if(jaw>0)m.ell(v3.add(sn,[-length*.1,-r*(mu[1]+jaw*.25),0]),[length*.8,r*jaw,r*mu[2]*.85],M.BODY,o);
   if(h.mouth)m.seg(v3.add(sn,[length*.1,-r*mu[1]*.6,-r*mu[2]]),v3.add(sn,[length*.85,-r*mu[1]*.6,r*mu[2]]),r*.025,r*.025,M.MOUTH,o);
   if(h.family==="reptile"||h.family==="insect")for(const side of [-1,1])m.ell(v3.add(sn,[length*.75,r*.15,side*r*mu[2]*.6]),[r*.05,r*.035,r*.04],M.NOSE,o);
-  else if(h.family!=="beak")m.ell(v3.add(sn,[length*.85,0,0]),[r*.16,r*.13,r*mu[2]*.5],M.NOSE,o);
+  else if(h.family!=="beak")m.ell(v3.add(sn,[length*.85,0,0]),[r*.16,r*.13,r*mu[2]*.5],M.NOSE,{...o,group:group+1});
   const ear={kind:legacy.ears??"point",size:1,angle:0,position:[-.25,.87,.65],...h.ears};
   const eye={size:.09,position:[.55,.2,.73],...h.eyes};
   for(const side of [-1,1]){
-    m.ell(v3.add(at,eye.position.map((v,i)=>r*v*(i===2?side:1))),[r*eye.size,r*eye.size,r*eye.size],M.EYE,o);
-    if(h.brow>0)m.ell(v3.add(at,[r*.48,r*.35,side*r*.6]),[r*.45,r*h.brow,r*.3],M.BODY,o);
+    const feature={...o,group:group+(side>0?4:2)};
+    m.ell(v3.add(at,eye.position.map((v,i)=>r*v*(i===2?side:1))),[r*eye.size,r*eye.size,r*eye.size],M.EYE,feature);
+    if(h.brow>0)m.ell(v3.add(at,[r*.48,r*.35,side*r*.6]),[r*.45,r*h.brow,r*.3],M.BODY,{...feature,group:feature.group+1});
     if(ear.kind==="none")continue;
     const c=v3.add(at,ear.position.map((v,i)=>r*v*(i===2?side:1))),size=r*ear.size;
     const tip=v3.add(c,[Math.sin(ear.angle)*size,size*(ear.kind==="bigbat"?1.8:.6),side*size*.12]);
-    if(ear.kind==="round")m.ell(c,[size*.25,size*.27,size*.14],M.BODY,o);
-    else if(ear.kind==="leaf"||ear.kind==="bigbat")m.ell(v3.lerp(c,tip,.5),[size*.17,size*(ear.kind==="bigbat"?.9:.4),size*.09],M.BODY,{...o,dir:[1,0,0],up:v3.sub(tip,c)});
-    else if(ear.kind==="point")m.chain([[...c,size*.22],[...tip,size*.015]],M.BODY,o);
+    const earOptions={...o,group:group+(side>0?7:6)};
+    if(ear.kind==="round")m.ell(c,[size*.25,size*.27,size*.14],M.BODY,earOptions);
+    else if(ear.kind==="leaf"||ear.kind==="bigbat")m.ell(v3.lerp(c,tip,.5),[size*.17,size*(ear.kind==="bigbat"?.9:.4),size*.09],M.BODY,{...earOptions,dir:[1,0,0],up:v3.sub(tip,c)});
+    else if(ear.kind==="point"){
+      const middle=v3.add(v3.lerp(c,tip,.5),[size*(ear.curl??0),0,0]);
+      m.chain([[...c,size*.22],...(ear.curl?[[...middle,size*.12]]:[]),[...tip,size*.015]],M.BODY,earOptions);
+    }
     else throw Error("Unknown ear family");
   }
   return {sn};
@@ -9894,9 +10035,10 @@ function familyCollars(m,graph,sockets,spec={}){
 }
 
 
+
 const ACCEPTANCE_IDS = Object.freeze(["bear","wolf","stag","bat","snail","hydra"]);
 const ACCEPTANCE_PLANS = {
-  bear:{family:"quadruped",coat:"muzzle",feet:"plantigrade",length:1.25,width:.4,depth:.36,leg:.43,head:.34,muzzle:.23,ears:"round",tail:.17,
+  bear:{family:"quadruped",template:"ursid",priors:[{kind:"broad",weight:.7},{kind:"compact",weight:.3}],muscles:[{from:.62,to:.88,angle:.1,radius:.045,depth:.6}],neck:.02,coat:"muzzle",feet:"plantigrade",length:1.25,width:.4,depth:.36,leg:.43,head:.34,muzzle:.23,ears:"round",tail:.17,
     headShape:{family:"ursine",skull:[1,1.05,1],ears:{kind:"round",size:1.15,position:[-.25,.82,.7]},eyes:{size:.075,position:[.65,.22,.74]}},
     stance:1.12,limbRadius:.105,limbProfile:[1,.92,.75],footShape:{kind:"paw",width:.13,length:.18,pads:true,claws:true},tailShape:{kind:"stub",length:.17,thickness:.09},
     furShell:{thickness:.025,softness:.12},volumes:[{region:"neck",at:.95,size:.065,softness:.2,width:1,depth:1},{region:"shoulder",at:.78,size:.13,softness:.18,lift:.25,width:.8,depth:1},{region:"chest",at:.75,size:.08,softness:.23,lift:-.35},{region:"belly",at:.45,size:.06,softness:.3,lift:-.5},{region:"haunch",at:.12,size:.07,softness:.2,width:1.2}],
@@ -10013,8 +10155,9 @@ function acceptanceGraph(S,age,frame=0){
       }
     }
   }else throw Error("Unknown acceptance graph family");
-  const volumes=[...(p.volumes??[]),...(p.ruff?.size>0?[{region:"ruff",at:.95,size:p.ruff.size,softness:p.ruff.softness??.15}]:[])];
-  shapeEnvelope(graph,{...p,volumes});
+  shapeEnvelope(graph,p);
+  const templates={quadruped:p.feet==="plantigrade"?"ursid":p.feet==="hoof"?"cervid":"canid",winged:"chiropteran",gastropod:"gastropod",branching:"serpent"};
+  acceptancePartTree(graph,{...p,template:p.template??templates[p.family]});
   return {graph,meta,plan:p};
 }
 
@@ -10049,7 +10192,18 @@ function buildAcceptanceModel(S,age,frame=0){
   const {graph,meta,plan}=acceptanceGraph(S,age,frame);
   const compiled=meta.family==="quadruped"?poseGraph(graph,frame*.16,{stride:.16,duty:.65,lift:.075}):compileGraph(graph);
   const m=compiled.model,heads=[];
-  for(const h of meta.heads){const at=compiled.sockets[h.id];buildFamilyHead(m,at,h.r,plan.headShape,{muzzle:h.muzzle,ears:meta.ears});heads.push({c:at,r:[h.r,h.r,h.r]});}
+  m.partTree=graph.partTree.map(part=>({...part}));
+  for(const h of meta.heads){
+    const at=compiled.sockets[h.id],start=m.parts.length;
+    buildFamilyHead(m,at,h.r,{...plan.headShape,group:compiled.groups[h.id]},{muzzle:h.muzzle,ears:meta.ears});
+    for(let i=start;i<m.parts.length;i++){
+      m.parts[i].parentPart=h.id;
+      m.partTree.push({id:`${h.id}/feature-${i-start}`,parent:h.id,kind:"feature"});
+    }
+    heads.push({c:at,r:[h.r,h.r,h.r]});
+  }
+  partMuscles(m,graph,plan.muscles);
+  if(plan.ruff?.size>0&&heads.length)m.ell(compiled.sockets.neck,[plan.ruff.size*2,plan.ruff.size*3,plan.ruff.size*3],M.BODY2,{part:"head",group:3500});
   if(heads.length)Object.assign(meta,{headX:heads[0].c[0],headY:heads[0].c[1]});
   for(const part of m.parts)if(part.mat===M.BODY){const label=compiled.legs.some(l=>l.id===part.part)?"legs":part.part;part.paint=p=>acceptanceCoat(plan,age,meta,p,label);}
   if(heads.length){m.anchors.head=heads[0];m.anchors.neck={c:heads[0].c,r:heads[0].r[0]*.8,dir:[1,.2,0]};}
@@ -10069,7 +10223,7 @@ function buildAcceptanceModel(S,age,frame=0){
     for(const side of [-1,1]){const pts=[];for(let i=0;i<=segments;i++){const t=i/segments,a=t*Math.PI*2*turns,R=(.08+(spiral.flare??.8)*t);pts.push([centre[0]+Math.cos(a)*r*R,centre[1]+Math.sin(a)*shell.r[1]*R,side*r*.73,.014]);}m.chain(pts,age===3?M.WOOD:M.ACCENT,{part:"body"});}
     if(spiral.aperture>0){
       const mouth=v3.add(centre,[r*.7,-shell.r[1]*.5,r*.6]),radii=[r*spiral.aperture,shell.r[1]*spiral.aperture,.08];
-      m.ell(mouth,radii,M.BODY3,{part:"body",group:graph.sockets.findIndex(s=>s.id==="shell")+2,cut:true});
+      m.ell(mouth,radii,M.BODY3,{part:"body",group:compiled.groups.shell,cut:true});
       m.ell(v3.add(mouth,[-.015,0,-.04]),radii.map(k=>k*.75),M.BODY3,{part:"body",group:90});
     }
     if(age===3){
@@ -10105,8 +10259,10 @@ function buildAcceptanceModel(S,age,frame=0){
     for(const p of m.parts)if(compiled.legs.some(l=>p.part===l.id))p.part="legs";
   }
   m.bodyGraph=graph;
+  boundTreeBlendGroups(m);
   return {model:m,meta};
 }
+
 
 
 // ---- inlined from art/body-graph/quadruped.js ----
@@ -12001,6 +12157,7 @@ function finish(m, S, level, st, k, facing, ref = null, scaleOverride = null) {
   const build = S.sizes.build?.[level] ?? 1;
   if (build !== 1) beef(m, build); // absent bulk curve means the authored model, as on shipped quadrupeds
   gearUp(m);
+  if(m.bodyGraph?.blendPolicy==="parent-tree")boundTreeBlendGroups(m);
   // ref: a model in the walk's first pose, its scale taken for every frame (a cycle's frames at one scale, not each fitted to its own height)
   let scale = scaleOverride ?? undefined;
   if (ref) { if (build !== 1) beef(ref, build); scale = render(ref, { height: drawHeight(level, st, k), facing, measure: true }).s; }
