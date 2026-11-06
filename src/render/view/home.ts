@@ -19,7 +19,7 @@ import { columnShown, leyReachTimes } from "../../rules/leypulse";
 import { routeSeen } from "../../rules/hatSpells";
 import { speakerBoot } from "../../rules/game";
 import type { ForestLight, View } from "../view";
-import { inView, overBulge } from "./culling";
+import { focusOf, inView, overBulge } from "./culling";
 import { mark } from "./pops";
 import { ringStoneKey, stumpId } from "../artBuild";
 import type { TrunkShadow } from "../trunkShadows";
@@ -99,8 +99,11 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   const lp = v.leyParty ?? g.party, rk = `${leyKey(lp)}:${g.party.spellAt ?? "-"}:${g.party.bootUntil}:${Math.floor(g.clock.time * 2)}`; // (the line's own party: leyLines.advance)
   if (v.leyReach.key !== rk) v.leyReach = { key: rk, times: leyReachTimes(lp, g.map, g.clock.time) };
   const FLARE = R.flare.time, allSeen = g.party.spellAt !== null && routeSeen(g); // (the Route-seer hat worn: every beacon up, rules/hatSpells.ts; none before the party, as the line: Ed, 2026-10-26)
+  // (drawn, and lit, round the view's focus: her, or a sail's dive's aim, so the stones and stumps the dive flies over show; Ed,
+  // 2026-11-06: "Campfires are nice to see, as are stumps"; her own sigils and notes by her, as ever)
+  const fo = focusOf(v);
   for (const m of mc.list) {
-    const d = Math.hypot(m.x - w.x, m.z - w.z);
+    const d = Math.hypot(m.x - w.x, m.z - w.z), df = Math.hypot(m.x - fo.x, m.z - fo.z);
     // Register visible stump notes independently of the column and marker draw ranges.
     let iconSize: number | undefined;
     if (ranked && stumps && t.cast?.on) {
@@ -114,7 +117,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     }
     if (iconSize !== undefined && (d >= stonesRange || d > range))
       v.leashView.stones.push({ key: m.key, x: m.x, z: m.z, top: 0, iconSize });
-    if (d > range) continue;
+    if (df > range) continue;
     const col = stoneCol(m.cell), dim = ranked && variant(m.cell) === EMPTY_STONE ? EMPTY_STONE_LIGHT : 1;
     // Awake: brighter on the beat, more so as the countdown runs out; dormant: a steady glow.
     const level = m.awake ? 1 + Math.round(Math.min(1, beat * (0.4 + 0.6 * build)) * (MARKER_LEVELS - 2)) : 0;
@@ -129,11 +132,11 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     const strength = (m.awake ? (A.light + A.lightBuild * build) * (0.55 + 0.45 * beat) : D.light) * dim;
     // (the trees, props and scenery round it cast shadows from it, as from a campfire, thrown from the stone itself, not from its
     // light's spot in front of it, so the stone casts none of its own: render/trunkShadows.ts; Ed, 2026-10-13)
-    if (d < R.lightRange && !stumps) near.push({ d, l: { x: m.x, y: 0.5, z: m.z + 1.5, reach: m.awake ? A.reach : D.reach, rgb: col, strength, shadow: { x: m.x, y: 1.5, z: m.z, k: m.awake ? 1 : 0.7 } } });
+    if (df < R.lightRange && !stumps) near.push({ d: df, l: { x: m.x, y: 0.5, z: m.z + 1.5, reach: m.awake ? A.reach : D.reach, rgb: col, strength, shadow: { x: m.x, y: 1.5, z: m.z, k: m.awake ? 1 : 0.7 } } });
     // A wild stump's clearing (before its soundsystem): no light of its own, eerie moonlight and a few pale wisps drifting round it,
     // the nearest few lighting the ground (Ed, 2026-10-29: "more like eerie moonlight ... blue/green/white wisps ... that move around
     // the stump area. Remove the current lighting"; render/stumpWisps.ts). (Its sigils' mixed light, runeMarkers.stump.light, is gone.)
-    if (stumps) stumpWisps(WT, m.cell, m.x, m.z, d, time, mote, WISP_LIGHTS);
+    if (stumps) stumpWisps(WT, m.cell, m.x, m.z, df, time, mote, WISP_LIGHTS);
     // Awake: a column of light and a thin laser straight up (Ed, v149: "let's see both"); dormant:
     // only the faint column above the canopy. The beams grow as the
     // countdown to the stone's wake runs (Ed, 2026-10-04): the next stone's from half to full,
@@ -191,7 +194,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     for (const l of lists.values()) l.length = 0;
     if (!g.map.zoo?.layout) for (const [cx, cy] of g.map.cells) {
       if ((cx === hx && cy === hy) || !g.map.playable(cx, cy)) continue;
-      const q = g.map.soundsystemSpot(cx, cy), d = Math.hypot(q.x - w.x, q.z - w.z);
+      const q = g.map.soundsystemSpot(cx, cy), d = Math.hypot(q.x - fo.x, q.z - fo.z);
       if (d > range) continue;
       const s = stumpOf([cx, cy], d < range * 0.6);
       if (!s) continue;
@@ -373,6 +376,17 @@ export const entDepth = (d: Deck | null): { far: number; near: number } => (d?.h
 export function alongRay(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number; scale: number } {
   const c = v.camera.position, l = Math.hypot(p.x - c.x, p.y - c.y, p.z - c.z) || 1, q = nearerCamera(v, p, d);
   return { ...q, scale: Math.max(0.05, (l - d) / l) };
+}
+
+/** A point `p` of a flat picture whose anchor `a` is laid `d` metres nearer the camera: moved toward the camera by the share of its
+ *  ray that `a`'s `d` is of `a`'s (not by `d` itself), so every point of the picture lands on its own pixel and the picture stays flat,
+ *  parallel to its plane. Each corner pushed by `d` along its own ray (alongRay) bends a picture: the far corners go a smaller share
+ *  of the way than the near ones, the GPU's interpolation inside it no longer matches its plane, and what's drawn inside it lands off
+ *  its pixel by an amount that changes as the camera moves: a room's dressing, a picture across the house in Ed's layout, slid over
+ *  the floor as she walked (Ed, 2026-11-05: "Some scenery items in the treehouse move around the floor when you walk around"). */
+export function alongRayFlat(v: { camera: { position: { x: number; y: number; z: number } } }, p: { x: number; y: number; z: number }, a: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number } {
+  const c = v.camera.position, k = d / (Math.hypot(a.x - c.x, a.y - c.y, a.z - c.z) || 1);
+  return { x: p.x - (p.x - c.x) * k, y: p.y - (p.y - c.y) * k, z: p.z - (p.z - c.z) * k };
 }
 
 /** The knockdown candles last shown, per view: their count, how many red, and (once she's free) when their smoke is done. */

@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { endNight, presentedGame, startNight, type Page } from "./night";
+import { buildSlice, endNight, presentedGame, startNight, type Page } from "./night";
+import { SLICE_MS } from "../render/slices";
 import * as leypulse from "../rules/leypulse";
 import { newGame, stepGame } from "../rules/game";
 import { TUNING } from "../rules/tuning";
@@ -100,7 +101,7 @@ describe("startNight (docs/plans/sail-without-reload.md B)", () => {
     page.view = { setGameSliced: render } as unknown as NonNullable<Page["view"]>;
     page.freeze = { retarget } as unknown as NonNullable<Page["freeze"]>;
     const night = await startNight(page, { ...spec(456), how: "bed" });
-    expect(presentedGame(page, night.game)).toBe(night.game); expect(render).toHaveBeenCalledWith(night.game);
+    expect(presentedGame(page, night.game)).toBe(night.game); expect(render).toHaveBeenCalledWith(night.game, SLICE_MS);
     expect(retarget).toHaveBeenCalledWith(night.game, 456);
     const clock = vi.spyOn(leypulse, "clockSeconds");
     try { night.hud.clock(); expect(clock).toHaveBeenCalledWith(night.game.party, night.game.clock.time); }
@@ -116,7 +117,7 @@ describe("startNight (docs/plans/sail-without-reload.md B)", () => {
     let facade: ReturnType<typeof presentedGame>;
     page.presentationGame = canonical => facade = { ...canonical, clock: { ...canonical.clock, time: 42 } };
     const night = await startNight(page, { ...spec(456), how: "bed" }), before = snapshotGame(night.game);
-    expect(render).toHaveBeenCalledWith(facade!); expect(night.game).not.toBe(facade!);
+    expect(render).toHaveBeenCalledWith(facade!, SLICE_MS); expect(night.game).not.toBe(facade!);
     expect(retarget).toHaveBeenCalledWith(night.game, 456);
     const clock = vi.spyOn(leypulse, "clockSeconds");
     try {
@@ -125,6 +126,32 @@ describe("startNight (docs/plans/sail-without-reload.md B)", () => {
       page.presentationGame = undefined; clock.mockClear(); night.hud.clock();
       expect(clock).toHaveBeenCalledWith(night.game.party, night.game.clock.time);
     } finally { clock.mockRestore(); endNight(page); }
+  });
+  it("builds under the sea chart's zoom at arrive.buildSlice ms a frame, and every other night at the page's own 8", async () => {
+    // (Ed, 2026-11-06: "Give the scene build more time per frame while the zoom is playing, since nothing else is happening then.
+    // For example 14 ms instead of 8 ms.")
+    expect(SLICE_MS).toBe(8);
+    expect(TUNING.arrive?.buildSlice).toBe(14);
+    expect(buildSlice({ underChart: true }, TUNING)).toBe(14);
+    expect(buildSlice({}, TUNING)).toBe(SLICE_MS);
+    expect(buildSlice({ underChart: false }, TUNING)).toBe(SLICE_MS);
+    expect(buildSlice({ underChart: true }, { arrive: { ...TUNING.arrive!, buildSlice: 20 } })).toBe(20); // (the knob's, as set)
+    expect(buildSlice({ underChart: true }, { arrive: undefined })).toBe(SLICE_MS); // (no arrival tuning: no zoom to build under)
+    const page: Page = { night: null, build: "test", look: () => null };
+    await startNight(page, spec(123));
+    const budgets: (number | undefined)[] = [];
+    page.view = { setGameSliced: async (_g: unknown, ms?: number) => { budgets.push(ms); } } as never;
+    try {
+      endNight(page);
+      await startNight(page, { ...spec(124), how: "sail", underChart: true }); // (the map table's chart: main.ts makeSailNight under its flight)
+      endNight(page);
+      await startNight(page, { ...spec(125), how: "sail" }); // (a sail with no zoom over it: the still, window.witch.sail)
+      endNight(page);
+      await startNight(page, { ...spec(126), how: "bed" });
+      endNight(page);
+      await startNight(page, { ...spec(127), how: "bot" });
+      expect(budgets).toEqual([14, SLICE_MS, SLICE_MS, SLICE_MS]);
+    } finally { endNight(page); }
   });
   it("resumes the saved rules and tuning without replaying the link's fresh-night switches", async () => {
     const original = await startNight({ night: null, build: "test", look: () => null }, spec(123, "home"));

@@ -26,7 +26,7 @@ import type { ScreenShake } from "./shake";
 import { sliceLog } from "../render/slices";
 
 /** What the hooks read of the night: the one on now (app/night.ts page.night), read at every use, so a new night is the one driven. */
-export interface HookNight { game: Game; tuning: Tuning; hud: Hud }
+export interface HookNight { game: Game; tuning: Tuning; hud: Hud; /** a sail's dive under way, if any (app/arrive.ts) */ arrival?: unknown }
 
 export interface HookDeps {
   advance?: typeof baseStepGame;
@@ -44,7 +44,7 @@ export function installHooks({ night, view, sound, meter, shake, frameStats, lad
   const stepGame = advance;
   let soundCue: MusicCue | undefined; // (the audit's own: the loop keeps its own cue)
   const applyShake = () => shake.apply();
-  (window as unknown as { witch: unknown }).witch = { get game() { return night().game; }, view, get tuning() { return night().tuning; }, frameStats, ladder, sound, slices: sliceLog, // (the sliced builds' longest steps: render/slices.ts, tools/view/build-budget.cjs)
+  (window as unknown as { witch: unknown }).witch = { get game() { return night().game; }, get arrival() { return night().arrival; }, view, get tuning() { return night().tuning; }, frameStats, ladder, sound, slices: sliceLog, // (the sliced builds' longest steps: render/slices.ts, tools/view/build-budget.cjs; arrival, a sail's dive, for the tools' timings)
     arena: (spec: string) => setupArena(night().game, spec), // (a debug hook: another arena without reloading)
     arenaAttack: (input: string) => arenaAttack(night().game, input), // (the Fight Arena: its wild side uses this attack in the grammar, a name or JSON; what was wrong or changed comes back)
     /** A builder's quick shot (app/shot.ts): put her at another scene, and the last one's result (tools/shot/shot.cjs). */

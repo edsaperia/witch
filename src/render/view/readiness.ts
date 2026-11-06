@@ -1,8 +1,10 @@
 // A4 mechanical extraction from src/render/view.ts; body identity is checked by tools/refactor/a4-split.mjs.
 import type { View, ViewInternals, ViewShared } from "../view";
+import { type StumpSpec } from "../artBuild";
 import * as THREE from "three";
 import { monitorProgramLink, waitForPrograms, type ReadyProgram } from "../programReadiness";
 import { materialProgramsReady } from "../shaderDrawGate";
+import { areaParts, areaReady, noteParts, seaReady } from "./mistReady";
 import { lateLandingReady } from "../landingReadiness";
 import { captureProgramUses, mapProgramUses } from "../programInventory";
 import { Hiz } from "../hiz";
@@ -10,6 +12,29 @@ import { carvingMask } from "../legendCarving";
 import { AREA_TYPES } from "../../rules/map";
 import { nextFrame, runSliced, type Steps } from "../slices";
 import { releaseDisposals } from "../retire";
+
+export function stumpsOf(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, t: number): StumpSpec[] {
+    const m = a4ViewHost.game.map;
+    if (a4PrivateHost.stumpsBy?.map !== m) {
+      const by = new Map<number, StumpSpec[]>(), [hx, hy] = m.centreCell, M = a4ViewHost.markerArt;
+      if (M?.stumps) for (const [cx, cy] of m.cells) {
+        if ((cx === hx && cy === hy) || !m.playable(cx, cy)) continue;
+        const s = M.stump([cx, cy]), t = m.typeOf(cx, cy);
+        if (s) { let l = by.get(t); if (!l) by.set(t, (l = [])); l.push(s.spec); }
+      }
+      a4PrivateHost.stumpsBy = { map: m, by };
+    }
+    return a4PrivateHost.stumpsBy.by.get(t) ?? [];
+  }
+
+export function updateLoadingMist(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, time: number): void {
+    const M = a4ViewHost.loadingMist!, log = a4ViewHost.mistLog, now = performance.now(), src = a4PrivateHost.mistSource;
+    const ready = (t: number) => { const p = areaParts(src, t), e = noteParts(log, t, p, now), r = areaReady(p); if (r && e.ready === undefined) e.ready = now; return r; };
+    if (a4PrivateHost.drawnMats.has(a4ViewHost.ground.ownMaterial)) a4PrivateHost.groundShown = true; // (once: from the house's rooms after the landing it isn't drawn)
+    const sea = () => { const ok = seaReady(a4PrivateHost.groundShown, a4ViewHost.stats.pendingGround), e = noteParts(log, -1, { ground: ok }, now); if (ok && e.ready === undefined) e.ready = now; return ok; };
+    M.update(time, ready, sea, t => a4PrivateHost.mistStartClear && (t < 0 || a4ViewHost.assets.hasType(t)));
+    for (const [t, e] of log) if (e.fade === undefined && (t < 0 ? M.seaBeganAt : M.beganAt(t)) !== undefined) e.fade = now;
+  }
 
 export function readyPrograms(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared): ReadyProgram[] {
     const programs = (a4ViewHost.renderer.info.programs ?? []) as unknown as ReadyProgram[];

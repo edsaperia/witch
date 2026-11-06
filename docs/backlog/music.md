@@ -1,8 +1,8 @@
 # Music: witchier, and a palette of genres
 
-**Audit status (2026-11-01): Partly built: samples, alto/A-B tools, genre foundations and Music Studio exist; the complete proposed palette and record progression do not.**
+**Audit status (2026-11-05): Partly built: samples, alto/A-B tools, genre foundations and Music Studio exist; the complete proposed palette and record progression do not; Ed's 4 Nov challenge-area music, isometric music-spell symbol and giant party-start spell are not built.** (1 Nov audit: 20 items, before the 4 Nov notes)
 
-The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+The status index checks the requests below against prototype `ab06904b` and cited history; re-checked on 2026-11-05 against prototype `26d69880` (live as v7569). **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
 
 | Request / feature group | Status | Evidence and remaining gap |
 |---|---|---|
@@ -192,4 +192,5 @@ Ed, 2026-11-04: "We should have some special spooky music for the challenge area
 | Spooky music at the challenge area before the fight (statues asleep) | — | Postponed by Ed. Ties in with the statues and the 4-bar wake-up (claude/challenge-statues). |
 | Challenge fight music while the pack is awake, until it is won | — | Postponed by Ed. Ends when the area is won, or when the pack goes back to stone. |
 | The music spell's symbol on the ground drawn isometric, lying on the ground like the other ground sigils (today it looks flat to the screen) | — | Ed, 2026-11-04. |
-| The party starts with a giant soundsystem spell: after she picks a record, a giant spell symbol appears on the dancefloor; while she casts, the dancefloor's stones turn into speakers as the audio analyser effect goes round | — | Ed, 2026-11-04: "the party should start with a giant version of the soundsystem spell". Knocked down, she still respawns and scratches as today. |
+| The party starts with a giant soundsystem spell: after she picks a record, a giant spell symbol appears on the dancefloor; while she casts, the dancefloor's stones turn into speakers as the audio analyser effect goes round | — | Ed, 2026-11-04: "the party should start with a giant version of the soundsystem spell". Knocked down, she still respawns and scratches as today. Audit 2026-11-05: not built; the 3 Nov party-start show (column, dome, sparkles, #1721 v7207) is a different effect. |
+| The first home night's music is generated (no new hand-picked 5-wave set) | **Built** | Audit 2026-11-05: home starts at 5 waves (#1810, v7537) and `isCurated` (`src/rules/musicSet.ts`) only matches the 10-wave `curated` set, so the night is generated. `curated` is still in `config/music-style.json`. |

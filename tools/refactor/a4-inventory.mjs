@@ -19,8 +19,8 @@ const view = {
   houseFrame: ['houseTilt', 'behindHouse', 'occluders', 'ensureCrown', 'buildHome', 'swapHomeArt'],
   markers: ['legendRings', 'pin', 'inviteStart'],
   atmosphere: ['updateMoon', 'updateSteam', 'updateSmoke'],
-  readiness: ['readyPrograms', 'landingWakeReady', 'beginLandingShaders', 'armLimitedLanding', 'limitedLandingReady', 'waitForLandingWitch', 'startLandingShaderGrace', 'compileAll', 'gpuCaughtUp', 'warmDraws', 'warmSteps', 'setReadiness'],
-  lifecycle: ['build', 'prepare', 'islandAhead', 'islandFaces', 'coastAhead', 'askIsland', 'setGameSteps', 'retype'],
+  readiness: ['stumpsOf', 'updateLoadingMist', 'readyPrograms', 'landingWakeReady', 'beginLandingShaders', 'armLimitedLanding', 'limitedLandingReady', 'waitForLandingWitch', 'startLandingShaderGrace', 'compileAll', 'gpuCaughtUp', 'warmDraws', 'warmSteps', 'setReadiness'],
+  lifecycle: ['build', 'prepare', 'bakeTufts', 'stumpSpecs', 'islandAhead', 'islandFaces', 'coastAhead', 'askIsland', 'setGameSteps', 'retype'],
   viewport: ['landingShot', 'scenePixelSize', 'resize', 'screenOf', 'aimAt'],
 };
 

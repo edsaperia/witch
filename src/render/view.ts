@@ -9,12 +9,13 @@ import { fxFor } from "./fx/system";
 const FX_MOCK_MODE = new URLSearchParams(globalThis.location?.search ?? "").get("fxmock");
 import type { RigGear } from "./rig/rigBuild";
 import type { Creature } from "../rules/creatures";
-import { partyGearOf } from "./artBuild";
+import { partyGearOf, type StumpSpec } from "./artBuild";
 
 import * as THREE from "three";
 
 import { type ReadyProgram } from "./programReadiness";
-import { installShaderDrawGate, type ShaderDrawStatus } from "./shaderDrawGate";
+import { installShaderDrawGate, instancesOf, type ShaderDrawStatus } from "./shaderDrawGate";
+import { type MistLogEntry, type MistSource } from "./view/mistReady";
 import { LandingArtFade } from './landingReadiness';
 
 import { deckOf } from "../rules/treehouse";
@@ -129,7 +130,7 @@ import { Wisps } from "./wisps";
 import { leyChain } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch, metresPerArtPixel } from "./sprites";
 import type { Spin } from "./spin";
-import { nextFrame, runSliced, runSync, type Steps } from "./slices";
+import { nextFrame, runSliced, runSync, SLICE_MS, type Steps } from "./slices";
 import { holdDisposals } from "./retire";
 import { Fireworks } from "./fireworks";
 import type { Style } from "./style";
@@ -267,6 +268,8 @@ function nightState(t: Tuning) {
     /** The crowns' reach now (metres; 0 on the ground): eased toward the tuning's scenery.canopyReach in the air (render/view/scenery.ts). */
     canopyNow: 0,
     lastBuild: { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1, relics: -1 } as { x: number; y: number; z: number; version: number; radius: number; canopy?: number; relics: number; cap?: number },
+    /** The loading mist's log (render/view/mistReady.ts): each area type's (the sea's, -1) parts first ready and its mist's going. */
+    mistLog: new Map<number, MistLogEntry>(),
     /** The scenery budget: how far round the witch scenery is drawn (rules/budget.ts). */
     budget: newBudget(t) as SceneryBudget,
     /** The last drawn frame's real time (ms), for the budget. */
@@ -398,8 +401,8 @@ import { render as a4_render, replayPartyStart as a4_replayPartyStart } from "./
 import { houseTilt as a4_houseTilt, behindHouse as a4_behindHouse, occluders as a4_occluders, ensureCrown as a4_ensureCrown, buildHome as a4_buildHome, swapHomeArt as a4_swapHomeArt } from "./view/houseFrame";
 import { legendRings as a4_legendRings, pin as a4_pin, inviteStart as a4_inviteStart } from "./view/markers";
 import { updateMoon as a4_updateMoon, updateSteam as a4_updateSteam, updateSmoke as a4_updateSmoke } from "./view/atmosphere";
-import { readyPrograms as a4_readyPrograms, landingWakeReady as a4_landingWakeReady, beginLandingShaders as a4_beginLandingShaders, armLimitedLanding as a4_armLimitedLanding, limitedLandingReady as a4_limitedLandingReady, waitForLandingWitch as a4_waitForLandingWitch, startLandingShaderGrace as a4_startLandingShaderGrace, compileAll as a4_compileAll, gpuCaughtUp as a4_gpuCaughtUp, warmDraws as a4_warmDraws, warmSteps as a4_warmSteps, setReadiness as a4_setReadiness } from "./view/readiness";
-import { build as a4_build, prepare as a4_prepare, islandAhead as a4_islandAhead, islandFaces as a4_islandFaces, coastAhead as a4_coastAhead, askIsland as a4_askIsland, setGameSteps as a4_setGameSteps, retype as a4_retype } from "./view/lifecycle";
+import { stumpsOf as a4_stumpsOf, updateLoadingMist as a4_updateLoadingMist, readyPrograms as a4_readyPrograms, landingWakeReady as a4_landingWakeReady, beginLandingShaders as a4_beginLandingShaders, armLimitedLanding as a4_armLimitedLanding, limitedLandingReady as a4_limitedLandingReady, waitForLandingWitch as a4_waitForLandingWitch, startLandingShaderGrace as a4_startLandingShaderGrace, compileAll as a4_compileAll, gpuCaughtUp as a4_gpuCaughtUp, warmDraws as a4_warmDraws, warmSteps as a4_warmSteps, setReadiness as a4_setReadiness } from "./view/readiness";
+import { build as a4_build, prepare as a4_prepare, bakeTufts as a4_bakeTufts, stumpSpecs as a4_stumpSpecs, islandAhead as a4_islandAhead, islandFaces as a4_islandFaces, coastAhead as a4_coastAhead, askIsland as a4_askIsland, setGameSteps as a4_setGameSteps, retype as a4_retype } from "./view/lifecycle";
 import { landingShot as a4_landingShot, scenePixelSize as a4_scenePixelSize, resize as a4_resize, screenOf as a4_screenOf, aimAt as a4_aimAt } from "./view/viewport";
 
 export class View {
@@ -413,6 +416,7 @@ export class View {
       set aimRay(value: View["aimRay"]) { owner.aimRay = value; },
       get armLimitedLanding(): View["armLimitedLanding"] { return owner.armLimitedLanding.bind(owner); },
       get askIsland(): View["askIsland"] { return owner.askIsland.bind(owner); },
+      get bakeTufts(): View["bakeTufts"] { return owner.bakeTufts.bind(owner); },
       get behindHouse(): View["behindHouse"] { return owner.behindHouse.bind(owner); },
       get borders(): View["borders"] { return owner.borders; },
       set borders(value: View["borders"]) { owner.borders = value; },
@@ -439,6 +443,8 @@ export class View {
       get dancefloor(): View["dancefloor"] { return owner.dancefloor; },
       get dark(): View["dark"] { return owner.dark; },
       set dark(value: View["dark"]) { owner.dark = value; },
+      get drawnMats(): View["drawnMats"] { return owner.drawnMats; },
+      set drawnMats(value: View["drawnMats"]) { owner.drawnMats = value; },
       get easeAppearing(): View["easeAppearing"] { return owner.easeAppearing.bind(owner); },
       get ensureCrown(): View["ensureCrown"] { return owner.ensureCrown.bind(owner); },
       get floorItems(): View["floorItems"] { return owner.floorItems; },
@@ -446,6 +452,8 @@ export class View {
       get glades(): View["glades"] { return owner.glades; },
       set glades(value: View["glades"]) { owner.glades = value; },
       get gpuCaughtUp(): View["gpuCaughtUp"] { return owner.gpuCaughtUp.bind(owner); },
+      get groundShown(): View["groundShown"] { return owner.groundShown; },
+      set groundShown(value: View["groundShown"]) { owner.groundShown = value; },
       get hazeBeforeTelescope(): View["hazeBeforeTelescope"] { return owner.hazeBeforeTelescope; },
       set hazeBeforeTelescope(value: View["hazeBeforeTelescope"]) { owner.hazeBeforeTelescope = value; },
       get hideForBare(): View["hideForBare"] { return owner.hideForBare.bind(owner); },
@@ -478,6 +486,9 @@ export class View {
       get makeLoadingMist(): View["makeLoadingMist"] { return owner.makeLoadingMist.bind(owner); },
       get masterplan(): View["masterplan"] { return owner.masterplan; },
       set masterplan(value: View["masterplan"]) { owner.masterplan = value; },
+      get mistSource(): View["mistSource"] { return owner.mistSource; },
+      get mistStartClear(): View["mistStartClear"] { return owner.mistStartClear; },
+      set mistStartClear(value: View["mistStartClear"]) { owner.mistStartClear = value; },
       get monitoredPrograms(): View["monitoredPrograms"] { return owner.monitoredPrograms; },
       get moonBase(): View["moonBase"] { return owner.moonBase; },
       set moonBase(value: View["moonBase"]) { owner.moonBase = value; },
@@ -486,6 +497,8 @@ export class View {
       get mushroomView(): View["mushroomView"] { return owner.mushroomView; },
       get nearRings(): View["nearRings"] { return owner.nearRings; },
       set nearRings(value: View["nearRings"]) { owner.nearRings = value; },
+      get nightEpoch(): View["nightEpoch"] { return owner.nightEpoch; },
+      set nightEpoch(value: View["nightEpoch"]) { owner.nightEpoch = value; },
       get occluders(): View["occluders"] { return owner.occluders.bind(owner); },
       get overDebug(): View["overDebug"] { return owner.overDebug; },
       set overDebug(value: View["overDebug"]) { owner.overDebug = value; },
@@ -518,6 +531,9 @@ export class View {
       set steamFor(value: View["steamFor"]) { owner.steamFor = value; },
       get strings(): View["strings"] { return owner.strings; },
       set strings(value: View["strings"]) { owner.strings = value; },
+      get stumpSpecs(): View["stumpSpecs"] { return owner.stumpSpecs.bind(owner); },
+      get stumpsBy(): View["stumpsBy"] { return owner.stumpsBy; },
+      set stumpsBy(value: View["stumpsBy"]) { owner.stumpsBy = value; },
       get swapHomeArt(): View["swapHomeArt"] { return owner.swapHomeArt.bind(owner); },
       get tiltAt(): View["tiltAt"] { return owner.tiltAt; },
       set tiltAt(value: View["tiltAt"]) { owner.tiltAt = value; },
@@ -529,6 +545,11 @@ export class View {
       set trailRgb(value: View["trailRgb"]) { owner.trailRgb = value; },
       get tuftBiome(): View["tuftBiome"] { return owner.tuftBiome; },
       set tuftBiome(value: View["tuftBiome"]) { owner.tuftBiome = value; },
+      get tuftsBaking(): View["tuftsBaking"] { return owner.tuftsBaking; },
+      set tuftsBaking(value: View["tuftsBaking"]) { owner.tuftsBaking = value; },
+      get tuftsDue(): View["tuftsDue"] { return owner.tuftsDue; },
+      set tuftsDue(value: View["tuftsDue"]) { owner.tuftsDue = value; },
+      get updateLoadingMist(): View["updateLoadingMist"] { return owner.updateLoadingMist.bind(owner); },
       get updateSmoke(): View["updateSmoke"] { return owner.updateSmoke.bind(owner); },
       get updateSteam(): View["updateSteam"] { return owner.updateSteam.bind(owner); },
       get warmDraws(): View["warmDraws"] { return owner.warmDraws.bind(owner); },
@@ -562,6 +583,8 @@ export class View {
   private readonly monitoredPrograms = new WeakSet<ReadyProgram>();
   private readyPrograms(): ReadyProgram[] { return a4_readyPrograms(this, this.a4Internals, a4Shared); }
   private shaderEpoch = 0;
+  /** Bumped by every setGame (compileAll bumps shaderEpoch too): what's made for one night under way, the tufts, stops for the next. */
+  private nightEpoch = 0;
   private shaderLandingDeadline = Infinity;
   private shaderChartLanding = false;
   shaderLandingLimited = false;
@@ -630,6 +653,10 @@ export class View {
   decorBatches = new Map<string, SpriteBatch>();
   /** The biome the ground cover's tufts were drawn in (none: temperate): drawn again for a night on an island in another. */
   private tuftBiome: string | undefined;
+  /** This island's tufts still to draw (setGame: another biome's), for bakeTufts; null once drawn (or none due). */
+  private tuftsDue: { biome: string | undefined; epoch: number } | null = null;
+  /** The tufts drawn under way (bakeTufts), resolving once they're in. */
+  private tuftsBaking: Promise<void> | null = null;
   creatureBatches = new Map<string, SpriteBatch>();
   witchBatch!: SpriteBatch;
   /** Her with her hat knocked off, and the hat where it lies (rules/hat.ts): made once the game is up. */
@@ -808,6 +835,26 @@ export class View {
   mist: Mist | null = null;
   /** Faint rings of moonlight on the crowns, seen from the treetops (render/lightRings.ts). */
   lightRings: LightRings | null = null;
+  /** Materials drawn with their own program at least once (the draw gate's hook): the ground's, for the sea's loading mist. */
+  private drawnMats = new WeakSet<THREE.Material>();
+  /** This night's ground drawn with its own program (the coast's with a coast) on some frame: the sea's loading mist's (seaReady). */
+  private groundShown = false;
+  /** Whether a type in before the first frame is clear of the loading mist from the start (a load's: its loading screen drew it), or
+   *  misted till drawn as any other (a sail's: prepare). */
+  private mistStartClear = true;
+  /** Each area type's great stumps (render/view/mistReady.ts), for the map they were worked out on. */
+  private stumpsBy: { map: object; by: Map<number, StumpSpec[]> } | null = null;
+  /** Area type `t`'s great stumps (none with the rune stones). */
+  stumpsOf(t: number): StumpSpec[] { return a4_stumpsOf(this, this.a4Internals, a4Shared, t); }
+  /** What the loading mist's readiness reads (render/view/mistReady.ts). */
+  private get mistSource(): MistSource {
+    const v = this;
+    return { assets: this.assets, typeBatches: this.typeBatches, creatureBatches: this.creatureBatches, propBatch: this.propBatch, markerBatch: this.markerBatch, stumpBatches: this.island.stumpBatches,
+      stumpsOf: t => v.stumpsOf(t), stumps: !!this.markerArt.stumps, partyFires: this.partyObjects.ready };
+  }
+  /** The loading mist this frame (render/loadingMist.ts): each area type's held till its parts are drawn (render/view/mistReady.ts),
+   *  the sea's till the ground's own program is drawn and the ground in view filled; logged (mistLog). `time`: the page's clock. */
+  private updateLoadingMist(time: number): void { return a4_updateLoadingMist(this, this.a4Internals, a4Shared, time); }
   /** The loading mist over the areas whose trees aren't drawn yet (render/loadingMist.ts), made each night by prepare; null once off. */
   loadingMist: LoadingMist | null = null;
   /** ?loadmist=1|0 (app/viewParams.ts): the loading mist on or off whatever the tuning and ?quick=1 say; null as they say. */
@@ -845,7 +892,12 @@ export class View {
     this.ledger = new GpuLedger(this.renderer.getContext(), () => canvas.width * canvas.height * 12); // (the canvas's back and front buffers and its depth: preserveDrawingBuffer)
     canvas.addEventListener("webglcontextlost", () => { this.ledger.reset(); this.onGpuEvent?.("context lost"); });
     this.renderer.setPixelRatio(1);
-    installShaderDrawGate(this.renderer, this.shaderDrawStatus, object => object === this.island?.ground.mesh ? this.ground.loadingFallback : null);
+    installShaderDrawGate(this.renderer, this.shaderDrawStatus, object => object === this.island?.ground.mesh ? this.ground.loadingFallback : null, (object, material, geometry) => {
+      // (what's been drawn with its own program: the loading mist waits for it, render/view/mistReady.ts)
+      if (instancesOf(object, geometry) <= 0) return;
+      this.drawnMats.add(material);
+      if (object.userData.drawn === undefined) object.userData.drawn = performance.now();
+    });
     this.renderer.info.autoReset = false; // count every pass of a frame, reset in render()
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // colours are the art's own sRGB values, untouched
     this.mpp = metresPerArtPixel(t);
@@ -894,7 +946,7 @@ export class View {
    *  task, the bedroom's alarm, its music and every animation stopped): the same steps in the same order as `new View`, the page
    *  given its frames between them. Nothing is drawn until it's whole (the caller waits for it). */
   /** `hatOff`: her hat-off frames are the start's own art too (a game's first morning, her hat on the hats' floor: main.ts). */
-  static async create(canvas: HTMLCanvasElement, game: Game, style: Style, witchGenome: unknown = null, { budgetMs = 8, hatOff = false }: { budgetMs?: number; hatOff?: boolean } = {}): Promise<View> {
+  static async create(canvas: HTMLCanvasElement, game: Game, style: Style, witchGenome: unknown = null, { budgetMs = SLICE_MS, hatOff = false }: { budgetMs?: number; hatOff?: boolean } = {}): Promise<View> {
     await nextFrame(); // (a turn of its own: the renderer and the light made apart from whatever came before, the night's map)
     const v = new View(canvas, game, style, witchGenome, true);
     if (hatOff) v.assets.askHatOff();
@@ -914,6 +966,8 @@ export class View {
     for (const m of [this.shadow.material, this.shadows.mesh.material] as THREE.Material[]) { m.blending = THREE.NormalBlending; m.transparent = true; m.needsUpdate = true; }
   }
 
+  /** The haze's range before a sail's dive brought it nearer (render/view/frameUniforms.ts diveLight; restored as it lands). */
+  diveHaze: THREE.Vector2 | null = null;
   /** The haze's range before the telescope widened it (restored as she looks away). */
   private hazeBeforeTelescope: THREE.Vector2 | null = null;
   /** The picture's pixels this many times the pixel size (the telescope: 1 over its resolution, finer below 1; main.ts resizes). */
@@ -935,7 +989,15 @@ export class View {
    *  forest round it are made from the start, alongside them, and on through the dive if they're not done by its hand-off (`homeDone`;
    *  app/arrive.ts eases the dive if they're due in view before then). */
   /** `underDive` (with `dive`): the chart hands over at once, this going on under the dive (compileAll's `underDive`). */
-  prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][]; underDive?: boolean } = {}): Promise<void> { return a4_prepare(this, this.a4Internals, a4Shared, o); }
+  /** `share` (with `dive`): each area type's share of the dive's view (rules/arrive.ts diveShare): its trees asked for in that order,
+   *  the largest first (Ed, 2026-11-06), ties by `dive`'s distance. */
+  prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; share?: ReadonlyMap<number, number>; track?: [number, number, number, number][]; underDive?: boolean } = {}): Promise<void> { return a4_prepare(this, this.a4Internals, a4Shared, o); }
+
+  /** This island's tufts drawn (setGame held them back: another biome's), a type at a time, `order`'s first (prepare's: nearest the
+   *  dive's track, else the house), off the hand-off (Ed, 2026-11-06: "Make sure things load and render before the mist disappears";
+   *  they were most of the bear's wait under the chart), then handed to the grass at once. Resolves once they're in (or a newer night
+   *  took over); at once with none due. */
+  private bakeTufts(order: readonly number[]): Promise<void> { return a4_bakeTufts(this, this.a4Internals, a4Shared, order); }
 
   /** Whether the start's house is made: its art (her, home, the soundsystems, the treehouse), the ground and the forest round it.
    *  Before a sail's dive it may not be yet (prepare's `dive`): made on through it, by buildHome. */
@@ -959,13 +1021,17 @@ export class View {
     }
     const A = this.ground.areaUniforms;
     this.loadingMist = new LoadingMist(T, typeReaches(cells, m.treehouse, m.areaSize), m.treehouse, m.extent, A.uniforms, this.post.scene.depthTexture, this.post.fxSize, A.slots);
+    this.mistLog = new Map(); this.groundShown = false;
     (this.post.fxScene ??= new THREE.Scene()).add(this.loadingMist.mesh);
   }
 
   /** The island's own asked for ahead (prepare; Ed, 2026-11-05: "Load the trees, creature art, and coast and lakes, during the
    *  loading screen."): its area types' trees, every look its creatures can wear and the coast's and lakes' dressing (render/
    *  islandNeeds.ts); resolves once they've landed. Not under ?quick=1 (only what's needed, as it's needed) or in the zoo (askIsland's). */
-  private islandAhead(near: Map<number, number>): Promise<void> { return a4_islandAhead(this, this.a4Internals, a4Shared, near); }
+  private islandAhead(near: Map<number, number>, dive = false): Promise<void> { return a4_islandAhead(this, this.a4Internals, a4Shared, near, dive); }
+  /** Every area's great stump (render/markers.ts stumpDeal; none with the rune stones), each baked once: its areas' types' in `near`'s
+   *  order, the nearest first. */
+  private stumpSpecs(near: ReadonlyMap<number, number>): StumpSpec[] { return a4_stumpSpecs(this, this.a4Internals, a4Shared, near); }
   /** The island's creatures' faces asked for in the background, not waited for (Ed, 2026-11-05: "Skip the animal faces"; render/
    *  islandNeeds.ts askIslandFaces): till one's in, a creature making that face shows its plain look. Not under ?quick=1 or in the zoo. */
   private islandFaces(near: Map<number, number>): void { return a4_islandFaces(this, this.a4Internals, a4Shared, near); }
@@ -1030,8 +1096,9 @@ export class View {
    *  and every part of the view that keeps something of a night re-pointed or reset. The caller runs prepare() for its start. */
   setGame(game: Game): void { runSync(this.setGameSteps(game)); }
   /** setGame a frame's budget at a time (render/slices.ts): the new island built off the scene in steps, the page's frames between
-   *  (the frame loop draws nothing meanwhile: main.ts, sailing), then swapped in at once. */
-  setGameSliced(game: Game, budgetMs = 8): Promise<void> {
+   *  (the frame loop draws nothing meanwhile: main.ts, sailing), then swapped in at once. `budgetMs`, a slice's: more under the
+   *  sea chart's zoom, nothing else happening then (app/night.ts buildSlice, the tuning's `arrive.buildSlice`). */
+  setGameSliced(game: Game, budgetMs = SLICE_MS): Promise<void> {
     holdDisposals(); // (the last night's materials kept till the new night's have their programs: render/retire.ts, compileAll)
     this.assets.early(MarkerArt.stoneJob(this.style, game.tuning, game.map).job); // (the new island's stones asked first, from the art workers)
     return runSliced(this.setGameSteps(game), "setGame", budgetMs);
@@ -1224,6 +1291,7 @@ export type ViewInternals = {
   aimRay: View["aimRay"];
   armLimitedLanding: View["armLimitedLanding"];
   askIsland: View["askIsland"];
+  bakeTufts: View["bakeTufts"];
   behindHouse: View["behindHouse"];
   borders: View["borders"];
   buildHome: View["buildHome"];
@@ -1240,11 +1308,13 @@ export type ViewInternals = {
   crownWorld: View["crownWorld"];
   dancefloor: View["dancefloor"];
   dark: View["dark"];
+  drawnMats: View["drawnMats"];
   easeAppearing: View["easeAppearing"];
   ensureCrown: View["ensureCrown"];
   floorItems: View["floorItems"];
   glades: View["glades"];
   gpuCaughtUp: View["gpuCaughtUp"];
+  groundShown: View["groundShown"];
   hazeBeforeTelescope: View["hazeBeforeTelescope"];
   hideForBare: View["hideForBare"];
   hiz: View["hiz"];
@@ -1265,11 +1335,14 @@ export type ViewInternals = {
   magicBlink: View["magicBlink"];
   makeLoadingMist: View["makeLoadingMist"];
   masterplan: View["masterplan"];
+  mistSource: View["mistSource"];
+  mistStartClear: View["mistStartClear"];
   monitoredPrograms: View["monitoredPrograms"];
   moonBase: View["moonBase"];
   moonUpBase: View["moonUpBase"];
   mushroomView: View["mushroomView"];
   nearRings: View["nearRings"];
+  nightEpoch: View["nightEpoch"];
   occluders: View["occluders"];
   overDebug: View["overDebug"];
   partyView: View["partyView"];
@@ -1289,12 +1362,17 @@ export type ViewInternals = {
   steam: View["steam"];
   steamFor: View["steamFor"];
   strings: View["strings"];
+  stumpSpecs: View["stumpSpecs"];
+  stumpsBy: View["stumpsBy"];
   swapHomeArt: View["swapHomeArt"];
   tiltAt: View["tiltAt"];
   trail: View["trail"];
   trailPresetId: View["trailPresetId"];
   trailRgb: View["trailRgb"];
   tuftBiome: View["tuftBiome"];
+  tuftsBaking: View["tuftsBaking"];
+  tuftsDue: View["tuftsDue"];
+  updateLoadingMist: View["updateLoadingMist"];
   updateSmoke: View["updateSmoke"];
   updateSteam: View["updateSteam"];
   warmDraws: View["warmDraws"];

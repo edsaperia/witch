@@ -7,7 +7,7 @@ import { challengeWords } from "./challengeWords";
 import { overlayPause } from "./overlayPause";
 import { currentSettings } from "./playerSettings";
 
-import { chartOpen, closeChart } from "../ui/chartOverlay";
+import { chartOpen, putChartDown } from "../ui/chartOverlay";
 import { endDream } from "../rules/wakeUp";
 import { replayWanted } from "../rules/partyStart";
 import { STATION_SLOT } from "../rules/clothesPile";
@@ -131,7 +131,7 @@ export function frameBody(pageHost: PageHost, now: number): void {
   // button (E; the pad's back, ○, since Ed's layout of 2026-10-28; a tap on touch) closes it: that press is the close and nothing else, even when the thing
   // open closed itself on it a moment before (the chart and the instruments take E themselves), so it never opens it again.
   const raw = pageHost.input.read(), openNow = chartOpen() || pageHost.telescope.on || !!pageHost.studio.at || !!pageHost.stations.station || pageHost.booth.isOpen || pageHost.phone.open, shutTap = !pageHost.freeze.frozen && !!(raw.sigil || raw.place) && (openNow || pageHost.openPrev); // (E is `place`; the pad's back, ○, and a tap `sigil`; never under the pause)
-  if (shutTap) { if (pageHost.phone.open) pageHost.phone.close(); if (pageHost.booth.isOpen) pageHost.booth.close(); if (pageHost.stations.station) pageHost.shutStation("E"); if (pageHost.studio.at) pageHost.studio.leave(); if (pageHost.chartAt && chartOpen()) { pageHost.chartAt = null; closeChart(); } } // (the telescope: its own step, below)
+  if (shutTap) { if (pageHost.phone.open) pageHost.phone.close(); if (pageHost.booth.isOpen) pageHost.booth.close(); if (pageHost.stations.station) pageHost.shutStation("E"); if (pageHost.studio.at) pageHost.studio.leave(); if (pageHost.chartAt && chartOpen() && putChartDown()) pageHost.chartAt = null; } // (not once a sail's flight is committed: ui/chartOverlay.ts) // (the telescope: its own step, below)
   const human = openNow || shutTap ? pageHost.stillControls(raw) : raw;
   pageHost.telescope.device = pageHost.input.device;
   if (pageHost.telescope.on) { if (pageHost.telescope.night !== game || game.witches[pageHost.phone.visiting ? 1 : 0]?.ko || chartOpen() || !tuning.telescope) pageHost.telescope.close(); else pageHost.telescope.step({ ...raw, sigil: !!(raw.sigil || raw.place) }, dt, tuning.telescope); } // Local knockout only; canonical night identity still closes replacement.

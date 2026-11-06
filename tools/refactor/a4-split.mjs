@@ -267,8 +267,8 @@ const viewGroups = {
   houseFrame: ['houseTilt', 'behindHouse', 'occluders', 'ensureCrown', 'buildHome', 'swapHomeArt'],
   markers: ['legendRings', 'pin', 'inviteStart'],
   atmosphere: ['updateMoon', 'updateSteam', 'updateSmoke'],
-  readiness: ['readyPrograms', 'landingWakeReady', 'beginLandingShaders', 'armLimitedLanding', 'limitedLandingReady', 'waitForLandingWitch', 'startLandingShaderGrace', 'compileAll', 'gpuCaughtUp', 'warmDraws', 'warmSteps', 'setReadiness'],
-  lifecycle: ['build', 'prepare', 'islandAhead', 'islandFaces', 'coastAhead', 'askIsland', 'setGameSteps', 'retype'],
+  readiness: ['stumpsOf', 'updateLoadingMist', 'readyPrograms', 'landingWakeReady', 'beginLandingShaders', 'armLimitedLanding', 'limitedLandingReady', 'waitForLandingWitch', 'startLandingShaderGrace', 'compileAll', 'gpuCaughtUp', 'warmDraws', 'warmSteps', 'setReadiness'],
+  lifecycle: ['build', 'prepare', 'bakeTufts', 'stumpSpecs', 'islandAhead', 'islandFaces', 'coastAhead', 'askIsland', 'setGameSteps', 'retype'],
   viewport: ['landingShot', 'scenePixelSize', 'resize', 'screenOf', 'aimAt'],
 };
 
@@ -319,7 +319,7 @@ function splitMain() {
     pagePause: { openMusicLab: 'void' },
     pageStations: { findsCtx: 'FindsCtx', workshopNow: 'WorkshopCtx', useHouse: 'void' },
     pageFinds: { partsNow: 'Set<string>' },
-    pageNight: { chartWorld: 'number', soundNote: 'void', armSkip: 'void', queueCast: 'void', armBack: 'void', wokenBefore: 'boolean', woke: 'void', mirrored: 'boolean', sawMirror: 'void' },
+    pageNight: { chartWorld: 'number', soundNote: 'void', armGesture: 'void', queueCast: 'void', armBack: 'void', wokenBefore: 'boolean', woke: 'void', mirrored: 'boolean', sawMirror: 'void' },
     pageDebug: { decidePanel: 'void', keyNow: 'ReturnType<typeof compareKey>' },
   };
   for (const [group, names] of Object.entries(arrowCuts)) for (const [name, returnType] of Object.entries(names)) {

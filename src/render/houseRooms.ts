@@ -22,7 +22,7 @@ import type { Witch } from "../rules/game";
 import { hatKey } from "./view/hatLooks";
 import { houseArtLayout, objectOffset } from "../rules/housePlacement";
 import { groundHeight } from "./height";
-import { alongRay } from "./view/home";
+import { alongRay, alongRayFlat } from "./view/home";
 import type { FloorPixels } from "./houseArt";
 import houseStanding from "virtual:house-standing";
 import { paintFloorOff } from "./houseFloor";
@@ -647,13 +647,16 @@ export class HouseRoomsView {
     const here = toPlanAt0(w.x - D.x, w.z - D.z), { ppm, pitch } = pictureScale(ky, v.mpp);
     const wanted = this.askPieces(v, here, ppm, pitch);
     this.adoptPieces(v, wanted, ppm, pitch, late, arrivalNow);
+    // (a picture's every point taken toward the camera by its anchor's share, alongRayFlat: kept flat, so what's drawn inside it stays
+    // on its own pixels of the floor as the camera moves; each corner pushed its own way, a room's dressing across the house slid over
+    // the floor as she walked: Ed, 2026-11-05)
     const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => {
-      const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + v.houseShift + dy);
-      const b = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z);
+      const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), q = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift), a = { x: q.x, y: q.y + g0, z: q.z };
+      const p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + v.houseShift + dy), b = alongRayFlat(v, { x: p.x, y: p.y + g0, z: p.z }, a, z);
       if (!late || share >= 1) return b;
       const anchor = toWorld(px, pz, 0);
       // Carry the whole painted piece with its moving floor anchor; retain its own pixel offsets.
-      const q = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift), full = alongRay(v, { x: q.x, y: q.y + g0, z: q.z }, z);
+      const full = alongRay(v, a, z);
       return { x: b.x + anchor.x - full.x, y: b.y + anchor.y - full.y, z: b.z + anchor.z - full.z };
     };
     this.brewing.update(v, pxWorld, ky * v.mpp, here); // (the cauldron and baskets in front of her drawn over her: render/houseWitchPass.ts inFrontOfHer)

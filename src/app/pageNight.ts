@@ -3,16 +3,16 @@ import type { PageHost } from "../main";
 import { slotStorage } from "./saveSlots";
 import { wavesOver } from "../rules/win";
 import { withSharedFind, type PersonalKit } from "./sharedFindLoan";
-import { closeChart, openChart, finishChartFlight, type Sailed } from "../ui/chartOverlay";
+import { closeChart, openChart, type Sailed } from "../ui/chartOverlay";
 import { openingWay, sailLandsInBed } from "./opening";
 import { wakeInBedroom } from "../rules/opening";
-import { morningAfter, startWake, tuckIn } from "../rules/wakeUp";
+import { fallAsleep, morningAfter, startWake, tuckIn } from "../rules/wakeUp";
 import { WorldDrawGate } from "./worldDrawGate";
 import { wornGenome } from "../rules/clothesPile";
 import { WakeCard } from "../render/wakeUp";
 import { carryTiming, clearCarried, mark } from "./timing";
 import { type Game } from "../rules/game";
-import { diveReach, diveTrack } from "../rules/arrive";
+import { diveReach, diveShare, diveTrack } from "../rules/arrive";
 import { awaitingSpell } from "../rules/leypulse";
 import { loadGenome } from "../ui/creator";
 import { HAT_SPELLS } from "../rules/spells";
@@ -146,8 +146,6 @@ export function chartOverNight(pageHost: PageHost, table?: string): void {
   const here = island ? { island, world: n.tuning.map?.world ?? 0, label: stayLabel(n.game.partyOver ? "over" : n.game.win?.phase === "won" ? "won" : "on") } : undefined;
   if (table) pageHost.chartAt = table;
   openChart((href, to) => { pageHost.chartAt = null; void pageHost.sailFromChart(href, to).catch(error => logCaughtError(error, "chart departure")); }, pageHost.chartWorldArg(), { here, onDepart: pageHost.departFromChart, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${pageHost.N().seed}, game time ${pageHost.N().game.clock.time.toFixed(1)} s)`),
-    // (she sails: her next morning's look asked for at once, as the island's build starts: aheadMorning)
-    onFly: () => { pageHost.view.beginLandingShaders(true); if (sailLandsInBed(new URLSearchParams(location.search), pageHost.N().tuning)) pageHost.aheadMorning(true); },
     // (the chart down at the water: no deadline for the island's shaders from here, Ed, 2026-11-03: "Don't limit the time, we have to
     // wait for the island to be build anyway; zoom in over the map, switch to the island's sea, fly over the island, and show whatever
     // is built, with mist over it if it's not built". The chart stays up, animated, till they're linked (app/chartView.ts hold); a
@@ -187,6 +185,7 @@ export async function departFromChart(pageHost: PageHost, to: Sailed, at: Flight
   if (pageHost.N().spec.borrowed) throw new Error("Return to your own night before sailing.");
   if (sailWay(pageHost.N().params, pageHost.N().tuning) === "reload") return Promise.resolve();
   pageHost.recordSail();
+  pageHost.view.beginLandingShaders(true); // (the chart's flight committed: no deadline for the island's shaders, below)
   const night = pageHost.makeSailNight(to, undefined, at);
   pageHost.departing = { island: to.island, seed: to.seed, night };
   return night.then(() => undefined, () => undefined);
@@ -198,9 +197,10 @@ export function wakeFirst(pageHost: PageHost): void {
 
 export function wakeFirstNow(pageHost: PageHost): void {
   const n = pageHost.N();
-  pageHost.bootAsleep = false; pageHost.morningAhead = null; // (the morning itself from here on: its wake-up's pile)
+  pageHost.bootAsleep = false; pageHost.morningAhead = null; pageHost.view.asleepInBed = false; // (the morning itself from here on: its wake-up's pile; the wake-up has her in bed)
   pageHost.firstEver = !pageHost.wokenBefore();
-  if (!wakeInBedroom(n.game) || !startWake(n.game, n.game.herTime, { mirrored: pageHost.mirrored() })) { pageHost.wakeCard?.hide(); pageHost.dressCreator(); pageHost.creator.show(); return; }
+  // (tucked in, not beside her bed: the camera settled on her in it, so nothing moves as the loading screen fades; Ed, 2026-11-05)
+  if (!tuckIn(n.game) || !startWake(n.game, n.game.herTime, { mirrored: pageHost.mirrored() })) { pageHost.wakeCard?.hide(); pageHost.dressCreator(); pageHost.creator.show(); return; }
   mark("opening:wake");
   pageHost.start();
   if (!pageHost.gestured) pageHost.soundNote(); else pageHost.sound.wake(); // (the alarm heard once she's pressed something: browsers keep sound off till then)
@@ -208,7 +208,7 @@ export function wakeFirstNow(pageHost: PageHost): void {
 
 export async function sailInPlace(pageHost: PageHost, to: Sailed, made?: Promise<Night>): Promise<void> {
   const arrival: Arrival | undefined = to.end ? { v: 1, island: to.island, world: to.world ?? loadSave().world, at: Date.now(), ...to.end } : undefined;
-  if (arrival) { showStill(arrival, !made); hudFade(pageHost.HUD_IDS); document.body.classList.add("arriving"); pageHost.armSkip(); } // (made under the flight: no "landing…", the still goes at once)
+  if (arrival) { showStill(arrival, !made); hudFade(pageHost.HUD_IDS); document.body.classList.add("arriving"); pageHost.armGesture(); } // (made under the flight: no "landing…", the still goes at once)
   const n = await (made ?? pageHost.makeSailNight(to, arrival));
   if (made && arrival) flyIn(n, arrival); // (made under the chart's flight: its hand-off, the still its last frame)
   if (n.arrival) n.arrival.onReveal = pageHost.revealArt;
@@ -237,13 +237,13 @@ export async function makeSailNight(pageHost: PageHost, to: Sailed, arrival?: Ar
   endNight(pageHost.page, pageHost.params.get("debug") === "sail");
   pageHost.backGuard.sailed("?" + p.toString() + location.hash);
   pageHost.armBack();
-  const n = await startNight(pageHost.page, { how: "sail", island: to.island, seed: to.seed, world: to.world, arrival, params: p });
+  const n = await startNight(pageHost.page, { how: "sail", island: to.island, seed: to.seed, world: to.world, arrival, params: p, underChart: at !== undefined }); // (under the chart's zoom: its build given more of each frame, app/night.ts buildSlice)
   pageHost.seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
   pageHost.bedFirst(n); // (the flight in ends on her asleep in her bedroom, rules/opening.ts)
   pageHost.worldDraw = new WorldDrawGate();
   pageHost.displayedStep = -1;
   const A = n.tuning.arrive, underChart = !!A && at !== undefined;
-  const prep = pageHost.view.prepare({ sail: true, ...(underChart ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A), underDive: true } : {}) });
+  const prep = pageHost.view.prepare({ sail: true, ...(underChart ? { dive: diveReach(n.game.map, A), share: diveShare(n.game.map, A), track: diveTrack(n.game.map, A), underDive: true } : {}) });
   if (underChart) {
     // Made under the chart's flight: it hands over as soon as the night is (its map, and the island's layers the view draws), and
     // the rest is built on under the dive: the shaders, the house, the forest, the ground along its track, shown as they're
@@ -254,7 +254,6 @@ export async function makeSailNight(pageHost: PageHost, to: Sailed, arrival?: Ar
   } else {
     await prep;
     if (pageHost.view.shaderLandingLimited) await pageHost.view.waitForLandingWitch();
-    if (pageHost.view.shaderLandingLimited) finishChartFlight();
   }
   mark("sail:ready");
   return n;
@@ -300,6 +299,11 @@ export async function nightInPlace(pageHost: PageHost, spec: NightSpec, href: st
   pageHost.startEl.classList.add("loading");
   pageHost.startEl.style.display = "none";
   if (room) { pageHost.dressCreator(); pageHost.creator.show(); }
+  // (asleep in her bed as the veil comes down, the camera settled on her there, and that drawn now: the picture held under the veil
+  // while the next night's made is framed as its first, tucked in at the same spot, so nothing moves as the wake-up starts; Ed's
+  // "Fix 2", 2026-11-06: it held her standing beside the bed, and the wake-up's first frame jumped to the bed's framing). Drawn twice:
+  // the camera aims by the house offset the last draw left (render/view/camera.ts houseCamInput), her place beside the bed's till then.
+  if (wakes && pageHost.mutate("wake: asleep in bed", () => fallAsleep(pageHost.N().game))) { pageHost.view.asleepInBed = true; pageHost.drawFrame(pageHost.displayedTime); pageHost.drawFrame(pageHost.displayedTime); pageHost.shake.apply(); }
   if (wakes) (pageHost.wakeCard ??= new WakeCard()).sleep();
   if (wakes && pageHost.dreamNext) pageHost.startDream(pageHost.dreamNext);
   pageHost.dreamNext = null;
@@ -308,7 +312,7 @@ export async function nightInPlace(pageHost: PageHost, spec: NightSpec, href: st
   pageHost.creator.loadout = { hat: n.game.spells.hat }; pageHost.creator.hats = unlockAll() ? undefined : n.game.spells.hats;
   pageHost.worldDraw = new WorldDrawGate();
   pageHost.displayedStep = -1;
-  if (wakes) tuckIn(n.game); // (in her bed before the start's made round her: its first frames have her drawn there, and the camera on her, as the wake-up will)
+  if (wakes) pageHost.view.asleepInBed = tuckIn(n.game); // (in her bed before the start's made round her: its first frames have her drawn there, asleep under the sleep's veil, and the camera on her, as the wake-up will)
   await pageHost.view.prepare();
   n.flags.ready = true;
   pageHost.startEl.classList.remove("loading");
@@ -322,6 +326,7 @@ export async function nightInPlace(pageHost: PageHost, spec: NightSpec, href: st
   else if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, { dreaming: !!pageHost.dream && !pageHost.dream.over, mirrored: pageHost.mirrored(), yesterday: true })) { mark("opening:bed"); pageHost.start(); } // (after the bed: last night's clothes in their pile)
   else if (!room && !wakes) pageHost.startDirect();
   if (wakes && n.game.wake) tuckIn(n.game); // (the camera settled on her in her bed again, where the wake-up has her: wakeInBedroom put it beside the bed)
+  pageHost.view.asleepInBed = false; // (the wake-up has her in bed from here, or there's none)
   pageHost.aheadMorning(false); // (woken, the morning's own pile from here: the look read ahead, so nothing's redrawn)
 }
 
@@ -345,10 +350,10 @@ export function soundNote(pageHost: PageHost): void {
   addEventListener("keydown", go); addEventListener("pointerdown", go);
 }
 
-export function armSkip(pageHost: PageHost): void {
-  if (pageHost.skipArmed) return;
-  pageHost.skipArmed = true;
-  for (const ev of ["keydown", "pointerdown"]) addEventListener(ev, () => { pageHost.gestured = true; const a = pageHost.N().arrival; if (a && !a.done) a.skip(); }, { capture: true });
+export function armGesture(pageHost: PageHost): void {
+  if (pageHost.gestureArmed) return;
+  pageHost.gestureArmed = true;
+  for (const ev of ["keydown", "pointerdown"]) addEventListener(ev, () => { pageHost.gestured = true; }, { capture: true });
 }
 
 export function queueCast(pageHost: PageHost): void { const n = pageHost.N(); if (awaitingSpell(n.game.party) && !n.game.wake) n.flags.castWanted = true; }

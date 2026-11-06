@@ -67,6 +67,7 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     // Late art may introduce programs after compileAll's background pass has ended.
     for (const p of a4PrivateHost.readyPrograms()) p.isReady();
     a4ViewHost.assets.playing = a4ViewHost.game.party.spellAt !== null; // (the night playing: the art ahead of need shares the workers, render/assets.ts dispatch)
+    a4ViewHost.assets.diving = !!a4ViewHost.fly; // (a sail's dive: the small things wait their turn, render/assets.ts DIVE_LATE)
     a4ViewHost.ms = {}; a4PrivateHost.lap = a4ViewHost.frameStart = performance.now();
     const g = a4ViewHost.game, t = g.tuning, P0 = poseOf(g), F = a4ViewHost.fly;
     if (a4ViewHost.magic.galleryCamera !== null) { g.witch.mode=a4ViewHost.magic.galleryCamera?"treetop":"ground"; g.witch.lift=a4ViewHost.magic.galleryCamera?1:0; }
@@ -290,7 +291,7 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     a4ViewHost.time("grass+lights");
     a4ViewHost.mist?.follow(pose.tx, pose.tz);
     if (a4ViewHost.loadingMist && draw) { // (on the page's own clock, a frame counting at most a tenth of a second: not the house's slowed time)
-      a4ViewHost.loadingMist.update(time, ty => a4ViewHost.assets.hasType(ty));
+      a4PrivateHost.updateLoadingMist(time);
     }
     a4ViewHost.lightRings?.update(a4ViewHost.camera, w.x, witchHeight(w, t) + a4ViewHost.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(a4ViewHost, time, ht, onTreehouse, repaintHeld);

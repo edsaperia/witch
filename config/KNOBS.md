@@ -3758,18 +3758,43 @@ Arriving on an island from the sea chart: the camera flies in over the sea, fram
 1. Ed, 2026-10-12: the zoom-to-island plan; rules/arrive.ts, app/arrive.ts
 2. Ed's playtest, 2026-10-12: the first frames at a new spot are heavy
 3. Ed, 2026-10-24: "Never a frozen frame" (the sail's transition)
-Arriving on an island from the sea chart [1]: the chart hands off over the open sea south of the island (its last frame and camera in sessionStorage, Charlie's chart side), the page shows that still pushing in (a CSS animation in index.html, from the first paint) while the night builds, then cross-fades it away over fade seconds into the game's camera at the same place, and flies on, looking north: over the sea and low over the forest at speed m/s (low: angle degrees down, distance metres back, aimed offshore metres past the south coast at first; each low leg at least minLeg seconds), then up over rise seconds to frame the dancefloor and the treehouse's spot together (frame: angle, distance, lift metres over the ground), then down over settle seconds into her bedroom, her asleep in bed (Ed, 2026-10-25; the opening shot at her decks before, as ?opening=old still has it). It waits behind the still [2] until warm.frames frames in a row come within warm.ms ms, or warm.max seconds pass, then flies on the frames' own time, each counting at most maxStep seconds, so a stall holds the flight rather than skipping it. Any key skips to its end. The chart's record (app/arrival.ts) is read once, and ignored if it's stale or for another island; with no still (too big for the storage) a plain dark screen fades instead. The flight starts at the chart's own speed north (its cam.speed). A sail in place [3]: the next night is made under the chart from the moment she sails, and the chart's flight waits for it (hold): from the end of its glide in, while the night isn't ready, its pace eases (over hold.ease seconds) down to hold.rate of its own, slowing on into a hover short of the hand-off, the sea still moving, for at most hold.cap seconds; then on, as it's ready, into the dive.
+Arriving on an island from the sea chart [1]: the chart hands off over the open sea south of the island (its last frame and camera in sessionStorage, Charlie's chart side), the page shows that still pushing in (a CSS animation in index.html, from the first paint) while the night builds, then cross-fades it away over fade seconds into the game's camera at the same place, and flies on, looking north: over the sea and low over the forest at speed m/s (low: angle degrees down, distance metres back, aimed offshore metres past the south coast at first; each low leg at least minLeg seconds), then up over rise seconds to frame the dancefloor and the treehouse's spot together (frame: angle, distance, lift metres over the ground), then down over settle seconds into her bedroom, her asleep in bed (Ed, 2026-10-25; the opening shot at her decks before, as ?opening=old still has it). It waits behind the still [2] until warm.frames frames in a row come within warm.ms ms, or warm.max seconds pass, then flies on the frames' own time, each counting at most maxStep seconds, so a stall holds the flight rather than skipping it. Nothing skips it (arrive.dive). The chart's record (app/arrival.ts) is read once, and ignored if it's stale or for another island; with no still (too big for the storage) a plain dark screen fades instead. The flight starts at the chart's own speed north (its cam.speed). A sail in place [3]: the next night is made under the chart from the moment she sails, and the chart's flight waits for it (hold): from the end of its glide in, while the night isn't ready, its pace eases (over hold.ease seconds) down to hold.rate of its own, slowing on into a hover short of the hand-off, the sea still moving, for at most hold.cap seconds; then on, as it's ready, into the dive.
 Code: `rules/arrive.ts`, `app/arrive.ts`, `app/arrival.ts`
 
+- **`arrive.zoom`**: How many seconds the sea chart's zoom in to the island takes when she sails.
+  1. Ed, 2026-11-06: "Remove the ability to skip the zoom. But you can press circle to close the map and stop the sail while it's happening." … "Both the zoom and the dive are loading screens; they shouldn't be skippable because loading must happen. If it happens much faster than the two animations, we should be deciding their minimum length."
+  Its three legs (the glide in to frame the island, the swoop down to the sea, the run on to the hand-off) scaled together (render/chart/seaChart.ts flyLegs); 5.6, their own. Nothing skips it; the chart's back (the pad's circle, E at the map table, Esc over the game) stops the sail during its first leg only, before the next night is started under it (app/chartSail.ts).
+  Code: `render/chart/seaChart.ts`, `app/chartView.ts`
+- **`arrive.dive`**: How many seconds the dive from the chart's hand-off down to her bed takes; 0 leaves it to its legs.
+  1. Ed, 2026-11-06: "Both the zoom and the dive are loading screens; they shouldn't be skippable because loading must happen. If it happens much faster than the two animations, we should be deciding their minimum length."
+  Every leg scaled to it (rules/arrive.ts arrivePlan); 0: its legs as the rest of arrive sets them (the low legs by their length at speed, at least minLeg each, then rise and settle), so its length depends on the island. Nothing skips it.
+  Code: `rules/arrive.ts`
+- **`arrive.low`**: The dive's low leg over the sea and the forest: angle degrees down to its aim, distance metres back (the camera about 110 m up), aimed offshore metres past the south coast at first.
+  1. Ed, 2026-11-06: "Dive: sounds good." (his approval of the dive plan's step 6, "Fly higher: for example ~30° at 220 m on the low leg, so the camera is ~110 m up and small things are half the size" (it was 20° at 110 m, ~38 m up))
+  Code: `rules/arrive.ts`
+- **`arrive.frame`**: The dive's rise: up to frame the dancefloor and the treehouse together, angle degrees down, distance metres back, aimed lift metres over the ground (about 156 m up).
+  1. Ed, 2026-11-06: "Dive: sounds good." (the dive plan's step 6, "Leg 3 higher too" (it was 34° at 170 m, ~103 m up); the landing into her bed as smooth as before (rules/arrive.test.ts))
+  Code: `rules/arrive.ts`
+- **`arrive.mood`**: The dive's own moodier light: what nothing lights darker and the haze nearer while it flies, back to the night's own as it lands; strength 0 is the night's light as before.
+  1. Ed, 2026-11-06: "Dive: sounds good." (the dive plan's step 7, "a dive-only blend toward darker ambient light and nearer haze (e.g. full by 140 m), easing back to the night's light over the last leg. Glowing things (the mist, the crown's lights, the runestones, the soundsystems) still read.")
+  strength: how much of it (0 to 1; 0 the night's own light); dark: the ambient and the moonlight times this at its fullest (the lights, her glow, the campfires, the runestones, the soundsystems, the crown's lights and the loading mist's glow are added after and read as ever); the haze from hazeNear metres from the camera's aim, full by hazeFar (the spooky night's own: 60, 200). Grown in from the hand-off with the bend (bend.grow seconds), full through the sea, the low leg and the rise, eased back to none over the last leg down into her room. Read every frame; ?set=arrive.mood.strength=0.5 for one load.
+  Code: `rules/arrive.ts`, `render/view/frameUniforms.ts`
 - **`arrive.handoff`**: where the chart hands over, sea metres out to sea off the south coast below the dancefloor (negative: inland), its camera dist metres back and pitchDeg degrees down (the first flight's: -40, 600, 50); ?dive=near\|far\|skim for one load (app/chartView.ts DIVES).
   Code: `app/chartView.ts`
 - **`arrive.bend`**: The dive's bend: the world curving away so the treehouse crown comes up over the horizon as the camera flies in.
   1. Ed, 2026-11-03: "I think we can get the 'Coming round to the treehouse' effect by using the bend shader rather than using the camera angle; I want to see the treehouse crown coming over the horizon, and this will achieve that straightforwardly." … "The reason why we fly out over the sea is to do the transition between these scenes while looking at the water, which should make the transition less obvious because we can fade between while looking at a simple blue texture." (in place of the swing round to the whole treehouse tree (Ed, 2026-10-24: "pan up to see the whole treehouse tree before we fly into her bedroom"; the whole-tree shot and its knobs, gone))
   the world's bend (render/height.ts, the curvature the treetops have) added on top of the night's own through the dive (rules/arrive.ts diveBend): none at the hand-off, so the crossfade from the chart's flat sea is over the same flat water, growing to curve (per metre; the treetops' own is camera.curve.treetop, 0.0015) over grow seconds as the camera comes down over the sea, so the island sits below the horizon; held while the camera flies straight in, the treehouse crown rising over the curve of the world; then eased back to none over the flight's last relax seconds, the night's own bend exactly as she lands in bed. 0 curve: no bend.
   Code: `rules/arrive.ts`, `render/view/camera.ts`
+- **`arrive.buildSlice`**: How many milliseconds of each frame the next island's build may take while the sea chart's zoom plays over it.
+  1. Ed, 2026-11-06: "Give the scene build more time per frame while the zoom is playing, since nothing else is happening then. For example 14 ms instead of 8 ms." … "this we should do"
+  From the zoom's commit (the end of its first leg) the next night is made under the chart (app/night.ts buildSlice, main.ts makeSailNight): its map in a worker, then the View's build on the main thread a slice at a time (render/slices.ts), a slice of up to this many milliseconds each frame, the chart's own frame drawn between; it keeps it through the chart's hold short of the hand-off, till the night is made. Everywhere else a build is sliced (the first load, the bed's next night, a sail with no zoom, the dive's own preparation) it's 8 ms (SLICE_MS). A single step of the build longer than this still runs whole (docs/notes/performance.md).
+  Code: `app/night.ts`, `render/slices.ts`
 
 | knob | type | range |
 |---|---|---|
+| `arrive.zoom` | number | 0 to … |
+| `arrive.dive` | number | 0 to … |
+| `arrive.buildSlice` | number | 1 to … |
 | `arrive.warm.frames` | number | 0 to … |
 | `arrive.warm.ms` | number | 0 to … |
 | `arrive.warm.max` | number | 0 to … |
@@ -3794,6 +3819,10 @@ Code: `rules/arrive.ts`, `app/arrive.ts`, `app/arrival.ts`
 | `arrive.bend.curve` | number | 0 to … |
 | `arrive.bend.grow` | number | 0 to … |
 | `arrive.bend.relax` | number | 0 to … |
+| `arrive.mood.strength` | number | 0 to … |
+| `arrive.mood.dark` | number | 0 to … |
+| `arrive.mood.hazeNear` | number | 0 to … |
+| `arrive.mood.hazeFar` | number | 0 to … |
 
 ### `camera`
 
@@ -4820,17 +4849,22 @@ a low drifting mist (height in metres above the ground). Each has on and strengt
 
 ### `loadingMist`
 
-A glowing mist over the parts of the island still loading, rolling back from the treehouse as their trees arrive.
+A glowing mist over the parts of the island still loading, each area's held till its trees, stumps, campfires and creatures are drawn, then rolling back from the treehouse and fading away.
 
 1. Ed, 2026-10-24: "Mist sounds ideal, which rolls away when loading finishes. If loading starts with areas closer to the treehouse, this will look fine"
 2. "make the mist roll away progressively away from the treehouse instead of all at once" (render/loadingMist.ts)
-The loading mist [1][2]: while the island is still being drawn (its trees one set an area type, nearest the treehouse first), every area whose trees aren't in yet lies under a low glowing night mist, in layers sheets up to height metres over the ground, each at most density opaque (the low ones thickest), in hard steps, glow times as bright as the night's mist. When a type's trees land, its mist rolls back off its areas as a front moving out from the treehouse at speed m/s, and what it hasn't reached cap seconds after the trees landed (the far rim) fades out over a second.
+3. Ed, 2026-11-06: "Make sure things load and render before the mist disappears, and mist should fade away smoothly over a few seconds not vanish." (render/view.ts mistReady)
+The loading mist [1][2][3]: while the island is still being drawn, every area type's areas lie under a low glowing night mist, in layers sheets up to height metres over the ground, each at most density opaque (the low ones thickest), in hard steps, glow times as bright as the night's mist. A type's mist holds till its areas' trees, great stumps (or rune stones), the campfires and its creatures' plain look are loaded and drawn (its shader linked and a frame drawn with it); then it rolls back off its areas as a front moving out from the treehouse at speed m/s (whatever the front hasn't reached cap seconds later goes all the same), and where the front passes the mist thins away over fade seconds, dithered, never in one frame.
 Code: `render/loadingMist.ts`
 
+- **`loadingMist.fade`**: Seconds an area's loading mist takes to thin away once its contents are drawn (never in one frame).
+  1. Ed, 2026-11-06: "mist should fade away smoothly over a few seconds not vanish"
+  Code: `render/loadingFront.ts`
 - **`loadingMist.soft`**: the front's soft edge (m either side), size: its rolling noise (m).
-- **`loadingMist.sea`**: The loading mist lies over the sea too and burns off last, once all the land is in.
+- **`loadingMist.sea`**: The loading mist lies over the sea too (and any ground not filled in yet), and goes once the ground's own program is drawn.
   1. Ed: "Maybe it should also appear over the water and burn off there too"
-  it lies over the water too, out to sea metres past the island's furthest ground, thinning, and burns off last, as its own front from the treehouse once the land's all in [1]; 0 none. Areas drawn before the first frame (a revisit's, from the art cache) never have any. Off under ?quick=1; ?loadmist=1\|0 for one load, ?artdelay=<s> to land the trees drawn ahead of need one every that many seconds and watch it.
+  2. Ed, 2026-11-06: "Coast (waves, sand) is urgent because we cross it first but coast decorations (starfish) are tiny and can wait."
+  it lies over the water too, out to sea metres past the island's furthest ground, thinning, and over any ground not filled in yet; it holds till the ground's own program (the coast's sand and waves) is drawn and the ground in view is filled, then goes as a type's does (it used to wait for all the land: Ed, 2026-11-06, "Coast (waves, sand) is urgent because we cross it first"); 0 none. Areas drawn before the first frame of a load (not a sail's) never have any. Off under ?quick=1; ?loadmist=1\|0 for one load, ?artdelay=<s> to land the trees drawn ahead of need one every that many seconds and watch it.
 
 | knob | type | range |
 |---|---|---|
@@ -4841,6 +4875,7 @@ Code: `render/loadingMist.ts`
 | `loadingMist.glow` | number | 0 to … |
 | `loadingMist.speed` | number | 0 to … |
 | `loadingMist.cap` | number | 0 to … |
+| `loadingMist.fade` | number | 0 to … |
 | `loadingMist.soft` | number | 0 to … |
 | `loadingMist.size` | number | 0 to … |
 | `loadingMist.sea` | number | 0 to … |

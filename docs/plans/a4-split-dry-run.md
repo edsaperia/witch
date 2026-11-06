@@ -377,3 +377,24 @@ picture/rules parity, must pass before READY. Local browser/full-suite/heavy
 proof is unrun; the old incomplete evidence remains historical. Application
 receipt and no-write output hashes are retained locally in
 previews/a4-proof/fenced-apply-20261105.
+
+## Post-#1881 refresh, 6 November
+
+Full coordinator instruction1562#6691306878 follows Ed's go for1562 and release
+#1881. Refresh source is a8ca5f2b0351c8ad78f9e1b7d0bf08586d873441. Normal merge
+only, preserving checkpoint2f0128fbd and prior proof history. The new lifecycle
+cuts are bakeTufts/stumpSpecs; readiness gains stumpsOf/updateLoadingMist.
+The private mistSource getter and mutable fields remain in View. The obsolete
+armSkip cut is replaced by current armGesture in pageNight. Existing module
+cuts take current dive order, tuft scheduling/cancellation, mist readiness,
+buildSlice hand-off and wake pose unchanged. Existing camera/aimVelocity modules
+remain where prototype put them. Public signatures/defaults and initialization
+order are verified against this exact source.
+
+No-write dry run:168 cuts/16 code files, no snapshot/manifest writes. Applied
+outputs match every dry-run code hash. Inverse check:168 bodies and18 output
+hashes PASS. Structural wakeSpawn/chartSail tests now verify main delegation
+and inspect their owning modules, retaining wake-in-bed/double-draw and
+non-skippable-flight coverage. No runtime behavior fix or bench declaration.
+Local evidence: previews/a4-proof/refresh-after-1881. Exact-head CI/bench must
+pass before READY; canonical alone combines and releases.

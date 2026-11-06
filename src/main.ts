@@ -39,7 +39,7 @@ import { sharedFindLoan, withSharedFind, type PersonalKit } from "./app/sharedFi
 import { chartOpen, prepareChart, type Sailed } from "./ui/chartOverlay";
 import { opensDirectly, opensInBedroom, opensWithCreator } from "./app/opening";
 
-import { firstMorning } from "./rules/wakeUp";
+import { firstMorning, tuckIn } from "./rules/wakeUp";
 
 import { WorldDrawGate } from "./app/worldDrawGate";
 import { LandingSleep } from './app/landingSleep';
@@ -152,9 +152,9 @@ import { restoreSettingsBase } from "./app/playerSettings";
 
 import { openPotionLab as a4_openPotionLab, pauseControls as a4_pauseControls, updatePauseMenus as a4_updatePauseMenus, openMusicLab as a4_openMusicLab, installPause1 as a4_installPause1, installPause2 as a4_installPause2, installPause3 as a4_installPause3, installPause4 as a4_installPause4, installPause5 as a4_installPause5, installPause6 as a4_installPause6, installPause7 as a4_installPause7, installPause8 as a4_installPause8, installPause9 as a4_installPause9 } from "./app/pagePause";
 import { reconcilePickers as a4_reconcilePickers, shutStation as a4_shutStation, findsCtx as a4_findsCtx, workshopNow as a4_workshopNow, useHouse as a4_useHouse, installStations1 as a4_installStations1, installStations2 as a4_installStations2, installStations3 as a4_installStations3, installStations4 as a4_installStations4, installStations5 as a4_installStations5, installStations6 as a4_installStations6, installStations7 as a4_installStations7, installStations8 as a4_installStations8, installStations9 as a4_installStations9, installStations10 as a4_installStations10, installStations11 as a4_installStations11, installStations12 as a4_installStations12, installStations13 as a4_installStations13, installStations14 as a4_installStations14, installStations15 as a4_installStations15, installStations16 as a4_installStations16, installStations17 as a4_installStations17 } from "./app/pageStations";
-import { keepNightie as a4_keepNightie, personalKit as a4_personalKit, hostCollections as a4_hostCollections, traceVisit as a4_traceVisit, aheadMorning as a4_aheadMorning, revealArt as a4_revealArt, bedFirst as a4_bedFirst, bedFirstNow as a4_bedFirstNow, arrived as a4_arrived, arrivedNow as a4_arrivedNow, wakeArrival as a4_wakeArrival, wakeArrivalNow as a4_wakeArrivalNow, start as a4_start, startDirect as a4_startDirect, dressCreator as a4_dressCreator, chartOverNight as a4_chartOverNight, chartWorldArg as a4_chartWorldArg, sailFromChart as a4_sailFromChart, recordSail as a4_recordSail, departFromChart as a4_departFromChart, wakeFirst as a4_wakeFirst, wakeFirstNow as a4_wakeFirstNow, sailInPlace as a4_sailInPlace, makeSailNight as a4_makeSailNight, newNight as a4_newNight, nightInPlace as a4_nightInPlace, leaveBot as a4_leaveBot, chartWorld as a4_chartWorld, soundNote as a4_soundNote, armSkip as a4_armSkip, queueCast as a4_queueCast, armBack as a4_armBack, wokenBefore as a4_wokenBefore, woke as a4_woke, mirrored as a4_mirrored, sawMirror as a4_sawMirror } from "./app/pageNight";
+import { keepNightie as a4_keepNightie, personalKit as a4_personalKit, hostCollections as a4_hostCollections, traceVisit as a4_traceVisit, aheadMorning as a4_aheadMorning, revealArt as a4_revealArt, bedFirst as a4_bedFirst, bedFirstNow as a4_bedFirstNow, arrived as a4_arrived, arrivedNow as a4_arrivedNow, wakeArrival as a4_wakeArrival, wakeArrivalNow as a4_wakeArrivalNow, start as a4_start, startDirect as a4_startDirect, dressCreator as a4_dressCreator, chartOverNight as a4_chartOverNight, chartWorldArg as a4_chartWorldArg, sailFromChart as a4_sailFromChart, recordSail as a4_recordSail, departFromChart as a4_departFromChart, wakeFirst as a4_wakeFirst, wakeFirstNow as a4_wakeFirstNow, sailInPlace as a4_sailInPlace, makeSailNight as a4_makeSailNight, newNight as a4_newNight, nightInPlace as a4_nightInPlace, leaveBot as a4_leaveBot, chartWorld as a4_chartWorld, soundNote as a4_soundNote, armGesture as a4_armGesture, queueCast as a4_queueCast, armBack as a4_armBack, wokenBefore as a4_wokenBefore, woke as a4_woke, mirrored as a4_mirrored, sawMirror as a4_sawMirror } from "./app/pageNight";
 import { lendFind as a4_lendFind, settleLoan as a4_settleLoan, settleLoanNow as a4_settleLoanNow, startDream as a4_startDream, herHead as a4_herHead, stepGuide as a4_stepGuide, partsNow as a4_partsNow } from "./app/pageFinds";
-import { botGame as a4_botGame, saveComment as a4_saveComment, restoreComment as a4_restoreComment, spawnHere as a4_spawnHere, spawnHereNow as a4_spawnHereNow, decidePanel as a4_decidePanel, keyNow as a4_keyNow, installDebug1 as a4_installDebug1, installDebug2 as a4_installDebug2, installDebug3 as a4_installDebug3, installDebug4 as a4_installDebug4, installDebug5 as a4_installDebug5, installDebug6 as a4_installDebug6, installDebug7 as a4_installDebug7, installDebug8 as a4_installDebug8, installDebug9 as a4_installDebug9, installDebug10 as a4_installDebug10, installDebug11 as a4_installDebug11, installDebug12 as a4_installDebug12, installDebug13 as a4_installDebug13, installDebug14 as a4_installDebug14, installDebug15 as a4_installDebug15, installDebug16 as a4_installDebug16, installDebug17 as a4_installDebug17, installDebug18 as a4_installDebug18, installDebug19 as a4_installDebug19, installDebug20 as a4_installDebug20, installDebug21 as a4_installDebug21, installDebug22 as a4_installDebug22, installDebug23 as a4_installDebug23, installDebug24 as a4_installDebug24, installDebug25 as a4_installDebug25, installDebug26 as a4_installDebug26, installDebug27 as a4_installDebug27, installDebug28 as a4_installDebug28, installDebug29 as a4_installDebug29, installDebug30 as a4_installDebug30, installDebug31 as a4_installDebug31, installDebug32 as a4_installDebug32 } from "./app/pageDebug";
+import { botGame as a4_botGame, saveComment as a4_saveComment, restoreComment as a4_restoreComment, spawnHere as a4_spawnHere, spawnHereNow as a4_spawnHereNow, decidePanel as a4_decidePanel, keyNow as a4_keyNow, installDebug1 as a4_installDebug1, installDebug2 as a4_installDebug2, installDebug3 as a4_installDebug3, installDebug4 as a4_installDebug4, installDebug5 as a4_installDebug5, installDebug6 as a4_installDebug6, installDebug7 as a4_installDebug7, installDebug8 as a4_installDebug8, installDebug9 as a4_installDebug9, installDebug10 as a4_installDebug10, installDebug11 as a4_installDebug11, installDebug12 as a4_installDebug12, installDebug13 as a4_installDebug13, installDebug14 as a4_installDebug14, installDebug15 as a4_installDebug15, installDebug16 as a4_installDebug16, installDebug17 as a4_installDebug17, installDebug18 as a4_installDebug18, installDebug19 as a4_installDebug19, installDebug20 as a4_installDebug20, installDebug21 as a4_installDebug21, installDebug22 as a4_installDebug22, installDebug23 as a4_installDebug23, installDebug24 as a4_installDebug24, installDebug25 as a4_installDebug25, installDebug26 as a4_installDebug26, installDebug27 as a4_installDebug27, installDebug28 as a4_installDebug28, installDebug29 as a4_installDebug29, installDebug30 as a4_installDebug30, installDebug31 as a4_installDebug31, installDebug32 as a4_installDebug32, installDebug33 as a4_installDebug33 } from "./app/pageDebug";
 import { updateChartWarm as a4_updateChartWarm, drawFrame as a4_drawFrame, frame as a4_frame, frameBody as a4_frameBody, overlayHead as a4_overlayHead } from "./app/pageFrame";
 import { createBuildNotice as a4_createBuildNotice, installBuildNotice1 as a4_installBuildNotice1 } from "./app/pageBuildNotice";
 
@@ -169,7 +169,7 @@ const pageHost = {
   get aheadMorning(): typeof aheadMorning { return aheadMorning; },
   get aimHud(): typeof aimHud { return aimHud; },
   get armBack(): typeof armBack { return armBack; },
-  get armSkip(): typeof armSkip { return armSkip; },
+  get armGesture(): typeof armGesture { return armGesture; },
   get arrived(): typeof arrived { return arrived; },
   get arrivedNow(): typeof arrivedNow { return arrivedNow; },
   get autoTalk(): typeof autoTalk { return autoTalk; }, set autoTalk(value: typeof autoTalk) { autoTalk = value; },
@@ -222,6 +222,7 @@ const pageHost = {
   get frameHouseEvents(): typeof frameHouseEvents { return frameHouseEvents; }, set frameHouseEvents(value: typeof frameHouseEvents) { frameHouseEvents = value; },
   get frameStats(): typeof frameStats { return frameStats; },
   get freeze(): typeof freeze { return freeze; },
+  get gestureArmed(): typeof gestureArmed { return gestureArmed; }, set gestureArmed(value: typeof gestureArmed) { gestureArmed = value; },
   get gestured(): typeof gestured { return gestured; }, set gestured(value: typeof gestured) { gestured = value; },
   get guestAudioGame(): typeof guestAudioGame { return guestAudioGame; }, set guestAudioGame(value: typeof guestAudioGame) { guestAudioGame = value; },
   get guide(): typeof guide { return guide; },
@@ -321,7 +322,6 @@ const pageHost = {
   get showLook(): typeof showLook { return showLook; },
   get shutButton(): typeof shutButton { return shutButton; },
   get shutStation(): typeof shutStation { return shutStation; },
-  get skipArmed(): typeof skipArmed { return skipArmed; }, set skipArmed(value: typeof skipArmed) { skipArmed = value; },
   get slowAudioLogged(): typeof slowAudioLogged { return slowAudioLogged; }, set slowAudioLogged(value: typeof slowAudioLogged) { slowAudioLogged = value; },
   get sound(): typeof sound { return sound; },
   get soundNote(): typeof soundNote { return soundNote; },
@@ -632,6 +632,7 @@ function updateChartWarm(): void { return a4_updateChartWarm(pageHost); }
 requestAnimationFrame(() => setTimeout(async () => {
   const night = N();
   if (night.arrival) bedFirst(night); // (the island's link loaded anew, &arrive=1: in bed before the dive, as a sail in place)
+  else if (inBedroom) view.asleepInBed = mutate("wake: first bed", () => tuckIn(night.game)); // (in her bed, the camera on her, before the start's made round her, as the bed's next night: nightInPlace; drawn there under the loading screen, never at her decks first)
   await view.prepare();
   night.flags.ready = true;
   // The sea chart's renderer and shaders made ahead, while the start screen shows (ui/chartOverlay.ts prepareChart): E at the map
@@ -762,8 +763,9 @@ page.presentationGame = game => phone.presented(game);
 
 // Arriving from the sea chart (?arrive=1, or a sail in place; the night's arrival, app/night.ts): the chart's last frame while the
 // night builds, then the flight from the chart's camera down to her asleep in her bed (Ed, 2026-10-25: "a sail always ends with her
-// asleep in bed"; bedFirst; at her decks under ?opening=old, the party spell cast as it lands). Any key or tap skips to its end; as
-// it lands she wakes (arrived), and if no key or tap has come by then (browsers keep sound off till one does) a small note asks for one.
+// asleep in bed"; bedFirst; at her decks under ?opening=old, the party spell cast as it lands). Nothing skips it (Ed, 2026-11-06:
+// "Both the zoom and the dive are loading screens; they shouldn't be skippable because loading must happen"); as it lands she wakes
+// (arrived), and if no key or tap has come by then (browsers keep sound off till one does) a small note asks for one.
 const bootArrival = N().arrival;
 // (Ed, 2026-10-12: the HUD hidden through the flight, fading in as she settles at her decks)
 const HUD_IDS = ["clock", "seed", "version", "aim", "touch", "bubbles", "invites"];
@@ -773,10 +775,10 @@ if (bootArrival) {
 }
 let gestured = false;
 const soundNote = (): void => a4_soundNote(pageHost);
-/** Any key or tap skips an arrival's flight (once a page: the boot's arrival, or the first sail in place). */
-let skipArmed = false;
-const armSkip = (): void => a4_armSkip(pageHost);
-if (bootArrival) armSkip();
+/** A key or tap during an arrival's flight wakes the sound (browsers keep it off till one comes); it never skips the flight. */
+let gestureArmed = false;
+const armGesture = (): void => a4_armGesture(pageHost);
+if (bootArrival) armGesture();
 /** The swap point (the transition review, 2026-10-19; Ed: "revisits can draw instantly then redraw during the bedroom sequence"):
  *  the island's trees were drawn at once from what's kept (its own seed, render/artCache.ts islandArtSeed); here, the last moment
  *  she can't see them change (the landing still about to fade; else play starting from behind the bedroom), tonight's own (drawn
@@ -926,7 +928,7 @@ if (botBtn) {
 }
 function start(): boolean { return a4_start(pageHost); }
 function startDirect(): void { return a4_startDirect(pageHost); }
-input.onAny = () => (N().arrival && !N().flags.landed ? true : start()); // (arriving: a key skips the flight, app/arrive.ts; the landing starts it)
+input.onAny = () => (N().arrival && !N().flags.landed ? true : start()); // (arriving: a key does nothing to the flight; the landing starts it)
 // The audio watchdog (app/sound.ts).
 a4_installPause5(pageHost);
 // The pause page's test sliders (Ed, 2026-10-12; ui/decide.ts PauseSliders): down the left while frozen, the freeze quiet (no card
@@ -1357,15 +1359,20 @@ a4_installDebug26(pageHost);
 // on the chart, the way by sail.inPlace or ?sail=, in place the fallback), for tools/sail/leak.cjs and swap.cjs; `end` the
 // chart's flight end (a plain one out at sea south of the island if not given: its still a dark screen; null, none), `fail`
 // (?debug=sail only) the sail in place made to throw, to see the fallback. Resolves once the night's start is ready.
-// window.witch.chart(): the sea chart over the night, as the map table opens it (tools/smoke/quick.cjs: choosing her own island).
+// window.witch.land(): the tools' own way past a sail's dive (the smoke run, tools/sail/leak.cjs), straight to her bed as a dive whose
+// shader grace ran out lands; no player can (Ed, 2026-11-06: "they shouldn't be skippable because loading must happen"). False if
+// there's no dive under way.
 a4_installDebug27(pageHost);
-// The bestiary book's zoo over the night, for the tools (tools/zoo/perf.cjs): open and close it as the book and its × do.
+// window.witch.chart(): the sea chart over the night, as the map table opens it (tools/smoke/quick.cjs: choosing her own island);
+// window.witch.chart("mapTable"), as the table's own, sailing on a hold (tools/sail/hold.cjs).
 a4_installDebug28(pageHost);
-// The Studio's instruments for the tools (tools/studio/check.cjs): where she's at and what it plays (its meter).
+// The bestiary book's zoo over the night, for the tools (tools/zoo/perf.cjs): open and close it as the book and its × do.
 a4_installDebug29(pageHost);
+// The Studio's instruments for the tools (tools/studio/check.cjs): where she's at and what it plays (its meter).
+a4_installDebug30(pageHost);
 // The telescope for the tools (tools/telescope/shots.cjs, tools/stars/shots.cjs): look through it pointed at a bearing and zoom (0
 // wide, 1 close) and an elevation (degrees up; its lowest if not given), or stop.
-a4_installDebug30(pageHost);
 a4_installDebug31(pageHost);
-// Known synchronous console mutations use declared boundaries too. Arbitrary direct writes to witch.game remain detectable replay failures.
 a4_installDebug32(pageHost);
+// Known synchronous console mutations use declared boundaries too. Arbitrary direct writes to witch.game remain detectable replay failures.
+a4_installDebug33(pageHost);

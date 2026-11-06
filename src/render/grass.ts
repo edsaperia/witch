@@ -179,24 +179,21 @@ export class GrassView {
    *  how much each sways: the mean of its sway mask over its drawn pixels (0 for pebbles and litter, most for long grass and rushes).
    *  In the style's biome (art/flora/biomes.js) only the area types in `own` (the island's: all, if not given), the rest as they
    *  always are; each type's drawing kept by its biome (TUFT_KEPT), so a night on another island draws only what it hasn't yet. */
-  static *tufts(style: object, own?: ReadonlySet<number>): Steps<TuftArt> {
+  static *tufts(style: object, own?: ReadonlySet<number>, order: readonly number[] = []): Steps<TuftArt> {
     const sprites: Baked[] = [], kinds: TuftArt["kinds"] = [], rushes: TuftArt["rushes"] = [];
     const { biome, ...plain } = style as { biome?: string }, styleKey = JSON.stringify(plain);
+    const keyOf = (t: number) => { const b = biome && (!own || own.has(t)) ? biome : undefined; return { b, key: `${styleKey}|${LOOKS[t].id}|${b ?? ""}` }; };
     yield "tufts";
+    // Each type's tufts baked first in `order` (a sail's: nearest the dive's track first, render/view.ts bakeTufts), then the rest;
+    // packed in the types' own order either way, so the atlas is the same whatever the order they were baked in.
+    for (const t of [...order.filter(t => t >= 0 && t < LOOKS.length), ...LOOKS.map((_, t) => t)]) {
+      const { b, key } = keyOf(t);
+      if (TUFT_KEPT.has(key)) continue;
+      yield;
+      TUFT_KEPT.set(key, GrassView.bake(LOOKS[t].id, b ? { ...plain, biome: b } : plain));
+    }
     for (let t = 0; t < LOOKS.length; t++) { // (the area types and home's meadow)
-      const type = LOOKS[t], b = biome && (!own || own.has(t)) ? biome : undefined, key = `${styleKey}|${type.id}|${b ?? ""}`;
-      let kept = TUFT_KEPT.get(key);
-      if (!kept) {
-        yield;
-        const list = Art.bakeTufts(type.id, b ? { ...plain, biome: b } : plain) as { kind: string; weight: number; A: Baked["A"]; N: Baked["N"]; S: Baked["A"]; w: number; h: number }[];
-        kept = list.map(b => {
-          const px = (b.S.getContext("2d") as CanvasRenderingContext2D).getImageData(0, 0, b.w, b.h).data;
-          let sum = 0, n = 0;
-          for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 0) { sum += px[i]; n++; }
-          return { kind: b.kind, weight: b.weight, sway: n ? Math.min(1, (sum / n / 255) * 2) : 0, sprite: { A: b.A, N: b.N, w: b.w, h: b.h } };
-        });
-        TUFT_KEPT.set(key, kept);
-      }
+      const kept = TUFT_KEPT.get(keyOf(t).key)!;
       let upTo = 0;
       kinds.push(kept.map(b => {
         sprites.push(b.sprite);
@@ -212,8 +209,28 @@ export class GrassView {
     return { kinds, rushes, pixels: yield* packSteps(sprites, 512) };
   }
 
-  /** The tufts drawn again (View.setGame: an island in another biome, art/flora/biomes.js): the new atlas in, the old freed. Call it
-   *  with setMap, which empties every block, so nothing is drawn from the old frames. */
+  /** One area type's tufts drawn (art/tufts.js), with how much each sways. */
+  private static bake(id: string, style: object): { kind: string; weight: number; sway: number; sprite: Baked }[] {
+    const list = Art.bakeTufts(id, style) as { kind: string; weight: number; A: Baked["A"]; N: Baked["N"]; S: Baked["A"]; w: number; h: number }[];
+    return list.map(b => {
+      const px = (b.S.getContext("2d") as CanvasRenderingContext2D).getImageData(0, 0, b.w, b.h).data;
+      let sum = 0, n = 0;
+      for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 0) { sum += px[i]; n++; }
+      return { kind: b.kind, weight: b.weight, sway: n ? Math.min(1, (sum / n / 255) * 2) : 0, sprite: { A: b.A, N: b.N, w: b.w, h: b.h } };
+    });
+  }
+
+  /** Area types whose tufts aren't drawn yet (a sail's, baked under the dive: render/view.ts bakeTufts): none of theirs drawn till
+   *  setArt brings them, so no other biome's tufts stand on this island meanwhile and none pops in outside the loading mist (they
+   *  grow only round her, and she's in bed). Null: every type's are in. */
+  private waiting: ReadonlySet<number> | null = null;
+  /** Hold back the tufts of `types` till setArt (Ed, 2026-11-06: "Make sure things load and render before the mist disappears"). */
+  hold(types: ReadonlySet<number>): void { this.waiting = types.size ? types : null; this.redraw(); }
+  /** Whether area type `t`'s tufts are held back (hold). */
+  holds(t: number): boolean { return !!this.waiting?.has(t); }
+
+  /** The tufts drawn again (an island in another biome, art/flora/biomes.js; a sail's under its dive, render/view.ts bakeTufts): the
+   *  new atlas in, the old freed, whatever's held back let go, and the cells in reach written again from the new frames. */
   setArt(made: TuftArt): void {
     const old = this.atlas;
     this.kinds = made.kinds; this.rushes = made.rushes;
@@ -222,7 +239,10 @@ export class GrassView {
     const u = this.mat.uniforms;
     setAtlasUniforms(u, this.atlas, "uTufts", "uTuftN"); (u.uTuftSize.value as THREE.Vector2).set(this.atlasW, this.atlasH);
     old.albedo.dispose(); old.normal.dispose();
+    this.waiting = null; this.redraw();
   }
+  /** Every cell in reach written again on the next update (its frames or what's held back changed): their blocks emptied and freed. */
+  private redraw(): void { for (const k of [...this.held.keys()]) this.release(k); this.lastCi = NaN; this.lastCj = NaN; }
 
   /** Another night's map (View.setGame): its tufts worked out afresh, every block emptied and free, and the canopy's and
    *  clearings' uniforms its ground's. (The tufts' art, by area type, is the page's, drawn again only for another biome: setArt.) */
@@ -316,7 +336,7 @@ export class GrassView {
         // Which of its area's tufts, by their shares, seeded from where it stands. (Reeds ringing a pond: the area's rushes, or any area's.)
         const ks = f && this.kinds[f.type], roll = f ? hash2(Math.round(f.x * 64), Math.round(f.z * 64), 1107) * (ks[ks.length - 1]?.upTo ?? 1) : 0;
         const kd = f && ((TUFT_KINDS[f.kind] === "reeds" ? this.rushes[f.type] : undefined) ?? ks.find(k => roll <= k.upTo) ?? ks[ks.length - 1]);
-        if (!f || !kd) { T[n * 4 + 2] = 0; continue; } // (an empty slot: no size, nothing drawn)
+        if (!f || !kd || this.waiting?.has(f.type)) { T[n * 4 + 2] = 0; continue; } // (an empty slot, or a type's held back: no size, nothing drawn)
         const fr = F[kd.frame];
         T[n * 4] = f.x; T[n * 4 + 1] = f.z; T[n * 4 + 2] = f.size; T[n * 4 + 3] = f.flip ? 1 : 0;
         U[n * 4] = Math.round(fr.uv[0] * this.atlasW); U[n * 4 + 1] = Math.round(fr.uv[1] * this.atlasH); U[n * 4 + 2] = fr.w; U[n * 4 + 3] = fr.h; // (its frame in atlas pixels)

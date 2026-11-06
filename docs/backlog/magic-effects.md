@@ -1,8 +1,8 @@
 # Magic effects pass: briefing
 
-**Audit status (2026-11-01): Partly built: the layered language and imprints are integrated; the full extended response catalogue and some authoring/distortion goals remain.**
+**Audit status (2026-11-05): Partly built: the layered language and imprints are integrated, patterned light is now on by default and creature spells were made bigger and brighter; the full extended response catalogue, landing ripples, flowing surfaces and full distortion remain.** (1 Nov audit: patterned light was a parked branch)
 
-The status index checks the requests below against prototype `ab06904b` and cited history. **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
+The status index checks the requests below against prototype `ab06904b` and cited history; re-checked on 2026-11-05 against prototype `26d69880` (live as v7569). **Built** means code is present, not a new play/audition/performance pass. **Partly built** states the missing part. An em dash leaves an unimplemented request unmarked. Versions are verified changelog build labels where available; “unverified” means no first-live number was established. Historical/superseded requests are preserved, not re-authorised. Repeated details/build-order summaries are counted with their feature group, not again.
 
 | Request / feature group | Status | Evidence and remaining gap |
 |---|---|---|
@@ -15,10 +15,10 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Budgets, ledger, quality and reduce-flashing fallbacks | **Built** | fx bounded pools/light/imprint rungs and gpuLedger tags; #1468 (polish follow-up #1484), first version unverified. No claim of new hardware measurements. |
 | Authoring schema, preview grid and Fight Arena integration | **Partly built** | FX data validation, ?lookdemo=fx and mock/gallery exist; full proposed per-form authoring UI and arena panel/schema controls not all demonstrated. #1468 (polish follow-up #1484), first version unverified. |
 | Mock stage0 and later native adapters | **Built** | fxMock/fire/frost scenes, native ribbons/sigils/ley/hologram/water/firework adapters; #1468 (polish follow-up #1484), first version unverified. Stage0 gate superseded by explicit full-pass implementation in git history. |
-| Stage5 replacements throughout inventory | **Partly built** | Party pillar, stone vortex, Cyclone and many native adapters built; broad every-inventory-item polish is not certified complete. #1468 (polish follow-up #1484), first version unverified. |
+| Stage5 replacements throughout inventory | **Partly built** | Party pillar, stone vortex, Cyclone and many native adapters built; broad every-inventory-item polish is not certified complete. #1468 (polish follow-up #1484), first version unverified. Since 1 Nov: creature spells bigger, brighter, longer, with pause-page sliders (#1718, v7197); red telegraphs (#1646); party-start column, dome and sparkles (#1721, v7207). |
 | Movement/footprint writers into common imprint field | **Partly built** | Field exists, movement/footfall memory writers do not. #1468 (polish follow-up #1484) foundation only; visual-response project1 remains incomplete. |
 | Shared visual-height landing ripples and coordinated earth response | — | Existing height renderer and attackFeel are not the proposed impact-wave implementation. |
-| Patterned light and soundsystem staging | **Partly built** | #1542 opt-in branch is parked outside current prototype; existing disco light is not the full proposed common pattern layer. No shipped completed version. |
+| Patterned light and soundsystem staging | **Partly built** | #1542 merged (v7527): default colour spokes from soundsystems, flicker and spell rings through one shared pattern layer (patterned-lighting.md). Soundsystem staging as a coordinated vertical spell form is not built; the giant party-start spell (music.md, Ed 2026-11-04) is a separate unbuilt request. |
 | Dodge/fast-spell pose echoes | **Partly built** | #1545 default dodge departure/arrival echoes exist, fragment v6727; fast-spell capture/reuse remains missing. |
 | General flowing beam/shield/water surfaces and full extended spell demonstrations | — | Some current shader motion exists; no complete project6 shared flow-field implementation or all six coordinated examples found. |
 

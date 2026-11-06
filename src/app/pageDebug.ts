@@ -258,18 +258,22 @@ if (pageHost.params.get("debug") === "sail") (window as unknown as { witch: Reco
 }
 
 export function installDebug27(pageHost: PageHost): void {
-(window as unknown as { witch: Record<string, unknown> }).witch.chart = () => pageHost.chartOverNight();
+(window as unknown as { witch: Record<string, unknown> }).witch.land = (): boolean => { const a = pageHost.N().arrival; if (!a || a.done) return false; a.skip(); return true; };
 }
 
 export function installDebug28(pageHost: PageHost): void {
-(window as unknown as { witch: Record<string, unknown> }).witch.zooOverlay = pageHost.zoo;
+(window as unknown as { witch: Record<string, unknown> }).witch.chart = (table?: string) => pageHost.chartOverNight(table);
 }
 
 export function installDebug29(pageHost: PageHost): void {
-(window as unknown as { witch: Record<string, unknown> }).witch.studio = pageHost.studio;
+(window as unknown as { witch: Record<string, unknown> }).witch.zooOverlay = pageHost.zoo;
 }
 
 export function installDebug30(pageHost: PageHost): void {
+(window as unknown as { witch: Record<string, unknown> }).witch.studio = pageHost.studio;
+}
+
+export function installDebug31(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.telescope = {
   look: (heading: number, zoom: number, elevation?: number) => { const { game, tuning } = pageHost.N(); if (!tuning.telescope) return false; pageHost.telescope.open(game, tuning.telescope); pageHost.telescope.point(heading, zoom, tuning.telescope, elevation); pageHost.view.telescope = pageHost.telescope.look(tuning.telescope); return true; },
   close: () => { pageHost.telescope.close(); pageHost.view.telescope = null; },
@@ -278,7 +282,7 @@ export function installDebug30(pageHost: PageHost): void {
 };
 }
 
-export function installDebug31(pageHost: PageHost): void {
+export function installDebug32(pageHost: PageHost): void {
 (window as unknown as { witch: Record<string, unknown> }).witch.sail = (island: string, seed: number, o: { end?: FlightEnd | null; fail?: boolean } = {}): Promise<boolean> => {
   pageHost.sailFail = !!o.fail && pageHost.params.get("debug") === "sail";
   const world = pageHost.chartWorldArg(), end = o.end === null ? undefined : o.end ?? { cam: { x: 0, z: 700, height: 260, pitch: 0.45, fov: 40, speed: 60 }, still: "" };
@@ -286,7 +290,7 @@ export function installDebug31(pageHost: PageHost): void {
 };
 }
 
-export function installDebug32(pageHost: PageHost): void {
+export function installDebug33(pageHost: PageHost): void {
 {
   const hooks = (window as unknown as { witch: Record<string, unknown> }).witch;
   for (const name of ["arena", "arenaAttack", "shot", "guest", "lose", "rainbow", "hit", "take", "wakeUp", "dream"]) {

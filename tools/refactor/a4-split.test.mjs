@@ -52,3 +52,26 @@ test('actual background generator stops between program slices after an epoch ch
   assert.equal(steps.next().done, true);
   assert.equal(uniforms, 1, 'second program is not prepared after cancellation');
 });
+
+test('actual extracted tuft generator stops before drawing for a replacement night', () => {
+  const file = 'src/render/view/lifecycle.ts', text = readFileSync(file, 'utf8');
+  const ast = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
+  const generators = [];
+  function scan(n) {
+    if (ts.isFunctionExpression(n) && n.asteriskToken && n.body.getText(ast).includes('nightEpoch')) generators.push(n);
+    ts.forEachChild(n, scan);
+  }
+  scan(ast);
+  assert.equal(generators.length, 1);
+  const lowered = ts.transpileModule(`const callback = ${generators[0].getText(ast)};`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
+  const bridge = { nightEpoch: 1 };
+  let drawn = 0;
+  const steps = { next: () => { drawn++; return { value: undefined, done: false }; } };
+  const callback = new Function('view', 'epoch', 'steps', lowered + '\nreturn callback;')(bridge, 1, steps);
+  const pending = callback();
+  assert.equal(pending.next().done, false);
+  assert.equal(drawn, 1);
+  bridge.nightEpoch++;
+  assert.deepEqual(pending.next(), { value: null, done: true });
+  assert.equal(drawn, 1, 'old biome must not draw another tuft slice after the night changes');
+});

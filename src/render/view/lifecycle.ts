@@ -2,6 +2,7 @@
 import type { View, ViewInternals, ViewShared } from "../view";
 import { RigView, rigOn } from "../rig/rigView";
 import { bridgeNativeObject } from "../fx/native";
+import { stumpId, type StumpSpec } from "../artBuild";
 import * as THREE from "three";
 import { deckOf } from "../../rules/treehouse";
 import { StationBackdrop } from "../stationBackdrop";
@@ -21,7 +22,7 @@ import { OcclusionProbes } from "../occlusion";
 import { HEIGHT_UNIFORMS } from "../height";
 import { LIGHT_UNIFORMS } from "../lighting";
 import { AreaMoods, moodOf } from "../mood";
-import { GrassView } from "../grass";
+import { GrassView, type TuftArt } from "../grass";
 import { resetRefraction } from "./refraction";
 import { resetDodgeEchoes } from "./dodgeEchoes";
 import { TRAIL_DEFAULT, WitchTrail } from "../trail";
@@ -203,9 +204,10 @@ export function* build(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     a4ViewHost.scene.add(a4ViewHost.shadow);
   }
 
-export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedHost: ViewShared, o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][]; underDive?: boolean }): Promise<void> {
+export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedHost: ViewShared, o: { sail?: boolean; dive?: (x: number, z: number) => number; share?: ReadonlyMap<number, number>; track?: [number, number, number, number][]; underDive?: boolean }): Promise<void> {
     performance.mark("witch:prep-start");
     if (o.sail) { a4ViewHost.homeDone = false; a4ViewHost.shaderDrawStatus.active = true; a4ViewHost.shaderDrawStatus.skipped = {}; a4ViewHost.shaderDrawStatus.fallback = {}; a4ViewHost.shaderDrawStatus.submitted = {}; if (!a4PrivateHost.shaderChartLanding) a4ViewHost.startLandingShaderGrace(); }
+    a4PrivateHost.mistStartClear = !o.sail; // (a load's: drawn under its loading screen; a sail's: misted till drawn)
     a4PrivateHost.makeLoadingMist();
     a4PrivateHost.coastAhead();
     { // tonight's own trees, if drawn ahead and kept (app/landingBake.ts), for the swap before she sees the island (retype)
@@ -224,17 +226,21 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
       const s = m.siteOf(x, y), t = m.typeOf(x, y), d = o.dive ? o.dive(s.x, s.z) : Math.hypot(s.x - h.x, s.z - h.z);
       if (!(near.get(t)! <= d)) near.set(t, d);
     }
+    // This island's tufts (when it's in another biome: setGame held them back), nearest the dive's track first (or the house).
+    const tuftOrder = [...near, [HOME_LOOK, o.dive ? o.dive(h.x, h.z) : 0] as [number, number]].sort((a, b) => a[1] - b[1]).map(([t]) => t);
     if (o.dive) {
       a4ViewHost.homeDone = false;
       a4ViewHost.prepared = true;
-      a4PrivateHost.askIsland(near); // (the workers drawing the dive's areas while the shaders link)
-      void a4PrivateHost.islandAhead(near); a4PrivateHost.islandFaces(near); // (the rest of the island's own asked too, not waited for: the dive shows what's built, Ed 2026-11-03)
+      // (the workers drawing the dive's areas while the shaders link, in the island's order, render/islandNeeds.ts ART_ORDER: its
+      // trees by their share of the dive's view, the largest first; not waited for: the dive shows what's built, Ed 2026-11-03)
+      const S = o.share, byView = S ? new Map([...near].sort((a, b) => (S.get(b[0]) ?? 0) - (S.get(a[0]) ?? 0) || a[1] - b[1]).map(([t], i) => [t, i])) : near;
+      void a4PrivateHost.islandAhead(byView, true); a4PrivateHost.askIsland(byView); a4PrivateHost.islandFaces(byView);
       // The house, the forest round it and the legends' carvings made from here on, while the shaders link and the chart flies on
       // down to the water (Ed, 2026-11-03: "The zoom into the sea chart can be quite a few seconds long, the idea is to build the
       // island during this time"): made only once the dive began, a slice a dive frame, they took 14.5 s of his laptop's dive for
       // what the boot makes in 0.6 s, the dive flying over a forest not there. What's left as it hands over goes on through the dive.
       const compiled = a4PrivateHost.compileAll(o.sail, !!o.underDive), homeEpoch = a4PrivateHost.shaderEpoch; // (compileAll's epoch: buildHome stops only for a newer night)
-      void a4PrivateHost.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === a4PrivateHost.shaderEpoch) { a4ViewHost.homeDone = true; performance.mark('landing:house-complete'); } });
+      void a4PrivateHost.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === a4PrivateHost.shaderEpoch) { a4ViewHost.homeDone = true; performance.mark('landing:house-complete'); } void a4PrivateHost.bakeTufts(tuftOrder); }); // (the tufts after the house, Ed's order: the house first; bakeTufts itself stops for a newer night)
       await compiled;
       // The ground where the dive first sees the island (Ed, 2026-10-24: the dive's view needs the ground; Echo's island black through
       // the descent, its tiles not drawn yet): the first TRACK_AHEAD metres of its track in from the sea, TRACK_REACH each side, a few
@@ -247,6 +253,7 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
       performance.mark("witch:prep-track");
       return;
     }
+    const tufts = a4PrivateHost.bakeTufts(tuftOrder); // (waited for below: the start shows them)
     await runSliced(a4PrivateHost.warmSteps(), "warm"); // (the first frame's own lazy work made ahead, a slice at a time)
     performance.mark("witch:prep-warm");
     a4ViewHost.render(0, false);
@@ -260,7 +267,7 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
         a4PrivateHost.armLimitedLanding(); a4ViewHost.prepared = true; await a4PrivateHost.compileAll(true);
         const homeEpoch = a4PrivateHost.shaderEpoch;
         void a4PrivateHost.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === a4PrivateHost.shaderEpoch) { a4ViewHost.homeDone = true; performance.mark('landing:house-complete'); } });
-        a4PrivateHost.askIsland(near); void a4PrivateHost.islandAhead(near); a4PrivateHost.islandFaces(near); return;
+        a4PrivateHost.askIsland(near); void a4PrivateHost.islandAhead(near); a4PrivateHost.islandFaces(near); void tufts; return;
       }
     } else await a4ViewHost.assets.homeArt(); // initial boot still waits for all home art
     performance.mark("witch:prep-home");
@@ -277,6 +284,7 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
     if (!o.sail) await island;
     performance.mark("witch:prep-idle");
     await house;
+    await tufts;
     performance.mark("witch:prep-rooms");
     a4ViewHost.render(0, false);
     await runSliced(refreshSteps(a4ViewHost), "refresh"); // (refresh(this, true), a slice at a time)
@@ -287,10 +295,38 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
     a4ViewHost.homeDone = true;
   }
 
-export function islandAhead(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, near: Map<number, number>): Promise<void> {
+export function bakeTufts(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedHost: ViewShared, order: readonly number[]): Promise<void> {
+    const due = a4PrivateHost.tuftsDue;
+    if (!due) return a4PrivateHost.tuftsBaking ?? Promise.resolve();
+    a4PrivateHost.tuftsDue = null;
+    const view = a4PrivateHost, epoch = due.epoch, style = due.biome ? { ...a4ViewHost.style, biome: due.biome } : a4ViewHost.style;
+    const steps = GrassView.tufts(style, a4SharedHost.islandTypes(a4ViewHost.game.map), order);
+    const run = runSliced((function* (): Steps<TuftArt | null> { for (;;) { if (epoch !== view.nightEpoch) return null; const s = steps.next(); if (s.done) return s.value; yield s.value; } })(), "tufts", 4);
+    const p = a4PrivateHost.tuftsBaking = run.then(made => {
+      if (!made || epoch !== a4PrivateHost.nightEpoch) return;
+      a4ViewHost.grass.setArt(made); a4PrivateHost.tuftBiome = due.biome;
+      performance.mark("witch:tufts-in");
+    }, e => { console.error("the tufts went wrong", e); }).finally(() => { if (a4PrivateHost.tuftsBaking === p) a4PrivateHost.tuftsBaking = null; });
+    return p;
+  }
+
+export function stumpSpecs(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, near: ReadonlyMap<number, number>): StumpSpec[] {
+    const m = a4ViewHost.game.map, [hx, hy] = m.centreCell, out = new Map<string, { spec: StumpSpec; at: number }>();
+    const M = (a4ViewHost.island as IslandLayers | undefined)?.markerArt; // (none in the tests' stand-in views)
+    if (!M?.stumps) return [];
+    for (const [cx, cy] of m.cells) {
+      if ((cx === hx && cy === hy) || !m.playable(cx, cy)) continue;
+      const s = M.stump([cx, cy]), id = s && stumpId(s.spec), at = near.get(m.typeOf(cx, cy)) ?? Infinity;
+      const was = id ? out.get(id) : undefined;
+      if (s && id && !(was && was.at <= at)) out.set(id, { spec: s.spec, at });
+    }
+    return [...out.values()].sort((a, b) => a.at - b.at).map(v => v.spec);
+  }
+
+export function islandAhead(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, near: Map<number, number>, dive: NonNullable<Parameters<View["islandAhead"]>[1]>): Promise<void> {
     const g = a4ViewHost.game;
     if (a4ViewHost.quick || g.map.zoo?.layout) return Promise.resolve();
-    const needs = islandNeeds(g.map, near), looks = { legendNap: !!g.tuning.wildLegends.seen?.nap, coast: !!beachOf(g.map.bounds, g.tuning), beachDecor: !!g.tuning.beach?.decor?.on, lakes: !!g.map.bounds.lakes };
+    const needs = islandNeeds(g.map, near), looks = { legendNap: !!g.tuning.wildLegends.seen?.nap, coast: !!beachOf(g.map.bounds, g.tuning), beachDecor: !!g.tuning.beach?.decor?.on, lakes: !!g.map.bounds.lakes, stumps: a4PrivateHost.stumpSpecs(near), dive };
     return a4ViewHost.assets.whenAsked(() => askIslandArt(a4ViewHost.assets, needs, looks)).then(() => { performance.mark("witch:prep-island"); });
   }
 
@@ -319,6 +355,7 @@ export function askIsland(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4Sh
 
 export function* setGameSteps(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedHost: ViewShared, game: Game): Steps {
     a4PrivateHost.shaderEpoch++; // a previous island's background completion cannot release this island's gate
+    a4PrivateHost.nightEpoch++;
     const t = game.tuning, old = a4ViewHost.island;
     // The last night's: the scenery's rebuild under way, the creatures' caches, the candles; its area types' batches and their
     // shadows, and its soundsystems' (their atlases the art's: freed once, by reseat).
@@ -341,15 +378,18 @@ export function* setGameSteps(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
     const island = new IslandLayers(a4ViewHost.scene, { game, style: a4ViewHost.style, mpp: a4ViewHost.mpp, maxTexture: a4ViewHost.renderer.capabilities.maxTextureSize, assets: a4ViewHost.assets, deck: deckOf(game.map, t) }, false);
     yield* island.groundSteps(); yield "paths"; yield* island.pathSteps(); yield; island.buildTreehouse(); yield* island.markerSteps(); yield "ley"; island.buildLey(); yield; island.buildDancefloor();
     yield* island.finishSteps();
-    const tb = a4ViewHost.style.biome ?? a4ViewHost.assets.typeBiome, tufts = tb !== a4PrivateHost.tuftBiome ? yield* GrassView.tufts(tb ? { ...a4ViewHost.style, biome: tb } : a4ViewHost.style, a4SharedHost.islandTypes(game.map)) : null; // (another biome's: drawn again, a step an area type)
+    // (another biome's tufts: drawn under the dive, not here, Ed 2026-11-06 "Make sure things load and render before the mist
+    // disappears"; on the bear they were 73 of the cloud's 84 s before the hand-off. Till then this island's are held back: bakeTufts)
+    const tb = a4ViewHost.style.biome ?? a4ViewHost.assets.typeBiome, tuftsDue = tb !== a4PrivateHost.tuftBiome;
     yield "swap";
     island.minimap.on = old.minimap.on;
     { const cs = t.canopyShadow; island.ground.setCanopyShadow(cs.on ? cs.strength : 0, cs.height, cs.cover, cs.wind); }
     island.ley.scale(a4PrivateHost.leyBase);
     // What draws on the ground re-pointed at the new one before the old is let go.
     a4ViewHost.beachView.setGround(island.ground);
-    if (tufts) { a4ViewHost.grass.setArt(tufts); a4PrivateHost.tuftBiome = tb; }
     a4ViewHost.grass.setMap(game.map, game.forest, (island.ground.mesh.material as THREE.ShaderMaterial).uniforms);
+    a4PrivateHost.tuftsDue = tuftsDue ? { biome: tb, epoch: a4PrivateHost.nightEpoch } : null;
+    if (tuftsDue) a4ViewHost.grass.hold(a4SharedHost.islandTypes(game.map));
     // The swap: the new island in (its hills the field in use), then the old let go.
     a4ViewHost.island = island;
     island.attach();
