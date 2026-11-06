@@ -10971,6 +10971,16 @@
     "arrive": {
       "type": "object",
       "properties": {
+        "zoom": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How many seconds the sea chart's zoom in to the island takes when she sails."
+        },
+        "dive": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How many seconds the dive from the chart's hand-off down to her bed takes; 0 leaves it to its legs."
+        },
         "warm": {
           "type": "object",
           "properties": {
@@ -11136,6 +11146,8 @@
         }
       },
       "required": [
+        "zoom",
+        "dive",
         "warm",
         "maxStep",
         "fade",

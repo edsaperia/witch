@@ -327,6 +327,14 @@ const smoothstep = (u: number) => u * u * (3 - 2 * u), easeIn = (u: number) => u
  *  (s) `onward` metres, ending looking down just `inland` of the shore below its dancefloor (the camera `dist` m back, tilted `pitchDeg` down:
  *  the game's treetop view) and still moving north, for the game to carry on. */
 const FLY = { frame: 1.6, swoop: 2.8, run: 1.2, dist: 600, pitchDeg: 50, onward: 60, inland: 40 };
+/** The flight's three legs' seconds (the glide in to frame the island, the swoop down, the run on to the hand-off), scaled together
+ *  to the tuning's arrive.zoom, the whole flight's length (Ed, 2026-11-06: "Both the zoom and the dive are loading screens; they
+ *  shouldn't be skippable because loading must happen. If it happens much faster than the two animations, we should be deciding
+ *  their minimum length."): FLY's own, 5.6 s, if it's not set. */
+export function flyLegs(zoom?: number): { frame: number; swoop: number; run: number } {
+  const own = FLY.frame + FLY.swoop + FLY.run, k = zoom && zoom > 0 ? zoom / own : 1;
+  return { frame: FLY.frame * k, swoop: FLY.swoop * k, run: FLY.run * k };
+}
 /** The chart's sea's colour at a sail's hand-off, channel by channel, times its own (flyFrame), so the still the game's dive
  *  cross-fades from is the game's own sea's blue (Ed, 2026-11-03: "we can fade between while looking at a simple blue texture").
  *  Fitted on the cloud renderer, 2026-11-03, a chart sail to the fox's island: the game's sea at the hand-off's camera averages
@@ -686,14 +694,14 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
   fly(id: string, done: (end: FlightEnd) => void, o: FlyOptions = {}): boolean {
     const i = this.isles.get(id); if (!i) return false;
     this.select(id); this.orbit = 0; this.yaw = 0;
-    const { keys, G } = this.flightKeys(i, o);
+    const { keys, G } = this.flightKeys(i, o), L = this.legs();
     // its dancefloor: a ring of party light at its middle (about the real one's size, a little more to show from up high)
     const floor = new THREE.Group(), y = G ? (() => { const r = Math.round(-G.z0 / G.step), c = Math.round(-G.x0 / G.step); return 0.06 + Math.max(0, G.h[r * G.cols + c] ?? 0) * K * RELIEF; })() : i.top;
     const disc = new THREE.Mesh(new THREE.CircleGeometry(1, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.9, 0.5, 1.2), transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
     const halo = new THREE.Mesh(new THREE.PlaneGeometry(5, 5).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.glow, color: new THREE.Color(0.7, 0.4, 1), transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
     floor.add(disc, halo); floor.position.y = y + 0.05; floor.scale.setScalar(22 * K); i.group.add(floor);
     const wallStart = performance.now();
-    this.flight = { id, t: 0, keys, done, speed: (FLY.onward * 2) / FLY.run, floor, size: i.size ?? 1, rate: 1, wall: 0, wallStart, hold: o.hold, slow: o.slow, landingDue: () => o.landingDue?.(wallStart + keys.at(-1)!.at * 1000) };
+    this.flight = { id, t: 0, keys, done, speed: (FLY.onward * 2) / L.run, floor, size: i.size ?? 1, rate: 1, wall: 0, wallStart, hold: o.hold, slow: o.slow, landingDue: () => o.landingDue?.(wallStart + keys.at(-1)!.at * 1000) };
     return true;
   }
 
@@ -707,12 +715,12 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
       const c0 = Math.round(-G.x0 / G.step);
       for (let r = Math.max(0, Math.round(-G.z0 / G.step)); r < G.rows; r++) if (!(G.h[r * G.cols + c0] > 0)) { coast = G.z0 + r * G.step; break; }
     }
-    const pitch = THREE.MathUtils.degToRad(o.pitchDeg ?? FLY.pitchDeg), dist = (o.dist ?? FLY.dist) * K, z3 = i.z + (coast + (o.sea ?? -FLY.inland)) * K, z2 = z3 + FLY.onward * K;
+    const L = this.legs(), pitch = THREE.MathUtils.degToRad(o.pitchDeg ?? FLY.pitchDeg), dist = (o.dist ?? FLY.dist) * K, z3 = i.z + (coast + (o.sea ?? -FLY.inland)) * K, z2 = z3 + FLY.onward * K;
     const keys: Flight["keys"] = [
       { x: this.focus.x, z: this.focus.z, dist: this.dist, pitch: this.pitch, at: 0, ease: smoothstep },
-      { x: i.x, z: i.z, dist: Math.max(CLOSEST, i.reach * 4.2), pitch: 0.95, at: FLY.frame, ease: smoothstep },
-      { x: i.x, z: z2, dist, pitch, at: FLY.frame + FLY.swoop, ease: smoothstep },
-      { x: i.x, z: z3, dist, pitch, at: FLY.frame + FLY.swoop + FLY.run, ease: easeIn },
+      { x: i.x, z: i.z, dist: Math.max(CLOSEST, i.reach * 4.2), pitch: 0.95, at: L.frame, ease: smoothstep },
+      { x: i.x, z: z2, dist, pitch, at: L.frame + L.swoop, ease: smoothstep },
+      { x: i.x, z: z3, dist, pitch, at: L.frame + L.swoop + L.run, ease: easeIn },
     ];
     return { keys, G };
   }
@@ -722,10 +730,13 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
   flightEnd(id: string, o: FlyOptions = {}): FlightEnd["cam"] | null {
     const i = this.isles.get(id); if (!i) return null;
     const e = this.flightKeys(i, o).keys.at(-1)!;
-    return { x: 0, z: (e.z + Math.cos(e.pitch) * e.dist - i.z) / K, height: (Math.sin(e.pitch) * e.dist) / K, pitch: e.pitch, fov: this.camera.fov, speed: (FLY.onward * 2) / FLY.run };
+    return { x: 0, z: (e.z + Math.cos(e.pitch) * e.dist - i.z) / K, height: (Math.sin(e.pitch) * e.dist) / K, pitch: e.pitch, fov: this.camera.fov, speed: (FLY.onward * 2) / this.legs().run };
   }
-  /** Any key or tap during a flight: straight to its end. */
-  skipFlight(): void { if (this.flight) { this.flight.t = this.flight.keys.at(-1)!.at; this.flight.rate = 1; this.flight.slow = undefined; this.flight.held = false; } }
+  /** The flight's legs, at the tuning's arrive.zoom (flyLegs). */
+  private legs(): ReturnType<typeof flyLegs> { return flyLegs((this.tuning as unknown as { arrive?: { zoom?: number } }).arrive?.zoom); }
+  /** Whether a flight is under way past its first leg, the glide in to frame the island: its swoop down begun, where a sail from the
+   *  chart over the game is committed and the next night made under it (app/chartView.ts). */
+  get flightFramed(): boolean { const f = this.flight; return !!f && f.t >= f.keys[1].at; }
 
   /** The flight's frame: the camera along its legs; the island's land easing to its true heights; its sigil settling. */
   private flyFrame(dt: number, time: number): void {

@@ -2140,6 +2140,8 @@ export type SchemaTuning = {
     };
   };
   "arrive": {
+    "zoom": number;
+    "dive": number;
     "warm": {
       "frames": number;
       "ms": number;
