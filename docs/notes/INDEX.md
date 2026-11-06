@@ -252,6 +252,7 @@ says what each note covers.
 - Crash journal budget
 - Slow-frame summaries
 - The sail's loading against its two animations
+- The dive's load order
 - Reused surface roughness (#1464, 2026-10-30):
 - Exact travel art profiles (2026-10-30, #1464):
 - Ordinary-play scenery stalls
