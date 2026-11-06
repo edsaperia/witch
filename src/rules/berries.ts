@@ -172,9 +172,10 @@ export function newBerries(map: ForestMap, t: Tuning): BerryState {
   for (const [cx, cy] of map.cells) {
     if (cx === map.centreCell[0] && cy === map.centreCell[1]) continue; // home: the dancefloor's clearing
     const s = map.siteOf(cx, cy), ar = rng(map.seed * 3571 + cx * 389 + cy * 7741 + 17), first = bushes.length;
-    // In patches (Ed, v233): a few bushes clustered within patch.radius of a centre, so a sigil in
-    // the middle of one is a feeding spot. Patch centres lie out in the area's woods, between its
-    // clearing and its edge.
+    // In patches (Ed, v233): a few bushes clustered within patch.radius of a centre, so she finds
+    // several berries in reach together (no animal eats on its own since Ed's 2026-11-03 feeding:
+    // she feeds the bottom of her stack with the sigil button). Patch centres lie out in the area's
+    // woods, between its clearing and its edge.
     for (let tries = 0; tries < B.bushesPerArea * 12 && bushes.length - first < B.bushesPerArea; tries++) {
       const a = ar() * Math.PI * 2, d = map.areaSize * (0.15 + ar() * 0.5), px = s.x + Math.cos(a) * d, pz = s.z + Math.sin(a) * d;
       const at = map.areaAt(px, pz);
