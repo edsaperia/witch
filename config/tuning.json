@@ -2487,7 +2487,7 @@
       "relax": 3
     },
     "mood": {
-      "strength": 1,
+      "strength": 0.6,
       "dark": 0.6,
       "hazeNear": 45,
       "hazeFar": 150
