@@ -1,0 +1,21 @@
+{
+  "tool": "image_gen__imagegen",
+  "date": "2026-11-07",
+  "prompt": "Create one fantasy design reference sheet, SIX equal panels in a clear 2rows x3columns grid. Columns A,B,C are THREE DIFFERENT legendary concepts of SAME animal; top row low hero viewpoint, bottom row SAME three concepts at GAME CAMERA: elevated30degrees, predominantly side-on body turned34degrees towards viewer from side profile, approximate orthographic. Every panel shows WHOLE giant animal fully in frame with margins and a SMALL standing witch in pointed hat BESIDE its feet plus FOREST TREES for scale. Legends tower ABOVE tree canopy; about20times game baby's height, witch about one-tenth giant's total height, no exact measurement claim. Deep colossal landform mass, atmospheric haze on far parts, epochs of weathering. No cropped extremities. Label A B C and Hero/Game camera, C MAXIMUM FANTASY. Clearly recognizable species, correct limb counts. Magic comes from its own defining trait, varied not generic uniform. EMPEROR DRAGONFLY, FOUR transparent glassy veined wings in TWO pairs, six small legs TUCKED under muscular thorax, enormous compound eyes, slender blue segmented abdomen, level flight head forward above mangrove-pool treetops. A: Time-Seer, gigantic compound eyes contain different remembered floods in thousands of facets, ancient broken-and-healed glass wings, tiny votive reed shrines on thorax, not human face. B: Storm Measurer, each of four wings a transparent map of living lightning veins, scarred copper-green thorax, tail narrow like storm needle. C MAXIMUM FANTASY: four glass wings are impossible transparent windows into FOUR different epochs of the same mangrove forest, with young and fossil forests visible within wing surfaces, eye facets like polished ancient observatories; still a four-winged dragonfly. Tiny witch and real surrounding trees in EVERY panel, maintain side-oblique game row.",
+  "source": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-d006e0eb-d38a-4b19-805f-7fa689e12ab4.png",
+  "pick": "C",
+  "layout": "A/B/C columns, hero top, approximate game-camera lower; witch and forest in every cell; C maximum fantasy",
+  "sourceSha256": "de6e6a4e60c6a9b1d5fed585d07061f40060f7e1466adffb8c8b2f285632abda",
+  "limits": "Generated projection/scale/witch costume approximate, no pixel-calibrated20x baby proof, no implementation. Crowded limbs/cropping/pose drift noted in species docs; anatomy references override generated anatomy.",
+  "currentLegend": "Preserved original current-legend-l8.png from524b, explicit Bold albedo. No rerender, no default-style claim.",
+  "history": "First pass c3a631ae97fde88263918c22f4fa0b886bd0bcfc retained.",
+  "inspection": "Witch and trees present throughout. Hero wing tips crop at some cell borders; game-row wing boundaries are more readable but remain approximate. Images cannot prove four wing roots or six tucked legs in all overlaps. Antennae are too prominent in the hero view; use tiny natural antennae.",
+  "signature": "Four glass wings showing four epochs of the mangrove forest",
+  "rationale": "The four-wing structure becomes the memory of a habitat that has existed across epochs. This is stranger than a large hawker but still organized by its unmistakable glass wings, eyes and long abdomen. B overlaps other lanes' storm wings; A overlaps the owl's time-seeing face more closely.",
+  "bodyPlan": "Keep four independent thin wing surfaces, huge compound eyes, six tucked thoracic legs and level abdomen. Use the earlier legend wing span1.7–2.0L as a first shape range, then test projection at colossal size. Each wing carries a different era within its own boundary; do not add extra wings or let the surface scene hide the wing roots.",
+  "graphNeeds": "Four independently phased transparent veined surfaces with separate bounded epoch-image/material regions, edge wear, body-local sparse shrine attachments, flap/glide/rest state support and giant bounds/LOD. No time simulation, world capture or portal mechanic is authorized.",
+  "files": {
+    "legend-comparison-l8-v2.png": "fc4e06bf3c896f339fcf4d61b4fc31cc8e13bb14068a4c9af7fe908cce3f9e3e",
+    "legend-concepts-l8-v2.png": "de6e6a4e60c6a9b1d5fed585d07061f40060f7e1466adffb8c8b2f285632abda"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "tool": "image_gen__imagegen",
+  "date": "2026-11-07",
+  "prompt": "Create one fantasy design reference sheet, SIX equal panels in a clear 2rows x3columns grid. Columns A,B,C are THREE DIFFERENT legendary concepts of SAME animal; top row low hero viewpoint, bottom row SAME three concepts at GAME CAMERA: elevated30degrees, predominantly side-on body turned34degrees towards viewer from side profile, approximate orthographic. Every panel shows WHOLE giant animal fully in frame with margins and a SMALL standing witch in pointed hat BESIDE its feet plus FOREST TREES for scale. Legends tower ABOVE tree canopy; about20times game baby's height, witch about one-tenth giant's total height, no exact measurement claim. Deep colossal landform mass, atmospheric haze on far parts, epochs of weathering. No cropped extremities. Label A B C and Hero/Game camera, C MAXIMUM FANTASY. Clearly recognizable species, correct limb counts. Magic comes from its own defining trait, varied not generic uniform. TARANTULA, orange-banded dark hairy jointed legs, exactly EIGHT walking legs plus two short front pedipalps, distinct low cephalothorax and large furry abdomen, no antennae. Dry thorn-scrub rocky banks, thorn trees/hawthorns/junipers. A: Burrow Weaver, ancient body arches over canyon burrow, ground silk forms a luminous rose-window trapdoor at its feet, thick legs scarred like rock, no orbweb hung in air. B: Canyon Listener, colossal sensory hairs on front walking legs hear every footfall, impossible concentric ripples of pale vibration travel through the EARTH from their tips, grey-tipped old fur, tiny pilgrim thorn offerings on knee bands. C MAXIMUM FANTASY: Earth Harp, eight vast tarantula legs become living arches that pluck a glowing web of fault-line strings across a canyon, each strand vibrates visible remembered footsteps of extinct animals; actual tarantula body remains hairy orangebanded, no human hands or extra eyes. Witch+forest trees EVERY panel and whole silhouette.",
+  "source": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-27821e01-ece3-4552-81e9-e72cd57ffff7.png",
+  "pick": "B",
+  "layout": "A/B/C columns, hero top, approximate game-camera lower; witch and forest in every cell; C maximum fantasy",
+  "sourceSha256": "783250f67ff836f286809119ba6c1e23abd97711f1c712e41a8dd3c88fa01749",
+  "limits": "Generated projection/scale/witch costume approximate, no pixel-calibrated20x baby proof, no implementation. Crowded limbs/cropping/pose drift noted in species docs; anatomy references override generated anatomy.",
+  "currentLegend": "Preserved original current-legend-l8.png from524b, explicit Bold albedo. No rerender, no default-style claim.",
+  "history": "First pass c3a631ae97fde88263918c22f4fa0b886bd0bcfc retained.",
+  "inspection": "Witch and thorn forest trees are present in every cell. Front-facing hero and game rows underperform requested side-oblique heading; some far legs occlude, and ornaments can hide joints. These are fantasy targets, with natural plate anatomy taking precedence.",
+  "signature": "Sensory foreleg hairs reading the earth's vibrations",
+  "rationale": "The ancient tarantula knows the land through touch. Impossible ground ripples magnify its sensory hairs while grey fur, old bands and votive knee offerings show reverence. C is the maximum leap, but B better preserves the low patient tarantula rather than borrowing a suspended orb-weaver identity.",
+  "bodyPlan": "Keep two body masses, eight walking legs and shorter pedipalps. Extend directional sensory hair envelope0.20–0.35L beyond the front legs, with sparse worn offerings above joints. Hair tips approach ground but do not become a second set of limbs. Ground ripples are decorative sensing imagery tied to contact points.",
+  "graphNeeds": "Part-local directional hair fans and sparse tip emission, contact-aligned bounded ground-ripple visual, independent palps/chelicerae, eight-leg support and massive-body bounds/LOD. No actual sensing mechanic or audio feature is implemented.",
+  "files": {
+    "legend-comparison-l8-v2.png": "8914746642be2be87184c27d2a540806b37da668f68f32da35793f16aadc212b",
+    "legend-concepts-l8-v2.png": "783250f67ff836f286809119ba6c1e23abd97711f1c712e41a8dd3c88fa01749"
+  }
+}

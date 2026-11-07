@@ -1,0 +1,21 @@
+{
+  "tool": "image_gen__imagegen",
+  "date": "2026-11-07",
+  "prompt": "Create one fantasy design reference sheet, SIX equal panels in a clear 2rows x3columns grid. Columns A,B,C are THREE DIFFERENT legendary concepts of SAME animal; top row low hero viewpoint, bottom row SAME three concepts at GAME CAMERA: elevated30degrees, predominantly side-on body turned34degrees towards viewer from side profile, approximate orthographic. Every panel shows WHOLE giant animal fully in frame with margins and a SMALL standing witch in pointed hat BESIDE its feet plus FOREST TREES for scale. Legends tower ABOVE tree canopy; about20times game baby's height, witch about one-tenth giant's total height, no exact measurement claim. Deep colossal landform mass, atmospheric haze on far parts, epochs of weathering. No cropped extremities. Label A B C and Hero/Game camera, C MAXIMUM FANTASY. Clearly recognizable species, correct limb counts. Magic comes from its own defining trait, varied not generic uniform. WOODLOUSE, low oval terrestrial isopod with overlapping transverse armor plates, exactly SEVEN pairs short walking legs adult, two long jointed antennae and two short rear uropods, not mammal/armadillo/pillbug sphere. Moss moor with long grass, puddles, lake and moss mounds. A: Walking Hearth, giant overlapping roof-tile plates contain warm tiny door/window refuges in side, weathered by rain and centuries, old moor grass in plate cracks, legs remain fourteen short supports. B: Fourteen-Step Keeper, each of fourteen feet makes impossible luminous ripples that raise stepping stones from bog, immense stone-worn plates and long feelers. C MAXIMUM FANTASY: Shelter of Lost Seasons, within gaps BETWEEN overlapping plates are impossible deep miniature warm forests and hearthlit villages from different seasons, a moving refuge that carries a whole lost landscape inside its armor, exterior still unmistakably woodlouse and14shortlegs, not a house bolted on. Witch and surrounding FOREST TREES everypanel giant above canopy, full antennae and body with margins.",
+  "source": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-e85dd195-9df1-4611-8f9c-a8b4eb4e85fc.png",
+  "pick": "A",
+  "layout": "A/B/C columns, hero top, approximate game-camera lower; witch and forest in every cell; C maximum fantasy",
+  "sourceSha256": "a82339d286629baeb68cca5ccba3e685f3d0f0ce5140b5243df13beaf3e263f2",
+  "limits": "Generated projection/scale/witch costume approximate, no pixel-calibrated20x baby proof, no implementation. Crowded limbs/cropping/pose drift noted in species docs; anatomy references override generated anatomy.",
+  "currentLegend": "Preserved original current-legend-l8.png from524b, explicit Bold albedo. No rerender, no default-style claim.",
+  "history": "First pass c3a631ae97fde88263918c22f4fa0b886bd0bcfc retained.",
+  "inspection": "Every cell contains witch/forest scale cues, but body is lifted higher on thicker legs than a natural woodlouse; lower it before modelling. Limb count is indeterminate behind plates. C's seasonal interiors are an alternative, not the selected target; exact20:1 is not proved.",
+  "signature": "A warm refuge within overlapping rain-worn armor plates",
+  "rationale": "The woodlouse carries shelter in the thing that defines it: overlapping plates. Moor-grown grass, old windows and weathered roof-like shields make it a moving ancient refuge. C supplies the maximum-fantasy alternative, but A keeps the animal silhouette clearer.",
+  "bodyPlan": "Keep adult fourteen short legs, two jointed antennae, paired uropods and low oval body. Armor depth0.35–0.45L, width0.65–0.80L, antennae0.65–0.90L remain useful first shape targets. Tiny warm refuges occupy plate gaps rather than a house simply perched on top; grass belongs in weathered seams.",
+  "graphNeeds": "Serial overlapping plate articulation with local recessed warm-window surfaces, sparse grass/offerings attached to plate frames, fourteen-leg wave contact support, antenna chains and colossal bounds/LOD. No interactive village or new house system is implied.",
+  "files": {
+    "legend-comparison-l8-v2.png": "527427c9c968ff0894ef24f9e6e981c0546a16bb95958994f820f11d4cf67cd0",
+    "legend-concepts-l8-v2.png": "a82339d286629baeb68cca5ccba3e685f3d0f0ce5140b5243df13beaf3e263f2"
+  }
+}

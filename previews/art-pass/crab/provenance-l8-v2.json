@@ -1,0 +1,21 @@
+{
+  "tool": "image_gen__imagegen",
+  "date": "2026-11-07",
+  "prompt": "Create one fantasy design reference sheet, SIX equal panels in a clear 2rows x3columns grid. Columns A,B,C are THREE DIFFERENT legendary concepts of SAME animal; top row low hero viewpoint, bottom row SAME three concepts at GAME CAMERA: elevated30degrees, predominantly side-on body turned34degrees towards viewer from side profile, approximate orthographic. Every panel shows WHOLE giant animal fully in frame with margins and a SMALL standing witch in pointed hat BESIDE its feet plus FOREST TREES for scale. Legends tower ABOVE tree canopy; about20times game baby's height, witch about one-tenth giant's total height, no exact measurement claim. Deep colossal landform mass, atmospheric haze on far parts, epochs of weathering. No cropped extremities. Label A B C and Hero/Game camera, C MAXIMUM FANTASY. Clearly recognizable species, correct limb counts. Magic comes from its own defining trait, varied not generic uniform. FIDDLER CRAB of tidal mudflat/mangrove forest, orange-red broad low shell, two stalk eyes, eight walking legs plus ONE enormous display claw and ONE tiny feeding claw. A: Tide Herald, giant pincer eroded into a tide gate through which a ribbon of seawater arcs, reef-old barnacles and votive shells, claw taller than mangroves. B: Mudflat Oracle, towering eye stalks each reflect a different past tide, carapace weathered into channels with small pilgrim offerings, enormous ordinary display claw. C MAXIMUM FANTASY: Moon-Caller, ONE vast display pincer holds a small pearly MOON between its two fingers and pulls impossible vertical tides up around its scarred reef carapace; body clearly fiddler, opposite claw remains tiny, no lobster tail. Witch+trees EVERY panel, all appendages whole.",
+  "source": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-d4872f9b-bc44-4643-8b11-61724c70e70d.png",
+  "pick": "A",
+  "layout": "A/B/C columns, hero top, approximate game-camera lower; witch and forest in every cell; C maximum fantasy",
+  "sourceSha256": "3f92810a3f4d5e7207c98e9d635d26ca77183107597d52497de6c9732b2eb9bb",
+  "limits": "Generated projection/scale/witch costume approximate, no pixel-calibrated20x baby proof, no implementation. Crowded limbs/cropping/pose drift noted in species docs; anatomy references override generated anatomy.",
+  "currentLegend": "Preserved original current-legend-l8.png from524b, explicit Bold albedo. No rerender, no default-style claim.",
+  "history": "First pass c3a631ae97fde88263918c22f4fa0b886bd0bcfc retained.",
+  "inspection": "Witch and mangrove trees appear in every cell, and both rows retain one giant/one tiny claw. Far-side foot counts are occluded. Hero view can exaggerate height relative to foreground trees; exact20:1 is not measured.",
+  "signature": "Tide gate inside one colossal display claw",
+  "rationale": "The fiddler's one beckoning pincer becomes the gate through which tides answer. Reef wear and offerings imply generations of reverence, without replacing the crab with a generic moon idol. B's eye mirrors and C's moon remain alternatives.",
+  "bodyPlan": "Keep eight walking legs plus two claw limbs, one major/one tiny. Preserve the above major-claw range2.0–2.8L; weather the inner claw into a tide-gate arch, with water visibly tied to the pincer opening. Tall eye stalks must remain clear of the gate. Shell and feet feel massive rather than delicate stilts.",
+  "graphNeeds": "Independent hinged pincer digits and asymmetric scale, a local water-ribbon attachment inside the claw, sparse barnacle/offerings sockets, tide-worn surface masks and colossal silhouette/bounds. Water here is a proposed visual, not a fluid simulation/gameplay feature.",
+  "files": {
+    "legend-comparison-l8-v2.png": "e364909e171f4bbc7caab51aa986ea8bd554abcfc91b03caffa213f0865a385f",
+    "legend-concepts-l8-v2.png": "3f92810a3f4d5e7207c98e9d635d26ca77183107597d52497de6c9732b2eb9bb"
+  }
+}

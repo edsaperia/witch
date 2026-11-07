@@ -1,0 +1,22 @@
+{
+  "tool": "image_gen__imagegen",
+  "date": "2026-11-07",
+  "prompt": "Create one fantasy design reference sheet, SIX equal panels in a clear 2rows x3columns grid. Columns A,B,C are THREE DIFFERENT legendary concepts of SAME animal; top row low hero viewpoint, bottom row SAME three concepts at GAME CAMERA: elevated30degrees, predominantly side-on body turned34degrees towards viewer from side profile, approximate orthographic. Every panel shows WHOLE giant animal fully in frame with margins and a SMALL standing witch in pointed hat BESIDE its feet plus FOREST TREES for scale. Legends tower ABOVE tree canopy; about20times game baby's height, witch about one-tenth giant's total height, no exact measurement claim. Deep colossal landform mass, atmospheric haze on far parts, epochs of weathering. No cropped extremities. Label A B C and Hero/Game camera, C MAXIMUM FANTASY. Clearly recognizable species, correct limb counts. Magic comes from its own defining trait, varied not generic uniform. FIRE STAG BEETLE, six thoracic legs, paired elytra and enormous branching mandibles, clubbed antennae, volcanic ash forest/rotting giant logs. A: eroded molten jaws frame a floating ember like an ancient forge, black shell scarred by epochs, a few charred trees rooted in old shell cracks; witch at foot. B: elytra immense engraved dark iron shields carrying tiny votive jaw-shaped offerings, no flames; legs like ancient supports. C maximum fantasy: paired branching jaws hold a miniature eclipsed SUN in open space between them, impossible gravitational forge of dawn, molten seams only around jaws, six-legged beetle still obvious, shell a weathered basalt landform. Giant, not normal beetle enlarged. Preserve differences across rows.",
+  "source": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-b9f688fe-a08e-4746-a33a-89b3b2dbb44d.png",
+  "pick": "A",
+  "layout": "A/B/C columns, hero top, approximate game-camera lower; witch and forest in every cell; C maximum fantasy",
+  "sourceSha256": "95bd221723d49fe45d6f564ba261293da7c3c1e7b993a74df15b99d952257051",
+  "limits": "Generated projection/scale/witch costume approximate, no pixel-calibrated20x baby proof, no implementation. Crowded limbs/cropping/pose drift noted in species docs; anatomy references override generated anatomy.",
+  "currentLegend": "Preserved original current-legend-l8.png from524b, explicit Bold albedo. No rerender, no default-style claim.",
+  "history": "First pass c3a631ae97fde88263918c22f4fa0b886bd0bcfc retained.",
+  "inspection": "Every cell has witch/trees. Some hero feet/antenna tips meet the frame; the lower row is more informative for body envelope. The huge mandibles read too horn-like: correct mouth origin/forward reach from the natural plate. The label does not prove exactly20:1 or calibrated camera.",
+  "signature": "A living forge held between eroded mandibles",
+  "rationale": "The impossible ember lives between the beetle's defining jaws. Basalt-like shell wear and rooted deadwood make epochs visible; the forge belongs to volcanic nature, while B is chiefly armor and C risks making the floating sun the whole animal.",
+  "bodyPlan": "Retain the six-leg/thorax/elytra anatomy above and first-pass jaw clearance ranges. Raise jaw volume enough to frame the forge but attach both at the mouth, not as skull antlers; the generator drifts toward upright horns. Keep the shell a broad low landform, with sparse world-grown deadwood as age evidence. The ember is an attached visual target, not an extra body segment.",
+  "graphNeeds": "Mouth-hinged branching jaw sockets, bounded emissive forge anchor between jaw tips, surface fissures, sparse deadwood/offerings attached in local shell frames, colossal bounds/culling and lower-detail distant silhouette.",
+  "files": {
+    "l8-legend-picks-v2.png": "8582375fea497f7c52f8b6a24ba4e0059156c84db27a25007830424d7761e93b",
+    "legend-comparison-l8-v2.png": "b9d19471ea1043d071bcae36168fb64df50e78cfc4833537ec1bb87d823fa11d",
+    "legend-concepts-l8-v2.png": "95bd221723d49fe45d6f564ba261293da7c3c1e7b993a74df15b99d952257051"
+  }
+}

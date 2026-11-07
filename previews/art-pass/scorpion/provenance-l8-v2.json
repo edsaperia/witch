@@ -1,0 +1,21 @@
+{
+  "tool": "image_gen__imagegen",
+  "date": "2026-11-07",
+  "prompt": "Create one fantasy design reference sheet, SIX equal panels in a clear 2rows x3columns grid. Columns A,B,C are THREE DIFFERENT legendary concepts of SAME animal; top row low hero viewpoint, bottom row SAME three concepts at GAME CAMERA: elevated30degrees, predominantly side-on body turned34degrees towards viewer from side profile, approximate orthographic. Every panel shows WHOLE giant animal fully in frame with margins and a SMALL standing witch in pointed hat BESIDE its feet plus FOREST TREES for scale. Legends tower ABOVE tree canopy; about20times game baby's height, witch about one-tenth giant's total height, no exact measurement claim. Deep colossal landform mass, atmospheric haze on far parts, epochs of weathering. No cropped extremities. Label A B C and Hero/Game camera, C MAXIMUM FANTASY. Clearly recognizable species, correct limb counts. Magic comes from its own defining trait, varied not generic uniform. RED-BROWN CANYON SCORPION eight walking legs, two front clawed pedipalps, low plated trunk, narrow tail attached REAR with exactly FIVE large armored segments plus telson stinger. Dry red scree, ocotillo, ironwood and canyon forest trees. A: Brood Matriarch, colossal tail arches like canyon shelter over pale young scorpions on scarred back, bluegreen plate seams, small votive pebble shrines placed by pilgrims. B: Venom Keeper, giant translucent amber stinger contains an impossible suspended drop of venom holding fossil silhouettes from epochs, pincers scarred and grounded. C MAXIMUM FANTASY: Canyon Cradle, tail arch opens an impossible sheltered valley of night under it, tiny living trees and luminous young on broad old back, sting like hooked crescent at valley roof, entire creature still unmistakably scorpion with eight legs and two pincers. Witch beside foot plus real trees EVERY panel; full silhouette no crop.",
+  "source": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-b276e0df-be45-4ea6-bf38-8d98ad7214f6.png",
+  "pick": "B",
+  "layout": "A/B/C columns, hero top, approximate game-camera lower; witch and forest in every cell; C maximum fantasy",
+  "sourceSha256": "1d166736c0ae9dd5b2f3f25fd7352bfe37474b16fca6d7ff54e36f8b4fc665cc",
+  "limits": "Generated projection/scale/witch costume approximate, no pixel-calibrated20x baby proof, no implementation. Crowded limbs/cropping/pose drift noted in species docs; anatomy references override generated anatomy.",
+  "currentLegend": "Preserved original current-legend-l8.png from524b, explicit Bold albedo. No rerender, no default-style claim.",
+  "history": "First pass c3a631ae97fde88263918c22f4fa0b886bd0bcfc retained.",
+  "inspection": "Witch and trees appear in every cell. The generator still adds too many tail segments and over-rocky armor. Rebuild five segments plus telson from anatomy before any model adoption; do not treat fossil silhouettes as a zoological claim.",
+  "signature": "Epoch fossils suspended inside an amber venom stinger",
+  "rationale": "The scorpion's own venom becomes a memory older than the forest. This separates it from shelter/portal motifs elsewhere while scars and canyon-like plates communicate survival. A preserves the maternal story as an option; C offers Ed the furthest fantasy.",
+  "bodyPlan": "Keep eight walking legs, two pincers and a five-segment rear tail plus telson. Enlarge only the terminal venom bulb to0.30–0.45L, using the earlier legend tail arc1.7–2.2L. Its translucent amber contains a few fossil silhouettes; no extra external claws or disconnected floating sting.",
+  "graphNeeds": "Distinct telson mesh/material and internal bounded fossil-mask layer, articulated discrete tail segments, worn pincer/plate surfaces, colossal contact/bounds. This is a visual memory image, not a venom simulation or new combat effect.",
+  "files": {
+    "legend-comparison-l8-v2.png": "3fb3eac519fc7f79fb642ee7ef31de169a34d7a89e9b2fa184b8736a3c21b225",
+    "legend-concepts-l8-v2.png": "1d166736c0ae9dd5b2f3f25fd7352bfe37474b16fca6d7ff54e36f8b4fc665cc"
+  }
+}

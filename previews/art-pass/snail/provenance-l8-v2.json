@@ -1,0 +1,21 @@
+{
+  "tool": "image_gen__imagegen",
+  "date": "2026-11-07",
+  "prompt": "Create one fantasy design reference sheet, SIX equal panels in a clear 2rows x3columns grid. Columns A,B,C are THREE DIFFERENT legendary concepts of SAME animal; top row low hero viewpoint, bottom row SAME three concepts at GAME CAMERA: elevated30degrees, predominantly side-on body turned34degrees towards viewer from side profile, approximate orthographic. Every panel shows WHOLE giant animal fully in frame with margins and a SMALL standing witch in pointed hat BESIDE its feet plus FOREST TREES for scale. Legends tower ABOVE tree canopy; about20times game baby's height, witch about one-tenth giant's total height, no exact measurement claim. Deep colossal landform mass, atmospheric haze on far parts, epochs of weathering. No cropped extremities. Label A B C and Hero/Game camera, C MAXIMUM FANTASY. Clearly recognizable species, correct limb counts. Magic comes from its own defining trait, varied not generic uniform. GARDEN SNAIL, one coherent spiral shell, broad muscular foot on ground, FOUR tentacles (upper two eye stalks plus two lower short), no legs. Giant of muddy forest with broken branches and many-trunk trees. A: Star Archive, enormous chipped shell whorls contain visibly deep revolving constellations, gold growth-ring inlay, shell eroded like a mountain with damp forest on old ledges, grey foot broad and grounded. B: Path Pilgrim, titanic snail's silver slime trail flows uphill into an impossible luminous river behind it, long eye stalks look across epochs, shell scarred and offered tiny bronze waymarkers. C MAXIMUM FANTASY: Spiral Cosmos, shell aperture opens into impossible deep rotating spiral galaxy while shell remains unmistakably coiled and materially attached to huge ancient snail; star-dust follows actual spiral grooves not floating generic halo, small forest shrines cling to shell ledges. Witch standing beside foot and real forest trees EVERY panel, show whole shell/foot/stalks with10percent margins.",
+  "source": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-548f0108-481d-4243-a250-9b9fec2e5273.png",
+  "pick": "C",
+  "layout": "A/B/C columns, hero top, approximate game-camera lower; witch and forest in every cell; C maximum fantasy",
+  "sourceSha256": "a0894b6b643612fdc933d050d5b59f80bc858f8dc49bd8b1f762dc515768e70d",
+  "limits": "Generated projection/scale/witch costume approximate, no pixel-calibrated20x baby proof, no implementation. Crowded limbs/cropping/pose drift noted in species docs; anatomy references override generated anatomy.",
+  "currentLegend": "Preserved original current-legend-l8.png from524b, explicit Bold albedo. No rerender, no default-style claim.",
+  "history": "First pass c3a631ae97fde88263918c22f4fa0b886bd0bcfc retained.",
+  "inspection": "Each cell has witch/trees and whole shell/foot substantially in view. Some hero stalk/branch edges approach borders. Lateral galaxy is not an open hole through the snail's body. Exact scale, optical depth and game-camera fit are unvalidated.",
+  "signature": "A galaxy inside the shell's own spiral",
+  "rationale": "The shell's spiral makes the cosmos feel intrinsic to the snail. Its carried world, old grey foot, shrines and weathered ledges express epochs and reverence; B's trail is compelling but the galaxy best realizes the age-of-stars brief.",
+  "bodyPlan": "Use shell diameter/height around0.9–1.2L with a broad foot supporting it. The actual generated pick shows the galaxy in the lateral whorl, not the biological soft-body aperture: preserve a real separate aperture/foot join. Four tentacles and asymmetrical shell growth remain mandatory. Shrines/trees on shell ledges are supporting history, not the primary signature.",
+  "graphNeeds": "Surface-locked spiral-galaxy region with bounded apparent depth/emission, separate real aperture and chipped lip, lower tentacle pair, sparse shrine/overgrowth sockets in shell-local frames and giant bounds/LOD. #1866's existing shell/spiral/stars are a foundation, not absent features.",
+  "files": {
+    "legend-comparison-l8-v2.png": "4688d58d24602ca6abfb25296dd17839a0c2ca49a097d239eed55223cb1fbfc3",
+    "legend-concepts-l8-v2.png": "a0894b6b643612fdc933d050d5b59f80bc858f8dc49bd8b1f762dc515768e70d"
+  }
+}
