@@ -1,0 +1,8 @@
+{
+  "id": "dormouse",
+  "prompt": "Use case: scientific-educational. Photorealistic whole-animal anatomical target sheet, NOT illustration. Eight cells in a clear 2-row by 4-column grid, plain neutral light-grey ground, soft daylight and realistic fur. No text, labels, borders, scenery or accessories. Row1 same adult, row2 same mobile fully furred juvenile (game age0 design proxy, NOT neonatal animal); juvenile visibly smaller at SAME scale. Columns precisely: standing towards viewer, standing away, walking towards, walking away. All animals substantially side-on with a 34-degree toward/away component; camera looks DOWN 30 degrees from horizontal, long-lens near-orthographic projection. Entire animal, every foot, ear and full tail must fit each cell with generous margins. Correct four-limb anatomy, no duplication, distinct natural walking foot placement. Subject anatomy: Hazel dormouse (Muscardinus avellanarius), warm golden-orange fur, creamy underside, round large dark eyes, rounded ears, short blunt muzzle with long whiskers, soft compact trunk, delicate gripping feet, fully FURRED long rounded cylindrical tail about 0.8 head-body length, NOT naked mouse tail or big squirrel fan. Juvenile is mobile older kit, shorter less full but still furred tail; no hamster cheek pouches.",
+  "path": "previews/art-pass/dormouse/target-v1.png",
+  "sha256": "3050ffb56e542fca7c3292a137891362f6f9cd771f8f7722579a3dedd3ace30d",
+  "tool": "built-in image_gen.imagegen",
+  "generated": "2026-11-07"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "marten",
+  "prompt": "Edit this same eight-cell photographic pine-marten target sheet. Preserve the exact eight-cell adult/juvenile and standing/walking towards/away structure, plain background, whole tails and all feet, juvenile smaller, photoreal fur, cream throat bib and rounded ears. Correct body proportions in ALL cells: a significantly longer supple weasel-like trunk carried LOW, shoulders and hips lowered, legs shortened by about one third so it no longer reads as fox/cat. Slimmer chest and longer tapered muzzle. Same camera looking down about30deg, substantial side component34deg; neither dead-front nor dead-back. Preserve natural correct four limbs. Do not add text.",
+  "path": "previews/art-pass/marten/target-v2.png",
+  "sha256": "1ffe92a6f22e3b9b2ad6f1e3e7d9f5f320cc5401c5c06615758827824308f579",
+  "tool": "built-in image_gen.imagegen edit",
+  "input": "target-v1.png",
+  "generated": "2026-11-07"
+}

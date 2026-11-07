@@ -1,0 +1,8 @@
+{
+  "id": "stoat",
+  "prompt": "Use case: scientific-educational. Photorealistic whole-animal anatomical target sheet, NOT illustration. Eight cells in a clear 2-row by 4-column grid, plain neutral light-grey ground, soft daylight and realistic fur. No text, labels, borders, scenery or accessories. Row1 same adult, row2 same mobile fully furred juvenile (game age0 design proxy, NOT neonatal animal); juvenile visibly smaller at SAME scale. Columns precisely: standing towards viewer, standing away, walking towards, walking away. All animals substantially side-on with a 34-degree toward/away component; camera looks DOWN 30 degrees from horizontal, long-lens near-orthographic projection. Entire animal, every foot, ear and full tail must fit each cell with generous margins. Correct four-limb anatomy, no duplication, distinct natural walking foot placement. Subject anatomy: Stoat (Mustela erminea), summer brown coat above creamy-white underside, conspicuous black tail tip in BOTH ages and headings, very long slim flexible trunk, very short legs, low small round ears, tapered head and whiskers. Tail about 0.35 head-body length, far slimmer and less bushy than pine marten. No ferret mask, no long-tailed-weasel proportions.",
+  "path": "previews/art-pass/stoat/target-v1.png",
+  "sha256": "4a701923e9d96ef14311ebe3523878c174be38199db12b1a5d29e8ca5d15ab76",
+  "tool": "built-in image_gen.imagegen",
+  "generated": "2026-11-07"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "hedgehog",
+  "prompt": "Edit this eight-cell European hedgehog photographic target sheet. Preserve adult top row/juvenile bottom row; standing towards, standing away, walking towards, walking away; plain grey ground, whole animal framing, fur/spines textures. Correct ALL cells: belly and oval trunk carried much nearer the ground, visible leg length reduced about half, rounded low dome silhouette instead of tall-legged spiny dog. Longer low pointed snout. Tiny partly visible ears, no porcupine spikes, no spine on face/belly. Slightly shorter softer juvenile spines. Maintain four real feet and plausible uncurled walking foot placement. Camera down30deg with side-on component34deg towards/away; not direct front/back. No text.",
+  "path": "previews/art-pass/hedgehog/target-v2.png",
+  "sha256": "cc7d6c14ffcdca8fbf97e98376875527e5343211b237d5e6afe5641cd03cdaf0",
+  "tool": "built-in image_gen.imagegen edit",
+  "input": "target-v1.png",
+  "generated": "2026-11-07"
+}

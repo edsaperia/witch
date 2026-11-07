@@ -1,0 +1,9 @@
+{
+  "id": "mole",
+  "prompt": "Edit this eight-cell European mole photographic target sheet. Preserve adult top/juvenile bottom, standing/walking and towards/away sequence, plain grey background and full framing, small pink snout and short sparse tail. Correct ALL cells: completely REMOVE visible external ear rims/pinnae; furred continuous side of head, tiny almost invisible eyes. Broaden the FOREHANDS into genuine lateral digging shovels, palm planes angled OUTWARD at sides of shoulders, broad across five true toes/claws, NOT long forward-facing rat fingers. Rear feet much smaller than forehands; short low limbs; cylindrical velvet-black trunk. Keep correct four-limb anatomy. Camera down30deg and a strong side component, not dead front/back. No star nose and no text.",
+  "path": "previews/art-pass/mole/target-v2.png",
+  "sha256": "954a0a0d09a32aca9ff0090de850cdd33f8de3afcb92ecf00a784d89060efbe9",
+  "tool": "built-in image_gen.imagegen edit",
+  "input": "target-v1.png",
+  "generated": "2026-11-07"
+}

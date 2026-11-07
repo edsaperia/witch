@@ -1,0 +1,8 @@
+{
+  "id": "squirrel",
+  "prompt": "Use case: scientific-educational. Photorealistic whole-animal anatomical target sheet, NOT illustration. Eight cells in a clear 2-row by 4-column grid, plain neutral light-grey ground, soft daylight and realistic fur. No text, labels, borders, scenery or accessories. Row1 same adult, row2 same mobile fully furred juvenile (game age0 design proxy, NOT neonatal animal); juvenile visibly smaller at SAME scale. Columns precisely: standing towards viewer, standing away, walking towards, walking away. All animals substantially side-on with a 34-degree toward/away component; camera looks DOWN 30 degrees from horizontal, long-lens near-orthographic projection. Entire animal, every foot, ear and full tail must fit each cell with generous margins. Correct four-limb anatomy, no duplication, distinct natural walking foot placement. Subject anatomy: Eurasian red squirrel (Sciurus vulgaris), reddish-brown coat and pale underside, conspicuous pointed ear tufts, long bushy tail curved up and back about 0.85 head-body length, narrow chest and enlarged springy hindquarters, longer folded hind limbs than forelimbs, small grasping forepaws and long hind feet. Grounded FOUR-foot standing and walking poses, not all seated nut-eating poses. Juvenile has shorter less full tail and subtler ear tufts. No grey squirrel substitution.",
+  "path": "previews/art-pass/squirrel/target-v1.png",
+  "sha256": "b8fe1e044d78a9ff265387cf1e1e253ad54fc4d3e6f28f29f27ae3739418ed20",
+  "tool": "built-in image_gen.imagegen",
+  "generated": "2026-11-07"
+}

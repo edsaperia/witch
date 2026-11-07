@@ -1,0 +1,8 @@
+{
+  "id": "marten",
+  "prompt": "Use case: scientific-educational. Create a photorealistic whole-animal anatomical target contact sheet of a European pine marten (Martes martes), NOT an American marten or a cat. Eight clearly separated cells, 2 rows by 4 columns, on plain neutral light grey ground, no scenery, no text. Row 1 same natural adult. Row 2 same mobile fully furred juvenile (game age0 target, NOT a naked newborn), visibly smaller at the SAME scale, proportionally bigger head, shorter muzzle and less full tail. Columns: standing facing towards viewer; standing facing away; walking facing towards; walking facing away. All views keep a substantial side profile: approximately 34 degrees towards or away from a side-on view, and camera looking downward 30 degrees from horizontal, long lens near-orthographic perspective. Four anatomically correct legs; paws grounded except a natural lifted walking paw; whole tail, ears and feet entirely in frame with wide margins in every cell. Long supple low narrow trunk, rounded prominent ears with pale rims, tapered muzzle, dark brown fur and cream-yellow throat bib, medium bushy cylindrical tail about half head-body length, furry feet; never fox tail or feline head. Clear real wildlife fur texture and soft studio daylight, no stylized/cartoon body. This is a photographic target, not a skeleton drawing. Juvenile is a plausible older kit able to walk, no invented adult ornaments.",
+  "path": "previews/art-pass/marten/target-v1.png",
+  "sha256": "10a72ca2308a69eb143d16795105193fdc04e9f5f3ffd96824acd599012b9b60",
+  "tool": "built-in image_gen.imagegen",
+  "generated": "2026-11-07"
+}
