@@ -1,0 +1,17 @@
+{
+  "species": "salamander",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "canonicalComments": [
+    6708227119,
+    6708229124
+  ],
+  "layout": "A/B/C columns; low hero top; approximate elevated game-camera bottom; witch and trees in all six panels",
+  "prompt": "Use case stylized-concept. REVISION BOARD for a videogame legend. STRICT SIX-PANEL CONTACT SHEET: exactly3 equal columns A/B/C, exactly2 rows. TOP three complete creatures from a low hero three-quarter camera. BOTTOM same three designs from the game's elevated29.8degree camera with body34.4degree toward-side. EVERY panel contains ONE entire animal, one TINY human WITCH in pointed hat beside its forefoot, and a few real FOREST TREES around feet for unambiguous scale. Creature taller than mature treetops, about20baby-animal-heights, witch roughly1/15creatureheight; atmospheric haze only on far body parts. Whole tails and features uncropped with margins; small surrounding habitat supports scale but creature remains central. Colossal heavy landform mass and epoch wear, reverence/offerings, ancient magic arising from its anatomy and area story. All three must be recognisable as same animal, each design distinct. ColC must be MAXIMUM FANTASY; do not hold back. No writing or labels; all6 panels required, retain exact sameA/B/C identities across rows. Prior image is design starting point, not scale reference. FIRE SALAMANDER, broadflattenedhead, robustverylowelongatedbody,4splayedclawlesslimbs, ROUND taperingtail/no fin,blackyellowwarningpatches. Wetmoss/rock/waterfallravinestory, foresttreesforscale. A: coalwarning, enormousweatheredblack salamander whose fewnatural yellowpatchesbecome deepbanked emberwindows under skin, old pale scars, nofiremane. B: renewalelder, immenseoldbodylikewetbasaltlandformwithscarsandcostal grooves, a freshlyregenerated softlytransparent rose-gold ROUND taperingtail flowsbehind likelivingrenewalriver withlightveins inside, small carvedofferings near healedtailseam, no detachedlimbs/gore. C MAX: waterfallwitness, ancient salamander sohuge its costalgrooves channel realwaterfalls along flanks, warningpatchesaremoonlit springs inits skin, ferns/mossinweatheredfolds, darkpatientheadbesidewitch, tailcomplete; do notbecomealizardislandwithoutlivinganimal. All6witch+trees.",
+  "inputImages": "own first legend concept plate; komodo correction uses own first colossal edit; no real photos",
+  "maximumFantasy": "C",
+  "proposedPick": "B",
+  "scaleIntent": "about20baby heights, taller than treetops; qualitative synthetic scale cues, not calibrated source dimensions",
+  "inspection": "Six panels visually inspected, witch and tree cues present; generator camera/proportions and distant topology remain approximate.",
+  "approval": "Ed judges; no activation, code or graph changes"
+}

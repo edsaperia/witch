@@ -1,0 +1,19 @@
+{
+  "species": "komodo",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "canonicalComments": [
+    6708227119,
+    6708229124
+  ],
+  "layout": "A/B/C columns; low hero top; approximate elevated game-camera bottom; witch and trees in all six panels",
+  "prompt": "undefinedKOMODO DRAGON, heavy low monitor trunk, distinct long neck and low wedge head, four splayed clawed legs, long muscular tapering tail. Dry savannah, dust, acacia and fan-palm story. A: scent oracle, immense weathered scarred monitor whose forked yellow tongue unfolds TWO impossible golden scent-path filaments mapping paths through the acacia canopy, folds of old throat like dried parchment, tiny offerings tied at jaw. B: rockbreaker, colossal broad forelimbs with gigantic worn stone-cutting claws, old copper offerings, dust/pale stone growing in scale creases, still living monitor not rock pile. C MAX: sunkeeper, sunlike starfire held INSIDE the spectacular expanded translucent folds of its hanging throat, gigantic long-necked monitor with obsidian-black weathered hide and old carvings/offerings along throat rim; no generic fire mane/wings/crown. Distinct living forms, long complete tails; witchandtreesall6panels.",
+  "correctionPrompt": "Correct ONLY scale, viewpoint and labels of this six-panel Komodo board. Preserve the three designs A scent-tongue, B stonecuttingclaws, C starfireinsidehangingthroat. NO text. CRITICAL: each monitor is a MOUNTAIN-SIZED LEGEND, not an elephant-sized lizard. Shrink every human witch to ONE-FIFTEENTH the creature's VERTICAL BODY HEIGHT and give her a pointed witch hat. Replace close framingtrees with normal foresttrees about HALF the creature's bodyheight, so ALL THREE animals stand ABOVE treetops. Low huge torso/head remainmonitorlike notuprightdinosaur. Fulltail completeincell. Bottomrowcamera MUST be elevated30degrees ABOVE horizontal, lookingdown with substantialtop surfaces, visiblydifferentfromtoprowgroundhero camera. Each bottompanel repeats SAME creature/powers with thetinywitchandmanyshorttreetops. Clear six equalcells,wholecreatureeach. Witches approximately15pixels high when creature300pixels high, trees100pixels. ForegroundwitchmustNOT sitlargerthanfoot. No lettering, no logos. Every cell must show impossible colossal mass.",
+  "rejected": "first colossal edit had oversized humans/trees, text and insufficient elevated camera distinction",
+  "inputImages": "own first legend concept plate; komodo correction uses own first colossal edit; no real photos",
+  "maximumFantasy": "C",
+  "proposedPick": "A",
+  "scaleIntent": "about20baby heights, taller than treetops; qualitative synthetic scale cues, not calibrated source dimensions",
+  "inspection": "Six panels visually inspected, witch and tree cues present; generator camera/proportions and distant topology remain approximate.",
+  "approval": "Ed judges; no activation, code or graph changes"
+}

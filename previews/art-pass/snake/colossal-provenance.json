@@ -1,0 +1,17 @@
+{
+  "species": "snake",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "canonicalComments": [
+    6708227119,
+    6708229124
+  ],
+  "layout": "A/B/C columns; low hero top; approximate elevated game-camera bottom; witch and trees in all six panels",
+  "prompt": "Use case stylized-concept. REVISION BOARD for a videogame legend. STRICT SIX-PANEL CONTACT SHEET: exactly3 equal columns A/B/C, exactly2 rows. TOP three complete creatures from a low hero three-quarter camera. BOTTOM same three designs from the game's elevated29.8degree camera with body34.4degree toward-side. EVERY panel contains ONE entire animal, one TINY human WITCH in pointed hat beside its forefoot, and a few real FOREST TREES around feet for unambiguous scale. Creature taller than mature treetops, about20baby-animal-heights, witch roughly1/15creatureheight; atmospheric haze only on far body parts. Whole tails and features uncropped with margins; small surrounding habitat supports scale but creature remains central. Colossal heavy landform mass and epoch wear, reverence/offerings, ancient magic arising from its anatomy and area story. All three must be recognisable as same animal, each design distinct. ColC must be MAXIMUM FANTASY; do not hold back. No writing or labels; all6 panels required, retain exact sameA/B/C identities across rows. Prior image is design starting point, not scale reference. JUNGLE PYTHON, continuous limbless emerald snake, broad SMALL python head and fine tapering prehensile tail, absolutely no cobrahood/rattle/legs. Mossy jungle lianas/ironwoods story. A: slough of epochs, colossal scarred python moving out of a vast hollow luminous shed skin as translucent old-world membrane, one real snake and empty skin sleeve only, sleeve displays faint memories of lost forests, tiny scale-reference witch walking by live jaw. B: coil archivist, mountain of three immense living coils with healed scar carvings like ancient roads, dark emerald skin and small weathered bronze offering torcs, moss in lower scale creases. C MAX: canopy constellation, gigantic serpent's own emerald body becomes an impossible river of night stars beneath transparent scales, spine flecks actual starfields, slow luminous auroral coils rising just above canopy, remains one whole python with head/tail/no detached cosmic wings. All3 tower above realforesttrees, witchineverypanel.",
+  "inputImages": "own first legend concept plate; komodo correction uses own first colossal edit; no real photos",
+  "maximumFantasy": "C",
+  "proposedPick": "A",
+  "scaleIntent": "about20baby heights, taller than treetops; qualitative synthetic scale cues, not calibrated source dimensions",
+  "inspection": "Six panels visually inspected, witch and tree cues present; generator camera/proportions and distant topology remain approximate.",
+  "approval": "Ed judges; no activation, code or graph changes"
+}

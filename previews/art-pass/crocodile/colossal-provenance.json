@@ -1,0 +1,17 @@
+{
+  "species": "crocodile",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "canonicalComments": [
+    6708227119,
+    6708229124
+  ],
+  "layout": "A/B/C columns; low hero top; approximate elevated game-camera bottom; witch and trees in all six panels",
+  "prompt": "Use case stylized-concept. REVISION BOARD for a videogame legend. STRICT SIX-PANEL CONTACT SHEET: exactly3 equal columns A/B/C, exactly2 rows. TOP three complete creatures from a low hero three-quarter camera. BOTTOM same three designs from the game's elevated29.8degree camera with body34.4degree toward-side. EVERY panel contains ONE entire animal, one TINY human WITCH in pointed hat beside its forefoot, and a few real FOREST TREES around feet for unambiguous scale. Creature taller than mature treetops, about20baby-animal-heights, witch roughly1/15creatureheight; atmospheric haze only on far body parts. Whole tails and features uncropped with margins; small surrounding habitat supports scale but creature remains central. Colossal heavy landform mass and epoch wear, reverence/offerings, ancient magic arising from its anatomy and area story. All three must be recognisable as same animal, each design distinct. ColC must be MAXIMUM FANTASY; do not hold back. No writing or labels; all6 panels required, retain exact sameA/B/C identities across rows. Prior image is design starting point, not scale reference. CROCODILE, low long flat jaws, four splayed limbs, thick compressed long tail, scute back. Mangrove tidal estuary story. A: lockjaw ancestor, enormous pale worn jaws like ancient ivory gate, scarce bronze offerings hung at jaw sides, dark scarred body/mud encrustation. B: keeper of tides, giant eroded scutes form terraced living armour recording blue-green glowing tide lines, brackish pools between natural scutes, cloudy scarred eye, channels reflecting ages. C MAX: the living mangrove island, clearly crocodile shaped with colossal flat head, long tail as estuary ridge, real rooted mangrove trees colonising weathered dorsal scutes, tidal water dripping from belly, tiny carved offering shrines at shoulder scutes; NOT a random island without animal silhouette. Keepwitch+normalforesttrees in ALL panels, not justC.",
+  "inputImages": "own first legend concept plate; komodo correction uses own first colossal edit; no real photos",
+  "maximumFantasy": "C",
+  "proposedPick": "C",
+  "scaleIntent": "about20baby heights, taller than treetops; qualitative synthetic scale cues, not calibrated source dimensions",
+  "inspection": "Six panels visually inspected, witch and tree cues present; generator camera/proportions and distant topology remain approximate.",
+  "approval": "Ed judges; no activation, code or graph changes"
+}
