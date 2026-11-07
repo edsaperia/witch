@@ -8,3 +8,14 @@
 | penguin | Emperor penguin (Aptenodytes forsteri) | upright low-mass trunk/short legs; stiff flippers/webbed feet; emperor chick colour and proportions | Flattened tapered flipper surfaces with constrained shoulder pose; webbed avian foot and compact-leg stance; stiff tail brace/contact and upright biped balance. Generic wing/head/tail sockets already exist but do not provide these anatomy/gait semantics. |
 
 Target review only: no graph candidate or shipped-art likeness acceptance. Four generated sheets/eight panels each; exact prompts and photo-comparison limitations in each species document. All graph findings are against prototype524b0acaa, not unmerged1866 work.
+
+## Flight follow-up gaps
+
+| Species | Flight/ground target | Additional missing graph features |
+|---|---|---|
+| owl | Tucked legs, broad feathered wings, quick flap/held glide, gripping perch | Fanned primaries, flight torso and leg pose, folded-wing state and takeoff/landing; flight photo cross-check supplemented from Wilderness Committee (non-Commons), no transition proof |
+| raven | Level body, bill forward, tucked feet, wedge tail | Feather articulation/fan, native-size readable flap+glide, grounded/attack-flight transitions |
+| heron | S-neck variation, long trailing legs; legs down in landing | Independent neck/leg state, feather fan/folding, support/contact transitions |
+| penguin | Flightless ground/flipper anatomy; no aerial pose | Flipper rigidity/webbed foot/stance, not generic feathered flight |
+
+Generated pose sheets are adult anatomy suggestions, not animation clips or runtime acceptance.

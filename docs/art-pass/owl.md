@@ -59,3 +59,35 @@ Exact prompt:
 ## Review status
 
 Reference/target document complete for coordinator review; biological/photo and generated-view limitations above remain explicit. No game-size likeness acceptance, exact-camera validation, source change, game text change or production migration claimed. Graph implementation remains with1866 owner; next condition is coordinator review and that owner's species batch after the six-species gate.
+
+## Flight and folded-ground follow-up (7 November)
+
+Exact instruction:1866#6707952715, updated2026-11-07T14:06:43Z. [Generated adult flight/ground pose sheet](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/owl/flight-targets.png); earlier eight-view standing/walking sheet remains valid separate evidence.
+
+### Posture and wing type
+
+Compact torso follows the flight path; head projects forward, legs and talons tucked against the belly during travel. Short broad tail steers; broad rounded feathered wings retain separated primaries, not bat finger rays. Ground/perch has folded wings against the flank and gripping feet.
+
+### Flap, glide and transitions required from the graph
+
+Require distinct mid-upstroke, raised reversal, mid-downstroke and lowered reversal targets (at least four recognizable phases as an initial review target, not Ed-mandated frame count), plus held-wing glide/soar. Enough interpolation/frames must read as flapping at native game size; two alternating wing pictures alone do not establish this. Head/torso/leg posture must remain coherent throughout the cycle. Grounded/perched hold is separate from glide.
+
+Perch/ground → crouch and unload toes → push off and open wings → first powered downstroke → level flight. Landing reverses the balance: flare wings/tail, extend talons toward contact, grip/absorb, then fold wings.
+
+Grounded-until-attack is a required available state path if gameplay assigns it; this documentation does not change attack behavior. Age0 mobile-young references are not permission to make an unflighted nestling fly. Flight-ready young need species-appropriate feather growth; adult sheet is not proof of age0 flight.
+
+### New missing-feature requirements
+
+Feathered articulated wing surface with separately fanned primaries and folded storage; torso/path orientation independent of standing; tucked/trailing leg posing; distinct flap/glide/ground states with phase-continuous takeoff/landing and support/contact switching. Existing generic wing sockets are not absent; missing are these specialized shapes/pose transitions and an accepted bird adapter. The reported bat membrane/finger-ray two-frame work in1866 is a separate wing kind, not evidence that feathered birds already pass.
+
+### Cross-check and limits
+
+Spotted-owl ground photo remains the inspected USFWS comparison. [NPS spotted-owl natural history](https://www.nps.gov/articles/000/california-spotted-owl.htm) describes large wings and alternating short glides/quick wingbeats; [USFWS species notes](https://www.fws.gov/species/mexican-spotted-owl-strix-occidentalis-lucida) describe barred flight feathers. No exact-species airborne Commons photograph was retrieved in this pass. Supplementary comparison-only real flight photograph: [Wilderness Committee, Keepers of the spotted owl](https://www.wildernesscommittee.org/news/keepers-spotted-owl), flight photograph credited in its source context; viewed locally without publication/import. It shows broad barred wings, separated rounded primaries, forward-facing disc and feet tucked beneath the belly; generated sheet agrees in those broad cues. This is an explicitly non-Commons supplementary source; Commons ground comparison remains above. It does not validate every generated phase or contact.
+
+Generated up/down/glide are readable broad-wing pose suggestions; extreme wing tips and feather counts are not validated. Camera angle varies and the push-off lacks a visible support/contact. Do not copy it as contact physics. No flap-cycle, transition, timing, collision or runtime proof is supplied; all are graph review targets.
+
+Flight-sheet provenance: built-in image_gen.imagegen,2026-11-07; one generation, original PNG unedited; SHA256 19c56fdbfd7f6ce11a4ab4d27616b7ab6f2eb7805dc22e3f1d0554fe89918c4a. Six adult panels inspected; exact camera and contact accuracy are not guaranteed.
+
+Exact flight-sheet prompt:
+
+> Photoreal natural history target sheet of Spotted owl Strix occidentalis, round head no tufts, broad rounded feathered wings with separated primaries, short tail, legs tucked. Six panels in2rows3columns: top row adult airborne upstroke, downstroke, held-wing glide; bottom row folded-wing grounded/perched, takeoff push-off, landing feet-forward flare. Entire bird and all wings/tips/feet in frame with generous margins, plain warmgrey background, soft daylight. Camera looking down30degrees, body predominantly left-right angled35degrees towards viewer, consistent wholeanimal scale. Flying torso level along path and head forward; feathered wing elbows/wrists naturally articulated, primaries visibly fanned. Exact2wings2legs, no mammal arms. Grounded wings truly folded. This is a set of anatomical pose targets not a validated animation sequence. No fantasy or scenery. Small accurate pose labels.

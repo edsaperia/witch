@@ -60,3 +60,35 @@ Exact prompt:
 ## Review status
 
 Reference/target document complete for coordinator review; biological/photo and generated-view limitations above remain explicit. No game-size likeness acceptance, exact-camera validation, source change, game text change or production migration claimed. Graph implementation remains with1866 owner; next condition is coordinator review and that owner's species batch after the six-species gate.
+
+## Flight and folded-ground follow-up (7 November)
+
+Exact instruction:1866#6707952715, updated2026-11-07T14:06:43Z. [Generated adult flight/ground pose sheet](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/heron/flight-targets.png); earlier eight-view standing/walking sheet remains valid separate evidence.
+
+### Posture and wing type
+
+Torso level in cruise; head/bill forward on a retracted S-neck, long legs trailing behind beyond the tail. Do not use crane-like fully straight neck as the default cruising target. Broad feathered wings fan at the primary tips. Grounded/perched bird restores tall legs, folded wings and poseable S-neck.
+
+### Flap, glide and transitions required from the graph
+
+Require distinct mid-upstroke, raised reversal, mid-downstroke and lowered reversal targets (at least four recognizable phases as an initial review target, not Ed-mandated frame count), plus held-wing glide/soar. Enough interpolation/frames must read as flapping at native game size; two alternating wing pictures alone do not establish this. Head/torso/leg posture must remain coherent throughout the cycle. Grounded/perched hold is separate from glide.
+
+Ground → lean and flex legs → leg push with wings opening → legs stream backward and neck retracts → flight. Landing → wing flare and leg extension down/forward → toe contact and load transfer → fold wings/raise standing posture. Keep neck/legs distinct across these states.
+
+Grounded-until-attack is a required available state path if gameplay assigns it; this documentation does not change attack behavior. Age0 mobile-young references are not permission to make an unflighted nestling fly. Flight-ready young need species-appropriate feather growth; adult sheet is not proof of age0 flight.
+
+### New missing-feature requirements
+
+Feathered articulated wing surface with separately fanned primaries and folded storage; torso/path orientation independent of standing; tucked/trailing leg posing; distinct flap/glide/ground states with phase-continuous takeoff/landing and support/contact switching. Existing generic wing sockets are not absent; missing are these specialized shapes/pose transitions and an accepted bird adapter. The reported bat membrane/finger-ray two-frame work in1866 is a separate wing kind, not evidence that feathered birds already pass.
+
+### Cross-check and limits
+
+Inspected [Commons heron in flight](https://commons.wikimedia.org/wiki/File:Ardea_cinerea_in_flight.jpg) and [heron landing](https://commons.wikimedia.org/wiki/File:Ardea_cinerea_landing.jpg). Flight photo has a partly extended curved neck in that instant, so neck pose varies; long legs clearly trail and primaries separate. Landing photo shows legs dropped toward contact while wings remain open. Preserve pose variation rather than declaring every flight frame must have one neck shape.
+
+Generated sheets may straighten the neck or shorten trailing legs. Those would be target errors, not reasons to change real anatomy. The six images are separate illustrations; landing/takeoff contacts cannot be measured from them. No flap-cycle, transition, timing, collision or runtime proof is supplied; all are graph review targets.
+
+Flight-sheet provenance: built-in image_gen.imagegen,2026-11-07; one generation, original PNG unedited; SHA256 b9cebddf0652d51d113f66f2a50f3d3e455add119b864f7949957baab0238446. Six adult panels inspected; exact camera and contact accuracy are not guaranteed.
+
+Exact flight-sheet prompt:
+
+> Photoreal natural history target sheet of Grey heron Ardea cinerea, long dagger bill pointing forward, neck retracted in an S (NOT crane straight-neck), broad feathered wings and fanned primaries, long legs trailing straight behind. Six panels in2rows3columns: top row adult airborne upstroke, downstroke, held-wing glide; bottom row folded-wing grounded/perched, takeoff push-off, landing feet-forward flare. Entire bird and all wings/tips/feet in frame with generous margins, plain warmgrey background, soft daylight. Camera looking down30degrees, body predominantly left-right angled35degrees towards viewer, consistent wholeanimal scale. Flying torso level along path and head forward; feathered wing elbows/wrists naturally articulated, primaries visibly fanned. Exact2wings2legs, no mammal arms. Grounded wings truly folded. This is a set of anatomical pose targets not a validated animation sequence. No fantasy or scenery. Small accurate pose labels.

@@ -60,3 +60,7 @@ Exact prompt:
 ## Review status
 
 Reference/target document complete for coordinator review; biological/photo and generated-view limitations above remain explicit. No game-size likeness acceptance, exact-camera validation, source change, game text change or production migration claimed. Graph implementation remains with1866 owner; next condition is coordinator review and that owner's species batch after the six-species gate.
+
+## Flight ruling applicability (7 November)
+
+1866#6707952715 does not make a penguin aerial. Emperor penguin remains flightless: stiff flattened flippers propel underwater, unlike fanned feathered airborne primaries or bat membrane/finger rays. Preserve upright grounded folded/resting-flipper and walking states from the existing photo-checked sheet. A future swimming pose would be horizontal with flippers sweeping and feet/tail steering, but no swimming implementation is authorized here. No takeoff/airborne-glide/landing cycle is requested for this species; do not apply a generic flyer animation. Missing graph semantics remain flipper rigidity, webbed feet, upright balance and tail brace; swimming support, if later assigned, needs its own evidence. No additional aerial reference is fabricated.

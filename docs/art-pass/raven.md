@@ -60,3 +60,35 @@ Exact prompt:
 ## Review status
 
 Reference/target document complete for coordinator review; biological/photo and generated-view limitations above remain explicit. No game-size likeness acceptance, exact-camera validation, source change, game text change or production migration claimed. Graph implementation remains with1866 owner; next condition is coordinator review and that owner's species batch after the six-species gate.
+
+## Flight and folded-ground follow-up (7 November)
+
+Exact instruction:1866#6707952715, updated2026-11-07T14:06:43Z. [Generated adult flight/ground pose sheet](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/raven/flight-targets.png); earlier eight-view standing/walking sheet remains valid separate evidence.
+
+### Posture and wing type
+
+Torso approximately level, heavy bill/head forward, feet tucked close under the belly, long tail behind. Feathered wings open at shoulder/elbow/wrist, with long separated primary tips; wedge tail fans for steering. Folded/perched state must keep the overlapping flight-feather silhouette.
+
+### Flap, glide and transitions required from the graph
+
+Require distinct mid-upstroke, raised reversal, mid-downstroke and lowered reversal targets (at least four recognizable phases as an initial review target, not Ed-mandated frame count), plus held-wing glide/soar. Enough interpolation/frames must read as flapping at native game size; two alternating wing pictures alone do not establish this. Head/torso/leg posture must remain coherent throughout the cycle. Grounded/perched hold is separate from glide.
+
+Ground/perch → crouch, wing opening and leg push → powered downstroke with feet leaving support → tucked travel. Landing: raise body angle, fan tail, flare wings, bring feet forward to grip, settle and fold.
+
+Grounded-until-attack is a required available state path if gameplay assigns it; this documentation does not change attack behavior. Age0 mobile-young references are not permission to make an unflighted nestling fly. Flight-ready young need species-appropriate feather growth; adult sheet is not proof of age0 flight.
+
+### New missing-feature requirements
+
+Feathered articulated wing surface with separately fanned primaries and folded storage; torso/path orientation independent of standing; tucked/trailing leg posing; distinct flap/glide/ground states with phase-continuous takeoff/landing and support/contact switching. Existing generic wing sockets are not absent; missing are these specialized shapes/pose transitions and an accepted bird adapter. The reported bat membrane/finger-ray two-frame work in1866 is a separate wing kind, not evidence that feathered birds already pass.
+
+### Cross-check and limits
+
+Inspected [Commons Northern Raven01](https://commons.wikimedia.org/wiki/File:Corvus_corax_-_Northern_Raven_01.jpg): actual airborne body is level, bill forward, feet tucked and primary feathers separated; this supports the target. Earlier standing NPS comparison supplies the grounded bill/hackle silhouette, with feet partly obscured.
+
+Generated wing states must preserve raven proportions instead of replacing the bird with a generic raptor. Inspect tucked feet and wedge tail in every target; individual feather counts and generated pose labels do not establish correct joint rotation. No flap-cycle, transition, timing, collision or runtime proof is supplied; all are graph review targets.
+
+Flight-sheet provenance: built-in image_gen.imagegen,2026-11-07; one generation, original PNG unedited; SHA256 f71f2fc06f01aa3b2028805171e0b8f57feaf7724cabfd3a752dda141444b139. Six adult panels inspected; exact camera and contact accuracy are not guaranteed.
+
+Exact flight-sheet prompt:
+
+> Photoreal natural history target sheet of Common raven Corvus corax, heavy bill forward, long wings with fanned primary feathers, wedge tail, legs tucked under belly. Six panels in2rows3columns: top row adult airborne upstroke, downstroke, held-wing glide; bottom row folded-wing grounded/perched, takeoff push-off, landing feet-forward flare. Entire bird and all wings/tips/feet in frame with generous margins, plain warmgrey background, soft daylight. Camera looking down30degrees, body predominantly left-right angled35degrees towards viewer, consistent wholeanimal scale. Flying torso level along path and head forward; feathered wing elbows/wrists naturally articulated, primaries visibly fanned. Exact2wings2legs, no mammal arms. Grounded wings truly folded. This is a set of anatomical pose targets not a validated animation sequence. No fantasy or scenery. Small accurate pose labels.
