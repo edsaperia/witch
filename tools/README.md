@@ -123,7 +123,7 @@ node tools/inventory.mjs [--check]
 - [`refraction/`](refraction/README.md): 6 scripts — capture-hold.cjs, capture-pair.cjs, depth-coverage.cjs, depth-readback.cjs, foreground.cjs, review-depth-coverage.mjs
 - [`relics/`](relics/README.md): 1 script — map.mjs
 - [`rig/`](rig/README.md): 4 scripts — demo.cjs, legends.cjs, perf.cjs, strip.mjs
-- [`robustness/`](robustness/README.md): 5 scripts — bundle-size.mjs, catch-audit.mjs, measure-log.mjs, measure-recorder.mjs, rules-layer.mjs
+- [`robustness/`](robustness/README.md): 6 scripts — bundle-size.mjs, catch-audit.mjs, comment-storage-browser.cjs, measure-log.mjs, measure-recorder.mjs, rules-layer.mjs
 - [`roster/`](roster/README.md): 10 scripts — assessments.mjs, audit.mjs, catalogue.mjs, check-model-pack.mjs, compare.mjs, fetch-previews.mjs, pixel-diff.js, poll.mjs, prepare-model.mjs, visual-review.mjs
 - [`sail/`](sail/README.md): 4 scripts — bed-shots.cjs, hold.cjs, leak.cjs, swap.cjs
 - [`samples/`](samples/README.md): 3 scripts — build.mjs, check.mjs, credits.mjs

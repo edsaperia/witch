@@ -1,0 +1,116 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Isolated comment storage diagnostic</title>
+<p>Diagnostic fixture only. Native abort injection is not quota exhaustion. Run only through its allocated launcher.</p>
+<script type="module">
+import { newGame } from "/src/rules/game.ts";
+import { TUNING } from "/src/rules/tuning.ts";
+import { restoreSettingsBase } from "/src/app/playerSettings.ts";
+import { captureComment, browserCommentStore, CommentBook } from "/src/app/playtestComments.ts";
+import { packLog, unpackLog, jsonBytes } from "/src/platform/logCodec.ts";
+import { packPlaytestDownload } from "/src/platform/playtestLog.ts";
+
+const assert = (condition, message) => { if (!condition) throw Error(message); };
+const equal = (actual, expected, message) => assert(JSON.stringify(actual) === JSON.stringify(expected), message);
+const errorText = error => error instanceof Error || error instanceof DOMException ? `${error.name}: ${error.message}` : String(error);
+const expectedKey = "comment-diagnostic-expected";
+let fixture;
+function comment(id, sha) {
+  if (!fixture) {
+    const tuning = structuredClone(TUNING); tuning.map.islandAreas = 4;
+    const game = newGame(123, tuning);
+    restoreSettingsBase(game.tuning, { voices: {}, shake: 1, legendFlash: 1 });
+    fixture = captureComment(game, "diagnostic words", { build: `diagnostic-${sha}`, params: "seed=123", look: null, loan: null,
+      flags: { chartRecorded: false, overRecorded: false } }, "?seed=123", { diagnostic: true }, [], 1000);
+    assert(jsonBytes(fixture) < 2 * 1024 * 1024, "Fixture exceeded 2 MiB; stop instead of allocating a large world");
+  }
+  return { ...fixture, id, text: `Written report ${id}: hat marker / suggestion`, at: 1000 + id.length };
+}
+function projection(rows) {
+  return rows.map(({ night, recording, omission, ...row }) => {
+    if (!row.context && night) { const { game, ...context } = night; row.context = context; }
+    return row;
+  });
+}
+function remember(rows) { sessionStorage.setItem(expectedKey, JSON.stringify(projection(rows))); }
+function verify(rows) { equal(projection(rows), JSON.parse(sessionStorage.getItem(expectedKey)), "Written report/context changed across real reload"); }
+function session() { sessionStorage.setItem("witch.comment-session", crypto.randomUUID()); }
+async function raw(write) {
+  const db = await new Promise((resolve, reject) => {
+    const request = indexedDB.open("witch.playtest-comments", 1);
+    request.onupgradeneeded = () => request.result.createObjectStore("sessions");
+    request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error);
+  });
+  try {
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction("sessions", write ? "readwrite" : "readonly");
+      const store = tx.objectStore("sessions"), key = `${location.pathname}:${sessionStorage.getItem("witch.comment-session")}`;
+      const request = write ? store.put(write, key) : store.get(key);
+      tx.oncomplete = () => resolve(write ?? request.result);
+      tx.onerror = tx.onabort = () => reject(tx.error ?? request.error);
+    });
+  } finally { db.close(); }
+}
+async function withAbort(putNumber, action) {
+  const original = IDBObjectStore.prototype.put;
+  let puts = 0, observed = false;
+  IDBObjectStore.prototype.put = function(...args) {
+    const request = original.apply(this, args);
+    if (this.name === "sessions" && this.transaction.db.name === "witch.playtest-comments" && ++puts === putNumber) {
+      observed = true; this.transaction.abort(); // Native abort of the real queued write, not a fabricated error object.
+    }
+    return request;
+  };
+  try { const result = await action(); assert(observed, "Abort injection never reached target transaction"); return result; }
+  finally { IDBObjectStore.prototype.put = original; }
+}
+window.storageDiagnostic = async (step, sha) => {
+  let book, rows, error, failure;
+  if (step === "save-count") {
+    session(); book = new CommentBook(browserCommentStore());
+    for (let i = 0; i < 10; i++) assert(await book.add(comment(`count-${i}`, sha)), "Native save failed");
+    rows = await book.all(); assert(rows.length === 10, "Count pressure lost written report");
+    assert(rows.filter(row => row.night).length === 8 && rows.slice(0, 2).every(row => row.omission), "Count omissions not explicit");
+    remember(rows);
+  } else if (step === "seed-migrate") {
+    session(); const legacy = comment("legacy", sha);
+    await raw({ format: "witch-comments/v1", bundles: [await packLog(legacy)] });
+    book = new CommentBook(browserCommentStore());
+    equal(projection(await book.all()), projection([legacy]), "Native v1 read lost text/context");
+    assert(await book.add(comment("migration-new", sha)), "Migration save failed");
+    assert((await raw()).format === "witch-comments/v2", "Next save did not migrate native storage");
+    rows = await book.all(); remember(rows);
+  } else if (step === "abort-first" || step === "abort-attachment") {
+    book = new CommentBook(browserCommentStore());
+    const previous = await book.all(); verify(previous);
+    const before = await raw(), target = step === "abort-first" ? 1 : 2;
+    const persisted = await withAbort(target, () => book.add(comment(step, sha)));
+    rows = await book.all(); assert(rows.length === previous.length + 1, "Aborted write lost current page report");
+    failure = "injected native transaction.abort";
+    if (target === 1) {
+      assert(!persisted && !book.status().persistent, "Aborted text transaction falsely claims durable text");
+      error = book.status().error; equal(await raw(), before, "First-write abort changed previously committed reports");
+      // Keep previous expected rows: the new page-only comment cannot survive a reload.
+    } else {
+      assert(persisted && book.status().persistent, "Committed text reported as lost after attachment abort");
+      assert(rows.every(row => !row.night && row.omission), "Failed attachment write did not retain labelled reports");
+      error = rows.at(-1).omission; remember(rows);
+    }
+    assert(/AbortError/.test(error ?? ""), "Native abort error was not exposed");
+  } else if (step === "export-fallback") {
+    book = new CommentBook(browserCommentStore()); rows = await book.all(); verify(rows);
+    let diagnostic = {}; for (let i = 0; i < 70; i++) diagnostic = { child: diagnostic };
+    const decoded = await unpackLog(await packPlaytestDownload([{ seed: 123, build: `diagnostic-${sha}`, started: "diagnostic", interval: 1, samples: [], diagnostic }], () => book.all(false)));
+    equal(projection(decoded[0].comments), projection(rows), "Reports-only export lost written context");
+    assert(decoded[0].exportOmissions?.[0].includes("Log nesting exceeds its limit") && decoded[0].exportOmissions?.[1].includes("Reports-only download"), "Export fallback omitted its actual reason");
+  } else if (step.startsWith("reload-")) {
+    book = new CommentBook(browserCommentStore()); rows = await book.all(); verify(rows);
+    assert(book.status().persistent, "Native read failed after reload");
+    if (step === "reload-count") assert(rows.length === 10 && rows.filter(row => row.night).length === 8, "Count budget changed after reload");
+    if (step === "reload-first") assert(!rows.some(row => row.id === "abort-first"), "Aborted page-only text was unexpectedly persisted");
+    if (step === "reload-attachment") assert(rows.every(row => !row.night && /AbortError/.test(row.omission)), "Committed text/error did not survive attachment abort/reload");
+  } else throw Error(`Unknown diagnostic step: ${step}`);
+  return { step, ok: true, storage: "native IndexedDB", reports: rows.length, fixtureBytes: fixture ? jsonBytes(fixture) : null,
+    omitted: rows.filter(row => row.omission).length, quotaProven: false, ...(failure ? { failure, error } : {}) };
+};
+</script>
