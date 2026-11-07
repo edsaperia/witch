@@ -18,7 +18,7 @@ import { LIGHT_UNIFORMS } from "../lighting";
 import { hsvInto, moodOf } from "../mood";
 import { cellKey, partifiedKey } from "../../rules/party";
 import { biomeJitter } from "../../../art/flora/biomes.js";
-import { FADE_MATERIALS, FADE_MESHES, SPRITE_UNIFORMS } from "../sprites";
+import { FADE_MATERIALS, FADE_MESHES, SPRITE_UNIFORMS, treeNormalsUniform } from "../sprites";
 import { cutawayRadius } from "../crown";
 import { PATH_UNIFORMS } from "../paths";
 
@@ -106,6 +106,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   // The island's biome keeps its share of the autumn and the hue turn (art/flora/biomes.js: none under snow, so it stays white).
   const LJ = t.leafJitter, bj = biomeJitter(v.assets.style.biome ?? v.assets.typeBiome);
   PATH_UNIFORMS.uPathBump.value = t.pathLook?.bump ?? 0; // the paths' bump maps (Ed, 2026-11-03; render/paths.ts)
+  SPRITE_UNIFORMS.uTreeNormals.value = treeNormalsUniform(t); // the trees' normal maps on or off (Ed, 2026-11-07: "Make the normal maps switch."; render/sprites.ts)
   SPRITE_UNIFORMS.uLeafJitter.value.set(LJ ? LJ.autumn * bj : 0, LJ ? LJ.value : 0, LJ ? ((LJ.hue ?? 0) / 360) * bj : 0);
   // The wind: gentler over the treetops (Ed, v171: "gentle and lovely").
   const W = t.wind;

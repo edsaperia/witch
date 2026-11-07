@@ -1,0 +1,18 @@
+{
+  "pr": 1894,
+  "group": "Tree normal maps",
+  "decisions": [
+    {
+      "id": "treeNormals",
+      "label": "Tree normal maps",
+      "note": "On: trees lit from their normal maps, as ever. Off: every tree pixel lit flat, as if it faced the camera. Trees only; the wind still sways them. Changes live.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "treeNormals"
+      }
+    }
+  ]
+}

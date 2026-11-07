@@ -50,6 +50,22 @@
       ],
       "notes": "its lit leaf colour's hue turned either way by up to hue degrees times the first seed [1]. Ed's v3893 playtest found the hue turn had no visible effect: it was turned on the albedo and the night's coloured moonlight squeezed it to a third on screen (20 degrees moved the crowns 4.9 on average, less than the value's 0.12 alone); it and the autumn drift are applied to the lit colour now, so its degrees are the screen's. All three change live (the pause page's Leaf jitter sliders: autumn 0 to 1, hue 0 to 180, value 0 to 0.6, well past sense: Ed, \"bigger range\"); no rebake. 0 and 0: every tree of a variant the same colour, as before. Ed's tuned values from the pause page [2]: autumn 0.2, value 0.15, hue 0 (no hue turn; the autumn drift carries the variety)."
     },
+    "treeNormals": {
+      "what": "Whether the trees are lit from their normal maps: true (the default) as ever, false flat, every tree pixel lit as if it faced the camera (the normal 128, 128, 255).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-07",
+          "quote": "Make the normal maps switch.",
+          "rest": "to judge in play whether trees still look right without normal maps: dropping them would make the pre-baked tree art about 3 times smaller (PR #1884's measurement)"
+        }
+      ],
+      "links": [
+        "render/sprites.ts",
+        "render/view/frameUniforms.ts"
+      ],
+      "notes": "A test switch: off, her glow, the campfires, the soundsystems and the moon light a tree flat. Live: the pause page's Tree normal maps toggle, or the link's d_treeNormals=0 (off) and d_treeNormals=1 (on). Only the forest's trees (their trunks, crowns and far crowns: the instances marked tree in render/view/scenery.ts) change; bushes, walls, set pieces, rocks, palms, creatures, the witch and the ground keep their normals. The normal map's alpha (the wind's sway code) is still read, so the trees sway as before. A shader uniform (uTreeNormals), so flipping it redraws nothing."
+    },
     "wind": {
       "what": "Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across; Walls and set pieces stand still. ?wind=0 turns it off."
     },
