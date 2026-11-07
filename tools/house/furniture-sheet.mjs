@@ -1,6 +1,6 @@
 // The treehouse's furniture (art/furniture.js) as a contact sheet, no browser: every piece drawn at its house.json footprint (every state of one with states), lit by a
 // plain light from the upper left (the game lights them with art/lighting.js), each art pixel `up` screen pixels wide.
-//   node tools/house/furniture-sheet.mjs [ppm] [up] [pitch] [out.png]   (ppm: art pixels a metre, the house's 10.67)   YAW=0 PER=6
+//   node tools/house/furniture-sheet.mjs [ppm] [up] [pitch] [out.png]   (ppm: art pixels a metre, the house's 10.67)   YAW=0 PER=6 ONLY=basin,bedroom2Basin
 import zlib from "zlib"; import fs from "fs";
 const R = new URL("../..", import.meta.url).pathname;
 const { furnitureSprite, furnitureColours, FURNITURE_IDS } = await import(R + "/art/furniture.js");
@@ -16,7 +16,8 @@ function png(w, h, rgba) { const crc = b => { let c, t = []; for (let n = 0; n <
 // (YAW, radians, to turn them all); in rows of PER (6); every state of a piece with states
 const yaw = Number(process.env.YAW || 0), PER = Number(process.env.PER || 6);
 const { FURNITURE_STATES } = await import(R + "/art/furniture.js");
-const jobs = FURNITURE_IDS.flatMap(id => (FURNITURE_STATES[id] ?? [undefined]).map(state => ({ id, state })));
+const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null;
+const jobs = FURNITURE_IDS.filter(id => !ONLY || ONLY.includes(id)).flatMap(id => (FURNITURE_STATES[id] ?? [undefined]).map(state => ({ id, state })));
 // (a piece with no object in house.json yet, as the Studio's instruments before the music builder places them: drawn at NEW's
 // footprint, facing the camera; NEW="id:w:d:h,..." for others)
 const NEW = Object.fromEntries([["drumKit", 4.4, 4, 2.6], ["synthRack", 4.8, 1.4, 3.8], ["microphone", 1, 1, 3.4], ...(process.env.NEW ?? "").split(",").filter(Boolean).map(e => e.split(":").map((v, i) => (i ? Number(v) : v)))].map(([id, w, d, h]) => [id, { id, room: "", x: 0, z: 0, w, d, h }]));

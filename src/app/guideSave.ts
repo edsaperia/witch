@@ -2,6 +2,7 @@ import { slotStorage } from "./saveSlots";
 // What guidance keeps on this browser (localStorage witch.guide; rules/guidance.ts): the new things in the treehouse she hasn't
 // been to yet. Storage blocked: this run only. (A save from before 2026-10-26 also has chartSeen, the islands seen on the chart: unread.)
 import { emptyGuide, type GuideSave, type NewThing } from "../rules/guidance";
+import { partStation } from "../rules/kit";
 
 export const GUIDE_KEY = "witch.guide";
 type Store = Pick<Storage, "getItem" | "setItem">;
@@ -14,7 +15,7 @@ export function loadGuide(storage?: Store | null): GuideSave {
     if (!o) return emptyGuide();
     const ok = (n: NewThing) => n && KINDS.includes(n.kind) && typeof n.id === "string" && typeof n.at === "string";
     return {
-      unseen: (Array.isArray(o.unseen) ? o.unseen : []).filter(ok).map(n => ({ kind: n.kind, id: n.id, at: n.at === "broomBay" || n.at === "pegboard" ? "lathe" : n.at })), // (the broom one station at the lathe since 2026-10-29: a part found before waits there)
+      unseen: (Array.isArray(o.unseen) ? o.unseen : []).filter(ok).map(n => ({ kind: n.kind, id: n.id, at: n.kind === "part" ? partStation(n.id) : n.at })), // (a part waits at its slot's modding station since Ed, 2026-11-07: one saved for the old bay, pegboard or lathe goes there)
     };
   } catch { return emptyGuide(); }
 }

@@ -17,7 +17,8 @@ export const WITCH_PARTS = { hair: M.HAIR, hat: M.HAT, headphones: M.PHONES, top
   pattern: M.HAT2, trim: M.HAT1, flower: M.FLOWER, flower2: M.POM, cup: M.ACCENT, glow: M.COLLAR, glow2: M.GLOW, shades: M.SHADES, frame: M.FRAME,
   cloak: M.CLOTH, scarf: M.BODY, satchel: M.WOOD, // the witch generator's: a cloak, a scarf, a satchel (art/witchGenome.js)
   lantern: M.STONED, book: M.BARKD, bumbag: M.EAR, band: M.IRIS, vial: M.CRYSTAL,
-  plume: M.WEB, gold: M.BARKL, backpack: M.LEAF }; // the creator's: a musketeer's plume, a crown's gold, a backpack // and its accessories: a lantern, a spellbook, a bum bag, a festival wristband, a potion vial
+  plume: M.WEB, gold: M.BARKL, backpack: M.LEAF, // the creator's: a musketeer's plume, a crown's gold, a backpack
+  lips: M.MOUTH, eyeshadow: M.PUPIL, blush: M.SHELL }; // and its accessories: a lantern, a spellbook, a bum bag, a festival wristband, a potion vial; the basin's makeup (Ed, 2026-11-07): lipstick, eyeshadow and blush, each drawn only while she wears it (drawMakeup)
 // The default outfit: a hue, saturation and value per part. Style knobs override the hues.
 export const DEFAULT_OUTFIT = {
   hair: [.01, .7, .85], hat: [.74, .45, .45], headphones: [.92, .55, .9], top: [.13, .15, .95], jacket: [.72, .45, .7],
@@ -26,6 +27,7 @@ export const DEFAULT_OUTFIT = {
   cloak: [.74, .5, .4], scarf: [.98, .6, .85], satchel: [.07, .55, .5],
   lantern: [.08, .3, .3], book: [.98, .55, .35], bumbag: [.5, .5, .55], band: [.95, .6, .9], vial: [.55, .15, .95],
   plume: [.13, .5, 1], gold: [.12, .75, .95], backpack: [.33, .55, .5],
+  lips: [.97, .7, .75], eyeshadow: [.78, .45, .7], blush: [.98, .38, .97],
 };
 // Her hat's glowing band (and a hat's glowing bits: a bead, a crown's jewels) in the plume's colour (Ed, 2026-10-29: "There is a
 // setting called 'plume' ... This should be renamed to 'band'. It should pick the colour of both the band and the plume"): its own
@@ -58,7 +60,9 @@ export const DEFAULT_LOOK = { hat: "classic", hair: "long", top: "jacket", phone
   // wristband, chunky trainers, round sunglasses (shades "round")
   cloakLength: 1, patches: false, lantern: false, vial: false, book: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, clutch: false, messenger: false, wristband: false, chunky: false,
   // the creator's (Ed, round 11): the scarf's length (times hers; 0 none, 3 trailing on the ground), the satchel's size, a backpack's size (0 none)
-  scarfLength: 1, bagSize: 1, backpackSize: 0 };
+  scarfLength: 1, bagSize: 1, backpackSize: 0,
+  // the basin's makeup (Ed, 2026-11-07: "lipstick colour, eyeshadow colour, blush on/off ... her face is a few pixels, so subtle"): off
+  lipstick: false, eyeshadow: false, blush: false };
 const shoeR = L => L.chunky ? [.095, .056, .056] : [.08, .04, .045]; // her sneakers, or chunky trainers
 // The hat's shape from the look: a crown point p scaled from the brim by hatHeight and leaned back by hatTilt; a brim's radii by hatBrim.
 const hatPt = (L, brim, p) => { const k = L.hatHeight ?? 1, a = L.hatTilt || 0; if (k === 1 && !a) return p; let d = v3.mul(v3.sub(p, brim), k); if (a) { const c = Math.cos(a), s = Math.sin(a); d = [d[0] * c - d[1] * s, d[0] * s + d[1] * c, d[2]]; } return v3.add(brim, d); };
@@ -245,6 +249,16 @@ function drawEyes(m, L, H, look = 0, tilt = 0, shut = false) {
     return;
   }
   for (const s of [-1, 1]) m.ell(at([.85, .05 + look, s * .45 + tilt * .1]), shut ? [.016, .011, .02] : [.016, .026, .016], M.EYE, { group: 8 });
+}
+// Her makeup (the basin's, Ed 2026-11-07: "her face is a few pixels, so subtle: a pixel or two of lip colour, a touch on the
+// eyelids"): lipstick where her mouth is (none while it's open: talking, laughing), eyeshadow just over each eye (not behind
+// sunglasses, nor on shut eyes), blush a dab on each cheek. Each only while she wears it, so a witch without is drawn as before.
+function drawMakeup(m, L, H, look = 0, tilt = 0, shut = false, open = false) {
+  if (!L.lipstick && !L.eyeshadow && !L.blush) return;
+  const R = [.11, .115, .1], at = d => Model.surface(H, R, v3.norm(d));
+  if (L.lipstick && !open) m.ell(at([1, -.5 + look, tilt * .1]), [.011, .01, .024], M.MOUTH, { group: 8 });
+  if (L.eyeshadow && !L.shades && !shut) for (const s of [-1, 1]) m.ell(at([.82, .2 + look, s * .45 + tilt * .1]), [.013, .012, .02], M.PUPIL, { group: 8 });
+  if (L.blush) for (const s of [-1, 1]) m.ell(at([.78, -.22 + look, s * .62 + tilt * .1]), [.012, .011, .018], M.SHELL, { group: 8 });
 }
 // A hand at `hand` in group g: "palm" (open, palm up), "down" (flat, palm to the ground), "wave" (fingers spread, up),
 // "point" (a finger up), or a loose fist.
@@ -526,6 +540,7 @@ export const WITCH_FOOT_POSES = {
   sitGround: { frames: 2, fps: 1, party: "rest" }, stargaze: { frames: 2, fps: 1, party: "rest" }, conga: { frames: 4, fps: 4, party: "pair" },
   twirl: { frames: 4, fps: 4, party: "pair" }, twirled: { frames: 4, fps: 4, party: "pair" }, limboHold: { frames: 2, fps: 2, party: "pair" }, limboHelp: { frames: 2, fps: 2, party: "pair" }, limbo: { frames: 4, fps: 3, party: "dance" },
   dj: { frames: 20, fps: 4, heading: "towards" },
+  brush: { frames: 2, fps: 8, heading: "towards" }, // brushing her teeth at the basin, facing us (Ed, 2026-11-07)
 };
 // Two witches together: each is her own sprite, and the game puts them so that her `meet` anchor and her partner's land on
 // the same pixel. mirror: the partner's sprite is flipped left-right (anchors too: x becomes w - x), so the two face each
@@ -584,6 +599,10 @@ const FOOT_FRAMES = {
     { crouch: .15, bend: .1, broom: { binding: [-.3, .28, -.06], dir: [.7, .4, -.04] }, legUp: [.1, .26, .13], sway: .04, free: [.24, .55, .17], hand: "rest" }, // a leg over
     { hop: .1, broom: { astride: true }, toes: true, sway: .06 },                                                   // astride it, pushing off
   ],
+  // brushing her teeth at the basin (Ed, 2026-11-07: "a short brushing animation"), facing us: her near hand up at her mouth, the
+  // brush across it, scrubbed side to side frame to frame; her far hand at her side
+  brush: [0, 1].map(f => ({ broom: null, brush: f ? 1 : -1, look: .04, tilt: f ? .06 : -.06, sway: .01, feet: [[-.01, .07, -.09], [.04, .07, .09]],
+    free: [.24, .9, .08 + (f ? .03 : -.03)], elbow: [.2, .7, .22], hand: "rest", far: [.01, .43, -.17], farHand: "rest" })),
   talk: [
     { free: [.47, .84, .13], hand: "palm", tilt: .35, mouth: true, sway: .01 },                     // an open palm
     { free: [.32, 1.18, .12], hand: "point", tilt: -.25, look: .12, sway: .02 },                    // pointing up: an idea
@@ -823,8 +842,14 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
     m.seg(base, rim, .034, .046, M.ACCENT, { group: 14 }); m.ell(rim, [.046, .01, .046], M.BELLY, { dir: [up[1], -up[0], 0], up, group: 14 });
     m.anchors.cup = rim;
   }
+  // a toothbrush in her free hand, its head at her mouth (brushing at the basin), going side to side with K.brush
+  if (K.brush) {
+    const tip = v3.add(free, [-.05, .07, -.05 - K.brush * .025]);
+    m.seg(free, tip, .012, .012, M.ACCENT, { group: 14 }); m.ell(tip, [.016, .02, .024], M.BELLY, { group: 14 });
+  }
   // face, hair, headphones and hat (as in flight, but the hair hangs down her back; flung forward when she nods)
   m.ell(H, [.11, .115, .1], M.SKIN, { group: 8, paint: p => (p[0] < H[0] - .01 || p[1] > H[1] + .075) ? M.HAIR : undefined });
+  drawMakeup(m, L, H, K.look, K.tilt, K.shut, !!K.mouth);
   drawEyes(m, L, H, K.look, K.tilt, K.shut);
   if (K.mouth) m.ell(Model.surface(H, [.11, .115, .1], v3.norm([1, -.5 + K.look, K.tilt * .1])), K.mouth === "laugh" ? [.014, .026, .035] : [.012, .016, .025], M.NOSE, { group: 8 }); // talking; laughing
   const nod = Math.max(0, K.nod);
@@ -915,6 +940,7 @@ export function witchModel({ frame = 0, lean = false, pose, look = DEFAULT_LOOK 
   }
   // head, face and hair
   m.ell(H, [.11, .115, .1], M.SKIN, { group: 8, paint: p => (p[0] < H[0] - .01 || p[1] > H[1] + .075) ? M.HAIR : undefined });
+  drawMakeup(m, LK, H);
   drawEyes(m, LK, H);
   // hair trailing out behind, swaying with the bob (streaming down while climbing, up while dropping)
   const tail = brake ? [[...v3.add(H, [-.06, .06, 0]), .06], [...v3.add(H, [.04, .13 + sway, .03]), .045], [...v3.add(H, [.2, .08 + sway, .04]), .02]] : [[...v3.add(H, [-.06, .02, 0]), .06], [...v3.add(H, [-.18 - Lh, -.05 + sway + flow * .1, .02]), .045], [...v3.add(H, [-.3 - Lh * 1.5, -.08 + sway * 1.6 + flow * .22, .03]), .02]]; // flung forward over her head
@@ -1092,7 +1118,7 @@ export function clothesPileSprite(st = {}, { look, facing = "towards", slots = [
 // The flecks: a pixel with none of its own material among its 8 neighbours (a stray interior-line dot, a lone speck of
 // hatband or hair) takes its neighbours' commonest material; alone, it goes; so does an interior line one or two pixels
 // long. Eyes (unless one pokes out past her face's edge), their glints and her mouth are kept.
-const FLECK_KEEP = new Set([M.EYE, M.GLINT, M.NOSE]);
+const FLECK_KEEP = new Set([M.EYE, M.GLINT, M.NOSE, M.MOUTH, M.PUPIL, M.SHELL]); // (and her makeup: a pixel or two each)
 export function cleanFlecks(sp) {
   let n = 0;
   for (let pass = 0; pass < 3; pass++) { const k = lineDots(sp) + lonePixels(sp); n += k; if (!k) break; } // (a line dot that melts can leave a lone pixel)

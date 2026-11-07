@@ -301,3 +301,35 @@ export function stir(K: SfxKit): void {
     for (const [r, l, d] of [[1, 1, 1.6], [2.76, 0.3, 0.7]]) { const b = c.createGain(); b.connect(out); b.connect(K.space()); K.env(b, t, vol * 0.35 * l * (1 - i * 0.12), 0.004, d); K.osc("sine", f * r, t, d + 0.1, b); }
   });
 }
+
+/** Brushing her teeth at the basin (Ed, 2026-11-07: "a 'brush your teeth' button that plays a short brushing animation with a
+ *  little sparkle and a sound, flavour only"): six quick scrubs, crisp bands of noise alternating a little in pitch as the brush
+ *  goes side to side, over about a second, then a bright two-note glint for the sparkle as it ends. `len` the brushing's
+ *  seconds (the animation's: main.ts BRUSH). */
+export function brushTeeth(K: SfxKit, pan = 0, len = 1.2): void {
+  if (!K.ready("brushTeeth", .5)) return;
+  const c = K.ctx, at = c.currentTime + 0.01, out = K.voice(pan, 0.25, 0.4), vol = K.T.land.volume, n = 6, step = (len - 0.25) / n;
+  for (let i = 0; i < n; i++) {
+    const t = at + i * step, bp = c.createBiquadFilter(), g = c.createGain();
+    bp.type = "bandpass"; bp.Q.value = 1.4; bp.frequency.setValueAtTime(i % 2 ? 3600 : 2900, t);
+    g.connect(out); K.env(g, t, vol * 0.8, 0.012, step * 0.8); bp.connect(g);
+    K.noiseBurst(t, step * 0.9, bp, 71 + i);
+  }
+  const N = K.T.knock, t = at + len - 0.15;
+  [[0, 0], [4, 0.09]].forEach(([deg, dt]) => {
+    const f = mtof(degree(K.root + 48, deg));
+    for (const [r, l] of [[1, 1], [2.76, 0.3]]) { const g = c.createGain(); g.connect(out); K.env(g, t + dt, N.volume * N.twinkle * l, 0.002, 0.22); K.osc("sine", f * r, t + dt, 0.26, g); }
+  });
+}
+
+/** The hydraulic lift (Ed, 2026-11-07: "It can hiss up and down when she uses it"): a breath of pressurised air, a band of noise that
+ *  rises in pitch going up (falls coming down) over half a second, and a soft clunk as it stops. */
+export function hiss(K: SfxKit, up: boolean, pan = 0): void {
+  if (!K.ready("liftHiss", .3)) return;
+  const c = K.ctx, at = c.currentTime + 0.01, out = K.voice(pan, 0.25, 0.4), vol = K.T.land.volume * 0.9, len = 0.55;
+  const bp = c.createBiquadFilter(), g = c.createGain(); bp.type = "bandpass"; bp.Q.value = 2.2;
+  bp.frequency.setValueAtTime(up ? 1400 : 3600, at); bp.frequency.exponentialRampToValueAtTime(up ? 3600 : 1400, at + len);
+  g.connect(out); K.env(g, at, vol, 0.04, len); bp.connect(g);
+  K.noiseBurst(at, len + 0.05, bp, 0.37);
+  K.thump(at + len, vol * 0.6, pan);
+}

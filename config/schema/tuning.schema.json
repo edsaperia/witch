@@ -11585,6 +11585,24 @@
                   ],
                   "additionalProperties": false
                 },
+                "face": {
+                  "type": "object",
+                  "properties": {
+                    "aim": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "distance": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "aim",
+                    "distance"
+                  ],
+                  "additionalProperties": false
+                },
                 "hat": {
                   "type": "object",
                   "properties": {
@@ -11604,6 +11622,42 @@
                   "additionalProperties": false
                 },
                 "top": {
+                  "type": "object",
+                  "properties": {
+                    "aim": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "distance": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "aim",
+                    "distance"
+                  ],
+                  "additionalProperties": false
+                },
+                "back": {
+                  "type": "object",
+                  "properties": {
+                    "aim": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "distance": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "aim",
+                    "distance"
+                  ],
+                  "additionalProperties": false
+                },
+                "bag": {
                   "type": "object",
                   "properties": {
                     "aim": {
@@ -11697,15 +11751,18 @@
               },
               "required": [
                 "head",
+                "face",
                 "hat",
                 "top",
+                "back",
+                "bag",
                 "legs",
                 "feet",
                 "broom",
                 "board"
               ],
               "additionalProperties": false,
-              "description": "Where the camera aims at a dressing station for each part of her being changed (head, hat, top, legs, feet, broom, the pegboard)."
+              "description": "Where the camera aims at a dressing station for each part of her being changed (head, face, hat, top, back, bag, legs, feet, broom, the pegboard)."
             }
           },
           "required": [

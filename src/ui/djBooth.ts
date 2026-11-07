@@ -3,7 +3,7 @@
 // button that says 'Get this party started' which you can press once a record is selected, which closes the menu and kicks off
 // the scratch routine. close menu button (circle) exits the menu without starting the party."): E at her decks before the party
 // (rules/wakeUp.ts, the "booth" event) slides it in from the left, as a station's panel does and in its look (ui/stationPanel.ts):
-// her records as cards (rules/records.ts; the ones she hasn't found locked), and under them the button, which does nothing till a
+// her records as cards (rules/records.ts; the ones she hasn't found yet grey, no padlock: Ed, 2026-11-07, "they're not locked, they just haven't been found yet!"), and under them the button, which does nothing till a
 // record is chosen. Moving only moves the focus; choose (Space or Enter, the pad's ✕) on a record chooses it, on the button starts
 // the party (onStart: main.ts, rules/wakeUp.ts startParty); back (E, the pad's ○) closes it (main.ts). The keys and the pad as
 // bound (platform/bindings.ts). The choosing itself is BoothNav's, without a page, for the tests.
@@ -30,12 +30,12 @@ export class BoothNav {
     else if (dy < 0 && this.onButton) this.focus = this.chosen ? RECORDS.findIndex(r => r.id === this.chosen) : 0;
     else if (dx && !this.onButton) this.focus = Math.max(0, Math.min(n - 1, this.focus + dx));
   }
-  /** Choose what's in focus: a record she has is chosen ("chose"); one she hasn't found, nothing ("locked"); the button starts
+  /** Choose what's in focus: a record she has is chosen ("chose"); one she hasn't found yet, nothing ("unfound"); the button starts
    *  the party with the record chosen ("start"), or does nothing without one ("none"). */
-  pick(): { did: "chose" | "locked" | "start" | "none"; record?: Vinyl } {
+  pick(): { did: "chose" | "unfound" | "start" | "none"; record?: Vinyl } {
     if (this.onButton) { const r = RECORDS.find(q => q.id === this.chosen); return r ? { did: "start", record: r } : { did: "none" }; }
     const r = RECORDS[this.focus];
-    if (!this.owned.has(r.id)) return { did: "locked", record: r };
+    if (!this.owned.has(r.id)) return { did: "unfound", record: r };
     this.chosen = r.id;
     return { did: "chose", record: r };
   }
@@ -114,7 +114,7 @@ export class DjBooth {
   private pick(): void {
     if (!this.nav) return;
     const r = this.nav.pick();
-    this.said = r.did === "locked" ? "Not found yet: one of the night's finds." : r.did === "none" ? "Choose a record first." : "";
+    this.said = r.did === "unfound" ? "Not found yet." : r.did === "none" ? "Choose a record first." : "";
     if (r.did === "start") { this.onStart(r.record!); return; }
     this.paint();
   }
@@ -124,10 +124,10 @@ export class DjBooth {
     const f = (i: number) => (N.focus === i ? " focus" : "");
     const cards = RECORDS.map((r, i) => {
       const own = N.owned.has(r.id), on = N.chosen === r.id;
-      return `<div class="db-card${own ? "" : " locked"}${on ? " worn" : ""}${f(i)}" data-at="${i}"><b>${r.bpm}</b><small>${own ? "" : "🔒 "}BPM</small>${on ? `<i class="db-tick">✓</i>` : ""}</div>`;
+      return `<div class="db-card${own ? "" : " unfound"}${on ? " worn" : ""}${f(i)}" data-at="${i}"><b>${r.bpm}</b><small>BPM</small>${on ? `<i class="db-tick">✓</i>` : ""}</div>`;
     }).join("");
     const go = `<button class="db-go${N.ready ? "" : " off"}${f(RECORDS.length)}" data-at="${RECORDS.length}"${N.ready ? "" : " aria-disabled=\"true\""}>Get this party started</button>`;
-    this.root.innerHTML = `<div class="db-head"><b>DJ booth</b><span>${N.owned.size} of ${RECORDS.length} records</span></div>`
+    this.root.innerHTML = `<div class="db-head"><b>DJ booth</b></div>`
       + `<div class="db-shelf"><div class="db-lab"><b>Records</b>${N.chosen ? `<span>${RECORDS.find(r => r.id === N.chosen)!.bpm} BPM on</span>` : ""}</div><div class="db-row">${cards}</div></div>`
       + go + (this.said ? `<p class="db-said">${this.said}</p>` : "") + `<div class="db-foot">${footHtml(this.device)}</div>`;
   }
@@ -139,7 +139,8 @@ function installCss(): void {
   const s = document.createElement("style");
   s.textContent = `
 #dj-booth { --ol: #0b0716; --gold: var(--accent, #e8b46a); position: fixed; left: 0; top: 0; bottom: 0; width: 50vw; z-index: 18; box-sizing: border-box; padding: 1.1em 1.4em 0.9em; color: var(--ink, #e8e2f4);
-  font: clamp(15px, 1.45vw, 26px)/1.35 ui-rounded, system-ui, sans-serif; flex-direction: column; gap: .75em; text-shadow: 0 1px 0 var(--ol);
+  font: clamp(15px, 1.45vw, 26px)/1.35 ui-monospace, Menlo, Consolas, monospace; flex-direction: column; gap: .75em; user-select: none; /* (the station panels' type and outlined text: Ed, 2026-11-07, "match the other panels' style") */
+  text-shadow: -1px -1px 0 var(--ol), 1px -1px 0 var(--ol), -1px 1px 0 var(--ol), 1px 1px 0 var(--ol), 0 0 6px rgba(0,0,0,.9);
   background: linear-gradient(90deg, rgba(11,7,22,.72) 0%, rgba(11,7,22,.55) 80%, rgba(11,7,22,0) 100%); }
 #dj-booth .db-head { display: flex; align-items: baseline; gap: .6em; } #dj-booth .db-head b { font-size: 1.6em; color: var(--gold); letter-spacing: 1px; } #dj-booth .db-head span { margin-left: auto; font-size: .8em; opacity: .85; }
 #dj-booth .db-shelf { display: flex; flex-direction: column; gap: .5em; padding: .7em .9em .8em; border-radius: .7em; background: rgba(38,26,62,.94); box-shadow: inset 0 0 0 2px rgba(232,180,106,.85), 0 2px 14px rgba(0,0,0,.45); }
@@ -147,9 +148,9 @@ function installCss(): void {
 #dj-booth .db-row { display: flex; flex-wrap: wrap; gap: .45em; }
 #dj-booth .db-card { position: relative; width: 4.6em; height: 4.6em; border-radius: 50%; background: radial-gradient(circle, #14101f 0 46%, #241c36 47% 50%, #14101f 51% 62%, #241c36 63% 66%, #14101f 67%); box-shadow: inset 0 0 0 1px rgba(232,226,244,.2); display: grid; place-content: center; text-align: center; cursor: pointer; }
 #dj-booth .db-card b { font-size: 1.1em; line-height: 1; } #dj-booth .db-card small { font-size: .55em; opacity: .8; letter-spacing: 1px; }
-#dj-booth .db-card.locked { cursor: default; opacity: .55; filter: grayscale(1); } #dj-booth .db-card.locked b { color: rgba(232,226,244,.6); } /* (its bpm greyed, the padlock by it: what's left to find, Ed 2026-10-29) */
+#dj-booth .db-card.unfound { cursor: default; opacity: .6; filter: grayscale(1); } #dj-booth .db-card.unfound b { color: rgba(232,226,244,.65); } /* (its bpm greyed: what's left to find, Ed 2026-10-29; no padlock since Ed, 2026-11-07) */
 #dj-booth .db-card.worn:not(.focus) { outline: 2px solid rgba(232,180,106,.8); outline-offset: 1px; }
-#dj-booth .db-tick { position: absolute; top: .1em; right: .1em; width: 1.2em; height: 1.2em; border-radius: 50%; background: var(--gold); color: #1a1430; font: normal .75em/1.2em sans-serif; text-shadow: none; }
+#dj-booth .db-tick { position: absolute; top: .1em; right: .1em; width: 1.2em; height: 1.2em; border-radius: 50%; background: var(--gold); color: #1a1430; font: normal .75em/1.2em ui-monospace, Menlo, Consolas, monospace; text-shadow: none; display: grid; place-items: center; font-style: normal; }
 #dj-booth .focus { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 12px rgba(255,255,255,.75); }
 #dj-booth .db-go { font: inherit; font-size: 1.1em; font-weight: 600; padding: .6em 1em; border-radius: .6em; border: 0; color: #1d1408; background: var(--gold); cursor: pointer; text-shadow: none; }
 #dj-booth .db-go.off { background: rgba(232,226,244,.18); color: rgba(232,226,244,.6); cursor: default; }

@@ -39,13 +39,16 @@ describe("her night's kit", () => {
     expect(broomsLeft(g)).toBe(KIT_BROOMS - 1);
   });
 
-  it("E at the invitations desk gives her tonight's invitations; E at the lathe, a broom", () => {
+  it("E at the invitations desk gives her tonight's invitations; E at the broom rack, a broom (Ed, 2026-11-07: moved there from the lathe)", () => {
     const g = night();
     at(g, "invitations"); run(g, 0.2);
     run(g, STEP, { place: true, sigilHeld: true });
     expect(hasInvites(g.witches[0])).toBe(true);
     expect(events(g, "kit").map(e => e.obj)).toEqual(["invites"]);
     at(g, "lathe"); run(g, 0.2);
+    run(g, STEP, { place: true, sigilHeld: true });
+    expect(hasBroom(g.witches[0])).toBe(false); // (the lathe gives none now: dark till she carries one)
+    at(g, "broomRack"); run(g, 0.2);
     run(g, STEP, { place: true, sigilHeld: true });
     expect(hasBroom(g.witches[0])).toBe(true);
     expect(events(g, "kit").map(e => e.obj)).toEqual(["broom"]);

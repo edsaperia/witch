@@ -56,7 +56,7 @@ describe("the wardrobe", () => {
   });
 
   it("starts her owning what she has on, on every shelf with items but the bags (she starts with none: Ed, 2026-10-29, \"Remove none\")", () => {
-    for (const s of Object.values(SHELVES).filter(q => q.items.length && q.id !== "bag")) {
+    for (const s of Object.values(SHELVES).filter(q => q.items.length && q.id !== "bag" && !q.toggle)) { // (the basin's makeup toggles: none on at first)
       expect(s.items.some(i => i.start && wears(CLASSIC, i)), s.id).toBe(true);
     }
     expect(SHELVES.bag.items.some(i => wears(CLASSIC, i))).toBe(false);
@@ -88,26 +88,33 @@ describe("the wardrobe", () => {
     expect(human).toEqual(HUMAN_SKINS);
     expect(Array.from({ length: GRID_ROWS }, (_, r) => skinSwatch(2, r))).toEqual(FANTASY_SKINS);
     const lum = (c: number[]) => { const [r, g, b] = (Art.hsv2rgb as (h: number, s: number, v: number) => number[])(c[0], c[1], c[2]); return .2126 * r + .7152 * g + .0722 * b; };
-    for (let r = 1; r < GRID_ROWS; r++) for (let c = 0; c < SKIN_COLS; c++) expect(lum(skinSwatch(c, r)), `${c},${r}`).toBeLessThan(lum(skinSwatch(c, r - 1))); // (each column darker down)
+    for (let r = 1; r < GRID_ROWS; r++) for (let c = 0; c < SKIN_COLS; c++) if (!(c === 2 && r === 3)) expect(lum(skinSwatch(c, r)), `${c},${r}`).toBeLessThan(lum(skinSwatch(c, r - 1))); // (each column darker down, but for the light green, Ed's default, in the moss green's place: Ed, 2026-11-07)
     skinSwatch(0, 0)[0] = 9; expect(skinSwatch(0, 0)[0]).not.toBe(9); // (a copy: changing one changes no list)
   });
-  it("her starting skin is one of the grid's swatches (config/default-look.json)", () => {
+  it("her starting skin is one of the grid's swatches (config/default-look.json): the light green (Ed, 2026-11-07: \"the default skin should be a light green\")", () => {
     const skin = (DEFAULT_LOOK.genome as { palette: Record<string, number[]> }).palette.skin, all = Array.from({ length: GRID_ROWS }, (_, r) => Array.from({ length: SKIN_COLS }, (_, c) => skinSwatch(c, r))).flat();
     expect(all).toContainEqual(skin);
+    expect(skin).toEqual(skinSwatch(2, 3));
+    const hex = (c: number[]) => "#" + (Art.hsv2rgb as (h: number, s: number, v: number) => number[])(c[0], c[1], c[2]).map(x => x.toString(16).padStart(2, "0")).join("");
+    expect(hex(skin)).toBe("#a8d08d");
   });
 });
 
 describe("Ed's redo (2026-10-23): nothing with no choice in it, the broom till the Workshop, her hat off for her face", () => {
-  it("an item row shows once two of its items are hers", () => {
-    const face = SHELVES.face, earrings = SHELVES.earrings;
-    expect(itemsToChoose(face, new Set(STARTING_SET))).toBe(false); // (bare only: the sunglasses still to find)
+  it("an item row shows once two of its items are hers, or while any is still to find (Ed, 2026-11-07: \"they're good foreshadowing\")", () => {
+    const face = SHELVES.face, earrings = SHELVES.earrings, shoes = SHELVES.shoes;
+    expect(itemsToChoose(face, new Set(STARTING_SET))).toBe(true); // (bare, and the sunglasses' silhouette)
+    expect(itemsToChoose(shoes, new Set(STARTING_SET))).toBe(true); // (her trainers, and the chunky ones' silhouette)
     expect(itemsToChoose(face, new Set([...STARTING_SET, "shades"]))).toBe(true);
     expect(itemsToChoose(earrings, new Set(STARTING_SET))).toBe(true);
+    expect(itemsToChoose({ ...face, items: face.items.slice(0, 1) }, new Set(STARTING_SET))).toBe(false); // (one item, hers: no choice)
+    expect(itemsToChoose(SHELVES.makeup, new Set(STARTING_SET))).toBe(true); // (each toggle a choice by itself)
   });
-  it("the lathe is the one broom station, the old stand, bay and separate pegboard gone; no station offers a broom's power or shape", () => {
+  it("the broom's three stations (the workbench, the lathe, the lift: Ed, 2026-11-07), the old stand and the pegboard's panel gone; no station offers a broom's power or shape", () => {
     expect(shelvesAt("broomStand")).toBeNull();
-    expect(shelvesAt("lathe")!.map(s => s.id)).toEqual(["tip", "chassis", "exhaust", "sets", "broomBody", "broomTrim", "broomFit", "trail", "pegboard"]); // (one broom station: Ed, 2026-10-29, "one for colours, the other for components")
-    for (const id of ["broomBay", "pegboard"]) expect(shelvesAt(id), id).toBeNull();
+    expect(shelvesAt("lathe")!.map(s => s.id)).toEqual(["chassis", "broomBody", "sets"]); // (the broom over three stations since Ed, 2026-11-07: the workbench, the lathe, the lift)
+    expect(shelvesAt("broomBay")!.map(s => s.id)).toEqual(["tip", "sets"]); expect(shelvesAt("broomLift")!.map(s => s.id)).toEqual(["exhaust", "broomTrim", "sets"]); // (was one station: Ed, 2026-10-29, "one for colours, the other for components")
+    expect(shelvesAt("pegboard")).toBeNull(); expect(shelvesAt("broomRack")).toBeNull();
     for (const s of Object.values(SHELVES)) { expect((s as unknown as Record<string, unknown>).power, s.id).toBeUndefined(); for (const i of s.items) expect(i.set["broom.kind"], i.id).toBeUndefined(); }
   });
   it("every shelf names the part of her the camera zooms on, one the tuning has", () => {

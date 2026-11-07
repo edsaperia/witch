@@ -7,5 +7,5 @@
 The dressing stations in the built game.
 
 ```
-npm run build && node tools/stations/check.cjs [out] [dist]   (about 10 minutes in the cloud; ONLY=wardrobe,shoeRack)
+npm run build && node tools/stations/check.cjs [out] [dist]   (about 20 minutes in the cloud; ONLY=wardrobe,shoeRack; LINK=parts=horse,ladder,nozzles)
 ```

@@ -6,10 +6,11 @@
 //      islands, just 🧭 towards islands the player can go to and hasn't visited yet");
 //   2. a game's first morning (no pile of last night's clothes: rules/wakeUp.ts yesterday), in Ed's order (2026-10-29: "skin/hair,
 //      then jacket/top/trousers, then shoes, then bag, then invitations, then cloak, then hat, then broom"; FIRST_MORNING): the
-//      dressing table till she's used it (E there: wake.styled), the wardrobe, shoe rack and bags till each piece is on, the
-//      invitations desk, the cloak pegs, the hats' floor, the lathe (Ed: "if it's the first night, there won't be any last night's
+//      basin till she's used it (E there: wake.washed; Ed, 2026-11-07: "first morning should have the basin as the first thing in
+//      the path"), the dressing table till she's used it (wake.styled), the wardrobe, shoe rack and bags till each piece is on, the
+//      invitations desk, the cloak pegs, the hats' floor, the broom rack (Ed: "if it's the first night, there won't be any last night's
 //      clothes"; with a pile, E there dresses her, and there's no dressing pin);
-//   3. every later night, before the party: the invitations desk, then the lathe (her broom), each until it's done tonight (her night's
+//   3. every later night, before the party: the invitations desk, then the broom rack (her broom), each until it's done tonight (her night's
 //      kit, rules/kit.ts, through GUIDANCE_HOOKS; a night with no kit, the tools' and the bots', has both, so those pins never show);
 //   4. something new in the treehouse (a find), each until she's been to where it is, newest first;
 //   5. the decks, until the party spell's cast.
@@ -27,7 +28,7 @@ import { HOUSE_ROOMS, hasRooms, hatSlots, hatsOnFloor, objectAt } from "./houseR
 import { hasBag, hasBroom, hasInvites } from "./kit";
 
 /** What a guidance pin is for (render/view/guidance.ts gives each its glyph). */
-export type GuideKind = "bed" | "dress" | "desk" | "lathe" | "hat" | "part" | "wearable" | "chart" | "decks";
+export type GuideKind = "bed" | "dress" | "desk" | "rack" | "hat" | "part" | "wearable" | "chart" | "decks";
 
 /** Where it points: a house object (config/house/) or a point in the world (the decks' seat, on the house's floor). */
 export type GuideTarget = { object: string } | { x: number; z: number };
@@ -43,7 +44,7 @@ export interface GuideSave { unseen: NewThing[] }
 export const emptyGuide = (): GuideSave => ({ unseen: [] });
 
 /** The pickups the getting-ready steps wait on: her night's kit (rules/kit.ts), tonight's invitations taken from the desk and her
- *  broom taken off the lathe. */
+ *  broom taken off the broom rack. */
 export const GUIDANCE_HOOKS = {
   invitationsReady: (g: Game, w: number): boolean => !g.witches[w] || hasInvites(g.witches[w]),
   /** A bag on her to carry them in (Ed, 2026-10-29: rules/kit.ts needsBag). */
@@ -52,12 +53,14 @@ export const GUIDANCE_HOOKS = {
 };
 
 /** A game's first morning, in Ed's order (2026-10-29: "The first station you go to after waking up should be skin/hair, then
- *  jacket/top/trousers, then shoes, then bag, then invitations, then cloak, then hat, then broom"): the dressing table till she's
+ *  jacket/top/trousers, then shoes, then bag, then invitations, then cloak, then hat, then broom"; and 2026-11-07, "first morning
+ *  should have the basin as the first thing in the path"): the basin till she's used it (wake.washed), the dressing table till she's
  *  used it (wake.styled), each dressing station till its piece is on (rules/clothesPile.ts STATION_SLOT; her hat off the hats'
- *  floor), the invitations desk and the lathe till her night's kit has them. */
-export const FIRST_MORNING: readonly ({ dress: PileSlot | "styled"; at: string } | { kit: "desk" | "lathe" })[] = [
-  { dress: "styled", at: "dressingTable" }, { dress: "top", at: "wardrobe" }, { dress: "shoes", at: "shoeRack" }, { dress: "bits", at: "bags" },
-  { kit: "desk" }, { dress: "cloak", at: "cloakPegs" }, { dress: "hat", at: "hats" }, { kit: "lathe" },
+ *  floor), the invitations desk and the broom rack till her night's kit has them (Ed, 2026-11-07: "The guidance pins point only to the
+ *  rack: there are no mods on the first night, so the modding stations aren't in the pointer sequence"). */
+export const FIRST_MORNING: readonly ({ dress: PileSlot | "washed" | "styled"; at: string } | { kit: "desk" | "rack" })[] = [
+  { dress: "washed", at: "basin" }, { dress: "styled", at: "dressingTable" }, { dress: "top", at: "wardrobe" }, { dress: "shoes", at: "shoeRack" }, { dress: "bits", at: "bags" },
+  { kit: "desk" }, { dress: "cloak", at: "cloakPegs" }, { dress: "hat", at: "hats" }, { kit: "rack" },
 ];
 
 /** The first morning's hat step: her hat where it lies. In Ed's arrangement the hats' floor is numbered spawn points (rules/houseRooms.ts
@@ -95,8 +98,8 @@ export function guidanceOf(g: Game, w: number, save: GuideSave, unvisited: reado
   if (!k?.open || g.party.spellAt !== null) return null; // (still in bed, or the party's on: the party's pointers guide her)
   if (!k.yesterday && !pileOut(k)) { // (a game's first morning: no pile of last night's clothes to put on at once)
     for (const s of FIRST_MORNING) {
-      if ("kit" in s) { if (s.kit === "desk" ? !hooks.invitationsReady(g, w) : !hooks.broomTaken(g, w)) return s.kit === "desk" ? desk() : { kind: "lathe", target: { object: "lathe" } }; }
-      else if (s.dress === "styled" ? !k.styled : !dressed(k) && !!k.pile?.includes(s.dress)) {
+      if ("kit" in s) { if (s.kit === "desk" ? !hooks.invitationsReady(g, w) : !hooks.broomTaken(g, w)) return s.kit === "desk" ? desk() : { kind: "rack", target: { object: "broomRack" } }; }
+      else if (s.dress === "washed" ? !k.washed : s.dress === "styled" ? !k.styled : !dressed(k) && !!k.pile?.includes(s.dress)) {
         if (s.dress !== "hat") return { kind: "dress", target: { object: s.at } };
         const h = hatGuide(g, w); // (Ed, 2026-11-02: "If there's a hat step but no hat lying anywhere then go to the next step")
         if (h) return h;
@@ -105,7 +108,7 @@ export function guidanceOf(g: Game, w: number, save: GuideSave, unvisited: reado
   }
   // (later mornings: E at the pile dresses her at once; then her kit, the invitations before the broom)
   if (!hooks.invitationsReady(g, w)) return desk();
-  if (!hooks.broomTaken(g, w)) return { kind: "lathe", target: { object: "lathe" } };
+  if (!hooks.broomTaken(g, w)) return { kind: "rack", target: { object: "broomRack" } };
   // (a hat: where it lies; in Ed's arrangement one lying on no spawn point has nowhere to point, so it's passed over: Ed, 2026-11-02)
   const placed = (n: NewThing) => n.kind !== "hat" || !HOUSE_ROOMS.layout?.hatPoints.length || !!hatSpot(g, w, n.id);
   const n = [...save.unseen].reverse().find(placed);

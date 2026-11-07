@@ -101,6 +101,8 @@ import { BagPreview } from "./ui/bagPreview";
 import { BAGS } from "./rules/bags";
 import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { DjBooth } from "./ui/djBooth";
+import { partStation } from "./rules/kit";
+import { BRUSH, BrushSparkle } from "./ui/brushSparkle";
 import { chooseRecord, lastRecord, ownedRecords } from "./app/recordSave";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { leaveZoo } from "./app/zooExit";
@@ -700,7 +702,7 @@ shutButton.style.cssText = "position:fixed;right:16px;bottom:16px;z-index:70;dis
 shutButton.append(keycapCanvas("TAP", 5));
 shutButton.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.sigil = true; });
 document.body.append(shutButton);
-let owned: Set<string> | null = null, stillAt = 0;
+let owned: Set<string> | null = null, stillAt = 0, liftUp = false;
 /** What the finds' keepers work on (app/finds.ts): tonight's spells and what she owns to wear, kept. */
 const findsCtx = (): FindsCtx => ({ spells: N().game.spells, owned: () => (owned ??= withLoan("wearable", loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>), loan)) });
 const menuWardrobe = () => phone.active ? new Set(phone.catalogue?.wardrobe ?? []) : ownedToChoose(findsCtx().owned());
@@ -729,6 +731,17 @@ booth.onStart = r => {
   mutate("house: DJ party start", () => { chooseRecord(r.id); booth.close(); startParty(N().game, r.bpm); });
 };
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
+// The basin's Teeth button (Ed, 2026-11-07: "a 'brush your teeth' button that plays a short brushing animation with a little sparkle
+// and a sound, flavour only, no gameplay effect"): her brush frames facing us (render/view/witch.ts), scrubs and a glint
+// (platform/audio/chimes.ts brushTeeth) and a few sparkles at her face as it ends (ui/brushSparkle.ts). Nothing in the rules changes.
+stations.onAction = id => {
+  if (id !== "teeth") return;
+  const t = N().game.herTime;
+  view.brush.from = t; view.brush.until = t + BRUSH; view.turnUntil = t + BRUSH;
+  sound.sfx?.brushTeeth(0, BRUSH);
+  sparkle.play(BRUSH);
+};
+const sparkle = new BrushSparkle(() => herHead());
 stations.onDress = () => { view.spin = spinStep(view.spin, N().game.herTime); }; // (Ed, 2026-10-26: she twirls while her new look draws)
 // The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
 // and its set's spell with it: rules/spells.ts setParts), and is kept on this browser for the nights after (app/broomSave.ts).
@@ -757,7 +770,7 @@ function lendFind(kind: FindKindId, id: string): void {
   if (kind === "wearable" || kind === "bag") findsCtx().owned().add(id); // (in what she owns tonight, not in her save)
   view.partsFound = partsNow();
   // (new in the treehouse: her guidance pin over where it is till she's been there, rules/guidance.ts)
-  const at = kind === "part" ? "lathe" : kind === "hat" ? "hats" : stationsShowing(shelfOf(id)?.id ?? "")[0];
+  const at = kind === "part" ? partStation(id) : kind === "hat" ? "hats" : stationsShowing(shelfOf(id)?.id ?? "")[0];
   if (at) { addNew(guide, { kind: kind === "part" || kind === "hat" ? kind : "wearable", id, at }); storeGuide(guide); }
 }
 /** Her guidance (rules/guidance.ts): what's kept of it on this browser (app/guideSave.ts), her pin, and the islands found (the
@@ -1723,6 +1736,7 @@ function frameBody(now: number): void {
   if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, menuWardrobe(), houseGame.wake && firstEver && !houseGame.wake.yesterday && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null, !!houseGame.wake?.pile?.includes(STATION_SLOT[station.id])); }
   else if (!shelves && stations.station) shutStation("no shelves");
   stations.update(performance.now() / 1000); booth.update(performance.now() / 1000);
+  { const up = stations.station === "broomLift"; if (up !== liftUp) { liftUp = up; sound.sfx?.hiss(up); } } // (the lift up while its panel's open, down after: render/houseFurniture.ts; Ed, 2026-11-07, "It can hiss up and down when she uses it")
   // The telescope: E at it looks (useHouse); E or ○ shuts it (its own step; Esc pauses over it); and should she somehow be off it, it shuts.
   const scope = bot || creator.open || sailing || charting ? null : stationOf(houseGame, telescope.on ? scopeAt : null, tuning, ["telescope"]);
   if (!scope && telescope.on && scopeAt) { telescope.close(); scopeAt = null; }
@@ -1730,7 +1744,7 @@ function frameBody(now: number): void {
   openPrev = chartOpen() || telescope.on || !!studio.at || !!stations.station || booth.isOpen || phone.open;
   shutButton.style.display = openPrev && input.device === "touch" ? "block" : "none"; // (on touch, a way to close it: the tap keycap)
   // (the use prompts, render/houseRooms.ts: the button on what she plays with, and none over what's open)
-  view.useDevice = input.device; stations.setDevice(input.device); booth.setDevice(input.device); studioPanel.setDevice(input.device); view.houseOpen = stations.station ?? studio.state.players[0].object ?? (telescope.on ? scopeAt : null) ?? chartAt ?? phone.object;
+  view.useDevice = input.device; stations.setDevice(input.device); booth.setDevice(input.device); studioPanel.setDevice(input.device); view.houseOpen = stations.station ?? (booth.isOpen ? "decks" : null) ?? studio.state.players[0].object ?? (telescope.on ? scopeAt : null) ?? chartAt ?? phone.object;
   // The new opening's wake-up (rules/wakeUp.ts, render/wakeUp.ts): its card, the dark and her phone; its beats marked for ?timing=1,
   // and the first time she comes to the dressing table; the island's art latched drawn (marked, nothing waits on it).
   if (!phone.visiting && !N().spec.borrowed && !game.islandReady && F.ready && F.artRevealed && (mistGateOff || view.islandDrawn())) { game.islandReady = true; if (phone.active) phone.changed(); mark("island:ready"); } // Only host owns this shared latch; visitor art readiness cannot overwrite it.

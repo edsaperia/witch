@@ -155,6 +155,7 @@ says what each note covers.
 - The treehouse's rooms
 - The oak
 - Furniture: size, freestanding, mess and layout
+- The stations regrouped
 - Station menus
 - Starting bags
 - Found bags
@@ -177,6 +178,7 @@ says what each note covers.
 - Find sets
 - Sleeping before the party
 - Finds pool
+- The broom's stations
 - Workshop
 - Invitations and brooms / her night's kit
 - Broom parts / slots

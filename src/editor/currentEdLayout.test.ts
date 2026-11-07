@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import authored from "../../docs/evidence/treehouse-layout-ed-2026-11-01.v2.json";
 import current from "../../config/house/layouts/ed-current.json";
-import { EDITOR_HOUSE, exportLayout, floorplanKey, layoutItems, LayoutHistory, parseLayout } from "./houseLayout";
+import { ADDED_OBJECTS, EDITOR_HOUSE, exportLayout, floorplanKey, layoutItems, LayoutHistory, parseLayout } from "./houseLayout";
 import { publishedLayout } from "./publishedLayout";
 import { applyEdLayout } from "../rules/housePlacement";
 import { placedDecorPlan } from "../render/houseDecor";
@@ -16,7 +16,7 @@ it("preserves the complete export and all 109 kept poses/anchors; removes strict
   expect(current.removedObjects).toEqual(["hats"]);
   expect(current.removed).toHaveLength(22); expect(current.objects).toHaveLength(109);
   const items = layoutItems(), key = floorplanKey(EDITOR_HOUSE, items);
-  expect(parseLayout(authored, items, key).objects).toHaveLength(130); // Recorded source migration still fully validated (less the guests' bedrooms' two doors, gone since Ed, 2026-11-03).
+  expect(parseLayout(authored, items, key).objects).toHaveLength(130 + ADDED_OBJECTS.length); // Recorded source migration still fully validated (less the guests' bedrooms' two doors, gone since Ed, 2026-11-03; and the objects new since, Ed 2026-11-07, at their defaults).
   const selected = publishedLayout(items, key, new URLSearchParams()), exported = exportLayout(selected, items);
   expect(parseLayout(exported, items, key)).toEqual(selected);
   const history = new LayoutHistory(selected); history.save(); history.value = structuredClone(selected); history.value.objects[0].x += 1; history.undo();

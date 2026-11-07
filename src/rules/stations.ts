@@ -53,15 +53,16 @@ export const tableOf = (g: Game, open: string | null, tuning: Tuning = g.tuning)
  *  lathe while she's at the lathe, in her hand on the Terrace (the hub and its balcony: not in a room off it), and nowhere drawn
  *  in the other rooms ("none": she walks without it, as before). Off the house's floor (flying, outdoors), "none" too: then she's
  *  on it, drawn as ever. Drawing only (render/view/witch.ts, render/houseRooms.ts); the rules don't change for it. */
-export type BroomWhere = "bay" | "lathe" | "held" | "none";
+export type BroomWhere = "bay" | "lathe" | "lift" | "held" | "none";
 export function broomWhere(g: Game, station: string | null, tuning: Tuning = g.tuning): BroomWhere {
   const w = g.witch;
   if (!w.perch || w.mode !== "ground" || w.seated) return "none";
   const d = deckOf(g.map, tuning);
   if (!d || !hasRooms(d)) return "none";
-  if (!hasBroom(g.witches[0])) return "none"; // (no broom of hers yet tonight: the lathe's brooms are its own, rules/kit.ts)
+  if (!hasBroom(g.witches[0])) return "none"; // (no broom of hers yet tonight: the rack's brooms are its own, rules/kit.ts)
   if (station === "broomBay") return "bay";
   if (station === "lathe") return "lathe";
+  if (station === "broomLift") return "lift";
   const inRoom = Math.hypot(w.x - d.x, w.z - d.z) > d.r && onRoomFloor(d.house!.rooms!, w.x, w.z);
   return inRoom ? "none" : "held";
 }

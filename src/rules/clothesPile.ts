@@ -16,8 +16,14 @@ export const PILE_SLOTS: readonly PileSlot[] = ["top", "shoes", "cloak", "hat", 
 
 /** The piece each dressing station puts on (config/house/'s station ids). The dressing table (her hair, skin, face, earrings)
  *  dresses nothing: those are hers in the nightie too. */
-export const STATION_SLOT: Readonly<Record<string, PileSlot>> = { wardrobe: "top", bedroom2Wardrobe: "top", bedroom3Wardrobe: "top", shoeRack: "shoes", cloakPegs: "cloak", bags: "bits" };
-export const isDressingTable = (id: string | undefined): boolean => id === "dressingTable" || id === "bedroom2DressingTable" || id === "bedroom3DressingTable";
+export const STATION_SLOT: Readonly<Record<string, PileSlot>> = { wardrobe: "top", bedroom2Wardrobe: "top", bedroom3Wardrobe: "top", shoeRack: "shoes", bedroom2ShoeRack: "shoes", bedroom3ShoeRack: "shoes", cloakPegs: "cloak", bags: "bits" };
+/** A station's home namesake: a guests' bedroom's piece (`bedroom2Basin`) holds what the home's (`basin`) does (Ed, 2026-11-07: "their
+ *  wardrobe becomes a wardrobe rail (jacket, top), and their dressing table holds hair, sunglasses and earrings"; "Guests need basins
+ *  and shoe racks"); the home's own id as it is. */
+export const homeStation = (id: string): string => { const m = /^bedroom[23]([A-Z].*)$/.exec(id); return m ? m[1][0].toLowerCase() + m[1].slice(1) : id; };
+export const isDressingTable = (id: string | undefined): boolean => !!id && homeStation(id) === "dressingTable";
+/** The basin, hers or a guest bedroom's (the first morning's first step: rules/guidance.ts FIRST_MORNING). */
+export const isBasin = (id: string | undefined): boolean => !!id && homeStation(id) === "basin";
 
 /** She's dressed: nothing of last night's left in the pile (an old wake-up, with no pile, counts as dressed). */
 export const dressed = (w: { pile?: PileSlot[] } | null | undefined): boolean => !w?.pile?.length;

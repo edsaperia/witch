@@ -2,14 +2,14 @@
 // button"): at every station, moving the focus anywhere never changes her or her broom; choosing does; and leaving without choosing
 // leaves her as she came.
 import { describe, expect, it } from "vitest";
-import { ITEMS, shelvesAt, shownItems, wears, type Shelf } from "../rules/wardrobe";
+import { ITEMS, shelvesAt, wears, type Shelf } from "../rules/wardrobe";
 import { bareBroom, PARTS } from "../rules/broomParts";
 import { pleasingWitch } from "./looks";
 import { PanelChoice, type Genome } from "./stationChoice";
 import { bindings, PAD_BUTTONS } from "../platform/bindings";
 import { panelPad, itemAt } from "./stationLines";
 
-const STATIONS = ["mirror", "dressingTable", "wardrobe", "cloakPegs", "shoeRack", "bags", "lathe"];
+const STATIONS = ["mirror", "dressingTable", "basin", "wardrobe", "cloakPegs", "shoeRack", "bags", "broomBay", "lathe", "broomLift"];
 const ctx = {
   grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 3 : 13, rows: 5 }),
   swatch: (_s: Shelf, col: number, row: number) => [col / 13, 0.3 + row / 10, 0.5],
@@ -87,8 +87,8 @@ describe("a station panel: moving only moves the focus, choosing changes her (Ed
     for (const st of STATIONS) {
       const p = panel(st), L = p.lines();
       L.forEach((l, line) => {
-        if (l.kind !== "items") return;
-        const items = l.item !== undefined ? [itemAt(p.shelves[l.shelf], l, 0)] : shownItems(p.shelves[l.shelf]), col = items.findIndex(it => !wears(p.g, it)); // (a list's line: its own one item)
+        if (l.kind !== "items" || p.shelves[l.shelf].toggle) return; // (a toggle comes off again: its own test below)
+        const items = Array.from({ length: l.n }, (_, c) => itemAt(p.shelves[l.shelf], l, c)), col = items.findIndex(it => !wears(p.g, it) && p.owned.has(it.id)); // (the line's own items, those she owns)
         if (col < 0) return;
         p.focus(line, col);
         const before = JSON.stringify(p.g), r = p.choose();
@@ -115,16 +115,37 @@ describe("a station panel: moving only moves the focus, choosing changes her (Ed
     }
   });
 
-  it("at the bags, a list: down moves bag to bag changing nothing, choosing a bag's line wears that bag", () => {
+  it("at the bags, compact cards: right moves bag to bag changing nothing, down to the second line; choosing a bag wears it", () => {
     const p = panel("bags"), L = p.lines(), bag = p.shelves.findIndex(s => s.id === "bag"), lines = L.map((l, i) => [l, i] as const).filter(([l]) => l.shelf === bag && l.kind === "items");
-    expect(lines.length).toBe(p.shelves[bag].items.length);
+    expect(lines.reduce((a, [l]) => a + l.n, 0)).toBe(p.shelves[bag].items.length);
     p.focus(lines[0][1], 0);
     const before = JSON.stringify(p.g);
-    for (let k = 1; k < lines.length; k++) { expect(p.move(0, 1)).toBe(true); expect(p.at.line).toBe(lines[k][1]); }
+    for (let k = 1; k < lines[0][0].n; k++) { expect(p.move(1, 0)).toBe(true); expect(p.at.col).toBe(k); }
+    expect(p.move(0, 1)).toBe(true); expect(p.at.line).toBe(lines[1][1]);
     expect(JSON.stringify(p.g)).toBe(before);
-    const want = lines.map(([l]) => itemAt(p.shelves[bag], l, 0)).find(it => !wears(p.g, it))!, at = lines.find(([l]) => itemAt(p.shelves[bag], l, 0) === want)![1];
-    p.focus(at, 0); p.choose();
+    const want = p.shelves[bag].items.find(it => !wears(p.g, it) && p.owned.has(it.id))!, k = p.shelves[bag].items.indexOf(want), at = lines.find(([l]) => k >= (l.from ?? 0) && k < (l.from ?? 0) + l.n)!;
+    p.focus(at[1], k - (at[0].from ?? 0)); p.choose();
     expect(wears(p.g, want)).toBe(true);
+  });
+
+  it("the basin's makeup: a toggle chosen goes on, chosen again comes off; a colour for her lips puts her lipstick on (Ed, 2026-11-07)", () => {
+    const p = panel("basin"), L = p.lines(), mk = p.shelves.findIndex(s => s.id === "makeup"), row = L.findIndex(l => l.shelf === mk && l.kind === "items");
+    const lip = p.shelves[mk].items.find(i => i.id === "lipstick")!, col = p.shelves[mk].items.indexOf(lip);
+    expect(wears(p.g, lip)).toBe(false);
+    p.focus(row, col); expect(p.choose().look).toBeDefined(); expect(wears(p.g, lip)).toBe(true);
+    p.focus(row, col); expect(p.choose().look).toBeDefined(); expect(wears(p.g, lip)).toBe(false);
+    const grid = L.findIndex(l => l.shelf === mk && l.kind === "grid"); p.focus(grid, 3); p.choose();
+    expect(wears(p.g, lip)).toBe(true); expect((p.g.accessories as Record<string, unknown>).eyeshadow).toBe(false);
+    const teeth = L.findIndex(l => l.kind === "action"); p.focus(teeth, 0); expect(p.choose()).toEqual({ action: "teeth", unfound: false });
+  });
+
+  it("opens on what she's wearing (Ed, 2026-11-07): the item she has on, or her colour's swatch where the first card has no items", () => {
+    for (const st of STATIONS) {
+      const p = panel(st), L = p.lines(), at = p.opening(), l = L[at.line], s = p.shelves[l.shelf];
+      expect(l.shelf, st).toBe(L[0].shelf);
+      if (l.kind === "items") expect(wears(p.g, itemAt(s, l, at.col)), st).toBe(true);
+      else if (l.kind === "grid") expect([at.col, l.row], st).toEqual(p.chosenSwatch(s));
+    }
   });
 
   it("an item still to be found, chosen, changes nothing and is marked till the focus moves", () => {
@@ -132,7 +153,7 @@ describe("a station panel: moving only moves the focus, choosing changes her (Ed
     if (items < 0) return; // (nothing to choose among with none owned)
     p.focus(items, 0);
     const before = JSON.stringify(p.g), r = p.choose();
-    expect(r).toEqual({ locked: true });
+    expect(r).toEqual({ unfound: true });
     expect(JSON.stringify(p.g)).toBe(before);
     expect(p.nope).toEqual(p.at);
     p.move(1, 0);
