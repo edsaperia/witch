@@ -335,12 +335,13 @@ export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPr
   // the night's set (Ed, 2026-10-11: "Each night should be a full set"; rules/musicSet.ts): its arc for the music (the tempo stays the
   // gameplay's: Ed, "tempo is set by the gameplay")
   const set = nightFor(map, seed);
+  const berries = newBerries(map, tuning);
   const g = {
     seed, tuning, map, forest, creatures, clock: newClock(), witches, cauldron: null as CauldronNight | null,
     get witch() { return this.witches[0].body; }, set witch(w: WitchState) { this.witches[0].body = w; },
     get leash() { return this.witches[0].leash; }, set leash(l: LeashState) { this.witches[0].leash = l; },
     get spells() { return this.witches[0].spells; }, set spells(s: SpellState) { this.witches[0].spells = s; },
-    camera: newCamera(tuning, body.x, witchHeight(body, tuning), body.z), party: newParty(map), berries: newBerries(map, tuning), mushrooms: newMushrooms(map, forest),
+    camera: newCamera(tuning, body.x, witchHeight(body, tuning), body.z), party: newParty(map), berries, mushrooms: newMushrooms(map, forest, berries.bushes), // (mushrooms keep off the berries' bushes)
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     speakerBoot: map.dancefloor.speakers.map(() => null),
     beat: newBeatClock(tuning.beat.bpm), knockdowns: [] as { at: number; back: number }[], musicSet: set,

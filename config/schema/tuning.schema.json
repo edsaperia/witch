@@ -4027,13 +4027,23 @@
             "radius": {
               "type": "number",
               "minimum": 0
+            },
+            "spacing": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The least distance between two berry patches' centres, in metres: patches spread evenly over each area, never nearer each other than this."
             }
           },
           "required": [
             "bushes",
-            "radius"
+            "radius",
+            "spacing"
           ],
           "additionalProperties": false
+        },
+        "stumpClear": {
+          "type": "number",
+          "description": "Metres past every stump's fighting arena that berry bushes and mushrooms also keep out of: 0 keeps them just outside the arena, 55 m from the stump today."
         },
         "eatTime": {
           "type": "number",
@@ -4107,6 +4117,7 @@
         "perArea",
         "bushesPerArea",
         "patch",
+        "stumpClear",
         "eatTime",
         "cost",
         "colour",

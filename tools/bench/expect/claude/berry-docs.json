@@ -1,0 +1,4 @@
+{
+  "reason": "Berries (Ed, 2026-11-06): twice as many patches (bushesPerArea 20, perArea [10, 16]), spread evenly over each area and kept out of every stump's fighting arena (55 m), so the bushes and the berries on them are elsewhere.",
+  "rules": { "berries": "the berry state holds every bush and berry, which this branch places afresh: more of them, elsewhere" }
+}
