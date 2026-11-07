@@ -156,11 +156,14 @@ describe("shared CI game build", () => {
     expect(jobs.check.steps[0].if).toContain("needs.unit.result != 'success'");
     expect(jobs.check.steps.some((s: any) => /run-unit/.test(s.run ?? ""))).toBe(false);
   });
-  it("bounds every Chromium install so a hung download cannot consume a whole job timeout", () => {
-    for (const [name, job] of Object.entries(jobs) as [string, any][]) for (const step of job.steps) {
-      if (!/playwright install/.test(step.run ?? "")) continue;
-      expect(step.run, name).toMatch(/timeout 300 /);
-      expect(step.run, name).toMatch(/for try in 1 2/);
+  it("uses the shared privileged-cleanup installer on the pinned supported image without masking failures", () => {
+    for (const name of ["smoke", "proofs", "large-world", "game-unchanged"]) {
+      const job = jobs[name], install = job.steps.find((s: any) => s.name === "Install Chromium (bounded, one retry)");
+      expect(job["runs-on"]).toBe("ubuntu-24.04");
+      expect(install.run).toBe(`node ${name === "game-unchanged" ? "head/" : ""}tools/ci/install-chromium.cjs`);
+      expect(install["continue-on-error"]).toBeUndefined();
+      // Full command/timeout/retry semantics are exercised without a browser in install-chromium.test.ts.
+      expect(job.steps.some((s: any) => /playwright install --with-deps/.test(s.run ?? ""))).toBe(false);
     }
   });
   it("gives main publication priority without publishing prototype pushes or forks", () => {
