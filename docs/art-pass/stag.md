@@ -2,6 +2,21 @@
 
 Deep forechest; loin narrows before the rounded haunch. The photographed stag’s two beams remain separate above the ears. Keep the crown open when one beam overlaps the other in the away view. [Commons comparison photograph](https://commons.wikimedia.org/wiki/File:Cervus_elaphus_Luc_Viatour_6.jpg)
 
+## Legend target for Ed’s review
+
+**A · Roosting crown.** The birds trust the elder enough to keep their perches as he walks; his forked beams echo the old slanted trees.
+
+**Silhouette and pose.** High branched crown, visible gaps between beams, small birds perched at different heights, long clear neck. Keep the adult body ratios below as the starting point.
+
+**Additional graph needs.** Branched bone sockets carrying independently posed birds; leave space across the span.
+
+[Three generated candidates and current legend](https://github.com/edsaperia/witch/blob/6fedd3e5529501af0c964da7e4271015b425cca7/previews/art-pass/stag/legend-concepts-l4.jpg). A–C are ImageGen concepts in prompt order. The right panel shows the awake level-three albedo sprite from prototype 524b0acaa, towards, frame 0, default generator style. Panels use independent scales. Generated pitch and lighting are approximate.
+
+**Concept prompt**
+
+> Photoreal natural-history fantasy design triptych, three genuinely distinct alternative elders of ONE species. Three evenly spaced equal panels horizontally, one entire animal per panel, left to right A B C, all fully in frame with margins. Plain neutral gray background, realistic materials, subtle shadows, no titles/text/letters. Approximate orthographic game camera looking down 30 degrees, animal faces right, rotated 35 degrees towards viewer from side profile. All clearly ancient and powerful, not humanoid, keep family anatomy. Ancient forest red deer stag, long legs, brown mane. A: its antlers branch in the slanted silhouette of old woodland trees with little roosting songbirds nestled in their weather-beaten crown. B: tines like a vast candelabrum, small flames at worn tips. C: strips of silver velvet hang from a crooked broken beam.
+
+
 ## Recognition checklist
 
 - Forward brow tines

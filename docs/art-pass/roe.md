@@ -2,6 +2,21 @@
 
 Light chest and short trunk with high haunches; generous daylight beneath the belly. The young male in the photo shows how strongly the ears frame the entire head. Use the adult sheet for mature antler length only. [Commons comparison photograph](https://commons.wikimedia.org/wiki/File:Roe_deer_%28Capreolus_capreolus%29_young_male_Cumnor.jpg)
 
+## Legend target for Ed’s review
+
+**C · Lingering hoofprint circle.** A small animal assembles a herd through the places it has stepped. The tracks explain the old gathering ring at dusk.
+
+**Silhouette and pose.** Keep small rack, bare gaps around ears and black nose; prints occur behind lifted feet at hoof width. Keep the adult body ratios below as the starting point.
+
+**Additional graph needs.** Hoof-contact trail attachments and a fading ring of prints independent of the moving body.
+
+[Three generated candidates and current legend](https://github.com/edsaperia/witch/blob/6fedd3e5529501af0c964da7e4271015b425cca7/previews/art-pass/roe/legend-concepts-l4.jpg). A–C are ImageGen concepts in prompt order. The right panel shows the awake level-three albedo sprite from prototype 524b0acaa, towards, frame 0, default generator style. Panels use independent scales. Generated pitch and lighting are approximate.
+
+**Concept prompt**
+
+> Photoreal natural-history fantasy design triptych, three genuinely distinct alternative elders of ONE species. Three evenly spaced equal panels horizontally, one entire animal per panel, left to right A B C, all fully in frame with margins. Plain neutral gray background, realistic materials, subtle shadows, no titles/text/letters. Approximate orthographic game camera looking down 30 degrees, animal faces right, rotated 35 degrees towards viewer from side profile. All clearly ancient and powerful, not humanoid, keep family anatomy. Small roe buck of an old dusk gathering ring in a moss and foxglove dell. A: amber foxglove pollen dusts his short three-point rack and ears. B: white rump marked with concentric dusk-light rings like the glade. C: his tiny split hooves leave a circle of dimly luminous tracks, each retaining light after he steps away. Frail grey muzzle and large listening ears.
+
+
 ## Recognition checklist
 
 - Short upright antlers close to forehead

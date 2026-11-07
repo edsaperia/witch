@@ -2,6 +2,21 @@
 
 Shoulder boss flows into a deep, wide barrel over short load-bearing limbs. In the walking photo the nose rides near the ground and the front horn projects clear of the face. Keep the lip broad even when the horn points almost toward the camera. [Commons comparison photograph](https://commons.wikimedia.org/wiki/File:109_Male_White_rhinoceros_walking_in_the_Kalahari_Desert_of_Namibia_Photo_by_Giles_Laurent.jpg)
 
+## Legend target for Ed’s review
+
+**A · Bronze offerings on one colossal horn.** The boma hearth is cold, but generations have returned to leave offerings. Wear beneath the bronze tells how long the rhino has carried them.
+
+**Silhouette and pose.** Single dominant nasal horn with rubbed lower band, spaced bronze rings, low broad mouth, high shoulder boss. Keep the adult body ratios below as the starting point.
+
+**Additional graph needs.** Taper-aware ring sockets at nasal horn base, abrasion material beneath offerings.
+
+[Three generated candidates and current legend](https://github.com/edsaperia/witch/blob/6fedd3e5529501af0c964da7e4271015b425cca7/previews/art-pass/rhino/legend-concepts-l4.jpg). A–C are ImageGen concepts in prompt order. The right panel shows the awake level-three albedo sprite from prototype 524b0acaa, towards, frame 0, default generator style. Panels use independent scales. Generated pitch and lighting are approximate.
+
+**Concept prompt**
+
+> Photoreal natural-history fantasy design triptych, three genuinely distinct alternative elders of ONE species. Three evenly spaced equal panels horizontally, one entire animal per panel, left to right A B C, all fully in frame with margins. Plain neutral gray background, realistic materials, subtle shadows, no titles/text/letters. Approximate orthographic game camera looking down 30 degrees, animal faces right, rotated 35 degrees towards viewer from side profile. All clearly ancient and powerful, not humanoid, keep family anatomy. Elder white rhino of bushveld red earth, old boma posts, thorn scrub and cold hearth. A: massive single horn carries green-patinated bronze votive rings caught above its base. B: thick hide has old overlapping thorn and battle scars resembling the boma stockade. C: ochre-red earth fills its hide folds, cold pale ash on its great blunt horn. Low square-lipped head and heavy body.
+
+
 ## Recognition checklist
 
 - Long low heavy head

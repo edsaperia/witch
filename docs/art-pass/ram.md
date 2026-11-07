@@ -2,6 +2,21 @@
 
 Broad front, thick neck merging into a deep barrel; rump stays visible behind fleece. Bighorn is the horn and skull reference. The photo shows the open curl beside the cheek. Use the game’s white fleece and curly hornless lamb for coat and age zero. [Commons comparison photograph](https://commons.wikimedia.org/wiki/File:New_Mexico_Bighorn_Sheep.JPG)
 
+## Legend target for Ed’s review
+
+**A · Fleece that carries the bramble harvest.** His fleece gathers what the tangled forest would tear away. The berries make him both a traveller and a food source for the wood.
+
+**Silhouette and pose.** Dark open curl beside cheek, snagged woody arcs, sparse berry clusters against fleece, clear eyes. Keep the adult body ratios below as the starting point.
+
+**Additional graph needs.** Fleece-surface snag sockets, branching thorn curves and clustered berry mounts.
+
+[Three generated candidates and current legend](https://github.com/edsaperia/witch/blob/6fedd3e5529501af0c964da7e4271015b425cca7/previews/art-pass/ram/legend-concepts-l4.jpg). A–C are ImageGen concepts in prompt order. The right panel shows the awake level-three albedo sprite from prototype 524b0acaa, towards, frame 0, default generator style. Panels use independent scales. Generated pitch and lighting are approximate.
+
+**Concept prompt**
+
+> Photoreal natural-history fantasy design triptych, three genuinely distinct alternative elders of ONE species. Three evenly spaced equal panels horizontally, one entire animal per panel, left to right A B C, all fully in frame with margins. Plain neutral gray background, realistic materials, subtle shadows, no titles/text/letters. Approximate orthographic game camera looking down 30 degrees, animal faces right, rotated 35 degrees towards viewer from side profile. All clearly ancient and powerful, not humanoid, keep family anatomy. Ancient ram with white shaggy fleece and heavy double spiral horns of tangly forest. A: a nest of brambles snags in the fleece with ripe berries. B: polished bronze patches on worn horn coils from generations touching them. C: living nettle cord threads one horn coil to the other like a cradle, woven by smaller animals and hung with empty seed cases. Show horn curl beside face.
+
+
 ## Recognition checklist
 
 - Heavy horn roots beside crown

@@ -2,6 +2,21 @@
 
 Deep ribcage suspended between columnar limbs, head balanced close to shoulders. The walking bull’s bent foreleg still carries a broad foot pad. The ear folds against the neck in profile. Avoid locking either form into a flat cutout. [Commons comparison photograph](https://commons.wikimedia.org/wiki/File:178_Male_African_bush_elephant_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg)
 
+## Legend target for Ed’s review
+
+**C · Trunk-sounded temple bells.** The matriarch can give the ruined temple its voice again. Her reaching trunk turns the bells into an action that belongs to an elephant.
+
+**Silhouette and pose.** Clear trunk-to-bell reach, open space between tusks, bells hung below jaw, broad ears framing a listening pose. Keep the adult body ratios below as the starting point.
+
+**Additional graph needs.** Jaw-mounted bell hangers with independent swing and a trunk contact target outside the tusk envelope.
+
+[Three generated candidates and current legend](https://github.com/edsaperia/witch/blob/6fedd3e5529501af0c964da7e4271015b425cca7/previews/art-pass/elephant/legend-concepts-l4.jpg). A–C are ImageGen concepts in prompt order. The right panel shows the awake level-three albedo sprite from prototype 524b0acaa, towards, frame 0, default generator style. Panels use independent scales. Generated pitch and lighting are approximate.
+
+**Concept prompt**
+
+> Photoreal natural-history fantasy design triptych, three genuinely distinct alternative elders of ONE species. Three evenly spaced equal panels horizontally, one entire animal per panel, left to right A B C, all fully in frame with margins. Plain neutral gray background, realistic materials, subtle shadows, no titles/text/letters. Approximate orthographic game camera looking down 30 degrees, animal faces right, rotated 35 degrees towards viewer from side profile. All clearly ancient and powerful, not humanoid, keep family anatomy. Ancient African elephant matriarch from tumbled jungle temple over roots. A: stone-dust patterns on broad ears preserve a vanished temple plan. B: one worn tusk propped by an ancient bronze repair sleeve. C: small deeply patinated temple bells slung below her jaw that her trunk can gently sound, her great ears poised to listen. Asymmetric age wear and massive padded feet.
+
+
 ## Recognition checklist
 
 - Broad fan ears over shoulders

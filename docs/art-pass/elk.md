@@ -2,6 +2,21 @@
 
 High withers above a long, deep chest; back descends to a narrow rump. The photographed bull shows a prominent shoulder ridge even with its head lowered. Preserve that ridge after the rack turns edge-on. [Commons comparison photograph](https://commons.wikimedia.org/wiki/File:Alaska_moose.jpg)
 
+## Legend target for Ed’s review
+
+**B · Water-bearing antler palms.** He carries the still water of the bog above his head. Even his heavy walk fails to disturb it.
+
+**Silhouette and pose.** Shallow cupped palms and raised rim tines, horizontal water surfaces, high shoulder and overhanging muzzle. Keep the adult body ratios below as the starting point.
+
+**Additional graph needs.** Concave paddles with water surfaces oriented against gravity and asymmetric worn rims.
+
+[Three generated candidates and current legend](https://github.com/edsaperia/witch/blob/6fedd3e5529501af0c964da7e4271015b425cca7/previews/art-pass/elk/legend-concepts-l4.jpg). A–C are ImageGen concepts in prompt order. The right panel shows the awake level-three albedo sprite from prototype 524b0acaa, towards, frame 0, default generator style. Panels use independent scales. Generated pitch and lighting are approximate.
+
+**Concept prompt**
+
+> Photoreal natural-history fantasy design triptych, three genuinely distinct alternative elders of ONE species. Three evenly spaced equal panels horizontally, one entire animal per panel, left to right A B C, all fully in frame with margins. Plain neutral gray background, realistic materials, subtle shadows, no titles/text/letters. Approximate orthographic game camera looking down 30 degrees, animal faces right, rotated 35 degrees towards viewer from side profile. All clearly ancient and powerful, not humanoid, keep family anatomy. Bull moose of a tundra bog with a shoulder hump, drooping nose and throat bell. A: exceptionally long throat bell threaded with windblown cotton grass. B: giant shallow concave palmate antlers carry still pools of black bog water reflecting the moon. C: broad split snowshoe hooves leave frost on sphagnum. All old and weathered.
+
+
 ## Recognition checklist
 
 - Broad antler palms with teeth around their rims
