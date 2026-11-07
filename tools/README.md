@@ -120,6 +120,7 @@ node tools/inventory.mjs [--check]
 - [`props/`](props/README.md): 1 script — ingame.cjs
 - [`qa/`](qa/README.md): 4 scripts — core.cjs, journey.cjs, leash-lake.cjs, win-strip.cjs
 - [`rainbow/`](rainbow/README.md): 1 script — shots.cjs
+- [`refactor/`](refactor/README.md): 4 scripts — a4-browser-preload.cjs, a4-inventory.mjs, a4-proof-artifacts.cjs, a4-split.mjs
 - [`refraction/`](refraction/README.md): 6 scripts — capture-hold.cjs, capture-pair.cjs, depth-coverage.cjs, depth-readback.cjs, foreground.cjs, review-depth-coverage.mjs
 - [`relics/`](relics/README.md): 1 script — map.mjs
 - [`rig/`](rig/README.md): 4 scripts — demo.cjs, legends.cjs, perf.cjs, strip.mjs

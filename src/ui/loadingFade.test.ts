@@ -122,6 +122,7 @@ describe("the loading screen's fade onto the bedroom", () => {
 
 describe("main.ts's side of it", () => {
   const main = readFileSync(new URL("../main.ts", import.meta.url), "utf8");
+  const night = readFileSync(new URL("../app/pageNight.ts", import.meta.url), "utf8");
   it("hands the screen the game ready: the view prepared and the night ready before finish, the wake-up given to finish", () => {
     const boot = main.slice(main.indexOf("await view.prepare();"), main.indexOf("night.arrival?.begin(night.game);"));
     const at = (s: string) => { const i = boot.indexOf(s); expect(i, s).toBeGreaterThanOrEqual(0); return i; };
@@ -130,8 +131,13 @@ describe("main.ts's side of it", () => {
     expect(boot).toMatch(/if \(loading\) loading\.finish\(wakeFirst\); else wakeFirst\(\);/); // (no wake-up of its own while the screen's up)
   });
   it("lets no key start the night while she's asleep under the screen", () => {
-    const start = main.slice(main.indexOf("function start(): boolean {"), main.indexOf("function startDirect("));
-    expect(start).toMatch(/if \(bootAsleep\) return false;/);
-    expect(main).toMatch(/function wakeFirstNow\(\): void \{\n  const n = N\(\);\n  bootAsleep = false;/);
+    // A4 retains the page's live host and delegates both operations to pageNight.
+    expect(main).toMatch(/function start\(\): boolean \{ return a4_start\(pageHost\); \}/);
+    expect(main).toMatch(/function wakeFirstNow\(\): void \{ return a4_wakeFirstNow\(pageHost\); \}/);
+    expect(main).toMatch(/get bootAsleep\(\): typeof bootAsleep \{ return bootAsleep; \}, set bootAsleep\(value: typeof bootAsleep\) \{ bootAsleep = value; \}/);
+    const start = night.slice(night.indexOf("export function start("), night.indexOf("export function startDirect("));
+    expect(start).toMatch(/if \(pageHost\.bootAsleep\) return false;/);
+    expect(start.indexOf("if (pageHost.bootAsleep) return false;")).toBeLessThan(start.indexOf("pageHost.sound.start();"));
+    expect(night).toMatch(/function wakeFirstNow\(pageHost: PageHost\): void \{\n  const n = pageHost\.N\(\);\n  pageHost\.bootAsleep = false;/);
   });
 });

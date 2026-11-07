@@ -53,8 +53,10 @@ it("main.ts tucks her in before the start is made, and wakes her where she was t
   const boot = main.indexOf("if (night.arrival) bedFirst(night);"), prepare = main.indexOf("await view.prepare();", boot);
   expect(boot).toBeGreaterThan(0);
   expect(main.slice(boot, prepare)).toMatch(/else if \(inBedroom\) view\.asleepInBed = mutate\("wake: first bed", \(\) => tuckIn\(night\.game\)\)/);
-  const wake = main.slice(main.indexOf("function wakeFirstNow(): void {"));
-  expect(wake.slice(0, wake.indexOf("\n}\n"))).toMatch(/if \(!tuckIn\(n\.game\) \|\| !startWake\(/);
+  expect(main).toMatch(/function wakeFirstNow\(\): void \{ return a4_wakeFirstNow\(pageHost\); \}/);
+  const night = readFileSync("src/app/pageNight.ts", "utf8").replace(/\r\n/g, "\n");
+  const wake = night.slice(night.indexOf("export function wakeFirstNow("), night.indexOf("export async function sailInPlace("));
+  expect(wake).toMatch(/if \(!tuckIn\(n\.game\) \|\| !startWake\(/);
 });
 
 // Ed's "Fix 2" (2026-11-06): the bed's next night. The page draws nothing while the next night is made (main.ts: it isn't ready), so
@@ -85,11 +87,13 @@ it("the bed's next night: the picture held under the veil is framed as the wake-
 
 it("main.ts puts her to sleep in her bed, drawn, before the veil comes down", () => {
   const main = readFileSync("src/main.ts", "utf8").replace(/\r\n/g, "\n");
-  const night = main.slice(main.indexOf("async function nightInPlace("));
-  const asleep = night.indexOf('mutate("wake: asleep in bed", () => fallAsleep(N().game))'), veil = night.indexOf("(wakeCard ??= new WakeCard()).sleep();");
+  expect(main).toMatch(/function nightInPlace\(spec: NightSpec, href: string\): Promise<void> \{ return a4_nightInPlace\(pageHost, spec, href\); \}/);
+  const source = readFileSync("src/app/pageNight.ts", "utf8").replace(/\r\n/g, "\n");
+  const night = source.slice(source.indexOf("export async function nightInPlace("), source.indexOf("export function leaveBot("));
+  const asleep = night.indexOf('pageHost.mutate("wake: asleep in bed", () => fallAsleep(pageHost.N().game))'), veil = night.indexOf("(pageHost.wakeCard ??= new WakeCard()).sleep();");
   expect(asleep).toBeGreaterThan(0);
   expect(veil).toBeGreaterThan(asleep);
-  expect(night.slice(asleep, veil)).toMatch(/view\.asleepInBed = true; drawFrame\(displayedTime\)/);
+  expect(night.slice(asleep, veil)).toMatch(/pageHost\.view\.asleepInBed = true; pageHost\.drawFrame\(pageHost\.displayedTime\); pageHost\.drawFrame\(pageHost\.displayedTime\)/);
 });
 
 // Ed, 2026-11-06: the wake-up's first frame drew her in her flying frame for one frame before she sat up in bed (the bed's next night,
