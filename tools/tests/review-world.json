@@ -1,0 +1,472 @@
+{
+  "world-islands-lakes": {
+    "title": "World, islands and lakes",
+    "status": "Two bounded source reviews are integrated: original97-case partition plus122 additional IDs (reports6566078651/6566081354 and6566275689/6566277162). Shared save/creature cases and owner-only listings are counted elsewhere once. No world runtime was executed. Six scenery declarations read in second house report 6566610514 are integrated here without duplicate membership.",
+    "keepSummary": "campaign identity and map equivalence, spatial boundaries, authored world content, resource budgets and explicit link/transition rules",
+    "protections": [
+      "A campaign retains island shapes across nights while permitted creature/type deals change.",
+      "Walkers, landing and world objects respect water, coast and zoo-fence boundaries.",
+      "Rosters, biome blends, lake appearances and beach interactions follow authored rules.",
+      "Prepared and directly generated maps agree; snapshot size and hydration speed have separate budgets.",
+      "Some mixed tests also pin aesthetic densities or event frequencies rather than direct rules."
+    ],
+    "groups": [
+      {
+        "id": "W1",
+        "title": "Campaign identity and map equivalence",
+        "kind": "hard limits",
+        "caseIds": [
+          "src/app/arrival.test.ts:16",
+          "src/app/arrival.test.ts:23",
+          "src/app/homeGrowth.test.ts:24",
+          "src/app/islandTypes.test.ts:11",
+          "src/app/landingBake.test.ts:8",
+          "src/app/landingBake.test.ts:25",
+          "src/rules/archipelago.test.ts:10",
+          "src/rules/areaRenames.test.ts:20",
+          "src/rules/deal.test.ts:54",
+          "src/rules/islandGrowth.test.ts:22",
+          "src/rules/islandGrowth.test.ts:39",
+          "src/rules/land.test.ts:13",
+          "src/rules/mapPrep.test.ts:50",
+          "src/rules/roster.test.ts:42",
+          "src/rules/win.test.ts:240",
+          "src/rules/worldSeed.test.ts:17",
+          "src/rules/worldSeed.test.ts:28",
+          "src/rules/worldSeed.test.ts:37",
+          "src/rules/heightSamples.test.ts:14",
+          "src/rules/heightSamples.test.ts:31",
+          "src/rules/heightSamples.test.ts:54"
+        ],
+        "reason": "Assertions compare identity, stable coast/shape, prepared/direct map equality, allowed species and connectivity. The roster case steps12/24 waves plus20s but only prohibits species outside the roster. It is not a win-rate target. Nearby mapPrep:59 prepared/direct continuation equality is another integrity check, not evidence to move the file. Lead additionally read heightSamples.test.ts:14/31/54: preserved quantized buffers, worker/direct rolling equality, immutable cache and malformed/NaN rejection. Its frozen hash is an extraction-parity baseline, with no later replacing terrain ruling established.",
+        "question": "Keep this group unchanged?",
+        "examples": [
+          "keeps an island's shape every night in one world, its insides the night's own; another world, another shape",
+          "keeps an island's shapes every night and moves only its types, the rules holding each night",
+          "is the map made directly: its data and its closures' answers, for several seeds, worlds and islands"
+        ],
+        "exampleLabels": [
+          "An island keeps its coast between nights.",
+          "The same shapes can receive a different type deal.",
+          "Prepared maps equal directly generated maps."
+        ]
+      },
+      {
+        "id": "W2",
+        "title": "Coast, lake and zoo boundaries",
+        "kind": "hard limits",
+        "caseIds": [
+          "src/rules/beach.test.ts:21",
+          "src/rules/beach.test.ts:88",
+          "src/rules/beach.test.ts:102",
+          "src/rules/beach.test.ts:113",
+          "src/rules/beach.test.ts:147",
+          "src/rules/beachDecor.test.ts:46",
+          "src/rules/homeGuard.test.ts:56",
+          "src/rules/lakeHold.test.ts:34",
+          "src/rules/lakeHold.test.ts:41",
+          "src/rules/lakeHold.test.ts:52",
+          "src/rules/lakeHold.test.ts:61",
+          "src/rules/lakes.test.ts:33",
+          "src/rules/lakes.test.ts:53",
+          "src/rules/lakes.test.ts:61",
+          "src/rules/lakes.test.ts:76",
+          "src/rules/lakes.test.ts:98",
+          "src/rules/lakes.test.ts:119",
+          "src/rules/lakes.test.ts:175",
+          "src/rules/zooCoast.test.ts:31",
+          "src/rules/zooCoast.test.ts:42",
+          "src/rules/zooCoast.test.ts:53",
+          "src/rules/zooFence.test.ts:26",
+          "src/rules/zooFence.test.ts:37",
+          "src/rules/zooFence.test.ts:44",
+          "src/rules/zooFence.test.ts:74"
+        ],
+        "reason": "Forced toggles, knockout and displacement verify declared landing/shore/fence states. Routing must terminate within its bound without crossing water. Scripted3–90s movement is boundary coverage rather than emergent survival statistics; beach poses are current interaction rules within this predominantly spatial-integrity group.",
+        "question": "Keep this group unchanged?",
+        "examples": [
+          "pressing to come down over the water leaves her in the treetops, said by the lakeHold event",
+          "routes a travelling animal round a lake",
+          "knocked out on an island, she comes back on the Ent's plaza (home), never inside a fence (Ed, 2026-10-26)"
+        ],
+        "exampleLabels": [
+          "Trying to land over water keeps her flying.",
+          "Travelling animals route around lakes.",
+          "A zoo knockout returns her outside the fences."
+        ]
+      },
+      {
+        "id": "W3",
+        "title": "Authored rosters, biomes and lake looks",
+        "kind": "current rules",
+        "caseIds": [
+          "src/biomeForests.test.ts:11",
+          "src/biomeForests.test.ts:16",
+          "src/biomeForests.test.ts:26",
+          "src/biomeForests.test.ts:32",
+          "src/biomeForests.test.ts:48",
+          "src/biomeForests.test.ts:75",
+          "src/floraBiomes.test.ts:28",
+          "src/floraBiomes.test.ts:31",
+          "src/rules/beach.test.ts:75",
+          "src/rules/beach.test.ts:123",
+          "src/rules/beachDecor.test.ts:29",
+          "src/rules/coastCamera.test.ts:17",
+          "src/rules/homeGuard.test.ts:39",
+          "src/rules/island.test.ts:58",
+          "src/rules/kinds.test.ts:22",
+          "src/rules/lakeLooks.test.ts:11",
+          "src/rules/lakeLooks.test.ts:18",
+          "src/rules/lakeLooks.test.ts:25",
+          "src/rules/lakeLooks.test.ts:35",
+          "src/rules/lakeLooks.test.ts:40",
+          "src/rules/lakes.test.ts:24",
+          "src/rules/lakes.test.ts:151",
+          "src/rules/rosters.test.ts:15",
+          "src/rules/rosters.test.ts:28",
+          "src/rules/rosters.test.ts:102",
+          "src/rules/rosters.test.ts:115",
+          "src/rules/terrain.test.ts:23"
+        ],
+        "reason": "Roster multiplicities and biome/phase assignments come directly from authored content rules. Equal wave numbers producing equal populations is a direct generation contract, not a played-night victory statistic. Flora exclusions and the no-lake early return need the targeted coverage review recorded in the ruling appendix.",
+        "question": "Keep this group unchanged?",
+        "examples": [
+          "gives each a roster by the rule: its kind plentiful, 1-3 new to its phase, only kinds of its phase or before, each other kind on at most 2 areas (Ed, 2026-10-28)",
+          "takes its biome's look by its ring: semi-temperate near home, the full look furthest out (Ed, 2026-10-25)",
+          "deals each lake one of its island's two looks, the same every time"
+        ],
+        "exampleLabels": [
+          "An island receives its allowed phase roster.",
+          "Biome appearance strengthens farther from home.",
+          "Lake appearance is seeded from its island’s two looks."
+        ]
+      },
+      {
+        "id": "W4",
+        "title": "Scenery distributions and sea-life frequencies",
+        "kind": "outcome stats",
+        "caseIds": [
+          "src/rules/beach.test.ts:43",
+          "src/rules/beachDecor.test.ts:16",
+          "src/rules/islandGrowth.test.ts:45",
+          "src/rules/rules.test.ts:1851",
+          "src/rules/seaLife.test.ts:15",
+          "src/rules/seaLife.test.ts:27",
+          "src/rules/terrain.test.ts:31"
+        ],
+        "reason": "One pure distribution case and six mixed cases sample coast widths,5–120 finds/km, raggedness ratios, featured scenery≥6/10 islands, ruins mean>4, dolphin starts15–80/300s, kraken rises>4/1500s with<35% active share, or low-ground trees>1.3×high. Preserve direct placement, forbidden-scenery, equality and parameter assertions before moving those statistical components.",
+        "question": "Split these seven mixed tests so scenery-density and event-frequency targets become nightly reports? Yes keeps placement, no-set-piece, deterministic equality and shape-parameter checks blocking; only statistical components become informational.",
+        "examples": [
+          "leaps dolphins off the east coast only, in the water north of her, now and then",
+          "grows trees thicker in the low ground than on the high",
+          "leaves out the cut scenery, keeps the playground, and puts the featured scene on most islands"
+        ],
+        "exampleLabels": [
+          "Dolphin appearances meet a sampled frequency band.",
+          "Low ground contains more trees by a sampled ratio.",
+          "Featured scenery appears on most sampled islands."
+        ],
+        "action": true
+      },
+      {
+        "id": "W5",
+        "title": "Map resource and test-helper budgets",
+        "kind": "hard limits",
+        "caseIds": [
+          "src/rules/mapPrep.test.ts:65",
+          "src/test/worlds.test.ts:7",
+          "src/test/worlds.test.ts:15",
+          "src/test/worlds.test.ts:18"
+        ],
+        "reason": "The existing hydration guard uses best-of-two measurements over four tuples: each hydration below generation time and summed hydration below0.6×generation. Small-world helpers must clone tuning, give a reason and preserve separate largest-world coverage. The snapshot<4M-character guard is already S2 on the saves page and is not counted again here.",
+        "question": "Keep this group unchanged?",
+        "examples": [
+          "is never slower to make than the map itself (Ed's laptop, 2026-10-20): hydrating takes well under generating, home's island too",
+          "shrinks only a cloned test map without mutating shared production/test tuning",
+          "keeps largest-shipped-world area diversity coverage separate from small logic fixtures"
+        ],
+        "exampleLabels": [
+          "Hydrating a prepared map stays cheaper than generating it.",
+          "A smaller test world does not mutate shared tuning.",
+          "Largest-world diversity coverage remains separate."
+        ]
+      },
+      {
+        "id": "W6",
+        "title": "Links, travel and explicit transition rules",
+        "kind": "current rules",
+        "caseIds": [
+          "src/app/linkParams.test.ts:18",
+          "src/app/linkParams.test.ts:62",
+          "src/app/linkParams.test.ts:66",
+          "src/app/linkParams.test.ts:69",
+          "src/app/sail.test.ts:44",
+          "src/app/sail.test.ts:83",
+          "src/app/sail.test.ts:87",
+          "src/platform/zooPad.test.ts:7",
+          "src/rules/guidance.test.ts:110",
+          "src/rules/guidance.test.ts:133",
+          "src/rules/island.test.ts:35",
+          "src/rules/wakeUp.test.ts:148",
+          "src/rules/win.test.ts:122"
+        ],
+        "reason": "Explicit URL values override carried sliders; retired wave-pace keys are forgotten. Door/ready and forced-clear transitions check named state and exactly-once pulses. The two generated-bot win/recruitment templates from the original partition remain with #1622, not a duplicate world proposal.",
+        "question": "Keep this group unchanged?",
+        "examples": [
+          "forgets the old waves' pace key (Ed, 2026-10-08; the pause page's slider keeps its own now: app/settings.ts)",
+          "carries every slider moved last night but those the next night's link sets itself",
+          "dressed, the door opens with the island still being built; the spell waits for her decks"
+        ],
+        "exampleLabels": [
+          "An obsolete wave-pace link key is ignored.",
+          "A new island’s explicit link overrides carried settings.",
+          "The door can open while island preparation continues."
+        ]
+      },
+      {
+        "id": "W7",
+        "title": "Procedural field and scenery quality",
+        "kind": "outcome stats",
+        "caseIds": [
+          "src/rules/layoutPatterns.test.ts:27",
+          "src/rules/rules.test.ts:183",
+          "src/rules/rules.test.ts:200",
+          "src/rules/rules.test.ts:218",
+          "src/rules/rules.test.ts:259",
+          "src/rules/rules.test.ts:296",
+          "src/rules/rules.test.ts:1140"
+        ],
+        "reason": "Seven bodies measure generated area-size spread, forest dense/open/gradient shares, type diversity, openness-band tree density, the deliberately reduced-density count, layout-pattern shares and path departure from a straight line. No save/replay/water/exclusion assertion occurs inside these quality-only bodies. These are procedural quality measurements, not seven fight simulations.",
+        "question": "Move these seven procedural-quality measurements to nightly/manual reports? Yes retains their measurements and design context, while those sampled appearance/distribution scores stop blocking releases.",
+        "examples": [
+          "varies area sizes more with areaSizeVariance, keeping 20 x 20 areas",
+          "is a forest with clearings: mostly dense woods, open ground in distinct clearings (their edges softened round each area's arena: Ed, 2026-10-05)",
+          "glades are the inverse of groves' idea (holes in a full wood), hedges thin lines, a grid rows crossing rows"
+        ],
+        "exampleLabels": [
+          "Area variance produces a minimum sampled size spread.",
+          "A forest meets sampled dense and open shares.",
+          "Generated patterns meet sampled glade and hedge shares."
+        ],
+        "action": true
+      },
+      {
+        "id": "W8",
+        "title": "Mixed procedural quality and world integrity",
+        "kind": "outcome stats",
+        "caseIds": [
+          "src/rules/archipelago.test.ts:22",
+          "src/rules/beachDecor.test.ts:35",
+          "src/rules/bufferClearings.test.ts:15",
+          "src/rules/groundcover.test.ts:19",
+          "src/rules/groundcover.test.ts:30",
+          "src/rules/lakeShore.test.ts:16",
+          "src/rules/lakeShore.test.ts:30",
+          "src/rules/layoutPatterns.test.ts:18",
+          "src/rules/layoutPatterns.test.ts:22",
+          "src/rules/mapShape.test.ts:53",
+          "src/rules/rosters.test.ts:44",
+          "src/rules/rules.test.ts:65",
+          "src/rules/rules.test.ts:80",
+          "src/rules/rules.test.ts:301",
+          "src/rules/rules.test.ts:766",
+          "src/rules/rules.test.ts:1049",
+          "src/rules/rules.test.ts:1063",
+          "src/rules/rules.test.ts:1110",
+          "src/rules/rules.test.ts:1121",
+          "src/rules/rules.test.ts:1131",
+          "src/rules/rules.test.ts:1148",
+          "src/rules/rules.test.ts:1172",
+          "src/rules/rules.test.ts:1200",
+          "src/rules/rules.test.ts:1221",
+          "src/rules/rules.test.ts:1231",
+          "src/rules/rules.test.ts:1513",
+          "src/rules/rules.test.ts:1524",
+          "src/rules/rules.test.ts:1621",
+          "src/rules/zooMap.test.ts:20"
+        ],
+        "reason": "Twenty-nine cases combine sampled density, variety, correlations, ring shapes, street proximity and route diversity with direct world protection. Keep coast separation, nonnegative masks, water/path/floor/clearing exclusions, current allowed/removed content, per-object counts, exact seed/chunk equality, configuration endpoints and exercised nonempty coverage. mapShape53’s >90% numerical boundary agreement is retained GEOMETRY CORRECTNESS, not demoted with its aesthetic headland ratio.",
+        "question": "Split these twenty-nine tests so only procedural density/variety/shape targets become reports? Yes keeps separation, valid content, numerical geometry correctness, equality, configured limits and meaningful nonempty coverage blocking. Whole mixed tests are not moved.",
+        "examples": [
+          "grows each island in its patch: home and its nearest neighbours' coasts never meet, a strait apart, and close enough to read as fitted",
+          "rings ponds with reeds and keeps the water clear",
+          "puts every kind's island at its chart place, size areas across, no two closer than the gap, the typical street about street (Ed: \"too small and too far apart\")"
+        ],
+        "exampleLabels": [
+          "Nearby islands retain a strait but also favor a closeness target.",
+          "A shore sample meets a minimum reed count.",
+          "Zoo streets meet a sampled median-distance target."
+        ],
+        "action": true
+      },
+      {
+        "id": "W9",
+        "title": "World continuation, placement and explicit modes",
+        "kind": "current rules",
+        "caseIds": [
+          "src/rules/areaRenames.test.ts:12",
+          "src/rules/areaRenames.test.ts:32",
+          "src/rules/arrive.test.ts:11",
+          "src/rules/arrive.test.ts:44",
+          "src/rules/arrive.test.ts:66",
+          "src/rules/arrive.test.ts:82",
+          "src/rules/arrive.test.ts:103",
+          "src/rules/beach.test.ts:158",
+          "src/rules/deal.test.ts:18",
+          "src/rules/deal.test.ts:31",
+          "src/rules/deal.test.ts:40",
+          "src/rules/deal.test.ts:67",
+          "src/rules/forestChunks.test.ts:11",
+          "src/rules/forestChunks.test.ts:23",
+          "src/rules/groundcover.test.ts:45",
+          "src/rules/homeArea.test.ts:15",
+          "src/rules/homeArea.test.ts:34",
+          "src/rules/homeArea.test.ts:56",
+          "src/rules/homeArea.test.ts:74",
+          "src/rules/island.test.ts:18",
+          "src/rules/islandGrowth.test.ts:56",
+          "src/rules/islandShape.test.ts:13",
+          "src/rules/lakes.test.ts:128",
+          "src/rules/lakes.test.ts:162",
+          "src/rules/land.test.ts:20",
+          "src/rules/land.test.ts:30",
+          "src/rules/land.test.ts:43",
+          "src/rules/land.test.ts:49",
+          "src/rules/mapPrep.test.ts:59",
+          "src/rules/mapPrep.test.ts:77",
+          "src/rules/mapPrep.test.ts:87",
+          "src/rules/mapShape.test.ts:20",
+          "src/rules/mapShape.test.ts:73",
+          "src/rules/mapShape.test.ts:90",
+          "src/rules/mapShape.test.ts:106",
+          "src/rules/pointFeatures.test.ts:18",
+          "src/rules/pointFeatures.test.ts:25",
+          "src/rules/roster.test.ts:31",
+          "src/rules/roster.test.ts:50",
+          "src/rules/rosters.test.ts:66",
+          "src/rules/rosters.test.ts:82",
+          "src/rules/rosters.test.ts:90",
+          "src/rules/rosters.test.ts:125",
+          "src/rules/rules.test.ts:56",
+          "src/rules/rules.test.ts:72",
+          "src/rules/rules.test.ts:91",
+          "src/rules/rules.test.ts:103",
+          "src/rules/rules.test.ts:121",
+          "src/rules/rules.test.ts:138",
+          "src/rules/rules.test.ts:144",
+          "src/rules/rules.test.ts:160",
+          "src/rules/rules.test.ts:169",
+          "src/rules/rules.test.ts:176",
+          "src/rules/rules.test.ts:224",
+          "src/rules/rules.test.ts:247",
+          "src/rules/rules.test.ts:279",
+          "src/rules/rules.test.ts:289",
+          "src/rules/rules.test.ts:1100",
+          "src/rules/rules.test.ts:1117",
+          "src/rules/rules.test.ts:1190",
+          "src/rules/rules.test.ts:1245",
+          "src/rules/rules.test.ts:1510",
+          "src/rules/rules.test.ts:1632",
+          "src/rules/stoneKeepClear.test.ts:50",
+          "src/rules/stoneKeepClear.test.ts:61",
+          "src/rules/terrain.test.ts:16",
+          "src/rules/zoo.test.ts:17",
+          "src/rules/zoo.test.ts:35",
+          "src/rules/zoo.test.ts:43",
+          "src/rules/zooCoast.test.ts:23",
+          "src/rules/zooFence.test.ts:60",
+          "src/rules/zooFence.test.ts:67",
+          "src/rules/zooFence.test.ts:86",
+          "src/rules/zooFence.test.ts:92",
+          "src/rules/zooFence.test.ts:100",
+          "src/rules/zooMap.test.ts:41",
+          "src/rules/zooMap.test.ts:59",
+          "src/rules/zooMap.test.ts:76",
+          "src/rules/zooMap.test.ts:92"
+        ],
+        "reason": "Seventy-nine tests protect matched prepared/direct moving state, corrupt-prep rejection, roster/save coherence, shore-safe routing, protected runestone ground, arrival step bounds, forest cache/query ordering and zoo transitions. A600s route escape bound checks every walked/drawn segment stays ashore; a40s flight checks coast containment. Numerical geometry/query-effectiveness and coverage bounds remain integrity/current rules, not generic sampled appearance scores.",
+        "question": "Keep this group unchanged?",
+        "examples": [
+          "plays the same game: its moving state after a few seconds' play",
+          "a leashed animal travelling to her across a lake (Ed, 2026-10-12) walks round its shore, never on the water, and its drawn route is where it goes",
+          "`nothing on Ed's list lies in a stone's keep-clear zone (${name}, seed ${seed})`"
+        ],
+        "exampleLabels": [
+          "Prepared and direct maps continue to the same state.",
+          "A travelling follower remains ashore around a lake.",
+          "Runestone grounds exclude special scenery."
+        ]
+      },
+      {
+        "id": "W-R2-1",
+        "title": "Scenery abundance observations",
+        "caseIds": [
+          "src/rules/rules.test.ts:1257",
+          "src/rules/rules.test.ts:1270",
+          "src/rules/rules.test.ts:1294"
+        ],
+        "kind": "outcome stats",
+        "reason": "Keep structural validity, exclusions, reproducibility, ownership, eligibility, identity and existing upper bounds blocking. Report only sampled minimum density, numerical variation, abundance and diversity. Exact assertion dispositions and ruling review: PR #1632 comment 6566610514.",
+        "question": "Report sampled scenery abundance while retaining uniqueness, suitability, clearance and valid placement checks?",
+        "action": true,
+        "examples": [
+          "no ruin, freak tree, relic, set piece or grounds arrangement appears twice, over 5 seeds",
+          "places scenes, each at most once, in areas they suit, off the paths and clear of the gameplay (Ed, 2026-10-04)",
+          "give each set piece to one area only, which has room for it"
+        ]
+      },
+      {
+        "id": "W-R2-K1",
+        "title": "Scenery footprint, stairs and paths",
+        "caseIds": [
+          "src/rules/rules.test.ts:1286",
+          "src/rules/rules.test.ts:1290",
+          "src/rules/rules.test.ts:1306"
+        ],
+        "kind": "current rules",
+        "reason": "Read in the second house pass and displayed here once: footprint size, stairs only in suitable areas and clear paths. These are direct placement and geometry contracts.",
+        "question": "Keep scenery footprint, stairs and clear-path contracts?",
+        "action": false,
+        "examples": [
+          "gives each scene a footprint at least the art's own",
+          "stairs stand only by ravines, rocky slopes, cave mouths and stone shrines",
+          "keep soundsystems and set pieces off the paths, so paths run on unbroken"
+        ]
+      }
+    ],
+    "ownerCases": {
+      "1622": [
+        "src/rules/bot.test.ts:52",
+        "src/rules/bot.test.ts:100",
+        "src/rules/island.test.ts:49"
+      ]
+    },
+    "rulings": [
+      "Set-piece supersession: DESIGN.md Ed3Oct says ‘Set pieces are rare bits of scenery’. world-art.md Ed29Oct says ‘phased out of normal generation (setPieceChance0)’ with recipes/art retained for previews. rules.test.ts:1851 asserts setPiecesNear=[] and paths.pieces=[]: retain those replacement guards and split only statistical scenery thresholds. lakes.test.ts:61 conditionally checks returned set-piece positions; mapPrep closure equality does not require one to spawn. No positive old-generation requirement was found in the97 reviewed tests.",
+      "Home-growth supersession: journey backlog Ed10/11Oct says first10 areas’ ‘places and their kinds’ remain the same; island.md Ed28Oct says ‘keep the route changing, shuffle the creatures and area types, retain the area shapes’. deal.test.ts:54 requires changed type deals with stable shapes; homeGrowth.test.ts:24 compares cell keys and sorted roster, not type-at-cell. They implement the replacement. The rosters comment saying the night ‘only deals its legends’ is stale explanation, not a reason to delete its count/coast protection.",
+      "Placeholder supersession: journey backlog Ed11Oct describes32 kinds and32 placeholders; island.md now says all64 designed. rosters.test.ts:115 still checks64 valid island descriptors; its old placeholder title is stale, while rejecting unknown-01 remains legacy-ID safety. Neither that title nor the64-designed statement proves flora RETHEMING exclusions obsolete.",
+      "G3 review limits: floraBiomes.test.ts:31 excludes11 RETHEMING IDs under a comment saying17; an art/data owner must confirm those exclusions. lakeLooks.test.ts:40 returns early if its sampled island has no lake. These are specific coverage-strengthening candidates, not established obsolete whole tests. This bounded review confirmed zero obsolete whole tests.",
+      "Timing overlaps: mapPrep, beach, beachDecor, islandGrowth, homeGuard, lakes, island, terrain and win appear in multiple groups. File durations include other tests and other systems. No group-time sum is a wall-time or savings estimate.",
+      "Second-pass set-piece evidence: rules.test.ts40–43 explicitly enables setPieceChance=.25, grounds/decor families and path pieces; stoneKeepClear14–16 opts in too. This is retained preview/placement compatibility under the29Oct phase-out, not a positive requirement for normal generation. Keep exclusion/placement rules; report only sampled quality portions.",
+      "Legacy zoo grid: old zoo.ts helpers draw borders/corners of a grid; island.md21 replaces the live zoo with chart-shaped islands26Oct. map.ts creates zooChartPlan, paths.ts omits grid strips with that layout, and the live map omits grid junctions. zoo35 directly tests retained zooPlan helpers, while the plan still supplies current jump-list rows. No live-grid requirement or helper-retirement permission is established.",
+      "Radius/square compatibility is explicit: island.md13 retains island=off and test/radiusMap sets islandAreas0. mapShape73 selects square intentionally; islandShape13 tests a still-used helper, while islandGrowth56 compares real outlines. Treehouse rules224 already asserts north-west after24Oct; no due-north-only assertion was found.",
+      "Owner-only second-pass listings: island49 master swarm curve belongs to1622. IslandShape9/24 and lakeShore38 are visual source tests; rules237 is house/input; rules1642/1653 are spawn-marker/replacement-rune party policy. They receive no automatic keep decision from the world reviewer and remain explicitly unread until an owner/lead review is recorded.",
+      "Set-piece follow-up to coordinator 6566615533: rules.test.ts:40–43 explicitly overrides GAME_TUNING with setPieceChance:0.25, enabled grounds, ruins/rocks/freak mix, path pieces and scenes.featured:undefined, disabling the featured exception while leaving ordinary scenes enabled. The five maps at 1253 use that TUNING. Therefore set-piece uniqueness (1257), assignment/count (1294) and path clearance (1306) explicitly opt into retained compatibility scenery; none requires default normal play to spawn set pieces. Ed 29 October phases normal generation out, while recipes/art remain for comparisons (world-art.md:11–12,39). Scenes/ruins remain documented features, and this fixture explicitly enables their full placement. Keep/split as proposed; no proven leftover.",
+      "House reviewer clarification 6566750463 confirms all six cases explicitly use local compatibility TUNING; current GAME_TUNING defaults are checked separately at rules.test.ts:1847–1864. Three mixed cases remain split proposals, three remain keeps, zero proven leftovers."
+    ],
+    "routing": {
+      "art-rendering": [
+        "src/rules/islandShape.test.ts:9",
+        "src/rules/islandShape.test.ts:24",
+        "src/rules/lakeShore.test.ts:38"
+      ],
+      "house-treehouse": [
+        "src/rules/rules.test.ts:237"
+      ],
+      "invites-party": [
+        "src/rules/rules.test.ts:1642",
+        "src/rules/rules.test.ts:1653"
+      ]
+    }
+  }
+}
