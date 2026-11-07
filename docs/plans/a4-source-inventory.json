@@ -1,0 +1,803 @@
+{
+  "schema": 1,
+  "sourceCommit": "ceb128a4a4e2899f21300deaa83096ab2bebb0e4",
+  "status": "inventory-only; no extraction or behavioural proof",
+  "sources": [
+    {
+      "file": "src/main.ts",
+      "sha256": "6885e14379274da6b235fefe806898fa8724fea1a2cafdb0c9d832d062a33cb6",
+      "bytes": 127954,
+      "lines": 1516,
+      "cuts": {
+        "pagePause": [
+          {
+            "name": "openPotionLab",
+            "start": 51957,
+            "end": 52221,
+            "line": 654,
+            "bytes": 264,
+            "sha256": "77c122f880fcd7ffa90fa17e1181e3ece22d46e290189ff4467363ac2c4364dc",
+            "bodySha256": "d1a6d1e3ec6de95c5d21a79a6016593f065a712a7fbe238242734cac25b0dced"
+          },
+          {
+            "name": "openMusicLab",
+            "start": 52683,
+            "end": 53383,
+            "line": 663,
+            "bytes": 700,
+            "sha256": "85a9817dcc6082b1aa7aa8399053d56b0eabf908c3f3947da804d6d514560949",
+            "bodySha256": null
+          },
+          {
+            "name": "pauseControls",
+            "start": 54249,
+            "end": 55317,
+            "line": 684,
+            "bytes": 1072,
+            "sha256": "5680be4d4649e78e7447058a24e681d4293616a1fec748406cac2cb581795e28",
+            "bodySha256": "a158f4a552746fb0874f27ffbb5549f712169b14c3b0794a2e75b754f90a2bb1"
+          },
+          {
+            "name": "updatePauseMenus",
+            "start": 119362,
+            "end": 119909,
+            "line": 1409,
+            "bytes": 547,
+            "sha256": "5140aec8718feae72f5404586238f4cbf8e2c074574a82010fb6bb07d7166b82",
+            "bodySha256": "944a2cdaec57dd61d37c17dba53903ac5ae3a8eb387dcb8531643137d26a44c1"
+          }
+        ],
+        "pageStations": [
+          {
+            "name": "findsCtx",
+            "start": 36965,
+            "end": 37147,
+            "line": 478,
+            "bytes": 182,
+            "sha256": "cfe4282c3c916bed07b636512a5da9884ed15770ef43a30cd5f74ce24f4cd332",
+            "bodySha256": null
+          },
+          {
+            "name": "workshopNow",
+            "start": 39257,
+            "end": 39491,
+            "line": 498,
+            "bytes": 234,
+            "sha256": "51dd29a39ae9d9f41389751d1cddf35aa59fe55980bd513b3ff2a2163a864afd",
+            "bodySha256": null
+          },
+          {
+            "name": "useHouse",
+            "start": 46594,
+            "end": 47436,
+            "line": 583,
+            "bytes": 842,
+            "sha256": "41fee4bdf3de1a947d9e3967f845926fd410383137f6b42a855897ee31d84045",
+            "bodySha256": null
+          },
+          {
+            "name": "shutStation",
+            "start": 96927,
+            "end": 97159,
+            "line": 1181,
+            "bytes": 232,
+            "sha256": "18ca59c6c2cb2994865686a9aedcd7478a33b4d4dca6031ed9a8b87e02ffb65c",
+            "bodySha256": "e313224818e3c724545a4c79cdff6e99a3c56a594dfb6145963e76cd5833f347"
+          }
+        ],
+        "pageNight": [
+          {
+            "name": "bedFirst",
+            "start": 30659,
+            "end": 30765,
+            "line": 404,
+            "bytes": 106,
+            "sha256": "6fc1c464e1df29e92ba25aa0d3a1389d23f9156993002495a0387aa93665484c",
+            "bodySha256": "574fb8124ddb764d3c97653c580388c0df9097cfe5d2fc7c2188081d599993a4"
+          },
+          {
+            "name": "arrived",
+            "start": 31228,
+            "end": 31298,
+            "line": 413,
+            "bytes": 70,
+            "sha256": "654b1292c7d46edee51d81f0922e24da1fcb1a8560123f7fdcdb973595160bd2",
+            "bodySha256": "51e2ff72a83e0f02f9172554f8b4268a60a01a96794fbc3dfaa04a19a9f8c11c"
+          },
+          {
+            "name": "wakeArrival",
+            "start": 32084,
+            "end": 32157,
+            "line": 430,
+            "bytes": 73,
+            "sha256": "e89a3a2512002a5bd05b63abd2e1c479965352f0a8760afe291df4aa97b1d7bf",
+            "bodySha256": "e39ba658ee635c7119ff420a4a0eab274582c5c8d1ff86866dd6dea2784bef16"
+          },
+          {
+            "name": "wakeFirst",
+            "start": 85661,
+            "end": 85740,
+            "line": 1025,
+            "bytes": 79,
+            "sha256": "fcf5919e6b9b3778616a50956942a61d059ce10417db6719be9a68efa9c0f078",
+            "bodySha256": "1a716bd0fb4c50326065ae60c5abce517b45f421ea4a41dfe94f9cb16a4980b6"
+          },
+          {
+            "name": "sailFromChart",
+            "start": 81896,
+            "end": 82486,
+            "line": 979,
+            "bytes": 590,
+            "sha256": "64b754f6500d515ad706e7384ae1342e081f70855f2cc5a78b5fe377248f65f4",
+            "bodySha256": "7a7fbb68949ba94d4e0f32a22ee4ff2bab8a9c3432ff26749c6268c22f072d33"
+          },
+          {
+            "name": "recordSail",
+            "start": 82612,
+            "end": 83181,
+            "line": 990,
+            "bytes": 569,
+            "sha256": "df61972f9754bd9e497b9d0f22f29a7e390fe845695a84384f9c5233e20ffefd",
+            "bodySha256": "c9443b8e2da12ce882a61102be98c1463c68a6cc9221bc8b6b871ea1e311003d"
+          },
+          {
+            "name": "departFromChart",
+            "start": 83879,
+            "end": 84227,
+            "line": 1004,
+            "bytes": 348,
+            "sha256": "865bf24591d92df8445bc166901baba16547c3d0486485f2b4f94a0c0ef8fe4f",
+            "bodySha256": "73eaa3ff1c0c2d7082deb7fcb63ab30432fcc5c912c3a794f85fb91015aae227"
+          },
+          {
+            "name": "sailInPlace",
+            "start": 87152,
+            "end": 88169,
+            "line": 1046,
+            "bytes": 1019,
+            "sha256": "c4605f8f15a2b5c2ce0ed6809634cca6d6a1962f42e42df74395159a89169d90",
+            "bodySha256": "9aec68bd99ae89dea655e68edb4059b7fed06073e37ece228aa6fc94198df1b7"
+          },
+          {
+            "name": "makeSailNight",
+            "start": 88697,
+            "end": 90266,
+            "line": 1065,
+            "bytes": 1569,
+            "sha256": "8c9b19eb6b18437ffb376926480f3b18e7d792d279a37cbb54f58e181efcac4d",
+            "bodySha256": "5ad1023101bc54f135b7e408c4f117c573d6c63d9719ab0de90d0086d980d622"
+          },
+          {
+            "name": "warmAt",
+            "start": 90508,
+            "end": 91965,
+            "line": 1091,
+            "bytes": 1457,
+            "sha256": "a32a26ba462442377c706d19f69699ace5e44c73dc210fdb52d4e6abc1cc90e0",
+            "bodySha256": "be120fe59d0d907fb7bb5ad191cf752abf472c1d087a575ea62e67935eea2989"
+          },
+          {
+            "name": "newNight",
+            "start": 92281,
+            "end": 93094,
+            "line": 1113,
+            "bytes": 813,
+            "sha256": "c617f106e7fd9286367e41469462e5b196343de4eeafe4cca702502a0be78547",
+            "bodySha256": "94c415a15a1f9687b306b0d89ef5ef4f01dc9806a94bdc9d8fe7cc7bfd975658"
+          },
+          {
+            "name": "nightInPlace",
+            "start": 93571,
+            "end": 95588,
+            "line": 1131,
+            "bytes": 2017,
+            "sha256": "f7b7523b97b6c35952f1db2bcb9d320d823a66dfb9e0939ee2f1574e10c3bff0",
+            "bodySha256": "3046e044f5c10bdc3b054fea1f56ded770b8ca9cc4b37c511b16fb686e346d49"
+          },
+          {
+            "name": "leaveBot",
+            "start": 95722,
+            "end": 95900,
+            "line": 1165,
+            "bytes": 178,
+            "sha256": "f96ee27dd9bdf0f5bf51105a839982e5ebef393e2a96662d7af210424696e917",
+            "bodySha256": "c8e3cc84ee0b4b1bbc7902b65ccdd7f9f6f52a476ed3322367abbf6f6d48401f"
+          }
+        ],
+        "pageFinds": [
+          {
+            "name": "lendFind",
+            "start": 39627,
+            "end": 40366,
+            "line": 500,
+            "bytes": 739,
+            "sha256": "97b34ea261398e998709f0278cc2b927e46db617dbcadaf3ed8cd6453074a058",
+            "bodySha256": "b7e71ae5805d915961a1796f3f9de894b233ee6c2afdc594e83cc464243fe97c"
+          },
+          {
+            "name": "settleLoan",
+            "start": 41621,
+            "end": 41762,
+            "line": 524,
+            "bytes": 141,
+            "sha256": "8fe4967639523fcab40cc0c22159fd14b284f636f8f40d8cc4cb320d463befc6",
+            "bodySha256": "60c75aea8fa0d5e58c4857f7fb76c17830e8ae88dda8e499b97db33d09578299"
+          },
+          {
+            "name": "settleLoanNow",
+            "start": 41764,
+            "end": 42598,
+            "line": 527,
+            "bytes": 834,
+            "sha256": "99f34d5ccc191c01c5261a1338335acea3fa78af52cef4a6c868edf18f4debdc",
+            "bodySha256": "c7183b513bde3c25a0cc966addf31563cb4dd608d91fc99e08721366331fcbe9"
+          },
+          {
+            "name": "startDream",
+            "start": 42700,
+            "end": 43514,
+            "line": 541,
+            "bytes": 814,
+            "sha256": "7e1152ca78b5d86e6197582bcfa3cd5510048fc948155a110059a053df695618",
+            "bodySha256": "ea4c468b56759cdce12cf2443bbf548286ad39693ad0ec58f2f4ecb1f948a94a"
+          },
+          {
+            "name": "herHead",
+            "start": 43672,
+            "end": 44066,
+            "line": 551,
+            "bytes": 394,
+            "sha256": "c597b44597e4005ac722dd4f763a679a9f938a747f3ad064e96c4d7c5da7e8c9",
+            "bodySha256": "bdc800f17e5ceb263429f221ab8223894a786d2ffcad804516ed9276ed1c7b4f"
+          },
+          {
+            "name": "stepGuide",
+            "start": 40814,
+            "end": 41318,
+            "line": 514,
+            "bytes": 504,
+            "sha256": "95f56d7df599b6c201ed107a1acd2621f104262cf3a3dffbea76b2ac5e755a6b",
+            "bodySha256": "9f1dae5becd54c7cecb539c77f3d857a956c53cbe7f1791609a2727ccf1159cc"
+          }
+        ],
+        "pageFrame": [
+          {
+            "name": "drawFrame",
+            "start": 97311,
+            "end": 97693,
+            "line": 1188,
+            "bytes": 382,
+            "sha256": "78f16dcddcc10015e4986efba517491227d724a9ccaae4ac95165aa164269508",
+            "bodySha256": "855eb683a0ba80bbd3d76eed951b7becb1a537dfcb889f96a426847a22c1db1d"
+          },
+          {
+            "name": "frame",
+            "start": 97695,
+            "end": 98693,
+            "line": 1196,
+            "bytes": 998,
+            "sha256": "5c8ae7b9db69bf63e40ddf9d77f20ef3ac86d00bc79dcd29b5cc9b83cbe349e3",
+            "bodySha256": "0f45f88585f3f526205c334d418b069af550ccb0f63cd04b205686ce51bd21e7"
+          },
+          {
+            "name": "frameBody",
+            "start": 98695,
+            "end": 119259,
+            "line": 1207,
+            "bytes": 20582,
+            "sha256": "eb67ee4b91c39f5a6870ec8a1d4d90800c34a279283b8ee128856f5994042411",
+            "bodySha256": "4f87e02bf4d2d3eab9a56bad8805db7bf823371676f7acb25492e3bca1aa3070"
+          },
+          {
+            "name": "overlayHead",
+            "start": 120015,
+            "end": 120993,
+            "line": 1416,
+            "bytes": 978,
+            "sha256": "8c40a636504118470dc4ecd1037914e114518ef0bb5de40ef01885e620cf3e64",
+            "bodySha256": "e5782bc5f5120e4e956042badc2040dbacc2b88f086830c2ea806a16039106e5"
+          }
+        ]
+      }
+    },
+    {
+      "file": "src/render/view.ts",
+      "sha256": "c86ede0b832a6a466cff79805b4cdf0f0d3768f95185ff5059dcfb2919600cbc",
+      "bytes": 148008,
+      "lines": 1944,
+      "cuts": {
+        "frame": [
+          {
+            "name": "render",
+            "start": 118958,
+            "end": 147971,
+            "line": 1638,
+            "bytes": 29019,
+            "sha256": "9f7af7fca1edc30b4f1ff75038bd70782c39d12f7f1d273645a8dc3cfc4add79",
+            "bodySha256": "64a92788c409acf331655d142ea59ca5b1f66a7c25526c69446fba7bb567de6b"
+          }
+        ],
+        "houseFrame": [
+          {
+            "name": "houseTilt",
+            "start": 29608,
+            "end": 29938,
+            "line": 464,
+            "bytes": 330,
+            "sha256": "481a98b747b12fa1044a94c04ce62e2fc7ea5a640617c7ff07edab80870f3e21",
+            "bodySha256": "95587746b89d29eaeed8ee53d8762c4fd278a75c1ca7326b1efd56613330a176"
+          },
+          {
+            "name": "behindHouse",
+            "start": 30083,
+            "end": 32028,
+            "line": 471,
+            "bytes": 1945,
+            "sha256": "cf81a34e8d9a2700be4ef82014abc0bedb088d322e4295248a8b80a3953880bc",
+            "bodySha256": "a0ebe63bd3048a64f12c1c2397f77e8b1537640edf15d967697c47dc65096edb"
+          },
+          {
+            "name": "occluders",
+            "start": 32522,
+            "end": 32949,
+            "line": 500,
+            "bytes": 427,
+            "sha256": "f8eae3b60ecc33a95a0bf79cdb8b3beeba931cff7afaa66923207135f824e5b0",
+            "bodySha256": "3e3ee078088f6c81b58a39ac27b3deec503120063f69516d18d5cd32e211101b"
+          },
+          {
+            "name": "ensureCrown",
+            "start": 35469,
+            "end": 37818,
+            "line": 545,
+            "bytes": 2349,
+            "sha256": "67659f491037c5bb5050030bc2592962e39921d1133229de3b471f230872d7f4",
+            "bodySha256": "ef8d7071d096e70ccdeb651dd2846906d989a422bb95b260836afb879f3e89d3"
+          },
+          {
+            "name": "buildHome",
+            "start": 76479,
+            "end": 77690,
+            "line": 1087,
+            "bytes": 1211,
+            "sha256": "3a93d5da682538c58b04e79276edfb9b5fdf3483d5ef0fafbfebf46146f164a6",
+            "bodySha256": "b39c259723dd4d491b7b6f066e3d9a35137b1e9b9cdc22fbe8e95e6772d56370"
+          },
+          {
+            "name": "swapHomeArt",
+            "start": 112666,
+            "end": 114138,
+            "line": 1559,
+            "bytes": 1472,
+            "sha256": "df4f5e93d379823733216ed1dbba3667cf0646cc63cc5140f7b84078321acc60",
+            "bodySha256": "43aedad09bb23dc35c42eb24a9d21ab1c189bcdefd08f29ce7c374e732ade4db"
+          }
+        ],
+        "markers": [
+          {
+            "name": "legendRings",
+            "start": 115797,
+            "end": 118695,
+            "line": 1600,
+            "bytes": 2898,
+            "sha256": "a56a58e575d3749729c147499d3b9b4e799c5eb6f248cfac5f131642a8a017ae",
+            "bodySha256": "b6ebbba87a334b8821174a972413fd46ae858099fa67e0d05a81b145c898cac9"
+          },
+          {
+            "name": "pin",
+            "start": 42903,
+            "end": 43121,
+            "line": 648,
+            "bytes": 218,
+            "sha256": "693fde46ed085ab2c1ca6578dfd58c8e1fd4490913707949e9f78370106482ce",
+            "bodySha256": "6f3c2316f25801bbd47aff731f66d6e22240a9b9c353de68f67f35e2bbc750cf"
+          },
+          {
+            "name": "inviteStart",
+            "start": 46081,
+            "end": 46300,
+            "line": 691,
+            "bytes": 219,
+            "sha256": "228874de18a881a942c3aec78729ff2feea5d68865c4c37467b45b2346df9ed6",
+            "bodySha256": "6f8277dcfc942d9d77d7bc4101ea29d3289f6d34b5a7fc5e882cd3582462882f"
+          }
+        ],
+        "atmosphere": [
+          {
+            "name": "updateMoon",
+            "start": 108926,
+            "end": 109700,
+            "line": 1509,
+            "bytes": 774,
+            "sha256": "6aff4b429b7ee68e876a159d6336b9c19972c5d2f2fba26bb9c26bf4f9bbaf26",
+            "bodySha256": "970b2338398e0a517143401d7acadf77081606d0abfca3f55b2e5214dc42dc9b"
+          },
+          {
+            "name": "updateSteam",
+            "start": 109828,
+            "end": 110290,
+            "line": 1520,
+            "bytes": 462,
+            "sha256": "ea7012b0d3047028dae17f0b210fc36a619d67e4cd39bc0e3ec7e320ac6fe70e",
+            "bodySha256": "0f6a12aa6622be0eebd2753a3d804dc5687d8ab00ab7e541903533422c41eeb1"
+          },
+          {
+            "name": "updateSmoke",
+            "start": 110435,
+            "end": 111442,
+            "line": 1530,
+            "bytes": 1007,
+            "sha256": "f428b88fab7457d57218fcbd0e83eb59dadb38f26c320bd18dd624c535e323f5",
+            "bodySha256": "caad12fdaf592e65f2e1623c29edd7bc59f539e2d92f7c6b6bd9cec971546904"
+          }
+        ],
+        "readiness": [
+          {
+            "name": "readyPrograms",
+            "start": 24652,
+            "end": 25008,
+            "line": 392,
+            "bytes": 356,
+            "sha256": "99861274327af4fe31b5cc42818c87c3a8d24e78e5669ea9a3d6692db7e4252a",
+            "bodySha256": "5ecb73c286d4b53d9f55a1eaee4cf07b8aa252bbd77bd57e33abe67ddbb9a5f1"
+          },
+          {
+            "name": "landingWakeReady",
+            "start": 25259,
+            "end": 25725,
+            "line": 406,
+            "bytes": 466,
+            "sha256": "daaf7324a7b61d0f2350a2acc6b6c35d42ad42ade08de1918610f60034c5c303",
+            "bodySha256": "fd5aca458e6da5dbbe6e7aaf1e5626a0177f09fb8ddd8270710779a6998c967e"
+          },
+          {
+            "name": "beginLandingShaders",
+            "start": 25729,
+            "end": 25986,
+            "line": 412,
+            "bytes": 257,
+            "sha256": "0cdbe53d8967530fd7b15e2cd237f50c9c3c13271b35f98457c5fc4c2865d395",
+            "bodySha256": "060adc2047fa8ce3557a48a9fa62c27b5cfe4b70a11972b69f24d01fb86c2bde"
+          },
+          {
+            "name": "armLimitedLanding",
+            "start": 25990,
+            "end": 26196,
+            "line": 413,
+            "bytes": 206,
+            "sha256": "d7c08a258c8c0f177f4d2d171d5d3d9a7dc1bfcad6532e801f0768256f87ca26",
+            "bodySha256": "24ef9868c0f37cb2e3b4530e4e28b48feaa1b77966c62b6a256330e7fa776a03"
+          },
+          {
+            "name": "limitedLandingReady",
+            "start": 26200,
+            "end": 26801,
+            "line": 418,
+            "bytes": 601,
+            "sha256": "46ed9eef56e469fa6f7dcf1460981408d80d7f24a26b9117befa320e8e0564cd",
+            "bodySha256": "c00e19ceadd9d3069c26805dc0a59cd92b3ac9c49a9d17a5688347eb5349be4c"
+          },
+          {
+            "name": "waitForLandingWitch",
+            "start": 26805,
+            "end": 27075,
+            "line": 426,
+            "bytes": 270,
+            "sha256": "d3764501bb8b8bfe5978d3ee9390a7529d5f163fa2a7679cfd6d94a6ddd575bb",
+            "bodySha256": "0557599b8271f18a8ef641c4d40d10c93377105fef55c3ad8f814a63590f79cf"
+          },
+          {
+            "name": "startLandingShaderGrace",
+            "start": 27079,
+            "end": 27345,
+            "line": 432,
+            "bytes": 266,
+            "sha256": "7f55dbb2e9603bd07648a7c811e236efd761b1844de82dd252a60a0ab7a0c650",
+            "bodySha256": "066e6b3303333938d1a890ef831e50882a82c8f9583e5456e1fc9580494c5f32"
+          },
+          {
+            "name": "compileAll",
+            "start": 81847,
+            "end": 89923,
+            "line": 1158,
+            "bytes": 8076,
+            "sha256": "fcec19908094088bb5c03098b26a5f76f647d673bc1518e5eb67640ed37d8a28",
+            "bodySha256": "4d72370c23f17b2c9c27ad2548d9f2c14c6b07f245def981e1b77fe5a916c4ec"
+          },
+          {
+            "name": "gpuCaughtUp",
+            "start": 90566,
+            "end": 91081,
+            "line": 1260,
+            "bytes": 515,
+            "sha256": "7af16828b7577f92720eba1f779f66c6241b3224366bc7635f02eb127913696e",
+            "bodySha256": "1c786431e881f673d61556ca4e400145fca20dd2b91445f5fc7731cb05363500"
+          },
+          {
+            "name": "warmDraws",
+            "start": 91582,
+            "end": 93634,
+            "line": 1275,
+            "bytes": 2052,
+            "sha256": "8b1079e7b3653d0d830c2596f8f3e205d34af96f094aa1622a29031b1dcac951",
+            "bodySha256": "9cb6554a0a5354d4c248d00f8d3972d81be16bd9227e7f3d2e4ce7aa2e24ceff"
+          },
+          {
+            "name": "warmSteps",
+            "start": 79351,
+            "end": 79845,
+            "line": 1123,
+            "bytes": 494,
+            "sha256": "7d8e5cc39199106228201fad6914cc0d4bb8b70c4818bca9840c731b999d813b",
+            "bodySha256": "7e9ac37e214bf2ef5306c768f48a11bdb02b6d0ea1669d1107658feb4610f255"
+          },
+          {
+            "name": "setReadiness",
+            "start": 81321,
+            "end": 81724,
+            "line": 1151,
+            "bytes": 403,
+            "sha256": "878f5ea534f64bfa495121a67f004d0971e80fcf77a78cc80dc518d4278f1de5",
+            "bodySha256": "1c0014f3de28a7771c63a44b2530d2ca5894dfe30a24d5994ce7af3536e315ce"
+          }
+        ],
+        "lifecycle": [
+          {
+            "name": "build",
+            "start": 56615,
+            "end": 66506,
+            "line": 807,
+            "bytes": 9893,
+            "sha256": "a6aac9cd6fa656ed0e5e19f84164d9fb4b76dfd6e78ada1c6c6aa8c1432395af",
+            "bodySha256": "04ad7a765164cc1ae6c08e7c149ef496d84fdfad0f84b94fa6a0baaa00f41140"
+          },
+          {
+            "name": "prepare",
+            "start": 69887,
+            "end": 74755,
+            "line": 999,
+            "bytes": 4868,
+            "sha256": "b489048d5fe812b7355754931b17a62aa647df6a270f4199240c9dea352b5ecc",
+            "bodySha256": "483ae3943115621b7c60a777cc7a76351130030455c06ef59d5e5cab2fbd89c5"
+          },
+          {
+            "name": "treeExtent",
+            "start": 75135,
+            "end": 75958,
+            "line": 1067,
+            "bytes": 823,
+            "sha256": "807c7764aa2d1091250b67729e845b96372a753e7d6b41a4e412709936fd0a49",
+            "bodySha256": "bead0de14e9bcffebe29ffec17b9c0584e40e078f003e22b6ee9ad0962c612b8"
+          },
+          {
+            "name": "askIsland",
+            "start": 93815,
+            "end": 95808,
+            "line": 1304,
+            "bytes": 1993,
+            "sha256": "238d73d0007b866ee64ab5a4aee244d68542d14f617b73dc84163095e43a83cb",
+            "bodySha256": "d43d81256398377a21eab8dce29d512343a4ca8615c5c5b36b4fa47400914cf0"
+          },
+          {
+            "name": "setGameSteps",
+            "start": 97166,
+            "end": 101270,
+            "line": 1336,
+            "bytes": 4104,
+            "sha256": "8846f1d182eeefafeb0c52ae9bf58eb92cd817195fdc85e5f73707451507d1f1",
+            "bodySha256": "f1e416e409e79c77b71d59e378c39d420f8eeda6dda8f938918e94b72d2c0216"
+          },
+          {
+            "name": "retype",
+            "start": 101516,
+            "end": 102006,
+            "line": 1388,
+            "bytes": 490,
+            "sha256": "8c647adabec38de15491113b0bbb085fea6dae85973eae8aa79407a0d85795c3",
+            "bodySha256": "e2654331a42bd0ba220808bbf3f588ca9d298d766a99d8bef476e9bb345a8154"
+          }
+        ],
+        "viewport": [
+          {
+            "name": "scenePixelSize",
+            "start": 67686,
+            "end": 68089,
+            "line": 969,
+            "bytes": 403,
+            "sha256": "4f620493534a5f9692ef2ff883eb57e6915f8e4712a9fba7b48527cae8a2ab0e",
+            "bodySha256": "cfa60a2983cf79308db886613189387256bd804b48f7680cddcac338f00946f8"
+          },
+          {
+            "name": "resize",
+            "start": 68197,
+            "end": 69095,
+            "line": 976,
+            "bytes": 898,
+            "sha256": "0dc439fb6bed0140256f0ddea68b7f2b0900df2bea4490de70ff1252971b77ab",
+            "bodySha256": "c65668a12d170d4a997858825da6ba73ac7719291e77dcf609006b319d14ee44"
+          },
+          {
+            "name": "screenOf",
+            "start": 106398,
+            "end": 106613,
+            "line": 1468,
+            "bytes": 215,
+            "sha256": "02fbfc47aac3ea9e1318045519afa55cb03b98ff1416756e51aab8c365083096",
+            "bodySha256": "9727fb5cd41dc6328d4707411c14c69d36bf93ea05bd5390e872658fe77ca6ee"
+          },
+          {
+            "name": "aimAt",
+            "start": 114461,
+            "end": 114993,
+            "line": 1583,
+            "bytes": 532,
+            "sha256": "cb81677eb3462dc67b718338ddc89f0f787bad3223da8323c4be6225ef632021",
+            "bodySha256": "3af9ee0bc70a85a27bc6c1ec4532e1ffa69a10f12c4b44379924b3579348d976"
+          }
+        ]
+      },
+      "publicApi": [
+        "setIntroFocus: (game: Game, focus: Game[\"introFocus\"]) => void = (game, focus) => { game.introFocus = focus; };",
+        "readonly renderer: THREE.WebGLRenderer;",
+        "scene = new THREE.Scene();",
+        "readonly magic = fxFor(this.scene);",
+        "fxMock: FxMock | null = null;",
+        "camera: THREE.PerspectiveCamera;",
+        "hazeKept: THREE.Vector2 | null = null;",
+        "island!: IslandLayers;",
+        "get ground(): Ground",
+        "readonly shaderDrawStatus: ShaderDrawStatus = { active: false, skipped: {}, fallback: {} };",
+        "shaderLandingLimited = false;",
+        "landingHouseShare = 1;",
+        "landingSleeping = false;",
+        "landingWakeReady(): boolean",
+        "beginLandingShaders(chart: boolean): void",
+        "limitedLandingReady(now = performance.now()): boolean",
+        "async waitForLandingWitch(): Promise<void>",
+        "startLandingShaderGrace(at = performance.now()): void",
+        "get heights(): HeightField",
+        "sky!: Sky;",
+        "moonShift = 0;",
+        "clouds!: Clouds;",
+        "tiltK = 1;",
+        "houseTilt(g: Game): number",
+        "readonly assets: AssetLibrary;",
+        "typeBatches = new Map<number, SpriteBatch>();",
+        "decorBatches = new Map<string, SpriteBatch>();",
+        "creatureBatches = new Map<string, SpriteBatch>();",
+        "witchBatch!: SpriteBatch;",
+        "bareBatch: SpriteBatch | null = null;",
+        "bareAsked = false;",
+        "hatOff = false;",
+        "get treehouseBatch(): SpriteBatch",
+        "entDeckDrawn(): { x: number; y: number; z: number } | null",
+        "houseRooms: HouseRoomsView | null = null;",
+        "zooExitTag: ZooExitTag | null = null;",
+        "castTag: CastTag | null = null;",
+        "crown: CrownView | null = null;",
+        "partsFound: ReadonlySet<string> = new Set();",
+        "get mapTable(): MapTable | null",
+        "set mapTable(m: MapTable | null)",
+        "get markerArt(): MarkerArt",
+        "get markerBatch(): SpriteBatch",
+        "markerFx = new MarkerFx();",
+        "speakerBatch: SpriteBatch | null = null;",
+        "grass!: GrassView;",
+        "spellFx = new SpellFx();",
+        "shadow!: THREE.Mesh;",
+        "mpp: number;",
+        "sceneryFixed: number | null = null;",
+        "readonly post: Post;",
+        "propBatch!: SpriteBatch;",
+        "leashView!: LeashView;",
+        "fireworks!: Fireworks;",
+        "get ley(): LeyLines",
+        "partyWitchView!: PartyWitchView;",
+        "beachView!: BeachView;",
+        "swoopTrails!: SwoopTrails;",
+        "inviteView!: InviteView;",
+        "occlusion!: OcclusionProbes;",
+        "stateMarks!: StateMarks;",
+        "debugTrunks = false;",
+        "partyObjects!: PartyObjectsView;",
+        "nextStones: StoneIndicator[] = [];",
+        "hatPointers: StoneIndicator[] = [];",
+        "dowsePointer: StoneIndicator | null = null;",
+        "stragglerPointer: StoneIndicator | null = null;",
+        "partyPointer: StoneIndicator | null = null;",
+        "legendPointers: StoneIndicator[] = [];",
+        "readonly pins = new Set<Pin>();",
+        "pinsAt = Number.NaN;",
+        "pin(target: PinTarget, look: PinLook): Pin & { remove(): void }",
+        "alarmCues: AlarmIndicators | null = null;",
+        "get minimap(): Minimap",
+        "readonly rulers = new Rulers(document.body);",
+        "debugReadouts = false;",
+        "readonly combatLight = new CombatLight();",
+        "shadows!: ShadowBatch;",
+        "rig!: RigView | null;",
+        "readonly subpixel = { x: 0, y: 0 };",
+        "readonly witchBase = { x: 0, y: 0, z: 0 };",
+        "readonly herHead = { x: 0.5, y: 0.5, on: false };",
+        "houseOpen: string | null = null;",
+        "useDevice: \"keys\" | \"pad\" | \"touch\" = \"keys\";",
+        "onUse: ((down: boolean) => void) | null = null;",
+        "readonly herHouseHead = { x: 0, y: 0, at: -Infinity };",
+        "readonly usePrompt = { id: \"\", top: 0 };",
+        "readonly houseCam = { x: 0, y: 0, z: 0 };",
+        "readonly herOffset: HerOffset = { on: false, x: 0, y: 0, z: 0 };",
+        "inviteStart(g: Game): { x: number; y: number; z: number; world: boolean }",
+        "houseShift = 0;",
+        "witchTall = 0;",
+        "witchFeetTop = 0;",
+        "backdrop!: StationBackdrop;",
+        "shadowList: ShadowInstance[] = [];",
+        "trunkShadowBatches = new Map<number | string, TrunkShadowBatch>();",
+        "witchShadows: ShadowInstance[] = [];",
+        "mist: Mist | null = null;",
+        "lightRings: LightRings | null = null;",
+        "loadingMist: LoadingMist | null = null;",
+        "loadingMistLink: boolean | null = null;",
+        "width = 1;",
+        "height = 1;",
+        "debugCull = false;",
+        "quick = false;",
+        "ghostLines: THREE.LineSegments | null = null;",
+        "areaMoods: AreaMoods | null = null;",
+        "stats: ViewStats = { berries: 0, forestMs: 0, forestMissing: 0, sceneryRadius: 0, fps: 0, gameplay: 0, scenery: 0, dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };",
+        "constructor(readonly canvas: HTMLCanvasElement, public game: Game, readonly style: Style, witchGenome: unknown = null, sliced = false)",
+        "static async create(canvas: HTMLCanvasElement, game: Game, style: Style, witchGenome: unknown = null, budgetMs = 8): Promise<View>",
+        "debugShadows(): void",
+        "pixelScale = 1;",
+        "cssPixel = 1;",
+        "resize(cssW: number, cssH: number): void",
+        "async prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][] } = {}): Promise<void>",
+        "treeExtent(): TreeExtent | null",
+        "homeDone = true;",
+        "islandDrawn(): boolean",
+        "readonly readiness: { stage: \"compile\" | \"programs\" | \"textures\" | \"draws\" | \"gpu\" | \"ready\"; done: number; total: number; share: number } = { stage: \"compile\", done: 0, total: 1, share: 0 };",
+        "setGame(game: Game): void",
+        "setGameSliced(game: Game, budgetMs = 8): Promise<void>",
+        "retype(types: number[]): void",
+        "typeUsed = new Map<number, number>();",
+        "creatureUsed = new Map<string, number>();",
+        "readonly ledger: GpuLedger;",
+        "readonly gpu = newGpuState();",
+        "onContextRestored?: () => void;",
+        "onGpuEvent?: (what: string) => void;",
+        "forgetType(t: number): void",
+        "forgetCreatures(keys: string[], atlas: SpriteBatch[\"atlas\"]): void",
+        "batchFor<K>(map: Map<K, SpriteBatch>, key: K, atlas: () => SpriteBatch | undefined): SpriteBatch | undefined",
+        "frustum = new THREE.Frustum();",
+        "frustumTo = new THREE.Frustum();",
+        "cullCam = new THREE.PerspectiveCamera();",
+        "box = new THREE.Box3();",
+        "m4 = new THREE.Matrix4();",
+        "v3 = new THREE.Vector3();",
+        "screenOf(x: number, y: number, z: number, world = false): [number, number]",
+        "v3b = new THREE.Vector3();",
+        "v3c = new THREE.Vector3();",
+        "trackPops = false;",
+        "berryBatch!: SpriteBatch;",
+        "rigGear(c: Creature, leashed: boolean): RigGear",
+        "fire = new THREE.Vector3(1, 0.5, 0.16);",
+        "runeCyan = new THREE.Vector3(0.3, 0.9, 1);",
+        "runeViolet = new THREE.Vector3(0.75, 0.45, 1);",
+        "runeGreen = new THREE.Vector3(0.45, 1, 0.5);",
+        "edgeSparkle(x: number, z: number): void",
+        "readonly waveNumbers = new WaveNumbers();",
+        "ms: Record<string, number> = {};",
+        "frameStart = 0;",
+        "updateMoon(g: Game): MoonState",
+        "time(part: string): void",
+        "makeWitchBatch(bare = false): SpriteBatch",
+        "setWitch(genome: unknown): void",
+        "overBulge(x: number, z: number, top: number): number",
+        "aimAt(clientX: number, clientY: number): { x: number; z: number } | null",
+        "drawEst = 0;",
+        "render(time: number, draw = true): void"
+      ],
+      "publicApiSha256": "5781fccc23ee2f4dcbf963bc416263d86cac4afadbdd7eb917d0c2996868720a"
+    }
+  ]
+}
