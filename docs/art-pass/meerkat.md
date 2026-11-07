@@ -36,7 +36,7 @@ Head 0.17–0.22; exposed neck0.12–0.20; quadrupedal standing limb reach0.22�
 
 Narrow shoulders/ribs, tucked abdomen and somewhat stronger hips; upright weight carried over hind feet, tail a support/counterbalance rather than a giant fan.
 
-Age0 target: scale the whole animal down, then increase relative head/eye size and reduce muzzle/tail maturity as listed above; do not merely shrink an adult. These are qualitative age keys, not validated growth measurements. Preserve the natural four-limb body plan at every game age. Magical/legend adornments must not replace the identifiable natural silhouette; no new legendary concept is invented in this lane.
+Age0 target: scale the whole animal down, then increase relative head/eye size and reduce muzzle/tail maturity as listed above; do not merely shrink an adult. These are qualitative age keys, not validated growth measurements. Preserve the natural four-limb body plan at every game age. Magical/legend adornments must not replace the identifiable natural silhouette; the separately authorized legend concepts below are proposals only.
 
 ## Graph requirements and missing features
 
@@ -55,3 +55,44 @@ v1 supplies four-foot standing and walking targets with clear mask and bands; ba
 All selected plates were visually inspected for whole framing, adult/young rows and towards/away standing/walking coverage. A lifted paw is not gait validation; hidden far-side feet and exact digit counts are not certified. Generated-photo discrepancies are excluded from the graph specification by the checklist and real-photo priority. Optional shipped-art critique omitted: no shipped renderer run or native/4× acceptance was allocated; the later instruction supersedes that exhaustive review.
 
 Review boundary: target note/reference output complete for coordinator review, with explicit uncertainties above. Species migration and likeness acceptance remain #1866/canonical/Ed decisions; no source, rig, render, registry, gameplay, text or default changed.
+
+## Legend concepts — 2026-11-07 proposal
+
+Authorized by1476#6707981581 and correction6707992824. Read ART-GUIDE0b/0c and legend-audit; crystals, flame crests and spirit wings are allowed when fitting. Fit and variety win over a blanket adornment ban. Ed judges these proposals; nothing is implemented.
+
+Area story: Warren: red sand and pebbles, low ledges, dry tussocks, twisted juniper and mesquite among red hoodoos, red-stone heap above burrows.
+
+| Today’s awake legend | Three generated alternatives |
+|---|---|
+| **PENDING exact-source comparison.** Requested in1904#6708045677 from prototype524b0acaa. The5Oct atlas is historical and is deliberately not relabelled today. | ![A/B/C legend concepts](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/meerkat/legend-concepts-v1.png) |
+
+Columns left→right A/B/C; upper row towards, lower row away. Whole-animal plain-background photographic concept targets; approximate camera only, not game-rendered or game-size acceptance.
+
+- **A:** The Horizon Watcher: towering very slender ancient MEERKAT sentinel standing on its real hind feet, long narrow neck, dark eye patches produce two restrained pale searchlight cones reaching a short distance into blank air, grey muzzle, torn small round ear, thin dark-tipped tail braces behind, weathered claws. No flames on head.
+- **B:** The Burrow Marshal: massive but recognisably slim meerkat on four feet with exaggerated digging foreclaws, protective rust-red stone forearm cuffs, faded back stripes and scars, one hanging mesquite-seed offering; no helmet or uniform human armour.
+- **C:** The Dust Listener: upright older meerkat with immense whisker fan gathering a small orbit of red dust pebbles just around its nose, luminous amber sensing whiskers, sand-worn fur, no extra eyes, no head crown, no global dust storm.
+
+**Strongest proposed pick A; signature element: Sentinel eye searchlights.** The animal is revered for keeping watch above the warren. Upright height, long neck and narrow supporting tail exaggerate the sentinel; worn claws/ear and grey muzzle show the cost of that vigilance. Eye beams belong to its gaze, not a generic flame crest.
+
+Actual image QA: A is the strongest sentinel; B becomes too dog-like and heavily cuffed, C spreads a generic whisker halo. A beams appear to converge near the muzzle in these pixels: require two actual eye origins, not nose emission. Exact hind-foot support is unproven.
+
+### Chosen legend checklist
+
+1. Recognisable dark eye patches, small low ears and pointed meerkat muzzle.
+2. Upright slender sentinel supported by real hind feet and a narrow trailing tail.
+3. Long neck carries the head above narrow shoulders.
+4. Two controlled eye-origin light cones follow gaze.
+5. Weathering/claw wear and grizzled face show long service.
+6. No heavy human armour that hides the animal body plan.
+
+### Chosen legend body plan and graph needs
+
+Legend upright height target1.7–2×adult sentinel; quadrupedal HBL about1.4×adult. Exposed neck0.20–0.28L, tail0.65–0.85L; keep narrow ribs and stronger hind support. All ratios are artist starting targets, not measured biology or accepted game size. L retains the nose-to-tail-base definition above; legend exaggeration is deliberate.
+
+Reusable upright support/pose contract, gaze-bound visual beam sockets with bounded extent, old ear/face wear. Neck sockets exist already; no duplicate neck implementation request. Shared graph work stays with1866. Existing neck/parent/static-membrane sockets are not reported missing; these requests describe species-ready behaviour/material/attachment contracts, not proof that generic geometry cannot express the shape.
+
+### Exact generated evidence
+
+[Plate](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/meerkat/legend-concepts-v1.png), SHA256 `caafb5ac81b020592da067e498f2c099c689adde1c6faed03195ba46f009fc8a`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/meerkat/legend-prompt-v1.txt); [provenance and A/B/C briefs](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/meerkat/legend-provenance-v1.json). Built-in image_gen.imagegen,2026-11-07; model/seed not exposed. Three concepts with two views each; no real photo input. All eight plates were visually inspected; written QA and real anatomy override generated defects.
+
+Legend-addition status: concepts/selection notes complete, **PARTIAL until today’s exact-source comparison is supplied and placed beside them**. This does not reopen the completed anatomy target milestone or authorize activation.

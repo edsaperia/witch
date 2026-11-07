@@ -36,7 +36,7 @@ Head 0.20–0.25; exposed neck0.10–0.16; standing fore/hind girdle-to-ground0.
 
 Length is distributed through ribcage and loin; modest shoulder and hip masses, narrow mobile waist. Do not replace the long axis with one round blob.
 
-Age0 target: scale the whole animal down, then increase relative head/eye size and reduce muzzle/tail maturity as listed above; do not merely shrink an adult. These are qualitative age keys, not validated growth measurements. Preserve the natural four-limb body plan at every game age. Magical/legend adornments must not replace the identifiable natural silhouette; no new legendary concept is invented in this lane.
+Age0 target: scale the whole animal down, then increase relative head/eye size and reduce muzzle/tail maturity as listed above; do not merely shrink an adult. These are qualitative age keys, not validated growth measurements. Preserve the natural four-limb body plan at every game age. Magical/legend adornments must not replace the identifiable natural silhouette; the separately authorized legend concepts below are proposals only.
 
 ## Graph requirements and missing features
 
@@ -57,3 +57,44 @@ v2 is substantially lower and longer, closer to the real trunk/neck silhouette. 
 All selected plates were visually inspected for whole framing, adult/young rows and towards/away standing/walking coverage. A lifted paw is not gait validation; hidden far-side feet and exact digit counts are not certified. Generated-photo discrepancies are excluded from the graph specification by the checklist and real-photo priority. Optional shipped-art critique omitted: no shipped renderer run or native/4× acceptance was allocated; the later instruction supersedes that exhaustive review.
 
 Review boundary: target note/reference output complete for coordinator review, with explicit uncertainties above. Species migration and likeness acceptance remain #1866/canonical/Ed decisions; no source, rig, render, registry, gameplay, text or default changed.
+
+## Legend concepts — 2026-11-07 proposal
+
+Authorized by1476#6707981581 and correction6707992824. Read ART-GUIDE0b/0c and legend-audit; crystals, flame crests and spirit wings are allowed when fitting. Fit and variety win over a blanket adornment ban. Ed judges these proposals; nothing is implemented.
+
+Area story: Old pinewood: pine needles, pine cones, tall ancient pines with knotholes.
+
+| Today’s awake legend | Three generated alternatives |
+|---|---|
+| **PENDING exact-source comparison.** Requested in1904#6708045677 from prototype524b0acaa. The5Oct atlas is historical and is deliberately not relabelled today. | ![A/B/C legend concepts](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/marten/legend-concepts-v1.png) |
+
+Columns left→right A/B/C; upper row towards, lower row away. Whole-animal plain-background photographic concept targets; approximate camera only, not game-rendered or game-size acceptance.
+
+- **A:** The Hearth-Bib Elder: a very long low pine marten with a huge shield-shaped cream throat bib, softly glowing like preserved hearth embers within the FUR itself, silver muzzle, worn round ears, one healed flank scar, thick age-worn tail; no literal shield or crown.
+- **B:** The Knothole Keeper: pine marten curled in an elongated S with exceptionally supple spine, pale rings of age worn into dark fur, a single old pine-cone offering tied near one forepaw and a small hollow wooden pendant, no portable tree, no antlers.
+- **C:** The Branch-Leaper: pine marten low in a poised leap-ready stance, enormous wind-swept bushy tail like an old cloak, scarred powerful wrists, one cracked bronze anklet, tiny pine-needle sparks caught in the tail, not wings.
+
+**Strongest proposed pick A; signature element: Luminous cream-bib shield grown in fur.** The marten's own throat bib becomes a guardian's blaze, while the long low body, round ears and tapering face stay intact. Worn fur/ear and healed scars show survival, not a young animal enlarged. Warm light belongs to the pinewood keeper rather than a detachable generic crown.
+
+Actual image QA: A has the clearest family/age/power balance. B overarches the trunk and C overgrows the tail toward squirrel-like display. A still has a taller chest than the natural target; lower its stance in graph work.
+
+### Chosen legend checklist
+
+1. Long low flexible mustelid trunk and bushy cylindrical tail.
+2. Rounded pale-rimmed ears and tapered muzzle remain recognisable.
+3. Cream bib is broadened into one coherent shield-like fur marking, not a metal breastplate.
+4. Silver muzzle, one worn ear and limited scars show age.
+5. Chest radiance is local to the bib; no obligatory crystals/wings on the rest of the body.
+6. Forepaws carry a quiet grounded, powerful stance.
+
+### Chosen legend body plan and graph needs
+
+Legend length starting target1.4×adult; head0.18–0.22L, tail0.50–0.65L, broad bib0.25–0.35L long. Keep a narrow mobile waist, not an upright bear shoulder hump. All ratios are artist starting targets, not measured biology or accepted game size. L retains the nose-to-tail-base definition above; legend exaggeration is deliberate.
+
+Body-following emissive bib mask, aged-fur/scar overlay and worn-pinna shape control; not a new shield socket. Tail and feet retain the natural family contracts. Shared graph work stays with1866. Existing neck/parent/static-membrane sockets are not reported missing; these requests describe species-ready behaviour/material/attachment contracts, not proof that generic geometry cannot express the shape.
+
+### Exact generated evidence
+
+[Plate](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/marten/legend-concepts-v1.png), SHA256 `fab4a1462a4f63bac1ab32bbec9b93327436fa086ab37260cc5e0a0cb4d2e2e8`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/marten/legend-prompt-v1.txt); [provenance and A/B/C briefs](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/marten/legend-provenance-v1.json). Built-in image_gen.imagegen,2026-11-07; model/seed not exposed. Three concepts with two views each; no real photo input. All eight plates were visually inspected; written QA and real anatomy override generated defects.
+
+Legend-addition status: concepts/selection notes complete, **PARTIAL until today’s exact-source comparison is supplied and placed beside them**. This does not reopen the completed anatomy target milestone or authorize activation.

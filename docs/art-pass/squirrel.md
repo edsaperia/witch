@@ -36,7 +36,7 @@ Head 0.18–0.24; exposed neck0.05–0.10; forelimb reach0.20–0.28, hindlimb r
 
 Hindquarter-dominant with a light chest and tucked middle; tail adds silhouette area without moving the torso centre of mass into the tail.
 
-Age0 target: scale the whole animal down, then increase relative head/eye size and reduce muzzle/tail maturity as listed above; do not merely shrink an adult. These are qualitative age keys, not validated growth measurements. Preserve the natural four-limb body plan at every game age. Magical/legend adornments must not replace the identifiable natural silhouette; no new legendary concept is invented in this lane.
+Age0 target: scale the whole animal down, then increase relative head/eye size and reduce muzzle/tail maturity as listed above; do not merely shrink an adult. These are qualitative age keys, not validated growth measurements. Preserve the natural four-limb body plan at every game age. Magical/legend adornments must not replace the identifiable natural silhouette; the separately authorized legend concepts below are proposals only.
 
 ## Graph requirements and missing features
 
@@ -55,3 +55,44 @@ v1 shows fan tail, tufts and stronger haunches, but adult tufts are exaggerated 
 All selected plates were visually inspected for whole framing, adult/young rows and towards/away standing/walking coverage. A lifted paw is not gait validation; hidden far-side feet and exact digit counts are not certified. Generated-photo discrepancies are excluded from the graph specification by the checklist and real-photo priority. Optional shipped-art critique omitted: no shipped renderer run or native/4× acceptance was allocated; the later instruction supersedes that exhaustive review.
 
 Review boundary: target note/reference output complete for coordinator review, with explicit uncertainties above. Species migration and likeness acceptance remain #1866/canonical/Ed decisions; no source, rig, render, registry, gameplay, text or default changed.
+
+## Legend concepts — 2026-11-07 proposal
+
+Authorized by1476#6707981581 and correction6707992824. Read ART-GUIDE0b/0c and legend-audit; crystals, flame crests and spirit wings are allowed when fitting. Fit and variety win over a blanket adornment ban. Ed judges these proposals; nothing is implemented.
+
+Area story: Twiggy forest: small leafy plants, many thin-trunk saplings and straight but slanted multi-trunk trees.
+
+| Today’s awake legend | Three generated alternatives |
+|---|---|
+| **PENDING exact-source comparison.** Requested in1904#6708045677 from prototype524b0acaa. The5Oct atlas is historical and is deliberately not relabelled today. | ![A/B/C legend concepts](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/squirrel/legend-concepts-v1.png) |
+
+Columns left→right A/B/C; upper row towards, lower row away. Whole-animal plain-background photographic concept targets; approximate camera only, not game-rendered or game-size acceptance.
+
+- **A:** The Coppice Archivist: very old red squirrel with enormously enlarged question-mark bushy tail, several real-sized acorn offerings caught within distinct tufts as if a living ancestral store, weathered ear tufts, grey muzzle, powerful haunches and delicate grasping forepaws; tail is the signature, no crystals and no horns.
+- **B:** The Seed-Armoured Guardian: aged red squirrel with enlarged orange incisors and powerful hindquarters, three overlapping weathered acorn-cup shoulder plates as small natural armour, scarred paws gripping one luminous seed, tail ordinary but bushy; no human knight uniform.
+- **C:** The Twig Runner: ancient lean red squirrel in spring-loaded grounded crouch, exaggerated long hind feet, old scar lines along haunches, three soft displaced red-fur afterimages taper immediately from its real tail, no extra bodies, no wings. Ear tufts and pale belly stay clear.
+
+**Strongest proposed pick A; signature element: Acorn-bearing question-mark tail.** The squirrel's tail and hoarding become an ancestral archive of the twiggy coppice. Great haunches, delicate forepaws and ear tufts retain the animal; weathered tufts and grey muzzle show many seasons. Acorns in the tail are offerings/story, not a claim squirrels naturally carry nuts there.
+
+Actual image QA: A is the clearest tail/hoarding evolution, with age-grey muzzle and sparse offerings. B pushes toward a common armoured guardian; C is lean and leggy, with weak ancient identity. A needs tail attachment/weight and offering density checked in the graph.
+
+### Chosen legend checklist
+
+1. Strong squirrel haunches, delicate forepaws and recognisable tufted ears.
+2. Huge bushy tail makes a clear curved question-mark silhouette.
+3. Acorns remain discrete sparse offerings rather than obscuring all the fur.
+4. Grey muzzle, worn ears/tufts and scarred paws show age.
+5. Tail remains attached to the pelvis with a plausible base.
+6. Pale belly and small face stay readable beneath the tail.
+
+### Chosen legend body plan and graph needs
+
+Legend HBL target1.4–1.6×adult; tail centreline1.2–1.6L with fur plume width0.30–0.45L. Bulk stays in hindquarters, not an oversized chest; offerings need their own silhouette/footprint audit. All ratios are artist starting targets, not measured biology or accepted game size. L retains the nose-to-tail-base definition above; legend exaggeration is deliberate.
+
+Anisotropic curved fur-plume tail with stable ornament attachment points, acorn offering sockets/LOD, asymmetrical ear tuft wear and scar layers. Do not add dormouse-like hibernation shell. Shared graph work stays with1866. Existing neck/parent/static-membrane sockets are not reported missing; these requests describe species-ready behaviour/material/attachment contracts, not proof that generic geometry cannot express the shape.
+
+### Exact generated evidence
+
+[Plate](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/squirrel/legend-concepts-v1.png), SHA256 `a257c3ed6889e38eff7cbda79cf97223c352c3b5be31d396344a005294bd037c`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/squirrel/legend-prompt-v1.txt); [provenance and A/B/C briefs](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/squirrel/legend-provenance-v1.json). Built-in image_gen.imagegen,2026-11-07; model/seed not exposed. Three concepts with two views each; no real photo input. All eight plates were visually inspected; written QA and real anatomy override generated defects.
+
+Legend-addition status: concepts/selection notes complete, **PARTIAL until today’s exact-source comparison is supplied and placed beside them**. This does not reopen the completed anatomy target milestone or authorize activation.

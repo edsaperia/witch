@@ -36,7 +36,7 @@ Head 0.22–0.28; exposed neck0.03–0.08; grounded limb reach0.18–0.28; tail0
 
 Soft compact ribcage/hips with flank volume from folded membrane; broad tail is a light rudder, not a fifth supporting limb.
 
-Age0 target: scale the whole animal down, then increase relative head/eye size and reduce muzzle/tail maturity as listed above; do not merely shrink an adult. These are qualitative age keys, not validated growth measurements. Preserve the natural four-limb body plan at every game age. Magical/legend adornments must not replace the identifiable natural silhouette; no new legendary concept is invented in this lane.
+Age0 target: scale the whole animal down, then increase relative head/eye size and reduce muzzle/tail maturity as listed above; do not merely shrink an adult. These are qualitative age keys, not validated growth measurements. Preserve the natural four-limb body plan at every game age. Magical/legend adornments must not replace the identifiable natural silhouette; the separately authorized legend concepts below are proposals only.
 
 ## Graph requirements and missing features
 
@@ -55,3 +55,44 @@ v1 reads as a large-eyed gliding squirrel with folded flanks and broad tail. The
 All selected plates were visually inspected for whole framing, adult/young rows and towards/away standing/walking coverage. A lifted paw is not gait validation; hidden far-side feet and exact digit counts are not certified. Generated-photo discrepancies are excluded from the graph specification by the checklist and real-photo priority. Optional shipped-art critique omitted: no shipped renderer run or native/4× acceptance was allocated; the later instruction supersedes that exhaustive review.
 
 Review boundary: target note/reference output complete for coordinator review, with explicit uncertainties above. Species migration and likeness acceptance remain #1866/canonical/Ed decisions; no source, rig, render, registry, gameplay, text or default changed.
+
+## Legend concepts — 2026-11-07 proposal
+
+Authorized by1476#6707981581 and correction6707992824. Read ART-GUIDE0b/0c and legend-audit; crystals, flame crests and spirit wings are allowed when fitting. Fit and variety win over a blanket adornment ban. Ed judges these proposals; nothing is implemented.
+
+Area story: Mistwood: deep wet moss, fallen nurse logs, sword ferns and fungi, giant spruce and cedar, young spruce from a fallen giant.
+
+| Today’s awake legend | Three generated alternatives |
+|---|---|
+| **PENDING exact-source comparison.** Requested in1904#6708045677 from prototype524b0acaa. The5Oct atlas is historical and is deliberately not relabelled today. | ![A/B/C legend concepts](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/flyingsquirrel/legend-concepts-v1.png) |
+
+Columns left→right A/B/C; upper row towards, lower row away. Whole-animal plain-background photographic concept targets; approximate camera only, not game-rendered or game-size acceptance.
+
+- **A:** The Mist-Sail Elder: ancient grey Siberian flying squirrel, huge dark eyes, small round ears, four real limbs; broad wrist-to-ankle furry patagium partly spread as a living fog sail, dew and pale mist cling only to membrane edge, broad flattened furred tail, old membrane repair scars and grey whiskers. NO detached wings, NO bat fingers, NO feathers.
+- **B:** The Nurse-Log Keeper: aged flying squirrel grounded with folded patagium and broad flat tail, several tiny seed-and-cone offerings suspended from membrane-edge fur, a small weathered cedar-bark shoulder clasp, large wise eyes, no plant/tree growing from body.
+- **C:** The Moonlit Glider: ancient flying squirrel in a low poised glide, membrane hugely but anatomically enlarged between real wrists/ankles, translucent moonlike vein patterns inside the membrane, one healed tear, dark eyes and flat tail; restrained blue light, not spirit bird wings.
+
+**Strongest proposed pick A; signature element: Furred patagium as a living fog sail.** The animal's actual gliding skin becomes the Mistwood's mist-bearing sail. Repaired membrane tears, grey whiskers and dew show an elder that has crossed the nurse-log canopy for ages. The magic stays on its own wrist-to-ankle membrane, not a detached spirit-bird wing.
+
+Actual image QA: A gives the best mist-sail identity with four-limb anatomical intent and healed membrane wear. B conceals the patagium under a cape; C has attractive moon veins but risks a common luminous-wing signature. A far-side wrist/ankle attachments are partly occluded; confirm both in geometry.
+
+### Chosen legend checklist
+
+1. Large dark eyes, small rounded ears and grey/pale flying-squirrel family.
+2. Exactly four animal limbs; membrane links wrist to ankle on both sides.
+3. Furred patagium partly spreads without bat fingers or feathers.
+4. Broad flattened tail balances the body.
+5. Healed membrane tears and old fur show age without destroying flight surface continuity.
+6. Fog/dew cling to membrane edges, leaving eyes, paws and silhouette visible.
+
+### Chosen legend body plan and graph needs
+
+Legend HBL target1.4–1.6×adult; tail0.70–0.95L. Part-spread total membrane width about1.2–1.6L as a concept target; actual limb-joint geometry and folded pose must be reviewed in1866, not inferred from generated pixels. All ratios are artist starting targets, not measured biology or accepted game size. L retains the nose-to-tail-base definition above; legend exaggeration is deliberate.
+
+Limb-endpoint-bound folding furred patagium, membrane scar/repair mask, bounded edge-mist/dew sockets and flattened tail section. Static triangular membrane kind exists; this is a deformation/attachment contract request. Shared graph work stays with1866. Existing neck/parent/static-membrane sockets are not reported missing; these requests describe species-ready behaviour/material/attachment contracts, not proof that generic geometry cannot express the shape.
+
+### Exact generated evidence
+
+[Plate](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/flyingsquirrel/legend-concepts-v1.png), SHA256 `40a23161d8b37f7ecad88f8702161148facc9eafcc92c9aadb3777c4569e4755`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/flyingsquirrel/legend-prompt-v1.txt); [provenance and A/B/C briefs](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/flyingsquirrel/legend-provenance-v1.json). Built-in image_gen.imagegen,2026-11-07; model/seed not exposed. Three concepts with two views each; no real photo input. All eight plates were visually inspected; written QA and real anatomy override generated defects.
+
+Legend-addition status: concepts/selection notes complete, **PARTIAL until today’s exact-source comparison is supplied and placed beside them**. This does not reopen the completed anatomy target milestone or authorize activation.

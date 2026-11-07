@@ -36,7 +36,7 @@ Head 0.20–0.27; exposed neck0.02–0.05; quiet stance limb reach0.12–0.20; t
 
 Rounded high mid-back with bulk over ribs/hips; face forms a low taper. Low belly and broad support, but feet must not be erased.
 
-Age0 target: scale the whole animal down, then increase relative head/eye size and reduce muzzle/tail maturity as listed above; do not merely shrink an adult. These are qualitative age keys, not validated growth measurements. Preserve the natural four-limb body plan at every game age. Magical/legend adornments must not replace the identifiable natural silhouette; no new legendary concept is invented in this lane.
+Age0 target: scale the whole animal down, then increase relative head/eye size and reduce muzzle/tail maturity as listed above; do not merely shrink an adult. These are qualitative age keys, not validated growth measurements. Preserve the natural four-limb body plan at every game age. Magical/legend adornments must not replace the identifiable natural silhouette; the separately authorized legend concepts below are proposals only.
 
 ## Graph requirements and missing features
 
@@ -57,3 +57,44 @@ v2 restores a low dome and furry tapered snout. Walking is only a lifted-foot po
 All selected plates were visually inspected for whole framing, adult/young rows and towards/away standing/walking coverage. A lifted paw is not gait validation; hidden far-side feet and exact digit counts are not certified. Generated-photo discrepancies are excluded from the graph specification by the checklist and real-photo priority. Optional shipped-art critique omitted: no shipped renderer run or native/4× acceptance was allocated; the later instruction supersedes that exhaustive review.
 
 Review boundary: target note/reference output complete for coordinator review, with explicit uncertainties above. Species migration and likeness acceptance remain #1866/canonical/Ed decisions; no source, rig, render, registry, gameplay, text or default changed.
+
+## Legend concepts — 2026-11-07 proposal
+
+Authorized by1476#6707981581 and correction6707992824. Read ART-GUIDE0b/0c and legend-audit; crystals, flame crests and spirit wings are allowed when fitting. Fit and variety win over a blanket adornment ban. Ed judges these proposals; nothing is implemented.
+
+Area story: Hazel forest: short grass, brown ground lumps and red-berried shrubs, crooked many-branched trees.
+
+| Today’s awake legend | Three generated alternatives |
+|---|---|
+| **PENDING exact-source comparison.** Requested in1904#6708045677 from prototype524b0acaa. The5Oct atlas is historical and is deliberately not relabelled today. | ![A/B/C legend concepts](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/hedgehog/legend-concepts-v1.png) |
+
+Columns left→right A/B/C; upper row towards, lower row away. Whole-animal plain-background photographic concept targets; approximate camera only, not game-rendered or game-size acceptance.
+
+- **A:** The Bramble Bastion: low enormous European hedgehog with long pointed furry snout and a dorsal mantle of huge thick age-weathered spines, some broken and regrown, resembling a defensive lance forest; a few tiny warm lights only at oldest quill tips, not body-covering crystal armour. Feet short, no quills on face/belly.
+- **B:** The Berry Offering Keeper: old low hedgehog with layered natural spines holding several red berry sprigs and dry hazel leaves as offerings, silver muzzle and a worn notch on one ear; a single translucent red berry larger than the rest glows gently within the spine mantle, no whole trees.
+- **C:** The Shielding Curl: huge hedgehog half-curled protectively, recognisable face and feet still visible; immense spines fan backwards into a crescent shell of warm pale light following actual spine roots, weathered bristles and old scars. No free-floating eye halo or wings.
+
+**Strongest proposed pick A; signature element: Weathered dorsal quill bastion.** The hedgehog's defence becomes an ancient protective fortress. Thick worn/broken quills and a low heavy dome show survival, while the furry pointed face and short feet preserve its family. Sparse old-quill tip lights add mystery without turning it into a generic crystal beast.
+
+Actual image QA: A best joins defence, age and the hazel thicket. It is still too tall and thorn/wood-like in places: lower the dome, retain true quills and do not copy literal branches as every spine. B hides the coat under foliage; C resembles a luminous crest rather than a protective half-curl.
+
+### Chosen legend checklist
+
+1. Low oval dome, short feet and long furry pointed snout.
+2. No quills on face, limbs or belly.
+3. Dorsal quills are the exaggerated main silhouette.
+4. Broken/regrown/worn quills vary in a coherent age pattern.
+5. Small eyes and rounded ears remain visible beneath the mantle.
+6. Any quill-tip light is sparse and attached, not an independent halo hiding the creature.
+
+### Chosen legend body plan and graph needs
+
+Legend HBL target1.4–1.6×adult; dorsal quills may reach0.25–0.40L for the concept, not twice total body height. Head0.20–0.25L; preserve a low belly and feet, avoid a tall porcupine profile. All ratios are artist starting targets, not measured biology or accepted game size. L retains the nose-to-tail-base definition above; legend exaggeration is deliberate.
+
+Directional dorsal spine field with per-spine wear/regrowth and sparse emissive tips, fur/spine boundary and safe deformation. Shell ellipsoid alone cannot define the quill coat. Shared graph work stays with1866. Existing neck/parent/static-membrane sockets are not reported missing; these requests describe species-ready behaviour/material/attachment contracts, not proof that generic geometry cannot express the shape.
+
+### Exact generated evidence
+
+[Plate](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/hedgehog/legend-concepts-v1.png), SHA256 `7d6903c8aea16bec88c8b8cf3e05e9ce27eef6df5aec7969d2bb42a347d054c6`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/hedgehog/legend-prompt-v1.txt); [provenance and A/B/C briefs](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/hedgehog/legend-provenance-v1.json). Built-in image_gen.imagegen,2026-11-07; model/seed not exposed. Three concepts with two views each; no real photo input. All eight plates were visually inspected; written QA and real anatomy override generated defects.
+
+Legend-addition status: concepts/selection notes complete, **PARTIAL until today’s exact-source comparison is supplied and placed beside them**. This does not reopen the completed anatomy target milestone or authorize activation.

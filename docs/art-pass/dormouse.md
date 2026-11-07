@@ -36,7 +36,7 @@ Head 0.22–0.28; exposed neck0.03–0.07; standing limb reach0.16–0.24; tail0
 
 Rounded ribs and hips with soft seasonal fat, but retain a distinct neck-to-body taper and climbing limb articulation.
 
-Age0 target: scale the whole animal down, then increase relative head/eye size and reduce muzzle/tail maturity as listed above; do not merely shrink an adult. These are qualitative age keys, not validated growth measurements. Preserve the natural four-limb body plan at every game age. Magical/legend adornments must not replace the identifiable natural silhouette; no new legendary concept is invented in this lane.
+Age0 target: scale the whole animal down, then increase relative head/eye size and reduce muzzle/tail maturity as listed above; do not merely shrink an adult. These are qualitative age keys, not validated growth measurements. Preserve the natural four-limb body plan at every game age. Magical/legend adornments must not replace the identifiable natural silhouette; the separately authorized legend concepts below are proposals only.
 
 ## Graph requirements and missing features
 
@@ -55,3 +55,44 @@ v1 has the furred tail and rounded ears/eyes; the generated head/muzzle is rathe
 All selected plates were visually inspected for whole framing, adult/young rows and towards/away standing/walking coverage. A lifted paw is not gait validation; hidden far-side feet and exact digit counts are not certified. Generated-photo discrepancies are excluded from the graph specification by the checklist and real-photo priority. Optional shipped-art critique omitted: no shipped renderer run or native/4× acceptance was allocated; the later instruction supersedes that exhaustive review.
 
 Review boundary: target note/reference output complete for coordinator review, with explicit uncertainties above. Species migration and likeness acceptance remain #1866/canonical/Ed decisions; no source, rig, render, registry, gameplay, text or default changed.
+
+## Legend concepts — 2026-11-07 proposal
+
+Authorized by1476#6707981581 and correction6707992824. Read ART-GUIDE0b/0c and legend-audit; crystals, flame crests and spirit wings are allowed when fitting. Fit and variety win over a blanket adornment ban. Ed judges these proposals; nothing is implemented.
+
+Area story: Honeysuckle tangle: grass and clover, bramble walls, honeysuckle, hazel coppice.
+
+| Today’s awake legend | Three generated alternatives |
+|---|---|
+| **PENDING exact-source comparison.** Requested in1904#6708045677 from prototype524b0acaa. The5Oct atlas is historical and is deliberately not relabelled today. | ![A/B/C legend concepts](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/dormouse/legend-concepts-v1.png) |
+
+Columns left→right A/B/C; upper row towards, lower row away. Whole-animal plain-background photographic concept targets; approximate camera only, not game-rendered or game-size acceptance.
+
+- **A:** The Winter Dream-Keeper: ancient golden hazel dormouse with large round dark eyes half-open wisely, small rounded ears and long FURRED tail curled around itself, sitting inside an opened enormous worn hazelnut shell used as a warm sanctuary; shell amber inner light and silver fur show deep hibernation magic, whole animal visible above shallow shell rim.
+- **B:** The Honeysuckle Weaver: ancient rounded dormouse with exaggerated precise grasping hands, long silver whiskers, a light loose woven honeysuckle-and-grass shawl over shoulders holding tiny seed offerings, no royal robe and no crown; tail still furred and long.
+- **C:** The Keeper of Lost Summers: ancient compact dormouse with a very long furred tail curled into three concentric nest-like loops, age-grey face and one cracked gold seed bead held in hands, a few dreamlike hazelnut motes nestle within loops, no stars blanket.
+
+**Strongest proposed pick A; signature element: Opened hazelnut dream sanctuary.** A dormouse's deep seasonal sleep becomes something sacred. The old shell is a shelter offered by the hazel coppice, with breathing warmth and age-silvered fur; large dark eyes, round ears and the furred tail keep it a dormouse. It is a sleep refuge, not royal armour.
+
+Actual image QA: A gives the clearest hibernation story and visible silver age, but its deep shell hides feet/back: open it farther and expose body anchors before migration. B looks younger and the cloak can hide anatomy; C overmultiplies the tail loops. No extra biological tail is approved.
+
+### Chosen legend checklist
+
+1. Round-eyed golden dormouse, small round ears and short muzzle.
+2. Long furred tail wraps softly rather than becoming a naked mouse tail.
+3. Worn opened hazelnut shell shelters but does not hide most of the animal.
+4. Silver fur and slow half-open wise eyes show age.
+5. Warm inner-shell light expresses hibernation/dream magic.
+6. Feet/head/tail remain anatomically distinct from the shell.
+
+### Chosen legend body plan and graph needs
+
+Legend HBL target1.3–1.5×adult; head0.23–0.28L, tail0.80–1.10L. Low soft curled ribs/hips; shell footprint may be1.2–1.6L and must be audited separately from animal volume. All ratios are artist starting targets, not measured biology or accepted game size. L retains the nose-to-tail-base definition above; legend exaggeration is deliberate.
+
+Separate shell/offerings attachment with visibility and footprint rules, fur-age mask, wrapped-tail pose and optional slow visual pulse. Not a biological shell fused to the spine. Shared graph work stays with1866. Existing neck/parent/static-membrane sockets are not reported missing; these requests describe species-ready behaviour/material/attachment contracts, not proof that generic geometry cannot express the shape.
+
+### Exact generated evidence
+
+[Plate](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/dormouse/legend-concepts-v1.png), SHA256 `b46fac4f13c512828e17edcd638da686b955aa19be0bdccbe524937152a19e37`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/dormouse/legend-prompt-v1.txt); [provenance and A/B/C briefs](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/dormouse/legend-provenance-v1.json). Built-in image_gen.imagegen,2026-11-07; model/seed not exposed. Three concepts with two views each; no real photo input. All eight plates were visually inspected; written QA and real anatomy override generated defects.
+
+Legend-addition status: concepts/selection notes complete, **PARTIAL until today’s exact-source comparison is supplied and placed beside them**. This does not reopen the completed anatomy target milestone or authorize activation.
