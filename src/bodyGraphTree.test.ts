@@ -55,25 +55,34 @@ describe("research-based opt-in part tree",()=>{
     boundTreeBlendGroups(m);const counts=new Map<number,number>();for(const p of m.parts)counts.set(p.group,(counts.get(p.group)??0)+1);
     expect([...counts.values()]).toEqual([3,3,3,3]);
   });
-  it("bear preset exposes the face and tail beyond torso masses, with broad supported feet at every age",()=>{
+  it("bear anatomy preset carries a low forward head, hanging belly, low rump and tiny tail",()=>{
     for(const age of [0,1,2,3]){
       const {graph,plan}=acceptanceGraph(pack.bear.graph,age),compiled=compileGraph(graph);
       const tree=graph as typeof graph & {bodyMasses:{at:number[];r:number[]}[]};
       const head=compiled.sockets.head,front=Math.max(...tree.bodyMasses.map(m=>m.at[0]+m.r[0]));
       expect(head[0]).toBeGreaterThan(front);
       const highest=Math.max(...tree.bodyMasses.map(m=>m.at[1]+m.r[1]));
-      expect(head[1]+plan.head*.8).toBeGreaterThan(highest);
+      expect(head[1]).toBeLessThan(highest);
+      const rear=tree.bodyMasses[0],middle=tree.bodyMasses[1],shoulder=tree.bodyMasses[2];
+      expect(shoulder.at[1]+shoulder.r[1]).toBeGreaterThan(rear.at[1]+rear.r[1]);
+      expect(middle.at[1]-middle.r[1]).toBeLessThan(rear.at[1]-rear.r[1]);
       const tail=(graph.sockets as {id:string;points:number[][]}[]).find(s=>s.id==="tail");
       if(!tail)throw Error("Missing tail");
       const tip=compiled.sockets.tail[0]+tail.points.at(-1)![0];
-      expect(tip).toBeLessThan(Math.min(...tree.bodyMasses.map(m=>m.at[0]-m.r[0])));
+      const rump=Math.min(...tree.bodyMasses.map(m=>m.at[0]-m.r[0]));
+      expect(Math.abs(tip-rump)).toBeLessThan(.12);
       const {model}=buildAcceptanceModel(pack.bear.graph,age);
       expect(model.anchors.feet).toHaveLength(4);
       expect(plan.limbRadius).toBeGreaterThanOrEqual(.13);
       expect(plan.footShape.pads).toBe(true);
       expect(plan.footShape.claws).toBe(true);
+      expect(plan.headShape.eyes.glint).toBeGreaterThan(0);
+      expect(plan.headShape.muzzleTaper).toBeLessThan(1);
+      for(const foot of model.anchors.feet as {c:number[]}[])expect(foot.c[1]-.07).toBeCloseTo(0,1);
     }
     const cub=acceptanceGraph(pack.bear.graph,0).plan,adult=acceptanceGraph(pack.bear.graph,2).plan;
     expect(cub.head/cub.width).toBeGreaterThan(adult.head/adult.width);
+    expect(cub.muzzle).toBeLessThan(adult.muzzle);
+    expect(cub.headShape.ears.size).toBeGreaterThan(adult.headShape.ears.size);
   });
 });

@@ -54,17 +54,24 @@ export function tailPoints(spec,defaultLength,defaultWidth,frame){
 export function buildFamilyHead(m,at,r,spec={},legacy={}){
   const h=headParameters(spec),group=spec.group??1,o={part:"head",group},mu=h.muzzle;
   const length=(legacy.muzzle??r)*mu[0],sn=v3.add(at,[r*h.skull[0]*.65+length*.5,-r*.18,0]);
-  m.ell(sn,[length,r*mu[1],r*mu[2]],h.family==="beak"?M.ACCENT:M.BODY,o);
+  const tip=v3.add(sn,[length*.85,r*(h.muzzleSlope??0),0]);
+  if(h.muzzleTaper){
+    const base=v3.add(at,[r*h.skull[0]*.35,-r*.15,0]);
+    const radius=r*Math.max(mu[1],mu[2]);
+    m.seg(base,tip,radius,radius*h.muzzleTaper,M.BODY,o);
+  }else m.ell(sn,[length,r*mu[1],r*mu[2]],h.family==="beak"?M.ACCENT:M.BODY,o);
   const jaw=h.jaw??.2;
   if(jaw>0)m.ell(v3.add(sn,[-length*.1,-r*(mu[1]+jaw*.25),0]),[length*.8,r*jaw,r*mu[2]*.85],M.BODY,o);
   if(h.mouth)m.seg(v3.add(sn,[length*.1,-r*mu[1]*.6,-r*mu[2]]),v3.add(sn,[length*.85,-r*mu[1]*.6,r*mu[2]]),r*.025,r*.025,M.MOUTH,o);
   if(h.family==="reptile"||h.family==="insect")for(const side of [-1,1])m.ell(v3.add(sn,[length*.75,r*.15,side*r*mu[2]*.6]),[r*.05,r*.035,r*.04],M.NOSE,o);
-  else if(h.family!=="beak")m.ell(v3.add(sn,[length*.85,0,0]),[r*.16,r*.13,r*mu[2]*.5],M.NOSE,{...o,group:group+1});
+  else if(h.family!=="beak")m.ell(h.muzzleTaper?v3.add(tip,[r*mu[2]*h.muzzleTaper*.7,0,0]):tip,[r*.16,r*.13,r*mu[2]*.5],M.NOSE,{...o,group:group+1});
   const ear={kind:legacy.ears??"point",size:1,angle:0,position:[-.25,.87,.65],...h.ears};
   const eye={size:.09,position:[.55,.2,.73],...h.eyes};
   for(const side of [-1,1]){
     const feature={...o,group:group+(side>0?4:2)};
-    m.ell(v3.add(at,eye.position.map((v,i)=>r*v*(i===2?side:1))),[r*eye.size,r*eye.size,r*eye.size],M.EYE,feature);
+    const eyeAt=v3.add(at,eye.position.map((v,i)=>r*v*(i===2?side:1)));
+    m.ell(eyeAt,[r*eye.size,r*eye.size,r*eye.size],M.EYE,feature);
+    if(eye.glint>0){const ray=v3.norm([eye.position[0],eye.position[1],side*eye.position[2]]);m.ell(v3.add(eyeAt,v3.mul(ray,r*eye.size*.95)),[r*eye.glint,r*eye.glint,r*eye.glint],M.GLINT,feature);}
     if(h.brow>0)m.ell(v3.add(at,[r*.48,r*.35,side*r*.6]),[r*.45,r*h.brow,r*.3],M.BODY,{...feature,group:feature.group+1});
     if(ear.kind==="none")continue;
     const c=v3.add(at,ear.position.map((v,i)=>r*v*(i===2?side:1))),size=r*ear.size;
@@ -107,7 +114,7 @@ export function familyMarking(spec,point){
 export function familyFeet(m,legs,spec={}){
   for(const leg of legs){const q=leg.end,w=spec.width??.07,length=spec.length??.12,kind=spec.kind??"paw";
     if(spec.pads&&kind!=="hoof")m.ell(v3.add(q,[length*.1,-.025,0]),[length*.6,.025,w*.65],M.NOSE,{part:leg.id});
-    if(kind==="clawed"||kind==="paw")for(const side of [-1,0,1])if(spec.claws)m.seg(v3.add(q,[length*.8,0,side*w*.6]),v3.add(q,[length*1.2,-.01,side*w*.6]),.012,.003,M.ACCENT,{part:leg.id});
+    if(kind==="clawed"||kind==="paw")for(const side of [-1,0,1])if(spec.claws)m.seg(v3.add(q,[length*1.2,0,side*w*.6]),v3.add(q,[length*1.65,-.01,side*w*.6]),.012,.003,M.ACCENT,{part:leg.id});
     if(kind==="webbed")m.ell(v3.add(q,[length*.3,0,0]),[length,.035,w*1.5],M.BODY2,{part:leg.id});
     if(!["paw","hoof","clawed","webbed"].includes(kind))throw Error("Unknown foot family");
   }

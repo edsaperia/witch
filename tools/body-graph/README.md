@@ -40,7 +40,7 @@ Source-only numeric allocation audit.
 
 ## `iterate.mjs`
 
-One-species native/4x and shipped-mask overlay.
+One-species reference/graph/shipped comparison.
 
 ## `size-candidate-audit.mjs`
 
