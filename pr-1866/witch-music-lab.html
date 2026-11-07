@@ -10187,6 +10187,7 @@ registerProcessor("witch-fof", WitchFof);
       value: 0.15,
       hue: 0
     },
+    treeNormals: true,
     wind: {
       on: true,
       strength: 0.25,
@@ -10476,12 +10477,14 @@ registerProcessor("witch-fof", WitchFof);
       slots: 96
     },
     berries: {
-      perArea: [5, 8],
-      bushesPerArea: 10,
+      perArea: [10, 16],
+      bushesPerArea: 20,
       patch: {
         bushes: [4, 7],
-        radius: 3.5
+        radius: 3.5,
+        spacing: 16
       },
+      stumpClear: 0,
       eatTime: 0.25,
       cost: {
         by: "value",
@@ -11982,6 +11985,7 @@ registerProcessor("witch-fof", WitchFof);
     arrive: {
       zoom: 5.6,
       dive: 0,
+      buildSlice: 14,
       warm: {
         frames: 3,
         ms: 120,
@@ -11992,13 +11996,13 @@ registerProcessor("witch-fof", WitchFof);
       speed: 110,
       minLeg: 1.5,
       low: {
-        angle: 20,
-        distance: 110,
+        angle: 30,
+        distance: 220,
         offshore: 60
       },
       frame: {
-        angle: 34,
-        distance: 170,
+        angle: 38,
+        distance: 240,
         lift: 8
       },
       rise: 3.5,
@@ -12017,6 +12021,12 @@ registerProcessor("witch-fof", WitchFof);
         curve: 25e-4,
         grow: 4,
         relax: 3
+      },
+      mood: {
+        strength: 0.6,
+        dark: 0.6,
+        hazeNear: 45,
+        hazeFar: 150
       }
     },
     camera: {
@@ -12392,7 +12402,8 @@ registerProcessor("witch-fof", WitchFof);
     glowToCutout: 2.24,
     glowHeight: 8,
     patternLight: {
-      strength: 3
+      strength: 3,
+      beatsPerTurn: 8
     },
     lightBudget: 20,
     lights: {
@@ -12659,6 +12670,7 @@ registerProcessor("witch-fof", WitchFof);
       glow: 1.4,
       speed: 140,
       cap: 6,
+      fade: 3,
       soft: 24,
       size: 34,
       sea: 600
