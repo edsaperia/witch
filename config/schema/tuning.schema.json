@@ -3078,6 +3078,18 @@
           "type": "number",
           "minimum": 0
         },
+        "bedGlow": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "In her bed (asleep, the alarm, a snooze, the stretch), the share of her own glow and its lift on her kept, so her white nightie keeps its shading."
+        },
+        "bedBloom": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "In her bed, the share of the picture's bloom kept: her white nightie and the pillows beside her bloomed to white over her."
+        },
         "heightSmooth": {
           "type": "number",
           "minimum": 0

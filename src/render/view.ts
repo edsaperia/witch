@@ -437,6 +437,9 @@ export class View {
   /** Put to bed before a sail's dive (main.ts bedFirst, rules/wakeUp.ts tuckIn), the wake-up not started till it lands: drawn asleep
    *  in her bed as its first beats have her (render/view/witch.ts), not standing in it. */
   asleepInBed = false;
+  /** In bed, how much of her own glow is off her (render/bedPose.ts bedHush), and her clock at the last frame's. */
+  bedHush = 0;
+  bedHushTime = 0;
   landingWakeReady(): boolean {
     const A = this.assets;
     return A.fullWitchReady && A.home.treehouse && this.treehouseBatch.atlas === A.treehouse.atlas && this.landingHouseShare === 1 &&

@@ -8,6 +8,8 @@ import { witchHeight } from "../../rules/witch";
 import { SPRITE_UNIFORMS } from "../../render/sprites";
 import type { WitchLookLease } from "../../render/witchLookLease";
 import { remoteRoomPass, remoteWitchFrame } from "../../render/remoteWitch";
+import { bedLift, inBedPose } from "../../render/bedPose";
+import { wakeOf } from "../../rules/wakeUp";
 import { hatMarkers } from "../../rules/hat";
 import { hatFlight } from "../../render/hatFlight";
 import { remoteEquipment } from "../../render/remoteEquipment";
@@ -50,6 +52,7 @@ export function otherWitches(view: View, source: Game, player: number, looks?: R
         const q = alongRay(view, { x: p.x, y: p.y + groundHeight(deck.x, deck.z), z: p.z }, inRoom ? 0 : dz);
         x = q.x; y = q.y; z = q.z; scale = q.scale;
       } else y += groundHeight(x, z);
+      if (look && inBedPose(wakeOf(source, W), false)) y += bedLift(source, W); // (sitting up in bed: on its mattress, render/bedPose.ts)
       if (profiles?.has(W.id)) { gear ??= remoteEquipment(view); gear.update(W, profiles.get(W.id), { x, y, z, scale }, !W.ko && (!b.perch || !!deck && onTerrace(deck, b.x, b.z)), error => console.error("[remote broom]", error)); }
       return batch.atlas.frames[index] ? [{ x, y, z, frame: batch.atlas.frames[index], flip: b.facing < 0, scale }] : [];
     }));
