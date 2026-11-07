@@ -1,0 +1,26 @@
+{
+  "pass": "v3",
+  "species": "flyingsquirrel",
+  "concepts": "A — folded broad patagium and collar. B — larger membrane edge, tail and eye mark.",
+  "pick": "A",
+  "readability": {
+    "targetPx": "64–128px tall beside ~50px witch",
+    "rationale": "The folded membrane creates a clear flying-squirrel outline without a body scene."
+  },
+  "pixel": {
+    "towards1x": "previews/art-pass/flyingsquirrel/pixel-pick-v3-1x.png",
+    "towards4x": "previews/art-pass/flyingsquirrel/pixel-pick-v3-4x.png",
+    "away1x": "previews/art-pass/flyingsquirrel/pixel-pick-v3-away-1x.png",
+    "away4x": "previews/art-pass/flyingsquirrel/pixel-pick-v3-away-4x.png",
+    "note": "Deterministic local silhouette evidence; not runtime art or visual acceptance."
+  },
+  "bodyPlan": [
+    "triangular membrane sockets",
+    "membrane edge curve",
+    "tail cross-section",
+    "collar",
+    "eye decal"
+  ],
+  "styleAnchor": "https://raw.githubusercontent.com/edsaperia/witch/0b571d1838cfc8eabe8e4b0604f7662b487fc4de/previews/art-pass/legends-today/524b0ac/lane-L2.png",
+  "generation": "Built-in imagegen was attempted and returned HTTP 403; local deterministic silhouette raster fallback is disclosed in the report."
+}

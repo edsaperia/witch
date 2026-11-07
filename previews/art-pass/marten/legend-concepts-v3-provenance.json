@@ -1,0 +1,27 @@
+{
+  "pass": "v3",
+  "species": "marten",
+  "concepts": "A — amber bib, long tail and one tail ring. B — older muzzle, ear tufts and a small shoulder band.",
+  "pick": "A",
+  "readability": {
+    "targetPx": "64–128px tall beside ~50px witch",
+    "rationale": "The bib and ring survive the 64–128px silhouette while the tail keeps the marten read."
+  },
+  "pixel": {
+    "towards1x": "previews/art-pass/marten/pixel-pick-v3-1x.png",
+    "towards4x": "previews/art-pass/marten/pixel-pick-v3-4x.png",
+    "away1x": "previews/art-pass/marten/pixel-pick-v3-away-1x.png",
+    "away4x": "previews/art-pass/marten/pixel-pick-v3-away-4x.png",
+    "note": "Deterministic local silhouette evidence; not runtime art or visual acceptance."
+  },
+  "bodyPlan": [
+    "bib",
+    "rounded ears",
+    "tapered face",
+    "bushy tail",
+    "tail-ring socket",
+    "scar decal"
+  ],
+  "styleAnchor": "https://raw.githubusercontent.com/edsaperia/witch/0b571d1838cfc8eabe8e4b0604f7662b487fc4de/previews/art-pass/legends-today/524b0ac/lane-L2.png",
+  "generation": "Built-in imagegen was attempted and returned HTTP 403; local deterministic silhouette raster fallback is disclosed in the report."
+}

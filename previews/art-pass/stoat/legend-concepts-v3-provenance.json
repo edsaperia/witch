@@ -1,0 +1,26 @@
+{
+  "pass": "v3",
+  "species": "stoat",
+  "concepts": "A — winter coat boundary, black tail tip and brow scar. B — long body, torn ear and narrow bronze band.",
+  "pick": "A",
+  "readability": {
+    "targetPx": "64–128px tall beside ~50px witch",
+    "rationale": "The long low axis plus black tail tip remains legible beside the witch."
+  },
+  "pixel": {
+    "towards1x": "previews/art-pass/stoat/pixel-pick-v3-1x.png",
+    "towards4x": "previews/art-pass/stoat/pixel-pick-v3-4x.png",
+    "away1x": "previews/art-pass/stoat/pixel-pick-v3-away-1x.png",
+    "away4x": "previews/art-pass/stoat/pixel-pick-v3-away-4x.png",
+    "note": "Deterministic local silhouette evidence; not runtime art or visual acceptance."
+  },
+  "bodyPlan": [
+    "long spine",
+    "short ears",
+    "distal tail-tip material",
+    "underside boundary",
+    "scar decal"
+  ],
+  "styleAnchor": "https://raw.githubusercontent.com/edsaperia/witch/0b571d1838cfc8eabe8e4b0604f7662b487fc4de/previews/art-pass/legends-today/524b0ac/lane-L2.png",
+  "generation": "Built-in imagegen was attempted and returned HTTP 403; local deterministic silhouette raster fallback is disclosed in the report."
+}
