@@ -62,3 +62,11 @@ A walking hearth inside rain-worn roof plates; B lit steps raising bog stones; C
 **Additional graph needs:** Serial overlapping plate articulation with local recessed warm-window surfaces, sparse grass/offerings attached to plate frames, fourteen-leg wave contact support, antenna chains and colossal bounds/LOD. No interactive village or new house system is implied.
 
 **Inspection and scale limits:** Every cell contains witch/forest scale cues, but body is lifted higher on thicker legs than a natural woodlouse; lower it before modelling. Limb count is indeterminate behind plates. C's seasonal interiors are an alternative, not the selected target; exact20:1 is not proved. Giant scale follows the newly relayed intent, roughly20times game baby height and above the treetops, with witch/trees as qualitative cues. No baby calibration measurement, exact projection, runtime size/lighting or performance is proven; lower-view labels are requests, not verified camera parameters. Absolute sizing needs separate acceptance against DESIGN and current size rules.
+
+## Third-pass readable pixel references
+
+Read the relayed third-pass direction (issue #1476, comments 6710686653/6710694651/6710701175). Two concepts are retained for review: **A plate-armored elder; B broad arched elder**. Both keep the animal readable by exaggerating existing features only; armor, decoration, weathering and magic stay restrained. Body-scenes and invented anatomy are excluded.
+
+[True 1× pixel reference](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/woodlouse/legend-pixel-l8-v3-1x.png) · [nearest-neighbour 4×](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/woodlouse/legend-pixel-l8-v3-4x.png). The sheet uses the existing v2 concept plate as a source anchor, reduced to a readable game-style pixel grid and enlarged 4× with nearest-neighbour. Each concept includes hero and approximate game-camera towards/away silhouettes, witch scale and forest trees.
+
+**Review limits:** These are reference derivatives, not runtime sprites. 1× is a readability target, not a measured final tile size; 4× is a nearest-neighbour inspection aid. Exact giant scale, camera projection, lighting, gait, distant LOD and graph implementation remain unverified.

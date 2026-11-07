@@ -68,3 +68,11 @@ A time-seeing compound eyes; B living lightning veins; C four epochs within four
 **Additional graph needs:** Four independently phased transparent veined surfaces with separate bounded epoch-image/material regions, edge wear, body-local sparse shrine attachments, flap/glide/rest state support and giant bounds/LOD. No time simulation, world capture or portal mechanic is authorized.
 
 **Inspection and scale limits:** Witch and trees present throughout. Hero wing tips crop at some cell borders; game-row wing boundaries are more readable but remain approximate. Images cannot prove four wing roots or six tucked legs in all overlaps. Antennae are too prominent in the hero view; use tiny natural antennae. Giant scale follows the newly relayed intent, roughly20times game baby height and above the treetops, with witch/trees as qualitative cues. No baby calibration measurement, exact projection, runtime size/lighting or performance is proven; lower-view labels are requests, not verified camera parameters. Absolute sizing needs separate acceptance against DESIGN and current size rules.
+
+## Third-pass readable pixel references
+
+Read the relayed third-pass direction (issue #1476, comments 6710686653/6710694651/6710701175). Two concepts are retained for review: **A long-winged ancient; B heavy-eyed ancient**. Both keep the animal readable by exaggerating existing features only; armor, decoration, weathering and magic stay restrained. Body-scenes and invented anatomy are excluded.
+
+[True 1× pixel reference](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/dragonfly/legend-pixel-l8-v3-1x.png) · [nearest-neighbour 4×](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/dragonfly/legend-pixel-l8-v3-4x.png). The sheet uses the existing v2 concept plate as a source anchor, reduced to a readable game-style pixel grid and enlarged 4× with nearest-neighbour. Each concept includes hero and approximate game-camera towards/away silhouettes, witch scale and forest trees.
+
+**Review limits:** These are reference derivatives, not runtime sprites. 1× is a readability target, not a measured final tile size; 4× is a nearest-neighbour inspection aid. Exact giant scale, camera projection, lighting, gait, distant LOD and graph implementation remain unverified.

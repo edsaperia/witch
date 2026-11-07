@@ -68,3 +68,11 @@ A eyespots showing possible futures; B life-seeding pollen between club antennae
 **Additional graph needs:** Articulated clubbed antennae with local pollen emission anchors, surface-following scale wear, sparse decorative pollen trail, folded/resting wing patterns and the flight states already listed. No actual seed spawning or ecology mechanic.
 
 **Inspection and scale limits:** All six cells contain witch/trees. Upper views are strongly dorsal and wing tips reach borders; lower row drifts to an upright wing pose rather than level flight. Use the separate flight/rest sheet to correct torso/leg posture; this is a fantasy/camera exploration, not a validated flight frame. Giant scale follows the newly relayed intent, roughly20times game baby height and above the treetops, with witch/trees as qualitative cues. No baby calibration measurement, exact projection, runtime size/lighting or performance is proven; lower-view labels are requests, not verified camera parameters. Absolute sizing needs separate acceptance against DESIGN and current size rules.
+
+## Third-pass readable pixel references
+
+Read the relayed third-pass direction (issue #1476, comments 6710686653/6710694651/6710701175). Two concepts are retained for review: **A scalloped-wing elder; B heavy-thorax elder**. Both keep the animal readable by exaggerating existing features only; armor, decoration, weathering and magic stay restrained. Body-scenes and invented anatomy are excluded.
+
+[True 1× pixel reference](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/moth/legend-pixel-l8-v3-1x.png) · [nearest-neighbour 4×](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/moth/legend-pixel-l8-v3-4x.png). The sheet uses the existing v2 concept plate as a source anchor, reduced to a readable game-style pixel grid and enlarged 4× with nearest-neighbour. Each concept includes hero and approximate game-camera towards/away silhouettes, witch scale and forest trees.
+
+**Review limits:** These are reference derivatives, not runtime sprites. 1× is a readability target, not a measured final tile size; 4× is a nearest-neighbour inspection aid. Exact giant scale, camera projection, lighting, gait, distant LOD and graph implementation remain unverified.
