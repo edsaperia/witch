@@ -2,7 +2,17 @@
 
 Deep forechest; loin narrows before the rounded haunch. The photographed stag’s two beams remain separate above the ears. Keep the crown open when one beam overlaps the other in the away view. [Commons comparison photograph](https://commons.wikimedia.org/wiki/File:Cervus_elaphus_Luc_Viatour_6.jpg)
 
-## Legend target for Ed’s review
+## Colossal legend · second pass
+
+**Proposed pick C: Walking roost forest.** An entire living aerial woodland rooted only in branching antler beams. Deer-shaped sky windows between the forked beams, flocks nesting above the cloud layer; giant ears and a long clear red-deer face beneath. Keep open sky around the brow tines; the beams bear the canopy, while the animal’s back stays clear.
+
+**Projection and graph review.** The crowns merge in the hero panel. The away-side antler needs a separate sky window to keep the animal readable. Use branching mounts with independent canopy masses.
+
+[Revised concept sheet and current sprite](https://github.com/edsaperia/witch/blob/cb076058baf963c1ca4be612ff84e71b08284172/previews/art-pass/stag/legend-scale-v2.jpg). Top left A: a crooked crown of cast antlers shelters roosting owls. Top right B: migrating songbirds thread luminous paths between the tines like the lines of a star chart. Lower left C is the maximum-fantasy hero view. Lower right repeats C from an approximate game camera. The witch and trees establish scale in each generated view. The source sprite at the right is an independently fitted colour comparison.
+
+**Provenance.** OpenAI ImageGen, 7 November 2026. Shared framing prompt: A 2 by 2 grid, exactly four equal square illustrations, no text or letters. Professional photoreal high-fantasy creature development plate, complete animal in each panel, strongly distinct designs. Every single panel MUST clearly include a small contrasting violet-cloaked pointed-hat witch standing by a front foot, visible and unobstructed, and full-size forest trees close to the animal, crowns only reaching its chest. Legends roughly twenty baby heights; massive gravity, worn anatomy, distance haze. Top left=A low angle; top right=B low angle; bottom left=C maximum fantasy low angle; bottom right=repeat exactly C and its magic from the game camera looking DOWN 30 degrees in orthographic three-quarter view with heading 35 degrees towards viewer from side profile. Frame entire silhouette including ears, horns, feet.  Subject: red deer stag in ancient slanted forest. Species-specific A, B and C directions are transcribed above. DESIGN’s roughly twenty baby heights is a target; these illustrative plates have no calibrated baby or projection measurement.
+
+## Legend target · first pass
 
 **A · Roosting crown.** The birds trust the elder enough to keep their perches as he walks; his forked beams echo the old slanted trees.
 

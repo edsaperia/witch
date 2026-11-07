@@ -2,7 +2,17 @@
 
 Shoulder boss flows into a deep, wide barrel over short load-bearing limbs. In the walking photo the nose rides near the ground and the front horn projects clear of the face. Keep the lip broad even when the horn points almost toward the camera. [Commons comparison photograph](https://commons.wikimedia.org/wiki/File:109_Male_White_rhinoceros_walking_in_the_Kalahari_Desert_of_Namibia_Photo_by_Giles_Laurent.jpg)
 
-## Legend target for Ed’s review
+## Colossal legend · second pass
+
+**Proposed pick C: Hearth pilgrimage horn.** A vast spiralling pilgrimage path carved into the SINGLE blunt nasal horn, a little cold hearth shrine at its summit, strings of tiny bronze votives round the foot of the horn; hide worn in slabs like red stone. Wind the path around a single taper. Give the summit shrine a level bed and keep the grazing muzzle below it.
+
+**Projection and graph review.** The overhead view makes the winding route clearer than the summit hearth. Keep the eyeline visible below the path and use a recessed shrine mount at its top.
+
+[Revised concept sheet and current sprite](https://github.com/edsaperia/witch/blob/cb076058baf963c1ca4be612ff84e71b08284172/previews/art-pass/rhino/legend-scale-v2.jpg). Top left A: hearth ash and red earth line the deep armour folds. Top right B: heavy bronze offerings polished by wear round a gigantic horn. Lower left C is the maximum-fantasy hero view. Lower right repeats C from an approximate game camera. The witch and trees establish scale in each generated view. The source sprite at the right is an independently fitted colour comparison.
+
+**Provenance.** OpenAI ImageGen, 7 November 2026. Shared framing prompt: A 2 by 2 grid, exactly four equal square illustrations, no text or letters. Professional photoreal high-fantasy creature development plate, complete animal in each panel, strongly distinct designs. Every single panel MUST clearly include a small contrasting violet-cloaked pointed-hat witch standing by a front foot, visible and unobstructed, and full-size forest trees close to the animal, crowns only reaching its chest. Legends roughly twenty baby heights; massive gravity, worn anatomy, distance haze. Top left=A low angle; top right=B low angle; bottom left=C maximum fantasy low angle; bottom right=repeat exactly C and its magic from the game camera looking DOWN 30 degrees in orthographic three-quarter view with heading 35 degrees towards viewer from side profile. Frame entire silhouette including ears, horns, feet.  Subject: wide-lipped bushveld white rhinoceros with one colossal legend horn and acacia trees around a cold boma hearth. Species-specific A, B and C directions are transcribed above. DESIGN’s roughly twenty baby heights is a target; these illustrative plates have no calibrated baby or projection measurement.
+
+## Legend target · first pass
 
 **A · Bronze offerings on one colossal horn.** The boma hearth is cold, but generations have returned to leave offerings. Wear beneath the bronze tells how long the rhino has carried them.
 

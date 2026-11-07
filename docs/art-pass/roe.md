@@ -2,7 +2,17 @@
 
 Light chest and short trunk with high haunches; generous daylight beneath the belly. The young male in the photo shows how strongly the ears frame the entire head. Use the adult sheet for mature antler length only. [Commons comparison photograph](https://commons.wikimedia.org/wiki/File:Roe_deer_%28Capreolus_capreolus%29_young_male_Cumnor.jpg)
 
-## Legend target for Ed’s review
+## Colossal legend · second pass
+
+**Proposed pick C: Dusk held in hoofprints.** A single ring of giant hoofprints holds different moments of dusk in each print: sunset, twilight, stars. Small spectral herds pass between the prints below the giant’s legs. Preserve a slight chest and short rack. The prints must originate at the split hooves and stay behind when the buck moves.
+
+**Projection and graph review.** The projected prints read as bright pools. Shape the edge as two hoof lobes and leave dark ground between prints. Anchor the marks to terrain across a stride.
+
+[Revised concept sheet and current sprite](https://github.com/edsaperia/witch/blob/cb076058baf963c1ca4be612ff84e71b08284172/previews/art-pass/roe/legend-scale-v2.jpg). Top left A: a bright white rump lantern guides a file of ordinary roe to the ancient glade. Top right B: its wide listening ears carry luminous veins shaped by centuries of herd calls. Lower left C is the maximum-fantasy hero view. Lower right repeats C from an approximate game camera. The witch and trees establish scale in each generated view. The source sprite at the right is an independently fitted colour comparison.
+
+**Provenance.** OpenAI ImageGen, 7 November 2026. Shared framing prompt: A 2 by 2 grid, exactly four equal square illustrations, no text or letters. Professional photoreal high-fantasy creature development plate, complete animal in each panel, strongly distinct designs. Every single panel MUST clearly include a small contrasting violet-cloaked pointed-hat witch standing by a front foot, visible and unobstructed, and full-size forest trees close to the animal, crowns only reaching its chest. Legends roughly twenty baby heights; massive gravity, worn anatomy, distance haze. Top left=A low angle; top right=B low angle; bottom left=C maximum fantasy low angle; bottom right=repeat exactly C and its magic from the game camera looking DOWN 30 degrees in orthographic three-quarter view with heading 35 degrees towards viewer from side profile. Frame entire silhouette including ears, horns, feet.  Subject: slight European roe buck, short three-point antlers, in dusk mossy dell with yews and rowans. Species-specific A, B and C directions are transcribed above. DESIGN’s roughly twenty baby heights is a target; these illustrative plates have no calibrated baby or projection measurement.
+
+## Legend target · first pass
 
 **C · Lingering hoofprint circle.** A small animal assembles a herd through the places it has stepped. The tracks explain the old gathering ring at dusk.
 

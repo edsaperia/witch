@@ -2,7 +2,17 @@
 
 Muscular shoulder and haunch around a compact barrel, low thick neck. The photo shows open space between the rear of the horns and the spine. Preserve that gap. Omit the sheet’s small horn buds for the game’s hornless age zero. [Commons comparison photograph](https://commons.wikimedia.org/wiki/File:003_Wild_Alpine_Ibex_Sunset_Creux_du_Van_Mont_Racine_Photo_by_Giles_Laurent.jpg)
 
-## Legend target for Ed’s review
+## Colossal legend · second pass
+
+**Proposed pick C: Glacier stair horns.** Backswept ridged horns split the sky like twin glacier crevasses: ice stairways wind along the exposed sections, tiny pilgrims have left cairns on their landings. Follow the rearward horn sweep with the staircases. Preserve the open wedge between tips and spine and give the climbing feet separate ledges.
+
+**Projection and graph review.** The split blue ridges survive the overhead view; individual steps are fine detail. The graph needs a discontinuous horn surface with a continuous route along its inner face.
+
+[Revised concept sheet and current sprite](https://github.com/edsaperia/witch/blob/cb076058baf963c1ca4be612ff84e71b08284172/previews/art-pass/ibex/legend-scale-v2.jpg). Top left A: a high wind sings through ancient boreholes in the ridged scimitar horns. Top right B: ice-blue fractures mend broken horn ridges, each ridge marking one winter. Lower left C is the maximum-fantasy hero view. Lower right repeats C from an approximate game camera. The witch and trees establish scale in each generated view. The source sprite at the right is an independently fitted colour comparison.
+
+**Provenance.** OpenAI ImageGen, 7 November 2026. Shared framing prompt: A 2 by 2 grid, exactly four equal square illustrations, no text or letters. Professional photoreal high-fantasy creature development plate, complete animal in each panel, strongly distinct designs. Every single panel MUST clearly include a small contrasting violet-cloaked pointed-hat witch standing by a front foot, visible and unobstructed, and full-size forest trees close to the animal, crowns only reaching its chest. Legends roughly twenty baby heights; massive gravity, worn anatomy, distance haze. Top left=A low angle; top right=B low angle; bottom left=C maximum fantasy low angle; bottom right=repeat exactly C and its magic from the game camera looking DOWN 30 degrees in orthographic three-quarter view with heading 35 degrees towards viewer from side profile. Frame entire silhouette including ears, horns, feet.  Subject: Alpine ibex goat in crags, conifer forest below glacier. Species-specific A, B and C directions are transcribed above. DESIGN’s roughly twenty baby heights is a target; these illustrative plates have no calibrated baby or projection measurement.
+
+## Legend target · first pass
 
 **A · Glacier ice in broken horn ridges.** The buck has survived enough winters for glacier ice to mend old horn fractures. The horns still describe a climbing goat in silhouette.
 

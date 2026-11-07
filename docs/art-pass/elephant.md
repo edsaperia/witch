@@ -2,7 +2,17 @@
 
 Deep ribcage suspended between columnar limbs, head balanced close to shoulders. The walking bull’s bent foreleg still carries a broad foot pad. The ear folds against the neck in profile. Avoid locking either form into a flat cutout. [Commons comparison photograph](https://commons.wikimedia.org/wiki/File:178_Male_African_bush_elephant_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg)
 
-## Legend target for Ed’s review
+## Colossal legend · second pass
+
+**Proposed pick C: The walking temple bell.** The loose bell tower of the lost temple now hangs beneath her throat; her curling trunk strikes its ancient great bronze bell and the sound briefly reassembles the fallen temple as a visible ghost colonnade in the forest. The throat supports the bell and the trunk reaches its lip. Keep the ghost columns clear of the feet so the elephant remains readable.
+
+**Projection and graph review.** The overhead view retains the bell and a loop of trunk. Keep the columns dimmer than the ear and bell rim, and give the bell its own swing pivot.
+
+[Revised concept sheet and current sprite](https://github.com/edsaperia/witch/blob/cb076058baf963c1ca4be612ff84e71b08284172/previews/art-pass/elephant/legend-scale-v2.jpg). Top left A: fan ears lit from within like the floor plan of the ruined temple. Top right B: a mended ivory tusk with its bronze repair sleeve carved with generations of elephants. Lower left C is the maximum-fantasy hero view. Lower right repeats C from an approximate game camera. The witch and trees establish scale in each generated view. The source sprite at the right is an independently fitted colour comparison.
+
+**Provenance.** OpenAI ImageGen, 7 November 2026. Shared framing prompt: A 2 by 2 grid, exactly four equal square illustrations, no text or letters. Professional photoreal high-fantasy creature development plate, complete animal in each panel, strongly distinct designs. Every single panel MUST clearly include a small contrasting violet-cloaked pointed-hat witch standing by a front foot, visible and unobstructed, and full-size forest trees close to the animal, crowns only reaching its chest. Legends roughly twenty baby heights; massive gravity, worn anatomy, distance haze. Top left=A low angle; top right=B low angle; bottom left=C maximum fantasy low angle; bottom right=repeat exactly C and its magic from the game camera looking DOWN 30 degrees in orthographic three-quarter view with heading 35 degrees towards viewer from side profile. Frame entire silhouette including ears, horns, feet.  Subject: African elephant matriarch with large fan ears and long articulated trunk in ruined temple jungle. Species-specific A, B and C directions are transcribed above. DESIGN’s roughly twenty baby heights is a target; these illustrative plates have no calibrated baby or projection measurement.
+
+## Legend target · first pass
 
 **C · Trunk-sounded temple bells.** The matriarch can give the ruined temple its voice again. Her reaching trunk turns the bells into an action that belongs to an elephant.
 
