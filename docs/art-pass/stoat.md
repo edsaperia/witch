@@ -56,7 +56,7 @@ All selected plates were visually inspected for whole framing, adult/young rows 
 
 Review boundary: target note/reference output complete for coordinator review, with explicit uncertainties above. Species migration and likeness acceptance remain #1866/canonical/Ed decisions; no source, rig, render, registry, gameplay, text or default changed.
 
-## Legend concepts — 2026-11-07 proposal
+## Legend concepts v1 — preserved earlier iteration
 
 Authorized by1476#6707981581 and correction6707992824. Read ART-GUIDE0b/0c and legend-audit; crystals, flame crests and spirit wings are allowed when fitting. Fit and variety win over a blanket adornment ban. Ed judges these proposals; nothing is implemented.
 
@@ -96,3 +96,44 @@ Stable body-coordinate seasonal coat mask through spine flex/age, asymmetric ear
 [Plate](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/stoat/legend-concepts-v1.png), SHA256 `f4df0bd411e48e7add9780570e89334f5278c658f08f75a39205365020733b82`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/stoat/legend-prompt-v1.txt); [provenance and A/B/C briefs](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/stoat/legend-provenance-v1.json). Built-in image_gen.imagegen,2026-11-07; model/seed not exposed. Three concepts with two views each; no real photo input. All eight plates were visually inspected; written QA and real anatomy override generated defects.
 
 Legend-addition status: concepts/selection notes complete, **PARTIAL until today’s exact-source comparison is supplied and placed beside them**. This does not reopen the completed anatomy target milestone or authorize activation.
+
+## Legend concepts v2 — colossal mythic second pass
+
+This is the current proposal, superseding v1 picks/body-size suggestions for legend review, not erasing that history. Authority:1476#6708227119 and later6708229124, fully read. ART-GUIDE0b/0c: each level evolves; nature plus ancient wisdom/power/magic; each its own. Later instruction explicitly permits fitting crystals/flame/spirit wings and supersedes the earlier plain-background constraint. Area text source/story remains as cited above.
+
+DESIGN, Art direction: legends are **about20times a baby’s height, taller than the treetops**. These are the revised concept-scale targets; v1’s adult-relative size multipliers do not constrain this pass. Witch about50px in game is a contextual ruler, not a generated-image calibration. No source size parameters were edited.
+
+| Today’s exact-source awake legend | Revised A / B / C; hero above, game-camera approximation below |
+|---|---|
+| **PENDING canonical pixels**, requested1904#6708045677. No historical image relabelled current. | ![Colossal legend alternatives with witch and trees](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/stoat/legend-concepts-v2.png) |
+
+Three columns A/B/C; top row low hero view, bottom row the same three designs from an elevated game-camera approximation (target29.79° down/34.38° toward). **Every cell includes a witch and forest trees. C is the clear maximum-fantasy option.** No exact projection,20×measurement, native-size/game-render or mature-canopy-clearance acceptance is claimed.
+
+- **A:** Two-Winter Keeper: colossal thin very long low stoat, tiny round ears, narrow face and clear black tail tip; one half winter white and one summer brown, sharp blue aurora seam freezes nearby alder leaves, age scars and votive alder rings at forefeet.
+- **B:** Alder River Coil: giant recognisable white/brown stoat with black-tipped tail, sinuous trunk winds among alder groves like an old river valley, fallen leaves travel along a living current of silver fur, eroded stone offerings inset along flanks, tiny feet still anatomically placed.
+- **C — MAXIMUM FANTASY:** MAXIMUM FANTASY Serpent of Seasons: enormously long low STOAT, four short limbs, tiny round ears/narrow snout and black tail tip unmistakable; body coils around whole alder groves, seasonal boundary impossible aurora river across white/brown fur, one end snowing while other end sheds autumn leaves; weathered cliff-like flanks bear small carved calendar shrines; not snake scales.
+
+**Revised strongest proposed pick C — SIGNATURE ELEMENT: Seasonal aurora river along a grove-encircling stoat.** Stoat length and winter/summer change become a seasonal river enclosing whole alder groves. Its four short limbs, narrow face and black tail tip retain the animal while calendar shrines imply generations of reverence. Ed judges how far to take it; no activation.
+
+Actual inspected image result: C most clearly turns seasonal change into landscape-scale magic; A has stronger ordinary anatomy but less mythic reach, B less distinct seasonal power. Witch and alder-like trees appear in all six cells. Body stays long/low and black tip is visible, but coils/season boundary shift between rows and end portions approach panel edges. Body does not unambiguously stand above every mature foreground tree: numerical20×baby and treetop clearance remain unproven.
+
+### Revised chosen checklist
+
+1. Very long thin white/brown fur body, four very short limbs.
+2. Small rounded ears, narrow face and black distal tail tip.
+3. One coherent seasonal boundary follows the same body coordinates.
+4. Snow/autumn magic stays local to that boundary rather than generic body flames.
+5. Weathered calendar niches/offerings follow flanks without replacing fur.
+6. Witch and alder trees visible beside the same giant in both views.
+
+### Revised body plan and missing shared features
+
+Build an elongated flexible spine with visible fore/hind support; coils are an authored pose, never a fused loop or serpent replacement. Keep face and black tail tip visible across grove-scale bends. Proportion/anatomy checklist remains the control over image defects; colossal mass/world-grown layers must not merely rescale the adult outline.
+
+Long-spine coiling with attachment-safe short limbs, continuous seasonal material coordinates, localized weather edge and bounded calendar-shrine sockets. Graph owner1866 confirms feasibility/implementation; existing neck/parent/static membrane kinds are not new requests. Shrines, ecology and environmental magic here are reference proposals only, no permission to change terrain, combat, effects or gameplay.
+
+### Revision provenance and acceptance
+
+[Full v2 plate](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/stoat/legend-concepts-v2.png), SHA256 `e7aab480463e0150e878870af453d47a657ff975539b57bc05f9047d2068a1f2`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/stoat/legend-prompt-v2.txt); [provenance and3briefs](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/stoat/legend-provenance-v2.json). Built-in image_gen.imagegen on2026-11-07; model/version/seed not exposed. All requested second-pass plates actually generated/saved/inspected; no source image edit or real-photo input. Earlier v1/anatomy images and their immutable provenance remain intact.
+
+Second-pass reference milestone complete for review, with image defects/scale-camera limits above. Overall comparison remains PARTIAL until canonical exact-source today panels arrive and are placed beside v2. Ed acceptance and migration are separate; nothing activated.

@@ -58,7 +58,7 @@ All selected plates were visually inspected for whole framing, adult/young rows 
 
 Review boundary: target note/reference output complete for coordinator review, with explicit uncertainties above. Species migration and likeness acceptance remain #1866/canonical/Ed decisions; no source, rig, render, registry, gameplay, text or default changed.
 
-## Legend concepts — 2026-11-07 proposal
+## Legend concepts v1 — preserved earlier iteration
 
 Authorized by1476#6707981581 and correction6707992824. Read ART-GUIDE0b/0c and legend-audit; crystals, flame crests and spirit wings are allowed when fitting. Fit and variety win over a blanket adornment ban. Ed judges these proposals; nothing is implemented.
 
@@ -98,3 +98,44 @@ Body-following emissive bib mask, aged-fur/scar overlay and worn-pinna shape con
 [Plate](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/marten/legend-concepts-v1.png), SHA256 `fab4a1462a4f63bac1ab32bbec9b93327436fa086ab37260cc5e0a0cb4d2e2e8`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/marten/legend-prompt-v1.txt); [provenance and A/B/C briefs](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/marten/legend-provenance-v1.json). Built-in image_gen.imagegen,2026-11-07; model/seed not exposed. Three concepts with two views each; no real photo input. All eight plates were visually inspected; written QA and real anatomy override generated defects.
 
 Legend-addition status: concepts/selection notes complete, **PARTIAL until today’s exact-source comparison is supplied and placed beside them**. This does not reopen the completed anatomy target milestone or authorize activation.
+
+## Legend concepts v2 — colossal mythic second pass
+
+This is the current proposal, superseding v1 picks/body-size suggestions for legend review, not erasing that history. Authority:1476#6708227119 and later6708229124, fully read. ART-GUIDE0b/0c: each level evolves; nature plus ancient wisdom/power/magic; each its own. Later instruction explicitly permits fitting crystals/flame/spirit wings and supersedes the earlier plain-background constraint. Area text source/story remains as cited above.
+
+DESIGN, Art direction: legends are **about20times a baby’s height, taller than the treetops**. These are the revised concept-scale targets; v1’s adult-relative size multipliers do not constrain this pass. Witch about50px in game is a contextual ruler, not a generated-image calibration. No source size parameters were edited.
+
+| Today’s exact-source awake legend | Revised A / B / C; hero above, game-camera approximation below |
+|---|---|
+| **PENDING canonical pixels**, requested1904#6708045677. No historical image relabelled current. | ![Colossal legend alternatives with witch and trees](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/marten/legend-concepts-v2.png) |
+
+Three columns A/B/C; top row low hero view, bottom row the same three designs from an elevated game-camera approximation (target29.79° down/34.38° toward). **Every cell includes a witch and forest trees. C is the clear maximum-fantasy option.** No exact projection,20×measurement, native-size/game-render or mature-canopy-clearance acceptance is claimed.
+
+- **A:** Pinewood Hearth Guardian: colossal long low brown marten, rounded pale-rim ears and cream throat bib expanded into a furnace of ancient amber light, stone-weathered fur ridges and pine roots around huge paws, tiny devotional bells in bib.
+- **B:** Knothole Waykeeper: long supple marten arches between old pines, cream bib and round ears, tail becomes a great spiral of hollow weathered wood with doorway shrines/offerings yet visibly fur-grown, luminous ancestral paths winding through tail.
+- **C — MAXIMUM FANTASY:** MAXIMUM FANTASY First Pine Hearth: immense recognisable pine marten, low long trunk and round ears, cream throat bib opens visually as a living amber cathedral of light held within fur, impossibly long bushy tail coils into a mountain-sized ring enclosing miniature old pines and knothole shrines; epochs of rock seams/moss/scars, no extra limbs.
+
+**Revised strongest proposed pick C — SIGNATURE ELEMENT: Amber cathedral within the cream throat bib; shrine-ring tail.** The identifying cream bib becomes a sacred impossible hearth, and the long supple marten becomes a keeper of the first pine grove. Tail ecology and worn devotional niches express epochs, rather than just grey fur. Ed judges how far to take it; no activation.
+
+Actual inspected image result: C wins over A’s simpler light bib and B’s tail-only sanctuary because the impossible hearth and shrine-ring work together without losing the marten face. Both rows visibly contain witch and pines. The raised tail overtops smaller trees, but large foreground pines and perspective make body-vs-canopy scale ambiguous. The bottom row is more elevated, not calibrated to29.79°. Ring curvature and shoulder height differ slightly between views.
+
+### Revised chosen checklist
+
+1. Long low mustelid axis, rounded pale-rim ears and tapering face.
+2. Cream throat bib remains the source of cathedral light.
+3. Bushy tail attaches to pelvis and encloses a grove without becoming another limb.
+4. Ancient rock seams, scars and moss coexist with recognizable brown fur.
+5. Shrines and offerings have small human scale, not body-sized generic jewels.
+6. Tiny witch and mature pines establish colossal scale in both views.
+
+### Revised body plan and missing shared features
+
+Preserve low shoulders/narrow waist and long natural tail root; enlarge chest bib into a volumetric light-filled fur recess, not a human torso. Tail curls around a ground grove; carry its supports and clear ground anchor explicitly. Proportion/anatomy checklist remains the control over image defects; colossal mass/world-grown layers must not merely rescale the adult outline.
+
+Bib volume/material light mask, curving fur tail with attached shrine/ecology sockets and bounded emissive interior; conservative silhouette/footprint budget and anchor handling. Graph owner1866 confirms feasibility/implementation; existing neck/parent/static membrane kinds are not new requests. Shrines, ecology and environmental magic here are reference proposals only, no permission to change terrain, combat, effects or gameplay.
+
+### Revision provenance and acceptance
+
+[Full v2 plate](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/marten/legend-concepts-v2.png), SHA256 `91c7feeb7ce499ee6c0054a29dad62e9f1e3a241d492891e785a027b8e49f8a0`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/marten/legend-prompt-v2.txt); [provenance and3briefs](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/marten/legend-provenance-v2.json). Built-in image_gen.imagegen on2026-11-07; model/version/seed not exposed. All requested second-pass plates actually generated/saved/inspected; no source image edit or real-photo input. Earlier v1/anatomy images and their immutable provenance remain intact.
+
+Second-pass reference milestone complete for review, with image defects/scale-camera limits above. Overall comparison remains PARTIAL until canonical exact-source today panels arrive and are placed beside v2. Ed acceptance and migration are separate; nothing activated.

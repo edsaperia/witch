@@ -56,7 +56,7 @@ All selected plates were visually inspected for whole framing, adult/young rows 
 
 Review boundary: target note/reference output complete for coordinator review, with explicit uncertainties above. Species migration and likeness acceptance remain #1866/canonical/Ed decisions; no source, rig, render, registry, gameplay, text or default changed.
 
-## Legend concepts — 2026-11-07 proposal
+## Legend concepts v1 — preserved earlier iteration
 
 Authorized by1476#6707981581 and correction6707992824. Read ART-GUIDE0b/0c and legend-audit; crystals, flame crests and spirit wings are allowed when fitting. Fit and variety win over a blanket adornment ban. Ed judges these proposals; nothing is implemented.
 
@@ -96,3 +96,44 @@ Separate shell/offerings attachment with visibility and footprint rules, fur-age
 [Plate](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/dormouse/legend-concepts-v1.png), SHA256 `b46fac4f13c512828e17edcd638da686b955aa19be0bdccbe524937152a19e37`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/dormouse/legend-prompt-v1.txt); [provenance and A/B/C briefs](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/dormouse/legend-provenance-v1.json). Built-in image_gen.imagegen,2026-11-07; model/seed not exposed. Three concepts with two views each; no real photo input. All eight plates were visually inspected; written QA and real anatomy override generated defects.
 
 Legend-addition status: concepts/selection notes complete, **PARTIAL until today’s exact-source comparison is supplied and placed beside them**. This does not reopen the completed anatomy target milestone or authorize activation.
+
+## Legend concepts v2 — colossal mythic second pass
+
+This is the current proposal, superseding v1 picks/body-size suggestions for legend review, not erasing that history. Authority:1476#6708227119 and later6708229124, fully read. ART-GUIDE0b/0c: each level evolves; nature plus ancient wisdom/power/magic; each its own. Later instruction explicitly permits fitting crystals/flame/spirit wings and supersedes the earlier plain-background constraint. Area text source/story remains as cited above.
+
+DESIGN, Art direction: legends are **about20times a baby’s height, taller than the treetops**. These are the revised concept-scale targets; v1’s adult-relative size multipliers do not constrain this pass. Witch about50px in game is a contextual ruler, not a generated-image calibration. No source size parameters were edited.
+
+| Today’s exact-source awake legend | Revised A / B / C; hero above, game-camera approximation below |
+|---|---|
+| **PENDING canonical pixels**, requested1904#6708045677. No historical image relabelled current. | ![Colossal legend alternatives with witch and trees](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/dormouse/legend-concepts-v2.png) |
+
+Three columns A/B/C; top row low hero view, bottom row the same three designs from an elevated game-camera approximation (target29.79° down/34.38° toward). **Every cell includes a witch and forest trees. C is the clear maximum-fantasy option.** No exact projection,20×measurement, native-size/game-render or mature-canopy-clearance acceptance is claimed.
+
+- **A:** Winter Sanctuary: giant golden hazel dormouse round ears/dark half-open eyes/furredtail, curled in an opened hazelnut shell like a weathered amphitheatre; warm dream glow, visible paws/head/body, honeysuckle/hazel groves outside shell and offerings at lip.
+- **B:** Honeysuckle Dream Weaver: colossal dormouse with soft golden mass, round ears/eyes and long furred tail, enormous grasping paws weave living honeysuckle arches between hazel trees, silver whiskers carry sleeping seed lights, weathered nest shawl with tiny votive bells.
+- **C — MAXIMUM FANTASY:** MAXIMUM FANTASY Sleeper Between Ages: colossal recognisable golden DORMOUSE, roundears/dark sleepy eyes/furredtail; an immense open cracked hazelnut shell contains a deep starfield dream while the animal remains materially visible resting at its rim, tail wraps shell as wooded valley, ancient hazel grove grows across old shell and silver fur scars; tiny offered nuts/shrines. Not a squirrel or naked mouse tail.
+
+**Revised strongest proposed pick C — SIGNATURE ELEMENT: Starfield hibernation inside a cracked hazelnut sanctuary.** Deep seasonal sleep becomes a window between ages. The shell and hazel-grown tail valley make the dormouse an object of pilgrimage; rounded ears, sleepy dark eyes and furred tail preserve its own family. Ed judges how far to take it; no activation.
+
+Actual inspected image result: C makes hibernation a starfield sanctuary; A remains mainly a giant shelter and B a flower weaver. Witch and hazel/honeysuckle trees are present in all cells. Golden head/round ears/furred tail remain clear, but the shell obscures much of torso/hindfeet and youthful softness remains despite silver/weathering. Bottom row is elevated but still steeply frontal. Do not treat occluded anchors or20×baby/above-every-tree as established.
+
+### Revised chosen checklist
+
+1. Golden compact dormouse, round ears, short muzzle and dark sleepy eyes.
+2. Long furred tail, no squirrel ear tufts or naked mouse tail.
+3. Animal body/head/paws remain visible at open shell rim.
+4. One starfield interior belongs to hibernation/dream, not a universal cosmic skin.
+5. Ancient hazel ecology and offered nuts/shrines have clear hierarchy.
+6. Witch and mature hazel trees establish scale in both views.
+
+### Revised body plan and missing shared features
+
+Separate dormouse mass, tail and shell sanctuary; shell interior may suggest depth without hiding body anchors. No multiple biological tails; authored curled pose and a clear ground base. Proportion/anatomy checklist remains the control over image defects; colossal mass/world-grown layers must not merely rescale the adult outline.
+
+Independent opened-shell prop/interior depth material, wrapped furred-tail rig, localized dream light and ecology/offerings sockets; shell is not biological armour. Graph owner1866 confirms feasibility/implementation; existing neck/parent/static membrane kinds are not new requests. Shrines, ecology and environmental magic here are reference proposals only, no permission to change terrain, combat, effects or gameplay.
+
+### Revision provenance and acceptance
+
+[Full v2 plate](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/dormouse/legend-concepts-v2.png), SHA256 `9846a4c3dcab794ddeb315292a294d088e4c397f5a816024aadbebe0be3c3095`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/dormouse/legend-prompt-v2.txt); [provenance and3briefs](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/dormouse/legend-provenance-v2.json). Built-in image_gen.imagegen on2026-11-07; model/version/seed not exposed. All requested second-pass plates actually generated/saved/inspected; no source image edit or real-photo input. Earlier v1/anatomy images and their immutable provenance remain intact.
+
+Second-pass reference milestone complete for review, with image defects/scale-camera limits above. Overall comparison remains PARTIAL until canonical exact-source today panels arrive and are placed beside v2. Ed acceptance and migration are separate; nothing activated.

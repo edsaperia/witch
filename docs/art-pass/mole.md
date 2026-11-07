@@ -58,7 +58,7 @@ All selected plates were visually inspected for whole framing, adult/young rows 
 
 Review boundary: target note/reference output complete for coordinator review, with explicit uncertainties above. Species migration and likeness acceptance remain #1866/canonical/Ed decisions; no source, rig, render, registry, gameplay, text or default changed.
 
-## Legend concepts — 2026-11-07 proposal
+## Legend concepts v1 — preserved earlier iteration
 
 Authorized by1476#6707981581 and correction6707992824. Read ART-GUIDE0b/0c and legend-audit; crystals, flame crests and spirit wings are allowed when fitting. Fit and variety win over a blanket adornment ban. Ed judges these proposals; nothing is implemented.
 
@@ -98,3 +98,44 @@ Rotatable shovel-palm/digit/claw assembly, claw wear/repair variants and per-sur
 [Plate](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/mole/legend-concepts-v1.png), SHA256 `e8e9a1bdf2ed7a8c288f64efb8c9c7acf4943e320584a7eb7c5010211b93cdc9`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/mole/legend-prompt-v1.txt); [provenance and A/B/C briefs](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/mole/legend-provenance-v1.json). Built-in image_gen.imagegen,2026-11-07; model/seed not exposed. Three concepts with two views each; no real photo input. All eight plates were visually inspected; written QA and real anatomy override generated defects.
 
 Legend-addition status: concepts/selection notes complete, **PARTIAL until today’s exact-source comparison is supplied and placed beside them**. This does not reopen the completed anatomy target milestone or authorize activation.
+
+## Legend concepts v2 — colossal mythic second pass
+
+This is the current proposal, superseding v1 picks/body-size suggestions for legend review, not erasing that history. Authority:1476#6708227119 and later6708229124, fully read. ART-GUIDE0b/0c: each level evolves; nature plus ancient wisdom/power/magic; each its own. Later instruction explicitly permits fitting crystals/flame/spirit wings and supersedes the earlier plain-background constraint. Area text source/story remains as cited above.
+
+DESIGN, Art direction: legends are **about20times a baby’s height, taller than the treetops**. These are the revised concept-scale targets; v1’s adult-relative size multipliers do not constrain this pass. Witch about50px in game is a contextual ruler, not a generated-image calibration. No source size parameters were edited.
+
+| Today’s exact-source awake legend | Revised A / B / C; hero above, game-camera approximation below |
+|---|---|
+| **PENDING canonical pixels**, requested1904#6708045677. No historical image relabelled current. | ![Colossal legend alternatives with witch and trees](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/mole/legend-concepts-v2.png) |
+
+Three columns A/B/C; top row low hero view, bottom row the same three designs from an elevated game-camera approximation (target29.79° down/34.38° toward). **Every cell includes a witch and forest trees. C is the clear maximum-fantasy option.** No exact projection,20×measurement, native-size/game-render or mature-canopy-clearance acceptance is claimed.
+
+- **A:** Deep Delver: enormous earless European mole low velvet cylinder/pink nose/tiny eyes, vast OUTWARD shovel palms with ivory worn claws split mossy ground into geological terraces, fern/birch roots trail flank, carved tunnel offerings on palms.
+- **B:** Root Listener: colossal mole with tiny eyes/no external ears/pink snout, rootlike copper sensory whiskers descend through earth and glow like underground river map, velvet body eroded like rounded basalt, huge outward palms, nurse moss/fern garden in old scars.
+- **C — MAXIMUM FANTASY:** MAXIMUM FANTASY Architect Below: mountain-sized recognisable MOLE, earless velvet low tube, pink pointed nose and enormous lateral shovel palms; hands lift great curved layers of earth like pages of geological time, living forests on those lifted strata, amber-lit tunnel-cathedral cross-sections visible within claw furrows; shoulder moss/stone strata and votive carvings. Four limbs, not humanoid hands.
+
+**Revised strongest proposed pick C — SIGNATURE ELEMENT: Outward shovel palms turning geological strata like pages.** The mole’s defining excavation becomes earth-shaping across epochs. Visible tunnel sanctuaries and mature trees on lifted layers express both size and the history beneath the fern forest. Ed judges how far to take it; no activation.
+
+Actual inspected image result: C is unmistakably the largest fantasy step: layered earth pages/tunnel halls versus A’s shrine palms and B’s root sensing. All cells include witch and forest trees. No external ears and pink nose read well. The palms still point partly forward; true lateral shovel anatomy is NOT accepted. Some rear limbs/whole-body outline are occluded by earth layers and crops. Elevated row shows the layers but not calibrated20×baby or full mature-canopy clearance.
+
+### Revised chosen checklist
+
+1. Earless low velvet tube, tiny eyes and pink tapered nose.
+2. Two huge lateral outward shovel palms, small rear feet.
+3. Ivory worn claws stay on animal palms, not human fingers.
+4. Curved earth layers lift from digging contact as separate environmental proposal.
+5. Lit tunnel niches/carvings signify reverence without a generic crown.
+6. Witch and fern-forest trees show scale in hero and camera views.
+
+### Revised body plan and missing shared features
+
+Low body and minimal neck, broad shoulder girdle; shovel palms need true outward rotation before reproducing imagery. Lifted strata are separable proposed environmental geometry, never extra animal limbs or gameplay terrain edits. Proportion/anatomy checklist remains the control over image defects; colossal mass/world-grown layers must not merely rescale the adult outline.
+
+Oriented digging hand/digit fan and wear variants; art-only strata/page attachments and tunnel cutaway visual contract. Terrain deformation/gameplay is NOT authorized by this concept. Graph owner1866 confirms feasibility/implementation; existing neck/parent/static membrane kinds are not new requests. Shrines, ecology and environmental magic here are reference proposals only, no permission to change terrain, combat, effects or gameplay.
+
+### Revision provenance and acceptance
+
+[Full v2 plate](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/mole/legend-concepts-v2.png), SHA256 `099f48224d615cfddb28f5bc6a4c7793c8efac05e7e49739a51c24b224ba4079`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/mole/legend-prompt-v2.txt); [provenance and3briefs](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/mole/legend-provenance-v2.json). Built-in image_gen.imagegen on2026-11-07; model/version/seed not exposed. All requested second-pass plates actually generated/saved/inspected; no source image edit or real-photo input. Earlier v1/anatomy images and their immutable provenance remain intact.
+
+Second-pass reference milestone complete for review, with image defects/scale-camera limits above. Overall comparison remains PARTIAL until canonical exact-source today panels arrive and are placed beside v2. Ed acceptance and migration are separate; nothing activated.

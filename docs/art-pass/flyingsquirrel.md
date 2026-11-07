@@ -56,7 +56,7 @@ All selected plates were visually inspected for whole framing, adult/young rows 
 
 Review boundary: target note/reference output complete for coordinator review, with explicit uncertainties above. Species migration and likeness acceptance remain #1866/canonical/Ed decisions; no source, rig, render, registry, gameplay, text or default changed.
 
-## Legend concepts — 2026-11-07 proposal
+## Legend concepts v1 — preserved earlier iteration
 
 Authorized by1476#6707981581 and correction6707992824. Read ART-GUIDE0b/0c and legend-audit; crystals, flame crests and spirit wings are allowed when fitting. Fit and variety win over a blanket adornment ban. Ed judges these proposals; nothing is implemented.
 
@@ -96,3 +96,44 @@ Limb-endpoint-bound folding furred patagium, membrane scar/repair mask, bounded 
 [Plate](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/flyingsquirrel/legend-concepts-v1.png), SHA256 `40a23161d8b37f7ecad88f8702161148facc9eafcc92c9aadb3777c4569e4755`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/flyingsquirrel/legend-prompt-v1.txt); [provenance and A/B/C briefs](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/flyingsquirrel/legend-provenance-v1.json). Built-in image_gen.imagegen,2026-11-07; model/seed not exposed. Three concepts with two views each; no real photo input. All eight plates were visually inspected; written QA and real anatomy override generated defects.
 
 Legend-addition status: concepts/selection notes complete, **PARTIAL until today’s exact-source comparison is supplied and placed beside them**. This does not reopen the completed anatomy target milestone or authorize activation.
+
+## Legend concepts v2 — colossal mythic second pass
+
+This is the current proposal, superseding v1 picks/body-size suggestions for legend review, not erasing that history. Authority:1476#6708227119 and later6708229124, fully read. ART-GUIDE0b/0c: each level evolves; nature plus ancient wisdom/power/magic; each its own. Later instruction explicitly permits fitting crystals/flame/spirit wings and supersedes the earlier plain-background constraint. Area text source/story remains as cited above.
+
+DESIGN, Art direction: legends are **about20times a baby’s height, taller than the treetops**. These are the revised concept-scale targets; v1’s adult-relative size multipliers do not constrain this pass. Witch about50px in game is a contextual ruler, not a generated-image calibration. No source size parameters were edited.
+
+| Today’s exact-source awake legend | Revised A / B / C; hero above, game-camera approximation below |
+|---|---|
+| **PENDING canonical pixels**, requested1904#6708045677. No historical image relabelled current. | ![Colossal legend alternatives with witch and trees](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/flyingsquirrel/legend-concepts-v2.png) |
+
+Three columns A/B/C; top row low hero view, bottom row the same three designs from an elevated game-camera approximation (target29.79° down/34.38° toward). **Every cell includes a witch and forest trees. C is the clear maximum-fantasy option.** No exact projection,20×measurement, native-size/game-render or mature-canopy-clearance acceptance is claimed.
+
+- **A:** Mist Sail: colossal grey flying squirrel, huge dark eyes/roundears, fourlimbs with wrist-to-ankle FURRED patagium, flat tail; immense old membrane draws banks of fog above wet cedar canopy, healed tears edged with dew, tiny bark offerings at wrist.
+- **B:** Nurse-Log Glider: huge grey flying squirrel with recognizable face and folded furred patagium, flat tail curls beside fallen giant cedar, old membrane seams carry tiny nurse-log seedlings/fungi offerings, body lichen scars and mist threads, no cape hiding attachments.
+- **C — MAXIMUM FANTASY:** MAXIMUM FANTASY Keeper of the Cloud Canopy: colossal GREY FLYING SQUIRREL exactly fourlimbs, huge black eyes/small roundears/flatfurredtail; real wrist-to-ankle patagium becomes a vast translucent furred living weather-front holding star-reflecting mist and cedar-silhouette shadows, repaired tears resemble lightning seams, tiny suspended cedar-bark shrines at membrane edge; giant animal above forest, no feathers/bat fingers/detached spirit wings.
+
+**Revised strongest proposed pick C — SIGNATURE ELEMENT: Limb-bound gliding membrane as a living cloud front.** The true patagium becomes the Mistwood’s weather. Lightning-like healed seams and cedar-bark shrines show age and reverence while huge dark eyes, round ears and flattened tail retain flying-squirrel anatomy. Ed judges how far to take it; no activation.
+
+Actual inspected image result: C makes the patagium a mist/star weather front, stronger than A’s simpler fog sail and B’s concealing cape. Witch and cedar/spruce trees appear in all six cells. C preserves four-limb intent and large dark eyes, but stands anthropomorphically upright and far membrane ankle attachments are obscured. Top tail is partly hidden, lower row clearer; no anatomical flight validation. It overtops smaller crowns but not every foreground tree;20×baby and game projection remain uncalibrated.
+
+### Revised chosen checklist
+
+1. Grey flying squirrel, huge dark eyes and small rounded ears.
+2. Exactly four limbs and furred wrist-to-ankle membrane on both sides.
+3. Flat furred tail, no feather/bat-finger substitute.
+4. Cloud/star reflection is localized inside the anatomical membrane.
+5. Repaired tear seams and tiny cedar shrines preserve continuous membrane surface.
+6. Witch and cedar canopy trees remain visible in both views.
+
+### Revised body plan and missing shared features
+
+Membrane spreads between actual limb endpoints and folds with them; body silhouette must remain visible through atmospheric magic. Surface/edge effects are a concept, not permission for detached extra wings or runtime weather changes. Proportion/anatomy checklist remains the control over image defects; colossal mass/world-grown layers must not merely rescale the adult outline.
+
+Limb-bound folding patagium with translucent fur material, localized cloud/repair mask and edge shrine attachment limits; existing static triangular membrane is insufficient evidence of that complete contract. Graph owner1866 confirms feasibility/implementation; existing neck/parent/static membrane kinds are not new requests. Shrines, ecology and environmental magic here are reference proposals only, no permission to change terrain, combat, effects or gameplay.
+
+### Revision provenance and acceptance
+
+[Full v2 plate](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/flyingsquirrel/legend-concepts-v2.png), SHA256 `90a0436f986bf15964e71f77683fb9ce4afe85b17d0ce5ecf8b2559734495ec3`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/flyingsquirrel/legend-prompt-v2.txt); [provenance and3briefs](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/flyingsquirrel/legend-provenance-v2.json). Built-in image_gen.imagegen on2026-11-07; model/version/seed not exposed. All requested second-pass plates actually generated/saved/inspected; no source image edit or real-photo input. Earlier v1/anatomy images and their immutable provenance remain intact.
+
+Second-pass reference milestone complete for review, with image defects/scale-camera limits above. Overall comparison remains PARTIAL until canonical exact-source today panels arrive and are placed beside v2. Ed acceptance and migration are separate; nothing activated.

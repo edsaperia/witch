@@ -56,7 +56,7 @@ All selected plates were visually inspected for whole framing, adult/young rows 
 
 Review boundary: target note/reference output complete for coordinator review, with explicit uncertainties above. Species migration and likeness acceptance remain #1866/canonical/Ed decisions; no source, rig, render, registry, gameplay, text or default changed.
 
-## Legend concepts — 2026-11-07 proposal
+## Legend concepts v1 — preserved earlier iteration
 
 Authorized by1476#6707981581 and correction6707992824. Read ART-GUIDE0b/0c and legend-audit; crystals, flame crests and spirit wings are allowed when fitting. Fit and variety win over a blanket adornment ban. Ed judges these proposals; nothing is implemented.
 
@@ -96,3 +96,44 @@ Anisotropic curved fur-plume tail with stable ornament attachment points, acorn 
 [Plate](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/squirrel/legend-concepts-v1.png), SHA256 `a257c3ed6889e38eff7cbda79cf97223c352c3b5be31d396344a005294bd037c`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/squirrel/legend-prompt-v1.txt); [provenance and A/B/C briefs](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/squirrel/legend-provenance-v1.json). Built-in image_gen.imagegen,2026-11-07; model/seed not exposed. Three concepts with two views each; no real photo input. All eight plates were visually inspected; written QA and real anatomy override generated defects.
 
 Legend-addition status: concepts/selection notes complete, **PARTIAL until today’s exact-source comparison is supplied and placed beside them**. This does not reopen the completed anatomy target milestone or authorize activation.
+
+## Legend concepts v2 — colossal mythic second pass
+
+This is the current proposal, superseding v1 picks/body-size suggestions for legend review, not erasing that history. Authority:1476#6708227119 and later6708229124, fully read. ART-GUIDE0b/0c: each level evolves; nature plus ancient wisdom/power/magic; each its own. Later instruction explicitly permits fitting crystals/flame/spirit wings and supersedes the earlier plain-background constraint. Area text source/story remains as cited above.
+
+DESIGN, Art direction: legends are **about20times a baby’s height, taller than the treetops**. These are the revised concept-scale targets; v1’s adult-relative size multipliers do not constrain this pass. Witch about50px in game is a contextual ruler, not a generated-image calibration. No source size parameters were edited.
+
+| Today’s exact-source awake legend | Revised A / B / C; hero above, game-camera approximation below |
+|---|---|
+| **PENDING canonical pixels**, requested1904#6708045677. No historical image relabelled current. | ![Colossal legend alternatives with witch and trees](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/squirrel/legend-concepts-v2.png) |
+
+Three columns A/B/C; top row low hero view, bottom row the same three designs from an elevated game-camera approximation (target29.79° down/34.38° toward). **Every cell includes a witch and forest trees. C is the clear maximum-fantasy option.** No exact projection,20×measurement, native-size/game-render or mature-canopy-clearance acceptance is claimed.
+
+- **A:** Coppice Archive: colossal red squirrel with strong haunches/tufted ears/delicate paws, giant question-mark bushy tail contains generations of acorn reliquaries, weathered grey muzzle, saplings grown in old tail scars, great roots/offerings at feet.
+- **B:** Seed of the First Wood: giant red squirrel holds a cathedral-sized glowing acorn between delicate forepaws, weathered acorn-cup shoulder armour, powerful haunches/huge bushy tail/tufted ears, seed casts branching forest-light across twiggy saplings.
+- **C — MAXIMUM FANTASY:** MAXIMUM FANTASY Ancestral Seed Spiral: colossal RED SQUIRREL with clear tufted ears, small pointed face, powerful hindquarters/delicate paws; impossible vast question-mark tail curls upward as a living spiral coppice, many tiny ancient saplings and acorn shrine hollows grow within deep red fur, one amber primordial acorn lights its roots; epochs of silvered fur/bark-like scars. Tail attached to pelvis, not extra tree replacing animal.
+
+**Revised strongest proposed pick C — SIGNATURE ELEMENT: Living spiral coppice grown in an ancestral squirrel tail.** The squirrel’s enormous tail and seed hoard become the origin of a forest. Acorn shrines and successive generations of saplings make its history visible; haunches, delicate paws and tufted ears retain red-squirrel identity. Ed judges how far to take it; no activation.
+
+Actual inspected image result: C is strongest: one attached question-mark tail becomes a spiral coppice/shrine archive. A is a simpler offering tail, B mainly a giant held acorn with common armour. Witch and trees appear in all six cells; tail overtops many local crowns, while taller foreground trunks complicate exact canopy scale. Ears/foredigits are oversized and the tail surface becomes barklike; retain visible fur and small-face/haunch anatomy. Bottom is elevated, not calibrated; exact20×baby is not measured.
+
+### Revised chosen checklist
+
+1. Red squirrel pointed face/tufted ears/strong haunches/delicate forepaws.
+2. A single huge question-mark bushy tail rooted at pelvis.
+3. Tail fur still visible beneath sparse coppice growth.
+4. Primordial acorn is the light source, not unrelated body crystals.
+5. Weathered shrine hollows show generations of hoarding/reverence.
+6. Witch and ordinary surrounding saplings/trees are visible in both views.
+
+### Revised body plan and missing shared features
+
+Bulk stays in hindquarters; tail plume can arch above canopy but needs one readable attachment and centreline. Small trees on tail are offerings/ecology at a different scale from the animal, not a tree replacing tail fur. Proportion/anatomy checklist remains the control over image defects; colossal mass/world-grown layers must not merely rescale the adult outline.
+
+Curved anisotropic fur-plume tail, nested ecological/acorn shrine sockets and bounded light volume; footprint/occlusion and actual tail support require shared-owner review. Graph owner1866 confirms feasibility/implementation; existing neck/parent/static membrane kinds are not new requests. Shrines, ecology and environmental magic here are reference proposals only, no permission to change terrain, combat, effects or gameplay.
+
+### Revision provenance and acceptance
+
+[Full v2 plate](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/squirrel/legend-concepts-v2.png), SHA256 `f61a4f8666e3667cd34acfc7a7602e9fadcbfbde34ca1ad8d0a1806480a6d9f0`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/squirrel/legend-prompt-v2.txt); [provenance and3briefs](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/squirrel/legend-provenance-v2.json). Built-in image_gen.imagegen on2026-11-07; model/version/seed not exposed. All requested second-pass plates actually generated/saved/inspected; no source image edit or real-photo input. Earlier v1/anatomy images and their immutable provenance remain intact.
+
+Second-pass reference milestone complete for review, with image defects/scale-camera limits above. Overall comparison remains PARTIAL until canonical exact-source today panels arrive and are placed beside v2. Ed acceptance and migration are separate; nothing activated.

@@ -58,7 +58,7 @@ All selected plates were visually inspected for whole framing, adult/young rows 
 
 Review boundary: target note/reference output complete for coordinator review, with explicit uncertainties above. Species migration and likeness acceptance remain #1866/canonical/Ed decisions; no source, rig, render, registry, gameplay, text or default changed.
 
-## Legend concepts — 2026-11-07 proposal
+## Legend concepts v1 — preserved earlier iteration
 
 Authorized by1476#6707981581 and correction6707992824. Read ART-GUIDE0b/0c and legend-audit; crystals, flame crests and spirit wings are allowed when fitting. Fit and variety win over a blanket adornment ban. Ed judges these proposals; nothing is implemented.
 
@@ -98,3 +98,44 @@ Directional dorsal spine field with per-spine wear/regrowth and sparse emissive 
 [Plate](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/hedgehog/legend-concepts-v1.png), SHA256 `7d6903c8aea16bec88c8b8cf3e05e9ce27eef6df5aec7969d2bb42a347d054c6`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/hedgehog/legend-prompt-v1.txt); [provenance and A/B/C briefs](https://raw.githubusercontent.com/edsaperia/witch/e85e74d7ccff41e1ffc9447cfe0df7cd959d77bc/previews/art-pass/hedgehog/legend-provenance-v1.json). Built-in image_gen.imagegen,2026-11-07; model/seed not exposed. Three concepts with two views each; no real photo input. All eight plates were visually inspected; written QA and real anatomy override generated defects.
 
 Legend-addition status: concepts/selection notes complete, **PARTIAL until today’s exact-source comparison is supplied and placed beside them**. This does not reopen the completed anatomy target milestone or authorize activation.
+
+## Legend concepts v2 — colossal mythic second pass
+
+This is the current proposal, superseding v1 picks/body-size suggestions for legend review, not erasing that history. Authority:1476#6708227119 and later6708229124, fully read. ART-GUIDE0b/0c: each level evolves; nature plus ancient wisdom/power/magic; each its own. Later instruction explicitly permits fitting crystals/flame/spirit wings and supersedes the earlier plain-background constraint. Area text source/story remains as cited above.
+
+DESIGN, Art direction: legends are **about20times a baby’s height, taller than the treetops**. These are the revised concept-scale targets; v1’s adult-relative size multipliers do not constrain this pass. Witch about50px in game is a contextual ruler, not a generated-image calibration. No source size parameters were edited.
+
+| Today’s exact-source awake legend | Revised A / B / C; hero above, game-camera approximation below |
+|---|---|
+| **PENDING canonical pixels**, requested1904#6708045677. No historical image relabelled current. | ![Colossal legend alternatives with witch and trees](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/hedgehog/legend-concepts-v2.png) |
+
+Three columns A/B/C; top row low hero view, bottom row the same three designs from an elevated game-camera approximation (target29.79° down/34.38° toward). **Every cell includes a witch and forest trees. C is the clear maximum-fantasy option.** No exact projection,20×measurement, native-size/game-render or mature-canopy-clearance acceptance is claimed.
+
+- **A:** Hazel Bastion: colossal low domed hedgehog long furred pointed face/round ears/shortfeet, true weathered quills as immense defensive ridges, bramble and red berries rooted only in old dorsal gaps, small lamps/offerings tied to worn quill bases.
+- **B:** Berry Reliquary: giant low hedgehog, face/feet free of quills, broad mantle carries huge translucent red berry lanterns among true spines and hazel leaf offerings; repaired ancient quills banded with bronze, mossy flank scars like old stone.
+- **C — MAXIMUM FANTASY:** MAXIMUM FANTASY Walking Bramble Range: colossal unmistakable low HEDGEHOG with furry pointed snout and short feet; dorsal quills rise as an entire jagged mountain range above hazel canopy, each weathered ivory quill has tiny carved pilgrim stair/shrine niches, glowing red berry suns nested sparsely between, ancient moss and bramble valleys. Face/limbs/belly unspined, not porcupine.
+
+**Revised strongest proposed pick C — SIGNATURE ELEMENT: Quill mountain range with pilgrim niches and berry suns.** The low defensive dome becomes an ancient mountain sanctuary. Its quills supply the entire impossible landform; red berries and hazel/bramble valleys tie reverence to the actual area. Ed judges how far to take it; no activation.
+
+Actual inspected image result: C best delivers a quill mountain sanctuary; A is a large bramble guardian and B berry armour. Witch and hazel-type trees appear in all six cells, smaller crowns below quill tips. Some foreground trees are taller in perspective. Quills become overly angular rock/wood slabs and the furry body/legs are still too tall, with a somewhat catlike face: these are explicit drawing defects, not accepted anatomy. Preserve low dome/pointed snout/shortfeet in the written target. Bottom row is elevated, not a calibrated game render.
+
+### Revised chosen checklist
+
+1. Low oval hedgehog dome, long furry pointed snout and shortfeet.
+2. Face, belly and limbs remain unspined.
+3. Quills rise from dorsal skin, not detached stone towers.
+4. Worn ivory quill ridges retain a coherent backward direction.
+5. Sparse berry lights and carved niches leave spine/face readable.
+6. Tiny witch and hazel trees show the giant’s height in both views.
+
+### Revised body plan and missing shared features
+
+Keep the animal low beneath exaggerated dorsal spines; distinguish animal height from added quill relief and surrounding trees. Avoid a tall porcupine neck/body even where fantasy quills form peaks. Proportion/anatomy checklist remains the control over image defects; colossal mass/world-grown layers must not merely rescale the adult outline.
+
+Directional quill field with worn/broken shapes and nested shrine features, dorsal-only ecological masks and bounded berry lights; safe deformation/curl envelope needs separate review. Graph owner1866 confirms feasibility/implementation; existing neck/parent/static membrane kinds are not new requests. Shrines, ecology and environmental magic here are reference proposals only, no permission to change terrain, combat, effects or gameplay.
+
+### Revision provenance and acceptance
+
+[Full v2 plate](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/hedgehog/legend-concepts-v2.png), SHA256 `3bebb0bf1733692964cdc91fc038f1e5f12eabb497681c7f192752913e3cd04d`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/hedgehog/legend-prompt-v2.txt); [provenance and3briefs](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/hedgehog/legend-provenance-v2.json). Built-in image_gen.imagegen on2026-11-07; model/version/seed not exposed. All requested second-pass plates actually generated/saved/inspected; no source image edit or real-photo input. Earlier v1/anatomy images and their immutable provenance remain intact.
+
+Second-pass reference milestone complete for review, with image defects/scale-camera limits above. Overall comparison remains PARTIAL until canonical exact-source today panels arrive and are placed beside v2. Ed acceptance and migration are separate; nothing activated.
