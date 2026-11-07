@@ -364,7 +364,7 @@ jobs:
       - check-work
     if: ${{ !cancelled() }}
   smoke:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
       PLAYWRIGHT_VERSION: 1.56.1
@@ -400,12 +400,7 @@ jobs:
       - name: Install Chromium (bounded, one retry)
         if: needs.build.outputs.reuse != 'true'
         shell: bash
-        run: |
-          for try in 1 2; do
-            timeout 300 .pw/node_modules/.bin/playwright install --with-deps chromium && exit 0
-            echo "Chromium install attempt $try failed or exceeded 300 s"; sleep 5
-          done
-          exit 1
+        run: node tools/ci/install-chromium.cjs
       - name: Quick smoke test
         if: needs.build.outputs.reuse != 'true'
         shell: bash
@@ -444,7 +439,7 @@ jobs:
       - deploy
     if: ${{ !cancelled() && needs.build.result == 'success' && (github.ref != 'refs/heads/main' || needs.deploy.result == 'success') }}
   proofs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     needs: [build]
     # Headless correctness only; release/publish heads were already proven on their own PRs.
@@ -473,12 +468,7 @@ jobs:
       - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
       - name: Install Chromium (bounded, one retry)
         shell: bash
-        run: |
-          for try in 1 2; do
-            timeout 300 .pw/node_modules/.bin/playwright install --with-deps chromium && exit 0
-            echo "Chromium install attempt $try failed or exceeded 300 s"; sleep 5
-          done
-          exit 1
+        run: node tools/ci/install-chromium.cjs
       - name: Run every declared CI-safe proof
         env:
           NODE_PATH: ${{ github.workspace }}/.pw/node_modules
@@ -494,7 +484,7 @@ jobs:
           if-no-files-found: warn
   large-world:
     name: largest shipped world art
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     needs: [build, deploy]
     if: ${{ !cancelled() && needs.build.result == 'success' && (github.ref != 'refs/heads/main' || needs.deploy.result == 'success') }}
@@ -531,12 +521,7 @@ jobs:
       - name: Install Chromium (bounded, one retry)
         if: needs.build.outputs.reuse != 'true'
         shell: bash
-        run: |
-          for try in 1 2; do
-            timeout 300 .pw/node_modules/.bin/playwright install --with-deps chromium && exit 0
-            echo "Chromium install attempt $try failed or exceeded 300 s"; sleep 5
-          done
-          exit 1
+        run: node tools/ci/install-chromium.cjs
       - name: Load and draw diverse art on the largest shipped world
         if: needs.build.outputs.reuse != 'true'
         env:
@@ -596,7 +581,7 @@ jobs:
           if-no-files-found: ignore
   game-unchanged:
     name: game unchanged (bench:quick)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     env:
       PLAYWRIGHT_VERSION: 1.56.1
@@ -652,12 +637,7 @@ jobs:
       - name: Install Chromium (bounded, one retry)
         if: steps.same.outputs.same != 'true'
         shell: bash
-        run: |
-          for try in 1 2; do
-            timeout 300 .pw/node_modules/.bin/playwright install --with-deps chromium && exit 0
-            echo "Chromium install attempt $try failed or exceeded 300 s"; sleep 5
-          done
-          exit 1
+        run: node head/tools/ci/install-chromium.cjs
       - name: Base
         if: steps.same.outputs.same != 'true'
         working-directory: base
