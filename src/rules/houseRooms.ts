@@ -20,10 +20,12 @@ export interface Rect { x0: number; x1: number; z0: number; z1: number; /** a ro
 /** What E does at an object (config/house/ `use`). */
 export type HouseUse =
   | { kind: "creator"; axes: string[]; wear: string[]; parts: string[]; spell?: "hat" | "broom" }
-  /** Only to look at (Ed, 2026-10-29: the Workshop's bay and pegboard, since the broom is one station at the lathe): no prompt, E does nothing. */
+  /** Only to look at (the Workshop's pegboard: Ed, 2026-11-07, "The pegboard becomes scenery only: no menu, still drawn on the wall with her finds"): no prompt, E does nothing. */
   | { kind: "scenery" }
   | { kind: "telephone" }
   | { kind: "hats" } | { kind: "bed" } | { kind: "zoo" } | { kind: "telescope" } | { kind: "say"; line: string } | /** the invitations desk (rules/kit.ts) */ { kind: "invites" }
+  /** The broom rack (Ed, 2026-11-07: "E takes her plain broom for the night. No menu, like the invitations desk"; rules/kit.ts takeBroom). */
+  | { kind: "brooms" }
   /** The map table (Ed, 2026-10-24: the Solarium's): E opens the sea chart (rules/treehouse.ts atMapTable). */
   | { kind: "chart" }
   /** A treehouse Studio instrument (Ed, 2026-10-23): she's at it by nearness, its menu in and every key playing it (rules/studio.ts). */

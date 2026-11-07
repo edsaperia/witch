@@ -20,7 +20,9 @@ let playwright; try { playwright = require("playwright"); } catch { playwright =
 const [outArg = "previews/stations", distArg] = process.argv.slice(2);
 const out = path.resolve(outArg), root = path.resolve(distArg || path.join(__dirname, "../../dist"));
 const W = 1280, H = 720, ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null;
-const STATIONS = ["mirror", "dressingTable", "basin", "wardrobe", "shoeRack", "cloakPegs", "bags"];
+const STATIONS = ["mirror", "dressingTable", "basin", "wardrobe", "shoeRack", "cloakPegs", "bags", "broomBay", "lathe", "broomLift"];
+// (the broom's three modding stations only work while she carries her broom, Ed 2026-11-07: those open on a night with her kit, ?kit=full)
+const BROOM = ["broomBay", "lathe", "broomLift"];
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
 
@@ -41,7 +43,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         Object.defineProperty(navigator, "getGamepads", { configurable: true, writable: true, value: () => (window.__padOn ? [{ id: "DualSense (STANDARD GAMEPAD Vendor: 054c)", index: 0, connected: true, mapping: "standard", timestamp: performance.now(), axes: window.__pad.axes, buttons: window.__pad.buttons.map(p => ({ pressed: p, touched: p, value: p ? 1 : 0 })) }] : real ? real() : []) });
       });
       page.on("pageerror", e => fails.push(`${id}: page error ${e.message}`));
-      await page.goto(`http://127.0.0.1:${server.address().port}/?shot=object:${id}&seed=123`);
+      await page.goto(`http://127.0.0.1:${server.address().port}/?shot=object:${id}&seed=123${BROOM.includes(id) ? "&kit=full" : ""}`);
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 500 });
       // (the start card's any key: Q, which the station's panel leaves alone, as it takes Enter, E and Space)
       await page.keyboard.press("KeyQ");

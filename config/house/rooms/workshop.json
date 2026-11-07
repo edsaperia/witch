@@ -9,7 +9,9 @@
   "r": 8,
   "objects": [
     {"id":"pegboard","label":"Pegboard","use":{"kind":"scenery"},"offset":[-3.76,-5.18],"box":{"w":6.2,"d":1.8,"h":6.2}},
-    {"id":"broomBay","label":"Broom bay","use":{"kind":"scenery"},"offset":[-2.29,3.43],"box":{"w":6.4,"d":3.2,"h":3}},
-    {"id":"lathe","label":"Lathe","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[3.02,-3.73],"box":{"w":5.76,"d":2.16,"h":2.64}}
+    {"id":"broomBay","label":"Workbench","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[-2.29,3.43],"box":{"w":6.4,"d":3.2,"h":3}},
+    {"id":"lathe","label":"Lathe","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[3.02,-3.73],"box":{"w":5.76,"d":2.16,"h":2.64}},
+    {"id":"broomRack","label":"Broom rack","use":{"kind":"brooms"},"offset":[-0.5,-3.5],"box":{"w":2.8,"d":1.2,"h":4.4}},
+    {"id":"broomLift","label":"Hydraulic lift","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[2,1],"box":{"w":5.2,"d":2.6,"h":3}}
   ]
 }

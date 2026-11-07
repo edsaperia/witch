@@ -78,7 +78,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     // In the house's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at an object uses it (main.ts opens what it opens); the hats'
     // floor's hats are picked up and put down; E held at the bed fills its ring, and full, she sleeps: the night's over.
     const candidate = inHouse ? objectAt(deck!, x, z) : null;
-    const at = candidate ? houseObjectFor(g, candidate) : null; // (in solo a guest's bedroom's piece only says it waits: rules/guestFurniture.ts)
+    const at = candidate ? houseObjectFor(g, candidate, W) : null; // (in solo a guest's bedroom's piece only says it waits: rules/guestFurniture.ts)
     if (c.hat && inHouse && HOUSE_ROOMS.layout) {
       if (wearing(W.hat)) { W.hat.down = { x, z, at: ht }; delete W.hat.hold; reserveHatPoints(W, deck!); relicEvents.push({ kind: "hatPut", id: W.id, x, z, at: ht }); }
       else { const event = useHats(W, deck!, x, z, ht, t.leash.runeRadius, 0.9, g.witches.length > 1 ? id => g.witches.some(o => o !== W && o.spells.hat === id) : undefined); if (event) relicEvents.push(event); }
@@ -86,9 +86,9 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     if ((sigil || place) && deck && W.body.mode === "ground" && !W.body.seated && atMapTable(deck, x, z)) relicEvents.push({ kind: "chart", id: W.id, x: deck.x, z: deck.z, at: ht });
     else if ((sigil || place) && inHouse && (at?.use.kind === "hats" || (HOUSE_ROOMS.layout && hatToTake(W, deck!, x, z, t.leash.runeRadius)))) { const e = useHats(W, deck!, x, z, ht, t.leash.runeRadius, 0.9, g.witches.length > 1 ? id => g.witches.some(o => o !== W && o.spells.hat === id) : undefined); if (e) relicEvents.push(e); }
     else if ((sigil || place) && at && at.use.kind !== "bed" && at.use.kind !== "scenery") {
-      // her night's kit (rules/kit.ts): E at the invitations desk, tonight's invitations; at the lathe, a broom
+      // her night's kit (rules/kit.ts): E at the invitations desk, tonight's invitations; at the broom rack, a broom
       if (at.use.kind === "invites" && needsBag(W)) relicEvents.push({ kind: "needBag", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id }); // (no bag to carry them: the desk says so, rules/kit.ts NEED_BAG)
-      else if (at.use.kind === "invites" ? takeInvites(W) : at.id === "lathe" && takeBroom(g, W)) relicEvents.push({ kind: "kit", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.use.kind === "invites" ? "invites" : "broom" });
+      else if (at.use.kind === "invites" ? takeInvites(W) : at.use.kind === "brooms" && takeBroom(g, W)) relicEvents.push({ kind: "kit", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.use.kind === "invites" ? "invites" : "broom" });
       relicEvents.push({ kind: "house", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id });
       const waking = wakeOf(g, W); if (isDressingTable(at.id) && waking) waking.styled = true; // (her hair seen to: a first morning's step, rules/guidance.ts)
       if (isBasin(at.id) && waking) waking.washed = true; // (the basin used: the first morning's first step, Ed 2026-11-07)

@@ -38,6 +38,6 @@ describe("the morning's guidance pins breathe", () => {
   });
   it("only the morning's: the night's end's 🧭 and 💤 stay still, as with no pin", () => {
     for (const g of [{ kind: "bed" as const, target: { object: "bed" } }, { kind: "chart" as const, target: { object: "mapTable" } }, null]) expect(over(s => guidePulse(g, s, T))).toEqual([1, 1]);
-    for (const kind of ["desk", "lathe", "decks", "hat"] as const) expect(over(s => guidePulse({ kind, target: { object: "x" } }, s, T))[1]).toBeGreaterThan(1);
+    for (const kind of ["desk", "rack", "decks", "hat"] as const) expect(over(s => guidePulse({ kind, target: { object: "x" } }, s, T))[1]).toBeGreaterThan(1);
   });
 });

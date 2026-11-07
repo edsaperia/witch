@@ -321,3 +321,15 @@ export function brushTeeth(K: SfxKit, pan = 0, len = 1.2): void {
     for (const [r, l] of [[1, 1], [2.76, 0.3]]) { const g = c.createGain(); g.connect(out); K.env(g, t + dt, N.volume * N.twinkle * l, 0.002, 0.22); K.osc("sine", f * r, t + dt, 0.26, g); }
   });
 }
+
+/** The hydraulic lift (Ed, 2026-11-07: "It can hiss up and down when she uses it"): a breath of pressurised air, a band of noise that
+ *  rises in pitch going up (falls coming down) over half a second, and a soft clunk as it stops. */
+export function hiss(K: SfxKit, up: boolean, pan = 0): void {
+  if (!K.ready("liftHiss", .3)) return;
+  const c = K.ctx, at = c.currentTime + 0.01, out = K.voice(pan, 0.25, 0.4), vol = K.T.land.volume * 0.9, len = 0.55;
+  const bp = c.createBiquadFilter(), g = c.createGain(); bp.type = "bandpass"; bp.Q.value = 2.2;
+  bp.frequency.setValueAtTime(up ? 1400 : 3600, at); bp.frequency.exponentialRampToValueAtTime(up ? 3600 : 1400, at + len);
+  g.connect(out); K.env(g, at, vol, 0.04, len); bp.connect(g);
+  K.noiseBurst(at, len + 0.05, bp, 0.37);
+  K.thump(at + len, vol * 0.6, pan);
+}

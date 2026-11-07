@@ -157,13 +157,30 @@ describe("the oak's rooms", () => {
     expect(["rising", "treetop"]).toContain(rise(0, 0)); // (the Terrace's middle, as before)
   });
 
-  it("the Workshop's bay and pegboard are only to look at: E there does nothing (Ed, 2026-10-29: the broom one station, at the lathe)", () => {
-    for (const id of ["broomBay", "pegboard"]) {
+  it("the Workshop's pegboard is only to look at: E there does nothing (Ed, 2026-11-07: \"The pegboard becomes scenery only: no menu\")", () => {
+    const o = obj("pegboard"), g = inHouse(0, 0), at = before(o);
+    expect(o.use.kind).toBe("scenery");
+    put(g, at.x, at.z);
+    expect(press(g).find(e => e.kind === "house")).toBeUndefined();
+  });
+
+  it("the broom's modding stations (workbench, lathe, lift) only work while she carries her broom (Ed, 2026-11-07, option B); the rack gives her one", () => {
+    for (const id of ["broomBay", "lathe", "broomLift"]) {
       const o = obj(id), g = inHouse(0, 0), at = before(o);
-      expect(o.use.kind, id).toBe("scenery");
+      g.witches[0].kit = { invites: true, broom: false };
       put(g, at.x, at.z);
+      expect(houseObjectFor(g, o).use.kind, `${id}: dark without her broom`).toBe("scenery");
       expect(press(g).find(e => e.kind === "house"), id).toBeUndefined();
+      g.witches[0].kit.broom = true;
+      expect(houseObjectFor(g, o).use.kind, `${id}: lit carrying it`).toBe("creator");
+      expect(press(g).find(e => e.kind === "house")?.obj, id).toBe(id);
     }
+    const r = obj("broomRack"), g = inHouse(0, 0), at = before(r);
+    g.witches[0].kit = { invites: true, broom: false };
+    put(g, at.x, at.z);
+    expect(r.use.kind).toBe("brooms");
+    press(g);
+    expect(g.witches[0].kit.broom).toBe(true);
   });
 
   it("E at each working object says which (main.ts opens its station, the creator at its choices, or the zoo)", () => {

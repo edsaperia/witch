@@ -9,7 +9,9 @@
     "cloakPegs": ["cloak", "scarf"],
     "shoeRack": ["trousers", "shoes"],
     "bags": ["bag", "bagFit"],
-    "lathe": ["tip", "chassis", "exhaust", "sets", "broomBody", "broomTrim", "broomFit", "trail", "pegboard"]
+    "broomBay": ["tip", "sets"],
+    "lathe": ["chassis", "broomBody", "sets"],
+    "broomLift": ["exhaust", "broomTrim", "sets"]
   },
   "shelves": {
     "hair": { "frame": "head", "label": "Hair", "colour": ["hair"], "items": [
@@ -74,9 +76,8 @@
     "chassis": { "frame": "broom", "label": "Chassis", "slot": "chassis", "items": [] },
     "exhaust": { "frame": "broom", "label": "Exhaust", "slot": "exhaust", "items": [] },
     "sets": { "frame": "broom", "label": "Sets", "sets": true, "items": [] },
-    "broomBody": { "frame": "broom", "label": "Body", "colour": ["broom"], "items": [] },
-    "broomTrim": { "frame": "broom", "label": "Trim", "colour": ["bristles"], "items": [] },
-    "broomFit": { "frame": "broom", "label": "Fit", "fit": ["broomLength", "broomThickness", "broomBend", "bristles"], "items": [] },
+    "broomBody": { "frame": "broom", "label": "Body", "colour": ["broom"], "fit": ["broomLength", "broomThickness", "broomBend"], "items": [] },
+    "broomTrim": { "frame": "broom", "label": "Trim", "colour": ["bristles"], "fit": ["bristles"], "trail": true, "items": [] },
     "trail": { "frame": "broom", "label": "Trail", "trail": true, "items": [] },
     "pegboard": { "frame": "board", "label": "Her finds, laid out like the world", "board": true, "readOnly": true, "items": [] }
   }
