@@ -1,0 +1,36 @@
+{
+  "tool": "image_gen__imagegen built-in",
+  "date": "2026-11-07",
+  "purpose": "synthetic anatomy and legend concept targets; never game assets",
+  "cameraRequested": {
+    "pitchRad": 0.52,
+    "yawFromRightProfileRad": [
+      0.6,
+      -0.6
+    ]
+  },
+  "limits": [
+    "Camera angles approximate, often compressed near profile; not calibrated",
+    "Young are mobile design proxies; no precise age verification",
+    "Still poses do not prove gait/flap/transition implementation",
+    "Real photographs override generated anatomy",
+    "Legend concepts are proposals for Ed, not approved designs",
+    "Todays shipped-legend comparison pending canonical exact-head capture"
+  ],
+  "records": [
+    {
+      "file": "ref-board-v2.png",
+      "prompt": "Photoreal scientific animal reference board, exact2x4 equal panels: adult top row, mobile juvenile bottom row. Columns1/2 neutral four-foot standing, columns3/4 walking. ALL ANIMALS FACE RIGHT. Odd columns strict right-facing SIDE PROFILE rotated0.6radians TOWARDS viewer; even columns same right-facing side profile rotated0.6radians AWAY viewer, animal STILL faces RIGHT. Elevated camera pitch0.52radians downward, near-orthographic long lens; do not use front-on/rear-on poses. Plain lightgrey floor/backdrop, daylight. Whole animal including all extremities/tail within each panel with margin. No text. Four anatomically correct limbs, no doubled legs. POLAR BEAR Ursus maritimus. Creamy white fur, long tapered neck, low small elongated head with dark nose/eyes, small round ears, no grizzly shoulder hump, broad plantigrade paws, tiny tail, long low sloping body. Cub relatively bigger head/shorter muzzle/rounder body. Real animal anatomy, no toy proportions.",
+      "sha256": "f3151e37f2532d0fa323c218392f8b74429694c399b277fd8fb32931f9c69809"
+    },
+    {
+      "file": "legend-concepts-v1.png",
+      "prompt": "Edit the three polar bear legend concepts retaining every design (left ancient floorlength fleece/bronze offering, middle snowshoe paw ice light, right sparse shoulder ice crystals). Zoom OUT every animal30percent, recenter separately within its panel, fully reconstruct any missing rump/fur/tiny tail so ENTIRE animal is visible with15percent empty grey margin on all sides. Keep plain grey background/floor,3equal panels, camera now elevated30degrees looking down, right-facing side yaw34degrees towards. No body cropped at sheet/panel edges; paws completely visible. Preserve long neck low tapered head small round ears, no grizzly hump. No new decoration or text.",
+      "sha256": "72c0550b16c891f1f3594d25def8730faf812a357c0e672c9aa6c02534495c39"
+    }
+  ],
+  "legendEditHistory": [
+    "Photoreal fantasy animal design triptych 1row3 equal concepts ancient legendary POLAR BEAR. Plain neutral grey floor/background; elevated camera down30degrees/right-facing side rotated34degrees towards viewer. Whole creature ALL limbs/tiny tail in each panel with generous empty margins. Long low neck/small elongated head tiny round ears black nose huge paws white fur, no grizzly hump. LEFT A: enormous ancient polar bear with a floor-length weathered ivory FLEECE, layered wind-combed hairs like old snowdrifts, dark scarred muzzle, one simple worn bronze throat offering with stone, still legs/paws visible. MIDDLE B: long-necked ice navigator with oversized snowshoe paws and faint blue cracks of light radiating only across its paw pads/nearest ground, frost on nose. RIGHT C: sea-ice sage, broad long paws, grey frost-streaked coat, sparse natural ice crystals growing only at worn shoulder fur, subtle cold light. Area pack ice: bleak ice, wind, old age and endurance, not forest or huge crown. Each unmistakable polar bear, no identical jewelry on all, no armor uniform, no text. Distinct animal-specific magic/ancient wisdom.",
+    "Edit the three polar bear legend concepts retaining every design (left ancient floorlength fleece/bronze offering, middle snowshoe paw ice light, right sparse shoulder ice crystals). Zoom OUT every animal30percent, recenter separately within its panel, fully reconstruct any missing rump/fur/tiny tail so ENTIRE animal is visible with15percent empty grey margin on all sides. Keep plain grey background/floor,3equal panels, camera now elevated30degrees looking down, right-facing side yaw34degrees towards. No body cropped at sheet/panel edges; paws completely visible. Preserve long neck low tapered head small round ears, no grizzly hump. No new decoration or text."
+  ]
+}

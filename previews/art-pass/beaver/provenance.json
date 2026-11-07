@@ -1,0 +1,32 @@
+{
+  "tool": "image_gen__imagegen built-in",
+  "date": "2026-11-07",
+  "purpose": "synthetic anatomy and legend concept targets; never game assets",
+  "cameraRequested": {
+    "pitchRad": 0.52,
+    "yawFromRightProfileRad": [
+      0.6,
+      -0.6
+    ]
+  },
+  "limits": [
+    "Camera angles approximate, often compressed near profile; not calibrated",
+    "Young are mobile design proxies; no precise age verification",
+    "Still poses do not prove gait/flap/transition implementation",
+    "Real photographs override generated anatomy",
+    "Legend concepts are proposals for Ed, not approved designs",
+    "Todays shipped-legend comparison pending canonical exact-head capture"
+  ],
+  "records": [
+    {
+      "file": "ref-board-v2.png",
+      "prompt": "Photoreal scientific animal reference board, exact2x4 equal panels: adult top row, mobile juvenile bottom row. Columns1/2 neutral four-foot standing, columns3/4 walking. ALL ANIMALS FACE RIGHT. Odd columns strict right-facing SIDE PROFILE rotated0.6radians TOWARDS viewer; even columns same right-facing side profile rotated0.6radians AWAY viewer, animal STILL faces RIGHT. Elevated camera pitch0.52radians downward, near-orthographic long lens; do not use front-on/rear-on poses. Plain lightgrey floor/backdrop, daylight. Whole animal including all extremities/tail within each panel with margin. No text. Four anatomically correct limbs, no doubled legs. EURASIAN BEAVER Castor fiber. In every panel body HORIZONTAL and low, all fours, never sitting upright or balancing on hind feet. Broad heavy rump, smaller chest, blunt broad head small round ears, brown fur, small unwebbed forepaws, large webbed hind feet. Very broad flat horizontally oriented scaly paddle tail fully visible trailing behind. Kit rounder body, proportionately bigger head/shorter legs, still paddle tail. Standing no lifted forelimbs, walking only one forepaw steps. Tail never vertical, not otter.",
+      "sha256": "c310a5f9aa892b8390408ddfab6fecd3a1399b4195bb9eea5ec6921549e018c7"
+    },
+    {
+      "file": "legend-concepts-v1.png",
+      "prompt": "Three photoreal fantasy ancient legendary BEAVER concepts, 1x3equal panels. Whole animals SMALL only60percent each panel width, giant empty grey margins ALL paddle tail/paws visible. Fixed down30degree camera right-facing side yaw34degrees towards. Plain grey floor/background. All recognisable low heavy brown beavers, broad blunt heads tiny ears big orange incisors, tiny forehands large webbed hindfeet huge broad flat paddle tail. Grey worn muzzle/scars/wisdom, no costume uniform. LEFT A: ancient dam-builder holds ONE deeply gnawed pale aspen log across forepaws, enormous worn orange incisors emit faint amber light, heavy low haunch and paddle. MIDDLE B: old waterkeeper with very broad dark flat paddle tail bearing subtle luminous concentric water-ripple grooves, not jewels; damp coat. RIGHT C: great pond elder with one asymmetrical necklace of worn wooden offering tokens and tiny smooth river stones, heavy scarred orange incisors, moss only small fur patches. Beaver pond story birch leaves/aspen stumps/dam; no scenery/dam building attached to back. Ancient animal nature and craft, not otter or capybara. No text or crown.",
+      "sha256": "2e2d20ec4e57320e85aad09bb5f8c0abb46bf716091a9cecda6c0e4f3ae92168"
+    }
+  ]
+}

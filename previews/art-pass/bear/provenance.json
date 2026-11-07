@@ -1,0 +1,37 @@
+{
+  "tool": "image_gen__imagegen built-in",
+  "date": "2026-11-07",
+  "purpose": "synthetic anatomy and legend concept targets; never game assets",
+  "cameraRequested": {
+    "pitchRad": 0.52,
+    "yawFromRightProfileRad": [
+      0.6,
+      -0.6
+    ]
+  },
+  "limits": [
+    "Camera angles approximate, often compressed near profile; not calibrated",
+    "Young are mobile design proxies; no precise age verification",
+    "Still poses do not prove gait/flap/transition implementation",
+    "Real photographs override generated anatomy",
+    "Legend concepts are proposals for Ed, not approved designs",
+    "Todays shipped-legend comparison pending canonical exact-head capture"
+  ],
+  "reusedBear": {
+    "source": "previews/ed/creature-graph/de27db515/bear",
+    "standing": "ref-board.png",
+    "provenance": "ref-provenance.json"
+  },
+  "records": [
+    {
+      "file": "ref-walk.png",
+      "prompt": "Photoreal scientific brown bear WALKING reference board 2by2 equal panels, adult top row/cub bottom, all FACE RIGHT. Each animal occupies ONLY60percent of its panel width with very generous EMPTY grey margins around ENTIRE BODY including rear rump paws ears tiny tail, absolutely NO CROPPING. Camera downward30degrees, right-facing side view rotated34degrees toward viewer left column,34degrees away right column, still right-facing. Natural slow four-foot walk, short thick legs broad paws heel-down hindfeet, heavy shoulder hump higher than lower rump, hanging belly, head forward/down continuous tapered tan-brown muzzle/dark nose, tiny round adult ears, brown shaggy fur. Cub rounder bigger relative head short muzzle/legs. Four limbs only. Soft daylight grey floor/background. No text, no props. Keep every extremity far away from panel borders.",
+      "sha256": "a0f5a6475fe2d58ad3b8141c0ca9b3f7aea0dea572c54be013910c575ca53c9d"
+    },
+    {
+      "file": "legend-concepts-v1.png",
+      "prompt": "Three DISTINCT legendary BROWN BEAR concept targets in one 1x3 horizontal triptych, photoreal fantasy wildlife, same camera down30degrees and right-facing threequarter34degrees, plain neutral grey ground/background. Whole animal EACH with huge margins, no text. All unmistakably ancient brown/grizzly bears: shoulder hump highest, low head small round ears, tapered muzzle, hanging belly, massive forearms broad plantigrade paws, tiny tail, scars/grey muzzle. LEFT A: immense scarred forest elder with one huge forepaw raised, five long worn amber-glowing claws like old tusks, power from its own muscle not armor. MIDDLE B: weathered honey guardian, subtle natural honeycomb patches in shoulder fur with warm gold honey droplets and a few tiny bee motes, never a building on back. RIGHT C: old river-fisher bear with broad pale scarred muzzle and one small luminous salmon held gently across huge paws. Berry-thicket home: pine needles/bramble berries/tall pines inspire earthy coat; don't add scenery or trees. Each same animal family but unique silhouette/magic. Not teddy, dog, boar, giant horns, uniform crystal crowns. Entire feet/rump within frame.",
+      "sha256": "edde2bd87d8f98efb8eaf637651fdd8dc6b29edd2c45e77559e30b14977fa7b3"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "tool": "image_gen__imagegen built-in",
+  "date": "2026-11-07",
+  "purpose": "synthetic anatomy and legend concept targets; never game assets",
+  "cameraRequested": {
+    "pitchRad": 0.52,
+    "yawFromRightProfileRad": [
+      0.6,
+      -0.6
+    ]
+  },
+  "limits": [
+    "Camera angles approximate, often compressed near profile; not calibrated",
+    "Young are mobile design proxies; no precise age verification",
+    "Still poses do not prove gait/flap/transition implementation",
+    "Real photographs override generated anatomy",
+    "Legend concepts are proposals for Ed, not approved designs",
+    "Todays shipped-legend comparison pending canonical exact-head capture"
+  ],
+  "records": [
+    {
+      "file": "ref-board-v2.png",
+      "prompt": "Photoreal scientific animal reference board, exact2x4 equal panels: adult top row, mobile juvenile bottom row. Columns1/2 neutral four-foot standing, columns3/4 walking. ALL ANIMALS FACE RIGHT. Odd columns strict right-facing SIDE PROFILE rotated0.6radians TOWARDS viewer; even columns same right-facing side profile rotated0.6radians AWAY viewer, animal STILL faces RIGHT. Elevated camera pitch0.52radians downward, near-orthographic long lens; do not use front-on/rear-on poses. Plain lightgrey floor/backdrop, daylight. Whole animal including all extremities/tail within each panel with margin. No text. Four anatomically correct limbs, no doubled legs. NINE-BANDED ARMADILLO Dasypus novemcinctus. Low elongated domed carapace, rigid shoulder/pelvic shields and nine flexible narrow transverse bands on middle only. Long pointed tapering snout, narrow upright ears, short stout clawed legs, long thin ring-armored tapering tail trailing behind fully in frame. Sparse hairy belly below armor. Juvenile proportionately bigger head/ears, smaller compact body. No pangolin scales, no hedgehog spines, no rolling ball. Correct natural anatomy/low gait.",
+      "sha256": "771fba5d7d574e431eb081ce5f4a5be50a0e79e8aed2286df3b8c0be5e2fa968"
+    },
+    {
+      "file": "legend-concepts-v1.png",
+      "prompt": "Scientific fantasy photoreal ancient ARMADILLO legends three DISTINCT concepts in three equal panels. Whole creature each SMALL60percent panel with huge empty grey margin, fixed camera looking down30degrees/right-facing side threequarter34degrees, plain grey floor/background no scenery. Ninebanded body family: domed shell, long tapered snout, upright ears, short clawed legs, ringed taper tail. Weathered shield wear/scars/wisdom. LEFT A chosen tradition: half-curled armadillo showing broad roof-tile armor bands with glowing warm seams, face tiny ears and tail recognisable; transformable to luminous rolling ball, fantasy not literal biology. MIDDLE B: ancient digger fourfeet, enormous worn spade foreclaws and cracked clay-red carapace, faint light in tiny old scratches only, no glowing seams. RIGHT C: quiet desert elder, weathered bronze-like natural armor with one small carved stone offering at breast, long scarred muzzle, no jewelry crown. Scrub wash story cracked clay/sun-split stones/dry scrub, not wet forest. Different signature each, no crystals uniform, no extra limbs, no text. Tail fully within panels.",
+      "sha256": "e87d4d8a1742ab119f8ae52500ce5efa5dbe7e96d555b9fa9759ca55415a12c3"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "tool": "image_gen__imagegen built-in",
+  "date": "2026-11-07",
+  "purpose": "synthetic anatomy and legend concept targets; never game assets",
+  "cameraRequested": {
+    "pitchRad": 0.52,
+    "yawFromRightProfileRad": [
+      0.6,
+      -0.6
+    ]
+  },
+  "limits": [
+    "Camera angles approximate, often compressed near profile; not calibrated",
+    "Young are mobile design proxies; no precise age verification",
+    "Still poses do not prove gait/flap/transition implementation",
+    "Real photographs override generated anatomy",
+    "Legend concepts are proposals for Ed, not approved designs",
+    "Todays shipped-legend comparison pending canonical exact-head capture"
+  ],
+  "records": [
+    {
+      "file": "ref-board-v2.png",
+      "prompt": "Photoreal scientific animal reference board, exact2x4 equal panels: adult top row, mobile juvenile bottom row. Columns1/2 neutral four-foot standing, columns3/4 walking. ALL ANIMALS FACE RIGHT. Odd columns strict right-facing SIDE PROFILE rotated0.6radians TOWARDS viewer; even columns same right-facing side profile rotated0.6radians AWAY viewer, animal STILL faces RIGHT. Elevated camera pitch0.52radians downward, near-orthographic long lens; do not use front-on/rear-on poses. Plain lightgrey floor/backdrop, daylight. Whole animal including all extremities/tail within each panel with margin. No text. Four anatomically correct limbs, no doubled legs. EUROPEAN BROWN HARE Lepus europaeus not rabbit. Tawny agouti coat, huge long black-tipped ears, long narrow face/large lateral amber eyes, powerful folded haunches, very long hind feet, slim forelegs, short black-top white-underside tail. All four feet in natural alert ground stance or slow stepping. Leveret fully furred/open eyed, relatively bigger head, shorter ears/rounder body; no pink newborn. Keep long ears/paws visible.",
+      "sha256": "83bca0558c30d1f47fb710e330355f554946505d0fa7f23e6f4dada8b1a0c2ec"
+    },
+    {
+      "file": "legend-concepts-v1.png",
+      "prompt": "Three photoreal fantasy legendary HARE concepts 1x3equal panels. EACH animal SMALL within panel occupying only60percent panel height/width; HUGE EMPTY grey margins so ALL enormous ears, feet and tail fit. Camera30degrees down, right-facing side yaw34degrees towards, plain grey floor. Unmistakable European hare elongated black-tipped ears, amber lateral eyes, huge folded haunch/long hindfeet slim forelegs tawny agouti, old grey muzzle/scars. LEFT A: ancient listening sage whose extraordinarily long leaf-shaped hare EARS carry subtle bluebell-violet luminous veins, tiny worn ear notch, no crown. MIDDLE B: old pathfinder mid-low bound with long spring-coiled hindlegs, two restrained fading hare afterimages behind, no extra real limbs. RIGHT C: quiet moon listener with broad silvered ears and ONE worn bronze ear ring, soft pale moon disc cradled between ears not a floating crown. Bluebell glade/beech and berried holly inspire subtle violet/silver details, no environment/tree/backpack. Wisdom, weathering, great animal nature; distinct each own. No text, no matching armor or crystal uniform.",
+      "sha256": "551d10a5748e944da8092412a2b91ed6d9400e87f9d9ed0d83532daf191ffb3d"
+    }
+  ]
+}

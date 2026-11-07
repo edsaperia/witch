@@ -1,0 +1,41 @@
+{
+  "tool": "image_gen__imagegen built-in",
+  "date": "2026-11-07",
+  "purpose": "synthetic anatomy and legend concept targets; never game assets",
+  "cameraRequested": {
+    "pitchRad": 0.52,
+    "yawFromRightProfileRad": [
+      0.6,
+      -0.6
+    ]
+  },
+  "limits": [
+    "Camera angles approximate, often compressed near profile; not calibrated",
+    "Young are mobile design proxies; no precise age verification",
+    "Still poses do not prove gait/flap/transition implementation",
+    "Real photographs override generated anatomy",
+    "Legend concepts are proposals for Ed, not approved designs",
+    "Todays shipped-legend comparison pending canonical exact-head capture"
+  ],
+  "records": [
+    {
+      "file": "ref-board-v2.png",
+      "prompt": "Photoreal scientific fruit bat/flying fox Pteropus reference board 2rows x4columns equal panels. Adult top, fully furred volant juvenile bottom. ALL ANIMALS FACE RIGHT. Columns1/2 standing crouched on horizontal plain perch with folded wings;3/4 gliding with spread wings. Odd columns strict right-facing SIDE profile rotated0.6rad TOWARDS viewer; even columns same SIDE profile rotated0.6rad AWAY, still facing right. Camera0.52rad downward from horizontal near orthographic, whole animal/wings/claws with generous margins, neutral grey backdrop. Fox-like elongated muzzle/dark nose, big dark eyes, small ears, golden-orange neck mantle, dark brown furry torso, no long obvious tail. Two forelimbs are wings with visible elbow wrist elongated fingers and thin dark leathery membranes to sides/hind feet; free thumb claw. Two hind feet. No extra front legs or feathers. Folded-wing stance uses hindfeet/thumbs, flight uses broad span and scalloped trailing membrane. Juvenile proportionately bigger head/shorter muzzle/smaller wing span. No text, no accessories, no giant microbat ears. Anatomical photoreal target, not cartoon.",
+      "sha256": "cc02d9af65a5b715c3ae67e36277a08acba277c53720294ce27fd35d1adeb9ec"
+    },
+    {
+      "file": "ref-flight-ground-v1.png",
+      "prompt": "Scientific photoreal flying fox FRUIT BAT Pteropus anatomy reference. Exact2x4 equal panels, adult top row juvenile volant bat bottom. ALL FACE RIGHT. Col1 hanging upside-down by hindfeet from plain slender horizontal branch towards-side; col2 same away-side; col3 horizontal forward flight GLIDE towards-side; col4 horizontal forward flight GLIDE away-side. Camera fixed elevated looking down30degrees. All right-facing side profiles rotated34degrees toward viewer in odd columns and34degrees away in even, not frontal. Neutral grey background, whole bat and wing tips fully inside with large margins. Flight body is HORIZONTAL, chest/head forward aligned in flight direction, hindlegs extend/trail behind tail end, NOT dangling vertical like standing human. Broad leathery wings extend laterally off shoulders, bent elbow/wrist with elongated fingers supporting membrane to flank/hindfeet, free thumb claw. Folded hanging pose hindfeet ABOVE head, membranes wrap compactly around torso. Fox-like muzzle, big dark eyes, small ears, golden-brown mantle dark body/wings, no visible long tail. Four limbs total forelimbs transformed into wings, no feathers/extra arms. Juvenile larger head/shorter muzzle/smaller wings. No text. This is anatomy reference not an animation cycle, no invented transition poses.",
+      "sha256": "6394facb4e7ed8708924854e783c029843ed84279f45240babafa296255da169"
+    },
+    {
+      "file": "legend-concepts-v1.png",
+      "prompt": "Edit this three-panel legend concept sheet: remove ALL forest, leaves, fruits scenery, cave and ground rocks. Replace background in EACH panel with uniform plain medium light grey studio background and small contact shadow where applicable. Keep three different whole bats/design concepts, all anatomy and poses and magical elements; top horizontal flying bat; middle hanging bat with its single held fig and ONLY a thin plain perch above feet; bottom crouched bat with seed-pod offerings. Zoom OUT each subject to leave15percent blank margin around every wing tip/foot/ear, never crop whole animal. Photoreal concept reference at elevated30degree camera, same right-facing heading. No labels. Keep all three distinct designs, no new decoration. Plain background is mandatory.",
+      "sha256": "fc5846cf1ef8e035fea6efb043c3d0451b888641877a819e5c9446524b27fc27"
+    }
+  ],
+  "legendEditHistory": [
+    "Three distinct ancient legendary FRUIT BAT FLYING FOX Pteropus concept designs photoreal fantasy, equal1x3 panels plain neutral grey background. Whole creature/wings fully inside each panel HUGE margins with animal only60percent width. Fixed game-like camera down30degrees/right-facing side rotated34degrees. All fox-like long muzzle big dark eyes SMALL ears, golden mantle dark fur, leathery finger-ray wings, two hindfeet no extra limbs, weathered scars/old wing tears healed. LEFT A: ancient dusk guide gliding horizontally head forward legs trailing, immense scar-mended dark wings with tiny warm fig-seed lights along existing finger veins, no feathers or new ghost wings. MIDDLE B: old fig keeper hanging upside-down, wings folded cloaklike, one tiny ripe fig held in thumb claw, pale grey muzzle and scarred wing edge, no crystal crown. RIGHT C: cave matriarch crouched folded wings, broad golden mantle worn bronze seed-pod offerings at breast, subtle faint small bat silhouettes behind as retinue not extra anatomy. Area mossy stone/fig roots/old strangler figs/cave-mouth at dusk; use animal/story not generic sonar giant ears (this is fruit bat not microbat). Each its own signature. No text, no scenery or uniform.",
+    "Edit this three-panel legend concept sheet: remove ALL forest, leaves, fruits scenery, cave and ground rocks. Replace background in EACH panel with uniform plain medium light grey studio background and small contact shadow where applicable. Keep three different whole bats/design concepts, all anatomy and poses and magical elements; top horizontal flying bat; middle hanging bat with its single held fig and ONLY a thin plain perch above feet; bottom crouched bat with seed-pod offerings. Zoom OUT each subject to leave15percent blank margin around every wing tip/foot/ear, never crop whole animal. Photoreal concept reference at elevated30degree camera, same right-facing heading. No labels. Keep all three distinct designs, no new decoration. Plain background is mandatory."
+  ]
+}
