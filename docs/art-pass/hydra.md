@@ -49,7 +49,7 @@ Tool: image_gen.imagegen, 7 November 2026. Exact requested prompt is preserved w
 ## Current #1866 boundary (supersedes baseline-only gap wording)
 Read-only audit at ed9e35cb733f72944677efcd80b46eb13c4229e0: graph.js now includes neck chains, parent sockets, u/v/r attachment guides, optional raised heel, per-segment limb radius profiles and triangular membrane sockets. Do not request those primitives again. Rotating spine frames remain future work. Generic wing/head/shell tags still compile to ellipsoids; species-ready facial/feather/hand/ornament assemblies and contact-aware flight remain the handoff concerns. Parented neck chains make hydra topology possible; independent pose/branch assembly and visual validation remain unverified. See [current graph audit](l9-graph.md).
 
-## Legend concepts: three alternatives and proposed pick
+## Previous iteration: legend concepts and v1 pick
 
 ![Three concepts A/B/C left to right](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/hydra/legend-concepts-v1.png). Synthetic imagegen proposals, 7 November 2026, exact prompt in provenance.json. Approximate camera, plain background; not calibrated game art.
 
@@ -75,3 +75,30 @@ Actual inspection / choice: A visibly shows seven heads and two forked front bas
 Today's comparison: current source design is recorded in the genome at prototype524b0acaa. Fresh exact-SHA current legend image requested from coordinator in PR1905#6708054195. The review board marks this slot pending until supplied; historical sprites or generated substitutes are not labelled current game output.
 
 Replacement inspection: corrected plate has no legs, five adult heads and one hatchling head in all panels. Continuous low coils/tapered tail match the python comparison. Cobra-like raised necks and absent crest/frill detail remain limitations; exact projection/gait not proven.
+
+## Revision 2: colossal fantasy target (current proposal)
+
+Supersedes v1 legend pick/body-plan for this second pass. Full1476#6708227119 and6708229124, ART-GUIDE0b/0c and DESIGN.md Art direction; [method](l9-scale-method.md). Earlier anatomy/flight targets and v1 history remain intact.
+
+![hydra three revised concepts with hero and approximate game views](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/hydra/legend-concepts-v2.png)
+
+A/B/C columns; top hero, bottom game-camera approximation. C is explicit MAXIMUM FANTASY. Witch beside body and forest trees are scale cues in every panel. Intended above-treetop giant/about20x baby height per DESIGN; no baby shown, exact ratio not measured. No runtime size change.
+
+**Current proposed pick C; SIGNATURE ELEMENT: Drowned-world coils with spectral shed histories.** Seven living heads rise over the drowned cypress canopy while immense coils become riverbanks bearing generations of shrines. Pale discarded forms make the hydra’s survival through epochs visible without adding legs or turning every head into a glowing eye. Ed judges the pick.
+
+Revised legend checklist:
+- Strictly limbless coils
+- seven solid serpent heads
+- independent long necks
+- riverbank-scale coiled mass
+- scar-mounted bronze shrines
+- spectral sloughs behind living heads
+- dark eyes
+
+Revised body plan, L as defined above: each head .18L, neck .9–1.4L, legs0, tail1.6L; broad low front coils carry raised necks and shrine mass. Keep seven living tips separate from translucent histories. These are modeling proposals, not measured image ratios or runtime dimensions.
+
+Revised MISSING GRAPH FEATURES / unverified assembly: Independent parented neck posing/branching and occlusion, self-contacting coils, surface-local shrine mounts, bounded translucent shed-skin layers; no extra living head sockets for ghosts. Existing neck/parent/membrane/heel primitives remain acknowledged; this is a semantic target, not a request to recreate them.
+
+Actual inspection / A–B–C choice: All six panels show witch and cypress forest. C makes the drowned-world story visibly impossible, with seven dark solid heads and translucent pale historical forms. A retains survival/scars, but the forked regrowth topology is not clearly traceable; B is a strong ancient root guardian with less magic. Ghost heads in C can confuse head count; count only seven solid heads and reduce ghost contrast in any rig trial. Coils fill the frames, hiding tail endpoints; exact projection/20:1 scale not measured.
+
+[Exact initial/revision prompts and provenance](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/hydra/provenance-v2.json). [Lane signatures and repeat rationale](l9-legends-v2.md). Current-game comparison still awaits exact-SHA pixels; the generated bottom row is a projection proposal, not that comparison.

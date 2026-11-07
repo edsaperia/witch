@@ -49,7 +49,7 @@ Tool: image_gen.imagegen, 7 November 2026. Exact requested prompt is preserved w
 ## Current #1866 boundary (supersedes baseline-only gap wording)
 Read-only audit at ed9e35cb733f72944677efcd80b46eb13c4229e0: graph.js now includes neck chains, parent sockets, u/v/r attachment guides, optional raised heel, per-segment limb radius profiles and triangular membrane sockets. Do not request those primitives again. Rotating spine frames remain future work. Generic wing/head/shell tags still compile to ellipsoids; species-ready facial/feather/hand/ornament assemblies and contact-aware flight remain the handoff concerns. Parented neck chains make hydra topology possible; independent pose/branch assembly and visual validation remain unverified. See [current graph audit](l9-graph.md).
 
-## Legend concepts: three alternatives and proposed pick
+## Previous iteration: legend concepts and v1 pick
 
 ![Three concepts A/B/C left to right](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/featheredserpent/legend-concepts-v1.png). Synthetic imagegen proposals, 7 November 2026, exact prompt in provenance.json. Approximate camera, plain background; not calibrated game art.
 
@@ -72,3 +72,30 @@ Legend MISSING GRAPH FEATURES / unverified assembly: Feather fan/crest assemblie
 Actual inspection / choice: B has attractive stepped patterns but risks reading as a woven carpet; C becomes a literal roof/armour panel. A keeps feathers identifiable. The generated flame height is stronger than needed; reduce it so plumage remains the main form.
 
 Today's comparison: current source design is recorded in the genome at prototype524b0acaa. Fresh exact-SHA current legend image requested from coordinator in PR1905#6708054195. The review board marks this slot pending until supplied; historical sprites or generated substitutes are not labelled current game output.
+
+## Revision 2: colossal fantasy target (current proposal)
+
+Supersedes v1 legend pick/body-plan for this second pass. Full1476#6708227119 and6708229124, ART-GUIDE0b/0c and DESIGN.md Art direction; [method](l9-scale-method.md). Earlier anatomy/flight targets and v1 history remain intact.
+
+![featheredserpent three revised concepts with hero and approximate game views](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/featheredserpent/legend-concepts-v2.png)
+
+A/B/C columns; top hero, bottom game-camera approximation. C is explicit MAXIMUM FANTASY. Witch beside body and forest trees are scale cues in every panel. Intended above-treetop giant/about20x baby height per DESIGN; no baby shown, exact ratio not measured. No runtime size change.
+
+**Current proposed pick C; SIGNATURE ELEMENT: Burning feather sun-calendar over temple coils.** The serpent becomes the temple calendar itself: immense feather ruff, fiery turquoise vanes and terrace-like coils preserve its limbless feathered nature while making the jungle guardian impossible. Ed judges the pick.
+
+Revised legend checklist:
+- Limbless emerald coils
+- gold belly
+- vast feather sun-calendar ruff
+- paired feather wings
+- turquoise tip-fire
+- weathered temple offerings
+- long streamer tail
+
+Revised body plan, L as defined above: neck .4L, head .12L, tail .8L, legs0; ruff diameter .9L, span2.5L; low heavy coils support raised neck. These are modeling proposals, not measured image ratios or runtime dimensions.
+
+Revised MISSING GRAPH FEATURES / unverified assembly: Radial feather fan and bounded tip emission, wing fold, surface-local temple offering mounts and varied feather wear. Existing neck/parent/membrane/heel primitives remain acknowledged; this is a semantic target, not a request to recreate them.
+
+Actual inspection / A–B–C choice: Witch and trees visible in all six panels, and bottom views expose coils/terraces. A remains an old decorated serpent; B becomes textile-like historical streamers; C most strongly ties impossible feathers to temple ritual. Hero wings/crest reach panel edges and lower right wing tip clips; bottom projection is approximate and still scenic. Temple terraces can obscure where scales end and stone begins; keep live serpent continuity explicit.
+
+[Exact initial/revision prompts and provenance](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/featheredserpent/provenance-v2.json). [Lane signatures and repeat rationale](l9-legends-v2.md). Current-game comparison still awaits exact-SHA pixels; the generated bottom row is a projection proposal, not that comparison.

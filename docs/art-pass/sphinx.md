@@ -50,7 +50,7 @@ Tool: image_gen.imagegen, 7 November 2026. Exact requested prompt is preserved w
 ## Current #1866 boundary (supersedes baseline-only gap wording)
 Read-only audit at ed9e35cb733f72944677efcd80b46eb13c4229e0: graph.js now includes neck chains, parent sockets, u/v/r attachment guides, optional raised heel, per-segment limb radius profiles and triangular membrane sockets. Do not request those primitives again. Rotating spine frames remain future work. Generic wing/head/shell tags still compile to ellipsoids; species-ready facial/feather/hand/ornament assemblies and contact-aware flight remain the handoff concerns. Parented neck chains make hydra topology possible; independent pose/branch assembly and visual validation remain unverified. See [current graph audit](l9-graph.md).
 
-## Legend concepts: three alternatives and proposed pick
+## Previous iteration: legend concepts and v1 pick
 
 ![Three concepts A/B/C left to right](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/sphinx/legend-concepts-v1.png). Synthetic imagegen proposals, 7 November 2026, exact prompt in provenance.json. Approximate camera, plain background; not calibrated game art.
 
@@ -75,3 +75,30 @@ Legend MISSING GRAPH FEATURES / unverified assembly: Flat face/nemes/cobra assem
 Actual inspection / choice: B is patient and leonine but less fantastical; C becomes decorated armour with too much geometric feather carving. A ties directly to the ruined city. Generated forelegs are too tall and face/headcloth too large; proposed ratios override the sheet.
 
 Today's comparison: current source design is recorded in the genome at prototype524b0acaa. Fresh exact-SHA current legend image requested from coordinator in PR1905#6708054195. The review board marks this slot pending until supplied; historical sprites or generated substitutes are not labelled current game output.
+
+## Revision 2: colossal fantasy target (current proposal)
+
+Supersedes v1 legend pick/body-plan for this second pass. Full1476#6708227119 and6708229124, ART-GUIDE0b/0c and DESIGN.md Art direction; [method](l9-scale-method.md). Earlier anatomy/flight targets and v1 history remain intact.
+
+![sphinx three revised concepts with hero and approximate game views](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/sphinx/legend-concepts-v2.png)
+
+A/B/C columns; top hero, bottom game-camera approximation. C is explicit MAXIMUM FANTASY. Witch beside body and forest trees are scale cues in every panel. Intended above-treetop giant/about20x baby height per DESIGN; no baby shown, exact ratio not measured. No runtime size change.
+
+**Current proposed pick C; SIGNATURE ELEMENT: Buried-city reliefs and star-bearing lapis nemes.** The buried city becomes the sphinx’s living history: worn reliefs and shrine niches are grown into a lion-shaped sandstone body, while the dark lapis headcloth holds the sky it has watched for epochs. Ed judges the pick.
+
+Revised legend checklist:
+- Four lion paws and lion trunk
+- wise human face
+- striped star-bearing lapis nemes
+- ancient relief-carved sandstone
+- shrine niches on flank
+- feather wings
+- tufted tail
+
+Revised body plan, L as defined above: head .30L, neck .25L, legs .65L, tail .9L; wingspan2.4L. Keep heavy lion chest/haunches and tucked waist, not horse-like long forelegs or a thin architectural beam. These are modeling proposals, not measured image ratios or runtime dimensions.
+
+Revised MISSING GRAPH FEATURES / unverified assembly: Surface relief/weathering masks, bounded nemes starfield, part-local shrine niches/torc/cobra, flat human face and articulated feather fans. Existing neck/parent/membrane/heel primitives remain acknowledged; this is a semantic target, not a request to recreate them.
+
+Actual inspection / A–B–C choice: All panels contain witch and desert trees. C clearly adds impossible history and star-bearing nemes; A is an eroded guardian and B a patient couched colossus. Lower C retains four paws and lion tail but its trunk is too narrow and forelegs too long; body-plan targets override those synthetic proportions. Upper C wing tip clips; lower projection is approximate. Full lion mass and wing-root articulation remain unverified.
+
+[Exact initial/revision prompts and provenance](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/sphinx/provenance-v2.json). [Lane signatures and repeat rationale](l9-legends-v2.md). Current-game comparison still awaits exact-SHA pixels; the generated bottom row is a projection proposal, not that comparison.

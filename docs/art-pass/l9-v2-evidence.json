@@ -1,0 +1,145 @@
+{
+  "lane": "L9",
+  "iteration": 2,
+  "date": "2026-11-07",
+  "species": [
+    "featheredserpent",
+    "frosttroll",
+    "frostwyrm",
+    "griffin",
+    "hydra",
+    "sphinx",
+    "unicorn"
+  ],
+  "currentConcepts": 21,
+  "views": 42,
+  "files": [
+    {
+      "path": "previews/art-pass/featheredserpent/legend-concepts-v2.png",
+      "bytes": 3843911,
+      "sha256": "85e441a924ee5ce00f94006e4acea4da3319a88e5f7c69b0f303e2d58e3f30b9",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "path": "previews/art-pass/featheredserpent/provenance-v2.json",
+      "bytes": 2899,
+      "sha256": "218428fd4472b1b219cea4ccc5113e02ab6abb054f3b0d7c3f2ce4ed6bb0a27b"
+    },
+    {
+      "path": "previews/art-pass/featheredserpent/review-v2.html",
+      "bytes": 901,
+      "sha256": "0875a2be27cbaaa6fab652092da9bf1bc982d2202512fffb877236174416e006"
+    },
+    {
+      "path": "previews/art-pass/frosttroll/legend-concepts-v2.png",
+      "bytes": 3947095,
+      "sha256": "4c9d0866fe8aa3ecdbcb37aeda837c211190b378c2a969f4015a6b31ed5e747d",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "path": "previews/art-pass/frosttroll/provenance-v2.json",
+      "bytes": 2856,
+      "sha256": "df03639e5da7bcbe85c451af769af22ca8b962582237389277ac1b8e3563b287"
+    },
+    {
+      "path": "previews/art-pass/frosttroll/review-v2.html",
+      "bytes": 889,
+      "sha256": "fc1342b34bf95d1353d38125028b06a1a6364c89dad8fd08d42364ea19686122"
+    },
+    {
+      "path": "previews/art-pass/frostwyrm/legend-concepts-v2.png",
+      "bytes": 3854766,
+      "sha256": "45d7ac5a367db807ee066cf736bca5a73cbc835c6135432170dd6ef8a59fc11a",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "path": "previews/art-pass/frostwyrm/provenance-v2.json",
+      "bytes": 2899,
+      "sha256": "c35e83439952be55da1cb8205024f65bc4cc8dc5c0af5e4891cb666c790ce87e"
+    },
+    {
+      "path": "previews/art-pass/frostwyrm/review-v2.html",
+      "bytes": 887,
+      "sha256": "ba110e3ae971e3094132f6fe2f3c86fba921fdcdce064180504b670722c60d62"
+    },
+    {
+      "path": "previews/art-pass/griffin/legend-concepts-v2.png",
+      "bytes": 3616385,
+      "sha256": "a267bcd6da4da836f32d76b85b886be9803be0c33c1e9e3c8ca66fe51b0e1a3a",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "path": "previews/art-pass/griffin/provenance-v2.json",
+      "bytes": 3017,
+      "sha256": "d52486ddf195a3d45be01ab62fd3d7f6720ba633e90879e3090ed5204c694d97"
+    },
+    {
+      "path": "previews/art-pass/griffin/review-v2.html",
+      "bytes": 883,
+      "sha256": "f63218466d19b0a85f7279c73a8764e9480287bf5985ebd7dd2291f8e2f6a620"
+    },
+    {
+      "path": "previews/art-pass/hydra/legend-concepts-v2.png",
+      "bytes": 3572823,
+      "sha256": "a4b8a89cea27092d3c07afe5df9c04bcd10fc71ef8af67a7ca4782cda0c5b4f2",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "path": "previews/art-pass/hydra/provenance-v2.json",
+      "bytes": 3042,
+      "sha256": "4cd92aac993d8519368badc3ea84e0aa3175ca308f4daf46efe76183b841d15c"
+    },
+    {
+      "path": "previews/art-pass/hydra/review-v2.html",
+      "bytes": 879,
+      "sha256": "7c637284e609c21a415ba3a92600c6908d6742d12f0fe229d50bcdc7db7fd43d"
+    },
+    {
+      "path": "previews/art-pass/sphinx/legend-concepts-v2.png",
+      "bytes": 3923655,
+      "sha256": "a5aade7ccb24d2194d50d2a3560c60e241c989dfd9108cb38a131adaafc2b422",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "path": "previews/art-pass/sphinx/provenance-v2.json",
+      "bytes": 2907,
+      "sha256": "bd6b75baf23a5f2eb8f4a4a69a6e672f82ae3164c56f511cba285f1706b9bb0b"
+    },
+    {
+      "path": "previews/art-pass/sphinx/review-v2.html",
+      "bytes": 881,
+      "sha256": "8638b3d8b8c602bd2daab630d9fb49e0456d5533639d9f936e2e5cfcbbec53b7"
+    },
+    {
+      "path": "previews/art-pass/unicorn/legend-concepts-v2.png",
+      "bytes": 3066790,
+      "sha256": "c24173891bf97469409db1f5b883ac69c161db362cc867c6b8f5cf63b62e467c",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "path": "previews/art-pass/unicorn/provenance-v2.json",
+      "bytes": 4185,
+      "sha256": "4a60c7a6d3db7932d3fef98b25932e7123adddb3bf5ae5de28b2d733faa6d797"
+    },
+    {
+      "path": "previews/art-pass/unicorn/review-v2.html",
+      "bytes": 883,
+      "sha256": "10871cb3d6e6fa405e8c5dbc38cfe48ba6ff4390805787b0dd17ff1717da9f5d"
+    }
+  ],
+  "previousSourceHead": "f5674530e3ef63d5918dd0e5c06cce470636f962",
+  "previousEvidenceCommit": "ae3e3cd206282534fcce7ac1b7608d450b61493b",
+  "validation": "Required current sections, local doc links, exact prompts incl unicorn edit, PNG headers/dimensions, SHA256 and21 explicitly allowed species evidence paths passed.",
+  "limits": [
+    "Visual cues only; exact20:1 baby ratio not measured",
+    "Camera approximate, no runtime sizing or activation",
+    "Current game comparison pixels pending coordinator"
+  ]
+}

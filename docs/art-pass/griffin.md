@@ -50,7 +50,7 @@ Tool: image_gen.imagegen, 7 November 2026. Exact requested prompt is preserved w
 ## Current #1866 boundary (supersedes baseline-only gap wording)
 Read-only audit at ed9e35cb733f72944677efcd80b46eb13c4229e0: graph.js now includes neck chains, parent sockets, u/v/r attachment guides, optional raised heel, per-segment limb radius profiles and triangular membrane sockets. Do not request those primitives again. Rotating spine frames remain future work. Generic wing/head/shell tags still compile to ellipsoids; species-ready facial/feather/hand/ornament assemblies and contact-aware flight remain the handoff concerns. Parented neck chains make hydra topology possible; independent pose/branch assembly and visual validation remain unverified. See [current graph audit](l9-graph.md).
 
-## Legend concepts: three alternatives and proposed pick
+## Previous iteration: legend concepts and v1 pick
 
 ![Three concepts A/B/C left to right](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/griffin/legend-concepts-v1.png). Synthetic imagegen proposals, 7 November 2026, exact prompt in provenance.json. Approximate camera, plain background; not calibrated game art.
 
@@ -74,3 +74,30 @@ Legend MISSING GRAPH FEATURES / unverified assembly: Independent feather wing fa
 Actual inspection / choice: B’s golden repaired wing is a good alternative but its single dominant fan obscures the far wing; C becomes a ring-holding upright mascot. A best expresses the wind and nest guardian. Wing tips approach panel borders; full spread needs a dedicated margin-safe rig review.
 
 Today's comparison: current source design is recorded in the genome at prototype524b0acaa. Fresh exact-SHA current legend image requested from coordinator in PR1905#6708054195. The review board marks this slot pending until supplied; historical sprites or generated substitutes are not labelled current game output.
+
+## Revision 2: colossal fantasy target (current proposal)
+
+Supersedes v1 legend pick/body-plan for this second pass. Full1476#6708227119 and6708229124, ART-GUIDE0b/0c and DESIGN.md Art direction; [method](l9-scale-method.md). Earlier anatomy/flight targets and v1 history remain intact.
+
+![griffin three revised concepts with hero and approximate game views](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/griffin/legend-concepts-v2.png)
+
+A/B/C columns; top hero, bottom game-camera approximation. C is explicit MAXIMUM FANTASY. Witch beside body and forest trees are scale cues in every panel. Intended above-treetop giant/about20x baby height per DESIGN; no baby shown, exact ratio not measured. No runtime size change.
+
+**Current proposed pick C; SIGNATURE ELEMENT: Stormcloud and lightning carried by feather primaries.** The eyrie’s eagle-lion guardian becomes the storm over its own nest: feather wings contain cloud bands and lightning, while heavy lion haunches anchor it to mountain stone. Ed judges the pick.
+
+Revised legend checklist:
+- Hooked eagle beak
+- white feather crest
+- huge separate feather wings
+- storm bands/branching lightning at primaries
+- taloned forelegs
+- lion hindquarters/paws
+- tufted tail
+
+Revised body plan, L as defined above: head .3L, neck .35L, legs .7L, tail1.0L; deployed span3.8L; massive chest/wing root and heavy feline haunches. These are modeling proposals, not measured image ratios or runtime dimensions.
+
+Revised MISSING GRAPH FEATURES / unverified assembly: Articulated feather fan/fold, bounded cloud/lightning surfaces following primaries, talon digits and scar masks; retain four ground limbs separate from wings. Existing neck/parent/membrane/heel primitives remain acknowledged; this is a semantic target, not a request to recreate them.
+
+Actual inspection / A–B–C choice: All six panels visibly include witch and trees. C retains eagle beak, crest, feather primaries, gold foretalons and lion tail, with rocklike haunch mass and storm-bearing wings. A is a worn wing elder; B emphasizes the nest offering but stands too upright in hero view. C is strongest fantasy while bottom C still reads griffin. Some hero and bottom wing tips crop at panel edges; crouched C obscures far limbs and does not verify all four contacts. Cloud bands must not replace feather structure.
+
+[Exact initial/revision prompts and provenance](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/griffin/provenance-v2.json). [Lane signatures and repeat rationale](l9-legends-v2.md). Current-game comparison still awaits exact-SHA pixels; the generated bottom row is a projection proposal, not that comparison.

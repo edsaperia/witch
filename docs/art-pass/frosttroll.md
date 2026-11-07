@@ -49,7 +49,7 @@ Tool: image_gen.imagegen, 7 November 2026. Exact requested prompt is preserved w
 ## Current #1866 boundary (supersedes baseline-only gap wording)
 Read-only audit at ed9e35cb733f72944677efcd80b46eb13c4229e0: graph.js now includes neck chains, parent sockets, u/v/r attachment guides, optional raised heel, per-segment limb radius profiles and triangular membrane sockets. Do not request those primitives again. Rotating spine frames remain future work. Generic wing/head/shell tags still compile to ellipsoids; species-ready facial/feather/hand/ornament assemblies and contact-aware flight remain the handoff concerns. Parented neck chains make hydra topology possible; independent pose/branch assembly and visual validation remain unverified. See [current graph audit](l9-graph.md).
 
-## Legend concepts: three alternatives and proposed pick
+## Previous iteration: legend concepts and v1 pick
 
 ![Three concepts A/B/C left to right](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/frosttroll/legend-concepts-v1.png). Synthetic imagegen proposals, 7 November 2026, exact prompt in provenance.json. Approximate camera, plain background; not calibrated game art.
 
@@ -72,3 +72,30 @@ Legend MISSING GRAPH FEATURES / unverified assembly: Organic/stone material boun
 Actual inspection / choice: B is readable but its beads become generic jewellery; C hides much of the body behind cupped hands and the light. A is the clearest evolved troll, though stone weight/contact still needs rig validation.
 
 Today's comparison: current source design is recorded in the genome at prototype524b0acaa. Fresh exact-SHA current legend image requested from coordinator in PR1905#6708054195. The review board marks this slot pending until supplied; historical sprites or generated substitutes are not labelled current game output.
+
+## Revision 2: colossal fantasy target (current proposal)
+
+Supersedes v1 legend pick/body-plan for this second pass. Full1476#6708227119 and6708229124, ART-GUIDE0b/0c and DESIGN.md Art direction; [method](l9-scale-method.md). Earlier anatomy/flight targets and v1 history remain intact.
+
+![frosttroll three revised concepts with hero and approximate game views](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/frosttroll/legend-concepts-v2.png)
+
+A/B/C columns; top hero, bottom game-camera approximation. C is explicit MAXIMUM FANTASY. Witch beside body and forest trees are scale cues in every panel. Intended above-treetop giant/about20x baby height per DESIGN; no baby shown, exact ratio not measured. No runtime size change.
+
+**Current proposed pick C; SIGNATURE ELEMENT: Troll body becoming a waterfall-bearing mountain.** The trollwood boulders become literal sleeping ancestors: cliff shoulder, rooted spruces and frozen beard falls grow from the troll’s massive arms and kind elder face. It feels old enough that a forest has grown on it. Ed judges the pick.
+
+Revised legend checklist:
+- Friendly round-eyed troll face
+- bulbous nose
+- long knuckle arms
+- cliff-like shoulder/arm
+- small spruces rooted in cracks
+- beard frozen waterfall
+- carved stone-knuckle offerings
+
+Revised body plan, L as defined above: head .32L, neck .08L, arms1.6L, legs .75L, tail0; upper shoulders/arm carry landform bulk; preserve articulated elbow/hand under rock. These are modeling proposals, not measured image ratios or runtime dimensions.
+
+Revised MISSING GRAPH FEATURES / unverified assembly: Asymmetric living/stone surface masks, arm-bound rock/tree/shrine mounts, hanging waterfall/beard geometry, independently posed knuckle hands. Existing neck/parent/membrane/heel primitives remain acknowledged; this is a semantic target, not a request to recreate them.
+
+Actual inspection / A–B–C choice: All six panels show witch and frozen forest. C has the strongest landform mass and rooted forest; A has partial stone but less mythic scale; B is a cupped-hand river guardian. C’s near hand reads as carved standing stones and must retain fingers/joints in the rig. Seated/stooped body and hidden rear feet do not validate full gait; camera and scale are qualitative.
+
+[Exact initial/revision prompts and provenance](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/frosttroll/provenance-v2.json). [Lane signatures and repeat rationale](l9-legends-v2.md). Current-game comparison still awaits exact-SHA pixels; the generated bottom row is a projection proposal, not that comparison.
