@@ -1,0 +1,38 @@
+{
+ "broomBay:fresh": {
+  "visible": 606,
+  "content": 330,
+  "ratio": 0.54,
+  "lines": 2
+ },
+ "broomBay:owned": {
+  "visible": 606,
+  "content": 380,
+  "ratio": 0.63,
+  "lines": 2
+ },
+ "lathe:fresh": {
+  "visible": 606,
+  "content": 524,
+  "ratio": 0.86,
+  "lines": 10
+ },
+ "lathe:owned": {
+  "visible": 606,
+  "content": 574,
+  "ratio": 0.95,
+  "lines": 10
+ },
+ "broomLift:fresh": {
+  "visible": 606,
+  "content": 516,
+  "ratio": 0.85,
+  "lines": 9
+ },
+ "broomLift:owned": {
+  "visible": 606,
+  "content": 566,
+  "ratio": 0.93,
+  "lines": 9
+ }
+}
