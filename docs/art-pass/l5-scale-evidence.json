@@ -1,0 +1,81 @@
+{
+  "date": "2026-11-07",
+  "shotsCommit": "fa7733e88614fca0ad022f0599ded78234855a9e",
+  "concepts": 18,
+  "views": 36,
+  "scope": "synthetic mythical-scale revision only; no numeric20x/camera/runtime acceptance; shipped legend comparison pending",
+  "records": [
+    {
+      "species": "bear",
+      "path": "previews/art-pass/bear/legend-scale-v2.json",
+      "sha256": "059d5f2d3298284a228adb06648e5f7692ce2d8eb500f00ae24ca84801042092"
+    },
+    {
+      "species": "bear",
+      "path": "previews/art-pass/bear/legend-scale-v2.png",
+      "sha256": "c7e2207d43440d652837ad5d6e0790a283b0d23adbcf583b41410bbb19b8c6f3",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "species": "polarbear",
+      "path": "previews/art-pass/polarbear/legend-scale-v2.json",
+      "sha256": "1895a61837f89133b2956fe7e2272e656cf212411391389b8b83548b1bde0683"
+    },
+    {
+      "species": "polarbear",
+      "path": "previews/art-pass/polarbear/legend-scale-v2.png",
+      "sha256": "26e96ca3b004473f019f0d4e463c82fa079414aac5f1f5341111f7909a824a9a",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "species": "hare",
+      "path": "previews/art-pass/hare/legend-scale-v2.json",
+      "sha256": "7036ead97c2ac33ac28c6d4b7f126a5a54416fae7f5825effed1514f714fa1bb"
+    },
+    {
+      "species": "hare",
+      "path": "previews/art-pass/hare/legend-scale-v2.png",
+      "sha256": "8a089462220fdc78894d05806235f6155e0509987e0a37a52646a5ac27c4d969",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "species": "beaver",
+      "path": "previews/art-pass/beaver/legend-scale-v2.json",
+      "sha256": "6d9d3b99c22c3507e25a9981513a25da802d1259184f9daabeba25c6d68eb22f"
+    },
+    {
+      "species": "beaver",
+      "path": "previews/art-pass/beaver/legend-scale-v2.png",
+      "sha256": "f9d6a35310039c6b5d3814281a7d36cfeaea9eb50f48d9d84cab05be598e5ef7",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "species": "armadillo",
+      "path": "previews/art-pass/armadillo/legend-scale-v2.json",
+      "sha256": "b7eff43b829b1328a36d4b43381c2750b7b43f7afcc463a187bae45161ca1f05"
+    },
+    {
+      "species": "armadillo",
+      "path": "previews/art-pass/armadillo/legend-scale-v2.png",
+      "sha256": "b4b4e6bbfdc877acf1d368adaedcbdbc42ec9cb364fac7103a9e94a2cbf54a65",
+      "width": 2172,
+      "height": 724
+    },
+    {
+      "species": "bat",
+      "path": "previews/art-pass/bat/legend-scale-v2.json",
+      "sha256": "669368ab7abda050b5e1aed4739722eb0e5eced61040bd0565afcd0dfbc1ff71"
+    },
+    {
+      "species": "bat",
+      "path": "previews/art-pass/bat/legend-scale-v2.png",
+      "sha256": "269ea2760ea4b8688dbf329c5329621d219600cabe4246a00b49af8d3d2e92ce",
+      "width": 1536,
+      "height": 1024
+    }
+  ]
+}

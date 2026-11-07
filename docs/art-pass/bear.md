@@ -1,7 +1,29 @@
 # Brown bear — Ursus arctos
 
 
-## Legend concepts — proposals for Ed
+## Current legend revision — mythic scale v2
+
+Authority: full1476#6708227119 and later scale addition6708229124. This is the current proposed legend target; v1 below remains previous-iteration evidence. New witch/tree scale cues supersede the earlier plain-background-only constraint. ART-GUIDE0b/0c, DESIGN “Creature sizes” (about20baby heights/above treetops), and this species’ area text remain the source brief.
+
+![bear three revised concepts in hero and game views](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/bear/legend-scale-v2.png)
+
+[Exact generation/edit prompts, hash and limits](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/bear/legend-scale-v2.json). Columns A/B/C, top low hero, bottom approximate30degree elevated game view; each concept has a witch and forest trees in BOTH views. A maximum fantasy: forest-shoulder/root-claw landform; B honeycomb-cavern oracle; C impossible salmon river.
+
+**Current provisional pick: A — first-forest bearer.** A makes the bear’s dominant shoulders and digging forepaws into the first forest’s foundations. Epochs are visible as moss/rock terraces and shrines grown into old claw roots; the face, low head, belly and four paw supports still identify a bear. B is a strong honey-specific alternative; C is more river-bound than the berry-thicket story. This supersedes v1’s merely enlarged raised paw.
+
+**Current SIGNATURE ELEMENT:** Forest-bearing shoulders and root-claw shrines.
+
+**Revised chosen checklist:** Shoulder hump stays highest; low recognisable bear face/tapered muzzle/small ears; low belly and broad heel-down feet; mossy shoulder strata support a sparse ancient pine grove; rooted amber foreclaws carry tiny votive entrances; scars/grey muzzle; witch and below-shoulder normal pines in both views.
+
+**Revised body plan/mass/scale:** Keep B-normalized base anatomy; add shoulder stratum envelope about0.3–0.5B above normal hump, with vegetation smaller than the bear’s head. Root/claw arches enlarge forepaws without turning limbs into an unrelated house. Overall legend height target remains about20baby heights and above crowns; no image-derived numerical scale claim.
+
+**Additional missing/unverified graph features:** Nested mantle/rock/vegetation attachments parented to shoulder guide; root/claw profiles plus supported paw contacts; local moss/scar masks; offering/shrine sockets with independent scale and occlusion. Terrain-like dressing must not replace articulated torso/limbs or imply actual traversable interiors.
+
+**Actual image inspection:** The corrected sheet shows the full body in both rows with shrines and trees; far limbs/tiny tail can be hidden naturally. A/B/C share some generated woodland overgrowth, but only A uses the forest-bearing shoulder as its signature; reduce it on other options if Ed chooses them. All six panels were visually inspected; scale cues are present. These are synthetic concepts, not source renders, numeric baby-height calibration or a pixel-size acceptance test. Ed judges the design. Today's shipped-legend comparison remains pending actual canonical capture, independently of this completed revision.
+
+
+
+## Previous legend concepts — v1 preserved, picks superseded above
 
 ![Three bear legend concepts](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/bear/legend-concepts-v1.png)
 

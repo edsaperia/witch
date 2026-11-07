@@ -1,7 +1,29 @@
 # Fruit bat / flying fox — Pteropus body-plan target
 
 
-## Legend concepts — proposals for Ed
+## Current legend revision — mythic scale v2
+
+Authority: full1476#6708227119 and later scale addition6708229124. This is the current proposed legend target; v1 below remains previous-iteration evidence. New witch/tree scale cues supersede the earlier plain-background-only constraint. ART-GUIDE0b/0c, DESIGN “Creature sizes” (about20baby heights/above treetops), and this species’ area text remain the source brief.
+
+![bat three revised concepts in hero and game views](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/bat/legend-scale-v2.png)
+
+[Exact generation/edit prompts, hash and limits](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/bat/legend-scale-v2.json). Columns A/B/C, top low hero, bottom approximate30degree elevated game view; each concept has a witch and forest trees in BOTH views. A maximum fantasy: level-gliding starseed membrane archive; B hanging luminous-fig keeper; C crouched migration matriarch.
+
+**Current provisional pick: A — dusk archive.** A makes the flying fox’s fig-seed dispersal and wide membrane wings into a living map of dusk. Constellations follow its actual finger-ray supports rather than adding unrelated spirit wings; scars and offerings imply epochs of migration. B is the quieter hanging alternative, C a grounded matriarch. Preserve small ears/fox face, never return to giant sonar ears.
+
+**Current SIGNATURE ELEMENT:** Starseed maps in scar-mended membranes.
+
+**Revised chosen checklist:** Fox muzzle/large eyes/small ears/golden mantle; torso level/head forward and hindfeet trailing for A; entire finger-supported wings with repaired old membrane scars and sparse seed lights; offerings at free thumbs; witch and whole forest canopy below body in both views; folded/hanging B and crouched C are distinct state targets.
+
+**Revised body plan/mass/scale:** Span target4.5–6.0B, but actual legend’s body/wing depth must read above canopy rather than only long span. Seed lights/offerings are secondary sub-head-size forms. Hero and game views are approximate generated pairs, no verified .52rad/20:1 measurement.
+
+**Additional missing/unverified graph features:** Membrane/finger-ray vocabulary exists; add parent-local scar/repair surfaces and seed-map/emissive layers, thumb offering sockets, independent flight torso/head/leg posture, timed multi-frame flap/held glide, folded/hanging/crouch states and takeoff/landing transitions. No animation/runtime proof.
+
+**Actual image inspection:** Framing edit restored full tips and hanging feet and removed huge cropped framing branches. A remains level flight; B now hangs from a complete standalone stone arch. The witch is generic scale cue, not the game sprite, and physical lift/pose transitions remain unproved. All six panels were visually inspected; scale cues are present. These are synthetic concepts, not source renders, numeric baby-height calibration or a pixel-size acceptance test. Ed judges the design. Today's shipped-legend comparison remains pending actual canonical capture, independently of this completed revision.
+
+
+
+## Previous legend concepts — v1 preserved, picks superseded above
 
 ![Three bat legend concepts](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/bat/legend-concepts-v1.png)
 

@@ -1,7 +1,29 @@
 # Armadillo — nine-banded body-plan target
 
 
-## Legend concepts — proposals for Ed
+## Current legend revision — mythic scale v2
+
+Authority: full1476#6708227119 and later scale addition6708229124. This is the current proposed legend target; v1 below remains previous-iteration evidence. New witch/tree scale cues supersede the earlier plain-background-only constraint. ART-GUIDE0b/0c, DESIGN “Creature sizes” (about20baby heights/above treetops), and this species’ area text remain the source brief.
+
+![armadillo three revised concepts in hero and game views](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/armadillo/legend-scale-v2.png)
+
+[Exact generation/edit prompts, hash and limits](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/armadillo/legend-scale-v2.json). Columns A/B/C, top low hero, bottom approximate30degree elevated game view; each concept has a witch and forest trees in BOTH views. A maximum fantasy: cliff-weathered seam-lit worldshield; B earthshaper with lifted clay rings; C meteoric votive sentinel.
+
+**Current provisional pick: A — worldshield of the dry wash.** A evolves Ed’s seam-lit rolling armor into a landform that remembers the dry wash: red sediment bands, ancient carvings and shrines are built into its armor. Snout, upright ears, claws and ring tail preserve the family. B emphasizes digging; C gives metallic reverence but weaker area specificity.
+
+**Current SIGNATURE ELEMENT:** Sediment-cliff armor with luminous history seams.
+
+**Revised chosen checklist:** Low domed shields; actual broad front/rear shields separated by transverse flexible middle bands; long pointed snout/upright ears and ring tail; worn digging claws; carved history/shrine recesses in rigid shield surfaces; amber band seams; witch and juniper/mesquite trees below dome.
+
+**Revised body plan/mass/scale:** Carapace surface has additional shallow weathered0.1–0.2B relief, not stacked leaf scales. Torso remains low with short support limbs. Rolling ball remains an intended fantasy state needing explicit head/tail/limb stowage; the new sheet actually shows walking armor, not proof of curl. Target20baby height/above trees remains conceptual.
+
+**Additional missing/unverified graph features:** Articulated shields/bands and seam emission; region-specific carving/erosion masks; tiny shrine/offerings sockets anchored to rigid sections; curling/stowage and correct overlap must be designed independently. Shell socket existence does not demonstrate these capabilities.
+
+**Actual image inspection:** Both rows show whole tail/head and witch/tree cues; top row is tightly framed near the dome. Generated layered armor edges are fantasy embellishment, not permission to lose the real shield/transverse-band topology. No rolling animation or scar mask acceptance claimed. All six panels were visually inspected; scale cues are present. These are synthetic concepts, not source renders, numeric baby-height calibration or a pixel-size acceptance test. Ed judges the design. Today's shipped-legend comparison remains pending actual canonical capture, independently of this completed revision.
+
+
+
+## Previous legend concepts — v1 preserved, picks superseded above
 
 ![Three armadillo legend concepts](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/armadillo/legend-concepts-v1.png)
 

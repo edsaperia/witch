@@ -1,7 +1,29 @@
 # Beaver — Castor fiber anatomy target
 
 
-## Legend concepts — proposals for Ed
+## Current legend revision — mythic scale v2
+
+Authority: full1476#6708227119 and later scale addition6708229124. This is the current proposed legend target; v1 below remains previous-iteration evidence. New witch/tree scale cues supersede the earlier plain-background-only constraint. ART-GUIDE0b/0c, DESIGN “Creature sizes” (about20baby heights/above treetops), and this species’ area text remain the source brief.
+
+![beaver three revised concepts in hero and game views](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/beaver/legend-scale-v2.png)
+
+[Exact generation/edit prompts, hash and limits](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/beaver/legend-scale-v2.json). Columns A/B/C, top low hero, bottom approximate30degree elevated game view; each concept has a witch and forest trees in BOTH views. A ancient log/cathedral architect; B maximum fantasy: terraced paddle reservoir; C incisors inscribed with flood history.
+
+**Current provisional pick: B — reservoir-tail keeper.** B makes the defining flat paddle and dam-building nature literally hold a landscape of water. Its low horizontal tail becomes an impossible reservoir of channels and tiny aspen islands; muzzle, small ears, incisors and rump remain beaver. A is the strongest less-transformed alternative. This supersedes v1’s log pick rather than pretending the old image already did it.
+
+**Current SIGNATURE ELEMENT:** Terraced reservoir paddle.
+
+**Revised chosen checklist:** Broad blunt beaver head/tiny ears/orange incisors; heavy rump and visible broad thin tail attachment; stepped horizontal tail basins/spillways, not turtle shell or a castle on back; small water-worn aspen islands; scarred damp coat with sediment age; giant hindfeet and little forehands; witch/normal pond trees in each view.
+
+**Revised body plan/mass/scale:** Tail envelope may span0.8–1.3B long and0.5–0.8B wide, still dorsoventrally shallow under terraces. Body stays pear-shaped; generated upright working state is a legend pose, not normal travel. Water and islands stay much smaller than the head.20baby-height target requires actual graph/scene review.
+
+**Additional missing/unverified graph features:** Paddle width/thickness independent controls, nested terrace/carving surfaces and bounded water/emissive attachments; vegetation and offering sockets on tail parent; held/upright vs quadruped states; tail-ground clearance and supporting hindfoot contacts. No real flowing water/terrain/physics is implied.
+
+**Actual image inspection:** All six panels include witch and smaller pond trees. B’s tail occupies a larger fantasy envelope than ordinary beaver anatomy; keep its clear root connection during implementation. Some toes/forehands are occluded, so digit topology is not accepted from the generated sheet. All six panels were visually inspected; scale cues are present. These are synthetic concepts, not source renders, numeric baby-height calibration or a pixel-size acceptance test. Ed judges the design. Today's shipped-legend comparison remains pending actual canonical capture, independently of this completed revision.
+
+
+
+## Previous legend concepts — v1 preserved, picks superseded above
 
 ![Three beaver legend concepts](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/beaver/legend-concepts-v1.png)
 

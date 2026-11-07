@@ -1,7 +1,29 @@
 # European brown hare — Lepus europaeus
 
 
-## Legend concepts — proposals for Ed
+## Current legend revision — mythic scale v2
+
+Authority: full1476#6708227119 and later scale addition6708229124. This is the current proposed legend target; v1 below remains previous-iteration evidence. New witch/tree scale cues supersede the earlier plain-background-only constraint. ART-GUIDE0b/0c, DESIGN “Creature sizes” (about20baby heights/above treetops), and this species’ area text remain the source brief.
+
+![hare three revised concepts in hero and game views](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/hare/legend-scale-v2.png)
+
+[Exact generation/edit prompts, hash and limits](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/hare/legend-scale-v2.json). Columns A/B/C, top low hero, bottom approximate30degree elevated game view; each concept has a witch and forest trees in BOTH views. A maximum fantasy: immense translucent listening ears with violet seasonal echoes; B haunch-driven paths of past lives; C moon custodian.
+
+**Current provisional pick: A — listener of lost seasons.** A turns hearing into something impossible while retaining the hare’s long ears, narrow face, big haunches and feet. The violet vein/bell forms tie to bluebells; worn ear edges and offerings imply a listening being older than the glade. B foregrounds speed; C offers a more traditional lunar legend. None is Ed-approved.
+
+**Current SIGNATURE ELEMENT:** Season-listening ear sails.
+
+**Revised chosen checklist:** Long ears rooted in skull, not extra wings; two translucent violet listening membranes retain dark hare tips and worn edges; narrow hare face/lateral eye; massive folded haunches and long hindfeet; old fur/stone wear and offerings at feet; witch and low beech crowns visible in both rows.
+
+**Revised body plan/mass/scale:** Ear height approximately1.0–1.6B as a proposed envelope, distinct from adult anatomy; retain torso/haunch ratio and grounded supports. Colossal body should also rise above tree crowns, not rely only on longer ears; explicit scale cues support this visually but are not20:1 measurement.
+
+**Additional missing/unverified graph features:** Long articulated pinna guides with nested translucent/emissive vein and bell-echo surfaces; per-ear edge wear/notches; skull-rooted transforms; age-shaped haunch/feet and independent votive sockets. Do not implement these as insect wings or a generic spectral wing kit.
+
+**Actual image inspection:** Framing edit restored full ear tips and shrank the surrounding trees; all six panels show the witch. Fine inner star/bell marks will need broad simplification for actual game pixels. No hearing/echo behavior implementation follows from concept art. All six panels were visually inspected; scale cues are present. These are synthetic concepts, not source renders, numeric baby-height calibration or a pixel-size acceptance test. Ed judges the design. Today's shipped-legend comparison remains pending actual canonical capture, independently of this completed revision.
+
+
+
+## Previous legend concepts — v1 preserved, picks superseded above
 
 ![Three hare legend concepts](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/hare/legend-concepts-v1.png)
 

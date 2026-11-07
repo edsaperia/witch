@@ -1,7 +1,29 @@
 # Polar bear — Ursus maritimus
 
 
-## Legend concepts — proposals for Ed
+## Current legend revision — mythic scale v2
+
+Authority: full1476#6708227119 and later scale addition6708229124. This is the current proposed legend target; v1 below remains previous-iteration evidence. New witch/tree scale cues supersede the earlier plain-background-only constraint. ART-GUIDE0b/0c, DESIGN “Creature sizes” (about20baby heights/above treetops), and this species’ area text remain the source brief.
+
+![polarbear three revised concepts in hero and game views](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/polarbear/legend-scale-v2.png)
+
+[Exact generation/edit prompts, hash and limits](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/polarbear/legend-scale-v2.json). Columns A/B/C, top low hero, bottom approximate30degree elevated game view; each concept has a witch and forest trees in BOTH views. A maximum fantasy: layered living glacier fleece; B aurora/star navigator; C pressure-ridge crystal shoulders.
+
+**Current provisional pick: A — glacier-fleece elder.** A extends the existing polar fleece into a moving history of sea ice: dark tidal leads between old coat layers belong to pack ice rather than a generic crown. It remains a long-necked polar bear with small low head and huge paws. B’s star navigation is viable but repeats celestial imagery; C’s crystals fit the area but are less distinctive than fleece.
+
+**Current SIGNATURE ELEMENT:** Glacial coat strata and tidal leads.
+
+**Revised chosen checklist:** Long forward low neck/small tapered head; tiny round ears/black nose; no grizzly hump; paws visible below layered glacial coat; deep-blue leads between coat strata, not a block of ice instead of body; weathered offerings embedded sparsely near throat; witch on floe and whole shore trees below giant.
+
+**Revised body plan/mass/scale:** Fleece/ice envelope hangs from trunk and shoulders roughly0.2–0.4B below ordinary belly but clears paw contacts; long neck stays exposed. Strata change silhouette by age, not uniform enlargement. Total crown line exceeds shore trees;20x baby target is not numerically verified in the illustration.
+
+**Additional missing/unverified graph features:** Layered directional fleece/ice-shelf sockets, local transparent/emissive fissures and frost masks, throat offering sockets, gravity-directed secondary forms across poses. Keep body, feet and head separable; no cloth/fluid simulation is claimed.
+
+**Actual image inspection:** Head carriage was edited down and framing expanded; bottom views show the whole bear on a floe. Atmospheric shore-tree distance contributes scale ambiguity, so canonical must judge the game projection rather than infer exact world metres. All six panels were visually inspected; scale cues are present. These are synthetic concepts, not source renders, numeric baby-height calibration or a pixel-size acceptance test. Ed judges the design. Today's shipped-legend comparison remains pending actual canonical capture, independently of this completed revision.
+
+
+
+## Previous legend concepts — v1 preserved, picks superseded above
 
 ![Three polarbear legend concepts](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/polarbear/legend-concepts-v1.png)
 
