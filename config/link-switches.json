@@ -518,6 +518,71 @@
    ]
   },
   {
+   "name": "shapeMole",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Review-only mole barrel body and spade paws; off by default.",
+   "group": "compare",
+   "since": "2026-11-05",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
+   "name": "shapeHydra",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Review-only hydra neck fan; off by default.",
+   "group": "compare",
+   "since": "2026-11-05",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
+   "name": "shapeLion",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Review-only lion ruff, ears, tail tuft and front; off by default.",
+   "group": "compare",
+   "since": "2026-11-05",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
+   "name": "shapeWoodlouse",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Review-only woodlouse antennae and legs; off by default.",
+   "group": "compare",
+   "since": "2026-11-05",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
+   "name": "shapeCrocodile",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Review-only crocodile tail base and splayed legs; off by default.",
+   "group": "compare",
+   "since": "2026-11-05",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
    "name": "creatureModels",
    "values": [
     "<species>:<variant>,..."

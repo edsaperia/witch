@@ -1,5 +1,26 @@
 # Creatures' art
 
+Stage-one shape review (Ed, 2026-11-05, "Only creature shapes"; #1584):
+`shapeMole`, `shapeHydra`, `shapeLion`, `shapeWoodlouse`, `shapeCrocodile` are
+independent link/style switches, all zero by default. Only an explicit `=1`
+opts in; explicit `creatureModels=<id>:current` takes precedence. Candidates
+compose over shipped paint selection without mutating it, and their genome
+hashes keep sprite/party/rig caches separate. Size curves and gameplay do not
+change. Mole uses the existing barrel/spade controls. Hydra adds neck fan
+width/stagger; lion uses round-ear width, tuft-only scale and a second chest
+ruff ring; woodlouse adds antenna thickness and leg reach/thickness;
+crocodile thickens the tail root without enlarging its distal tip and uses
+the existing sprawl. Shared controls retain exact old defaults.
+
+`tools/body-graph/shape-review-sheets.mjs` is for the canonical cloud runner,
+requiring `WITCH_SHAPE_CLOUD=1` and the checkout's exact `WITCH_SHA`. It emits
+one matching-pixel before/after sheet and its nearest-neighbour 4x copy for
+each species, four ages and two facings, plus source/fit/cache evidence.
+These frame-zero sheets are not full gait, nap or live-rig proof. Publish
+only through `tools/shots/push.mjs` to `previews/ed/creature-shapes-stage1/<batch>`.
+Ed's visual approval and canonical art/bench proof remain pending; all five
+candidates stay off. Expressions and wider generator migration are excluded.
+
 Creature sizing (Ed, 2026-10-30; coordinator 6520479974 and 6520542543) uses the visible standing witch's **43 occupied pixels**. This supersedes the earlier game-wide projected-fit instruction: witch, house, props and other non-creature art retain the old renderer path. Only creatures opt into camera-projected support. Ellipsoids use oriented radii, rounded boxes their support, round cones endpoint spheres, and masked planes their clipping parallelogram. Ray acceleration and its 96-step budget remain unchanged.
 
 `art/genome/size-ranks.js` assigns [broad body-mass classes](projected-fit-data/ranks.md) within each age. With class rank r from 0 to 1, baby targets are 0.75+0.2r witch heights through r=0.9, then 0.93+2.7(r-0.9); youth targets are 1.1+0.4r; adults 1.8+1.2r. Legends target at least 1.75 times the same species' rounded adult height. Targets measure the full occupied silhouette, including decoration. Nearby classes may tie after pixel rounding; tiger>cat, wolf>fox>stoat, elephant>rhino and class gaps of two or more must remain strict. Mythical and extinct placements are design choices, not measured living-animal masses.

@@ -162,6 +162,11 @@ Each brings back how something was before a change, to compare against what repl
 | `attacks=old` | Every species fights with its old attacks from config/combat.json, not its own in the attack grammar. *Decision: Each species' own attack is the default (Ed, 2026-10-27, #1326).* | 2026-10-27 | app/linkParams.ts |
 | `snap=0` | The picture's pixels as the pixel size has them, not snapped to whole device pixels (pixels.snap), to compare. | 2026-10-29 | app/linkParams.ts |
 | `creatureSizeCandidate=0` / `creatureSizeCandidate=1` | Revised creature sizes are on by default; 0 compares the previous sizes. | 2026-10-31 | app/viewParams.ts |
+| `shapeMole=0` / `shapeMole=1` | Review-only mole barrel body and spade paws; off by default. | 2026-11-05 | app/viewParams.ts |
+| `shapeHydra=0` / `shapeHydra=1` | Review-only hydra neck fan; off by default. | 2026-11-05 | app/viewParams.ts |
+| `shapeLion=0` / `shapeLion=1` | Review-only lion ruff, ears, tail tuft and front; off by default. | 2026-11-05 | app/viewParams.ts |
+| `shapeWoodlouse=0` / `shapeWoodlouse=1` | Review-only woodlouse antennae and legs; off by default. | 2026-11-05 | app/viewParams.ts |
+| `shapeCrocodile=0` / `shapeCrocodile=1` | Review-only crocodile tail base and splayed legs; off by default. | 2026-11-05 | app/viewParams.ts |
 | `creatureModels=<species>:<variant>,...` | Selects available experimental creature records per species; omitted, current or unavailable variants keep the current art. | 2026-10-30 | app/viewParams.ts |
 | `cullpass=0` | Each see-through pass isn't culled by the kind of pixel it keeps, as before the performance pass. | 2026-10-24 | render/sprites.ts |
 | `cut=pixel` / `cut=whole` | The canopy cut away round her pixel by pixel, or each crown whole (performance suspects). | 2026-10-14 | app/linkParams.ts |
