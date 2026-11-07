@@ -14,7 +14,7 @@
 //    and at a hat-off station her hat-off frames for it); Enter, E and Space choose in the panel, not in the game (she neither rises
 //    nor puts anything down), a locked item saying it isn't found yet.
 // Fails on any of those or a page error; writes <out>/<station>-<zoom>.png.
-//   npm run build && node tools/stations/check.cjs [out] [dist]   (about 20 minutes in the cloud; ONLY=wardrobe,shoeRack)
+//   npm run build && node tools/stations/check.cjs [out] [dist]   (about 20 minutes in the cloud; ONLY=wardrobe,shoeRack; LINK=parts=horse,ladder,nozzles)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const [outArg = "previews/stations", distArg] = process.argv.slice(2);
@@ -41,7 +41,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         Object.defineProperty(navigator, "getGamepads", { configurable: true, writable: true, value: () => (window.__padOn ? [{ id: "DualSense (STANDARD GAMEPAD Vendor: 054c)", index: 0, connected: true, mapping: "standard", timestamp: performance.now(), axes: window.__pad.axes, buttons: window.__pad.buttons.map(p => ({ pressed: p, touched: p, value: p ? 1 : 0 })) }] : real ? real() : []) });
       });
       page.on("pageerror", e => fails.push(`${id}: page error ${e.message}`));
-      await page.goto(`http://127.0.0.1:${server.address().port}/?shot=object:${id}&seed=123`);
+      await page.goto(`http://127.0.0.1:${server.address().port}/?shot=object:${id}&seed=123${process.env.LINK ? "&" + process.env.LINK : ""}`); // (LINK: more of the link, e.g. parts=horse,ladder,nozzles)
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 500 });
       // (the start card's any key: Q, which the station's panel leaves alone, as it takes Enter, E and Space)
       await page.keyboard.press("KeyQ");
