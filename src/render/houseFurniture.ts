@@ -61,19 +61,21 @@ export function bakePieceHere(key: string, st: Style, ppm: number, pitch: number
 }
 
 /** The state an object is drawn in now (art/furniture.js FURNITURE_STATES): the invitations desk's three piles, each witch's empty
- *  once she's taken it, the brooms left at the lathe (rules/kit.ts) and the guests' bedrooms' furniture; the rest each as it is (the bedroom's curtains, shut while
+ *  once she's taken it, the brooms left on the rack (rules/kit.ts), the hydraulic lift (up while its panel's open: `open`, View.houseOpen) and the guests' bedrooms' furniture; the rest each as it is (the bedroom's curtains, shut while
  *  she woke, are gone: Ed, 2026-10-24). */
 /** Every state an object can be drawn in (furnitureState's), so the house asks the art workers for them all up front: a piece in a
  *  new state (E at the desk or the lathe) is there at once, not baked while she watches it vanish. */
 export function furnitureStates(id: string): string[] {
   if (GUEST_FURNITURE.has(id)) return ["sheeted", "open"];
   if (id === "invitations") return [0, 1, 2, 3, 4, 5, 6, 7].map(b => [0, 1, 2].map(i => (b >> i) & 1 ? 0 : 8).join(","));
-  if (id === "lathe") return Array.from({ length: KIT_BROOMS + 1 }, (_, i) => String(KIT_BROOMS - i));
+  if (id === "broomRack") return Array.from({ length: KIT_BROOMS + 1 }, (_, i) => String(KIT_BROOMS - i));
+  if (id === "broomLift") return ["down", "up"];
   return [];
 }
-export function furnitureState(id: string, g: Pick<Game, "wake" | "witches">): string | undefined {
+export function furnitureState(id: string, g: Pick<Game, "wake" | "witches">, open: string | null = null): string | undefined {
+  if (id === "broomLift") return open === "broomLift" ? "up" : "down"; // (raised while its panel's open: Ed, 2026-11-07, "It can hiss up and down when she uses it"; View.houseOpen)
   if (id === "invitations") return [0, 1, 2].map(i => (g.witches[i]?.kit?.invites ? 0 : 8)).join(",");
-  if (id === "lathe") return String(broomsLeft(g));
+  if (id === "broomRack") return String(broomsLeft(g));
   // (the guests' bedrooms' bed, wardrobe and dressing table: uncovered while a visit is on, under dust sheets in solo; both baked up
   // front, so the visit's start and end each only swap which is shown: rules/guestFurniture.ts)
   if (GUEST_FURNITURE.has(id)) return guestRoomsOpen(g) ? "open" : "sheeted";

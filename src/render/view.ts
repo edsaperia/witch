@@ -154,6 +154,7 @@ import { FeedTag } from "./feedTag";
 
 
 
+import { treeDirsStatus } from "./treeNormalDirs";
 import { newReveal } from "./view/reveal";
 
 import { MushroomView } from './mushrooms';
@@ -594,6 +595,9 @@ export class View {
   /** Put to bed before a sail's dive (main.ts bedFirst, rules/wakeUp.ts tuckIn), the wake-up not started till it lands: drawn asleep
    *  in her bed as its first beats have her (render/view/witch.ts), not standing in it. */
   asleepInBed = false;
+  /** In bed, how much of her own glow is off her (render/bedPose.ts bedHush), and her clock at the last frame's. */
+  bedHush = 0;
+  bedHushTime = 0;
   landingWakeReady(): boolean { return a4_landingWakeReady(this, this.a4Internals, a4Shared); }
   beginLandingShaders(chart: boolean): void { return a4_beginLandingShaders(this, this.a4Internals, a4Shared, chart); }
   private armLimitedLanding(): void { return a4_armLimitedLanding(this, this.a4Internals, a4Shared); }
@@ -647,6 +651,8 @@ export class View {
   private steamFor: { map: ForestMap; vents: Float32Array } | null = null;
   readonly assets: AssetLibrary;
   typeBatches = new Map<number, SpriteBatch>();
+  /** The Tree normal maps choice's reduced settings at work (render/treeNormalDirs.ts): atlases not yet cut, palettes made. */
+  readonly treeDirs = treeDirsStatus;
   private readonly mushroomView = new MushroomView();
   private masterplan?: MasterplanView;
   private readonly potionObservers = new PotionObserversView();
@@ -801,6 +807,12 @@ export class View {
   /** The house object whose panel or close-up is open now (main.ts: a station, an instrument), or null: its use prompt is down and
    *  its light out while it's open (render/houseRooms.ts). */
   houseOpen: string | null = null;
+  /** Brushing her teeth at the basin (Ed, 2026-11-07: "a short brushing animation with a little sparkle"; main.ts sets it on the
+   *  basin's Teeth button): her brush frames from `from` till `until` (her time, s) while she stands still (render/view/witch.ts). */
+  readonly brush = { from: -Infinity, until: -Infinity };
+  /** At a station, how far across (m) the camera's aim is moved so she's drawn `camera.station.whole.at` of the screen's width across
+   *  (render/view/camera.ts: measured on screen a frame at a time); 0 away from one. */
+  stationShift = 0;
   /** What she plays with, for the use prompts' button (platform/input.ts device): the use button as bound (E, the pad's ✕) or a tap on the prompt itself. */
   useDevice: "keys" | "pad" | "touch" = "keys";
   /** A tap on a use prompt (touch): down and up, as the touch sigil button's (main.ts sets it). */

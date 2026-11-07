@@ -27,7 +27,7 @@ const CASES = [
   // (a station's own panel, not the last one's: the wardrobe's, still in as she was put at the bay on a slow runner, read as the
   // bay's and then shut by the game under the pause, she no longer at the wardrobe: the broom-bay flake, 2026-10-26)
   { id: "wardrobe", at: "wardrobe", sel: '#station-panel.in[data-station="wardrobe"]', state: true },
-  { id: "broom", at: "lathe", sel: '#station-panel.in[data-station="lathe"]', state: true }, // (the broom's one station: its parts, colours and pegboard, Ed 2026-10-29)
+  { id: "broom", at: "lathe", sel: '#station-panel.in[data-station="lathe"]', state: true }, // (one of the broom's three stations, its chassis, colour and fit: Ed 2026-11-07; ?creator=0 has no kit, so she has her broom and it's lit)
   // (at an instrument Esc is hers, Ed 2026-10-23: "Esc (a gamepad's B) steps her away, the next Esc pauses": so not here)
   { id: "telescope", open: p => p.evaluate(() => window.witch.telescope.look(0, 0.5)), on: () => window.witch.telescope.on },
   { id: "finds-dev", open: p => p.evaluate(() => document.getElementById("finds-dev-btn")?.click()), sel: "#finds-dev.on" },

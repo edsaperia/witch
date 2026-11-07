@@ -4,7 +4,7 @@
 // found: every colour is hers from the start (Ed, "She starts with all the colour variants"). Pure: the genome in, a new one out.
 import WARDROBE from "../../config/wardrobe.json";
 import type { Slot } from "./broomParts";
-import { isDressingTable } from "./clothesPile";
+import { homeStation } from "./clothesPile";
 import { FANTASY_SKINS, HUMAN_SKINS } from "../../art/skinTones.js";
 import { hsv2rgb } from "../../art/core.js";
 
@@ -13,10 +13,14 @@ import { hsv2rgb } from "../../art/core.js";
 export interface WardrobeItem { id: string; name: string; set: Record<string, string | number | boolean>; start?: boolean;
   /** a bag's 💌 stats: multipliers on the tuning's invites numbers (cooldown, range, homing...) while she wears it (rules/bags.ts) */ invites?: Record<string, number>;
   /** a bag's 💌 stats the tuning has at 0 (inaccuracy, bloom...): added on, not multiplied (rules/bags.ts) */ invitesAdd?: Record<string, number>;
-  /** the words under its name on a panel's card ("faster throws, shorter reach") */ stat?: string }
+  /** the words under its name on a panel's card ("faster throws, shorter reach") */ stat?: string;
+  /** a toggle's short label, on its card in place of a picture (the basin's makeup: "Lips", "Eyes", "Blush") */ short?: string;
+  /** a toggle's colour part (its shelf's colour grid's): choosing a colour for that part puts it on (lipstick and its lips) */ colour?: string }
 /** A row of a station's panel: its items, its colour grid's parts and kind, its fit sliders (WITCH_AXES); or the Workshop's (Ed,
  *  2026-10-23; docs/backlog/workshop.md): a slot's broom-part cards, the sets' chips, the pegboard's 3 × 3 board. */
-export interface Shelf { id: string; label: string; items: WardrobeItem[]; /** its items as a vertical list, one a line, moved down to choose (Ed, 2026-10-29, the bags: "a vertical list you move down to select") */ list?: boolean; colour?: string[]; grid?: "cloth" | "skin"; fit?: string[]; always?: boolean; /** the part of her the camera zooms in on while it's chosen (camera.station.parts) */ frame?: string;
+export interface Shelf { id: string; label: string; items: WardrobeItem[]; /** its items' live pictures (the bags firing: Ed, 2026-10-29), shown with the stat line for the one in focus only (Ed, 2026-11-07: "Show the stats line and firing preview only for the bag in focus") */ preview?: boolean;
+  /** its items each on or off by itself, choosing a worn one taking it off (the basin's makeup: Ed, 2026-11-07, "lipstick colour, eyeshadow colour, blush on/off") */ toggle?: boolean;
+  /** a button, not a choice: chosen, the panel plays it (the basin's "teeth": Ed, 2026-11-07, "a 'brush your teeth' button ... flavour only, no gameplay effect") */ action?: string; colour?: string[]; grid?: "cloth" | "skin"; fit?: string[]; always?: boolean; /** the part of her the camera zooms in on while it's chosen (camera.station.parts) */ frame?: string;
   /** the Workshop's bay: a row of part cards for this slot of her broom (rules/broomParts.ts), the empty slot first */ slot?: Slot;
   /** the bay: the sets' progress, a chip each */ sets?: boolean;
   /** the pegboard: the parts on the 3 × 3 biome map (broomParts.ts BOARD) */ board?: boolean;
@@ -34,7 +38,7 @@ export const itemById = (id: string): WardrobeItem | undefined => BY_ID.get(id);
  *  across, the creator's 12 hues and its grey column, its rows these of the creator's 9 (ui/creator.ts swatchAt). Skin (Ed,
  *  2026-11-07: "skin tone range plus some fantasy tones"; art/skinTones.js) is 3 across, palest at the top: the Monk scale's ten
  *  human tones two to a row in order (Monk 1 and 2, 3 and 4 ... 9 and 10), then a fantasy tone each row (frost blue, lilac, ash
- *  grey, moss green, night indigo). */
+ *  grey, light green, night indigo: the light green her starting skin, Ed 2026-11-07, so its column is palest at the top but for it). */
 export const GRID_ROWS = 5;
 export const CLOTH_COLS = 13, CLOTH_ROWS = [1, 3, 4, 6, 8];
 export const SKIN_COLS = 3;
@@ -54,20 +58,20 @@ export function nearestSkin(c: number[]): number[] {
 }
 
 /** A station's shelves, top to bottom (config/house/'s object id), or null for one with none. */
-export function shelvesAt(station: string): Shelf[] | null {
-  const home = station === "bedroom2Wardrobe" || station === "bedroom3Wardrobe" ? "wardrobe"
-    : isDressingTable(station) ? "dressingTable" : station;
+export function shelvesAt(station: string): Shelf[] | null { // (the guests' bedrooms' furniture holds what their home namesakes do: Ed, 2026-11-07, "their wardrobe becomes a wardrobe rail (jacket, top), and their dressing table holds hair, sunglasses and earrings")
+  const home = homeStation(station);
   const ids = RAW.stations[home];
   return ids ? ids.map(id => SHELVES[id]) : null;
 }
 
 /** A shelf's items as its panel shows them (all of them: the brooms that waited on the Workshop are its parts now). */
 export const shownItems = (s: Shelf): WardrobeItem[] => s.items;
-/** Whether a shelf's items give her a choice: two or more of them hers (Ed, 2026-10-23: "Don't show options where there's nothing
- *  to choose yet"; the row appears once there's something to choose). */
-export const itemsToChoose = (s: Shelf, owned: ReadonlySet<string>): boolean => shownItems(s).filter(i => owned.has(i.id)).length >= 2;
+/** Whether a shelf's items row shows: two or more of them hers (Ed, 2026-10-23: "Don't show options where there's nothing to choose
+ *  yet"), or any of them not found yet, shown as grey silhouettes (Ed, 2026-11-07: "they're good foreshadowing", so the unfound shoes
+ *  and sunglasses show even while she has only one of that shelf); a toggle's with one (on or off is a choice). */
+export const itemsToChoose = (s: Shelf, owned: ReadonlySet<string>): boolean => { const items = shownItems(s), mine = items.filter(i => owned.has(i.id)).length; return mine >= (s.toggle ? 1 : 2) || (mine < items.length && items.length >= 2); };
 /** Whether she's drawn without her hat while `station`'s panel is open (its choices are on her head or face: Ed, 2026-10-23). */
-export const bareHeadAt = (station: string): boolean => !!RAW.bareHead?.includes(isDressingTable(station) ? "dressingTable" : station);
+export const bareHeadAt = (station: string): boolean => !!RAW.bareHead?.includes(homeStation(station));
 
 const get = (g: Genome, path: string): unknown => path.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown> | null | undefined)?.[k], g);
 /** Whether she has `item` on: every value it sets is hers (a number: hers above 0 when its is, none when its is 0). */
@@ -85,6 +89,12 @@ export function wear(g: Genome, item: WardrobeItem): Genome {
     o[last] = v;
   }
   return out;
+}
+
+/** Her genome with a toggle `item` taken off (a copy): each value it sets back to off (false, 0, "none"). */
+export function unwear(g: Genome, item: WardrobeItem): Genome {
+  const off = Object.fromEntries(Object.entries(item.set).map(([p, v]) => [p, typeof v === "boolean" ? false : typeof v === "number" ? 0 : "none"]));
+  return wear(g, { ...item, set: off });
 }
 
 /** The items she owns in a first game. */

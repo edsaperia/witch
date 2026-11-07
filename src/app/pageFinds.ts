@@ -11,6 +11,7 @@ import { fitBroom, loadBroom } from "./broomSave";
 import { keepFound } from "./finds";
 import { homeOf, lend, loanName, settle, withLoan, type Loan } from "./loan";
 import { DreamView, dreamArt } from "../render/dream";
+import { partStation } from "../rules/kit";
 import { loadSave, unvisited } from "./chartSave";
 import { guidanceOf, seeGuide } from "../rules/guidance";
 import { addNew, dropNew, storeGuide } from "./guideSave";
@@ -21,7 +22,7 @@ export function lendFind(pageHost: PageHost, kind: FindKindId, id: string): void
   if (kind === "wearable" || kind === "bag") pageHost.findsCtx().owned().add(id); // (in what she owns tonight, not in her save)
   pageHost.view.partsFound = pageHost.partsNow();
   // (new in the treehouse: her guidance pin over where it is till she's been there, rules/guidance.ts)
-  const at = kind === "part" ? "lathe" : kind === "hat" ? "hats" : stationsShowing(shelfOf(id)?.id ?? "")[0];
+  const at = kind === "part" ? partStation(id) : kind === "hat" ? "hats" : stationsShowing(shelfOf(id)?.id ?? "")[0];
   if (at) { addNew(pageHost.guide, { kind: kind === "part" || kind === "hat" ? kind : "wearable", id, at }); storeGuide(pageHost.guide); }
 }
 

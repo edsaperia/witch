@@ -1301,6 +1301,14 @@ Speeds per mode, and how long rising and descending take. The witch is lit by th
   2. Ed: "don't make it stop at scenery"
   The witch knocked back and staggered by a blow [1]: thrown straight away from the blow, base metres for any blow (bites, swipes, shots) plus scale times the attack's own knockback (combat.json; so a maul, quake or slam sits in between), at least charge metres when it rams her (a charge, or a leap landing on her), at most max; eased off at ease a second (like a creature's knockback), straight through scenery [2], nudged to the nearest clear spot at the end if she'd rest inside a trunk, rock, speaker, soundsystem or the treehouse (the blink's clearances). Staggered (no moving, blinking or 💌s, a wobble and stars) stunBase seconds plus stunScale a metre thrown past base, at most stunMax; then not staggered again for immune seconds (the blows still count), so a pack can't stun-lock her. A blink dodges it all; the blow that knocks her out throws nothing. on false, or ?knock=0, turns it off.
   Code: `rules/knock.ts`
+- **`witch.bedGlow`**: In her bed (asleep, the alarm, a snooze, the stretch), the share of her own glow and its lift on her kept, so her white nightie keeps its shading.
+  1. Ed, 2026-11-07: "fix the glow in #1908 first" (her nightie clipped to white in bed under her own glow and its lift)
+  Only her own sprite and only in bed: 1 keeps all of it (as anywhere else), 0 none. Taken off at once as she's put in bed; given back over the stretch (half of what's off) and the second after she's up beside the bed, so nothing pops. Her glow's pool on the world round her is unchanged.
+  Code: `render/bedPose.ts`
+- **`witch.bedBloom`**: In her bed, the share of the picture's bloom kept: her white nightie and the pillows beside her bloomed to white over her.
+  1. Ed, 2026-11-07: "fix the glow in #1908 first" (her nightie clipped to white in bed)
+  Eased with witch.bedGlow (taken at once as she's put in bed, given back over the stretch and the second after she's up), so nothing pops. 1 keeps all of it; anywhere but her bed, all of it.
+  Code: `render/post.ts`, `render/bedPose.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -1317,6 +1325,8 @@ Speeds per mode, and how long rising and descending take. The witch is lit by th
 | `witch.lightFloor` | number | 0 to … |
 | `witch.lightTint` | number | 0 to … |
 | `witch.lightRim` | number | 0 to … |
+| `witch.bedGlow` | number | 0 to 1 |
+| `witch.bedBloom` | number | 0 to 1 |
 | `witch.heightSmooth` | number | 0 to … |
 | `witch.heightLookAhead` | number | 0 to … |
 | `witch.heightClearance` | number | 0 to … |
@@ -3877,13 +3887,15 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
   1. Ed, 2026-10-21
   Code: `ui/stationPanel.ts`
 - **`camera.station.aim`**: with no part, the camera aimed that share of her height (as she's drawn) up her.
-- **`camera.station.parts`**: Where the camera aims at a dressing station for each part of her being changed (head, hat, top, legs, feet, broom, the pegboard).
+- **`camera.station.parts`**: Where the camera aims at a dressing station for each part of her being changed (head, face, hat, top, back, bag, legs, feet, broom, the pegboard).
   1. Ed, 2026-10-23: "zoom in on what's being chosen"
   2. Ed's playtest, 2026-10-23: aimed by metres from her feet, her head went off the top of the screen up close; by her height it stays on the part chosen at any zoom
-  for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed aim of her height (as drawn: 0 her feet, 1 the top of her hat) up her and look metres higher (a thing by her: the board, the broom), and its distance times distance in place of the station's own, eased from part to part as the cursor moves [2].
+  3. Ed, 2026-11-07: "frame the part of her that station changes ... Every station now changes one part of her, so each gets its part framed. Trousers and shoes frame from the waist down."
+  for the part of her the row in focus is about (config/wardrobe.json's frame: head, face (the basin), hat, top, back (the cloak pegs), bag, legs (her waist down: the shoe rack's trousers and shoes), feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed aim of her height (as drawn: 0 her feet, 1 the top of her hat) up her and look metres higher (a thing by her: the board, the broom), and its distance times distance in place of the station's own, eased from part to part as the cursor moves [2].
   Code: `config/wardrobe.json`
 - **`camera.station.whole`**: At a dressing station the camera frames her whole, top of her hat to the soles of her shoes, in the right half of the screen while the panel takes the left half.
   1. Ed, 2026-10-29: "Menus should be left half of the screen, and the witch right half of the screen, and she should be nicely centred and visible top of hat to bottom of shoes."
+  2. Ed, 2026-11-07: "frame the part of her that station changes, using the existing per-part framing" (so whole.on is off: each station frames its part (parts))
   margin is the share of the screen's height left clear above and below her; at is where across the screen's width she stands (0.75: the right half's middle). On, it replaces distance, side, aim and parts (the zoom on the part of her being chosen), which stay for it off.
   Code: `src/render/view/camera.ts`, `src/ui/stationPanel.ts`
 - **`camera.station.dim`**: How dark the picture behind her goes while she's framed at a station, so she stands out: 0 leaves it as it is, 1 makes it black.
@@ -3947,10 +3959,16 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
 | `camera.station.aim` | number | 0 to … |
 | `camera.station.parts.head.aim` | number | 0 to … |
 | `camera.station.parts.head.distance` | number | 0 to … |
+| `camera.station.parts.face.aim` | number | 0 to … |
+| `camera.station.parts.face.distance` | number | 0 to … |
 | `camera.station.parts.hat.aim` | number | 0 to … |
 | `camera.station.parts.hat.distance` | number | 0 to … |
 | `camera.station.parts.top.aim` | number | 0 to … |
 | `camera.station.parts.top.distance` | number | 0 to … |
+| `camera.station.parts.back.aim` | number | 0 to … |
+| `camera.station.parts.back.distance` | number | 0 to … |
+| `camera.station.parts.bag.aim` | number | 0 to … |
+| `camera.station.parts.bag.distance` | number | 0 to … |
 | `camera.station.parts.legs.aim` | number | 0 to … |
 | `camera.station.parts.legs.distance` | number | 0 to … |
 | `camera.station.parts.feet.aim` | number | 0 to … |

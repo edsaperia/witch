@@ -55,7 +55,7 @@ type V3 = { x: number; y: number; z: number };
  *  within it, `depth`: how far south its nearest point is in the world (the far drawn first). */
 interface Quad { p: [number, number, number][]; rgb: [number, number, number]; obj?: string; layer: number; depth: number }
 
-const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], telephone: [0.48, 0.42, 0.56], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], invites: [0.32, 0.62, 0.45], pile: [0.32, 0.62, 0.45], scenery: [0.48, 0.42, 0.56] };
+const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], telephone: [0.48, 0.42, 0.56], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], invites: [0.32, 0.62, 0.45], brooms: [0.32, 0.62, 0.45], pile: [0.32, 0.62, 0.45], scenery: [0.48, 0.42, 0.56] };
 /** How long a placeholder's line stays up (s). */
 const SAY_FOR = 3.5;
 /** How high over the floor (m) her line at the decks is said (sayAtDecks): over her head behind them. */
@@ -196,7 +196,7 @@ const houseKy = (T: View["assets"]["treehouse"], d: Deck): number => (T.ent ? (T
 /** The pictures' pixel (art pixels a metre) and the pitch the house's plane is seen at (asin(ky * mpp)). */
 const pictureScale = (ky: number, mpp: number) => ({ ppm: 1 / mpp, pitch: Math.asin(Math.min(.95, Math.max(.2, ky * mpp))) });
 /** A piece's key: its object's id and the state it's drawn in now. */
-const pieceKey = (o: HouseObject, g: View["game"]) => `${o.id}|${furnitureState(o.id, g) ?? ""}`;
+const pieceKey = (o: HouseObject, g: View["game"], open: string | null = null) => `${o.id}|${furnitureState(o.id, g, open) ?? ""}`;
 
 export class HouseRoomsView {
   /** Its meshes, for the scene: behind the hub, and in front. */
@@ -464,7 +464,7 @@ export class HouseRoomsView {
    *  his playtest of v4515); each one tracked, so the shots and the bench wait for them. */
   private askPieces(v: View, here: { x: number; z: number }, ppm: number, pitch: number): { key: string; x: number; z: number }[] {
     const g = v.game, wanted: { key: string; x: number; z: number }[] = [];
-    for (const o of HOUSE_ROOMS.objects) if (FURNITURE.has(o.id)) wanted.push({ key: pieceKey(o, g), x: o.x, z: o.z });
+    for (const o of HOUSE_ROOMS.objects) if (FURNITURE.has(o.id)) wanted.push({ key: pieceKey(o, g, v.houseOpen), x: o.x, z: o.z });
     for (const r of placedDecorRooms()) wanted.push({ key: `decor:${r.id}`, x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2 });
     const spare = HOUSE_ROOMS.objects.filter(o => FURNITURE.has(o.id)).flatMap(o => furnitureStates(o.id).map(st => ({ key: `${o.id}|${st}`, x: o.x, z: o.z })).filter(q => !wanted.some(w => w.key === q.key)));
     const near = (a: { x: number; z: number }) => Math.hypot(a.x - here.x, a.z - here.z);
@@ -501,7 +501,7 @@ export class HouseRoomsView {
    *  laid on those pieces' marks (`markAt`; none yet under preload: asked and made, hidden). */
   private workshopFrame(v: View, pitch: number, markAt: (id: string, mark: string, dx: number, dy: number) => V3 | null, orderOf: (id: string) => number, ht: number): void {
     const g = v.game, t = g.tuning, W = g.witches[0], tr = g.trunk, tonight = tr && tr.kind === "part" && !tr.found ? tr.item : null, where = broomWhere(g, stationOf(g, null, t)?.id ?? null, t);
-    this.workshop.update({ fitted: W.spells.parts, found: v.partsFound, tonight, at: where === "bay" || where === "lathe" ? where : null, genome: v.assets.witchGenome }, v.assets.style, 1 / v.mpp, pitch,
+    this.workshop.update({ fitted: W.spells.parts, found: v.partsFound, tonight, at: where === "bay" || where === "lathe" || where === "lift" ? where : null, genome: v.assets.witchGenome }, v.assets.style, 1 / v.mpp, pitch,
       id => { const o = HOUSE_ROOMS.objects.find(q => q.id === id); return o ? facing(o).yaw : 0; }, markAt, orderOf, ht,
       (key, pic) => { const p = v.assets.oneOff({ kind: "workshopPic", id: key, style: v.assets.style, pic }).then(r => r.housePiece ?? Promise.reject(new Error("nothing drawn"))); v.assets.track(`workshopPic:${key}`, p); return p; });
   }
@@ -626,11 +626,11 @@ export class HouseRoomsView {
       const o = flat(0, 0, 0); this.plan = { o, ex: flat(1, 0, 0).sub(o), ey: flat(0, 0, 1).sub(o), ez: flat(0, 1, 0).sub(o) }; } else this.plan = null;
     // (the hats' floor isn't a thing to use: the hat she's by is, hatToTake; Ed, 2026-10-29: "just an area where normal hat objects
     // are placed")
-    const near0 = inside ? objectAt(D, w.x, w.z) : null, at0 = near0 && houseObjectFor(g, near0), hatBy = at0?.use.kind === "hats" || HOUSE_ROOMS.layout ? hatToTake(W, D, w.x, w.z, g.tuning.leash.runeRadius) : null;
+    const near0 = inside ? objectAt(D, w.x, w.z) : null, at0 = near0 && houseObjectFor(g, near0, W), hatBy = at0?.use.kind === "hats" || HOUSE_ROOMS.layout ? hatToTake(W, D, w.x, w.z, g.tuning.leash.runeRadius) : null;
     // (by a lying hat in Ed's arrangement, the prompt's the hats' own, id "hats", where the hat lies: there's no hats' floor there)
     const hatSpot = hatBy && HOUSE_ROOMS.layout ? toPlan(D, hatBy.x, hatBy.z) : null;
     const at = hatSpot ? hatPromptAt(hatSpot.x, hatSpot.z) : at0?.use.kind === "hats" && !hatBy ? null : at0;
-    const lit = at && at.id !== v.houseOpen ? (hatBy ? (hatBy.slot !== undefined ? `hat:${hatBy.slot}` : "") : at.id) : undefined; // (lit, the one she can use; out while it's open)
+    const lit = at && at.id !== v.houseOpen && (hatBy || at.use.kind !== "scenery") ? (hatBy ? (hatBy.slot !== undefined ? `hat:${hatBy.slot}` : "") : at.id) : undefined; // (lit, the one she can use; out while it's open)
     for (const P of this.parts) {
       let k = 0;
       for (const q of P.quads) {
@@ -666,7 +666,7 @@ export class HouseRoomsView {
       if (mesh.userData.loadingOrder !== undefined) { mesh.renderOrder = mesh.userData.loadingOrder; delete mesh.userData.loadingOrder; }
       const o = HOUSE_ROOMS.objects.find(q => q.id === id);
       // (a piece in another state than now's, hidden, unless now's isn't in yet: the last one shown stays till it is; a room's dressing always)
-      const cur = o ? pieceKey(o, g) : k;
+      const cur = o ? pieceKey(o, g, v.houseOpen) : k;
       if (o && this.pieces.has(cur)) this.shownState.set(id, cur);
       mesh.visible = !o || k === (this.pieces.has(cur) ? cur : this.shownState.get(id) ?? cur);
       if (!mesh.visible) continue;

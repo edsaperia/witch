@@ -398,3 +398,21 @@ and inspect their owning modules, retaining wake-in-bed/double-draw and
 non-skippable-flight coverage. No runtime behavior fix or bench declaration.
 Local evidence: previews/a4-proof/refresh-after-1881. Exact-head CI/bench must
 pass before READY; canonical alone combines and releases.
+
+## Post-release-14 refresh, 7 November (branch claude/a4-split)
+
+Continues #1562 on its own branch from `0d2222f78`, under Ed's go of 6 November.
+Normal merge of prototype `48eb331bd305d3d970f537e0d6c15f69011871e3` (releases
+#1909, #1912, #1914: tree normal directions, bed pose, station menus, broom
+stations). Only main and View conflicted. Both were regenerated from that exact
+source with `--replay --refresh-reviewed-source`, so the new code moved with its
+owners: the Teeth button's `stations.onAction` becomes pageStations' installer 10
+(later installers renumber by one, same order); the lift hiss and the decks' open
+prompt go with frameBody (pageFrame); the part's own station pin goes with
+lendFind (pageFinds); the tree normal directions step goes with render
+(view/frame). New state (`liftUp`, `sparkle`, `bedHush`, `treeDirs`, `brush`,
+`stationShift`) stays where prototype declared it, reached through the live
+hosts. The previous merge (`0d2222f78`) had kept the old View and so dropped the
+tree normal directions lines; this refresh restores them from source.
+
+Inverse check: 169 bodies and 18 output hashes PASS. No bench declaration.

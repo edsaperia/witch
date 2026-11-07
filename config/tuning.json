@@ -761,6 +761,8 @@
     "lightFloor": 0.75,
     "lightTint": 1,
     "lightRim": 0.6,
+    "bedGlow": 0.7,
+    "bedBloom": 0,
     "heightSmooth": 0.2,
     "heightLookAhead": 0.4,
     "heightClearance": 0.3
@@ -2560,7 +2562,7 @@
     "station": {
       "on": true,
       "whole": {
-        "on": true,
+        "on": false,
         "margin": 0.25,
         "at": 0.75
       },
@@ -2571,20 +2573,32 @@
       "aim": 0.55,
       "parts": {
         "head": {
-          "aim": 0.8,
-          "distance": 0.32
+          "aim": 0.45,
+          "distance": 0.22
+        },
+        "face": {
+          "aim": 0.62,
+          "distance": 0.2
         },
         "hat": {
-          "aim": 0.92,
-          "distance": 0.4
+          "aim": 0.55,
+          "distance": 0.45
         },
         "top": {
-          "aim": 0.6,
-          "distance": 0.4
+          "aim": 0.36,
+          "distance": 0.3
+        },
+        "back": {
+          "aim": 0.3,
+          "distance": 0.45
+        },
+        "bag": {
+          "aim": 0.3,
+          "distance": 0.3
         },
         "legs": {
-          "aim": 0.35,
-          "distance": 0.42
+          "aim": 0.2,
+          "distance": 0.3
         },
         "feet": {
           "aim": 0.15,

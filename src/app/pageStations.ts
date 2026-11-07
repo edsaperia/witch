@@ -20,6 +20,7 @@ import { hatWithoutLoan, lookWithoutLoan, partsWithoutLoan, withLoan } from "./l
 import { BagPreview } from "../ui/bagPreview";
 import { BAGS } from "../rules/bags";
 import { type WorkshopCtx } from "../ui/stationPanel";
+import { BRUSH } from "../ui/brushSparkle";
 import { chooseRecord } from "./recordSave";
 import { integratedGpu } from "./telescope";
 import { nightOver } from "./chartSave";
@@ -108,10 +109,20 @@ pageHost.stations.onChange = () => { const { game } = pageHost.N(); pageHost.vie
 }
 
 export function installStations10(pageHost: PageHost): void {
-pageHost.stations.onDress = () => { pageHost.view.spin = spinStep(pageHost.view.spin, pageHost.N().game.herTime); };
+pageHost.stations.onAction = id => {
+  if (id !== "teeth") return;
+  const t = pageHost.N().game.herTime;
+  pageHost.view.brush.from = t; pageHost.view.brush.until = t + BRUSH; pageHost.view.turnUntil = t + BRUSH;
+  pageHost.sound.sfx?.brushTeeth(0, BRUSH);
+  pageHost.sparkle.play(BRUSH);
+};
 }
 
 export function installStations11(pageHost: PageHost): void {
+pageHost.stations.onDress = () => { pageHost.view.spin = spinStep(pageHost.view.spin, pageHost.N().game.herTime); };
+}
+
+export function installStations12(pageHost: PageHost): void {
 pageHost.stations.onFit = f => {
   if (!pageHost.phone.active && pageHost.N().spec.borrowed) return;
   if (pageHost.phone.active) { if (!pageHost.phone.choose({ kind: "broom", fitted: { ...f } })) pageHost.reconcilePickers(); return; }
@@ -119,11 +130,11 @@ pageHost.stations.onFit = f => {
 };
 }
 
-export function installStations12(pageHost: PageHost): void {
+export function installStations13(pageHost: PageHost): void {
 pageHost.stations.onTrail = id => { pageHost.view.trailPreset = id; if (!pageHost.N().spec.borrowed) chooseTrail(id); };
 }
 
-export function installStations13(pageHost: PageHost): void {
+export function installStations14(pageHost: PageHost): void {
 pageHost.telescope.onChange = on => {
   const T = pageHost.N().tuning.telescope, res = Number(new URLSearchParams(location.search).get("telescopeRes")) || (T && integratedGpu(pageHost.view.renderer.getContext()) ? T.lowGpuResolution : T?.resolution ?? 1);
   pageHost.view.pixelScale = on ? 1 / Math.max(0.25, Math.min(3, res)) : 1; // (finer than the game's pixels too: Ed, 2026-10-23, "too pixellated")
@@ -132,15 +143,15 @@ pageHost.telescope.onChange = on => {
 };
 }
 
-export function installStations14(pageHost: PageHost): void {
+export function installStations15(pageHost: PageHost): void {
 pageHost.creator.progress = () => { const a = pageHost.view.assets; return { done: a.done, total: a.done + a.pending, ready: !pageHost.sailing && pageHost.N().flags.ready }; };
 }
 
-export function installStations15(pageHost: PageHost): void {
+export function installStations16(pageHost: PageHost): void {
 pageHost.creator.onGesture = () => pageHost.sound.wake();
 }
 
-export function installStations16(pageHost: PageHost): void {
+export function installStations17(pageHost: PageHost): void {
 pageHost.creator.onStart = g => {
   if (pageHost.phone.active || pageHost.N().spec.borrowed) return; // Also protects the asynchronous borrowed-return interval.
   const who = pageHost.playerPick?.value ?? "human"; // (the dev "Player:" pick: a bot plays the run instead of her)
@@ -150,6 +161,6 @@ pageHost.creator.onStart = g => {
 };
 }
 
-export function installStations17(pageHost: PageHost): void {
+export function installStations18(pageHost: PageHost): void {
 pageHost.creator.spellSound = (cue, v) => pageHost.sound.sfx?.spell(cue, v);
 }

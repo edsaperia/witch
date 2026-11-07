@@ -8,7 +8,7 @@ import { newGame as fullGame } from "../rules/game";
 import { smallWorld } from "../test/worlds";
 const newGame = smallWorld(fullGame, "Furniture-state integration only consumes one witch's kit; sprite generation uses explicit furniture footprints.");
 import { TUNING } from "../rules/tuning";
-import { newKit, takeBroom, takeInvites } from "../rules/kit";
+import { KIT_BROOMS, newKit, takeBroom, takeInvites } from "../rules/kit";
 
 type Drawn = { sp: { w: number; h: number; m: Uint8Array }; origin: { x: number; y: number }; lights: { x: number; y: number }[] };
 const PPM = 32 / 3; // (the house's art pixels a metre: tuning artPixelsPerMetre 16 at pixelSize 3)
@@ -36,11 +36,12 @@ describe("the treehouse's furniture", () => {
       }
     }
   });
-  it("knows every state her kit can put the desk and the lathe in, so the house asks for them all up front (rules/kit.ts)", () => {
+  it("knows every state her kit can put the desk and the broom rack in, and the lift up and down, so the house asks for them all up front (rules/kit.ts)", () => {
     const g = newGame(123, TUNING);
     g.witches.forEach(W => (W.kit = newKit(true)));
-    const seen = new Set<string>([`invitations|${furnitureState("invitations", g)}`, `lathe|${furnitureState("lathe", g)}`]);
-    for (const W of g.witches) { takeInvites(W); seen.add(`invitations|${furnitureState("invitations", g)}`); takeBroom(g, W); seen.add(`lathe|${furnitureState("lathe", g)}`); }
+    const seen = new Set<string>([`invitations|${furnitureState("invitations", g)}`, `broomRack|${furnitureState("broomRack", g)}`, `broomLift|${furnitureState("broomLift", g)}`, `broomLift|${furnitureState("broomLift", g, "broomLift")}`]);
+    for (const W of g.witches) { takeInvites(W); seen.add(`invitations|${furnitureState("invitations", g)}`); takeBroom(g, W); seen.add(`broomRack|${furnitureState("broomRack", g)}`); }
+    expect(furnitureState("broomRack", g)).toBe(String(KIT_BROOMS - g.witches.length)); expect(furnitureState("broomLift", g, "broomLift")).toBe("up"); expect(furnitureState("broomLift", g)).toBe("down");
     for (const k of seen) { const [id, st] = k.split("|"); expect(furnitureStates(id), k).toContain(st); }
     expect(furnitureStates("bed")).toEqual([]);
   });
@@ -52,8 +53,8 @@ describe("the treehouse's furniture", () => {
       if (id === "microphone") { const s = d.marks.spot; expect(s.y, "the spot lamp over the mic").toBeLessThan(d.origin.y - 20); expect(s.x).toBeGreaterThan(0); expect(s.x).toBeLessThan(d.sp.w); }
     }
   });
-  it("draws the Workshop's pieces (Hotel's, Ed's OK 2026-10-23) with their marks for Hotel's broom and parts: the bay's and the lathe's rest, the biome board's nine cells in rows from the top left", () => {
-    for (const id of ["broomBay", "lathe", "pegboard"]) {
+  it("draws the Workshop's pieces (Hotel's, Ed's OK 2026-10-23; the workbench and the lift Ed's of 2026-11-07) with their marks for her broom and parts: the workbench's vice's, the lathe's and the lift's rest, the biome board's nine cells in rows from the top left", () => {
+    for (const id of ["broomBay", "lathe", "broomLift", "pegboard"]) {
       const o = HOUSE_ROOMS.objects.find(q => q.id === id)!, { yaw, foot, curve } = standing(o);
       const d = furnitureSprite(id, foot, {}, { ppm: PPM, yaw, curve }) as Drawn & { marks: Record<string, { x: number; y: number }> };
       const want = id === "pegboard" ? [...Array(9).keys()].map(i => `cell${i}`) : ["rest"];

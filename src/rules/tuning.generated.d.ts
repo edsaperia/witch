@@ -599,6 +599,8 @@ export type SchemaTuning = {
     "lightFloor": number;
     "lightTint": number;
     "lightRim": number;
+    "bedGlow"?: number;
+    "bedBloom"?: number;
     "heightSmooth": number;
     "heightLookAhead": number;
     "heightClearance": number;
@@ -2266,11 +2268,23 @@ export type SchemaTuning = {
           "aim": number;
           "distance": number;
         };
+        "face": {
+          "aim": number;
+          "distance": number;
+        };
         "hat": {
           "aim": number;
           "distance": number;
         };
         "top": {
+          "aim": number;
+          "distance": number;
+        };
+        "back": {
+          "aim": number;
+          "distance": number;
+        };
+        "bag": {
           "aim": number;
           "distance": number;
         };

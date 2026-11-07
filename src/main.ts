@@ -101,6 +101,8 @@ import { FindsPanel } from "./ui/findsPanel";
 
 import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { DjBooth } from "./ui/djBooth";
+
+import { BrushSparkle } from "./ui/brushSparkle";
 import { chooseRecord, ownedRecords } from "./app/recordSave";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 
@@ -151,7 +153,7 @@ import { nightSaveNotice } from "./ui/resumeNight";
 import { restoreSettingsBase } from "./app/playerSettings";
 
 import { openPotionLab as a4_openPotionLab, pauseControls as a4_pauseControls, updatePauseMenus as a4_updatePauseMenus, openMusicLab as a4_openMusicLab, installPause1 as a4_installPause1, installPause2 as a4_installPause2, installPause3 as a4_installPause3, installPause4 as a4_installPause4, installPause5 as a4_installPause5, installPause6 as a4_installPause6, installPause7 as a4_installPause7, installPause8 as a4_installPause8, installPause9 as a4_installPause9 } from "./app/pagePause";
-import { reconcilePickers as a4_reconcilePickers, shutStation as a4_shutStation, findsCtx as a4_findsCtx, workshopNow as a4_workshopNow, useHouse as a4_useHouse, installStations1 as a4_installStations1, installStations2 as a4_installStations2, installStations3 as a4_installStations3, installStations4 as a4_installStations4, installStations5 as a4_installStations5, installStations6 as a4_installStations6, installStations7 as a4_installStations7, installStations8 as a4_installStations8, installStations9 as a4_installStations9, installStations10 as a4_installStations10, installStations11 as a4_installStations11, installStations12 as a4_installStations12, installStations13 as a4_installStations13, installStations14 as a4_installStations14, installStations15 as a4_installStations15, installStations16 as a4_installStations16, installStations17 as a4_installStations17 } from "./app/pageStations";
+import { reconcilePickers as a4_reconcilePickers, shutStation as a4_shutStation, findsCtx as a4_findsCtx, workshopNow as a4_workshopNow, useHouse as a4_useHouse, installStations1 as a4_installStations1, installStations2 as a4_installStations2, installStations3 as a4_installStations3, installStations4 as a4_installStations4, installStations5 as a4_installStations5, installStations6 as a4_installStations6, installStations7 as a4_installStations7, installStations8 as a4_installStations8, installStations9 as a4_installStations9, installStations10 as a4_installStations10, installStations11 as a4_installStations11, installStations12 as a4_installStations12, installStations13 as a4_installStations13, installStations14 as a4_installStations14, installStations15 as a4_installStations15, installStations16 as a4_installStations16, installStations17 as a4_installStations17, installStations18 as a4_installStations18 } from "./app/pageStations";
 import { keepNightie as a4_keepNightie, personalKit as a4_personalKit, hostCollections as a4_hostCollections, traceVisit as a4_traceVisit, aheadMorning as a4_aheadMorning, revealArt as a4_revealArt, bedFirst as a4_bedFirst, bedFirstNow as a4_bedFirstNow, arrived as a4_arrived, arrivedNow as a4_arrivedNow, wakeArrival as a4_wakeArrival, wakeArrivalNow as a4_wakeArrivalNow, start as a4_start, startDirect as a4_startDirect, dressCreator as a4_dressCreator, chartOverNight as a4_chartOverNight, chartWorldArg as a4_chartWorldArg, sailFromChart as a4_sailFromChart, recordSail as a4_recordSail, departFromChart as a4_departFromChart, wakeFirst as a4_wakeFirst, wakeFirstNow as a4_wakeFirstNow, sailInPlace as a4_sailInPlace, makeSailNight as a4_makeSailNight, newNight as a4_newNight, nightInPlace as a4_nightInPlace, leaveBot as a4_leaveBot, chartWorld as a4_chartWorld, soundNote as a4_soundNote, armGesture as a4_armGesture, queueCast as a4_queueCast, armBack as a4_armBack, wokenBefore as a4_wokenBefore, woke as a4_woke, mirrored as a4_mirrored, sawMirror as a4_sawMirror } from "./app/pageNight";
 import { lendFind as a4_lendFind, settleLoan as a4_settleLoan, settleLoanNow as a4_settleLoanNow, startDream as a4_startDream, herHead as a4_herHead, stepGuide as a4_stepGuide, partsNow as a4_partsNow } from "./app/pageFinds";
 import { botGame as a4_botGame, saveComment as a4_saveComment, restoreComment as a4_restoreComment, spawnHere as a4_spawnHere, spawnHereNow as a4_spawnHereNow, decidePanel as a4_decidePanel, keyNow as a4_keyNow, installDebug1 as a4_installDebug1, installDebug2 as a4_installDebug2, installDebug3 as a4_installDebug3, installDebug4 as a4_installDebug4, installDebug5 as a4_installDebug5, installDebug6 as a4_installDebug6, installDebug7 as a4_installDebug7, installDebug8 as a4_installDebug8, installDebug9 as a4_installDebug9, installDebug10 as a4_installDebug10, installDebug11 as a4_installDebug11, installDebug12 as a4_installDebug12, installDebug13 as a4_installDebug13, installDebug14 as a4_installDebug14, installDebug15 as a4_installDebug15, installDebug16 as a4_installDebug16, installDebug17 as a4_installDebug17, installDebug18 as a4_installDebug18, installDebug19 as a4_installDebug19, installDebug20 as a4_installDebug20, installDebug21 as a4_installDebug21, installDebug22 as a4_installDebug22, installDebug23 as a4_installDebug23, installDebug24 as a4_installDebug24, installDebug25 as a4_installDebug25, installDebug26 as a4_installDebug26, installDebug27 as a4_installDebug27, installDebug28 as a4_installDebug28, installDebug29 as a4_installDebug29, installDebug30 as a4_installDebug30, installDebug31 as a4_installDebug31, installDebug32 as a4_installDebug32, installDebug33 as a4_installDebug33 } from "./app/pageDebug";
@@ -243,6 +245,7 @@ const pageHost = {
   get leaveBot(): typeof leaveBot { return leaveBot; },
   get leaveVisitButton(): typeof leaveVisitButton { return leaveVisitButton; }, set leaveVisitButton(value: typeof leaveVisitButton) { leaveVisitButton = value; },
   get lendFind(): typeof lendFind { return lendFind; },
+  get liftUp(): typeof liftUp { return liftUp; }, set liftUp(value: typeof liftUp) { liftUp = value; },
   get loadTimes(): typeof loadTimes { return loadTimes; },
   get loan(): typeof loan { return loan; }, set loan(value: typeof loan) { loan = value; },
   get loanIcon(): typeof loanIcon { return loanIcon; },
@@ -325,6 +328,7 @@ const pageHost = {
   get slowAudioLogged(): typeof slowAudioLogged { return slowAudioLogged; }, set slowAudioLogged(value: typeof slowAudioLogged) { slowAudioLogged = value; },
   get sound(): typeof sound { return sound; },
   get soundNote(): typeof soundNote { return soundNote; },
+  get sparkle(): typeof sparkle { return sparkle; },
   get spawnHere(): typeof spawnHere { return spawnHere; },
   get spawnHereNow(): typeof spawnHereNow { return spawnHereNow; },
   get spawnWanted(): typeof spawnWanted { return spawnWanted; }, set spawnWanted(value: typeof spawnWanted) { spawnWanted = value; },
@@ -835,7 +839,7 @@ shutButton.style.cssText = "position:fixed;right:16px;bottom:16px;z-index:70;dis
 shutButton.append(keycapCanvas("TAP", 5));
 shutButton.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.sigil = true; });
 document.body.append(shutButton);
-let owned: Set<string> | null = null, stillAt = 0;
+let owned: Set<string> | null = null, stillAt = 0, liftUp = false;
 /** What the finds' keepers work on (app/finds.ts): tonight's spells and what she owns to wear, kept. */
 const findsCtx = (): FindsCtx => a4_findsCtx(pageHost);
 const menuWardrobe = () => phone.active ? new Set(phone.catalogue?.wardrobe ?? []) : ownedToChoose(findsCtx().owned());
@@ -848,15 +852,20 @@ const booth = new DjBooth();
 a4_installStations7(pageHost);
 a4_installStations8(pageHost);
 a4_installStations9(pageHost);
-a4_installStations10(pageHost); // (Ed, 2026-10-26: she twirls while her new look draws)
+// The basin's Teeth button (Ed, 2026-11-07: "a 'brush your teeth' button that plays a short brushing animation with a little sparkle
+// and a sound, flavour only, no gameplay effect"): her brush frames facing us (render/view/witch.ts), scrubs and a glint
+// (platform/audio/chimes.ts brushTeeth) and a few sparkles at her face as it ends (ui/brushSparkle.ts). Nothing in the rules changes.
+a4_installStations10(pageHost);
+const sparkle = new BrushSparkle(() => herHead());
+a4_installStations11(pageHost); // (Ed, 2026-10-26: she twirls while her new look draws)
 // The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
 // and its set's spell with it: rules/spells.ts setParts), and is kept on this browser for the nights after (app/broomSave.ts).
-a4_installStations11(pageHost); // Solo keeps fitted parts without any loan; online choices wait for host approval.
+a4_installStations12(pageHost); // Solo keeps fitted parts without any loan; online choices wait for host approval.
 // Her trail's colours (Ed, 2026-11-03: "set the colour set of your trail in the broom station and there are a few presets"; the Broom
 // station's Trail row, render/trailColours.ts): drawn at once and kept with her broom (app/broomSave.ts); cosmetic, her own view only
 // (the other player's trail isn't drawn online), so nothing waits on the host; a borrowed game's isn't kept.
 { const t = loadBroom().trail ?? null; view.trailPreset = t; stations.setTrail(t); }
-a4_installStations12(pageHost);
+a4_installStations13(pageHost);
 /** What the Workshop's stations show (ui/stationPanel.ts): the parts found, her broom, tonight's part to find, her tuning. */
 const workshopNow = (): WorkshopCtx => a4_workshopNow(pageHost);
 function reconcilePickers(): void { return a4_reconcilePickers(pageHost); }
@@ -898,13 +907,13 @@ const studio = new StudioPlayer(N().musicStyle, () => sound.audio, () => N().tun
 let keysTaken = "";
 const telescope = new TelescopeView(document.body, bootTuning.telescope?.vignette ?? 0.6);
 let scopeAt: string | null = null; // (the telescope it's open at)
-a4_installStations13(pageHost);
+a4_installStations14(pageHost);
 const useHouse = (obj: string): void => a4_useHouse(pageHost, obj);
-a4_installStations14(pageHost); // (a new night in place: not till it's made)
+a4_installStations15(pageHost); // (a new night in place: not till it's made)
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
-a4_installStations15(pageHost);
-a4_installStations16(pageHost); // (the scroll's burst: play, and the spell cast)
-a4_installStations17(pageHost);
+a4_installStations16(pageHost);
+a4_installStations17(pageHost); // (the scroll's burst: play, and the spell cast)
+a4_installStations18(pageHost);
 // The bot game (Ed, 2026-10-06: "start the game and watch the skilled bot play"; ?bot=skilled|crude, or the start
 // screen's Bot game): rules/bot.ts plays in place of her controls, a seeded witch, no character creation. The bot's code loads
 // only for a bot game (overnight phase 2: out of the game's bundle); it starts as soon as both it and the forest are ready.

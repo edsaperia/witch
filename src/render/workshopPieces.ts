@@ -13,7 +13,7 @@ const ctx2d = (c: AnyCanvas) => c.getContext("2d", { willReadFrequently: true })
 
 /** What a Workshop picture is: her broom from its parts on its host (the lathe's bigger), or a part on the pegboard in its state. */
 export type WorkshopPic =
-  | { what: "broom"; fitted: Fitted; host: "broomBay" | "lathe"; ppm: number; pitch: number; yaw: number; colours: Record<string, number[]> }
+  | { what: "broom"; fitted: Fitted; host: "broomBay" | "lathe" | "broomLift"; ppm: number; pitch: number; yaw: number; colours: Record<string, number[]> }
   | { what: "part"; part: string; state: "found" | "missing" | "tonight"; fit: number; pitch: number; yaw: number; colours: Record<string, number[]> };
 
 /** A part's picture, lit in the Workshop's light in her broom's colours (render/workshopArt.ts broomColours). */
@@ -50,11 +50,14 @@ export function glowPicture(src: AnyCanvas, mk: MakeCanvas, pad = 3, rgb: number
   return c;
 }
 
+/** How her broom lies on the hydraulic lift: turned this far (radians) from along its platform, its bristles toward us. */
+export const LIFT_TURN = -1.25;
 /** A Workshop picture, drawn: its pixels and its origin (where it sits on its host's mark). */
 export function workshopPicture(p: WorkshopPic, st: Style, mk: MakeCanvas): PiecePixels {
   let pic: { c: AnyCanvas; ox: number; oy: number };
   if (p.what === "broom") {
-    const d = restingBroomSprite(p.fitted, { ppm: p.ppm, pitch: p.pitch, yaw: p.yaw, scale: p.host === "lathe" ? 1.5 : 2 }) as Drawn;
+    // (on the lift turned end on, its bristles toward the player: Ed, 2026-11-07, "a little garage ramp the broom goes up on, bristles toward the player")
+    const d = restingBroomSprite(p.fitted, { ppm: p.ppm, pitch: p.pitch, yaw: p.yaw, scale: p.host === "lathe" ? 1.5 : 2, turn: p.host === "broomLift" ? LIFT_TURN : 0 }) as Drawn;
     pic = { c: litCanvas(d, st, mk, 1, "", p.colours), ox: d.origin.x, oy: d.origin.y };
   } else {
     const q = partPicture(st, p.colours, p.part, mk, { fit: p.fit, pitch: p.pitch, yaw: p.yaw, hung: true });

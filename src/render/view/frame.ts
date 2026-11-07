@@ -35,7 +35,7 @@ import { leyDrawnTo, RING_AFTER, shaderPulse } from "../leylines";
 import { routeSeen } from "../../rules/hatSpells";
 import { bootLineAt, bootPath, bootPulseAt } from "../../rules/bootRing";
 import { leyKey } from "../../rules/leylines";
-import { SPRITE_UNIFORMS } from "../sprites";
+import { SPRITE_UNIFORMS, treeNormalDirections } from "../sprites";
 import { inView } from "./culling";
 import { checkPops, drawGhosts } from "./pops";
 import { refresh } from "./scenery";
@@ -50,6 +50,7 @@ import { FeedTag } from "../feedTag";
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./lights";
 import { placeCamera } from "./camera";
 import { setFrameUniforms } from "./frameUniforms";
+import { stepTreeNormalDirs } from "../treeNormalDirs";
 import { setReveal } from "./reveal";
 import { drawWitch, houseShiftOf } from "./witch";
 import { MasterplanView } from "../masterplan";
@@ -103,6 +104,7 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
 
     if (!repaintHeld) a4PrivateHost.swapHomeArt();
     setFrameUniforms(a4ViewHost, time, up);
+    stepTreeNormalDirs(a4ViewHost.renderer, a4ViewHost.assets.typeArts(), treeNormalDirections(t)); // (the trees' normals cut to the pause page's Tree normal maps choice: nothing while it's full)
     setReveal(a4ViewHost, time);
     const w = g.witch;
     a4ViewHost.time("uniforms");

@@ -1,14 +1,16 @@
 // The witches' skin tones (Ed, 2026-11-07: "skin tone range plus some fantasy tones"), one list for everything that picks a skin:
 // the party witches (witch.js partyWitch), the witch generator (witchGenome.js), the creator's Randomise (src/ui/looks.ts) and
-// the dressing table's skin grid (src/rules/wardrobe.ts skinSwatch).
+// the basin's skin grid (src/rules/wardrobe.ts skinSwatch).
 //   HUMAN_SKINS: the Monk Skin Tone Scale's ten tones, palest (Monk 1) to deepest (Monk 10), exactly as published.
 //     Monk, Ellis. "Monk Skin Tone Scale," 2019. https://skintone.google. Released by Google under the Creative Commons
 //     Attribution 4.0 International licence (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/): free to use, with credit.
 //     (Hex values and licence as Google publishes them with the scale; this copy checked against Google's own
 //     GoogleCloudPlatform/genmedia-creative-studio config/virtual_model_options.json, 2026-11-07.)
 //   FANTASY_SKINS: a witch's own, palest to deepest, from the forest's cold side of the colour grammar (src/render/colourGrammar.ts:
-//     its blues, purples and turquoise; the sleeping legend's pale lilac): frost blue, lilac, ash grey, moss green, night indigo.
-//     Only the dressing table offers them: a random witch is always one of the ten human tones.
+//     its blues, purples and turquoise; the sleeping legend's pale lilac): frost blue, lilac, ash grey, light green, night indigo,
+//     palest to deepest but for the light green (Ed, 2026-11-07: "the default skin should be a light green": #a8d08d, in the moss
+//     green's old place, her starting skin, config/default-look.json). Only the basin offers them: a random witch is always one of
+//     the ten human tones.
 // Each a [hue, saturation, value] (0-1) as every palette is, rounded to 4 places (hsv2rgb gives the published hex back exactly).
 export const MONK_HEX = ["#f6ede4", "#f3e7db", "#f7ead0", "#eadaba", "#d7bd96", "#a07e56", "#825c43", "#604134", "#3a312a", "#292420"];
 
@@ -25,6 +27,6 @@ export const FANTASY_SKINS = [
   [.58, .14, .95], // frost blue
   [.75, .22, .86], // lilac (the old grid's lavender column)
   [.62, .06, .72], // ash grey
-  [.25, .38, .6],  // moss green
+  hexToHsv("#a8d08d"), // light green (Ed, 2026-11-07: her starting skin; it was a darker moss green, [.25, .38, .6])
   [.69, .35, .42], // night indigo
 ];
