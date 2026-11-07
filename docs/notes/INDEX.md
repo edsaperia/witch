@@ -254,6 +254,7 @@ says what each note covers.
 - The sail's loading against its two animations
 - The build's slice under the zoom
 - The dive's load order
+- The art baked at build time
 - Reused surface roughness (#1464, 2026-10-30):
 - Exact travel art profiles (2026-10-30, #1464):
 - Ordinary-play scenery stalls

@@ -40,6 +40,10 @@ const RIG_PAGES = 48;
 /** How recently (ms) a rig page drawn is kept whatever RIG_PAGES says (evictRigs). */
 const RIG_KEEP = 3000;
 
+/** A tool's record of every set asked for (tools/prebake/coverage.cjs sets `__witchArtAsks` to an array before the page loads). */
+type Asked = { key: string | null; kind: string; id: unknown; job: ArtJob };
+const ARTS_ASKED = (): Asked[] | undefined => (globalThis as { __witchArtAsks?: Asked[] }).__witchArtAsks;
+
 type Reply = { job: ArtJob; result?: ArtResult; error?: string; ms?: number; cached?: boolean; /** Asked only if kept, and not kept. */ miss?: boolean };
 
 /** The art workers, started ahead of the View (prewarmArtWorkers), for its AssetLibrary to take: they load their code (most of a
@@ -250,7 +254,8 @@ export class AssetLibrary {
     if (home) (job as ArtJob & { home?: boolean }).home = true;
     // The cache is the worker's (render/artWorker.ts: the job carries its key; a set drawn before comes back `cached`), so the
     // page never reads or writes a set's megabytes itself (the stall hunt, 2026-10-13); drawing on the page (no workers), it does.
-    (job as ArtJob & CacheHint).cacheKey = this.cacheKey(job);
+    const cacheKey = (job as ArtJob & CacheHint).cacheKey = this.cacheKey(job);
+    ARTS_ASKED()?.push({ key: cacheKey, kind: job.kind, id: job.id, job });
     (job as ArtJob & { urgent?: boolean }).urgent = urgent;
     (job as Stamped).gen = this.gen;
     enqueueWorkerTrace(job, `art:${job.kind}`, job.id, this.queue.length);

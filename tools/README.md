@@ -117,6 +117,7 @@ node tools/inventory.mjs [--check]
 - [`opening/`](opening/README.md): 3 scripts — bedroom-budget.cjs, shots.cjs, wake-keys.cjs
 - [`overrides/`](overrides/README.md): 1 script — png.ts
 - [`playtest/`](playtest/README.md): 1 script — compare.cjs
+- [`prebake/`](prebake/README.md): 5 scripts — bake.mjs, coverage.cjs, lightUniforms.cjs, page.ts, treeQuant.mjs
 - [`props/`](props/README.md): 1 script — ingame.cjs
 - [`qa/`](qa/README.md): 4 scripts — core.cjs, journey.cjs, leash-lake.cjs, win-strip.cjs
 - [`rainbow/`](rainbow/README.md): 1 script — shots.cjs
