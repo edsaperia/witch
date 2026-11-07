@@ -50,3 +50,14 @@ Priority order: Articulate trunk → Fold broad ear fans → Keep pad contact. G
 **Generation prompt**
 
 > Photorealistic zoological morphology reference plate, plain light grey floor, no lettering, two rows and four columns of separate whole animals including feet and horns. Orthographic telephoto approximation from 30 degrees above horizontal. All animals point right; columns 1 and 2 turn their heading 35 degrees toward the viewer from side profile, standing then walking; columns 3 and 4 turn 35 degrees away from side profile, standing then walking. Top row same adult male; bottom row same juvenile, visibly smaller. Realistic natural limb articulation, visible negative space between feet, soft shadows. Species: African savanna elephant, broad fan ears, tusks and trunk with two finger tips; calf with short trunk and no visible tusks
+## Third pass · restrained giant target
+
+Two readable concepts are retained from the new pass. The intended pick is the second, with the defining feature exaggerated through age and scale, plus one small magic or reverence detail. The first is a quieter fallback. Both keep the animal's body readable beside the witch.
+
+[Pixel-style sheet](https://github.com/edsaperia/witch/blob/43b0c8ebae1c8d6a3365b5c3d00ca66c70366160/previews/art-pass/elephant/pixel-legend-pass-l4.jpg). This sheet shows the current level-three sprite rendered by the game's own generator at true native raster and nearest-neighbour 4×, towards and away. The violet marker is approximately the witch's 50px height. It is a style and scale anchor, not an activated legend design.
+
+**Pixel pick requirements.** Keep a compact silhouette at 64–128px, three cel bands, a dark outline, deliberate clusters and only the species signature. Preserve the existing head, feet and body ratios before adding armour, worn marks or magic.
+
+**Additional graph notes.** The selected legend should expose the already documented body-plan needs above, then add only sockets required for its signature element. The sheet does not claim that the current graph can express these details.
+
+
