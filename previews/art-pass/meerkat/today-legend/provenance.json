@@ -1,0 +1,170 @@
+{
+  "id": "meerkat",
+  "sourceHead": "e7133f00bc43441faf72cede1b6a6e013552aa38",
+  "currentPrototype": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
+  "artTree": "231a72851575d44e88e7cc85380d809ceb8bd69c",
+  "prototypeArtTree": "231a72851575d44e88e7cc85380d809ceb8bd69c",
+  "configTree": "b9e0e0ae57c51ae8310068cea2ddfc4d8204553b",
+  "prototypeConfigTree": "b9e0e0ae57c51ae8310068cea2ddfc4d8204553b",
+  "configStyle": {
+    "_readme": "Art Lab style overrides; omitted fields follow current Lab defaults. Detailed notes and decisions: docs/notes/config-history/style.md.",
+    "name": "Lab default",
+    "style": {}
+  },
+  "style": {
+    "creatureSizeCandidate": 1,
+    "ambientHue": 0.68,
+    "ambient": 0.22,
+    "moon": 0.3,
+    "moonHue": 0.58,
+    "glowHue": 0.13,
+    "glowSat": 0.35,
+    "glowRadius": 110,
+    "glowPower": 1.4,
+    "bands": 3,
+    "dither": 0.35,
+    "round": 0.9,
+    "outline": "none",
+    "cOutline": "dark",
+    "shafts": 0.3,
+    "areaContrast": 0.6,
+    "sat": 0.9,
+    "leafHue": 0.3,
+    "leafVariety": 0.3,
+    "trunkHue": 0.07,
+    "groundHue": 0.27,
+    "groundVal": 0.4,
+    "pixel": 3,
+    "treeSize": 0.85,
+    "crownWidth": 3,
+    "clearing": 0.55,
+    "depth": 4,
+    "areaScale": 1,
+    "areaTypes": 64,
+    "density": 0.55,
+    "clump": 0.6,
+    "gnarl": 0.5,
+    "roots": 0.6,
+    "bark": 0.6,
+    "trees": 1,
+    "wBroad": 0.8,
+    "wFir": 0.6,
+    "wWillow": 0.5,
+    "wBirch": 0.5,
+    "wPalm": 0.3,
+    "wFlat": 0.5,
+    "bushes": 55,
+    "bushSize": 1,
+    "flowers": 0.3,
+    "cSat": 0.6,
+    "cVal": 0.85,
+    "head": 0.44,
+    "eye": 1,
+    "legs": 1,
+    "long": 1,
+    "size": 8,
+    "growth": 20,
+    "magicHue": 0.5,
+    "fur": 0.5,
+    "creatureScale": 1.5,
+    "texture": 1,
+    "texDetail": 0.3,
+    "hueShift": 0,
+    "cloakHue": 0.72,
+    "hairHue": 0.01,
+    "hatHue": 0.74,
+    "topHue": 0.13,
+    "jeansHue": 0.6,
+    "shoeHue": 0,
+    "phonesHue": 0.92
+  },
+  "styleSha256": "25f6dcfbf0a2f8e1cb501e64a88cec6b3baeed111d9f94496d4b76340844a362",
+  "tuningFileSha256": "1a34e039a04d12b93e26edce3ca0341e5777098ef30354945219b917bdb053ce",
+  "level": 3,
+  "frame": 0,
+  "facing": "towards",
+  "kind": "plain defaultStyle albedo; no gear/woken/sleep/browser/live lighting; NOT Bold style parity",
+  "native": {
+    "w": 274,
+    "h": 240,
+    "rawRgbaSha256": "3a8f17dbbbae700fc111aedf0cbe322fdd2547d9e2cf5130f277a40545f4fa92",
+    "pngSha256": "6c207dbd23b250f742139635ea321cae95b833972fd3de8e676f15815f9f0dc4"
+  },
+  "nearest4x": {
+    "w": 1096,
+    "h": 960,
+    "pngSha256": "679af91094096cd742f9b75555bbe4725088ac7d165a6c7c6a38ee1cea2b19da",
+    "method": "each source RGBA pixel copied to4x4 identical pixels",
+    "exact": true
+  },
+  "comparison": {
+    "w": 2664,
+    "h": 1248,
+    "sha256": "3f60fb4a20899e735761d3c4f8c584b831efbada757385a36337e5dff77329df",
+    "method": "left v2 concept unscaled; right upper native, lower exact nearest4x, alpha composited over RGB32/36/40; no crop/rescale/AI alteration",
+    "conceptSha256": "94e1f31cd655c526b8b93fb9d3856417c1c9df2fc5e7c3f09bf68954a13a4101",
+    "positions": {
+      "concept": [
+        0,
+        0
+      ],
+      "native": [
+        1552,
+        16
+      ],
+      "nearest4x": [
+        1552,
+        272
+      ]
+    }
+  },
+  "milliseconds": 420.2349999999999,
+  "slotStatus": "FREE; worker stopped on hedgehog3s; no retry",
+  "workerManifest": {
+    "started": "2026-11-07T14:49:14.569Z",
+    "results": [
+      {
+        "event": "done",
+        "id": "marten",
+        "w": 328,
+        "h": 237,
+        "milliseconds": 572.7336999999999
+      },
+      {
+        "event": "done",
+        "id": "stoat",
+        "w": 354,
+        "h": 229,
+        "milliseconds": 505.60040000000004
+      },
+      {
+        "event": "done",
+        "id": "meerkat",
+        "w": 274,
+        "h": 240,
+        "milliseconds": 420.2349999999999
+      },
+      {
+        "event": "done",
+        "id": "mole",
+        "w": 410,
+        "h": 323,
+        "milliseconds": 1130.4679
+      }
+    ],
+    "status": "STOPPED_SPECIES_3S:hedgehog",
+    "limitSpeciesMs": 3000,
+    "limitProcessMs": 30000,
+    "current": "hedgehog",
+    "elapsedMs": 6323.9771,
+    "exitCode": null,
+    "signal": "SIGTERM",
+    "stderr": "",
+    "finished": "2026-11-07T14:49:20.893Z"
+  },
+  "recipeSource": "import fs from 'node:fs';import {performance} from 'node:perf_hooks';import {critter,speciesColours,defaultStyle,bake} from '../art/generator.js';\nconst ids=['marten','stoat','meerkat','mole','hedgehog','dormouse','squirrel','flyingsquirrel'],style=defaultStyle();\nfs.writeFileSync(new URL('./current-cpu-style.json',import.meta.url),JSON.stringify(style,null,2)+'\\n');\nfor(const id of ids){\n await new Promise(r=>process.send({event:'start',id},r));\n const started=performance.now();const sprite=critter(id,3,0,style,'towards');\n const factory=()=>{const canvas={};canvas.getContext=()=>({createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),putImageData:img=>canvas.data=img.data});return canvas;};\n const colours=speciesColours(id,style);const {A,w,h}=bake(sprite,colours,style,style.cOutline,factory);\n const milliseconds=performance.now()-started;const dir=new URL('./art-pass/'+id+'/today-legend/',import.meta.url);fs.mkdirSync(dir,{recursive:true});\n fs.writeFileSync(new URL('albedo.rgba',dir),Buffer.from(A.data));\n fs.writeFileSync(new URL('capture.json',dir),JSON.stringify({id,w,h,milliseconds,level:3,frame:0,facing:'towards',style,colours,styleSelection:'defaultStyle() unchanged',artStyle:style.artStyle??null,pixel:style.pixel,outline:style.cOutline,kind:'plain albedo, no gear/woken/sleep/live lighting'},null,2)+'\\n');\n await new Promise(r=>process.send({event:'done',id,w,h,milliseconds},r));\n if(milliseconds>=3000)process.exit(3);\n}process.exit(0);",
+  "recipeSha256": "905ef7fd406d04f55933a819ddc88c3d8f1a2933d1ed9af1554de3fece3db4f4",
+  "supervisorSource": "import fs from 'node:fs';import {fork} from 'node:child_process';import {performance} from 'node:perf_hooks';\nconst start=performance.now(),manifest={started:new Date().toISOString(),results:[],status:'RUNNING',limitSpeciesMs:3000,limitProcessMs:30000};let speciesTimer,reason;const save=()=>fs.writeFileSync(new URL('./current-cpu-manifest.json',import.meta.url),JSON.stringify(manifest,null,2)+'\\n');\nconst child=fork(new URL('./current-cpu-worker.mjs',import.meta.url),[],{stdio:['ignore','pipe','pipe','ipc']});let err='';child.stderr.on('data',b=>err+=b);const stop=r=>{reason=r;manifest.status=r;child.kill();save();};const outer=setTimeout(()=>stop('STOPPED_PROCESS_30S'),30000);\nchild.on('message',m=>{if(m.event==='start'){manifest.current=m.id;save();speciesTimer=setTimeout(()=>stop('STOPPED_SPECIES_3S:'+m.id),3000);}else if(m.event==='done'){clearTimeout(speciesTimer);manifest.results.push(m);delete manifest.current;save();}});\nchild.on('exit',(code,signal)=>{clearTimeout(outer);clearTimeout(speciesTimer);manifest.elapsedMs=performance.now()-start;manifest.status=reason??(code===0?'COMPLETE':'FAILED');manifest.exitCode=code;manifest.signal=signal;manifest.stderr=err;manifest.finished=new Date().toISOString();save();console.log(JSON.stringify(manifest));});\nsave();",
+  "supervisorSha256": "0aeb93879c80ab500e188117addeecbf9ed635c69932a48e1b740ec66158c6b1",
+  "checks": "rawlength,PNG roundtrip,exactnearest4x; composite fullpixel checks below; montagePNG fullRGBA roundtrip PASS"
+}

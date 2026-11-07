@@ -1,0 +1,253 @@
+{
+  "id": "mole",
+  "w": 410,
+  "h": 323,
+  "milliseconds": 1130.4679,
+  "level": 3,
+  "frame": 0,
+  "facing": "towards",
+  "style": {
+    "creatureSizeCandidate": 1,
+    "ambientHue": 0.68,
+    "ambient": 0.22,
+    "moon": 0.3,
+    "moonHue": 0.58,
+    "glowHue": 0.13,
+    "glowSat": 0.35,
+    "glowRadius": 110,
+    "glowPower": 1.4,
+    "bands": 3,
+    "dither": 0.35,
+    "round": 0.9,
+    "outline": "none",
+    "cOutline": "dark",
+    "shafts": 0.3,
+    "areaContrast": 0.6,
+    "sat": 0.9,
+    "leafHue": 0.3,
+    "leafVariety": 0.3,
+    "trunkHue": 0.07,
+    "groundHue": 0.27,
+    "groundVal": 0.4,
+    "pixel": 3,
+    "treeSize": 0.85,
+    "crownWidth": 3,
+    "clearing": 0.55,
+    "depth": 4,
+    "areaScale": 1,
+    "areaTypes": 64,
+    "density": 0.55,
+    "clump": 0.6,
+    "gnarl": 0.5,
+    "roots": 0.6,
+    "bark": 0.6,
+    "trees": 1,
+    "wBroad": 0.8,
+    "wFir": 0.6,
+    "wWillow": 0.5,
+    "wBirch": 0.5,
+    "wPalm": 0.3,
+    "wFlat": 0.5,
+    "bushes": 55,
+    "bushSize": 1,
+    "flowers": 0.3,
+    "cSat": 0.6,
+    "cVal": 0.85,
+    "head": 0.44,
+    "eye": 1,
+    "legs": 1,
+    "long": 1,
+    "size": 8,
+    "growth": 20,
+    "magicHue": 0.5,
+    "fur": 0.5,
+    "creatureScale": 1.5,
+    "texture": 1,
+    "texDetail": 0.3,
+    "hueShift": 0,
+    "cloakHue": 0.72,
+    "hairHue": 0.01,
+    "hatHue": 0.74,
+    "topHue": 0.13,
+    "jeansHue": 0.6,
+    "shoeHue": 0,
+    "phonesHue": 0.92
+  },
+  "colours": {
+    "1": [
+      73,
+      71,
+      82
+    ],
+    "2": [
+      121,
+      117,
+      126
+    ],
+    "3": [
+      100,
+      95,
+      105
+    ],
+    "4": [
+      24,
+      18,
+      30
+    ],
+    "5": [
+      255,
+      255,
+      245
+    ],
+    "6": [
+      82,
+      60,
+      45
+    ],
+    "7": [
+      79,
+      140,
+      63
+    ],
+    "8": [
+      143,
+      191,
+      96
+    ],
+    "10": [
+      238,
+      158,
+      192
+    ],
+    "14": [
+      45,
+      41,
+      54
+    ],
+    "16": [
+      70,
+      190,
+      150
+    ],
+    "17": [
+      70,
+      40,
+      90
+    ],
+    "18": [
+      142,
+      102,
+      255
+    ],
+    "21": [
+      217,
+      174,
+      65
+    ],
+    "22": [
+      221,
+      209,
+      255
+    ],
+    "23": [
+      38,
+      28,
+      36
+    ],
+    "24": [
+      69,
+      68,
+      96
+    ],
+    "25": [
+      27,
+      23,
+      33
+    ],
+    "26": [
+      37,
+      89,
+      36
+    ],
+    "35": [
+      150,
+      148,
+      142
+    ],
+    "36": [
+      84,
+      82,
+      84
+    ],
+    "37": [
+      98,
+      130,
+      60
+    ],
+    "39": [
+      170,
+      212,
+      255
+    ],
+    "40": [
+      255,
+      178,
+      70
+    ],
+    "41": [
+      178,
+      122,
+      58
+    ],
+    "51": [
+      236,
+      234,
+      226
+    ],
+    "52": [
+      226,
+      218,
+      204
+    ],
+    "53": [
+      101,
+      99,
+      112
+    ],
+    "54": [
+      26,
+      28,
+      62
+    ],
+    "55": [
+      44,
+      50,
+      96
+    ],
+    "56": [
+      150,
+      72,
+      70
+    ],
+    "57": [
+      73,
+      71,
+      82
+    ],
+    "58": [
+      73,
+      71,
+      82
+    ],
+    "59": [
+      45,
+      41,
+      54
+    ]
+  },
+  "styleSelection": "defaultStyle() unchanged",
+  "artStyle": null,
+  "pixel": 3,
+  "outline": "dark",
+  "kind": "plain albedo, no gear/woken/sleep/live lighting"
+}
