@@ -14,12 +14,12 @@ export const PATTERN_LOOK = patternOptions(globalThis.location?.search ?? '');
 const smooth = (x: number) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
 
 /** All music-driven looks share the game's absolute beat clock; gently fade at look boundaries. */
-export function speakerPattern(clock: BeatClock, time: number, look: PatternLook, calm: boolean): PackedPattern {
+export function speakerPattern(clock: BeatClock, time: number, look: PatternLook, calm: boolean, beatsPerTurn?: number): PackedPattern {
   if (look === 'off' || calm) return IDENTITY_PATTERN;
   const beat = Math.max(0, beatAt(clock, time)), cycle = beat / 64;
   const kind = look === 'auto' ? (['spokes', 'stripes', 'bands'] as const)[Math.floor(cycle) % 3] : look;
   const within = beat % 64, envelope = look === 'auto' ? smooth(within / 4) * smooth((64 - within) / 4) : 1;
-  return [LIGHT_PATTERN[kind], PATTERN_DEFAULTS.scale, patternContrast(PATTERN_DEFAULTS.contrast * envelope, true, calm), lightPatternPhase(clock, time)];
+  return [LIGHT_PATTERN[kind], PATTERN_DEFAULTS.scale, patternContrast(PATTERN_DEFAULTS.contrast * envelope, true, calm), lightPatternPhase(clock, time, beatsPerTurn)];
 }
 export function sourcePattern(kind: LightPatternKind, worldTime: number, calm: boolean): PackedPattern {
   return calm ? IDENTITY_PATTERN : [LIGHT_PATTERN[kind], kind === 'rings' ? 3 : 6,

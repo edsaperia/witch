@@ -5,6 +5,7 @@ import type { Schema } from "./schema";
 
 export const TUNING_OVER: Record<string, Partial<Schema>> = {
   "patternLight.strength": { minimum: 0, maximum: 4 },
+  "patternLight.beatsPerTurn": { minimum: 1, maximum: 256 },
   "combatWaiting.reachScale": { minimum: 0, maximum: 3 },
   "combatWaiting.areaGrowth": { minimum: 0, maximum: 1 },
   "combatWaiting.passPower": { minimum: 1, maximum: 64 },

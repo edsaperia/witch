@@ -92,17 +92,18 @@ export function setLights(v: View, all: ForestLight[], x: number, z: number, pat
   // The light just outside the budget sets the fade: the last ones in fade as it nears them.
   const edge = NEAR_D.length > budget ? NEAR_D[budget] : Infinity, used = Math.min(budget, NEAR_D.length);
   const U = LIGHT_UNIFORMS;
-  let n = 0, speakerPatternUsed = false, gentlePatternUsed = false;
+  let n = 0, gentlePatternUsed = false;
   for (let i = 0; i < used; i++) {
     const l = NEAR_L[i], d = NEAR_D[i];
     const fade = Math.min(1, Math.max(0, (edge - d) / 15));
     U.uLightPos.value[n].set(l.x, l.y + groundHeight(l.x, l.z), l.z, l.reach); // its height above the rolling ground
     U.uLightCol.value[n].set(l.rgb.x, l.rgb.y, l.rgb.z, l.strength * fade);
-    // Only one selected soundsystem and one gentle source; selection/ranking/light count stay unchanged.
+    // Every playing soundsystem in the light budget, nearest first (Ed, 2026-11-07: every won stump's light turns, not only the
+    // nearest one's), and one gentle source; the pattern slots' cap (PATTERN_DEFAULTS.projectorCap, 3) still holds, and
+    // selection/ranking/light count stay unchanged.
     const pattern = l.pattern, speaker = pattern && ((pattern[0] >= 1 && pattern[0] <= 3) || pattern[0] === 6), gentle = pattern?.[0] === 4;
-    if (patternLook !== "off" && !comfort.reduceFlashing && pattern && ((speaker && !speakerPatternUsed) || (gentle && !gentlePatternUsed))) {
+    if (patternLook !== "off" && !comfort.reduceFlashing && pattern && (speaker || (gentle && !gentlePatternUsed))) {
       writeLightPattern(n, pattern);
-      if (speaker) speakerPatternUsed = true;
       if (gentle) gentlePatternUsed = true;
     }
     n++;
