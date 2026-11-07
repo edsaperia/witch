@@ -3,6 +3,7 @@
 import { describe, expect, it } from "vitest";
 import * as Art from "../../art/generator.js";
 import { applies, BOXES, boxOf, GRID_COLS, GRID_ROWS, nearestSwatch, PURE_ROW, slot, snapPalette, swatchAt, upgrade } from "./creator";
+import { GRID_ROWS as WARDROBE_ROWS, SKIN_COLS, nearestSkin, skinSwatch } from "../rules/wardrobe";
 import { clear, newWalker, spotAt, type RoomFloor } from "./roomWalk";
 
 describe("the character creator", () => {
@@ -86,7 +87,10 @@ describe("the character creator", () => {
     expect(snapPalette(null)).toBeNull();
     const old = { hat: [0.75, 0.6, 0.45], skin: [0.07, 0.32, 0.9], hair: [0.07, 0.6, 0.33], jacket: [0.92, 0.9, 1], sneakers: [0, 0, 0.97] };
     const snapped = snapPalette(old)!;
-    for (const [k, c] of Object.entries(snapped)) { const [col, row] = nearestSwatch(c); expect(c, k).toEqual(swatchAt(col, row)); }
+    for (const [k, c] of Object.entries(snapped)) if (k !== "skin") { const [col, row] = nearestSwatch(c); expect(c, k).toEqual(swatchAt(col, row)); }
+    // her skin to the dressing table's nearest skin swatch, not the cloth grid's (Ed, 2026-11-07: the Monk scale's ten and the fantasy tones)
+    expect(snapped.skin).toEqual(nearestSkin(old.skin));
+    for (let r = 0; r < WARDROBE_ROWS; r++) for (let c = 0; c < SKIN_COLS; c++) expect(snapPalette({ skin: skinSwatch(c, r) })!.skin, `${c},${r} stays`).toEqual(skinSwatch(c, r));
     expect(nearestSwatch(old.sneakers)[0], "white to the grey column").toBe(12);
     expect(nearestSwatch(old.jacket), "a near-pure crimson to crimson's pure swatch").toEqual([11, PURE_ROW]);
     for (const [k, c] of Object.entries(Art.DEFAULT_OUTFIT as Record<string, number[]>)) expect(nearestSwatch(c).every(Number.isInteger), k).toBe(true);

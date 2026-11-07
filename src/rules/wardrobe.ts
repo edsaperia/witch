@@ -6,6 +6,7 @@ import WARDROBE from "../../config/wardrobe.json";
 import type { Slot } from "./broomParts";
 import { isDressingTable } from "./clothesPile";
 import { FANTASY_SKINS, HUMAN_SKINS } from "../../art/skinTones.js";
+import { hsv2rgb } from "../../art/core.js";
 
 /** A thing she can wear: what it sets on her genome (a dotted path for a part), and whether it's hers in a first game (the rest
  *  are found in the forest, as the other permanent upgrades are: Ed, 2026-10-21). */
@@ -39,6 +40,18 @@ export const CLOTH_COLS = 13, CLOTH_ROWS = [1, 3, 4, 6, 8];
 export const SKIN_COLS = 3;
 /** A skin swatch (hue, saturation, value) at column `col`, row `row` (0 the palest): columns 0 and 1 the human tones, 2 the fantasy. */
 export const skinSwatch = (col: number, row: number): number[] => [...(col < 2 ? HUMAN_SKINS[row * 2 + col] : FANTASY_SKINS[row])];
+/** The skin swatch nearest a colour (by red, green and blue as the eye weighs them, as the panel ticks one): her saved skin is
+ *  snapped to this on load (ui/creator.ts snapPalette), not to the cloth grid, so a skin from the dressing table stays hers. */
+export function nearestSkin(c: number[]): number[] {
+  const rgb = hsv2rgb as (h: number, s: number, v: number) => number[], [r0, g0, b0] = rgb(c[0], c[1], c[2]);
+  let best = skinSwatch(0, 0), bd = Infinity;
+  for (let row = 0; row < GRID_ROWS; row++) for (let col = 0; col < SKIN_COLS; col++) {
+    const s = skinSwatch(col, row), [r, g, b] = rgb(s[0], s[1], s[2]), m = (r + r0) / 2;
+    const d = (2 + m / 256) * (r - r0) ** 2 + 4 * (g - g0) ** 2 + (2 + (255 - m) / 256) * (b - b0) ** 2;
+    if (d < bd) { bd = d; best = s; }
+  }
+  return best;
+}
 
 /** A station's shelves, top to bottom (config/house/'s object id), or null for one with none. */
 export function shelvesAt(station: string): Shelf[] | null {
