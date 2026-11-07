@@ -2,7 +2,7 @@
 // feet, and so when you're zoomed close her head is off screen"; "When choosing clothes etc I can't select them, I can only move the
 // selector around"). For each of her dressing stations (the bedroom's, the basin, the mirror, the cloak pegs and the bags; ?shot=object:<id>, app/shot.ts), the loop running as in play:
 //  - no scrolling (Ed, 2026-11-07: "no station menu is taller than the screen at 1280×720, so there's no scrolling"): its panel's
-//    body never scrolls, with the focus walked over every line (the detail at each card's foot as tall as it gets), on a fresh save and
+//    body never scrolls, with the focus walked over every line and along each line of cards (the detail at each card's foot as tall as it gets), on a fresh save and
 //    again with everything owned (the pause page's Unlock everything, app/debugUnlock.ts, read as the panel opens again); shots of both,
 //    <out>/<station>-fresh.png and -owned.png, and the heights in <out>/heights.json;
 //  - framing: once she's choosing, the part of her the station changes framed in the right half (camera.station.parts, Ed 2026-11-07:
@@ -14,7 +14,7 @@
 //    and at a hat-off station her hat-off frames for it); Enter, E and Space choose in the panel, not in the game (she neither rises
 //    nor puts anything down), a locked item saying it isn't found yet.
 // Fails on any of those or a page error; writes <out>/<station>-<zoom>.png.
-//   npm run build && node tools/stations/check.cjs [out] [dist]   (about 20 minutes in the cloud; ONLY=wardrobe,shoeRack)
+//   npm run build && node tools/stations/check.cjs [out] [dist]   (about 20 minutes in the cloud; ONLY=wardrobe,shoeRack; LINK=parts=horse,ladder,nozzles)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const [outArg = "previews/stations", distArg] = process.argv.slice(2);
@@ -43,7 +43,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         Object.defineProperty(navigator, "getGamepads", { configurable: true, writable: true, value: () => (window.__padOn ? [{ id: "DualSense (STANDARD GAMEPAD Vendor: 054c)", index: 0, connected: true, mapping: "standard", timestamp: performance.now(), axes: window.__pad.axes, buttons: window.__pad.buttons.map(p => ({ pressed: p, touched: p, value: p ? 1 : 0 })) }] : real ? real() : []) });
       });
       page.on("pageerror", e => fails.push(`${id}: page error ${e.message}`));
-      await page.goto(`http://127.0.0.1:${server.address().port}/?shot=object:${id}&seed=123${BROOM.includes(id) ? "&kit=full" : ""}`);
+      await page.goto(`http://127.0.0.1:${server.address().port}/?shot=object:${id}&seed=123${BROOM.includes(id) ? "&kit=full" : ""}${process.env.LINK ? "&" + process.env.LINK : ""}`); // (LINK: more of the link, e.g. parts=horse,ladder,nozzles)
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 500 });
       // (the start card's any key: Q, which the station's panel leaves alone, as it takes Enter, E and Space)
       await page.keyboard.press("KeyQ");
@@ -74,10 +74,20 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         const m = () => page.evaluate(() => { const b = document.querySelector("#station-panel .sp-body"), kids = [...b.children], content = kids.length ? Math.ceil(Math.max(...kids.map(k => k.getBoundingClientRect().bottom)) - b.getBoundingClientRect().top + 2) : 0; return { client: b.clientHeight, scroll: Math.max(b.scrollHeight > b.clientHeight ? b.scrollHeight : 0, content), /* (what it holds: its scroll height when it scrolls, else its cards' extent) */ lines: new Set([...document.querySelectorAll("#station-panel [data-line]")].map(e => e.dataset.line)).size }; });
         let worst = await m(), at0 = null;
         for (let i = 0; i < 80; i++) { await page.keyboard.press("ArrowUp"); await page.waitForTimeout(60); const a = await page.evaluate(() => document.querySelector("#station-panel .focus")?.dataset.line); if (a === at0) break; at0 = a; }
+        // (along a line of cards too, each card's detail in turn: the longest detail showing, the coordinator for Ed, 2026-11-07, "The
+        // no-scroll rule must hold with everything owned and the longest detail showing"; then back to its start)
+        const across = async () => {
+          if (!(await page.evaluate(() => !!document.querySelector("#station-panel .focus.sp-card")))) return;
+          const col = () => page.evaluate(() => document.querySelector("#station-panel .focus")?.dataset.col);
+          const go = async (key, wait) => { for (let i = 0; i < 14; i++) { const was = await col(); await page.keyboard.press(key); await page.waitForTimeout(wait); if (await col() === was) return; if (wait > 100) { const n = await m(); if (n.scroll > worst.scroll) worst = n; } } };
+          await go("ArrowLeft", 60); await go("ArrowRight", 250); await go("ArrowLeft", 60); // (to its start, along it measuring, back to its start)
+        };
+        await across();
         for (let i = 0; i < 120; i++) {
           const before = await page.evaluate(() => { const f = document.querySelector("#station-panel .focus"); return f ? `${f.dataset.line}:${f.dataset.col}` : null; });
           await page.keyboard.press("ArrowDown"); await page.waitForTimeout(250);
           const n = await m(); if (n.scroll > worst.scroll) worst = n;
+          await across();
           const after = await page.evaluate(() => { const f = document.querySelector("#station-panel .focus"); return f ? `${f.dataset.line}:${f.dataset.col}` : null; });
           if (after === before) break;
         }
