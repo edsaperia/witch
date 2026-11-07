@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "base": "524b0acaa",
+  "records": [
+    {
+      "id": "fox",
+      "source": "exec-e0c60a61-94f0-4a64-882d-c6766a4c6c82.png",
+      "prompt": "Use case: photorealistic-natural. Asset: red fox (Vulpes vulpes) skeleton anatomy target sheet for a game, NOT existing game art. Make one crisp 4-column by 2-row contact sheet on plain light grey background, no scenery. Eight separate whole animals, generous margins, no clipping. Top row adult red fox; bottom row an independently walking, eyes-open fox kit (age0 target, not newborn). Columns: standing towards; walking towards; standing away; walking away. Camera for every panel is elevated looking DOWN 30 degrees, telephoto/near-orthographic, body broadside diagonal with 35-degree yaw toward or away from viewer; do not use eye-level or straight head-on portraits. Towards means muzzle visible; away means rump and back of head visible. No looking back in away panels. Natural lean fox anatomy: fine long muzzle, large triangular ears, slender digitigrade legs, light chest tucked waist, very long full brush with pale tip, reddish body black lower legs white throat. Kit relatively larger head, shorter muzzle, softer rounded body and shorter less full tail; do not miniaturize adult. Walking is one quiet terrestrial step, four anatomically correct limbs, no galloping. Natural fur and neutral soft light, documentary photographic realism. Small labels only: adult / kit; standing towards / walking towards / standing away / walking away. No costume, extra tails, jewelry, fantasy, illustration, cartoon, scale ruler or claims of measurement. Consistent adult anatomy across top row, consistent kit across bottom.",
+      "sha256": "2aedc23ae0975bdf1f61666db4b23e038d8ae3f754e5b94484c30230ec624640",
+      "bytes": 2087786,
+      "width": 1774,
+      "height": 887,
+      "evidencePath": "previews/art-pass/fox/target-v1.png",
+      "tool": "image_gen.imagegen",
+      "date": "2026-11-07",
+      "status": "provisional; photo and camera review incomplete"
+    },
+    {
+      "id": "arcticfox",
+      "source": "exec-9853cb6c-6ff8-4df8-a35b-895bcbb0db88.png",
+      "prompt": "Use case: photorealistic-natural. Asset: arctic fox (Vulpes lagopus) skeleton anatomy target sheet for a game, NOT existing game art. Make one crisp 4-column by 2-row contact sheet on plain light grey background, no scenery. Eight separate whole animals, generous margins, no clipping. Top row adult winter-white arctic fox; bottom row an independently walking, eyes-open arctic fox kit (age0 target, not newborn). Columns: standing towards; walking towards; standing away; walking away. Camera for every panel is elevated looking DOWN 30 degrees, telephoto/near-orthographic, body broadside diagonal with 35-degree yaw toward or away from viewer; do not use eye-level or straight head-on portraits. Towards means muzzle visible; away means rump and back of head visible. No looking back in away panels. Natural arctic fox anatomy: compact rounded winter body, short broad muzzle, SMALL rounded-triangular ears nestled in fur, short digitigrade legs with furred paws, dense white winter coat and large full brush carried low. NOT a white red fox: smaller ears and shorter extremities. Young kit grey-brown coat, not white. Kit relatively larger head, shorter muzzle, softer rounded body and shorter less full tail; do not miniaturize adult. Walking is one quiet terrestrial step, four anatomically correct limbs, no galloping. Natural fur and neutral soft light, documentary photographic realism. Small labels only: adult / kit; standing towards / walking towards / standing away / walking away. No costume, extra tails, jewelry, fantasy, illustration, cartoon, scale ruler or claims of measurement. Consistent adult anatomy across top row, consistent kit across bottom.",
+      "sha256": "9440739aef64a304708ea2a0bd94cdb698bdbdbba0550b08ab125472fdf340b9",
+      "bytes": 1956686,
+      "width": 1774,
+      "height": 887,
+      "evidencePath": "previews/art-pass/arcticfox/target-v1.png",
+      "tool": "image_gen.imagegen",
+      "date": "2026-11-07",
+      "status": "provisional; photo and camera review incomplete"
+    },
+    {
+      "id": "fennec",
+      "source": "exec-c5fe1544-994c-4ea7-8172-6075bade0a25.png",
+      "prompt": "Use case: photorealistic-natural. Asset: fennec fox (Vulpes zerda) skeleton anatomy target sheet for a game, NOT existing game art. Make one crisp 4-column by 2-row contact sheet on plain light grey background, no scenery. Eight separate whole animals, generous margins, no clipping. Top row adult fennec fox; bottom row an independently walking, eyes-open fennec kit (age0 target, not newborn). Columns: standing towards; walking towards; standing away; walking away. Camera for every panel is elevated looking DOWN 30 degrees, telephoto/near-orthographic, body broadside diagonal with 35-degree yaw toward or away from viewer; do not use eye-level or straight head-on portraits. Towards means muzzle visible; away means rump and back of head visible. No looking back in away panels. Natural fennec anatomy: very small lightly built sand-coloured desert fox, enormous broad-based upright triangular cupped ears, slim pointed muzzle and tiny dark nose, pale cream body white underparts, fine digitigrade limbs with furry soles, long bushy tail with BLACK tip. Do not give it black red-fox socks. Ears remain anatomically attached, not rabbit ears. Kit relatively larger head, shorter muzzle, softer rounded body and shorter less full tail; do not miniaturize adult. Walking is one quiet terrestrial step, four anatomically correct limbs, no galloping. Natural fur and neutral soft light, documentary photographic realism. Small labels only: adult / kit; standing towards / walking towards / standing away / walking away. No costume, extra tails, jewelry, fantasy, illustration, cartoon, scale ruler or claims of measurement. Consistent adult anatomy across top row, consistent kit across bottom.",
+      "sha256": "a56aa35f59bee5621413e48f78aca61d22b48c99204603f9817241d7b19a0136",
+      "bytes": 1881616,
+      "width": 1774,
+      "height": 887,
+      "evidencePath": "previews/art-pass/fennec/target-v1.png",
+      "tool": "image_gen.imagegen",
+      "date": "2026-11-07",
+      "status": "provisional; photo and camera review incomplete"
+    },
+    {
+      "id": "wolf",
+      "source": "exec-686ba735-efef-4bfa-bd3f-b0a06c036b5a.png",
+      "prompt": "Use case: photorealistic-natural. Asset: grey wolf (Canis lupus) skeleton anatomy target sheet for a game, NOT existing game art. Make one crisp 4-column by 2-row contact sheet on plain light grey background, no scenery. Eight separate whole animals, generous margins, no clipping. Top row adult grey wolf; bottom row an independently walking, eyes-open wolf pup (age0 target, not newborn). Columns: standing towards; walking towards; standing away; walking away. Camera for every panel is elevated looking DOWN 30 degrees, telephoto/near-orthographic, body broadside diagonal with 35-degree yaw toward or away from viewer; do not use eye-level or straight head-on portraits. Towards means muzzle visible; away means rump and back of head visible. No looking back in away panels. Natural grey wolf anatomy: powerful deep narrow chest, long robust digitigrade legs and large paws, substantial wedge skull and long broad muzzle, moderate triangular ears much SMALLER in proportion than fox ears, thick neck ruff, almost level back with tucked flank, straight bushy tail hangs LOW never curled, grey-brown guard coat pale cheeks and throat. Not a husky, no blue eyes, no black white dog mask, no white fox tail tip. Kit relatively larger head, shorter muzzle, softer rounded body and shorter less full tail; do not miniaturize adult. Walking is one quiet terrestrial step, four anatomically correct limbs, no galloping. Natural fur and neutral soft light, documentary photographic realism. Small labels only: adult / pup; standing towards / walking towards / standing away / walking away. No costume, extra tails, jewelry, fantasy, illustration, cartoon, scale ruler or claims of measurement. Consistent adult anatomy across top row, consistent pup across bottom.",
+      "sha256": "01c36834ad36d0997dada26a35828556a16f546f57935a38f7b210b3481c911c",
+      "bytes": 2165055,
+      "width": 1774,
+      "height": 887,
+      "evidencePath": "previews/art-pass/wolf/target-v1.png",
+      "tool": "image_gen.imagegen",
+      "date": "2026-11-07",
+      "status": "provisional; photo and camera review incomplete"
+    },
+    {
+      "id": "raccoon",
+      "source": "exec-ed07200d-12a1-440f-b945-a7bffa98675d.png",
+      "prompt": "Use case: photorealistic-natural. Asset: raccoon (Procyon lotor) skeleton anatomy target sheet for a game, NOT existing game art. Make one crisp 4-column by 2-row contact sheet on plain light grey background, no scenery. Eight separate whole animals, generous margins, no clipping. Top row adult raccoon; bottom row an independently walking, eyes-open raccoon kit (age0 target, not newborn). Columns: standing towards; walking towards; standing away; walking away. Camera for every panel is elevated looking DOWN 30 degrees, telephoto/near-orthographic, body broadside diagonal with 35-degree yaw toward or away from viewer; do not use eye-level or straight head-on portraits. Towards means muzzle visible; away means rump and back of head visible. No looking back in away panels. Natural raccoon anatomy: stocky grey-brown body, rounded high rump/arched back, head carried low, pointed muzzle, small rounded ears with pale rims, clear black eye mask, medium bushy tail with dark rings, short sturdy plantigrade limbs and five separate slender finger-like toes on forepaws. A raccoon not a red panda or fox, NO upright triangular ears. Kit relatively larger head, shorter muzzle, smaller round body, short less full ringed tail; do not miniaturize adult. Walking is one quiet terrestrial step, four anatomically correct limbs, no galloping. Natural fur and neutral soft light, documentary photographic realism. Small labels only: adult / kit; standing towards / walking towards / standing away / walking away. No costume, extra tails, jewelry, fantasy, illustration, cartoon, scale ruler or claims of measurement. Consistent adult anatomy across top row, consistent kit across bottom.",
+      "sha256": "c3fa9e142b1cbd760a8f6415bb86802b2cfdb713f4866aac90974f1d386342c5",
+      "bytes": 2255472,
+      "width": 1774,
+      "height": 887,
+      "evidencePath": "previews/art-pass/raccoon/target-v1.png",
+      "tool": "image_gen.imagegen",
+      "date": "2026-11-07",
+      "status": "provisional; photo and camera review incomplete"
+    },
+    {
+      "id": "redpanda",
+      "source": "exec-dbc71543-07b9-45a4-b747-a4d98e50320d.png",
+      "prompt": "Use case: photorealistic-natural. Asset: red panda (Ailurus fulgens) skeleton anatomy target sheet for a game, NOT existing game art. Make one crisp 4-column by 2-row contact sheet on plain light grey background, no scenery. Eight separate whole animals, generous margins, no clipping. Top row adult red panda; bottom row an independently walking, eyes-open red panda cub (age0 target, not newborn). Columns: standing towards; walking towards; standing away; walking away. Camera for every panel is elevated looking DOWN 30 degrees, telephoto/near-orthographic, body broadside diagonal with 35-degree yaw toward or away from viewer; do not use eye-level or straight head-on portraits. Towards means muzzle visible; away means rump and back of head visible. No looking back in away panels. Natural red panda anatomy: compact long-backed, slightly arched furry body, reddish-rust back, black belly and black short sturdy plantigrade legs, broad round pale face with rusty tear marks, short white muzzle, large rounded pointed ears with white rims, very long thick tapering tail with broad alternating reddish and pale rings. Shoulder and rump softly rounded, head low in walking. NO fox snout, no black raccoon eye mask, no giant panda pattern. Kit relatively larger head, shorter muzzle, softer rounded body and shorter less full tail; do not miniaturize adult. Walking is one quiet terrestrial step, four anatomically correct limbs, no galloping. Natural fur and neutral soft light, documentary photographic realism. Small labels only: adult / cub; standing towards / walking towards / standing away / walking away. No costume, extra tails, jewelry, fantasy, illustration, cartoon, scale ruler or claims of measurement. Consistent adult anatomy across top row, consistent cub across bottom.",
+      "sha256": "bd22c4bca28fb93be384c65f407389cfbc8445df6a222385c5ba5e15579ad27e",
+      "bytes": 2018549,
+      "width": 1774,
+      "height": 887,
+      "evidencePath": "previews/art-pass/redpanda/target-v1.png",
+      "tool": "image_gen.imagegen",
+      "date": "2026-11-07",
+      "status": "provisional; photo and camera review incomplete"
+    },
+    {
+      "id": "badger",
+      "source": "exec-82ec8b93-e74f-4967-9d5d-cf48c07047ef.png",
+      "prompt": "Use case: photorealistic-natural. Asset: European badger (Meles meles) skeleton anatomy target sheet for a game, NOT existing game art. Make one crisp 4-column by 2-row contact sheet on plain light grey background, no scenery. Eight separate whole animals, generous margins, no clipping. Top row adult European badger; bottom row an independently walking, eyes-open badger cub (age0 target, not newborn). Columns: standing towards; walking towards; standing away; walking away. Camera for every panel is elevated looking DOWN 30 degrees, telephoto/near-orthographic, body broadside diagonal with 35-degree yaw toward or away from viewer; do not use eye-level or straight head-on portraits. Towards means muzzle visible; away means rump and back of head visible. No looking back in away panels. Natural European badger anatomy: very LOW broad heavy grey body with low nearly level back, massive shoulders and short sturdy black plantigrade legs, long wedge-shaped head carried near ground, distinct white face with two black longitudinal eye-to-ear stripes, small white-edged rounded ears, short stubby tail, long pale foreclaws suited to digging. NO bear proportions, NO raccoon transverse eye mask, NO tall dog legs, NO long brush tail. Kit relatively larger head, shorter muzzle, softer rounded body and shorter less full tail; do not miniaturize adult. Walking is one quiet terrestrial step, four anatomically correct limbs, no galloping. Natural fur and neutral soft light, documentary photographic realism. Small labels only: adult / cub; standing towards / walking towards / standing away / walking away. No costume, extra tails, jewelry, fantasy, illustration, cartoon, scale ruler or claims of measurement. Consistent adult anatomy across top row, consistent cub across bottom.",
+      "sha256": "3b561a4764aa8b16c775401ab1a0e12acdc22b82cedeaac4222eb28cc01741d9",
+      "bytes": 2559285,
+      "width": 1774,
+      "height": 887,
+      "evidencePath": "previews/art-pass/badger/target-v1.png",
+      "tool": "image_gen.imagegen",
+      "date": "2026-11-07",
+      "status": "provisional; photo and camera review incomplete"
+    },
+    {
+      "id": "otter",
+      "source": "exec-625658e3-f385-4631-879b-3e380ea25499.png",
+      "prompt": "Use case: photorealistic-natural. Asset: smooth-coated otter (Lutrogale perspicillata) skeleton anatomy target sheet for a game, NOT existing game art. Make one crisp 4-column by 2-row contact sheet on plain light grey background, no scenery. Eight separate whole animals, generous margins, no clipping. Top row adult smooth-coated otter; bottom row an independently walking, eyes-open otter pup (age0 target, not newborn). Columns: standing towards; walking towards; standing away; walking away. Camera for every panel is elevated looking DOWN 30 degrees, telephoto/near-orthographic, body broadside diagonal with 35-degree yaw toward or away from viewer; do not use eye-level or straight head-on portraits. Towards means muzzle visible; away means rump and back of head visible. No looking back in away panels. Natural smooth-coated otter anatomy: LONG low streamlined cylindrical brown torso with no pinched dog waist, very short strong plantigrade limbs with webbed feet, thick neck blends smoothly into flattened broad rounded head, blunt short muzzle prominent whisker pads and tiny rounded ears, smooth close chocolate-brown fur and paler cream throat. LONG thick muscular tail widens at root and tapers, flattened in vertical thickness (not a furry brush and not a beaver paddle). Stand and WALK ON LAND on all four feet, not swimming, not upright, not a sea otter. Kit relatively larger head, shorter muzzle, softer rounded body and shorter less full tail; do not miniaturize adult. Walking is one quiet terrestrial step, four anatomically correct limbs, no galloping. Natural fur and neutral soft light, documentary photographic realism. Small labels only: adult / pup; standing towards / walking towards / standing away / walking away. No costume, extra tails, jewelry, fantasy, illustration, cartoon, scale ruler or claims of measurement. Consistent adult anatomy across top row, consistent pup across bottom.",
+      "sha256": "89439ee41f12477ac1c71de0eb0b88df92cea161ae61dbdbf88918dd252a91a2",
+      "bytes": 1990416,
+      "width": 1774,
+      "height": 887,
+      "evidencePath": "previews/art-pass/otter/target-v1.png",
+      "tool": "image_gen.imagegen",
+      "date": "2026-11-07",
+      "status": "provisional; photo and camera review incomplete"
+    }
+  ],
+  "shotCommit": "f533d68f8f25bfa9a6f0d24caddfdaba331abcbe"
+}
