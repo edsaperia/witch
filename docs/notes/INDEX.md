@@ -52,7 +52,7 @@ says what each note covers.
 
 ## [Cauldron collection and brewing preview](cauldron.md)
 
-(no entries: its tools and checks only)
+- Where mushrooms grow
 
 ## [Config files](config.md)
 

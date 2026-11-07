@@ -1,9 +1,9 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { COMBAT } from "./combat";
-import { cancelFeeding, feed, feedRoom, hasRoom, newBerries, queueBerry, queuedFor, stepBerries, toEvolve, type BerryState, berryCounts } from "./berries";
+import { berryPatches, cancelFeeding, feed, feedRoom, hasRoom, newBerries, queueBerry, queuedFor, stepBerries, toEvolve, type BerryState, berryCounts } from "./berries";
 import { LEGEND, spawnCreatures, type Creature, type Level } from "./creatures";
 import { invitable, leashSpeed, newLeash } from "./leash";
-import { generateMap } from "./map";
+import { generateMap, stumpClearance } from "./map";
 import { TUNING, withTuning } from "./tuning";
 import { smallWorldTuning } from "../test/worlds";
 
@@ -178,3 +178,62 @@ describe("berries and evolving", () => {
   });
 
 });
+
+// Where berries grow (Ed, 2026-11-06: "I think we should change this process to more evenly distribute patches in the area, and also
+// increase the clearance from the stump (not the middle)."; berries outside the stump's fight zone). The fox island at seed 123, one
+// of the two islands measured for it: ten areas of 196 m.
+describe("where berries grow", () => {
+  const fox = { ...TUNING, map: { ...TUNING.map!, island: "fox", islandAreas: 10, world: 0 } }, foxMap = generateMap(123, fox);
+  const placed = berryPatches(foxMap, fox), B = berryCounts(foxMap, fox), areas = foxMap.cells.filter(([x, y]) => x !== foxMap.centreCell[0] || y !== foxMap.centreCell[1]);
+  const inArea = (cx: number, cy: number) => placed.patches.filter(p => p.cell[0] === cx && p.cell[1] === cy);
+
+  it("spreads patch centres evenly: none nearer another than patch.spacing (across areas too), and no big empty stretch of woods", () => {
+    const P = placed.patches, spacing = fox.berries.patch.spacing;
+    for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) expect(Math.hypot(P[i].x - P[j].x, P[i].z - P[j].z)).toBeGreaterThanOrEqual(spacing);
+    // Coverage: the farthest a spot of an area's bush ground beyond the stumps' arenas lies from any of its patch centres. The old
+    // random-angle draw left up to 190 m (127 m on average) on this island; spread, 113 m at most (70 on average).
+    const gaps = areas.map(([cx, cy]) => {
+      const s = foxMap.siteOf(cx, cy), A = foxMap.areaSize, ps = inArea(cx, cy), clear = stumpClearance(fox) + fox.berries.patch.radius;
+      let most = 0;
+      for (let x = s.x - A; x <= s.x + A; x += 6) for (let z = s.z - A; z <= s.z + A; z += 6) {
+        const c = foxMap.areaAt(x, z).cell;
+        if (c[0] !== cx || c[1] !== cy || foxMap.hardClear(x, z) || foxMap.paths.at(x, z, 1.5) || foxMap.stoneGap(x, z) < clear) continue;
+        most = Math.max(most, Math.min(...ps.map(p => Math.hypot(p.x - x, p.z - z))));
+      }
+      return most;
+    });
+    expect(Math.max(...gaps)).toBeLessThan(foxMap.areaSize * 0.62);
+    expect(gaps.reduce((a, b) => a + b, 0) / gaps.length).toBeLessThan(foxMap.areaSize * 0.45);
+  });
+
+  it("keeps every bush out of every stump's fighting arena, measured from the stump, and every area still gets its bushes", () => {
+    const clear = stumpClearance(fox);
+    expect(clear).toBe((fox.arena!.radius + fox.arena!.band) * fox.fight.scale + fox.berries.stumpClear);
+    expect(clear).toBe(55);
+    for (const b of placed.bushes) expect(foxMap.stoneGap(b.x, b.z)).toBeGreaterThanOrEqual(clear);
+    for (const [cx, cy] of areas) expect(inArea(cx, cy).reduce((n, p) => n + p.to - p.from, 0)).toBe(B.bushesPerArea);
+    // (the clearance follows the arena, and stumpClear is metres past it: less lets bushes into its outer band)
+    expect(stumpClearance({ ...fox, arena: { ...fox.arena!, band: 30 } })).toBe(35);
+    const nearer = { ...fox, berries: { ...fox.berries, stumpClear: -25 } };
+    expect(Math.min(...berryPatches(foxMap, nearer).bushes.map(b => foxMap.stoneGap(b.x, b.z)))).toBeLessThan(clear);
+  });
+
+  it("keeps each patch whole in its own area, its bushes within patch.radius of its centre", () => {
+    for (const p of placed.patches) for (let i = p.from; i < p.to; i++) {
+      const b = placed.bushes[i];
+      expect(Math.hypot(b.x - p.x, b.z - p.z)).toBeLessThanOrEqual(fox.berries.patch.radius + 1e-9);
+      expect(foxMap.areaAt(b.x, b.z).cell).toEqual(p.cell);
+      expect(foxMap.paths.at(b.x, b.z, 1.5)).toBeNull();
+      expect(foxMap.hardClear(b.x, b.z)).toBe(false);
+    }
+  });
+
+  it("is the same from the same seed", () => {
+    expect(berryPatches(foxMap, fox)).toEqual(placed);
+    const a = newBerries(foxMap, fox), b = newBerries(foxMap, fox);
+    expect(b.bushes).toEqual(a.bushes);
+    expect(b.berries).toEqual(a.berries);
+    expect(a.bushes).toEqual(placed.bushes);
+  });
+});
+

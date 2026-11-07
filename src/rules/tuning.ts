@@ -522,7 +522,9 @@ export interface Tuning {
    *  (babies, young, adults), the berry's colour and glow. */
   /** The colour grammar (Ed, 2026-11-03: "the forest is cold, the party is warm"; render/colourGrammar.ts): "new" hers warm and the wild cold, the berries pink, the ley line cold ahead of its spark; "old" the colours before it. */
   colourGrammar?: "new" | "old";
-  berries: { /** babyCost berries evolve a baby (Ed, 2026-10-11) */ babyCost?: number; perArea: number[]; bushesPerArea: number; patch: { bushes: number[]; radius: number }; eatTime: number;
+  berries: { /** babyCost berries evolve a baby (Ed, 2026-10-11) */ babyCost?: number; perArea: number[]; bushesPerArea: number;
+    /** Bushes a patch [min, max] within radius m, patch centres at least spacing m apart (rules/berries.ts berryPatches). */ patch: { bushes: number[]; radius: number; spacing: number };
+    /** Metres past the stump's arena (arena.radius + arena.band) no bush grows within, from the stump (Ed, 2026-11-06; rules/berries.ts stumpClearance). */ stumpClear: number; eatTime: number;
     /** Feeding on command (Ed, 2026-11-03: no animal eats on its own; the sigil button feeds the bottom of her stack): a berry within
      *  `reach` m of her; the animal walks to it at its leash pace times `speed`; the button held `hold` s puts the sigil down instead;
      *  that berry glows `glow` times as bright (render/feedTag.ts offerGlow; Ed, 2026-11-03: "the berry glows brighter"). */
