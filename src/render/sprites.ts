@@ -19,9 +19,19 @@ export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: num
   return 1 / (t.artPixelsPerMetre * (2 / t.pixelSize));
 }
 
-/** The tree-normals switch's uniform from the tuning (treeNormals; Ed, 2026-11-07): 1 the trees lit from their normal maps (the
- *  default, and when the knob is absent), 0 lit flat. Set every frame (render/view/frameUniforms.ts), so the pause page's toggle is live. */
-export const treeNormalsUniform = (t: { treeNormals?: boolean }): number => (t.treeNormals === false ? 0 : 1);
+/** The Tree normal maps choice from the tuning (treeNormals; Ed, 2026-11-07: "Make the normal maps switch.", then "Normal maps do
+ *  improve things, can we try a low number (16? 32? 64?)"): 0 the full normal maps (the default, and when the knob is absent or
+ *  unknown), N their directions cut to a palette of N per tree atlas (render/treeNormalDirs.ts), -1 off, lit flat ("0", or false
+ *  as the switch was). */
+export function treeNormalDirections(t: { treeNormals?: unknown }): number {
+  const v = t.treeNormals;
+  if (v === false || v === "0" || v === 0) return -1;
+  const n = typeof v === "string" && /^\d+$/.test(v) ? Number(v) : 0;
+  return n >= 1 && n <= 255 ? n : 0;
+}
+/** The tree-normals switch's uniform from the tuning: 1 the trees lit from their normal maps (full or cut to a palette: the default,
+ *  and when the knob is absent), 0 lit flat. Set every frame (render/view/frameUniforms.ts), so the pause page's choice is live. */
+export const treeNormalsUniform = (t: { treeNormals?: unknown }): number => (treeNormalDirections(t) < 0 ? 0 : 1);
 
 /** Shared by every sprite batch: the camera's right and (tilted) up, and the canopy fade. */
 export interface SpriteInstance { /** Bushes and low foliage, hidden by Floor Becomes Sky. */ small?: boolean; tree?: boolean; /** Semantic creature temperature; absent/zero is scenery. */ heat?: number }

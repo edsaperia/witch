@@ -994,15 +994,16 @@ Code: `docs/ART-GUIDE.md`
 
 ### `treeNormals`
 
-Whether the trees are lit from their normal maps: true (the default) as ever, false flat, every tree pixel lit as if it faced the camera (the normal 128, 128, 255).
+The trees' normal maps: "full" (the default) as ever; "64", "32" or "16" their directions cut to a k-means palette of that many per tree atlas; "0" off, every tree pixel lit flat, as if it faced the camera (the normal 128, 128, 255).
 
 1. Ed, 2026-11-07: "Make the normal maps switch." (to judge in play whether trees still look right without normal maps: dropping them would make the pre-baked tree art about 3 times smaller (PR #1884's measurement))
-A test switch: off, her glow, the campfires, the soundsystems and the moon light a tree flat. Live: the pause page's Tree normal maps toggle, or the link's d_treeNormals=0 (off) and d_treeNormals=1 (on). Only the forest's trees (their trunks, crowns and far crowns: the instances marked tree in render/view/scenery.ts) change; bushes, walls, set pieces, rocks, palms, creatures, the witch and the ground keep their normals. The normal map's alpha (the wind's sway code) is still read, so the trees sway as before. A shader uniform (uTreeNormals), so flipping it redraws nothing.
-Code: `render/sprites.ts`, `render/view/frameUniforms.ts`
+2. Ed, 2026-11-07: "Normal maps do improve things, can we try a low number (16? 32? 64?)" (to see the trees in play with their normal maps cut to a small palette of directions, as a bake could ship them much smaller)
+A test choice. Live: the pause page's Tree normal maps choice, or the link's d_treeNormals=64 (or 32, 16; 0 off; anything else full). 64, 32 and 16: each loaded area type's atlas has its trees' normals (the big pieces' frames) cut to a k-means palette of that many directions (render/treeQuant.ts, ported from PR #1884's measurement: weighted by pixel count, unit directions, the centres renormalised), the alpha (the wind's sway code) kept exactly and empty pixels skipped, and its normal texture uploaded again in place (render/treeNormalDirs.ts); the original plane is kept beside it, so full puts the very bytes back, and each atlas's palettes are kept by count, so flipping back is an upload. The palettes are worked out by a worker of their own, a quarter to two-thirds of a second an atlas at 64 (less at 32 and 16), after the plane is read back from the GPU; atlases landing while a reduced setting is on are cut as they land. Off: her glow, the campfires, the soundsystems and the moon light a tree flat, a shader uniform (uTreeNormals), redrawing nothing. Only the forest's trees (their trunks, crowns and far crowns: the instances marked tree in render/view/scenery.ts) change; bushes, walls, set pieces, rocks, palms, creatures, the witch and the ground keep their normals. Nothing is held or done until a reduced setting is first picked.
+Code: `render/sprites.ts`, `render/treeNormalDirs.ts`, `render/treeQuant.ts`, `render/view/frameUniforms.ts`
 
 | knob | type | range |
 |---|---|---|
-| `treeNormals` | boolean |  |
+| `treeNormals` | string | "full" / "64" / "32" / "16" / "0" |
 
 ### `wind`
 

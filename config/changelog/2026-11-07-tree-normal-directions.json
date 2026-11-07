@@ -1,0 +1,6 @@
+{
+  "version": null,
+  "items": [
+    "The pause page's Tree normal maps test switch is now a choice: full, 64, 32 or 16 directions, or off. The reduced ones cut each tree atlas's normal map to that many directions, to judge how few the trees can keep and still look right. Full stays the default."
+  ]
+}

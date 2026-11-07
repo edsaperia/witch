@@ -128,7 +128,7 @@ import { bootLineAt, bootPath, bootPulseAt } from "../rules/bootRing";
 import { Glades } from "./glades";
 import { Wisps } from "./wisps";
 import { leyChain, leyKey } from "../rules/leylines";
-import { SPRITE_UNIFORMS, SpriteBatch, metresPerArtPixel } from "./sprites";
+import { SPRITE_UNIFORMS, SpriteBatch, metresPerArtPixel, treeNormalDirections } from "./sprites";
 import type { Spin } from "./spin";
 import { nextFrame, runSliced, runSync, SLICE_MS, type Steps } from "./slices";
 import { holdDisposals, releaseDisposals } from "./retire";
@@ -154,6 +154,7 @@ import { FeedTag } from "./feedTag";
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./view/lights";
 import { gameAim, placeCamera, ridePoint } from "./view/camera";
 import { setFrameUniforms } from "./view/frameUniforms";
+import { stepTreeNormalDirs, treeDirsStatus } from "./treeNormalDirs";
 import { newReveal, setReveal } from "./view/reveal";
 import { drawWitch, houseShiftOf } from "./view/witch";
 import { MushroomView } from './mushrooms';
@@ -546,6 +547,8 @@ export class View {
   private steamFor: { map: ForestMap; vents: Float32Array } | null = null;
   readonly assets: AssetLibrary;
   typeBatches = new Map<number, SpriteBatch>();
+  /** The Tree normal maps choice's reduced settings at work (render/treeNormalDirs.ts): atlases not yet cut, palettes made. */
+  readonly treeDirs = treeDirsStatus;
   private readonly mushroomView = new MushroomView();
   private masterplan?: MasterplanView;
   private readonly potionObservers = new PotionObserversView();
@@ -1901,6 +1904,7 @@ export class View {
 
     if (!repaintHeld) this.swapHomeArt();
     setFrameUniforms(this, time, up);
+    stepTreeNormalDirs(this.renderer, this.assets.typeArts(), treeNormalDirections(t)); // (the trees' normals cut to the pause page's Tree normal maps choice: nothing while it's full)
     setReveal(this, time);
     const w = g.witch;
     this.time("uniforms");
