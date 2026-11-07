@@ -13084,10 +13084,17 @@
           "minimum": 0,
           "maximum": 4,
           "description": "How strongly coloured spokes shape existing lights, from 0 (ordinary lighting) to 4."
+        },
+        "beatsPerTurn": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 256,
+          "description": "How many beats the coloured-spokes wheel round a playing soundsystem takes to turn once, so it turns faster as the tempo rises."
         }
       },
       "required": [
-        "strength"
+        "strength",
+        "beatsPerTurn"
       ],
       "additionalProperties": false,
       "description": "Drawing-only coloured patterns on existing lights, controlled from the pause page."

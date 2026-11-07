@@ -1,0 +1,6 @@
+{
+  "reason": "Skin tones (Ed, 2026-11-07: \"skin tone range plus some fantasy tones\"): the Monk Skin Tone Scale's ten tones and five fantasy tones (art/skinTones.js). Her starting skin, the old grid's palest (#f5d6bf), is no longer a swatch and snaps to the nearest, Monk 4 (#eadaba); random and party witches pick from the ten human tones.",
+  "frames": {
+    "*": "wherever her face, hands or a party witch's skin shows: its colour (hers now Monk 4, #eadaba; theirs one of the ten), and her art landing a frame earlier or later as the new colour's sprite is baked"
+  }
+}

@@ -12,7 +12,7 @@ import { HOUSE_ROOMS } from "../rules/houseRooms";
 import { broomSummary, canChoose, cardAt, choose, itemAt, panelPad, partStats, setChips, stationLines, type Line } from "./stationLines";
 
 const newGame = smallWorld(fullGame, "Station menu integration reads fitted broom stats on one witch, independent of world extent.");
-const ctx = (owned: string[] = []) => ({ owned: new Set(owned), fitOn: () => true, grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 6 : 13, rows: 5 }) });
+const ctx = (owned: string[] = []) => ({ owned: new Set(owned), fitOn: () => true, grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 3 : 13, rows: 5 }) });
 const linesAt = (id: string) => { const sh = shelvesAt(id)!; return { sh, L: stationLines(sh, ctx()) }; };
 const cards = (sh: Shelf[], l: Line) => Array.from({ length: l.n }, (_, c) => cardAt(sh[l.shelf], l, c));
 

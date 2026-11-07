@@ -2557,6 +2557,7 @@ export type SchemaTuning = {
   "glowHeight": number;
   "patternLight": {
     "strength": number;
+    "beatsPerTurn": number;
   };
   "lightBudget": number;
   "lights": {

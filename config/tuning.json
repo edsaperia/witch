@@ -2870,7 +2870,8 @@
   "glowToCutout": 2.24,
   "glowHeight": 8,
   "patternLight": {
-    "strength": 3
+    "strength": 3,
+    "beatsPerTurn": 8
   },
   "lightBudget": 20,
   "lights": {

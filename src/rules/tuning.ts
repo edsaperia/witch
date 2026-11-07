@@ -398,7 +398,7 @@ export interface Tuning {
   spriteTilt: number;
   artPixelsPerMetre: number;
   viewMargin: number;
-  patternLight: { strength: number };
+  patternLight: { strength: number; beatsPerTurn: number };
   lightBudget: number;
   lightSources: { spacing: number; campfire: number; magicStone: number; pond: number; wetPond: number };
   haze: { near: number; far: number };

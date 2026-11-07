@@ -7,6 +7,7 @@
 import { M, hsv2rgb, hash2, rng } from "./core.js";
 import { Model, render, v3 } from "./model3d.js";
 import { witchGenome, genomeLook } from "./witchGenome.js";
+import { HUMAN_SKINS } from "./skinTones.js";
 import { BROOM_KINDS, SIT_IN, PARKED } from "./brooms.js";
 
 // Her parts and the material each is drawn in. The last few are a party outfit's: its pattern and trim (sequins, a mesh,
@@ -1134,7 +1135,7 @@ export const PARTY_OUTFITS = [
     outfit: { hat: [.06, .55, .4], jacket: [.03, .55, .6], trim: [.12, .6, .9], pattern: [.45, .4, .7], jeans: [.6, .45, .55], sneakers: [.07, .45, .5], frame: [.07, .5, .5] } },
 ];
 export const PARTY_OUTFIT_BY_ID = Object.fromEntries(PARTY_OUTFITS.map(o => [o.id, o]));
-const WITCH_SKINS = [[.07, .25, .96], [.07, .32, .9], [.07, .42, .78], [.06, .5, .62], [.05, .55, .47], [.05, .5, .34]];
+const WITCH_SKINS = HUMAN_SKINS; // (the Monk scale's ten: art/skinTones.js)
 const WITCH_HAIRS = [[.07, .4, .14], [.07, .6, .33], [.04, .7, .5], [.11, .45, .88], [.02, .75, .7], [.6, .04, .86]]; // black, brown, auburn, blonde, red, silver
 // A party witch: seed picks her outfit (or o.outfit, an id), jitters its colours, and picks her skin, her hair (unless the
 // outfit dyes it) and her glow sticks' neons. { id, seed, name, look, outfit, colours(st) }: draw her with
