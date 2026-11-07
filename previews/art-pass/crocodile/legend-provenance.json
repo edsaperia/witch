@@ -1,0 +1,12 @@
+{
+  "species": "crocodile",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "layout": "Three concepts A/B/C left to right, toward top, away bottom; approximate game camera",
+  "prompt": "Use case stylized-concept. Create a polished realistic-fantasy creature concept CONTACT PLATE, plain neutral grey background, three columns of DISTINCT legendary designs A B C, two rows same designs viewed towards (top) and away (bottom). Whole animals, full tails and ornaments, generous margins, no scenery or human riders. Camera down29.8deg, near-side long body shown at34.4deg toward/away from side. Each design must still read instantly as the named animal, not a dragon or costume. Ancient wisdom, power, weathering and healed scars; mature real anatomy exaggerated with ONE principal magical signature per concept, not a common uniform. No text labels. Species CROCODILE: huge low armoured trunk, flat long jaws, four splayed legs, laterally compressed heavy tail. Mangrove tidal mud/brackish channels, stilt roots and sunken dugout are STORY only, not scenery. ColumnA: lockjaw ancestor, immensely elongated weathered pale jaws, worn teeth and just two old bronze offerings on jaw-side, no glow. ColumnB: keeper of tides, low broad age-dark crocodile with dorsal scutes eroded like tidal strata, faint blue-green bioluminescent tide-lines crossing its own scutes and tail, one scar through blind cloudy eye; NO trees or reefs on back. ColumnC: ferryman, oversized ridged boat-shaped tail with worn wooden offering tags and a single white throat marking like foam; no wings/crystals/fire. Distinct silhouettes and convincing age.",
+  "inputImages": "none",
+  "proposedPick": "B",
+  "approval": "Ed to judge; no implementation or activation",
+  "currentLegendComparison": "pending exact-current cloud rendering, PR1900 question6708034797",
+  "limits": "Synthetic fantasy target; exact camera, materials, topology, age evolution and game-size readability unproved."
+}

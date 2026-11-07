@@ -1,0 +1,12 @@
+{
+  "species": "stegosaurus",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "layout": "Three concepts A/B/C left to right, toward top, away bottom; approximate game camera",
+  "prompt": "Use case stylized-concept. Create a polished realistic-fantasy creature concept CONTACT PLATE, plain neutral grey background, three columns of DISTINCT legendary designs A B C, two rows same designs viewed towards (top) and away (bottom). Whole animals, full tails and ornaments, generous margins, no scenery or human riders. Camera down29.8deg, near-side long body shown at34.4deg toward/away from side. Each design must still read instantly as the named animal, not a dragon or costume. Ancient wisdom, power, weathering and healed scars; mature real anatomy exaggerated with ONE principal magical signature per concept, not a common uniform. No text labels. Species STEGOSAURUS, tiny low beaked head, deep heavy barrel, hips high above short forelimbs, four legs, long muscular tail with FOUR directed spikes, two staggered rows of thin broad plates. Story black basalt and ash, lava cracks, cycads, cinder cone. ColumnA: furnace elder, black obsidian-like but living worn plates with narrow orange lava-vein cracks through their actual surfaces, ash-grey old body, one broken-healed tail spike, no added fire crest. ColumnB: stratum keeper, immense old grey stegosaurus with naturally shaped dorsal plates transformed into weathered layered basalt strata, pale mineral seams marking epochs and chipped edges, faint warm light only in a few deep seams, no glowing crystals or trees; massive unequal legs and tiny wise dark eyes. ColumnC: crater sentinel, low broad elder with very broad curved dark plates enclosing faint red warmth between the rows like banked coals, few ancient gold offering rings only at bases of the four tail spikes, no crown. Plates still anatomical not castle/rocks piled on animal, all tails uncropped.",
+  "inputImages": "none",
+  "proposedPick": "B",
+  "approval": "Ed to judge; no implementation or activation",
+  "currentLegendComparison": "pending exact-current cloud rendering, PR1900 question6708034797",
+  "limits": "Synthetic fantasy target; exact camera, materials, topology, age evolution and game-size readability unproved."
+}

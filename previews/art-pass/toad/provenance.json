@@ -1,0 +1,18 @@
+{
+  "species": "toad",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "use": "reference target only; no game import",
+  "camera": {
+    "pitchRadians": 0.52,
+    "yawRadians": [
+      0.6,
+      -0.6
+    ],
+    "calibrated": false
+  },
+  "layout": "adult top, postmetamorphic/hatchling juvenile bottom; stationary-toward, locomoting-toward, stationary-away, locomoting-away",
+  "prompt": "Use case scientific-educational. ONE photoreal whole-animal reference plate on plain pale-grey background, soft neutral light, no text. Eight separate whole animals, 2 rows x4 columns. Top adult, bottom juvenile age0; columns stationary-towards, locomoting-towards, stationary-away, locomoting-away. Camera elevated 29.8deg, body axis 34.4deg out of screen plane, orthographic-like long three-quarter SIDE view with head toward/away respectively, no head-on view. All tails/toes within each cell with margins. Real anatomy, not game sprites or cartoons. Consistent species and lighting; clear age differences without giant baby eyes. Locomotion is one plausible phase not a gait sequence. Species COMMON TOAD Bufo bufo, terrestrial adult and recently metamorphosed toadlet juvenile, not tadpole. Broad squat pear-shaped torso, head nearly continuous with shoulders, blunt wide muzzle, bronze eyes with horizontal pupils, obvious long oval parotoid gland behind each eye, granular dry-looking warty brown-olive skin, muscular short folded hind limbs broader than forearms, broad planted forefeet, no adult tail. Four fingers front five toes back, no claws. Stationary cells squat resting; walking cells low slow four-limb crawl with one forefoot reaching and opposite hind limb moving, no soaring leap. Juvenile smaller slimmer toadlet but same tailless plan, no enormous baby eyes or smooth shiny frog skin. Whole feet clear of cell edges.",
+  "inputImages": "none",
+  "limitations": "Synthetic anatomy aid; photos/fossils and checklist win. No gait, exact camera or native-size acceptance proof."
+}

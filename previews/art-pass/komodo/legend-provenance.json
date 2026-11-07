@@ -1,0 +1,14 @@
+{
+  "species": "komodo",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "layout": "Three concepts A/B/C left to right, toward top, away bottom; approximate game camera",
+  "prompt": "undefinedSpecies KOMODO DRAGON, heavy low monitor, long muscular neck, long wedge head, four splayed clawed limbs, thick long tapering tail, NO dragon wings or crocodile dorsal armour. Story dry savannah dust, thorn scrub, acacia, ancient basking rock. ColumnA: scent oracle, immense old scarred monitor with long forked yellow tongue whose two tips release two very fine golden scent-path filaments close to snout, heavy weathered throat folds, one chipped claw. ColumnB: rockbreaker, huge worn curved digging claws with few copper ritual cuffs at foreankles, armoured pebbly skin but real monitor shape, no glow. ColumnC: sunkeeper, very old lean monitor with deeply folded throat/dewlap hanging like a sun-baked parchment, sparse ochre glowing lines only in folds, no crown or fire crest. Each distinct, whole tail.",
+  "correctionPrompt": "Correct the reference layout. Generate an isolated MODEL TURNAROUND BOARD of these same THREE Komodo dragon legend designs, without any scenery, text, lettering, graphics or labels. Background MUST be uniform light grey. SIX complete animals in strict equal 3-column by2-row grid, no animal overlaps another cell. Top row each of three designs full-body from elevated29.8degree three-quarter toward side view. Bottom row SAME three full-body animals elevated rear three-quarter away view. Entire tails, feet and magical details contained in each cell with generous margin. Col1 Scent Oracle: old heavy realistic Komodo with long neck and low wedge head, forked yellow tongue with two fine golden scent filaments. Col2 Rockbreaker: heavy realistic Komodo with giant worn claws and two copper ankle cuffs. Col3 Sunkeeper: lean old realistic Komodo with long wrinkled throat folds edged ochre light. Keep age/healed scars and real reptile body. NO upright mammal stance. No rocks/grass/trees/landscape. The previous image is design inspiration ONLY; replace its composition entirely.",
+  "input": "first generated concept plate only",
+  "rejected": "initial generation added environment/text and failed required whole-body turnaround layout",
+  "proposedPick": "A",
+  "approval": "Ed to judge; no implementation or activation",
+  "currentLegendComparison": "pending exact-current cloud rendering, PR1900 question6708034797",
+  "limits": "Synthetic fantasy target; exact camera, materials, topology, age evolution and game-size readability unproved."
+}

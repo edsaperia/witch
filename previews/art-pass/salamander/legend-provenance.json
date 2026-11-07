@@ -1,0 +1,12 @@
+{
+  "species": "salamander",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "layout": "Three concepts A/B/C left to right, toward top, away bottom; approximate game camera",
+  "prompt": "Use case stylized-concept. Create a polished realistic-fantasy creature concept CONTACT PLATE, plain neutral grey background, three columns of DISTINCT legendary designs A B C, two rows same designs viewed towards (top) and away (bottom). Whole animals, full tails and ornaments, generous margins, no scenery or human riders. Camera down29.8deg, near-side long body shown at34.4deg toward/away from side. Each design must still read instantly as the named animal, not a dragon or costume. Ancient wisdom, power, weathering and healed scars; mature real anatomy exaggerated with ONE principal magical signature per concept, not a common uniform. No text labels. Species FIRE SALAMANDER, robust long low black/yellow amphibian with broad flattened head, short splayed clawless limbs and round tapering tail, no dorsal crest. Story wet moss and rock, waterfall ravine, no scenery. ColumnA: coal warning, ancient charcoal-black salamander with few large natural yellow warning patches glowing like embers through skin, old pale scars, no fire plume or crown. ColumnB: renewal elder, old heavy black/yellow salamander with a smoothly regenerated tail growing from healed pale seam, tail softly luminous rose-gold/translucent new living tissue contrasting old dark weathered body, NOT a severed limb, no gore, no glowing back spots, calm dark eyes. ColumnC: waterfall witness, broad low elder with dark skin eroded-looking but organic, tiny clear beads of water suspended close to back and glistening narrow water lines in costal grooves, moss only as traces near feet, no trees or coral. Different silhouettes, all recognisable salamander.",
+  "inputImages": "none",
+  "proposedPick": "B",
+  "approval": "Ed to judge; no implementation or activation",
+  "currentLegendComparison": "pending exact-current cloud rendering, PR1900 question6708034797",
+  "limits": "Synthetic fantasy target; exact camera, materials, topology, age evolution and game-size readability unproved."
+}

@@ -1,0 +1,14 @@
+{
+  "species": "snake",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "layout": "Three concepts A/B/C left to right, toward top, away bottom; approximate game camera",
+  "prompt": "undefinedSpecies JUNGLE PYTHON, muscular continuous green limbless python, broad small python head, fine tapering prehensile tail, white speckles, no cobra hood, no rattle, no wings. Story mossy jungle leaf litter and lianas, used as inspiration not actual trees in plate. ColumnA: slough of epochs, ancient pale-scarred emerald python moving free of ONE loose translucent luminous shed skin sleeve trailing off its rear body, single real snake plus hollow shed skin not second ghost snake/head. ColumnB: coil archivist, colossal low tower of three interlocking coils with etched pale old scars crossing scales, one aged bronze offering loop near tail, no glow. ColumnC: canopy constellation, elongated dark-green python with sparse white dorsal flecks expanded into tiny star points along its actual spine, no halo, clouds or wings. Three distinct designs, full continuous bodies and tail.",
+  "correctionPrompt": "Create an isolated CREATURE MODEL TURNAROUND BOARD of the THREE python legends in this reference. Remove ALL environment, lettering, borders and title. Uniform light grey background ONLY. Exactly six WHOLE snakes in equal3-column by2-row grid, generous margins, each full continuous body and tail visibly contained, no cropping. Top row designs A/B/C viewed downward29.8deg towards-side; bottom row SAME A/B/C rear-side away, showing the back of heads. ColA old green python slipping from a hollow softly luminous shed skin trailing tail, ONE real snake only. ColB old dark green python in three low heavy coils, pale healed scars, one bronze tail offering. ColC lean ancient green python with sparse white dorsal flecks glowing like stars confined to its own skin. Small python heads, no cobra hoods, no limbs/wings/rattles, no neck jewellery choking snake. Full body anatomy, studio neutral lighting, no fantasy landscape. No text of any kind.",
+  "input": "first generated concept plate only",
+  "rejected": "initial generation added environment/text and failed required whole-body turnaround layout",
+  "proposedPick": "A",
+  "approval": "Ed to judge; no implementation or activation",
+  "currentLegendComparison": "pending exact-current cloud rendering, PR1900 question6708034797",
+  "limits": "Synthetic fantasy target; exact camera, materials, topology, age evolution and game-size readability unproved."
+}

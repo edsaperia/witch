@@ -1,0 +1,20 @@
+{
+  "species": "salamander",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "use": "reference target only; no game import",
+  "camera": {
+    "pitchRadians": 0.52,
+    "yawRadians": [
+      0.6,
+      -0.6
+    ],
+    "calibrated": false
+  },
+  "layout": "adult top, postmetamorphic/hatchling juvenile bottom; stationary-toward, locomoting-toward, stationary-away, locomoting-away",
+  "prompt": "Use case scientific-educational. ONE photoreal whole-animal reference plate on plain pale-grey background, soft neutral light, no text. Eight separate whole animals, 2 rows x4 columns. Top adult, bottom juvenile age0; columns stationary-towards, locomoting-towards, stationary-away, locomoting-away. Camera elevated 29.8deg, body axis 34.4deg out of screen plane, orthographic-like long three-quarter SIDE view with head toward/away respectively, no head-on view. All tails/toes within each cell with margins. Real anatomy, not game sprites or cartoons. Consistent species and lighting; clear age differences without giant baby eyes. Locomotion is one plausible phase not a gait sequence. Species FIRE SALAMANDER Salamandra salamandra. Adult robust cylindrical low body, broad flat rounded head and neck hardly distinct, large dark eyes, short splayed limbs, rounded fleshy tapering tail shorter than trunk+head, glossy moist black skin with irregular yellow patches (not reptile scales), subtle costal grooves and parotoid bulges behind eyes. Bottom postmetamorphic juvenile with limbs and no external gills, smaller slimmer body and proportionally bigger head, recognisable black and yellow pattern, no crest or fin. Four digits forelimb five hind, no claws, no external ears. Stationary planted and low walking with lateral flex. No flames or fantasy anatomy.",
+  "revisionPrompt": "Edit this salamander reference plate only: keep the eight-cell adult/juvenile standing/walking toward/away layout, black/yellow fire salamander identity, plain grey background, same downwards camera. Correct the head to a REAL FIRE SALAMANDER: notably smaller eyes, flatter and less inflated broad low skull, no cute rounded forehead or exaggerated eyebrow lumps. Keep discreet parotoid glands. Make every tail a gently tapering round fleshy tail with clearly visible complete tip, including top-left; keep generous margins. Adult body should be elongated low and supple, not a squat frog. Maintain no crest, no claws, four foredigits five hinddigits; do not invent extra limbs. Photoreal natural moist skin not glossy plastic model. No text.",
+  "revision": "smaller eyes/flatter head/full tapered tail",
+  "input": "generated first plate only, no photo",
+  "limitations": "Synthetic anatomy aid; photos/fossils and checklist win. No gait, exact camera or native-size acceptance proof."
+}

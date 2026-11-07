@@ -1,0 +1,18 @@
+{
+  "species": "stegosaurus",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "use": "reference target only; no game import",
+  "camera": {
+    "pitchRadians": 0.52,
+    "yawRadians": [
+      0.6,
+      -0.6
+    ],
+    "calibrated": false
+  },
+  "layout": "adult top, postmetamorphic/hatchling juvenile bottom; stationary-toward, locomoting-toward, stationary-away, locomoting-away",
+  "prompt": "Use case scientific-educational. ONE photoreal whole-animal reference plate on plain pale-grey background, soft neutral light, no text. Eight separate whole animals, 2 rows x4 columns. Top adult, bottom juvenile age0; columns stationary-towards, locomoting-towards, stationary-away, locomoting-away. Camera elevated 29.8deg, body axis 34.4deg out of screen plane, orthographic-like long three-quarter SIDE view with head toward/away respectively, no head-on view. All tails/toes within each cell with margins. Real anatomy, not game sprites or cartoons. Consistent species and lighting; clear age differences without giant baby eyes. Locomotion is one plausible phase not a gait sequence. Species STEGOSAURUS STENOPS. Scientifically informed photoreal life reconstruction, NOT a photograph of a living animal and not a fantasy dragon. Adult deep barrel ribcage, hips substantially higher than shoulders because hind limbs longer and straighter than short sturdy forelimbs, very small low beaked head on a modest slender forward neck, long muscular tail held clear of ground, FOUR long spikes near tail tip (two lateral pairs), two staggered alternating rows of broad thin upright irregular kite-shaped plates with largest around rear trunk, NOT paired symmetrical triangular saw teeth. Grey-brown pebbly skin, no horns or dorsal spikes replacing plates. Juvenile reconstruction bottom has proportionally larger head, slimmer shallower barrel, lower smaller plates and modest tail spikes; clearly speculative ontogeny, no cute caricature. Standing and plausible slow quadrupedal walking without mammalian gallop, four limbs total. All plates and long tail spikes uncropped. Keep tiny head truly tiny relative to torso.",
+  "inputImages": "none",
+  "limitations": "Synthetic anatomy aid; photos/fossils and checklist win. No gait, exact camera or native-size acceptance proof."
+}

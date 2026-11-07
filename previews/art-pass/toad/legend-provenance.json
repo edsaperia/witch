@@ -1,0 +1,12 @@
+{
+  "species": "toad",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "layout": "Three concepts A/B/C left to right, toward top, away bottom; approximate game camera",
+  "prompt": "Use case stylized-concept. Create a polished realistic-fantasy creature concept CONTACT PLATE, plain neutral grey background, three columns of DISTINCT legendary designs A B C, two rows same designs viewed towards (top) and away (bottom). Whole animals, full tails and ornaments, generous margins, no scenery or human riders. Camera down29.8deg, near-side long body shown at34.4deg toward/away from side. Each design must still read instantly as the named animal, not a dragon or costume. Ancient wisdom, power, weathering and healed scars; mature real anatomy exaggerated with ONE principal magical signature per concept, not a common uniform. No text labels. Species TOAD, squat broad warty body, blunt wide head, parotoid glands, four short splayed clawless legs with folded thick thighs, no tail. Story wet mud, reed puddles, willows, no scenery. ColumnA: deep-song elder, enormous but still readable toad, one great translucent softly luminous pale-blue throat sac expanding below chin like a resonating bladder, wrinkled weathered skin and old scars, dark watchful eyes; no crown, keep limbs/body visible. ColumnB: rain gatherer, huge low ancient toad whose broad irregular warts each hold one tiny luminous dew drop, drops follow actual skin not a halo, earthy moss-brown skin, scarred parotoid gland. ColumnC: reed-tongue prophet, ancient ochre toad with one very long curling tongue extended in elegant loop ending tiny golden light, chipped bronze offering band on one foreankle, no wings or crystals. Strong distinct shapes, family unmistakable.",
+  "inputImages": "none",
+  "proposedPick": "A",
+  "approval": "Ed to judge; no implementation or activation",
+  "currentLegendComparison": "pending exact-current cloud rendering, PR1900 question6708034797",
+  "limits": "Synthetic fantasy target; exact camera, materials, topology, age evolution and game-size readability unproved."
+}

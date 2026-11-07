@@ -1,0 +1,18 @@
+{
+  "species": "crocodile",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "use": "reference target only; no game import",
+  "camera": {
+    "pitchRadians": 0.52,
+    "yawRadians": [
+      0.6,
+      -0.6
+    ],
+    "calibrated": false
+  },
+  "layout": "adult top, postmetamorphic/hatchling juvenile bottom; stationary-toward, locomoting-toward, stationary-away, locomoting-away",
+  "prompt": "Use case: scientific-educational. Create ONE photoreal animal anatomy reference plate for a Nile-type CROCODILE, not a game sprite. Plain pale-grey background, soft neutral daylight, whole animals including all tails and feet with ample margins. 2 rows x4 columns equal cells. Top row same natural adult in: standing toward camera, walking toward camera, standing away, walking away. Bottom row hatchling juvenile same four views. Fixed orthographic-like camera looks down 29.8 degrees; body long axis is 34.4 degrees out of screen plane, facing toward for columns1/2 and away for3/4, keeping a readable long side. No frontal head-on foreshortening. Adult heavy low trunk, long flattened tapering jaws with high-set eyes/nose, dorsal scutes, laterally compressed muscular tail about half total length, four short outward-bent legs, no external ears. Juvenile slimmer and cross-banded, anatomically crocodile not cartoon baby. Walking shows alternating planted feet, belly slightly lifted, not mammal gallop. No extra limbs, no omitted tail, no text, no landscape. This is a realistic target aid, not a calibrated render or biological measurement.",
+  "inputImages": "none",
+  "limitations": "Synthetic anatomy aid; photos/fossils and checklist win. No gait, exact camera or native-size acceptance proof."
+}

@@ -1,0 +1,18 @@
+{
+  "species": "snake",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "use": "reference target only; no game import",
+  "camera": {
+    "pitchRadians": 0.52,
+    "yawRadians": [
+      0.6,
+      -0.6
+    ],
+    "calibrated": false
+  },
+  "layout": "adult top, postmetamorphic/hatchling juvenile bottom; stationary-toward, locomoting-toward, stationary-away, locomoting-away",
+  "prompt": "Use case scientific-educational. ONE photoreal whole-animal reference plate on plain pale-grey background, soft neutral light, no text. Eight separate whole animals, 2 rows x4 columns. Top adult, bottom juvenile age0; columns stationary-towards, locomoting-towards, stationary-away, locomoting-away. Camera elevated 29.8deg, body axis 34.4deg out of screen plane, orthographic-like long three-quarter SIDE view with head toward/away respectively, no head-on view. All tails/toes within each cell with margins. Real anatomy, not game sprites or cartoons. Consistent species and lighting; clear age differences without giant baby eyes. Locomotion is one plausible phase not a gait sequence. Species GREEN TREE PYTHON (Morelia viridis), anatomical target for game's generic jungle python. Adult emerald green with a few small white dorsal flecks, muscular long limbless continuous body, broad python head distinct but not cobra hood, slender tapering prehensile tail. Juvenile naturally yellow with small dark reddish markings, not green scaled-down adult. Stationary cells relaxed low loose S coils on floor (no branch to obscure anatomy); locomotion cells extended shallow S slithering, all continuous tail visible. Absolutely no legs, horns, rattle or cobra hood. Same camera for all.",
+  "inputImages": "none",
+  "limitations": "Synthetic anatomy aid; photos/fossils and checklist win. No gait, exact camera or native-size acceptance proof."
+}

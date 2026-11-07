@@ -1,0 +1,18 @@
+{
+  "species": "newt",
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-11-07",
+  "use": "reference target only; no game import",
+  "camera": {
+    "pitchRadians": 0.52,
+    "yawRadians": [
+      0.6,
+      -0.6
+    ],
+    "calibrated": false
+  },
+  "layout": "adult top, postmetamorphic/hatchling juvenile bottom; stationary-toward, locomoting-toward, stationary-away, locomoting-away",
+  "prompt": "Use case scientific-educational. ONE photoreal whole-animal reference plate on plain pale-grey background, soft neutral light, no text. Eight separate whole animals, 2 rows x4 columns. Top adult, bottom juvenile age0; columns stationary-towards, locomoting-towards, stationary-away, locomoting-away. Camera elevated 29.8deg, body axis 34.4deg out of screen plane, orthographic-like long three-quarter SIDE view with head toward/away respectively, no head-on view. All tails/toes within each cell with margins. Real anatomy, not game sprites or cartoons. Consistent species and lighting; clear age differences without giant baby eyes. Locomotion is one plausible phase not a gait sequence. Species GREAT CRESTED NEWT Triturus cristatus as reference for the game's slender newt. Adult male slender elongated dark granular body, small flattened head, short outward splayed legs with tiny digits, long laterally flattened fin-like tail, serrated dorsal crest with break at tail base, subtle orange belly edge. Top adult breeding morphology, realistic thin crest not stegosaur plates; land poses used solely to expose anatomy. Bottom juvenile postmetamorphic eft, no external gills, no adult crest, slim brown-dark body, much thinner tail fin and proportionally larger head, not a larva or gecko. Four toes front five hind, no claws/scales/external ears. Low walking with gentle lateral body bend; whole tail inside frame.",
+  "inputImages": "none",
+  "limitations": "Synthetic anatomy aid; photos/fossils and checklist win. No gait, exact camera or native-size acceptance proof."
+}
