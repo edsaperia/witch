@@ -2570,6 +2570,10 @@
       "additionalProperties": false,
       "description": "Each tree's own leaf colour: every tree is dealt two fixed seeds from where it stands (-1 to 1 each)."
     },
+    "treeNormals": {
+      "type": "boolean",
+      "description": "Whether the trees are lit from their normal maps: true (the default) as ever, false flat, every tree pixel lit as if it faced the camera (the normal 128, 128, 255)."
+    },
     "wind": {
       "type": "object",
       "properties": {
@@ -14862,6 +14866,7 @@
     "treeMarginFromSoundsystem",
     "treeDensity",
     "leafJitter",
+    "treeNormals",
     "wind",
     "groundCover",
     "density",

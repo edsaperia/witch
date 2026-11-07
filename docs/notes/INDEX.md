@@ -382,6 +382,7 @@ says what each note covers.
 - Moon
 - Cooldown trail
 - Trail colours
+- Tree normal maps switch
 
 ## [The witch's art](witch-art.md)
 
