@@ -109,7 +109,8 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         const focusNow = () => page.evaluate(() => { const f = document.querySelector("#station-panel .focus"); return f ? { at: `${f.dataset.line}:${f.dataset.col}`, card: f.closest(".sp-shelf")?.dataset.shelf, worn: [...document.querySelectorAll("#station-panel .worn, #station-panel .sel")].map(e => `${e.dataset.line}:${e.dataset.col}`).join(",") } : null; });
         const press = async b => { const was = (await focusNow())?.at; await page.evaluate(b => { window.__pad.buttons[b] = true; }, b); for (let t = 0; t < 40 && (await focusNow())?.at === was; t++) await page.waitForTimeout(500); await page.evaluate(b => { window.__pad.buttons[b] = false; }, b); await page.waitForTimeout(1500); };
         await page.evaluate(() => { window.__padOn = true; }); await page.waitForTimeout(600);
-        const a = await focusNow(); await press(15); const b = await focusNow();
+        let a = await focusNow(); await press(15); let b = await focusNow();
+        if (a && b && a.at === b.at) { a = b; await press(14); b = await focusNow(); } // (at the end of its line: the d-pad left instead)
         ok(a && b && a.at !== b.at && a.worn === b.worn, `${id}: the pad's d-pad moves the focus and changes nothing (${a?.at} → ${b?.at})`);
         const cards = await page.evaluate(() => document.querySelectorAll("#station-panel .sp-shelf").length);
         if (cards > 1) { await press(5); const c = await focusNow(); ok(c && c.card !== b.card, `${id}: R1 jumps to the next card (${b?.card} → ${c?.card})`); await press(4); }
@@ -152,7 +153,8 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         ok(JSON.stringify(after.worn) === JSON.stringify(before.worn), `${id}: ${key} on the item she wears keeps it on`);
       }
       if (locked) {
-        await page.mouse.click(locked[0], locked[1]); await page.waitForTimeout(500); await page.keyboard.press("Enter"); await page.waitForTimeout(500);
+        const box = await page.evaluate(() => { const e = document.querySelector("#station-panel .sp-card.unfound"); if (!e) return null; const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }); // (where it is now: the detail box moves the cards about)
+        await page.mouse.click(box[0], box[1]); await page.waitForTimeout(500); await page.keyboard.press("Enter"); await page.waitForTimeout(500);
         const s = await state();
         ok(/not found yet/i.test(s.detail), `${id}: Enter on an item not found yet says so ("${s.detail.replace(/\s+/g, " ").trim()}")`);
       }
