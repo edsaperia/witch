@@ -108,6 +108,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         // press fell between frames)
         const focusNow = () => page.evaluate(() => { const f = document.querySelector("#station-panel .focus"); return f ? { at: `${f.dataset.line}:${f.dataset.col}`, card: f.closest(".sp-shelf")?.dataset.shelf, worn: [...document.querySelectorAll("#station-panel .worn, #station-panel .sel")].map(e => `${e.dataset.line}:${e.dataset.col}`).join(",") } : null; });
         const press = async b => { const was = (await focusNow())?.at; await page.evaluate(b => { window.__pad.buttons[b] = true; }, b); for (let t = 0; t < 40 && (await focusNow())?.at === was; t++) await page.waitForTimeout(500); await page.evaluate(b => { window.__pad.buttons[b] = false; }, b); await page.waitForTimeout(1500); };
+        for (let i = 0, was = null; i < 20; i++) { await page.keyboard.press("ArrowLeft"); await page.waitForTimeout(150); const f = (await focusNow())?.at; if (f === was) break; was = f; } // (from its line's start, so the d-pad's right has somewhere to go)
         await page.evaluate(() => { window.__padOn = true; }); await page.waitForTimeout(600);
         let a = await focusNow(); await press(15); let b = await focusNow();
         if (a && b && a.at === b.at) { a = b; await press(14); b = await focusNow(); } // (at the end of its line: the d-pad left instead)
