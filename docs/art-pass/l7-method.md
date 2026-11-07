@@ -65,8 +65,17 @@ Evidence lives only on `claude/ed-shots`, species-owned paths
 `previews/art-pass/<species>/refs-l7-v1.png` and `provenance.json`. Publish with
 `node tools/shots/push.mjs`, never a shared-branch checkout or force push.
 
-Legend additions6707981581/6707992824 are covered in each species document and
-[summary](l7-summary.md). `legends-l7-v1.png` contains three concepts in columns
-A/B/C and both headings in rows. Exact-current legend renders for the comparison
-column are an explicit outstanding cloud request, not substituted by source
-descriptions or historical pictures. No full READY claim while that is pending.
+Legend additions6707981581/6707992824 and colossal scale corrections
+6708227119/6708229124 are covered in each species document and
+[summary](l7-summary.md). `legends-l7-v1.png` is the preserved first pass.
+`legends-colossal-l7-v2.png` has three revised concepts per species (A/B/C),
+with one maximum-fantasy option, in a two-row layout: low hero view above and
+elevated game-camera study below. Each cell includes a witch and forest scale
+cues. The intended scale follows DESIGN's approx.20× level0 height and above-
+treetop fantasy; generated pixels do not prove that numerical ratio or reproduce
+the game's exact projection. The v2 prompts and their constraints are recorded
+in `colossal-provenance.json`; first-pass files remain as history.
+
+Exact-current legend renders for the comparison column are an explicit
+outstanding cloud request, not substituted by source descriptions or historical
+pictures. No full READY claim while that is pending.

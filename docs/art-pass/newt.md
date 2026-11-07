@@ -1,5 +1,32 @@
 # Newt — skeleton target
 
+## Current legend: colossal second pass, proposed A
+
+[Revised A/B/C with witch and trees, hero top/game-camera bottom](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/newt/legends-colossal-l7-v2.png).
+
+A's torn membrane catches moonlight over alder crowns; B regrows a translucent amber forelimb; C MAXIMUM FANTASY contains a night fen of light-pools/stars inside its spotted belly with tail-fin arching over trees. A remains strongest because its impossible silhouette comes from the breeding crest rather than another animal's magic.
+
+**Current signature: Canopy-tall ancient breeding sail. Ed judges the pick.**
+
+Chosen checklist: slim newt; flattened tail; four delicate splayed limbs; thin tall serrated sail; back/tail crest gap; healed tears/light rim; witch/alders.
+
+Body plan: retain the natural target's relative B ratios below, while increasing
+trunk depth/proximal mass to feel like a landform. Total vertical envelope
+(including coil/crest/plates where relevant) targets about20×baby height and
+exceeds normal treetops (DESIGN); this is not20×adult and not a measured
+ratio from generation. A tiny witch and forest trees appear in all six scenes;
+low hero view is allowed, elevated row studies what the game might show.
+
+Additional graph needs: large flexible serrated membrane/tears, transmitted rim light and bounded envelope; extend1866's existing crest work. C belly-world material is optional, not required for A.
+
+Inspection limit: Six cells contain scale cues; precise toe count, angle and numerical scale are unverified. All generated cameras remain approximate;
+no game-projection or native-size acceptance is claimed. Source comparison
+column still awaits actual current pixels via QUESTION6708034797.
+
+This section supersedes the first-pass legend pick below under canonical
+6708227119/6708229124. Base anatomy and the earlier plate remain useful history.
+
+
 Target: slender great-crested-newt-type animal, adult breeding male as crest
 reference and terrestrial postmetamorphic juvenile as level0. A crest is a
 season/sex trait, not a statement that all real newts wear it. Game record

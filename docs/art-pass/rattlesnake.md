@@ -1,5 +1,32 @@
 # Rattlesnake (sidewinder) — skeleton target
 
+## Current legend: colossal second pass, proposed A
+
+[Revised A/B/C with witch and trees, hero top/game-camera bottom](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/rattlesnake/legends-colossal-l7-v2.png).
+
+A's weathered monolithic rattle bends haze/treetops with sound; B contains miniature sandstorms in amber segments; C MAXIMUM FANTASY suspends rattle monoliths on bonds of sound above dune-like coils. A remains strongest: real keratin warning instrument made impossible, while C offers the farther boundary.
+
+**Current signature: The epoch bell's landscape-scale warning. Ed judges the pick.**
+
+Chosen checklist: sidewinder wedge head; narrow neck; continuous sandy coils; short tail rooted in rattle; hollow worn segments; sound begins at tail; witch/Joshua-tree scale.
+
+Body plan: retain the natural target's relative B ratios below, while increasing
+trunk depth/proximal mass to feel like a landform. Total vertical envelope
+(including coil/crest/plates where relevant) targets about20×baby height and
+exceeds normal treetops (DESIGN); this is not20×adult and not a measured
+ratio from generation. A tiny witch and forest trees appear in all six scenes;
+low hero view is allowed, elevated row studies what the game might show.
+
+Additional graph needs: tail-local resonator/effect anchors, worn hollow segments, offering sockets and safe enlarged motion envelope; C requires suspended-segment hierarchy.
+
+Inspection limit: Actual sound, sidewinding contacts and exact scale/camera are not established. All generated cameras remain approximate;
+no game-projection or native-size acceptance is claimed. Source comparison
+column still awaits actual current pixels via QUESTION6708034797.
+
+This section supersedes the first-pass legend pick below under canonical
+6708227119/6708229124. Base anatomy and the earlier plate remain useful history.
+
+
 Target Crotalus cerastes body plan: the current genome explicitly says desert
 sidewinder. Adult and neonate level0, toward/away, resting/sliding. Not a cobra
 or python recolour. [Method](l7-method.md). [Generated plate](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/rattlesnake/refs-l7-v1.png).

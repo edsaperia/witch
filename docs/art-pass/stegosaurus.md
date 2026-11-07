@@ -1,5 +1,32 @@
 # Stegosaurus — skeleton target
 
+## Current legend: colossal second pass, proposed B
+
+[Revised A/B/C with witch and trees, hero top/game-camera bottom](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/stegosaurus/legends-colossal-l7-v2.png).
+
+A has obsidian lava-veined cliff plates; B's layered plates carry epoch carvings and tiny offering shrines; C MAXIMUM FANTASY makes great plates into crater-rims holding banked starfire/ash. B remains strongest: geological age in its defining plates, while C offers Ed the bolder volcanic boundary.
+
+**Current signature: Epoch strata and reverence carved into anatomical plates. Ed judges the pick.**
+
+Chosen checklist: tiny low beaked head; high hips/short forelegs; barrel mass; staggered thin plates; four tail spikes; weathered layers/root shrines; witch/cycad/tree-fern scale.
+
+Body plan: retain the natural target's relative B ratios below, while increasing
+trunk depth/proximal mass to feel like a landform. Total vertical envelope
+(including coil/crest/plates where relevant) targets about20×baby height and
+exceeds normal treetops (DESIGN); this is not20×adult and not a measured
+ratio from generation. A tiny witch and forest trees appear in all six scenes;
+low hero view is allowed, elevated row studies what the game might show.
+
+Additional graph needs: plate-root offering mounts, layered edge erosion/carvings and limited emission; optional C crater interior anchors.
+
+Inspection limit: Far spike overlap/edge framing and synthetic plate count do not override four-spike/staggered-plate anatomy. All generated cameras remain approximate;
+no game-projection or native-size acceptance is claimed. Source comparison
+column still awaits actual current pixels via QUESTION6708034797.
+
+This section supersedes the first-pass legend pick below under canonical
+6708227119/6708229124. Base anatomy and the earlier plate remain useful history.
+
+
 Target: Stegosaurus stenops-inspired reconstruction. There can be no living
 animal photograph; use museum fossil skeletons for hard anatomy, and label all
 skin, colour and juvenile soft tissues speculative. Adult and juvenile level0,

@@ -1,5 +1,32 @@
 # Komodo — skeleton target
 
+## Current legend: colossal second pass, proposed A
+
+[Revised A/B/C with witch and trees, hero top/game-camera bottom](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/komodo/legends-colossal-l7-v2.png).
+
+A maps invisible routes through an acacia canopy with its forked tongue; B has monolithic worn rock-cutting claws; C MAXIMUM FANTASY holds starfire/a sun inside enormous hanging throat folds. A remains strongest: ancient sensory knowledge comes from the monitor, rather than borrowing a fire dragon.
+
+**Current signature: Canopy-spanning forked scent-path divination. Ed judges the pick.**
+
+Chosen checklist: low wedge head; distinct muscular neck; four splayed clawed limbs; long thick tail; paired scent paths; weathered throat folds; tiny witch and acacia/fan palms.
+
+Body plan: retain the natural target's relative B ratios below, while increasing
+trunk depth/proximal mass to feel like a landform. Total vertical envelope
+(including coil/crest/plates where relevant) targets about20×baby height and
+exceeds normal treetops (DESIGN); this is not20×adult and not a measured
+ratio from generation. A tiny witch and forest trees appear in all six scenes;
+low hero view is allowed, elevated row studies what the game might show.
+
+Additional graph needs: forked tongue child articulation, bounded canopy-path emission, throat-fold soft tissue and aged offerings; optional C luminous throat interior.
+
+Inspection limit: The first colossal edit made people/trees too large and added labels; selected correction shrinks them and distinguishes elevated camera. Exact scale/camera is still unmeasured. All generated cameras remain approximate;
+no game-projection or native-size acceptance is claimed. Source comparison
+column still awaits actual current pixels via QUESTION6708034797.
+
+This section supersedes the first-pass legend pick below under canonical
+6708227119/6708229124. Base anatomy and the earlier plate remain useful history.
+
+
 Target: Komodo dragon, not crocodile or generic iguana. Adult and patterned
 juvenile level0, toward/away, stationary/walking. [Method](l7-method.md).
 [Generated plate](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/komodo/refs-l7-v1.png).

@@ -1,5 +1,32 @@
 # Salamander — skeleton target
 
+## Current legend: colossal second pass, proposed B
+
+[Revised A/B/C with witch and trees, hero top/game-camera bottom](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/salamander/legends-colossal-l7-v2.png).
+
+A's warning patches contain banked coals; B's old basalt-like body regrows a luminous river of new living tail tissue; C MAXIMUM FANTASY channels waterfalls through costal grooves and springs through warning patches. B remains strongest: epoch wear and renewal together, still readable from the elevated row.
+
+**Current signature: A river of living tail renewal. Ed judges the pick.**
+
+Chosen checklist: broad low salamander head; four splayed limbs; black/yellow trunk; healed old/new tail boundary; continuous rounded tail; old scars/offerings; witch/forest scale.
+
+Body plan: retain the natural target's relative B ratios below, while increasing
+trunk depth/proximal mass to feel like a landform. Total vertical envelope
+(including coil/crest/plates where relevant) targets about20×baby height and
+exceeds normal treetops (DESIGN); this is not20×adult and not a measured
+ratio from generation. A tiny witch and forest trees appear in all six scenes;
+low hero view is allowed, elevated row studies what the game might show.
+
+Additional graph needs: regional old/new tissue boundary, bounded translucent tail interior and offering/scar sockets; C additionally needs costal water-channel anchors.
+
+Inspection limit: Generator still flattens B's tip too much: retain the natural target's round tail section rather than silently importing a newt fin. All generated cameras remain approximate;
+no game-projection or native-size acceptance is claimed. Source comparison
+column still awaits actual current pixels via QUESTION6708034797.
+
+This section supersedes the first-pass legend pick below under canonical
+6708227119/6708229124. Base anatomy and the earlier plate remain useful history.
+
+
 Target: fire salamander anatomy, robust and low; black/yellow warning pattern.
 Adult and postmetamorphic juvenile level0, both headings, resting/walking.
 [Method](l7-method.md). [Generated plate](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/salamander/refs-l7-v1.png).

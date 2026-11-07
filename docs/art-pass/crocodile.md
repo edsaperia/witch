@@ -1,5 +1,32 @@
 # Crocodile — skeleton target
 
+## Current legend: colossal second pass, proposed C
+
+[Revised A/B/C with witch and trees, hero top/game-camera bottom](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/crocodile/legends-colossal-l7-v2.png).
+
+A is an ivory-gate jaw ancestor; B has tide-pools/light-lines in eroded scutes; C MAXIMUM FANTASY is a living mangrove island, rooted trees, brackish channels and tiny shrines growing from its own scutes. C now beats first-pass B: an ambush survivor that has outlived forests has become its estuary, while flat jaws/low body/four limbs/compressed tail still say crocodile.
+
+**Current signature: Living tidal estuary on ancient crocodile armour. Ed judges the pick.**
+
+Chosen checklist: flat jaws; low broad trunk; four splayed limbs; compressed tail; mangrove roots follow osteoderms; tidal channels; weathered shrine offerings/scars.
+
+Body plan: retain the natural target's relative B ratios below, while increasing
+trunk depth/proximal mass to feel like a landform. Total vertical envelope
+(including coil/crest/plates where relevant) targets about20×baby height and
+exceeds normal treetops (DESIGN); this is not20×adult and not a measured
+ratio from generation. A tiny witch and forest trees appear in all six scenes;
+low hero view is allowed, elevated row studies what the game might show.
+
+Additional graph needs: scute-local root/vegetation/shrine sockets, bounded world-growth envelope, water-channel/drip anchors and erosion. Trees-on-back fit this animal's mangrove/log camouflage; they are not a uniform for the lane.
+
+Inspection limit: Far tail surfaces are hidden by hero-view haze; elevated row is the whole-animal projection study. All generated cameras remain approximate;
+no game-projection or native-size acceptance is claimed. Source comparison
+column still awaits actual current pixels via QUESTION6708034797.
+
+This section supersedes the first-pass legend pick below under canonical
+6708227119/6708229124. Base anatomy and the earlier plate remain useful history.
+
+
 Target: recognisable crocodile, using Nile crocodile anatomy as a reference
 anchor, not claiming the game's mangrove animal is that exact taxon. Applies to
 adult and hatchling level0, toward/away, stationary/walking. [Method, ratios and
