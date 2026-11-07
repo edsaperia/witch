@@ -43,6 +43,10 @@ describe("explicit body graph acceptance pack",()=>{
       if(pack[base.id]){
         const candidate=structuredClone(pack[base.id].graph);
         delete candidate.look.bodyGraphAcceptance;
+        if(base.id==="bear"){
+          expect((candidate as any).palette).toMatchObject({hue:.07,sat:.5,val:.43,over:{BODYL:[151,119,87],BODY2:[125,92,61],BELLY:[190,151,104]}});
+          (candidate as any).palette=(base as any).palette;
+        }
         if(!base.look)delete candidate.look;
         expect(candidate).toEqual(base);
       }

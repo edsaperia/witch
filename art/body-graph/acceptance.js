@@ -11,11 +11,11 @@ import {flightPose,flightWings,poseFlightModel} from "./flight.js";
 
 export const ACCEPTANCE_IDS = Object.freeze(["bear","wolf","stag","bat","snail","hydra"]);
 const ACCEPTANCE_PLANS = {
-  bear:{family:"quadruped",template:"ursid",priors:[{kind:"reference",weight:.6},{kind:"compact",weight:.4}],ribcage:{depth:1.1,width:.95},flank:{depth:.9,width:.98},muscles:[{from:.62,to:.88,angle:.1,radius:.045,depth:.6}],neck:-.05,neckForward:.36,coat:"muzzle",feet:"plantigrade",length:1.25,width:.39,depth:.36,leg:.39,head:.35,muzzle:.31,ears:"round",tail:.17,
+  bear:{family:"quadruped",template:"ursid",priors:[{kind:"reference",weight:.6},{kind:"compact",weight:.4}],ribcage:{depth:1.1,width:.95},flank:{depth:.9,width:.86},muscles:[{from:.62,to:.88,angle:.1,radius:.045,depth:.6}],neck:-.05,neckForward:.36,coat:"muzzle",feet:"plantigrade",length:1.25,width:.39,depth:.36,leg:.51,head:.35,muzzle:.31,ears:"round",tail:.17,
     headShape:{family:"ursine",skull:[1,1.05,1],muzzle:[1,.34,.46],muzzleTaper:.52,muzzleSlope:-.12,jaw:.2,ears:{kind:"round",size:.78,position:[-.05,.7,.87]},eyes:{size:.095,position:[.8,.32,.76],glint:.028}},
     stance:1.12,limbRadius:.16,limbProfile:[1,1.08,1],hindBend:-.14,footShape:{kind:"paw",width:.19,length:.24,pads:true,claws:true},tailShape:{kind:"stub",length:.19,thickness:.085,drop:.04},
     furShell:{thickness:.02,softness:.12},volumes:[{region:"neck",at:.95,size:.035,softness:.15,width:1,depth:1},{region:"shoulder",at:.79,size:.1,softness:.18,lift:.25,width:.8,depth:1},{region:"chest",at:.72,size:.06,softness:.2,lift:-.45},{region:"belly",at:.43,size:.085,softness:.24,lift:-.8},{region:"haunch",at:.08,size:.035,softness:.2,lift:-.12,width:1.1}],
-    agePlans:[{length:.83,head:.42,width:.37,depth:.33,leg:.4,limbRadius:.145,neck:-.02,muzzle:.2,headShape:{family:"ursine",skull:[1,1.08,1.08],muzzle:[.85,.35,.5],muzzleTaper:.6,muzzleSlope:-.08,jaw:.2,ears:{kind:"round",size:1,position:[-.06,.77,.84]},eyes:{size:.1,position:[.8,.32,.8],glint:.028}},tailShape:{kind:"stub",length:.16,thickness:.075,drop:.04}},{length:1.15,head:.35,width:.36,leg:.4},{},{width:.42,head:.37,limbRadius:.18}],markingSoftness:.045,
+    agePlans:[{length:.83,head:.455,width:.37,depth:.33,leg:.64,limbRadius:.145,neck:-.02,muzzle:.2,headShape:{family:"ursine",skull:[1,1.08,1.08],muzzle:[.85,.35,.5],muzzleTaper:.6,muzzleSlope:-.08,jaw:.2,ears:{kind:"round",size:1.14,position:[-.06,.77,.84]},eyes:{size:.1,position:[.8,.32,.8],glint:.028}},tailShape:{kind:"stub",length:.16,thickness:.075,drop:.04}},{length:1.15,head:.35,width:.36,leg:.51},{},{width:.42,head:.37,limbRadius:.18}],markingSoftness:.045,
     markings:[{space:"head",kind:"mask",centre:[1.05,-.15,0],radius:[.85,.45,.58],softness:.22,mat:"BODYL"}]},
   wolf:{family:"quadruped",coat:"saddle",feet:"digitigrade",width:.22,depth:.25,leg:.66,head:.22,muzzle:.32,ears:"point",tail:.58,headShape:{family:"canid"},tailShape:{kind:"bushy"},ruff:{size:.04,softness:.12},markings:[{space:"body",kind:"saddle",centre:[0,.85,0],radius:[.52,.7,1.2],softness:.15,mat:"BODY3"},{space:"body",kind:"mask",centre:[0,-.9,0],radius:[.65,.65,1.3],softness:.12,mat:"BELLY"},{space:"head",kind:"mask",centre:[.8,-.5,0],radius:[1,.5,.75],softness:.15,mat:"BELLY"}]},
   stag:{family:"quadruped",coat:"fawn",feet:"hoof",width:.21,depth:.25,leg:.86,head:.19,muzzle:.29,ears:"point",tail:.18,neck:.37,antlers:true,headShape:{family:"cervid",ears:{kind:"leaf",size:1.2}},antlerShape:{branches:4,spread:.34,curve:-.1,tineLength:.18,glow:true},footShape:{kind:"hoof",width:.065,length:.09},markingSoftness:.035},
@@ -27,6 +27,7 @@ export function acceptanceGraphGenome(base){
   if(!ACCEPTANCE_IDS.includes(base.id))throw Error("Outside body-graph acceptance batch");
   const out=structuredClone(base);
   out.look={...out.look,bodyGraphAcceptance:{version:1,...ACCEPTANCE_PLANS[base.id]}};
+  if(base.id==="bear")out.palette={...out.palette,hue:.07,sat:.5,val:.43,over:{...out.palette?.over,BODYL:[151,119,87],BODY2:[125,92,61],BELLY:[190,151,104]}};
   return out;
 }
 export function createAcceptanceVariants(genomes){
