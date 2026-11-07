@@ -1,0 +1,40 @@
+{
+  "direction": "third-pass-readable-legends",
+  "sourceLegendSheet": "https://raw.githubusercontent.com/edsaperia/witch/0b571d1838cfc8eabe8e4b0604f7662b487fc4de/previews/art-pass/legends-today/524b0ac/lane-L6.png",
+  "sourceSha": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
+  "status": "reference-package-pixel-evidence-published",
+  "scaleTest": "64-128px concept silhouette beside 50px witch",
+  "concepts": {
+    "owl": [
+      {"id":"A","name":"Disc Warden","exaggeration":"deep round facial disc and heavy barred chest","wear":"small silver brow ring, healed bill scar","magic":"faint eye-ring glow","pick":false},
+      {"id":"B","name":"Timeworn Listener","exaggeration":"oversized layered facial disc and broad folded wings","wear":"weathered shoulder plate and chipped talon","magic":"one thin time-colour rim","pick":true,"rationale":"The disc, compact owl mass and dark eyes survive the 64–128px test before the restrained rim is noticed."}
+    ],
+    "raven": [
+      {"id":"A","name":"Iron Bill","exaggeration":"deep hooked bill and shaggy throat hackles","wear":"one worn neck torque and two scars","magic":"small blue glint in the eye","pick":true,"rationale":"A wedge tail, massive bill and single torque make an ancient raven readable without a carried hoard."},
+      {"id":"B","name":"Crownscratch","exaggeration":"broad wedge tail and layered wing coverts","wear":"battered brow band and chipped feather tips","magic":"one ember mark on the bill","pick":false}
+    ],
+    "heron": [
+      {"id":"A","name":"Long-Reed Elder","exaggeration":"tall S-neck and dagger bill","wear":"bronze ankle band and torn crest feather","magic":"single blue throat stripe","pick":true,"rationale":"The S-neck, bill and long legs remain a clean heron silhouette; the stripe is a small accent, not a scene."},
+      {"id":"B","name":"Mere Watcher","exaggeration":"long trailing legs and narrow wing mantle","wear":"weathered shoulder plates and old leg scar","magic":"one pale bill glint","pick":false}
+    ],
+    "penguin": [
+      {"id":"A","name":"Epoch Wader","exaggeration":"massive upright emperor trunk and broad webbed feet","wear":"worn gorget and one offering bead","magic":"small aurora breast band","pick":true,"rationale":"The upright emperor body, webbed feet and stiff flippers read first; the aurora band stays secondary at game size."},
+      {"id":"B","name":"Ice-Scar Elder","exaggeration":"heavy chest and short grounded stance","wear":"chipped flipper edge and simple neck ring","magic":"one cold eye highlight","pick":false}
+    ]
+  },
+  "pixelPick": {
+    "required": true,
+    "views": ["towards", "away"],
+    "sizes": ["1x", "4x-nearest-neighbour"],
+    "style": ["limited night palette", "three cel bands", "dark outline", "deliberate clusters"],
+    "status": "published-native-albedo-evidence",
+    "method": "pure Node native generator; current level-3 albedo composited with witch scale, towards/away, true 1x and nearest-neighbour 4x; this is a schematic evidence sheet, not a new concept render",
+    "links": {
+      "owl": "https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/l6-third-pass/owl-pixel-pick.png",
+      "raven": "https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/l6-third-pass/raven-pixel-pick.png",
+      "heron": "https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/l6-third-pass/heron-pixel-pick.png",
+      "penguin": "https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/l6-third-pass/penguin-pixel-pick.png"
+    },
+    "nextCondition": "Ed/coordinator review; no adoption or visual acceptance inferred"
+  }
+}
