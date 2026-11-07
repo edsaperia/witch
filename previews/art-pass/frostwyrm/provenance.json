@@ -1,0 +1,14 @@
+{
+  "tool": "image_gen.imagegen",
+  "date": "2026-11-07",
+  "synthetic": true,
+  "prompt": "Photoreal speculative anatomy concept reference sheet for frostwyrm: wingless long low four-legged ice dragon borrowing crocodile trunk and snout, long flexible neck, swept back horns, dorsal plates and very long tapering tail; hatchling shorter muzzle and horn buds; absolutely no wings. Eight panels two rows adult above age0 below; four columns standing towards, walking towards, standing away, walking away. Full animal and extremities in every panel on plain gray ground. Downward camera pitch29.8 degrees, body viewed near-side three quarter: yaw34.4 degrees towards or away from side. Consistent individual anatomy across row, believable weight bearing and joint chains, soft neutral daylight, no humans, no labels or text, no cropped tails/wings. Walking is grounded weight transfer; serpent locomotion undulation. This is an explicit fantasy concept target, not an actual species photograph or a game render.",
+  "limitations": "See species document; not runtime or exact projection evidence.",
+  "legend": {
+    "prompt": "Photoreal fantasy creature concept contact sheet, three distinct full-body alternatives in three equally sized panels horizontally, left A middle B right C; no text. Each whole creature and every extremity fits within its own panel with generous margin, plain neutral gray ground, no environment scenery. Camera looks downward about29.8 degrees, body three-quarter side yaw34.4 degrees towards viewer, full body. Species frostwyrm: wingless ice dragon, long low four-legged body, long flexible neck, crocodilian snout, sweeping horns and very long tapering tail. Area story for design inspiration ONLY, not background: blue glacier ice and frozen waterfalls at ice cave, ice-spire ring and crystal-leaf trees. Three alternative designs: A: extraordinarily long sinuous river-of-ice body and tail, great chipped backward horns and hanging icicle beard, four short legs, no wings; B: translucent blue ice dorsal plates with ancient sediment layers, long crocodilian body, worn snout, no wings; C: weathered near-white scaleless old neck with frost breath flowing low, scarred low reptile body and very long tail, no wings. Each shows ancient age, wisdom, immense power and animal-specific mystery while recognizable as same family. They are different evolved designs, not merely three recolors. Subtle neutral light, credible weight support. No shared legend uniform, no unrelated generic crystals or halos. Mythical design proposals, not game renders.",
+    "file": "legend-concepts-v1.png",
+    "layout": "Three concepts A/B/C left to right. Actual inspection and selected target in species doc.",
+    "tool": "image_gen.imagegen",
+    "date": "2026-11-07"
+  }
+}

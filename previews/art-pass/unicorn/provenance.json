@@ -1,0 +1,14 @@
+{
+  "tool": "image_gen.imagegen",
+  "date": "2026-11-07",
+  "synthetic": true,
+  "prompt": "Scientific concept reference plate, photoreal fictional unicorn borrowing real horse anatomy. Eight panels in two rows: adult upper row, foal age0 lower row; columns standing towards, walking towards, standing away, walking away. Whole animal including single horn, hooves and tail fully in each panel on plain warm gray ground. Camera looks downward 29.8 degrees; body axis 34.4 degrees towards viewer from side in towards panels, 34.4 degrees away from side in away panels. Same horse across panels, no humans or tack. Correct equine carpal versus hock anatomy, long metapodials, single solid hooves, deep chest, muscular hindquarters, long neck, horse face, mane and tail; only fantastical feature single midline forehead horn. Foal has proportionately long thin legs, shorter muzzle and small horn bud. Neutral daylight, clean silhouette, no decorative ice, no magical glow, no cropped anatomy, no text. Intended as proposed skeleton target, not game screenshot.",
+  "limitations": "See species document; not runtime or exact projection evidence.",
+  "legend": {
+    "prompt": "Photoreal fantasy creature concept contact sheet, three distinct full-body alternatives in three equally sized panels horizontally, left A middle B right C; no text. Each whole creature and every extremity fits within its own panel with generous margin, plain neutral gray ground, no environment scenery. Camera looks downward about29.8 degrees, body three-quarter side yaw34.4 degrees towards viewer, full body. Species unicorn: white horse with one smooth gold-white glowing brow horn, horse hooves and long mane, no wings. Area story for design inspiration ONLY, not background: still moonlit pool, white stone ring, old cedars/spruces/alders, offerings from people healed. Three alternative designs: A: first ancient unicorn, one long smooth gold-white luminous horn, grey muzzle, goat beard, long weathered mane, feathered hooves with healed visitors bead garlands; B: ancient slender horse with one worn but unbroken smooth glowing horn reflected in a small water sheen at hooves, grey muzzle, no garlands; C: heavily scarred white elder horse with one smooth gold-white horn and soft white mane flowing like pool mist, old braided offering cord around one fetlock. Each shows ancient age, wisdom, immense power and animal-specific mystery while recognizable as same family. They are different evolved designs, not merely three recolors. Subtle neutral light, credible weight support. No shared legend uniform, no unrelated generic crystals or halos. Mythical design proposals, not game renders.",
+    "file": "legend-concepts-v1.png",
+    "layout": "Three concepts A/B/C left to right. Actual inspection and selected target in species doc.",
+    "tool": "image_gen.imagegen",
+    "date": "2026-11-07"
+  }
+}

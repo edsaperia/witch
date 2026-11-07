@@ -1,0 +1,14 @@
+{
+  "tool": "image_gen.imagegen",
+  "date": "2026-11-07",
+  "synthetic": true,
+  "prompt": "Photoreal speculative anatomy concept reference sheet for frosttroll: friendly shaggy gorilla-like troll, immense shoulders and long knuckle-walking arms, plantigrade hindfeet, round eyes and bulbous humanoid nose, white beard adult only, mossy stone shoulder accents; youngster big head without beard; no tail. Eight panels two rows adult above age0 below; four columns standing towards, walking towards, standing away, walking away. Full animal and extremities in every panel on plain gray ground. Downward camera pitch29.8 degrees, body viewed near-side three quarter: yaw34.4 degrees towards or away from side. Consistent individual anatomy across row, believable weight bearing and joint chains, soft neutral daylight, no humans, no labels or text, no cropped tails/wings. Walking is grounded weight transfer; serpent locomotion undulation. This is an explicit fantasy concept target, not an actual species photograph or a game render.",
+  "limitations": "See species document; not runtime or exact projection evidence.",
+  "legend": {
+    "prompt": "Photoreal fantasy creature concept contact sheet, three distinct full-body alternatives in three equally sized panels horizontally, left A middle B right C; no text. Each whole creature and every extremity fits within its own panel with generous margin, plain neutral gray ground, no environment scenery. Camera looks downward about29.8 degrees, body three-quarter side yaw34.4 degrees towards viewer, full body. Species frosttroll: friendly white shaggy knuckle-walking troll, long arms, broad shoulders, round eyes, bulbous nose, white beard. Area story for design inspiration ONLY, not background: troll bridge over iced stream, frozen spruce/larch forest and snow-capped boulders that may be sleeping trolls. Three alternative designs: A: half of long arms and shoulder naturally petrified into waterworn stone, living wise face and flowing white beard, moss in old cracks; B: immense beard woven with ancient river pebbles offered by travelers, scarred hands, no stone body; C: giant cupped hands guarding a small frost light, heavily weathered fur and drooping wise eyelids, no petrification. Each shows ancient age, wisdom, immense power and animal-specific mystery while recognizable as same family. They are different evolved designs, not merely three recolors. Subtle neutral light, credible weight support. No shared legend uniform, no unrelated generic crystals or halos. Mythical design proposals, not game renders.",
+    "file": "legend-concepts-v1.png",
+    "layout": "Three concepts A/B/C left to right. Actual inspection and selected target in species doc.",
+    "tool": "image_gen.imagegen",
+    "date": "2026-11-07"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "tool": "image_gen.imagegen",
+  "date": "2026-11-07",
+  "synthetic": true,
+  "prompt": "Photoreal fantasy swamp hydra reference sheet: strictly LIMBLESS thick coiled snake body, absolutely NO LEGS, NO PAWS, NO WINGS. Adult upper row exactly FIVE separate snake heads on five long necks rooted at broad anterior trunk. Hatchling lower row ONE head and one neck. Eight panels two rows four columns: resting towards, undulating locomotion towards, resting away, undulating locomotion away. Full creature tail tips and all heads inside every panel with margins, plain gray ground. Camera looks down29.8degrees, yaw34.4degrees towards/away from side. Low continuous serpentine body mass, reptile scales, long tapering tail, wedge snake heads and visible jaws; dark glinting eyes not glowing. Believable python-like body motion. Consistent anatomy across panels. Concept target, not game render. No text.",
+  "limitations": "See species document; not runtime or exact projection evidence.",
+  "legend": {
+    "prompt": "Photoreal fantasy creature concept contact sheet, three distinct full-body alternatives in three equally sized panels horizontally, left A middle B right C; no text. Each whole creature and every extremity fits within its own panel with generous margin, plain neutral gray ground, no environment scenery. Camera looks downward about29.8 degrees, body three-quarter side yaw34.4 degrees towards viewer, full body. Species hydra: strictly LIMBLESS thick coiled swamp serpent, exactly SEVEN long snake heads and necks, no legs, no wings. Area story for design inspiration ONLY, not background: cold still black water, drowned cypress roots and broken old walls. Three alternative designs: A: exactly seven heads: three old long necks plus two scarred short branching neck bases each supporting two younger heads, old bronze neck offering rings, dark eyes without glow; B: exactly seven weathered snake heads in uneven heights, colossal low coiled body with pale healed scars and swamp-silt hide, no glow; C: exactly seven heads, broad crested frills like drowned cypress root arches, age-pitted scales and a few worn bronze rings, no glow. Each shows ancient age, wisdom, immense power and animal-specific mystery while recognizable as same family. They are different evolved designs, not merely three recolors. Subtle neutral light, credible weight support. No shared legend uniform, no unrelated generic crystals or halos. Mythical design proposals, not game renders.",
+    "file": "legend-concepts-v1.png",
+    "layout": "Three concepts A/B/C left to right. Actual inspection and selected target in species doc.",
+    "tool": "image_gen.imagegen",
+    "date": "2026-11-07"
+  },
+  "rejected": "Initial quadruped generation excluded: incorrect anatomy; current reference-v1.png is limbless replacement."
+}

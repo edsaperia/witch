@@ -1,0 +1,18 @@
+{
+  "tool": "image_gen.imagegen",
+  "date": "2026-11-07",
+  "synthetic": true,
+  "prompt": "Photoreal speculative anatomy concept reference sheet for griffin: eagle head and feathered neck on muscular lion trunk, two eagle taloned forelegs and two feline hindlegs, separate pair of feathered wings on shoulder back, tufted lion tail; chick-cub has wing nubs, oversized head and short beak. Eight panels two rows adult above age0 below; four columns standing towards, walking towards, standing away, walking away. Full animal and extremities in every panel on plain gray ground. Downward camera pitch29.8 degrees, body viewed near-side three quarter: yaw34.4 degrees towards or away from side. Consistent individual anatomy across row, believable weight bearing and joint chains, soft neutral daylight, no humans, no labels or text, no cropped tails/wings. Walking is grounded weight transfer; serpent locomotion undulation. This is an explicit fantasy concept target, not an actual species photograph or a game render.",
+  "limitations": "See species document; not runtime or exact projection evidence.",
+  "flight": {
+    "prompt": "Photoreal speculative anatomy reference for griffin: eagle head and lion trunk, four legs with eagle foretalons and feline hind paws, separate feathered wings. One adult, eight separate full-body panels in a 2 by 4 grid, all extremities within panel, gray plain background. Panels show: grounded standing with fully folded wings, grounded walking wings folded, flight downstroke, flight upstroke, flight midstroke, held-wing glide, takeoff pushing from ground, landing with wings braking. Flight has level or path-angled torso, head extended forward, legs tucked/trailing where present, never standing upright in midair. Feathered wings show rooted upper arm, elbow and wrist, distinct fanned primaries. Consistent anatomy and proportions. Camera roughly 30 degrees downward and three-quarter side. No text, no labels, no magic, no game sprites. Mythical anatomy concept proposal.",
+    "file": "flight-v1.png"
+  },
+  "legend": {
+    "prompt": "Photoreal fantasy creature concept contact sheet, three distinct full-body alternatives in three equally sized panels horizontally, left A middle B right C; no text. Each whole creature and every extremity fits within its own panel with generous margin, plain neutral gray ground, no environment scenery. Camera looks downward about29.8 degrees, body three-quarter side yaw34.4 degrees towards viewer, full body. Species griffin: eagle head, hooked beak and white feather neck on lion body, eagle foretalons and feline hind paws, separate feathered wings, tufted lion tail. Area story for design inspiration ONLY, not background: wind-bent cedar and pine peaks and great nest on high ledge. Three alternative designs: A: immense weather-beaten sail wings, missing and regrown primaries, white swept crest, scarred gold foretalons, lion haunches; B: one great storm-battered wing with natural gold repair feathers, old beak scars, no armor; C: huge protective foretalons holding ancient worn nest-offering bronze ring, folded feather wings, wise eagle head. Each shows ancient age, wisdom, immense power and animal-specific mystery while recognizable as same family. They are different evolved designs, not merely three recolors. Subtle neutral light, credible weight support. No shared legend uniform, no unrelated generic crystals or halos. Mythical design proposals, not game renders.",
+    "file": "legend-concepts-v1.png",
+    "layout": "Three concepts A/B/C left to right. Actual inspection and selected target in species doc.",
+    "tool": "image_gen.imagegen",
+    "date": "2026-11-07"
+  }
+}

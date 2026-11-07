@@ -1,0 +1,18 @@
+{
+  "tool": "image_gen.imagegen",
+  "date": "2026-11-07",
+  "synthetic": true,
+  "prompt": "Photoreal speculative anatomy concept reference sheet for sphinx: golden lion body with digitigrade paws and tufted tail, humanlike flat face framed by striped pharaonic nemes cloth, adult short false beard and small feather wings; cub has little headcloth and no wings, no beard. Eight panels two rows adult above age0 below; four columns standing towards, walking towards, standing away, walking away. Full animal and extremities in every panel on plain gray ground. Downward camera pitch29.8 degrees, body viewed near-side three quarter: yaw34.4 degrees towards or away from side. Consistent individual anatomy across row, believable weight bearing and joint chains, soft neutral daylight, no humans, no labels or text, no cropped tails/wings. Walking is grounded weight transfer; serpent locomotion undulation. This is an explicit fantasy concept target, not an actual species photograph or a game render.",
+  "limitations": "See species document; not runtime or exact projection evidence.",
+  "flight": {
+    "prompt": "Photoreal speculative anatomy reference for sphinx: lion trunk and four lion paws, human face and nemes headcloth, two feathered wings. One adult, eight separate full-body panels in a 2 by 4 grid, all extremities within panel, gray plain background. Panels show: grounded standing with fully folded wings, grounded walking wings folded, flight downstroke, flight upstroke, flight midstroke, held-wing glide, takeoff pushing from ground, landing with wings braking. Flight has level or path-angled torso, head extended forward, legs tucked/trailing where present, never standing upright in midair. Feathered wings show rooted upper arm, elbow and wrist, distinct fanned primaries. Consistent anatomy and proportions. Camera roughly 30 degrees downward and three-quarter side. No text, no labels, no magic, no game sprites. Mythical anatomy concept proposal.",
+    "file": "flight-v1.png"
+  },
+  "legend": {
+    "prompt": "Photoreal fantasy creature concept contact sheet, three distinct full-body alternatives in three equally sized panels horizontally, left A middle B right C; no text. Each whole creature and every extremity fits within its own panel with generous margin, plain neutral gray ground, no environment scenery. Camera looks downward about29.8 degrees, body three-quarter side yaw34.4 degrees towards viewer, full body. Species sphinx: lion body and four lion paws, human face, striped gold/lapis nemes, feather wings and tufted lion tail. Area story for design inspiration ONLY, not background: buried sandstone city, tumbled columns and fallen colossus head under dunes. Three alternative designs: A: living weathered sandstone body with eroded face still wise, worn gold torc and brow cobra, folded feather wings; B: very long lion body couched in patient stillness, deeply worn nemes and one chipped gold claw, no stone transformation; C: broad eagle wings carved with worn geometric feather edges, sand-polished lion body, stern wise face and one ancient cracked lapis ornament. Each shows ancient age, wisdom, immense power and animal-specific mystery while recognizable as same family. They are different evolved designs, not merely three recolors. Subtle neutral light, credible weight support. No shared legend uniform, no unrelated generic crystals or halos. Mythical design proposals, not game renders.",
+    "file": "legend-concepts-v1.png",
+    "layout": "Three concepts A/B/C left to right. Actual inspection and selected target in species doc.",
+    "tool": "image_gen.imagegen",
+    "date": "2026-11-07"
+  }
+}
