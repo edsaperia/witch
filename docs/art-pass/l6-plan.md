@@ -23,4 +23,4 @@ These are inspection questions, not verified missing-graph findings or completed
 
 ## Checkpoint
 
-Planning only; NOT READY. No generated reference, real-photo comparison or anatomy acceptance is claimed yet. No browser, renderer, service or background process launched. Next wake condition: coordinator resumes this owner for reference generation and evidence completion. Personal monitor remains paused.
+Completed reference-target documents and four generated eight-panel sheets are now supplied; see l6-summary.md and the individual species pages. Real photos were inspected for comparison only and were not committed. Generated camera/joint limits remain explicit; no graph implementation or likeness acceptance is claimed. No browser, game renderer, service or background process launched. Next wake condition: coordinator review of PR1901. Personal monitor remains paused.
