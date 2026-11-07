@@ -15,7 +15,7 @@ describe("the DJ booth", () => {
   });
   it("chooses a record she has, not one she hasn't found; then the button starts the party with it", () => {
     const n = new BoothNav(own);
-    n.move(1, 0); expect(n.pick()).toMatchObject({ did: "locked" }); expect(n.ready).toBe(false); // (110: a find)
+    n.move(1, 0); expect(n.pick()).toMatchObject({ did: "unfound" }); expect(n.ready).toBe(false); // (110: a find)
     n.move(1, 0); expect(n.pick()).toMatchObject({ did: "chose", record: { bpm: 120 } });
     n.move(0, 1); expect(n.pick()).toMatchObject({ did: "start", record: { id: "record-120", bpm: 120 } });
     n.move(0, -1); expect(n.focus).toBe(at("record-120")); // (back up onto the record chosen)

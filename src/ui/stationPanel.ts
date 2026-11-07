@@ -12,11 +12,11 @@
 // beat later (onLook) and she turns to show it (onChange). Her room (ui/creator.ts) is the full-screen creator; this is only the stations'.
 import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
-import { bareHeadAt, CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, shownItems, SKIN_COLS, skinSwatch, wear, wears, type Shelf, type WardrobeItem } from "../rules/wardrobe";
+import { bareHeadAt, CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, shownItems, SKIN_COLS, skinSwatch, wear, type Shelf, type WardrobeItem } from "../rules/wardrobe";
 import { BOARD, partById, type Fitted } from "../rules/broomParts";
 import type { Tuning } from "../rules/tuning";
 import { broomColours, partCanvas } from "../render/workshopArt";
-import { broomSummary, CARD_SHOW, cardAt, itemAt, panelPad, partStats, partsFound, setChips, setsOf, spellLine, type Line } from "./stationLines";
+import { broomSummary, CARD_SHOW, cardAt, itemAt, panelPad, stationTitle, partStats, setChips, setsOf, spellLine, type Line } from "./stationLines";
 import { PanelChoice } from "./stationChoice";
 import { bindings } from "../platform/bindings";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
@@ -44,7 +44,9 @@ const SLOT_ROLE: Record<string, string> = { tip: "steering", chassis: "body", ex
 /** The Workshop's state the bay and the pegboard show (main.ts): the parts she's found, those on her broom, tonight's part to find
  *  (the night's find when it's a part, not yet taken: one's out there, never where) and the tuning her parts change. */
 export interface WorkshopCtx { found: ReadonlySet<string>; fitted: Fitted; tonight: string | null; tuning: Tuning }
-const PART_NAMES: Record<string, string> = { broom: "handle", bristles: "bristles", hat: "hat", plume: "band" };
+const PART_NAMES: Record<string, string> = { broom: "handle", bristles: "bristles", hat: "hat", plume: "band", lips: "lips", eyeshadow: "eyes" };
+/** A button line's words (the basin's teeth: Ed, 2026-11-07, "an icon or short label for the teeth button"). */
+const ACTION_NAMES: Record<string, string> = { teeth: "Brush teeth" };
 
 
 /** A list card's live picture (ui/bagPreview.ts BagPreview): its element, run or stopped, freed. */
@@ -65,15 +67,16 @@ export class StationPanel {
   setTrail(id: string | null): void { this.trailNow = trailPreset(id).id; if (this.id && this.c) { this.c.trail = this.trailNow; this.paint(); } }
   /** Her broom's parts changed at the bay (a card chosen: fitted at once). */
   onFit: (f: Fitted) => void = () => {};
+  /** A button chosen (the basin's "teeth": main.ts plays her brushing; Ed, 2026-11-07, "flavour only, no gameplay effect"). */
+  onAction: (id: string) => void = () => {};
   /** Back (platform/bindings.ts menu.back: E, the pad's circle) pressed while it's open: main.ts closes it (the pad's goes through padControls). */
   onBack: () => void = () => {};
-  /** A list shelf's item's live picture, a bag firing (Ed, 2026-10-29: "The bag menu should also show little animations of each bag
-   *  'firing'"; Juliet's BagPreview, main.ts sets it): made once an item, kept while the panel's open, run only while its card is on
-   *  screen. Unset, the list's cards have none. */
+  /** A preview shelf's item's live picture, a bag firing (Ed, 2026-10-29: "The bag menu should also show little animations of each bag
+   *  'firing'"; Juliet's BagPreview, main.ts sets it): made once an item, kept while the panel's open, shown and run only in the detail
+   *  of the bag in focus (Ed, 2026-11-07: "Show the stats line and firing preview only for the bag in focus"). Unset, none. */
   preview: ((item: string) => Preview | null) | null = null;
   private previews = new Map<string, Preview>();
   private sized = new Map<string, string>();
-  private seen: IntersectionObserver | null = null;
   private id: string | null = null;
   private shelves: Shelf[] = [];
   /** The focus and what's chosen (ui/stationChoice.ts): her look, what she owns, her broom's parts. */
@@ -160,11 +163,7 @@ export class StationPanel {
     this.c.trail = this.trailNow;
     this.navAt = -1e9; this.hover = null;
     this.padChoose = true; // (the pad's use button that opened it is held: let go first, then a press chooses)
-    const L = this.lines(), first = L.findIndex(l => l.kind === "items" || (l.kind === "cards" && !l.readOnly));
-    const s0 = first >= 0 ? this.shelves[L[first].shelf] : null;
-    const worn = !s0 ? 0 : s0.slot ? Math.max(0, Array.from({ length: L[first].n }, (_, c) => cardAt(s0, L[first], c)).indexOf(this.ws?.fitted[s0.slot] ?? null)) : shownItems(s0).findIndex(i => wears(this.g, i));
-    if (s0?.list) { const at = L.findIndex(l => l.shelf === L[first].shelf && l.item === worn); this.at = { line: Math.max(first, at), col: 0 }; } // (a list: the line of what she wears)
-    else this.at = { line: Math.max(0, first), col: Math.max(0, worn) };
+    this.at = this.c.opening(); // (on what she's wearing: Ed, 2026-11-07)
     this.paint();
     this.slide.in(); // (another station's swapped in place: it's in already)
     this.root.classList.add("in"); // (a mark for the tools: tools/opening/shots.cjs)
@@ -175,7 +174,7 @@ export class StationPanel {
     if (!this.id) return;
     if (this.lookTimer) this.lookNow();
     this.id = null; this.pointerIn = false; this.queue = [];
-    this.seen?.disconnect(); this.seen = null; for (const p of this.previews.values()) p.dispose(); this.previews.clear(); this.sized.clear(); // (no preview runs with the panel shut)
+    for (const p of this.previews.values()) p.dispose(); this.previews.clear(); this.sized.clear(); // (no preview runs with the panel shut)
     this.slide.out();
     this.root.classList.remove("in");
     delete this.root.dataset.station;
@@ -201,7 +200,7 @@ export class StationPanel {
       this.ws = workshop; this.c.found = workshop?.found ?? new Set(); this.c.fitted = workshop ? { ...workshop.fitted } : null;
     }
     const lines = this.lines();
-    const same = previous ? lines.findIndex(l => l.shelf === previous.shelf && l.kind === previous.kind && l.item === previous.item && l.axis === previous.axis && l.row === previous.row) : -1;
+    const same = previous ? lines.findIndex(l => l.shelf === previous.shelf && l.kind === previous.kind && l.from === previous.from && l.axis === previous.axis && l.row === previous.row) : -1;
     const line = same >= 0 ? same : Math.max(0, Math.min(at.line, lines.length - 1));
     this.c.focus(line, Math.max(0, Math.min(at.col, (lines[line]?.n ?? 1) - 1)));
     this.paint();
@@ -232,17 +231,6 @@ export class StationPanel {
   private partOf(s: Shelf): string { return this.c.partOf(s); }
   private colourOf(part: string): number[] { return { ...classicPalette(this.st), ...this.g.palette }[part] ?? [.07, .5, .45]; }
   private swatch(s: Shelf, col: number, row: number): number[] { return s.grid === "skin" ? skinSwatch(col, row) : swatchAt(col, CLOTH_ROWS[row]); }
-  /** The swatch nearest her colour for `s`'s chosen part (column, row of its 5), by red, green and blue as the eye weighs them. */
-  private chosenSwatch(s: Shelf): [number, number] {
-    const c = this.colourOf(this.partOf(s)), [r0, g0, b0] = rgb(c[0], c[1], c[2]), cols = s.grid === "skin" ? SKIN_COLS : CLOTH_COLS;
-    let best: [number, number] = [0, 0], bd = Infinity;
-    for (let col = 0; col < cols; col++) for (let row = 0; row < GRID_ROWS; row++) {
-      const [h, s2, v] = this.swatch(s, col, row), [r, g, b] = rgb(h, s2, v), m = (r + r0) / 2;
-      const d = (2 + m / 256) * (r - r0) ** 2 + 4 * (g - g0) ** 2 + (2 + (255 - m) / 256) * (b - b0) ** 2;
-      if (d < bd) { bd = d; best = [col, row]; }
-    }
-    return best;
-  }
   private fitValue(axis: string): number { const [p, k] = slot(axis); return Number(p ? (this.g[p] as Record<string, unknown>)[k] : this.g[k]); }
   private fitRange(axis: string): [number, number] { const [lo, hi] = axis === "cloakLength" ? (Art.cloakRange as (c: unknown) => number[])(this.g.cloak) : AXES[axis] as number[]; /* (each cloak its own side of her knee: art/witchGenome.js) */ return [axis in FIT_NEEDS ? Math.max(lo, .25) : lo, hi]; }
 
@@ -258,15 +246,15 @@ export class StationPanel {
   /** The focus to the next card or the last (L1/R1, PageUp/PageDown): nothing on her changes. */
   private jump(dir: -1 | 1): void { this.navAt = 1; this.hover = null; if (this.c.jumpCard(dir)) this.paint(); }
   /** Choose what's in focus (confirm, a click): an owned item or a colour on her, the part the colours are for, a broom part fitted
-   *  at the bay; a locked one says it's still to be found. */
+   *  at the bay; one not found yet says so. */
   private pick(): void {
     const r = this.c.choose();
     if (r.look) this.change(r.look);
     if (r.fitted && this.ws) { this.ws = { ...this.ws, fitted: r.fitted }; this.onFit(r.fitted); this.onChange(); }
     if (r.trail) { this.trailNow = r.trail; this.onTrail(r.trail); }
+    if (r.action) this.onAction(r.action);
     this.paint();
   }
-  private tried(at: { line: number; col: number }): boolean { const n = this.c.nope; return !!n && n.line === at.line && n.col === at.col; }
   private setFit(axis: string, share: number): void {
     if (!this.fitOn(axis)) return;
     const [lo, hi] = this.fitRange(axis), v = +(lo + Math.max(0, Math.min(1, share)) * (hi - lo)).toFixed(3);
@@ -296,7 +284,7 @@ export class StationPanel {
     if (this.at.line >= L.length) this.at = { line: Math.max(0, L.length - 1), col: 0 };
     const at = this.at;
     let html = this.banner ? `<div class="sp-banner">${esc(this.banner)}</div>` : "";
-    html += `<div class="sp-head"><b>${esc(STATION_NAMES[this.id] ?? this.id)}</b><span>${this.found()}</span></div><div class="sp-body">`;
+    html += `<div class="sp-head"><b>${esc(stationTitle(this.id))}</b></div><div class="sp-body">`;
     let shelf = -1;
     const shut = (i: number) => { const s = this.shelves[i]; return `${s.sets && this.ws ? this.summary(this.ws) : ""}</div>`; };
     L.forEach((l, i) => {
@@ -304,59 +292,49 @@ export class StationPanel {
       if (l.shelf !== shelf) {
         if (shelf >= 0) html += shut(shelf);
         shelf = l.shelf;
-        const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name ?? "Empty" : s.trail ? trailPreset(this.trailNow).name : shownItems(s).find(it => this.c.wears(it))?.name;
+        const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name ?? "Empty" : s.trail ? trailPreset(this.trailNow).name : s.toggle ? shownItems(s).filter(it => this.c.wears(it)).map(it => it.short ?? it.name).join(", ") : shownItems(s).find(it => this.c.wears(it))?.name;
         const note = s.always ? "every colour" : s.slot ? SLOT_ROLE[s.slot] : s.board ? "north up" : "";
         html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}" data-shelf="${l.shelf}"><div class="sp-lab" data-card="${i}">${s.id === "hat" && (this.g.hat as { shape?: string } | undefined)?.shape !== "none" ? `<span class="sp-hatpic" data-thumb="hatpic:now:${hash(JSON.stringify(this.g))}"></span>` : ""}<b>${esc(s.label)}</b>${worn ? `<span>${esc(worn)}</span>` : ""}${note ? `<em>${esc(note)}</em>` : ""}</div>`;
       }
       const f = (c: number) => at.line === i && at.col === c ? " focus" : "";
-      if (l.kind === "items" && l.item !== undefined) { const it = itemAt(s, l, 0), own = this.owned.has(it.id), on = this.c.wears(it), stat = own ? statOf(it) : ""; html += `<div class="sp-card sp-listrow${own ? "" : " locked"}${on ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(0)}" data-line="${i}" data-col="0">${none(it) ? `<i class="sp-none">∅</i>` : `<span class="sp-pic" data-thumb="${this.thumbKey(it, s)}"></span>`}<span class="sp-stat"><b>${own ? esc(it.name) : "🔒"}</b>${esc(stat)}</span>${own && !none(it) && this.preview ? `<span class="sp-preview" data-preview="${esc(it.id)}"></span>` : ""}${on ? `<b class="sp-tick">✓</b>` : ""}</div>`; }
-      else if (l.kind === "items") html += `<div class="sp-row">${shownItems(s).map((it, c) => { const own = this.owned.has(it.id), stat = own ? statOf(it) : ""; return `<div class="sp-card${stat ? " sp-statcard" : ""}${own ? "" : " locked"}${this.c.wears(it) ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${none(it) ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${stat ? `<span class="sp-stat"><b>${esc(it.name)}</b>${esc(stat)}</span>` : ""}${this.c.wears(it) ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`; }).join("")}</div>`;
+      if (l.kind === "items") html += `<div class="sp-row">${Array.from({ length: l.n }, (_, c) => { const it = itemAt(s, l, c), own = this.owned.has(it.id), on = this.c.wears(it); return `<div class="sp-card${s.toggle ? " sp-toggle" : ""}${own ? "" : " unfound"}${on ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${s.toggle ? `<span class="sp-short">${esc(it.short ?? it.name)}</span>` : none(it) ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${on ? `<b class="sp-tick">✓</b>` : ""}</div>`; }).join("")}</div>`; // (one not found yet: its silhouette, no padlock: Ed, 2026-11-07, "they're not locked, they just haven't been found yet!")
+      else if (l.kind === "action") html += `<div class="sp-action${f(0)}" data-line="${i}" data-col="0">${esc(ACTION_NAMES[s.action!] ?? s.action!)}</div>`;
       else if (l.kind === "cards" && s.board) html += `<div class="sp-row sp-board">${Array.from({ length: l.n }, (_, c) => {
         const id = cardAt(s, l, c)!, cell = BOARD[(l.row ?? 0) * 3 + c], own = this.found_().has(id), tonight = !own && this.ws?.tonight === id;
-        return `<div class="sp-cell${own ? "" : " locked"}${tonight ? " tonight" : ""}${id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}"><small>${esc(cell.point)} · ${esc(cell.biome)}</small><span data-thumb="${this.partKey(id)}"></span><b>${own ? esc(partById(id)!.name) : "?"}</b></div>`;
+        return `<div class="sp-cell${own ? "" : " unfound"}${tonight ? " tonight" : ""}${id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}"><small>${esc(cell.point)} · ${esc(cell.biome)}</small><span data-thumb="${this.partKey(id)}"></span><b>${own ? esc(partById(id)!.name) : "?"}</b></div>`;
       }).join("")}</div>`;
       else if (l.kind === "cards") html += `<div class="sp-row">${Array.from({ length: l.n }, (_, c) => {
         const id = cardAt(s, l, c), own = id === null || this.found_().has(id), on = (this.ws?.fitted[s.slot!] ?? null) === id;
-        return `<div class="sp-card sp-wide${own ? "" : " locked"}${on ? " worn" : ""}${id !== null && id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${id === null ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.partKey(id)}"></span>`}${on ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`;
+        return `<div class="sp-card sp-wide${own ? "" : " unfound"}${on ? " worn" : ""}${id !== null && id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${id === null ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.partKey(id)}"></span>`}${on ? `<b class="sp-tick">✓</b>` : ""}</div>`;
       }).join("")}</div>`;
       else if (l.kind === "trail") html += `<div class="sp-row">${TRAIL_PRESETS.map((p, c) => `<div class="sp-card sp-trail${p.id === this.trailNow ? " worn" : ""}${f(c)}" data-line="${i}" data-col="${c}" data-trail="${esc(p.id)}"><span data-thumb="trail:${esc(p.id)}:1"></span>${p.id === this.trailNow ? `<b class="sp-tick">✓</b>` : ""}</div>`).join("")}</div>`;
       else if (l.kind === "chips") html += `<div class="sp-chips">${setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null }).map((x, c) => `<span class="${x.whole ? "whole" : x.fitted ? "some" : ""}${f(c)}" data-line="${i}" data-col="${c}">${x.whole ? "✦ " : ""}${esc(x.name)} ${x.fitted}/${x.of} · ${esc(x.spell)}</span>`).join("")}</div>`;
       else if (l.kind === "parts") html += `<div class="sp-parts">${s.colour!.map((p, c) => `<span class="${p === this.partOf(s) ? "on" : ""}${f(c)}" data-line="${i}" data-col="${c}"><i style="background:${css(this.colourOf(p))}"></i>${esc(PART_NAMES[p] ?? p)}</span>`).join("")}</div>`;
-      else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); html += `<div class="sp-grid" style="grid-template-columns:repeat(${l.n},1fr)">${Array.from({ length: l.n }, (_, c) => `<i class="${!this.c.awaitingDress && sc === c && sr === l.row ? "sel" : ""}${f(c)}" data-line="${i}" data-col="${c}" style="background:${css(this.swatch(s, c, l.row!))}"></i>`).join("")}</div>`; }
+      else if (l.kind === "grid") { const [sc, sr] = this.c.chosenSwatch(s); html += `<div class="sp-grid" style="grid-template-columns:repeat(${l.n},var(--sw))">${Array.from({ length: l.n }, (_, c) => `<i class="${!this.c.awaitingDress && sc === c && sr === l.row ? "sel" : ""}${f(c)}" data-line="${i}" data-col="${c}" style="background:${css(this.swatch(s, c, l.row!))}"></i>`).join("")}</div>`; }
       else if (l.kind === "fit") { const [lo, hi] = this.fitRange(l.axis!), on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g), v = Math.max(0, Math.min(1, (this.fitValue(l.axis!) - lo) / (hi - lo))); html += `<div class="sp-fit${on ? "" : " off"}${f(0)}" data-line="${i}" data-col="0"><span>${esc(FIT_NAMES[l.axis!] ?? l.axis!)}</span><div class="bar"><i style="left:${(v * 100).toFixed(1)}%"></i></div></div>`; }
     });
     if (shelf >= 0) html += shut(shelf);
     html += `</div><div class="sp-foot">${footHtml(this.device)}</div>`;
     this.root.innerHTML = html;
+    this.root.dataset.frame = this.framePart ?? ""; // (the part of her it frames, for the tools: tools/stations/check.cjs)
     for (const el of this.root.querySelectorAll<HTMLElement>("[data-thumb]")) this.thumbInto(el);
-    this.placePreviews();
     this.paintDetail();
     const card = this.root.querySelector<HTMLElement>(".sp-shelf.on"), fo = this.root.querySelector<HTMLElement>(".focus");
     card?.scrollIntoView({ block: "nearest" }); fo?.scrollIntoView({ block: "nearest" }); // (the focused card whole where it fits, its focus always)
   }
-  /** The list's live pictures into their cards (each made once and kept while the panel's open: the panel's HTML is rebuilt on every
-   *  move), each run only while its card shows in the scrolling body (an IntersectionObserver), so ten bags cost the work of the two or
-   *  three on screen. */
+  /** The live picture of the bag in focus into its detail (each made once and kept while the panel's open: the panel's HTML is
+   *  rebuilt on every move), run; every other one stopped. */
   private placePreviews(): void {
-    const slots = this.root.querySelectorAll<HTMLElement>("[data-preview]");
-    if (!slots.length || !this.preview) return;
-    const body = this.root.querySelector<HTMLElement>(".sp-body");
-    this.seen?.disconnect();
-    this.seen = new IntersectionObserver(es => { for (const e of es) this.previews.get((e.target as HTMLElement).dataset.preview!)?.run(e.isIntersecting); }, { root: body, threshold: 0.1 });
-    for (const slot of slots) {
-      const id = slot.dataset.preview!;
-      let p = this.previews.get(id);
-      if (!p) { const made = this.preview(id); if (!made) continue; this.previews.set(id, (p = made)); }
-      if (p.el.parentElement !== slot) slot.replaceChildren(p.el);
-      const r = slot.getBoundingClientRect(), size = `${Math.round(r.width)}x${Math.round(r.height)}`; // (the slot's size: 12em × 6em, with the panel's type)
-      if (r.width > 0 && this.sized.get(id) !== size) { p.resize?.(r.width, r.height); this.sized.set(id, size); }
-      p.focus?.(!!slot.closest(".focus"));
-      this.seen.observe(slot); // (its first word, at once, runs it or stops it)
-    }
-  }
-  private found(): string {
-    if (this.shelves.some(q => q.slot || q.board)) return partsFound(this.found_());
-    const all = this.shelves.flatMap(shownItems); return all.length ? `${all.filter(i => this.owned.has(i.id)).length} of ${all.length} found` : "";
+    const slot = this.root.querySelector<HTMLElement>("[data-preview]"), id = slot?.dataset.preview ?? null;
+    for (const [k, p] of this.previews) if (k !== id) p.run(false);
+    if (!slot || !id || !this.preview) return;
+    let p = this.previews.get(id);
+    if (!p) { const made = this.preview(id); if (!made) return; this.previews.set(id, (p = made)); }
+    if (p.el.parentElement !== slot) slot.replaceChildren(p.el);
+    const r = slot.getBoundingClientRect(), size = `${Math.round(r.width)}x${Math.round(r.height)}`; // (the slot's size: 12em × 6em, with the panel's type)
+    if (r.width > 0 && this.sized.get(id) !== size) { p.resize?.(r.width, r.height); this.sized.set(id, size); }
+    p.focus?.(true);
+    p.run(true);
   }
   /** "Her broom" (the bay): every number her parts change, bare → now, up green and down red, and her spell. */
   private summary(ws: WorkshopCtx): string {
@@ -369,29 +347,31 @@ export class StationPanel {
     let box = this.root.querySelector<HTMLElement>(".sp-detail");
     if (!box) { box = document.createElement("div"); }
     if (box.parentElement !== card) card.append(box); // (at the foot of the card it's about: its own controls together, Ed 2026-10-29)
-    let title = "", text = "", locked = false, sub = "", stats: { name: string; from: string; to: string; better: boolean | null }[] = [];
+    let title = "", text = "", unfound = false, sub = "", preview = "", stats: { name: string; from: string; to: string; better: boolean | null }[] = [];
     if (l) {
       const s = this.shelves[l.shelf];
-      if (l.kind === "items") { const it = itemAt(s, l, at.col); locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? (this.tried(at) ? "Not found yet." : "") : (this.c.wears(it) ? "Wearing." : "Hers: choose to wear it.") + (it.stat ? ` ${it.stat[0].toUpperCase()}${it.stat.slice(1)}.` : ""); } // (a bag's 💌 stats in words: rules/bags.ts) // (a silhouette, nothing more: Ed, 2026-10-21; chosen anyway, it says it's not hers yet)
+      if (l.kind === "items") { const it = itemAt(s, l, at.col); unfound = !this.owned.has(it.id); title = unfound ? "Not found yet." : it.name; text = unfound ? "" : (this.c.wears(it) ? "Wearing." : "Hers: choose to wear it.") + (it.stat ? ` ${it.stat[0].toUpperCase()}${it.stat.slice(1)}.` : ""); if (!unfound && s.preview && !none(it) && this.preview) preview = it.id; } // (a bag's 💌 stats in words, rules/bags.ts, and its live picture: the bag in focus only, Ed 2026-11-07) // (one not found yet: its silhouette, and "Not found yet.": Ed, 2026-11-07, "they're not locked, they just haven't been found yet!")
+      else if (l.kind === "action") title = ACTION_NAMES[s.action!] ?? s.action!;
       else if (l.kind === "cards" && s.board) {
         const id = cardAt(s, l, at.col)!, cell = BOARD[(l.row ?? 0) * 3 + at.col], own = this.found_().has(id), where = `${cell.point.toLowerCase()} · ${cell.biome.toLowerCase()}`;
         if (own) { title = partById(id)!.name; text = `${where}. ${setsOf(id).map(n => `${n} set`).join(", ")}. Fit it at the bay.`; }
         else if (this.ws?.tonight === id) { title = "A glowing outline"; text = `${where}. One lies on tonight's island: a wreck somewhere in its woods. The board never says where; the telescope shows its outline in the stars.`; }
-        else { title = "?"; text = `${where}. Still to find.`; locked = true; }
+        else { title = "?"; text = `${where}. Still to find.`; unfound = true; }
       } else if (l.kind === "cards") {
         const id = cardAt(s, l, at.col), p = partById(id);
         if (!p) { title = "Empty"; text = `Nothing in the ${s.slot}: the bare broom's.`; }
-        else if (!this.found_().has(p.id)) { title = "🔒"; locked = true; if (this.tried(at)) text = "Not found yet."; } // (unfound: a silhouette, no hint)
+        else if (!this.found_().has(p.id)) { title = "Not found yet."; unfound = true; } // (not found yet: a silhouette, no hint)
         else { title = p.name; sub = `${p.slot}${setsOf(p.id).length ? ` · ${setsOf(p.id).join(", ")} set${setsOf(p.id).length > 1 ? "s" : ""}` : ""}`; stats = this.ws ? partStats(p.id, this.ws.tuning) : []; text = this.ws?.fitted[p.slot] === p.id ? "On her broom." : "Choose it to fit it."; }
       } else if (l.kind === "chips") { const x = setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null })[at.col]; title = `${x.name} · ${x.spell}`; text = x.whole ? `Whole: R casts ${x.spell}.` : `${x.fitted} of its ${x.of} parts on her broom.`; }
       else if (l.kind === "trail") { const p = TRAIL_PRESETS[at.col]; title = `${p.name} ${p.emoji}`; text = p.id === this.trailNow ? "Her trail's colours, front to back: the first band as she flies, then a band for each dodge still to come back." : "Choose it for her trail's colours."; }
       else if (l.kind === "parts") { const p = s.colour![at.col]; title = `Colour: ${PART_NAMES[p] ?? p}`; text = p === this.partOf(s) ? "The colours below are for this." : "Choose it to colour it below."; }
-      else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); title = `${s.label}: colour`; text = !this.c.awaitingDress && sc === at.col && sr === l.row ? "Wearing." : "Every colour is hers: choose to put it on."; }
+      else if (l.kind === "grid") { const [sc, sr] = this.c.chosenSwatch(s); title = `${s.label}: colour`; text = !this.c.awaitingDress && sc === at.col && sr === l.row ? "Wearing." : "Every colour is hers: choose to put it on."; }
       else { const on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g); title = FIT_NAMES[l.axis!] ?? l.axis!; text = on ? "◀ ▶ or drag to change it." : "Put it on first."; }
     }
-    box.className = `sp-detail${locked ? " locked" : ""}`;
-    if (!title && !text && !stats.length) { box.remove(); return; }
-    box.innerHTML = `<h3>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ""}</h3>${stats.map(r => `<p class="${r.better ? "up" : "down"}">${r.better ? "▲" : "▼"} ${esc(r.name)} ${esc(r.from)} → ${esc(r.to)}</p>`).join("")}<p>${esc(text)}</p>`;
+    box.className = `sp-detail${unfound ? " unfound" : ""}${preview ? " sp-withpreview" : ""}${!preview && !stats.length && !sub ? " sp-brief" : ""}`;
+    if (!title && !text && !stats.length) { box.remove(); this.placePreviews(); return; }
+    box.innerHTML = `${preview ? `<span class="sp-preview" data-preview="${esc(preview)}"></span>` : ""}<div><h3>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ""}</h3>${stats.map(r => `<p class="${r.better ? "up" : "down"}">${r.better ? "▲" : "▼"} ${esc(r.name)} ${esc(r.from)} → ${esc(r.to)}</p>`).join("")}${text ? `<p>${esc(text)}</p>` : ""}</div>`;
+    this.placePreviews();
   }
 
   // ---- the items' pictures: each one as its shelf shows it, on her as she is (baked a few a frame, kept by look) ----
@@ -471,11 +451,7 @@ export const footHtml = (device: "keys" | "pad" | "touch"): string =>
   : `${(["menu.up", "menu.left", "menu.down", "menu.right"] as const).map(id => keycapHtml(glyphOf(id, "keys"))).join("")} · ${keycapHtml(glyphOf("menu.choose", "keys"))} · ${keycapHtml(glyphOf("menu.back", "keys"))}`;
 // (the keys and the pad as bound now, platform/bindings.ts: a remap shows here too, Ed 2026-10-28)
 const PAD_DIRS: Record<string, [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
-const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", bedroom2Wardrobe: "Wardrobe", bedroom3Wardrobe: "Wardrobe", bedroom2DressingTable: "Dressing table", bedroom3DressingTable: "Dressing table", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Broom", pegboard: "Pegboard" };
 const ART_M = Art.M as Record<string, number>;
-/** An item's stat line, on its card (Juliet's two bags, 2026-10-29: "faster throws, shorter reach"; config/wardrobe.json `stat`,
- *  rules/bags.ts), or "". */
-const statOf = (it: WardrobeItem): string => { const s = (it as WardrobeItem & { stat?: unknown }).stat; return typeof s === "string" ? s : ""; };
 const none = (it: WardrobeItem) => Object.values(it.set).every(v => v === false || v === 0 || v === "none");
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 const hash = (s: string) => { let x = 2166136261; for (let i = 0; i < s.length; i++) x = Math.imul(x ^ s.charCodeAt(i), 16777619); return (x >>> 0).toString(36); };
@@ -492,8 +468,8 @@ body.paused #station-panel { visibility: hidden; }
 #station-panel .sp-banner { color: var(--gold); font-size: .9em; }
 #station-panel .sp-head { display: flex; align-items: baseline; gap: .6em; }
 #station-panel .sp-head b { font-size: 1.6em; color: var(--gold); letter-spacing: 1px; } #station-panel .sp-head span { margin-left: auto; font-size: .8em; opacity: .85; }
-#station-panel .sp-body { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(232,180,106,.5) transparent; display: flex; flex-direction: column; gap: .75em; padding: 2px 4px 2px 2px; }
-#station-panel .sp-shelf { flex: none; display: flex; flex-direction: column; gap: .5em; padding: .7em .9em .8em; border-radius: .7em; background: rgba(26,18,44,.88); box-shadow: inset 0 0 0 1px rgba(232,226,244,.16), 0 2px 10px rgba(0,0,0,.35); }
+#station-panel .sp-body { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(232,180,106,.5) transparent; display: flex; flex-direction: column; gap: .5em; padding: 2px 4px 2px 2px; }
+#station-panel .sp-shelf { flex: none; display: flex; flex-direction: column; gap: .35em; padding: .45em .9em .55em; border-radius: .7em; background: rgba(26,18,44,.88); box-shadow: inset 0 0 0 1px rgba(232,226,244,.16), 0 2px 10px rgba(0,0,0,.35); }
 #station-panel .sp-shelf.on { background: rgba(38,26,62,.94); box-shadow: inset 0 0 0 2px rgba(232,180,106,.85), 0 2px 14px rgba(0,0,0,.45); }
 #station-panel .sp-lab { display: flex; gap: .6em; align-items: baseline; cursor: pointer; }
 #station-panel .sp-lab b { font-size: 1.15em; letter-spacing: .5px; } #station-panel .sp-shelf.on .sp-lab b { color: var(--gold); }
@@ -501,36 +477,36 @@ body.paused #station-panel { visibility: hidden; }
 #station-panel .sp-lab span { font-size: .85em; opacity: .9; } #station-panel .sp-lab em { margin-left: auto; font-style: normal; font-size: .75em; opacity: .75; }
 #station-panel .sp-sub { font-size: .8em; display: flex; gap: .5em; opacity: .9; } #station-panel .sp-sub em { margin-left: auto; font-style: normal; opacity: .75; }
 #station-panel .sp-row { display: flex; flex-wrap: wrap; gap: .45em; }
-#station-panel .sp-card { position: relative; width: 4.6em; height: 4.6em; border-radius: .5em; background: rgba(11,7,22,.55); box-shadow: inset 0 0 0 1px rgba(232,226,244,.14); display: grid; place-items: center; cursor: pointer; box-sizing: border-box; }
+#station-panel .sp-card { position: relative; width: 4em; height: 4em; border-radius: .5em; background: rgba(11,7,22,.55); box-shadow: inset 0 0 0 1px rgba(232,226,244,.14); display: grid; place-items: center; cursor: pointer; box-sizing: border-box; }
 #station-panel .sp-card.sp-trail { width: 6.4em; } #station-panel .sp-card.sp-trail canvas { height: 1.5em; width: 6em; max-width: 6em; }
-#station-panel .sp-card canvas { image-rendering: pixelated; width: auto; height: 4.2em; max-width: 4.3em; object-fit: contain; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
-#station-panel .sp-card.locked { cursor: default; } #station-panel .sp-card.locked canvas { filter: brightness(0) invert(.22) drop-shadow(1px 0 0 rgba(232,226,244,.5)) drop-shadow(-1px 0 0 rgba(232,226,244,.5)) drop-shadow(0 1px 0 rgba(232,226,244,.5)) drop-shadow(0 -1px 0 rgba(232,226,244,.5)); }
+#station-panel .sp-card canvas { image-rendering: pixelated; width: auto; height: 3.6em; max-width: 3.7em; object-fit: contain; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
+#station-panel .sp-card.unfound canvas { filter: brightness(0) invert(.32) drop-shadow(1px 0 0 rgba(214,204,240,.6)) drop-shadow(-1px 0 0 rgba(214,204,240,.6)) drop-shadow(0 1px 0 rgba(214,204,240,.6)) drop-shadow(0 -1px 0 rgba(214,204,240,.6)); } /* (one not found yet: a grey silhouette, a shade softer than a disabled one, no padlock: Ed, 2026-11-07, "they're good foreshadowing") */
 #station-panel .focus { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 12px rgba(255,255,255,.75), inset 0 0 0 1px var(--ol); }
 #station-panel .sp-card.worn:not(.focus) { outline: 2px solid rgba(232,180,106,.8); outline-offset: 1px; }
 #station-panel .sp-none { font-style: normal; font-size: 1.8em; }
 #station-panel .sp-tick { position: absolute; top: .15em; right: .15em; width: 1.2em; height: 1.2em; border-radius: 50%; background: var(--gold); color: #1a1430; font-size: .75em; display: grid; place-items: center; text-shadow: none; box-shadow: 0 0 0 1px var(--ol); }
-#station-panel .sp-lock { position: absolute; bottom: .1em; right: .2em; font-size: .9em; font-weight: normal; }
+#station-panel .sp-toggle { width: auto; min-width: 4.6em; height: 1.9em; padding: 0 .9em; } #station-panel .sp-short { font-size: .9em; }
+#station-panel .sp-toggle .sp-tick { top: -.45em; right: -.45em; }
+#station-panel .sp-action { align-self: flex-start; padding: .2em 1em; border-radius: .5em; background: rgba(11,7,22,.55); box-shadow: inset 0 0 0 1px rgba(232,226,244,.3); cursor: pointer; font-size: .95em; }
 #station-panel .sp-parts { display: flex; gap: .5em; flex-wrap: wrap; } #station-panel .sp-parts span { display: inline-flex; gap: .4em; align-items: center; font-size: .9em; padding: .15em .6em; border-radius: 1em; cursor: pointer; background: rgba(11,7,22,.45); opacity: .85; }
 #station-panel .sp-parts span.on { opacity: 1; color: var(--gold); box-shadow: inset 0 0 0 1px rgba(232,180,106,.7); } #station-panel .sp-parts i { width: .85em; height: .85em; border-radius: 50%; box-shadow: 0 0 0 1px var(--ol); }
-#station-panel .sp-grid { display: grid; gap: 2px; padding: 2px; background: var(--ol); border-radius: 4px; } #station-panel .sp-grid + .sp-grid { margin-top: calc(-.5em - 2px); }
-#station-panel .sp-grid i { height: 1.45em; cursor: pointer; position: relative; display: block; }
-#station-panel .sp-grid i.sel { outline: 3px solid var(--gold); outline-offset: 0; z-index: 1; } #station-panel .sp-grid i.sel::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center; font-size: .8em; font-style: normal; color: #fff; text-shadow: 0 0 2px #000, 0 0 2px #000; } #station-panel .sp-grid i.focus { outline: 3px solid #fff; z-index: 2; box-shadow: 0 0 8px rgba(255,255,255,.85); }
+#station-panel .sp-grid { --sw: 2.1em; display: grid; width: max-content; gap: 2px; padding: 2px; background: var(--ol); border-radius: 4px; } #station-panel .sp-grid + .sp-grid { margin-top: calc(-.35em - 2px); }
+#station-panel .sp-grid i { height: .74em; cursor: pointer; position: relative; display: block; }
+/* (the colour she has on: a gold ring inside a dark one and a gold badge with a dark tick, readable on any swatch, pale or dark; the focus a
+   white box with a glow round the outside: Ed, 2026-11-07, "make it clearly distinct from the white focus box") */
+#station-panel .sp-grid i.sel { z-index: 1; box-shadow: inset 0 0 0 2px var(--ol), inset 0 0 0 4px var(--gold); } #station-panel .sp-grid i.sel::after { content: "✓"; position: absolute; left: 50%; top: 50%; width: 1.05em; height: 1.05em; margin: -.525em 0 0 -.525em; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 1.5px var(--ol); display: grid; place-items: center; font: normal 700 .75em/1 ui-monospace, Menlo, Consolas, monospace; color: #1a1430; text-shadow: none; }
+#station-panel .sp-grid i.focus { outline: 3px solid #fff; outline-offset: 1px; z-index: 2; box-shadow: 0 0 10px 2px rgba(255,255,255,.85); } #station-panel .sp-grid i.sel.focus { box-shadow: inset 0 0 0 2px var(--ol), inset 0 0 0 4px var(--gold), 0 0 10px 2px rgba(255,255,255,.85); }
 #station-panel .sp-fit { display: flex; align-items: center; gap: .8em; padding: .25em .3em; border-radius: .4em; cursor: pointer; } #station-panel .sp-fit.off { opacity: .45; cursor: default; }
 #station-panel .sp-fit span { width: 8em; font-size: .9em; } #station-panel .sp-fit .bar { position: relative; flex: 1; height: .35em; background: rgba(232,226,244,.55); border-radius: .2em; box-shadow: 0 0 0 1px var(--ol); }
 #station-panel .sp-fit .bar i { position: absolute; top: -.45em; width: .7em; height: 1.25em; margin-left: -.35em; border-radius: .2em; background: var(--gold); box-shadow: 0 0 0 1px var(--ol); }
-#station-panel .sp-detail { padding: .45em .6em; border-radius: .45em; background: rgba(11,7,22,.5); } #station-panel .sp-detail h3 { margin: 0 0 .15em; font-size: 1em; font-weight: 600; } #station-panel .sp-detail p { margin: 0; font-size: .85em; opacity: .9; }
-#station-panel .sp-listrow { width: 100%; height: auto; min-height: 5.2em; grid-template-columns: 4.4em 1fr auto; gap: .7em; padding: .35em .8em .35em .2em; justify-items: start; }
-#station-panel .sp-listrow + .sp-listrow, #station-panel .sp-row + .sp-listrow { margin-top: -.1em; }
-#station-panel .sp-listrow .sp-pic canvas { height: 4.2em; }
-#station-panel .sp-preview { width: 12em; height: 6em; border-radius: .4em; overflow: hidden; background: rgba(11,7,22,.6); justify-self: end; }
+#station-panel .sp-detail { padding: .3em .6em; border-radius: .45em; background: rgba(11,7,22,.5); } #station-panel .sp-detail.sp-brief h3, #station-panel .sp-detail.sp-brief p { display: inline; } #station-panel .sp-detail.sp-brief h3 { margin-right: .6em; } /* (a title and a line: one line, so the panel fits the screen: Ed, 2026-11-07) */ #station-panel .sp-detail.sp-withpreview { display: flex; gap: .8em; align-items: center; } #station-panel .sp-detail h3 { margin: 0 0 .15em; font-size: 1em; font-weight: 600; } #station-panel .sp-detail p { margin: 0; font-size: .85em; opacity: .9; }
+#station-panel .sp-preview { flex: none; width: 12em; height: 6em; border-radius: .4em; overflow: hidden; background: rgba(11,7,22,.6); }
 #station-panel .sp-preview > * { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-#station-panel .sp-statcard { width: auto; min-width: 13em; max-width: 100%; grid-template-columns: 4.4em 1fr; gap: .5em; padding: 0 .7em 0 .1em; justify-items: start; }
-#station-panel .sp-stat { display: flex; flex-direction: column; font-size: .85em; line-height: 1.2; } #station-panel .sp-stat b { color: var(--gold); font-weight: 600; }
 #station-panel .sp-wide { width: 6.4em; height: 3.8em; } #station-panel .sp-wide canvas { height: auto; width: auto; max-width: 5.9em; max-height: 3.3em; }
 #station-panel .sp-board { flex-wrap: nowrap; gap: .45em; } #station-panel .sp-cell { flex: 1; position: relative; min-height: 6.2em; border: 1px solid rgba(232,226,244,.3); border-radius: .45em; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: .3em .2em; cursor: default; background: rgba(11,7,22,.5); }
 #station-panel .sp-cell small { font-size: .65em; line-height: 1.15; text-align: center; text-transform: uppercase; letter-spacing: .5px; opacity: .85; } #station-panel .sp-cell b { font-size: .75em; font-weight: normal; text-align: center; }
 #station-panel .sp-cell canvas { image-rendering: pixelated; max-width: 6.5em; max-height: 2.8em; width: auto; height: auto; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
-#station-panel .sp-cell.locked canvas { filter: brightness(0) invert(.12) drop-shadow(1px 0 0 rgba(232,226,244,.45)) drop-shadow(-1px 0 0 rgba(232,226,244,.45)) drop-shadow(0 1px 0 rgba(232,226,244,.45)) drop-shadow(0 -1px 0 rgba(232,226,244,.45)); }
+#station-panel .sp-cell.unfound canvas { filter: brightness(0) invert(.12) drop-shadow(1px 0 0 rgba(232,226,244,.45)) drop-shadow(-1px 0 0 rgba(232,226,244,.45)) drop-shadow(0 1px 0 rgba(232,226,244,.45)) drop-shadow(0 -1px 0 rgba(232,226,244,.45)); }
 #station-panel .sp-cell.tonight { border-color: rgba(255,214,120,.9); box-shadow: 0 0 10px rgba(255,214,120,.55), inset 0 0 8px rgba(255,214,120,.3); } #station-panel .sp-cell.tonight canvas { filter: brightness(0) invert(.12) drop-shadow(1px 0 0 #ffd678) drop-shadow(-1px 0 0 #ffd678) drop-shadow(0 1px 0 #ffd678) drop-shadow(0 -1px 0 #ffd678) drop-shadow(0 0 4px rgba(255,214,120,.9)); animation: sp-glow 1.6s ease-in-out infinite; }
 @keyframes sp-glow { 50% { opacity: .65; } }
 #station-panel .loaned { box-shadow: inset 0 0 12px rgba(255,236,190,.3); }

@@ -3887,13 +3887,15 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
   1. Ed, 2026-10-21
   Code: `ui/stationPanel.ts`
 - **`camera.station.aim`**: with no part, the camera aimed that share of her height (as she's drawn) up her.
-- **`camera.station.parts`**: Where the camera aims at a dressing station for each part of her being changed (head, hat, top, legs, feet, broom, the pegboard).
+- **`camera.station.parts`**: Where the camera aims at a dressing station for each part of her being changed (head, face, hat, top, back, bag, legs, feet, broom, the pegboard).
   1. Ed, 2026-10-23: "zoom in on what's being chosen"
   2. Ed's playtest, 2026-10-23: aimed by metres from her feet, her head went off the top of the screen up close; by her height it stays on the part chosen at any zoom
-  for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed aim of her height (as drawn: 0 her feet, 1 the top of her hat) up her and look metres higher (a thing by her: the board, the broom), and its distance times distance in place of the station's own, eased from part to part as the cursor moves [2].
+  3. Ed, 2026-11-07: "frame the part of her that station changes ... Every station now changes one part of her, so each gets its part framed. Trousers and shoes frame from the waist down."
+  for the part of her the row in focus is about (config/wardrobe.json's frame: head, face (the basin), hat, top, back (the cloak pegs), bag, legs (her waist down: the shoe rack's trousers and shoes), feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed aim of her height (as drawn: 0 her feet, 1 the top of her hat) up her and look metres higher (a thing by her: the board, the broom), and its distance times distance in place of the station's own, eased from part to part as the cursor moves [2].
   Code: `config/wardrobe.json`
 - **`camera.station.whole`**: At a dressing station the camera frames her whole, top of her hat to the soles of her shoes, in the right half of the screen while the panel takes the left half.
   1. Ed, 2026-10-29: "Menus should be left half of the screen, and the witch right half of the screen, and she should be nicely centred and visible top of hat to bottom of shoes."
+  2. Ed, 2026-11-07: "frame the part of her that station changes, using the existing per-part framing" (so whole.on is off: each station frames its part (parts))
   margin is the share of the screen's height left clear above and below her; at is where across the screen's width she stands (0.75: the right half's middle). On, it replaces distance, side, aim and parts (the zoom on the part of her being chosen), which stay for it off.
   Code: `src/render/view/camera.ts`, `src/ui/stationPanel.ts`
 - **`camera.station.dim`**: How dark the picture behind her goes while she's framed at a station, so she stands out: 0 leaves it as it is, 1 makes it black.
@@ -3957,10 +3959,16 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
 | `camera.station.aim` | number | 0 to … |
 | `camera.station.parts.head.aim` | number | 0 to … |
 | `camera.station.parts.head.distance` | number | 0 to … |
+| `camera.station.parts.face.aim` | number | 0 to … |
+| `camera.station.parts.face.distance` | number | 0 to … |
 | `camera.station.parts.hat.aim` | number | 0 to … |
 | `camera.station.parts.hat.distance` | number | 0 to … |
 | `camera.station.parts.top.aim` | number | 0 to … |
 | `camera.station.parts.top.distance` | number | 0 to … |
+| `camera.station.parts.back.aim` | number | 0 to … |
+| `camera.station.parts.back.distance` | number | 0 to … |
+| `camera.station.parts.bag.aim` | number | 0 to … |
+| `camera.station.parts.bag.distance` | number | 0 to … |
 | `camera.station.parts.legs.aim` | number | 0 to … |
 | `camera.station.parts.legs.distance` | number | 0 to … |
 | `camera.station.parts.feet.aim` | number | 0 to … |

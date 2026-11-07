@@ -1,12 +1,13 @@
 {
   "_": "Wardrobe items and each bag throwing pattern and invite modifiers. Detailed notes and decisions: docs/notes/config-history/wardrobe.md.",
-  "bareHead": ["dressingTable"],
+  "bareHead": ["dressingTable", "basin"],
   "stations": {
     "mirror": ["hat", "band"],
-    "dressingTable": ["hair", "skin", "face", "earrings"],
-    "wardrobe": ["jacket", "top", "trousers"],
+    "dressingTable": ["hair", "face", "earrings"],
+    "basin": ["skin", "makeup", "teeth"],
+    "wardrobe": ["jacket", "top"],
     "cloakPegs": ["cloak", "scarf"],
-    "shoeRack": ["shoes"],
+    "shoeRack": ["trousers", "shoes"],
     "bags": ["bag", "bagFit"],
     "lathe": ["tip", "chassis", "exhaust", "sets", "broomBody", "broomTrim", "broomFit", "trail", "pegboard"]
   },
@@ -17,7 +18,13 @@
       { "id": "hair-buns", "name": "Buns", "set": { "hair": "buns" }, "start": true },
       { "id": "hair-mohawk", "name": "Mohawk", "set": { "hair": "mohawk" } }
     ] },
-    "skin": { "frame": "head", "label": "Skin", "colour": ["skin"], "grid": "skin", "always": true, "items": [] },
+    "skin": { "frame": "face", "label": "Skin", "colour": ["skin"], "grid": "skin", "always": true, "items": [] },
+    "makeup": { "frame": "face", "label": "Makeup", "toggle": true, "colour": ["lips", "eyeshadow"], "items": [
+      { "id": "lipstick", "name": "Lipstick", "short": "Lips", "colour": "lips", "set": { "accessories.lipstick": true }, "start": true },
+      { "id": "eyeshadow", "name": "Eyeshadow", "short": "Eyes", "colour": "eyeshadow", "set": { "accessories.eyeshadow": true }, "start": true },
+      { "id": "blush", "name": "Blush", "short": "Blush", "set": { "accessories.blush": true }, "start": true }
+    ] },
+    "teeth": { "frame": "face", "label": "Teeth", "action": "teeth", "items": [] },
     "face": { "frame": "head", "label": "Face", "items": [
       { "id": "face-bare", "name": "Bare", "set": { "accessories.shades": false }, "start": true },
       { "id": "shades", "name": "Sunglasses", "set": { "accessories.shades": true } }
@@ -37,21 +44,21 @@
     ] },
     "top": { "frame": "top", "label": "Top", "colour": ["top"], "items": [] },
     "trousers": { "frame": "legs", "label": "Trousers", "colour": ["jeans"], "items": [] },
-    "cloak": { "frame": "top", "label": "Cloak", "colour": ["cloak"], "fit": ["cloakLength"], "items": [
+    "cloak": { "frame": "back", "label": "Cloak", "colour": ["cloak"], "fit": ["cloakLength"], "items": [
       { "id": "cloak-none", "name": "None", "set": { "cloak": "none" }, "start": true },
       { "id": "cloak-short", "name": "Short cloak", "set": { "cloak": "short" }, "start": true },
       { "id": "cloak-long", "name": "Long cloak", "set": { "cloak": "long" } },
       { "id": "cloak-hooded", "name": "Hooded cloak", "set": { "cloak": "hooded" } }
     ] },
-    "scarf": { "frame": "top", "label": "Scarf", "colour": ["scarf"], "fit": ["scarfLength"], "items": [
+    "scarf": { "frame": "back", "label": "Scarf", "colour": ["scarf"], "fit": ["scarfLength"], "items": [
       { "id": "scarf-none", "name": "None", "set": { "accessories.scarf": false }, "start": true },
       { "id": "scarf", "name": "Scarf", "set": { "accessories.scarf": true }, "start": true }
     ] },
-    "shoes": { "frame": "feet", "label": "Shoes", "colour": ["sneakers"], "items": [
+    "shoes": { "frame": "legs", "label": "Shoes", "colour": ["sneakers"], "items": [
       { "id": "shoes-trainers", "name": "Trainers", "set": { "accessories.chunky": false }, "start": true },
       { "id": "shoes-chunky", "name": "Chunky trainers", "set": { "accessories.chunky": true } }
     ] },
-    "bag": { "frame": "top", "label": "Bag", "list": true, "colour": ["satchel"], "items": [
+    "bag": { "frame": "bag", "label": "Bag", "preview": true, "colour": ["satchel"], "items": [
       { "id": "satchel", "name": "Satchel", "stat": "steady throws, a little homing", "invites": { "cooldown": 1, "range": 1, "homing": 1.5, "homingCone": 1.5 }, "set": { "accessories.satchel": true, "accessories.bumbag": false, "accessories.purse": false, "accessories.tote": false, "accessories.duffel": false, "accessories.briefcase": false, "accessories.clutch": false, "accessories.messenger": false, "backpackSize": 0 }, "start": true },
       { "id": "bumbag", "name": "Bumbag", "stat": "faster throws, shorter reach", "invites": { "cooldown": 0.76, "range": 0.76 }, "invitesAdd": { "inaccuracy": 2, "bloomPer": 1, "bloomDecay": 6, "bloomMax": 5 }, "set": { "accessories.satchel": false, "accessories.bumbag": true, "accessories.purse": false, "accessories.tote": false, "accessories.duffel": false, "accessories.briefcase": false, "accessories.clutch": false, "accessories.messenger": false, "backpackSize": 0 }, "start": true },
       { "id": "purse", "name": "Purse", "stat": "slower throws, longer reach", "invites": { "cooldown": 1.27, "range": 1.3 }, "set": { "accessories.satchel": false, "accessories.bumbag": false, "accessories.purse": true, "accessories.tote": false, "accessories.duffel": false, "accessories.briefcase": false, "accessories.clutch": false, "accessories.messenger": false, "backpackSize": 0 }, "start": true },
@@ -62,7 +69,7 @@
       { "id": "messenger", "name": "Messenger", "stat": "letters that hop on to the next", "invites": { "cooldown": 1.05, "range": 0.9 }, "invitesAdd": { "chain": 2, "chainRange": 6 }, "set": { "accessories.satchel": false, "accessories.bumbag": false, "accessories.purse": false, "accessories.tote": false, "accessories.duffel": false, "accessories.briefcase": false, "accessories.clutch": false, "accessories.messenger": true, "backpackSize": 0 } },
       { "id": "backpack", "name": "Backpack", "stat": "a stream of letters, slows her down", "invites": { "cooldown": 0.7, "range": 0.75, "fireSlow": 0.6 }, "invitesAdd": { "inaccuracy": 3, "bloomPer": 1.5, "bloomDecay": 6, "bloomMax": 9 }, "set": { "accessories.satchel": false, "accessories.bumbag": false, "accessories.purse": false, "accessories.tote": false, "accessories.duffel": false, "accessories.briefcase": false, "accessories.clutch": false, "accessories.messenger": false, "backpackSize": 1 } }
     ] },
-    "bagFit": { "frame": "top", "label": "Fit", "fit": ["bagSize", "backpackSize"], "items": [] },
+    "bagFit": { "frame": "bag", "label": "Fit", "fit": ["bagSize", "backpackSize"], "items": [] },
     "tip": { "frame": "broom", "label": "Tip", "slot": "tip", "items": [] },
     "chassis": { "frame": "broom", "label": "Chassis", "slot": "chassis", "items": [] },
     "exhaust": { "frame": "broom", "label": "Exhaust", "slot": "exhaust", "items": [] },

@@ -90,8 +90,7 @@ describe("the dressing stations by nearness", () => {
   });
 
   it("choosing there, with her whole framed (camera.station.whole), the rules leave the camera's distance and aim to the view (render/view/camera.ts) but ease in and out", () => {
-    const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = inHouse(p.x, p.z), S = g.tuning.camera.station!;
-    expect(S.whole?.on).toBe(true);
+    const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = inHouse(p.x, p.z); (g as { tuning: Game["tuning"] }).tuning = JSON.parse(JSON.stringify(g.tuning)); g.tuning.camera.station!.whole!.on = true; const S = g.tuning.camera.station!; // (whole framing behind its switch, off since Ed, 2026-11-07: "frame the part of her that station changes")
     const pose = () => cameraPose(g.camera, g.witch.lift, g.tuning);
     for (let i = 0; i < 4 / STEP; i++) stepGame(g, idle, STEP);
     const before = pose();
@@ -102,7 +101,7 @@ describe("the dressing stations by nearness", () => {
     expect(g.camera.station).toBeLessThan(0.01);
   });
 
-  // (with the whole framing off: the old zoom on the part being chosen, kept behind its switch)
+  // (with the whole framing off, as it is by default since Ed, 2026-11-07: the zoom on the part being chosen)
   const partsZoom = (g: Game) => { (g as { tuning: Game["tuning"] }).tuning = JSON.parse(JSON.stringify(g.tuning)); g.tuning.camera.station!.whole!.on = false; return g; };
   it("choosing there (whole framing off), the camera eases in on her and aside from the panel; walking off, back out", () => {
     const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = partsZoom(inHouse(p.x, p.z)), S = g.tuning.camera.station!;

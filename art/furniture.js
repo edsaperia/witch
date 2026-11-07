@@ -231,6 +231,41 @@ const PIECES = {
     for (let i = 0; i < 3; i++) m.ell([W * .36 + .1 + i * .02, sit + .06 - i * .12, .08], [.06, .035, .05], M.LEAF2, { group: 22, dir: [1, -.5, .3] });
   },
 
+  // The basin (Ed, 2026-11-07: a new station, skin, makeup and a "brush your teeth" button): an old marble-topped washstand on turned
+  // legs, a round porcelain bowl sunk in its top with a little water in it and a brass tap curling over it from a pipe behind, a round
+  // mirror on a post at its back, her toothbrush and paste in a cup, a cake of pink soap, a towel hung off its side rail, a lipstick
+  // and a blusher's compact on the top, a sprig of ivy round the mirror's post.
+  basin(m, { W, D, H }) {
+    const top = .82, zb = -D / 2 + .06;
+    m.box([0, top, 0], [W / 2, .035, D / 2], M.BELLY, { round: .02, group: 1, paint: p => (Math.sin(p[0] * 23 + p[2] * 9) > .93 ? M.STONED : undefined) }); // (its marble top, veined)
+    m.box([0, top - .1, .01], [W / 2 - .05, .07, D / 2 - .05], M.WOOD, { group: 2, paint: p => (Math.abs(p[0]) < .012 ? M.BARKD : undefined) });
+    for (const x of [-W / 4, W / 4]) m.ell([x, top - .1, D / 2 - .03], [.025, .025, .02], M.FLOWER, { group: 3 });
+    for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) m.chain([[x * (W / 2 - .06), top - .17, z * (D / 2 - .06), .03], [x * (W / 2 - .06), .45, z * (D / 2 - .06), .038], [x * (W / 2 - .06), .03, z * (D / 2 - .06), .026]], M.WOOD, { group: 4 });
+    m.box([0, .16, 0], [W / 2 - .07, .015, D / 2 - .07], M.WOOD, { group: 5 }); // (a low shelf)
+    // the bowl, its water, the tap
+    const bx = -W * .1, bz = .03, br = Math.min(.24, D * .46);
+    m.ell([bx, top + .1, bz], [br * 1.2, .1, br], M.BELLY, { group: 6, paint: p => (p[1] > top + .17 ? M.IRIS : undefined) }); // (a big porcelain bowl standing on the top, a blue band at its rim)
+    m.ell([bx, top + .19, bz], [br * 1.02, .018, br * .84], M.CRYSTAL, { group: 7 }); // (clear water, catching the light)
+    m.seg([bx, top, zb + .02], [bx, top + .36, zb + .02], .03, .028, M.FLOWER, { group: 8 });
+    m.chain([[bx, top + .36, zb + .02, .03], [bx, top + .42, zb + .1, .026], [bx, top + .33, zb + .19, .024]], M.FLOWER, { group: 8 });
+    for (const s of [-1, 1]) m.ell([bx + s * .08, top + .3, zb + .02], [.035, .02, .035], M.FLOWER, { group: 8 });
+    // the mirror on its post at the back, round, bright
+    const my = H - .3, mr = Math.min(.27, W * .3);
+    m.seg([W * .14, top, zb], [W * .14, my - mr * .7, zb], .022, .02, M.FLOWER, { group: 9 });
+    m.ell([W * .14, my, zb], [mr + .03, mr + .03, .025], M.FLOWER, { group: 10 });
+    m.flat([W * .14, my, zb + .03], X, Y, mr, mr, (u, v) => (Math.hypot(u, v) > 1 ? undefined : u + v * .7 > .3 && u + v * .7 < .55 ? M.BELLY : M.WEB), { group: 11, bend: 0 });
+    ivy(m, W * .14, zb + .02, top + .05, my - mr * .5, 12, .045);
+    // her toothbrush and paste in a cup, the soap, a towel off the side rail, a lipstick and a compact
+    can(m, W * .32, -.02, top + .03, top + .14, .045, M.CRYSTAL, { group: 13 });
+    m.seg([W * .32, top + .08, -.02], [W * .3, top + .27, -.03], .012, .012, M.ACCENT, { group: 14 }); m.ell([W * .3, top + .28, -.03], [.016, .022, .022], M.BELLY, { group: 14 });
+    m.seg([W * .34, top + .08, -.01], [W * .37, top + .22, .0], .014, .012, M.IRIS, { group: 15 });
+    m.box([W * .3, top + .055, D / 2 - .1], [.06, .025, .04], M.POM, { round: .02, group: 16 });
+    m.seg([-W / 2 - .02, top - .06, -D / 2 + .08], [-W / 2 - .02, top - .06, D / 2 - .08], .014, .014, M.FLOWER, { group: 17 });
+    m.box([-W / 2 - .04, top - .3, 0], [.02, .24, D / 2 - .12], M.CLOTH, { round: .02, group: 18, paint: p => (Math.abs(p[1] - (top - .46)) < .025 ? M.ACCENT : undefined) });
+    m.seg([-W * .36, top + .04, D / 2 - .1], [-W * .36, top + .12, D / 2 - .1], .016, .014, M.ACCENT, { group: 19 });
+    m.ell([-W * .26, top + .045, D / 2 - .11], [.04, .012, .04], M.FLOWER, { group: 20, paint: p => (p[1] > top + .05 ? M.POM : undefined) });
+  },
+
   // The crystal ball: a round table draped in a fringed cloth to the floor, a brass stand of three claws holding the ball, which glows,
   // mist curling in it; tarot cards fanned beside it, a candle on a saucer, a little crystal cluster.
   crystalBall(m, { W, D }) {
@@ -831,7 +866,7 @@ const PIECES = {
 /** The guests' bedrooms' pieces drawn in two states, by object id. */
 export const GUEST_FURNITURE = new Set();
 for (const room of ["bedroom2", "bedroom3"]) {
-  for (const [kind, home, sheeted] of [["Bed", "bed", "Bed"], ["Wardrobe", "wardrobe", "Wardrobe"], ["DressingTable", "dressingTable", "Chest"]]) {
+  for (const [kind, home, sheeted] of [["Bed", "bed", "Bed"], ["Wardrobe", "wardrobe", "Wardrobe"], ["DressingTable", "dressingTable", "Chest"], ["Basin", "basin", "Chest"], ["ShoeRack", "shoeRack", "Chest"]]) { // (and a basin and a shoe rack each: Ed, 2026-11-07, "Guests need basins and shoe racks"; under a sheet, a lump as the dressing table is)
     const working = PIECES[home], covered = SHEETED_PIECES[room + sheeted], id = room + kind;
     PIECES[id] = (m, foot, state) => (state === "open" ? working(m, foot) : covered(m, foot));
     GUEST_FURNITURE.add(id);
@@ -870,7 +905,7 @@ const BASE = {
 /** (the biome frames dimmed, so the board's bright ones don't bloom over the parts hung in them) */
 const FRAME_DIM = .6;
 // (the letters' paper slightly off-white; the whole desk dimmed, PIECE_DIM)
-const PIECE_COLOURS = { ...SHEETED_COLOURS, invitations: { [M.BELLY]: [228, 222, 208], [M.IRIS]: [110, 162, 218], [M.ACCENT]: [238, 44, 70] }, pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i]).map(v => Math.round(v * FRAME_DIM))])) };
+const PIECE_COLOURS = { ...SHEETED_COLOURS, ...Object.fromEntries([...GUEST_FURNITURE].filter(id => /(Basin|ShoeRack)$/.test(id)).map(id => [id, SHEETED_COLOURS[id.replace(/(Basin|ShoeRack)$/, "Chest")]])), invitations: { [M.BELLY]: [228, 222, 208], [M.IRIS]: [110, 162, 218], [M.ACCENT]: [238, 44, 70] }, pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i]).map(v => Math.round(v * FRAME_DIM))])) };
 /** Pieces mostly flat to the light, their colours times this (as render/houseDecor.ts RUG_DIM a rug's): the invitations desk, its top
  *  and its letters lying face up, lit to a glare that bloomed at the house's camera (2026-10-26). */
 const PIECE_DIM = { invitations: .62 };

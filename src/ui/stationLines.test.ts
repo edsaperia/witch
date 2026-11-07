@@ -9,7 +9,7 @@ import { BOARD, PARTS, bareBroom, fittedKey, fittedOf, partById } from "../rules
 import { setParts } from "../rules/spells";
 import { SHELVES, shelvesAt, type Shelf } from "../rules/wardrobe";
 import { HOUSE_ROOMS } from "../rules/houseRooms";
-import { broomSummary, canChoose, cardAt, choose, itemAt, panelPad, partStats, setChips, stationLines, type Line } from "./stationLines";
+import { broomSummary, canChoose, cardAt, choose, ITEMS_PER_LINE, itemAt, panelPad, partStats, setChips, stationLines, type Line } from "./stationLines";
 
 const newGame = smallWorld(fullGame, "Station menu integration reads fitted broom stats on one witch, independent of world extent.");
 const ctx = (owned: string[] = []) => ({ owned: new Set(owned), fitOn: () => true, grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 3 : 13, rows: 5 }) });
@@ -95,13 +95,13 @@ describe("the pegboard", () => {
   });
 });
 
-describe("a list shelf (Ed, 2026-10-29, the bags: \"a vertical list you move down to select\")", () => {
-  it("is a line an item, each its own, the bags' station's bag shelf a list", () => {
-    const { sh, L } = (() => { const sh = shelvesAt("bags")!; return { sh, L: stationLines(sh, ctx(["bag-none", "satchel", "bumbag"])) }; })();
+describe("item lines wrap (Ed, 2026-11-07, the bags: \"compact cards like the jacket's\")", () => {
+  it("the bags' nine are two lines of cards, five and four, in order", () => {
+    const sh = shelvesAt("bags")!, L = stationLines(sh, ctx(["satchel", "bumbag"]));
     const bag = sh.findIndex(s => s.id === "bag"), lines = L.filter(l => l.shelf === bag && l.kind === "items");
-    expect(sh[bag].list).toBe(true);
-    expect(lines.map(l => [l.n, l.item])).toEqual(sh[bag].items.map((_, k) => [1, k]));
-    expect(lines.map(l => itemAt(sh[bag], l, 0).id)).toEqual(sh[bag].items.map(i => i.id));
+    expect(sh[bag].preview).toBe(true);
+    expect(lines.map(l => [l.n, l.from ?? 0])).toEqual([[ITEMS_PER_LINE, 0], [sh[bag].items.length - ITEMS_PER_LINE, ITEMS_PER_LINE]]);
+    expect(lines.flatMap(l => Array.from({ length: l.n }, (_, c) => itemAt(sh[bag], l, c).id))).toEqual(sh[bag].items.map(i => i.id));
   });
 });
 

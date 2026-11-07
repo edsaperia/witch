@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { EDITOR_HOUSE, defaultLayout, floorplanKey, layoutItems, normalAngle } from "./houseLayout";
+import { ADDED_OBJECTS, EDITOR_HOUSE, defaultLayout, floorplanKey, layoutItems, normalAngle } from "./houseLayout";
 import { publishedLayout } from "./publishedLayout";
 import proposal from "../../config/house/layouts/ed-current.json";
 import { guestFurnitureMigration } from "../rules/guestFurnitureMigration";
@@ -9,6 +9,7 @@ it("opens and resets the editor to Ed's published poses with the stable import i
   const selected = publishedLayout(items, key, new URLSearchParams());
   expect(selected).toEqual(publishedLayout(items, key, new URLSearchParams("layout=ed")));
   for (const p of selected.objects) {
+    if (ADDED_OBJECTS.includes(p.id)) continue; // (new since Ed's export, Ed 2026-11-07: at their defaults)
     const sourceId = p.id === "bedroom2DressingTable" ? "bedroom2Chest" : p.id === "bedroom3DressingTable" ? "bedroom3Chest" : p.id;
     const authored = proposal.objects.find(o => o.id === sourceId)!;
     expect(p).toEqual({ id: p.id, x: authored.x, z: authored.z, rotation: normalAngle(authored.rotation) });

@@ -101,6 +101,7 @@ import { BagPreview } from "./ui/bagPreview";
 import { BAGS } from "./rules/bags";
 import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { DjBooth } from "./ui/djBooth";
+import { BRUSH, BrushSparkle } from "./ui/brushSparkle";
 import { chooseRecord, lastRecord, ownedRecords } from "./app/recordSave";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { leaveZoo } from "./app/zooExit";
@@ -729,6 +730,17 @@ booth.onStart = r => {
   mutate("house: DJ party start", () => { chooseRecord(r.id); booth.close(); startParty(N().game, r.bpm); });
 };
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
+// The basin's Teeth button (Ed, 2026-11-07: "a 'brush your teeth' button that plays a short brushing animation with a little sparkle
+// and a sound, flavour only, no gameplay effect"): her brush frames facing us (render/view/witch.ts), scrubs and a glint
+// (platform/audio/chimes.ts brushTeeth) and a few sparkles at her face as it ends (ui/brushSparkle.ts). Nothing in the rules changes.
+stations.onAction = id => {
+  if (id !== "teeth") return;
+  const t = N().game.herTime;
+  view.brush.from = t; view.brush.until = t + BRUSH; view.turnUntil = t + BRUSH;
+  sound.sfx?.brushTeeth(0, BRUSH);
+  sparkle.play(BRUSH);
+};
+const sparkle = new BrushSparkle(() => herHead());
 stations.onDress = () => { view.spin = spinStep(view.spin, N().game.herTime); }; // (Ed, 2026-10-26: she twirls while her new look draws)
 // The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
 // and its set's spell with it: rules/spells.ts setParts), and is kept on this browser for the nights after (app/broomSave.ts).
@@ -1730,7 +1742,7 @@ function frameBody(now: number): void {
   openPrev = chartOpen() || telescope.on || !!studio.at || !!stations.station || booth.isOpen || phone.open;
   shutButton.style.display = openPrev && input.device === "touch" ? "block" : "none"; // (on touch, a way to close it: the tap keycap)
   // (the use prompts, render/houseRooms.ts: the button on what she plays with, and none over what's open)
-  view.useDevice = input.device; stations.setDevice(input.device); booth.setDevice(input.device); studioPanel.setDevice(input.device); view.houseOpen = stations.station ?? studio.state.players[0].object ?? (telescope.on ? scopeAt : null) ?? chartAt ?? phone.object;
+  view.useDevice = input.device; stations.setDevice(input.device); booth.setDevice(input.device); studioPanel.setDevice(input.device); view.houseOpen = stations.station ?? (booth.isOpen ? "decks" : null) ?? studio.state.players[0].object ?? (telescope.on ? scopeAt : null) ?? chartAt ?? phone.object;
   // The new opening's wake-up (rules/wakeUp.ts, render/wakeUp.ts): its card, the dark and her phone; its beats marked for ?timing=1,
   // and the first time she comes to the dressing table; the island's art latched drawn (marked, nothing waits on it).
   if (!phone.visiting && !N().spec.borrowed && !game.islandReady && F.ready && F.artRevealed && (mistGateOff || view.islandDrawn())) { game.islandReady = true; if (phone.active) phone.changed(); mark("island:ready"); } // Only host owns this shared latch; visitor art readiness cannot overwrite it.
