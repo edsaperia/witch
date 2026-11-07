@@ -64,10 +64,10 @@ export const itemAt = (s: Shelf, l: Line, col: number) => shownItems(s)[(l.from 
  *  items line's cards, a grid row, a fit slider...), with the tallest detail box at a card's foot: the no-scroll rule's estimate
  *  (Ed, 2026-11-07: "no station menu is taller than the screen at 1280×720"; src/ui/stationFit.test.ts, beside the panel measured
  *  in the built game by tools/stations/check.cjs). Rough by a line or so: the DOM measure is the judge. */
-export const LINE_EM: Record<Line["kind"], number> = { items: 4 + 0.35, parts: 1.55 + 0.35, grid: 0.74 + 0.11, fit: 1.6 + 0.35, cards: 3.8 + 0.35, chips: 1.6 + 0.35, trail: 4 + 0.35, action: 1.75 + 0.35 };
+export const LINE_EM: Record<Line["kind"], number> = { items: 4 + 0.35, parts: 1.55 + 0.35, grid: 0.74 + 0.11, fit: 2 + 0.35, cards: 3.8 + 0.35, chips: 1.6 + 0.35, trail: 4 + 0.35, action: 1.75 + 0.35 };
 /** A card's own (its title, its padding, the gap to the next), the panel's heading, foot and padding (the rest of the screen's height at
  *  1280×720: its body is 601 px of 720 there), and the tallest detail box (two lines). */
-export const CARD_EM = 1.55 + 1.0 + 0.5, HEAD_EM = 4.8, FOOT_EM = 1.6, DETAIL_EM = 3.0;
+export const CARD_EM = 1.55 + 1.0 + 0.5, HEAD_EM = 4.8, FOOT_EM = 1.6, DETAIL_EM = 4.3;
 export function panelEm(shelves: readonly Shelf[], lines: readonly Line[], detail = DETAIL_EM): number {
   const cards = new Set(lines.map(l => l.shelf)).size;
   return HEAD_EM + FOOT_EM + cards * CARD_EM + lines.reduce((a, l) => a + (l.kind === "items" && shelves[l.shelf].toggle ? 1.9 + 0.35 : LINE_EM[l.kind]), 0) + detail;
