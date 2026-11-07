@@ -5,3 +5,7 @@ Moved from `config/default-look.json` on 2026-10-29 for #1459. Original notes be
 ## Overview
 
 What a brand-new witch starts with (Ed, 2026-10-29: "Please give me an easy way to select character creation defaults ... This is a dev tool - just so I can set the defaults for the game"; src/app/defaultLook.ts). genome: her look (art/witchGenome.js's shape: hat, hair, top, cloak, broom's colours and fit, accessories, sizes, palette), or null for the classic witch (WITCH_GENOME, her colours DEFAULT_OUTFIT under the style's hues); whatever it wears is hers from the start, over config/wardrobe.json's start items. broom: the parts fitted in each slot (config/broom-parts.json), found from the start, or null for a bare broom. Made by the pause page's Copy look as defaults (with the debug overlay or Unlock everything on): paste its text over this file. A genome the generator's rules refuse is the classic witch. ?newWitch=1 plays a load as a brand-new witch, nothing saved.
+
+## 2026-11-07: her skin snapped to Monk 4
+
+Ed's "skin tone range plus some fantasy tones" replaced the dressing table's skin grid with the Monk Skin Tone Scale's ten tones and five fantasy tones (`art/skinTones.js`). Her starting skin, `[0.07, 0.22, 0.96]` (#f5d6bf, the old grid's palest), was no longer a swatch, so it was snapped to the nearest one by the panel's own colour distance (`ui/stationPanel.ts` chosenSwatch): Monk 4, #eadaba, `[0.1111, 0.2051, 0.9176]`. `src/rules/wardrobeShelves.test.ts` checks it stays a swatch.

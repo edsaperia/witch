@@ -6,12 +6,13 @@
 //     or (now and then) a fantasy hair colour.
 //   - pleasingWitch: the creator's Randomise. (Its named preset looks went with the creator's Looks box, Ed 2026-10-08.)
 import * as Art from "../../art/generator.js";
+import { HUMAN_SKINS } from "../../art/skinTones.js";
 
 type HSV = [number, number, number];
 export type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; [k: string]: unknown };
 
 const wrap = (h: number) => ((h % 1) + 1) % 1;
-const SKINS: HSV[] = [[.07, .25, .96], [.07, .32, .9], [.07, .42, .78], [.06, .5, .62], [.05, .55, .47], [.05, .5, .34]];
+const SKINS = HUMAN_SKINS as HSV[]; // (the Monk scale's ten: art/skinTones.js; never a fantasy tone)
 const NATURAL_HAIR: HSV[] = [[.07, .4, .14], [.07, .6, .33], [.04, .7, .5], [.11, .45, .88], [.02, .75, .7], [.6, .04, .86]]; // black, brown, auburn, blonde, red, silver
 export const SCHEMES = ["analogous", "complementary", "triad", "split"] as const;
 

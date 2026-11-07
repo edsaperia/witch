@@ -1,6 +1,6 @@
 // Mushroom collecting and the shared kitchen. World time measures trips; her time measures choreography.
 import type { Game, Witch } from './game';
-import { AREA_TYPES, type ForestMap } from './map';
+import { AREA_TYPES, stumpClearance, type ForestMap } from './map';
 import { Forest, treeChance } from './forest';
 import { KINDS } from './rosters';
 import { rng, hash2 } from './random';
@@ -49,41 +49,72 @@ export const emptyBaskets = (): Record<MushroomColour, number> => Object.fromEnt
 export const recipeKey = (colours: readonly MushroomColour[]): string => [...colours].sort().join('+');
 export const basketFill = (count: number): 'empty' | 'half' | 'full' | 'overflowing' => count <= 0 ? 'empty' : count <= 5 ? 'half' : count <= 15 ? 'full' : 'overflowing';
 
-/** Stable placement: score secluded candidates, then reject a tree trunk over the actual mushroom. */
-export function placeMushrooms(map: ForestMap, forest: Forest): MushroomPatch[] {
+/** How far a mushroom keeps from every berry bush: beyond its patch's radius and MUSHROOM_BUSH_MARGIN metres more (Ed, 2026-11-06:
+ *  "Mushrooms shouldn't grow on berry patches, paths, stump fight areas, etc."). */
+export const MUSHROOM_BUSH_MARGIN = 3;
+/** Ground a mushroom may grow on in its area (Ed, 2026-11-06: "Mushrooms shouldn't grow on berry patches, paths, stump fight areas,
+ *  etc."): its own area, inside the map's edge and off the lakes; not on hardClear ground (the beach's sand, a lake's shore, the
+ *  dancefloor's and treehouse's clearings, a sleeping legend's circle, the find's and the challenge circle's clearings, grounds,
+ *  scenes, set pieces, a stump's roots clearing) nor near anything reserved; 2 m off every path; out of every stump's fighting arena
+ *  (stumpClearance from the stump, the berries' own clearance: rules/map.ts); and beyond patch.radius + MUSHROOM_BUSH_MARGIN m of every
+ *  berry bush. `onPath`: the paths allowed (the last resort: Ed, 2026-11-06, "If no valid spot, on a path is ok."). */
+function mushroomGround(map: ForestMap, cell: readonly [number, number], x: number, z: number, clear: number, near: (x: number, z: number) => boolean, onPath = false): boolean {
+  const at = map.cellSafe(x, z).cell;
+  if (at[0] !== cell[0] || at[1] !== cell[1] || !isInside(map.bounds, x, z, 3) || onLake(map.bounds, x, z, 2)) return false;
+  if (map.stoneGap(x, z) < clear || near(x, z)) return false;
+  return !map.hardClear(x, z) && (onPath || !map.paths.at(x, z, 2)) && !map.reserved(x, z, 2);
+}
+
+/** Stable placement: score secluded candidates on mushroomGround, then reject a tree trunk over the actual mushroom. Placed after the
+ *  berries (rules/game.ts), against their bushes. A cramped area searches its whole vicinity on the same ground; failing that, the same
+ *  search with the paths allowed (Ed, 2026-11-06: "If no valid spot, on a path is ok.": still off the stumps' arenas, the bushes, the
+ *  lakes and the clearings); failing even that, the area gets no mushroom, said in the console (never a throw: a night must start). */
+export function placeMushrooms(map: ForestMap, forest: Forest, bushes: readonly { x: number; z: number }[] = []): MushroomPatch[] {
   if (map.zoo) return [];
-  const out: MushroomPatch[] = [];
+  const out: MushroomPatch[] = [], clear = stumpClearance(map.tuning), bushGap = (map.tuning.berries?.patch?.radius ?? 0) + MUSHROOM_BUSH_MARGIN;
+  // (the bushes by 16 m squares: a mushroom asks only its own and the eight round it)
+  const G = 16, grid = new Map<string, { x: number; z: number }[]>();
+  for (const b of bushes) { const k = `${Math.floor(b.x / G)},${Math.floor(b.z / G)}`; const l = grid.get(k); if (l) l.push(b); else grid.set(k, [b]); }
+  const nearBush = (x: number, z: number) => {
+    const gx = Math.floor(x / G), gz = Math.floor(z / G);
+    for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) for (const b of grid.get(`${gx + i},${gz + j}`) ?? []) if (Math.hypot(b.x - x, b.z - z) < bushGap) return true;
+    return false;
+  };
   for (const cell of map.cells) {
     if (cell[0] === map.centreCell[0] && cell[1] === map.centreCell[1]) continue;
     const id = cell.join(','), seed = Math.floor(hash2(cell[0], cell[1], map.seed + 7731) * 0xffffffff), random = rng(seed);
     const own = BIOME_MUSHROOM[KINDS[AREA_TYPES[map.typeOf(...cell)].creature]?.biome ?? 'temperate'] ?? 'red';
     const others = MUSHROOM_COLOURS.filter(c => c !== own), type = random() < .9 ? own : others[Math.floor(random() * others.length)];
     const site = map.siteOf(...cell), candidates: { x: number; z: number; score: number }[] = [];
+    const ground = (x: number, z: number, onPath = false) => mushroomGround(map, cell, x, z, clear, nearBush, onPath);
     for (let i = 0; i < 256; i++) {
       const x = site.x + (random() - .5) * map.areaSize * 2, z = site.z + (random() - .5) * map.areaSize * 2;
-      const at = map.cellSafe(x, z).cell;
-      if (at[0] !== cell[0] || at[1] !== cell[1] || !isInside(map.bounds, x, z, 3) || onLake(map.bounds, x, z, 2)) continue;
-      if (map.reserved(x, z, 2) || map.paths.at(x, z, 2)) continue;
+      if (!ground(x, z)) continue;
       candidates.push({ x, z, score: treeChance(map, x, z, map.typeOf(...cell)) * 3 + map.arenaOpen(x, z, cell) + random() * .15 });
     }
     candidates.sort((a, b) => b.score - a.score);
     const free = (p: { x: number; z: number }) => !forest.treesNear(p.x, p.z, 2).some(t => Math.hypot(t.x - p.x, t.z - p.z) < 1.8);
     let chosen: { x: number; z: number } | undefined = candidates.find(free);
-    // Rare cramped cells: search their whole vicinity instead of silently placing under a trunk or in water.
-    if (!chosen) outer: for (let z = site.z - map.areaSize * 3; z <= site.z + map.areaSize * 3; z += 2) {
-      for (let x = site.x - map.areaSize * 3; x <= site.x + map.areaSize * 3; x += 2) {
+    // Rare cramped cells: search their whole vicinity, on the same ground, instead of silently placing under a trunk or in water; then
+    // with the paths allowed (Ed, 2026-11-06: "If no valid spot, on a path is ok.").
+    if (!chosen) {
+      const spots: { x: number; z: number }[] = []; // (its own ground on a 2 m grid, found once for both searches)
+      for (let z = site.z - map.areaSize * 3; z <= site.z + map.areaSize * 3; z += 2) for (let x = site.x - map.areaSize * 3; x <= site.x + map.areaSize * 3; x += 2) {
         const c = map.cellSafe(x, z).cell;
-        if (c[0] !== cell[0] || c[1] !== cell[1] || !isInside(map.bounds, x, z, 3) || onLake(map.bounds, x, z, 2) || map.reserved(x, z, 2) || map.paths.at(x, z, 2)) continue;
-        if (free({ x, z })) { chosen = { x, z }; break outer; }
+        if (c[0] === cell[0] && c[1] === cell[1]) spots.push({ x, z });
+      }
+      for (const onPath of [false, true]) {
+        chosen = spots.find(p => ground(p.x, p.z, onPath) && free(p));
+        if (chosen) { if (onPath) console.info(`mushrooms: seed ${map.seed}: area ${id}'s patch on or by a path (no other ground for it)`); break; }
       }
     }
-    if (!chosen) throw new Error(`No reachable mushroom location in area ${id}`);
+    if (!chosen) { console.warn(`mushrooms: seed ${map.seed}: no ground for area ${id}'s patch, even on a path (off the bushes, clearings, lakes and stumps' arenas): none there`); continue; }
     out.push({ id, x: chosen.x, z: chosen.z, type, seed, picked: false });
   }
   return out;
 }
-export function newMushrooms(map: ForestMap, forest: Forest): MushroomState {
-  return { patches: placeMushrooms(map, forest), baskets: emptyBaskets(), carried: {}, flights: [], puffs: [], plops: [], ingredients: [], smoke: null, affected: {}, trips: {}, nextUnload: {}, serial: 0 };
+export function newMushrooms(map: ForestMap, forest: Forest, bushes: readonly { x: number; z: number }[] = []): MushroomState {
+  return { patches: placeMushrooms(map, forest, bushes), baskets: emptyBaskets(), carried: {}, flights: [], puffs: [], plops: [], ingredients: [], smoke: null, affected: {}, trips: {}, nextUnload: {}, serial: 0 };
 }
 const testRows = new WeakMap<MushroomState, MushroomPatch[]>();
 /** Optional samples use the ordinary pickup/inventory path; disabling removes only their visible patches. */

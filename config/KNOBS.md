@@ -992,6 +992,19 @@ Code: `docs/ART-GUIDE.md`
 | `leafJitter.value` | number | 0 to … |
 | `leafJitter.hue` | number | 0 to 180 |
 
+### `treeNormals`
+
+The trees' normal maps: "full" (the default) as ever; "64", "32" or "16" their directions cut to a k-means palette of that many per tree atlas; "0" off, every tree pixel lit flat, as if it faced the camera (the normal 128, 128, 255).
+
+1. Ed, 2026-11-07: "Make the normal maps switch." (to judge in play whether trees still look right without normal maps: dropping them would make the pre-baked tree art about 3 times smaller (PR #1884's measurement))
+2. Ed, 2026-11-07: "Normal maps do improve things, can we try a low number (16? 32? 64?)" (to see the trees in play with their normal maps cut to a small palette of directions, as a bake could ship them much smaller)
+A test choice. Live: the pause page's Tree normal maps choice, or the link's d_treeNormals=64 (or 32, 16; 0 off; anything else full). 64, 32 and 16: each loaded area type's atlas has its trees' normals (the big pieces' frames) cut to a k-means palette of that many directions (render/treeQuant.ts, ported from PR #1884's measurement: weighted by pixel count, unit directions, the centres renormalised), the alpha (the wind's sway code) kept exactly and empty pixels skipped, and its normal texture uploaded again in place (render/treeNormalDirs.ts); the original plane is kept beside it, so full puts the very bytes back, and each atlas's palettes are kept by count, so flipping back is an upload. The palettes are worked out by a worker of their own, a quarter to two-thirds of a second an atlas at 64 (less at 32 and 16), after the plane is read back from the GPU; atlases landing while a reduced setting is on are cut as they land. Off: her glow, the campfires, the soundsystems and the moon light a tree flat, a shader uniform (uTreeNormals), redrawing nothing. Only the forest's trees (their trunks, crowns and far crowns: the instances marked tree in render/view/scenery.ts) change; bushes, walls, set pieces, rocks, palms, creatures, the witch and the ground keep their normals. Nothing is held or done until a reduced setting is first picked.
+Code: `render/sprites.ts`, `render/treeNormalDirs.ts`, `render/treeQuant.ts`, `render/view/frameUniforms.ts`
+
+| knob | type | range |
+|---|---|---|
+| `treeNormals` | string | "full" / "64" / "32" / "16" / "0" |
+
 ### `wind`
 
 Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across; Walls and set pieces stand still. ?wind=0 turns it off.
@@ -1607,8 +1620,19 @@ Berries on the bushes of every area, which her creatures eat to evolve.
 5. Ed, 2026-10-05: "we can make the berry clusters bigger"
 6. Ed, 2026-10-04: legends are the areas' own, never grown
 7. Ed, 2026-11-03: "No animal eats on its own" (only the bottom of her stack eats, fed by her with the sigil button; the detour knob (Ed, v233) and the baby's reach at its placed sigil (2026-10-11) gone with it)
-Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. No animal eats on its own (Ed, 2026-11-03; see feed): the bottom of her stack eats a berry she feeds it, walking over and eating it (eatTime seconds). The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs [1]: the fighting value it gains (cost.by "value": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 [2][3][4] ("power" would count hp × dps instead). Bigger patches since [5]: perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult [6].
+8. Ed, 2026-11-06: "There should be twice the number of patches as there are now." (bushesPerArea 10 → 20 (patches the same size, so twice as many) and perArea [5, 8] → [10, 16], the same share of their bushes in berry as on 2026-10-27; an eaten berry still regrows at once elsewhere (Ed: "That's intended; you exhaust an area and then need to explore to find more."))
+Berries and evolving (Ed): every area (not home's dancefloor clearing) has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start, both for an area 112 m across and grown with the area's ground (rules/berries.ts berryCounts: at today's 196 m areas, × 3.06, 61 bushes and 32–49 berries an area, measured on the fox and bear islands). Bushes grow in patches of patch.bushes [min, max] within patch.radius metres, spread evenly over the area at least patch.spacing apart, and none within a stump's fighting arena (stumpClear; Ed, 2026-11-06). No animal eats on its own (Ed, 2026-11-03; see feed): the bottom of her stack eats a berry she feeds it, walking over and eating it (eatTime seconds). The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs [1]: the fighting value it gains (cost.by "value": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 [2][3][4] ("power" would count hp × dps instead). Bigger patches since [5]: perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult [6].
 
+- **`berries.patch.spacing`**: The least distance between two berry patches' centres, in metres: patches spread evenly over each area, never nearer each other than this.
+  1. Ed, 2026-11-06: "I think we should change this process to more evenly distribute patches in the area, and also increase the clearance from the stump (not the middle)." (patch centres were a random angle and distance (0.15 to 0.65 of the area) from the area's middle, so they bunched; now each is the best of 24 random spots on the area's bush ground, the one farthest from every patch already placed, its own area's and its neighbours' (best-candidate blue noise), and at least spacing from all of them)
+  A floor, not the usual gap: the sampler spaces patches as far apart as the ground allows (about 50 m apart on average at 196 m areas, measured on the fox and bear islands), and spacing only binds in a cramped area, where an area that has no room left for another patch at this spacing stops short of its bushes. 16 m (about 4.5 patch radii) fits every area of the fox island and all but one of the bear island's at today's doubled count (Ed, 2026-11-06), with no area below 87% of its bushes; 18 m left two short, 20 m three. Each patch's centre keeps its whole patch inside its own area (patch.radius off the rim); the old 0.65 cap from the middle is gone, as patches now spread over the whole area.
+  Code: `src/rules/berries.ts`
+- **`berries.stumpClear`**: Metres past every stump's fighting arena that berry bushes and mushrooms also keep out of: 0 keeps them just outside the arena, 55 m from the stump today.
+  1. Ed, 2026-11-06: "I think we should change this process to more evenly distribute patches in the area, and also increase the clearance from the stump (not the middle)." (measured from the stump (rules/map.ts soundsystemSpot), which since the 50 m site gaps stands off the area's middle; before, the only clearance was the stump's 17 m roots clearing (runeMarkers.stump.clear), and patch centres kept 0.15 of the area from its middle, not the stump)
+  2. Ed, 2026-11-06: berries outside the stump's fight zone: the clearance is the stump's arena's whole extent, arena.radius + arena.band (55 m, both times fight.scale), plus this knob, so it follows the arena
+  3. Ed, 2026-11-06: "Mushrooms shouldn't grow on berry patches, paths, stump fight areas, etc." (the mushrooms keep the same clearance from every stump (rules/mushrooms.ts))
+  rules/map.ts stumpClearance: (arena.radius + arena.band) × fight.scale + stumpClear, never below 0, from the nearest stump (rules/map.ts stoneGap: its own area's or a neighbour's). The arena (rules/map.ts arenaOpen) is open round both the area's middle and its stump; only the stump's counts here. A berry patch's centre keeps stumpClearance + patch.radius, so no bush grows nearer. An area with too little ground beyond it keeps fewer bushes rather than grow them in the arena: measured at 55 m with spacing 16, every fox area has all 61 bushes, and one of the bear island's 30 areas has 53 of 61 (87%). Below 0 lets bushes and mushrooms into the arena's outer band (e.g. −10: 45 m).
+  Code: `src/rules/map.ts`, `src/rules/berries.ts`, `src/rules/mushrooms.ts`
 - **`berries.colour`**: The berries' colour: a deep berry pink.
   1. Ed, 2026-11-03: "Berries: deep berry pink, instead of red." (red is the warnings' colour; a shiny dark cherry red (#9e1024) before, which colourGrammar old brings back)
   Code: `render/colourGrammar.ts`
@@ -1628,6 +1652,8 @@ Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bus
 | `berries.bushesPerArea` | number | 0 to … |
 | `berries.patch.bushes` | array of number |  |
 | `berries.patch.radius` | number | 0 to … |
+| `berries.patch.spacing` | number | 0 to … |
+| `berries.stumpClear` | number |  |
 | `berries.eatTime` | number | 0 to … |
 | `berries.cost.by` | string | "power" / "value" |
 | `berries.cost.per` | number | 0 to … |
@@ -4504,10 +4530,14 @@ Drawing-only coloured patterns on existing lights, controlled from the pause pag
 - **`patternLight.strength`**: How strongly coloured spokes shape existing lights, from 0 (ordinary lighting) to 4.
   1. Ed, 2026-11-05: "this is imperceptible atm; put it live with a strength slider and I'll just test it in game." (Colour spokes on by default; strength 0–4, default 3, at most three existing light slots and no extra lights.)
   Changes immediately from the pause page; reduced flashing disables all patterns. Strength 1 preserves original 0.9 contrast; default 3 brightens only the colour-spokes lit bands threefold, with dark gaps and centre fade preserved; at most three existing light slots, no added lights or shadows.
+- **`patternLight.beatsPerTurn`**: How many beats the coloured-spokes wheel round a playing soundsystem takes to turn once, so it turns faster as the tempo rises.
+  1. Ed, 2026-11-07: "Patterned lighting around treestumps; it should rotate, speed scaled by bpm" (One turn every 2 bars (8 beats: 4 s at 120 bpm); it was one turn every 128 beats, too slow to see.)
+  Read from the game's beat clock, so it follows the record's bpm and her knockdowns' tempo rises. The other ?patternlight= looks share the phase and speed up by the same factor.
 
 | knob | type | range |
 |---|---|---|
 | `patternLight.strength` | number | 0 to 4 |
+| `patternLight.beatsPerTurn` | number | 1 to 256 |
 
 ### `lightBudget`
 

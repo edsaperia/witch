@@ -344,6 +344,8 @@ export interface Tuning {
   bushClump: number;
   treeHeight: number;
   /** Each tree's own leaf colour (Ed, 2026-10-16; render/sprites.ts): its leaves' hue turned up to hue degrees and value scaled up to value either way, by its own seeds. */
+  /** The trees' normal maps (Ed, 2026-11-07: "Make the normal maps switch.", then "can we try a low number (16? 32? 64?)"): "full" as ever; "64", "32" or "16" their directions cut to a k-means palette of that many per tree atlas (render/treeNormalDirs.ts); "0" off, every tree pixel lit as if it faced the camera (render/sprites.ts uTreeNormals). Live. */
+  treeNormals?: "full" | "64" | "32" | "16" | "0";
   leafJitter?: { /** how far each tree's leaves drift toward its own autumn colour, 0 to 1 (Ed, 2026-10-19) */ autumn: number; value: number; /** each tree's leaves' hue turned either way by up to this many degrees (0 to 180), on the lit colour */ hue?: number };
   crownWidth: number;
   treeSpacingX: number;
@@ -396,7 +398,7 @@ export interface Tuning {
   spriteTilt: number;
   artPixelsPerMetre: number;
   viewMargin: number;
-  patternLight: { strength: number };
+  patternLight: { strength: number; beatsPerTurn: number };
   lightBudget: number;
   lightSources: { spacing: number; campfire: number; magicStone: number; pond: number; wetPond: number };
   haze: { near: number; far: number };
@@ -522,7 +524,9 @@ export interface Tuning {
    *  (babies, young, adults), the berry's colour and glow. */
   /** The colour grammar (Ed, 2026-11-03: "the forest is cold, the party is warm"; render/colourGrammar.ts): "new" hers warm and the wild cold, the berries pink, the ley line cold ahead of its spark; "old" the colours before it. */
   colourGrammar?: "new" | "old";
-  berries: { /** babyCost berries evolve a baby (Ed, 2026-10-11) */ babyCost?: number; perArea: number[]; bushesPerArea: number; patch: { bushes: number[]; radius: number }; eatTime: number;
+  berries: { /** babyCost berries evolve a baby (Ed, 2026-10-11) */ babyCost?: number; perArea: number[]; bushesPerArea: number;
+    /** Bushes a patch [min, max] within radius m, patch centres at least spacing m apart (rules/berries.ts berryPatches). */ patch: { bushes: number[]; radius: number; spacing: number };
+    /** Metres past the stump's arena (arena.radius + arena.band) no bush grows within, from the stump (Ed, 2026-11-06; rules/berries.ts stumpClearance). */ stumpClear: number; eatTime: number;
     /** Feeding on command (Ed, 2026-11-03: no animal eats on its own; the sigil button feeds the bottom of her stack): a berry within
      *  `reach` m of her; the animal walks to it at its leash pace times `speed`; the button held `hold` s puts the sigil down instead;
      *  that berry glows `glow` times as bright (render/feedTag.ts offerGlow; Ed, 2026-11-03: "the berry glows brighter"). */

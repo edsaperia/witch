@@ -19,6 +19,20 @@ export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: num
   return 1 / (t.artPixelsPerMetre * (2 / t.pixelSize));
 }
 
+/** The Tree normal maps choice from the tuning (treeNormals; Ed, 2026-11-07: "Make the normal maps switch.", then "Normal maps do
+ *  improve things, can we try a low number (16? 32? 64?)"): 0 the full normal maps (the default, and when the knob is absent or
+ *  unknown), N their directions cut to a palette of N per tree atlas (render/treeNormalDirs.ts), -1 off, lit flat ("0", or false
+ *  as the switch was). */
+export function treeNormalDirections(t: { treeNormals?: unknown }): number {
+  const v = t.treeNormals;
+  if (v === false || v === "0" || v === 0) return -1;
+  const n = typeof v === "string" && /^\d+$/.test(v) ? Number(v) : 0;
+  return n >= 1 && n <= 255 ? n : 0;
+}
+/** The tree-normals switch's uniform from the tuning: 1 the trees lit from their normal maps (full or cut to a palette: the default,
+ *  and when the knob is absent), 0 lit flat. Set every frame (render/view/frameUniforms.ts), so the pause page's choice is live. */
+export const treeNormalsUniform = (t: { treeNormals?: unknown }): number => (treeNormalDirections(t) < 0 ? 0 : 1);
+
 /** Shared by every sprite batch: the camera's right and (tilted) up, and the canopy fade. */
 export interface SpriteInstance { /** Bushes and low foliage, hidden by Floor Becomes Sky. */ small?: boolean; tree?: boolean; /** Semantic creature temperature; absent/zero is scenery. */ heat?: number }
 export const SPRITE_UNIFORMS = {
@@ -110,6 +124,10 @@ export const SPRITE_UNIFORMS = {
   uWind: { value: new THREE.Vector4(0, 0, 1, 0) },
   /** Per-tree leaf-colour jitter (Ed, 2026-10-16 and 2026-10-19; the tuning's leafJitter): the autumn share, the value share and the hue turn in turns at a seed of 1 (render/view/frameUniforms.ts). */
   uLeafJitter: { value: new THREE.Vector3(0, 0, 0) },
+  /** The trees lit from their normal maps (1, as ever); 0: every tree pixel (the instances marked tree: trunks, crowns, far crowns)
+   *  lit as if it faced the camera, the normal (128, 128, 255), its sway code still read (Ed, 2026-11-07: "Make the normal maps
+   *  switch."; the tuning's treeNormals, render/view/frameUniforms.ts). */
+  uTreeNormals: { value: 1 },
   /** The trees watching her (Ed, 2026-10-07): where she was a beat ago (x, z), how near (m) a leafy thing must stand to lean
    *  her way, and how far its tip leans (m). */
   uWatch: { value: new THREE.Vector4(0, 0, 9, 0) },
@@ -158,6 +176,7 @@ varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vFlags;
 varying float vSmall;
+varying float vTree; // a tree (trunk, crown or far crown): the tree-normals switch's (uTreeNormals)
 varying float vFront;
 varying vec2 vLocal;
 varying float vSizeY;
@@ -232,7 +251,7 @@ void main() {
   float u = iFlags.x > 0.5 ? 1.0 - uv.x : uv.x;
   vUv = vec2(mix(iUv.x, iUv.z, u), mix(iUv.w, iUv.y, uv.y));
   vFlags = iFlags.xyz;
-  vFlags.z = mod(iFlags.z, 2.0); vSmall = mod(floor(iFlags.z / 2.0), 2.0);
+  vFlags.z = mod(iFlags.z, 2.0); vSmall = mod(floor(iFlags.z / 2.0), 2.0); vTree = step(3.5, iFlags.z);
   vGlow = iGlow;
   vJitter = iJitter.xy;
   vThermalHeat = iJitter.z;
@@ -357,6 +376,8 @@ varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vFlags;
 varying float vSmall;
+varying float vTree;
+uniform float uTreeNormals; // 0: trees lit flat, as if every pixel faced the camera (the tuning's treeNormals)
 uniform float uPotionSky;
 ${THERMAL_GLSL}
 varying float vThermalHeat;
@@ -590,8 +611,11 @@ void shade() {
   }
   // (glow -0.5: switched off, a soundsystem standing when the party's over (render/party.ts): its glowing pixels lit as paint)
   if (a.a < 0.999 && !eyePx && abs(vGlow + 0.5) > 0.25) { vec3 g = a.rgb * uGlowGain; g /= max(1.0, max(g.r, max(g.g, g.b))); gl_FragColor = vec4(haze(g, vWorld), alpha); return; }
-  vec4 n = normalAt(uvS);
-  if (areaOn) n = areaAvg(true, uvS, n);
+  // The tree-normals switch off (Ed, 2026-11-07: "Make the normal maps switch."): a tree's pixels lit as if each faced the camera,
+  // the normal (128, 128, 255), never read; its alpha (the wind's sway code) is read above, as ever.
+  bool flatN = vTree > 0.5 && uTreeNormals < 0.5;
+  vec4 n = flatN ? vec4(128.0 / 255.0, 128.0 / 255.0, 1.0, 1.0) : normalAt(uvS);
+  if (areaOn && !flatN) n = areaAvg(true, uvS, n);
   float nx = (n.r * 255.0 - 128.0) / 127.0, ny = (n.g * 255.0 - 128.0) / 127.0, nz = n.b;
   if (vFlags.x > 0.5) nx = -nx;
   if (uLandscapeTrip.x == TRIP_INSIDE_OUT_RELIEF) {

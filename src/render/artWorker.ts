@@ -22,7 +22,8 @@ self.onmessage = async (e: MessageEvent<ArtJob & CacheHint>) => {
   try {
     if (key) { const hit = await traceAsync(trace, 'cache-read', () => cacheGet(key)); if (hit?.px) { reply({ job, result: hit, ms: 0, cached: true }, transferables(hit), 'cached'); return; } }
     if (job.cacheOnly) { reply({ job, miss: true }, [], 'cache-miss'); return; } // (only if it's kept: render/assets.ts tonight)
-    const { runJob } = await traceAsync(trace, 'load:art', () => drawing ??= import("./artBuild"));
+    // (a failed chunk fetch isn't kept: the next job tries the import again, rather than every later job in this worker failing)
+    const { runJob } = await traceAsync(trace, 'load:art', () => drawing ??= import("./artBuild").catch(err => { drawing = undefined; throw err; }));
     const t0 = performance.now(), result = traceSync(trace, 'compute:art', () => runJob(job, mk)), ms = performance.now() - t0;
     if (key) await traceAsync(trace, 'cache-write', () => cachePut(key, result)); // (copied as it's put, before its buffers are sent on)
     reply({ job, result, ms }, transferables(result));

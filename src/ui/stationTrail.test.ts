@@ -10,7 +10,7 @@ import { TRAIL_PRESETS } from "../render/trailColours";
 import { chooseTrail, fitBroom, loadBroom } from "../app/broomSave";
 import { fittedOf } from "../rules/broomParts";
 
-const ctx = { grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 6 : 13, rows: 5 }), swatch: () => [0, 0, 0], palette: (g: Genome) => ({ ...(g.palette ?? {}) }), fitOn: () => true };
+const ctx = { grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 3 : 13, rows: 5 }), swatch: () => [0, 0, 0], palette: (g: Genome) => ({ ...(g.palette ?? {}) }), fitOn: () => true };
 const store = () => { const m = new Map<string, string>(); return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) }; };
 
 describe("the Broom station's Trail row", () => {

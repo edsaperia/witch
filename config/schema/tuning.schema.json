@@ -2570,6 +2570,17 @@
       "additionalProperties": false,
       "description": "Each tree's own leaf colour: every tree is dealt two fixed seeds from where it stands (-1 to 1 each)."
     },
+    "treeNormals": {
+      "type": "string",
+      "enum": [
+        "full",
+        "64",
+        "32",
+        "16",
+        "0"
+      ],
+      "description": "The trees' normal maps: \"full\" (the default) as ever; \"64\", \"32\" or \"16\" their directions cut to a k-means palette of that many per tree atlas; \"0\" off, every tree pixel lit flat, as if it faced the camera (the normal 128, 128, 255)."
+    },
     "wind": {
       "type": "object",
       "properties": {
@@ -4027,13 +4038,23 @@
             "radius": {
               "type": "number",
               "minimum": 0
+            },
+            "spacing": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The least distance between two berry patches' centres, in metres: patches spread evenly over each area, never nearer each other than this."
             }
           },
           "required": [
             "bushes",
-            "radius"
+            "radius",
+            "spacing"
           ],
           "additionalProperties": false
+        },
+        "stumpClear": {
+          "type": "number",
+          "description": "Metres past every stump's fighting arena that berry bushes and mushrooms also keep out of: 0 keeps them just outside the arena, 55 m from the stump today."
         },
         "eatTime": {
           "type": "number",
@@ -4107,6 +4128,7 @@
         "perArea",
         "bushesPerArea",
         "patch",
+        "stumpClear",
         "eatTime",
         "cost",
         "colour",
@@ -13069,10 +13091,17 @@
           "minimum": 0,
           "maximum": 4,
           "description": "How strongly coloured spokes shape existing lights, from 0 (ordinary lighting) to 4."
+        },
+        "beatsPerTurn": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 256,
+          "description": "How many beats the coloured-spokes wheel round a playing soundsystem takes to turn once, so it turns faster as the tempo rises."
         }
       },
       "required": [
-        "strength"
+        "strength",
+        "beatsPerTurn"
       ],
       "additionalProperties": false,
       "description": "Drawing-only coloured patterns on existing lights, controlled from the pause page."
@@ -14844,6 +14873,7 @@
     "treeMarginFromSoundsystem",
     "treeDensity",
     "leafJitter",
+    "treeNormals",
     "wind",
     "groundCover",
     "density",

@@ -493,6 +493,7 @@ export type SchemaTuning = {
     "value": number;
     "hue": number;
   };
+  "treeNormals": "full" | "64" | "32" | "16" | "0";
   "wind": {
     "on": boolean;
     "strength": number;
@@ -787,7 +788,9 @@ export type SchemaTuning = {
     "patch": {
       "bushes": Array<number>;
       "radius": number;
+      "spacing": number;
     };
+    "stumpClear": number;
     "eatTime": number;
     "cost": {
       "by": "power" | "value";
@@ -2554,6 +2557,7 @@ export type SchemaTuning = {
   "glowHeight": number;
   "patternLight": {
     "strength": number;
+    "beatsPerTurn": number;
   };
   "lightBudget": number;
   "lights": {

@@ -52,7 +52,7 @@ says what each note covers.
 
 ## [Cauldron collection and brewing preview](cauldron.md)
 
-(no entries: its tools and checks only)
+- Where mushrooms grow
 
 ## [Config files](config.md)
 
@@ -382,6 +382,8 @@ says what each note covers.
 - Moon
 - Cooldown trail
 - Trail colours
+- Tree normal maps switch
+- Tree normal directions
 
 ## [The witch's art](witch-art.md)
 

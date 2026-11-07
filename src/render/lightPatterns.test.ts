@@ -61,10 +61,10 @@ it('preserves original strength1 and brightens only lit colour-spoke bands above
 it('rotates coloured spokes with absolute musical phase through tempo changes', () => {
   const clock = newBeatClock(120); rampTo(clock, 8, 140, 16);
   const zero = { x: 0, y: 0, z: 0 }, angle = .3;
-  const before = lightPatternPhase(clock, timeAt(clock, 7)), after = lightPatternPhase(clock, timeAt(clock, 23));
+  const before = lightPatternPhase(clock, timeAt(clock, 7)), after = lightPatternPhase(clock, timeAt(clock, 21)); // (14 beats: not a whole number of turns)
   const sample = (a: number, phase: number) => lightPatternSample({ x: Math.cos(a), y: 0, z: Math.sin(a) }, zero,
     { kind: 'colour-spokes', scale: 1, contrast: .9, angle: 0, phase });
-  const a = sample(angle, before), b = sample(angle + (after - before) / 4, after);
+  const a = sample(angle, before), b = sample(angle + (after - before), after);
   a.forEach((value, channel) => expect(b[channel]).toBeCloseTo(value, 12));
   expect(sample(angle, after)).not.toEqual(a);
   expect(sample(angle, before)).toEqual(a);
@@ -74,7 +74,20 @@ it('uses absolute musical beats through tempo ramps rather than frame count or w
   for (const beat of [0, 7, 8, 12, 23, 24, 48]) {
     const time = timeAt(clock, beat);
     expect(beatAt(clock, time)).toBeCloseTo(beat, 10);
-    expect(lightPatternPhase(clock, time)).toBeCloseTo(beat * Math.PI * 2 / 32, 10);
+    expect(lightPatternPhase(clock, time)).toBeCloseTo((beat % 8) * Math.PI * 2 / 8, 10);
+    expect(lightPatternPhase(clock, time, 16)).toBeCloseTo((beat % 16) * Math.PI * 2 / 16, 10);
     expect(lightPatternPhase(clock, time)).toBe(lightPatternPhase(clock, time)); // pause/repeated draw
   }
+});
+it('turns the colour-spokes wheel once every beatsPerTurn beats, faster at a higher bpm', () => {
+  const zero = { x: 0, y: 0, z: 0 }, at = (a: number) => ({ x: Math.cos(a), y: 0, z: Math.sin(a) });
+  const look = (phase: number, a = .3) => lightPatternSample(at(a), zero, { kind: 'colour-spokes', scale: 1, contrast: .9, angle: 0, phase });
+  for (const bpm of [100, 120, 130]) {
+    const clock = newBeatClock(bpm), start = lightPatternPhase(clock, 0), turn = lightPatternPhase(clock, 8 * 60 / bpm);
+    look(turn).forEach((v, c) => expect(v).toBeCloseTo(look(start)[c], 6)); // (a whole turn: the same light)
+    const half = lightPatternPhase(clock, 4 * 60 / bpm); // (half a turn later the wheel has moved half way round)
+    look(half, .3 + Math.PI).forEach((v, c) => expect(v).toBeCloseTo(look(start)[c], 6));
+  }
+  expect(lightPatternPhase(newBeatClock(120), 2)).toBeCloseTo(Math.PI, 10); // 4 beats at 120 bpm: half a turn
+  expect(lightPatternPhase(newBeatClock(120), 2, 0)).toBe(lightPatternPhase(newBeatClock(120), 2)); // (a bad knob: the default)
 });
