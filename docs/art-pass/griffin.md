@@ -16,7 +16,7 @@ Eagle forequarters on lion body.
 ## Body plan and mass
 Let L be the axial trunk length from neck base/shoulder station to pelvis/vent, excluding neck, head and tail. Proposed model-space lengths relative to L: head .30; neck .30; legs .65; tail .9; deployed wingspan 2.5. These are design starting points, not photo measurements; foreshortening in the generated sheet must not set rig lengths.
 
-Large chest and wing roots, narrower waist and powerful feline hindquarters. Four ground limbs remain independent of wings. Juvenile proportions must be authored independently, not a uniform adult shrink. Use larger head relative to its own trunk, age-specific ornament/wing omission, and shorter muzzle; unicorn foal retains disproportionately long slender legs.
+Large chest and wing roots, narrower waist and powerful feline hindquarters. Four ground limbs remain independent of wings. Juvenile proportions must be authored independently, not a uniform adult shrink. Use larger head relative to its own trunk, age-specific ornament/wing omission, and shorter muzzle.
 
 ## Reference evidence and actual comparison
 [Generated ground concept plate](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/griffin/reference-v1.png): upper row adult, lower row age0; columns intended standing towards, walking towards, standing away, walking away. All are synthetic fantasy concepts, not photographs. Actual inspection: Sheet reads eagle/lion and retains four legs plus wings. Adult standing wings are half-open, not a folded-ground standard. Talon counts vary; cub wings are larger than simple nubs in some panels.

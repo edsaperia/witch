@@ -16,7 +16,7 @@ Friendly shaggy, long-armed troll.
 ## Body plan and mass
 Let L be the axial trunk length from neck base/shoulder station to pelvis/vent, excluding neck, head and tail. Proposed model-space lengths relative to L: head .35; neck .10; arms 1.4; hindlegs .8; tail 0. These are design starting points, not photo measurements; foreshortening in the generated sheet must not set rig lengths.
 
-Upper back/chest and forearms carry bulk, lower pelvis smaller. Weight transfers between hands and feet. Juvenile proportions must be authored independently, not a uniform adult shrink. Use larger head relative to its own trunk, age-specific ornament/wing omission, and shorter muzzle; unicorn foal retains disproportionately long slender legs.
+Upper back/chest and forearms carry bulk, lower pelvis smaller. Weight transfers between hands and feet. Juvenile proportions must be authored independently, not a uniform adult shrink. Use larger head relative to its own trunk, age-specific ornament/wing omission, and shorter muzzle.
 
 ## Reference evidence and actual comparison
 [Generated ground concept plate](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/frosttroll/reference-v1.png): upper row adult, lower row age0; columns intended standing towards, walking towards, standing away, walking away. All are synthetic fantasy concepts, not photographs. Actual inspection: The sheet has useful shoulder bulk, long arms and clear age faces. Its standing pose is too upright for a reliable knuckle support target; walking hands/feet need explicit contact validation. Dense fur hides joints.

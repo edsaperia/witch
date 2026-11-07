@@ -72,4 +72,3 @@ Signature: Living sandstone weathering. [Rationale and body plan](sphinx.md). Cu
 ![unicorn three proposed legend concepts](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/unicorn/legend-concepts-v1.png)
 
 Signature: Smooth healing horn with visitors’ offerings. [Rationale and body plan](unicorn.md). Current comparison image: pending coordinator exact-SHA evidence.
-

@@ -15,7 +15,7 @@ Feathered, limbless serpent.
 ## Body plan and mass
 Let L be the axial trunk length from neck base/shoulder station to pelvis/vent, excluding neck, head and tail. Proposed model-space lengths relative to L: head .12; neck .20; legs 0; tail .45. These are design starting points, not photo measurements; foreshortening in the generated sheet must not set rig lengths.
 
-Continuous axial mass, broadest midbody; no mammal chest/hips. Wing roots load the anterior trunk. Juvenile proportions must be authored independently, not a uniform adult shrink. Use larger head relative to its own trunk, age-specific ornament/wing omission, and shorter muzzle; unicorn foal retains disproportionately long slender legs.
+Continuous axial mass, broadest midbody; no mammal chest/hips. Wing roots load the anterior trunk. Juvenile proportions must be authored independently, not a uniform adult shrink. Use larger head relative to its own trunk, age-specific ornament/wing omission, and shorter muzzle.
 
 ## Reference evidence and actual comparison
 [Generated ground concept plate](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/featheredserpent/reference-v1.png): upper row adult, lower row age0; columns intended standing towards, walking towards, standing away, walking away. All are synthetic fantasy concepts, not photographs. Actual inspection: The sheet preserves a continuous body and wingless young. Wings become ambiguous layered ruff in front views; do not copy that attachment. Juvenile crest remains too adult-like.

@@ -16,7 +16,7 @@ Long, low, wingless ice dragon.
 ## Body plan and mass
 Let L be the axial trunk length from neck base/shoulder station to pelvis/vent, excluding neck, head and tail. Proposed model-space lengths relative to L: head .30; neck .65; legs .35; tail 1.5. These are design starting points, not photo measurements; foreshortening in the generated sheet must not set rig lengths.
 
-Low trunk, broad shoulder region and heavy tail base; neck rises without making torso upright. Juvenile proportions must be authored independently, not a uniform adult shrink. Use larger head relative to its own trunk, age-specific ornament/wing omission, and shorter muzzle; unicorn foal retains disproportionately long slender legs.
+Low trunk, broad shoulder region and heavy tail base; neck rises without making torso upright. Juvenile proportions must be authored independently, not a uniform adult shrink. Use larger head relative to its own trunk, age-specific ornament/wing omission, and shorter muzzle.
 
 ## Reference evidence and actual comparison
 [Generated ground concept plate](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/frostwyrm/reference-v1.png): upper row adult, lower row age0; columns intended standing towards, walking towards, standing away, walking away. All are synthetic fantasy concepts, not photographs. Actual inspection: Sheet is wingless and has a tapered scuted tail, but the raised chest and relatively short neck drift toward a stocky dragon. Do not adopt those proportions; some tail tips approach panel edges.

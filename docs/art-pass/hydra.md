@@ -15,7 +15,7 @@ Limbless coiled swamp serpent with independent necks.
 ## Body plan and mass
 Let L be the axial trunk length from neck-root station to vent, excluding neck, head and tail. Proposed model-space lengths relative to L: each head .18; neck .9–1.3; legs 0; tail 1.2. These are design starting points, not photo measurements; foreshortening in the generated sheet must not set rig lengths.
 
-Broad anterior trunk supports the neck fan; continuous heavy coils and tail base counterbalance it. There is no shoulder girdle for legs. Juvenile proportions must be authored independently, not a uniform adult shrink. Use larger head relative to its own trunk, age-specific ornament/wing omission, and shorter muzzle; unicorn foal retains disproportionately long slender legs.
+Broad anterior trunk supports the neck fan; continuous heavy coils and tail base counterbalance it. There is no shoulder girdle for legs. Juvenile proportions must be authored independently, not a uniform adult shrink. Use larger head relative to its own trunk, age-specific ornament/wing omission, and shorter muzzle.
 
 ## Reference evidence and actual comparison
 [Generated ground concept plate](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/hydra/reference-v1.png): upper row adult, lower row age0; columns intended resting towards, undulating towards, resting away, undulating away. All are synthetic fantasy concepts, not photographs. Actual inspection: The initial quadruped generation was rejected after reading hydra3d and the genome: this game uses a LIMBLESS coiled serpent. It is excluded from evidence publication. Replacement sheet inspection is recorded below; head counts must remain five adult/one hatchling. Legend seven-head form is separate.
