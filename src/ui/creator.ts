@@ -23,6 +23,7 @@ import { HAT_SPELLS, ownsHat } from "../rules/spells";
 import { HAT_ICONS } from "../render/hatIcons";
 import { runSliced, type Steps } from "../render/slices";
 import { defaultGenome, newWitch } from "../app/defaultLook";
+import { nearestSkin } from "../rules/wardrobe";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -116,9 +117,11 @@ export function nearestSwatch(c: number[]): [number, number] {
   }
   return best;
 }
-/** A palette with each colour moved to its nearest swatch (null stays null: the classic witch's own colours). */
+/** A palette with each colour moved to its nearest swatch (null stays null: the classic witch's own colours); her skin to the
+ *  nearest of the dressing table's skin swatches (rules/wardrobe.ts: the Monk scale's ten and the fantasy tones, Ed 2026-11-07),
+ *  not the cloth grid's, so the skin she chose there stays hers. */
 export function snapPalette(p: Record<string, number[]> | null): Record<string, number[]> | null {
-  return p && Object.fromEntries(Object.entries(p).map(([k, c]) => [k, Array.isArray(c) && c.length === 3 ? swatchAt(...nearestSwatch(c)) : c]));
+  return p && Object.fromEntries(Object.entries(p).map(([k, c]) => [k, Array.isArray(c) && c.length === 3 ? (k === "skin" ? nearestSkin(c) : swatchAt(...nearestSwatch(c))) : c]));
 }
 
 /** The colours the classic witch shows (the style's hues over her default outfit), as a palette to start editing from. */
