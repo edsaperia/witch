@@ -1,0 +1,29 @@
+{
+  "id": "spider",
+  "baseSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-d79c752a-f7b1-42c2-b6db-f335532c4aae.png",
+  "basePrompt": "Photoreal natural-history whole-animal target contact sheet, 2 rows x4 columns, plain gray ground, every extremity uncropped. Adult top row, smaller age0 game target bottom. Columns: standing towards, standing away, walking towards, walking away. Camera elevated30degrees; body axis predominantly SIDE-ON left-right, head rotated34degrees towards/away FROM SIDE PROFILE, not head-on/rear portraits. Long lens approximate orthographic, no calibration claim. Concise row/column labels. Natural realistic anatomy, no fantasy effects. Mexican redknee tarantula Brachypelma hamorii, dark hairy spider with orange knee bands, two clear body masses: lower broad cephalothorax and larger oval furry abdomen connected by narrow pedicel. Exactly EIGHT long stout hairy walking legs attached to cephalothorax, four pairs, plus TWO shorter front pedipalps clearly differentiated. No antennae, no tail, no orb-weaver cross. Adult top juvenile below with relatively round abdomen, same eight legs. Low broad radial stance, articulated joints, realistic walking.",
+  "legendSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-91aa0474-be65-4499-8d23-102e99f96ac3.png",
+  "legendPrompt": "Create a photoreal fantasy natural-history concept plate with THREE clearly separate alternative designs A, B, C, same species. One whole creature per panel, all limbs/extremities uncropped, plain gray background, raised camera30degrees, body mostly side-on turned34degrees towards viewer from side profile, game camera approximate. Ancient wisdom, age, scars and restrained power, recognizably same animal family, each alternative different idea not costume swaps. Anatomically correct limbs, no generic uniform. Titles short. No game screenshot or pixel art. Tarantula, orange-banded hairy jointed legs, eight walking legs plus two short pedipalps, low cephalothorax and heavy furry abdomen. Thorn-scrub badlands: dry earth, rocky banks, thorn trees/junipers, web-hung dead tree. A: ancient burrow weaver, eight thick worn legs frame a low arch, a small luminous sheet of radial silk anchored between rear legs and ground like a rose-window fragment; keep tarantula not orbweaver suspended in orbweb, abdomen scarred and hairs grey at tips. B: canyon listener, enormous feathery sensory hairs on front legs glowing only at tips, orange knees worn pale, body low, no extra eyes ring. C: silk reliquary, old silk threads layered as protective shawl across abdomen with a single tiny bronze thorn offering, thick tarantula legs, no human costume. Prefer B for correct tarantula nature.",
+  "tool": "image_gen__imagegen",
+  "date": "2026-11-07",
+  "camera": "PITCH .52, YAW +/-.6 from side profile requested; approximate not calibrated",
+  "review": "Visually inspected in tool outputs. Generated anatomy may contain errors; species note corrections override image. No game/runtime evidence.",
+  "realPhotoComparison": {
+    "gallery": "https://commons.wikimedia.org/wiki/Category:Brachypelma_hamorii",
+    "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7b/Brachypelma_smithi_2009_G09.jpg/250px-Brachypelma_smithi_2009_G09.jpg?utm_source=commons.wikimedia.org&utm_campaign=parser&utm_content=thumbnail",
+    "inspection": "Local thumbnail viewed; no photos committed. 120px except moth/scorpion/spider250px. Fine details and exact juvenile anatomy not validated; larger Commons requests403/429."
+  },
+  "currentLegend": {
+    "source": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
+    "method": "Browser-free Node: critter(id,3,0,st,towards); bake with in-memory createImageData/putImageData canvas; A channel encoded losslessly PNG",
+    "style": "defaultStyle merged config/style.json.style; artStyle bold; config/tuning.json.pixelSize",
+    "limits": "Awake unlit albedo, not screenshot or runtime/lighting proof; no equipment; independent image scales"
+  },
+  "pick": "B",
+  "files": {
+    "current-legend-l8.png": "409afd77614e1de185c3282fdc89a689db610991edc6d02af82e686a5eb15b9c",
+    "legend-comparison-l8.png": "ff205e4ac3fa965376270522ee67dcd8ab673b0ede4f20750fb120f450751365",
+    "legend-concepts-l8.png": "31bf8c313e1a0a2a97e2530d74800fee0add48120686e9271c8239e9d74b7a33",
+    "target-l8.png": "33247fa73b7e9e9cfa2ce5eff34af836875e64d341525656dc6c7148a0098af5"
+  }
+}

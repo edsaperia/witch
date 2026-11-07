@@ -1,0 +1,40 @@
+{
+  "id": "moth",
+  "baseSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-1c8d5c01-b6e5-440c-ba35-436b4222f6ba.png",
+  "basePrompt": "Photoreal natural-history whole-animal target contact sheet, 2 rows x4 columns, plain gray ground, every extremity uncropped. Adult top row, smaller age0 game target bottom. Columns: standing towards, standing away, walking towards, walking away. Camera elevated30degrees; body axis predominantly SIDE-ON left-right, head rotated34degrees towards/away FROM SIDE PROFILE, not head-on/rear portraits. Long lens approximate orthographic, no calibration claim. Concise row/column labels. Natural realistic anatomy, no fantasy effects. Swallowtail butterfly Papilio machaon (game id moth). Yellow black-veined broad SCALED wings, hindwing tails and blue crescent spots, thin body, clubbed antennae, SIX small thoracic legs. Adult top row, small butterfly game proxy bottom explicitly 'age0 game proxy, not caterpillar'. Standing columns: perched on ground wings vertically folded, lateral body visible, six feet grounded. Walking columns: in flight level torso head forward legs tucked, wings open mid-flap, all four wings visible. Label perched/flight. Natural butterfly not fuzzy brown moth. No extra wings.",
+  "legendSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-0a0fd973-f8ff-435e-b695-c1a4e81aca70.png",
+  "legendPrompt": "Create a photoreal fantasy natural-history concept plate with THREE clearly separate alternative designs A, B, C, same species. One whole creature per panel, all limbs/extremities uncropped, plain gray background, raised camera30degrees, body mostly side-on turned34degrees towards viewer from side profile, game camera approximate. Ancient wisdom, age, scars and restrained power, recognizably same animal family, each alternative different idea not costume swaps. Anatomically correct limbs, no generic uniform. Titles short. No game screenshot or pixel art. Swallowtail butterfly (game id moth), four broad yellow black SCALED wings, hindwing tails and blue crescents, club antennae, six small legs. Meadow wildflowers and lone oaks; inherited heath heather/gorse/wind-bent birches only secondary context. A: ancient eyespot oracle, paired enormous luminous blue eyespots naturally embedded on hindwings, frayed scale-worn margins, long weathered swallowtails, body small and wings open. B: pollen pilgrim, antennae expanded into elegant CLUBBED sensory staffs dusted gold pollen, wings faded but map-like veins, no feathery moth antennae. C: wind elder, long trailing hindwing tails curl like wind-carved ribbons continuous with actual wing, chipped yellow-black wings, no added spirit wings. Level flying body legs tucked. Keep butterfly.",
+  "tool": "image_gen__imagegen",
+  "date": "2026-11-07",
+  "camera": "PITCH .52, YAW +/-.6 from side profile requested; approximate not calibrated",
+  "review": "Visually inspected in tool outputs. Generated anatomy may contain errors; species note corrections override image. No game/runtime evidence.",
+  "flight": {
+    "id": "moth",
+    "path": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-6acf65af-2939-44db-af2a-3317ce38acef.png",
+    "prompt": "Photoreal natural-history pose target sheet six equal panels, whole swallowtail butterfly Papilio machaon, yellow-black SCALED four wings with two hindwing tails and blue crescents, club antennae, six thoracic legs. Plain gray ground, elevated30degree three-quarter SIDE camera34degree from side.1 perched wings truly CLOSED vertically together above body, see underside, all six feet supported;2 glide wings held open torso level head forward legs tucked;3 upstroke both wing pairs raised;4 downstroke both pairs lowered;5 takeoff feet lifting from ground and wings beating;6 landing feet extended body path angled towards ground. No generic moth feathers, no membrane finger rays. Static targets not animation. Avoid labels claiming more than visible."
+  },
+  "flightReview": "Static pose concepts only. Foot counts occluded. Swallowtail closed/rest target improved, flight plate cell order row-major: perch, glide, upstroke, downstroke, takeoff, landing. Dragonfly rests wings open, not folded like damselfly.",
+  "realPhotoComparison": {
+    "gallery": "https://commons.wikimedia.org/wiki/Papilio_machaon",
+    "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/36/%28MHNT%29_Papilio_machaon_-_Ch%C4%99ciny_%28Mazovie%29_-_Poland_-_male.jpg/250px-%28MHNT%29_Papilio_machaon_-_Ch%C4%99ciny_%28Mazovie%29_-_Poland_-_male.jpg?utm_source=commons.wikimedia.org&utm_campaign=parser&utm_content=thumbnail",
+    "inspection": "Local thumbnail viewed; no photos committed. 120px except moth/scorpion/spider250px. Fine details and exact juvenile anatomy not validated; larger Commons requests403/429."
+  },
+  "currentLegend": {
+    "source": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
+    "method": "Browser-free Node: critter(id,3,0,st,towards); bake with in-memory createImageData/putImageData canvas; A channel encoded losslessly PNG",
+    "style": "defaultStyle merged config/style.json.style; artStyle bold; config/tuning.json.pixelSize",
+    "limits": "Awake unlit albedo, not screenshot or runtime/lighting proof; no equipment; independent image scales"
+  },
+  "pick": "A",
+  "files": {
+    "current-legend-l8.png": "9148dd9bc9d28f24b6c74f6819b8c8a27545d2f957c13ea5741c689979da8527",
+    "flight-targets-l8.png": "8d4691796b160e5e0de77c2e999d724806258f83b99b53d0ab122235ad89712e",
+    "legend-comparison-l8.png": "e4ba09ed91fda527ef00d98ccc6df7f899fdcc520a46b9b82f879909db15c786",
+    "legend-concepts-l8.png": "0ee42996720e6c292e30a4fea4c89cdf924a9c6d448815a345346dc001cb3665",
+    "target-l8.png": "c1575155dc91e4d5e00e19ef7b9c9586d7de4af1728d3158f5ce7f7c81c74275"
+  },
+  "flightPhotos": [
+    "https://photos-marc-solari.e-monsite.com/album-photos/papillons-de-jour-rhopaloceres/papilionidae/papilio-machaon-en-vol-web-1.html (flight original viewed)",
+    "https://lepiforum.org/wiki/page/Papilio_machaon (Matter 2007-06-19 Buettenhardt underside rest original viewed)"
+  ]
+}

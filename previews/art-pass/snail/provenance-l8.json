@@ -1,0 +1,29 @@
+{
+  "id": "snail",
+  "baseSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-4f5702e3-5f09-424f-82f0-6c4866ddd81f.png",
+  "basePrompt": "Photoreal natural-history whole-animal target contact sheet, 2 rows x4 columns, plain gray ground, every extremity uncropped. Adult top row, smaller age0 game target bottom. Columns: standing towards, standing away, walking towards, walking away. Camera elevated30degrees; body axis predominantly SIDE-ON left-right, head rotated34degrees towards/away FROM SIDE PROFILE, not head-on/rear portraits. Long lens approximate orthographic, no calibration claim. Concise row/column labels. Natural realistic anatomy, no fantasy effects. Garden snail Cornu aspersum. One coiled globose brown banded shell carried on soft muscular elongated foot, visible shell aperture and mantle join; FOUR tentacles total, long upper pair eye-tipped and short lower sensory pair, no legs. Adult shell several whorls, game baby smaller paler translucent approximately one-turn shell and relatively big eye stalks. Walking means crawling with extended foot and tentacles, standing means paused crawl. Anatomically realistic asymmetrical shell, mucus foot on ground.",
+  "legendSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-4f274355-b24e-4013-a809-558c22f47ba6.png",
+  "legendPrompt": "Create a photoreal fantasy natural-history concept plate with THREE clearly separate alternative designs A, B, C, same species. One whole creature per panel, all limbs/extremities uncropped, plain gray background, raised camera30degrees, body mostly side-on turned34degrees towards viewer from side profile, game camera approximate. Ancient wisdom, age, scars and restrained power, recognizably same animal family, each alternative different idea not costume swaps. Anatomically correct limbs, no generic uniform. Titles short. No game screenshot or pixel art. Garden snail, four tentacles two long eye stalks plus two lower, muscular foot, one coiled shell. Muddy forest: mud/leaves, broken branches, many-trunk trees. A: age-of-stars shell, huge worn spiral shell with deep dark blue whorls containing tiny gold star maps, chipped aperture and mud along foot, old grey skin, warm gold spiral inlay, no trees. B: pilgrim of paths, comparatively low scarred shell and enormous long extended eyestalks, silver luminous slime trail forming one old looping path behind grounded foot. C: shell archive, tall buttressed whorls deeply etched with weathered growth rings and tiny bronze votive bells around aperture, no architecture doors. Whole animal, no legs.",
+  "tool": "image_gen__imagegen",
+  "date": "2026-11-07",
+  "camera": "PITCH .52, YAW +/-.6 from side profile requested; approximate not calibrated",
+  "review": "Visually inspected in tool outputs. Generated anatomy may contain errors; species note corrections override image. No game/runtime evidence.",
+  "realPhotoComparison": {
+    "gallery": "https://commons.wikimedia.org/wiki/Cornu_aspersum",
+    "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/53/Snail-wiki-120-Zachi-Evenor.jpg/120px-Snail-wiki-120-Zachi-Evenor.jpg?utm_source=commons.wikimedia.org&utm_campaign=parser&utm_content=thumbnail",
+    "inspection": "Local thumbnail viewed; no photos committed. 120px except moth/scorpion/spider250px. Fine details and exact juvenile anatomy not validated; larger Commons requests403/429."
+  },
+  "currentLegend": {
+    "source": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
+    "method": "Browser-free Node: critter(id,3,0,st,towards); bake with in-memory createImageData/putImageData canvas; A channel encoded losslessly PNG",
+    "style": "defaultStyle merged config/style.json.style; artStyle bold; config/tuning.json.pixelSize",
+    "limits": "Awake unlit albedo, not screenshot or runtime/lighting proof; no equipment; independent image scales"
+  },
+  "pick": "A",
+  "files": {
+    "current-legend-l8.png": "ff9a095a3713bce0d8940c5bec424e4d179d40136f88397f9d25e2215d8a9d45",
+    "legend-comparison-l8.png": "609245e0842376097686da6514f8903ae7d041e842c8294550b055bcd1259ac1",
+    "legend-concepts-l8.png": "558d71a12198ce845f765316fcc00a70004004f13b99d58add722f9851e7c2b8",
+    "target-l8.png": "14d3291e1268698e8eb0f33eafcb519f5520d523f3fe995999fdaad32a31d7cd"
+  }
+}

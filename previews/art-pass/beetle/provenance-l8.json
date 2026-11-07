@@ -1,0 +1,30 @@
+{
+  "id": "beetle",
+  "baseSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-ee369842-e1fb-4102-bbbd-012a39af13c8.png",
+  "basePrompt": "Photoreal zoological target plate, 2 rows by4 columns, whole stag beetle (Lucanus cervus) in every cell, neutral gray ground. Adult male top row, smaller game baby proxy bottom row, label 'age0 game proxy, not larva'. Columns stand towards, stand away, walk towards, walk away. IMPORTANT camera shows the animal largely SIDE-ON, longitudinal axis left-to-right, then rotate heading 34 degrees towards viewer or 34 degrees away FROM SIDE PROFILE, camera looking down30 degrees. Not front/rear portrait. Exactly six jointed legs on thorax, elbowed clubbed antennae, distinct head/pronotum/paired smooth elytra center seam, large branching stag mandibles in adult; modest mandibles proxy. Black/dark chestnut chitin, no fire embellishment. Correct whole-animal anatomy dominates; keep all extremities visible. Natural walk grounded. Concise labels.",
+  "legendSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-c42ae155-a142-43be-872d-7538fe2eb28d.png",
+  "legendPrompt": "Create a photoreal fantasy natural-history concept plate with THREE clearly separate alternative designs A, B, C, same species. One whole creature per panel, all limbs/extremities uncropped, plain gray background, raised camera30degrees, body mostly side-on turned34degrees towards viewer from side profile, game camera approximate. Ancient wisdom, age, scars and restrained power, recognizably same animal family, each alternative different idea not costume swaps. Anatomically correct limbs, no generic uniform. Titles short. No game screenshot or pixel art. Species stag-jawed fire beetle, six jointed legs, elbowed club antennae, paired dark elytra, branching mandibles. Area story volcanic fertile ash/charred trunks, older log-pile rotting leaves/fungi/fallen giant as secondary heritage. A: giant eroded branching mandibles with molten orange light in old cracks, charred black shell, single chipped jaw tip; no back flame crest. B: elytra become immense scarred iron shields with ash-polished metal surface and tiny votive bronze jaw rings. C: elytra opened to reveal amber translucent hindwings inscribed with age growth scars, jaws intact, extinct-forest guardian. Prefer A visually, keep six legs.",
+  "tool": "image_gen__imagegen",
+  "date": "2026-11-07",
+  "camera": "PITCH .52, YAW +/-.6 from side profile requested; approximate not calibrated",
+  "review": "Visually inspected in tool outputs. Generated anatomy may contain errors; species note corrections override image. No game/runtime evidence.",
+  "realPhotoComparison": {
+    "gallery": "https://commons.wikimedia.org/wiki/Lucanus_cervus",
+    "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bb/Cerf-volant_MHNT_Dos.jpg/120px-Cerf-volant_MHNT_Dos.jpg?utm_source=commons.wikimedia.org&utm_campaign=parser&utm_content=thumbnail",
+    "inspection": "Local thumbnail viewed; no photos committed. 120px except moth/scorpion/spider250px. Fine details and exact juvenile anatomy not validated; larger Commons requests403/429."
+  },
+  "currentLegend": {
+    "source": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
+    "method": "Browser-free Node: critter(id,3,0,st,towards); bake with in-memory createImageData/putImageData canvas; A channel encoded losslessly PNG",
+    "style": "defaultStyle merged config/style.json.style; artStyle bold; config/tuning.json.pixelSize",
+    "limits": "Awake unlit albedo, not screenshot or runtime/lighting proof; no equipment; independent image scales"
+  },
+  "pick": "A",
+  "files": {
+    "current-legend-l8.png": "525ac943ebd80dd115c397ab3e35acec2edaf57cb1789e10ce77b70f84fe0fad",
+    "l8-legend-picks.png": "45c22972fed19f14d700a0e00ce87da246c4123f72bc93aad9dfe9e2fb401850",
+    "legend-comparison-l8.png": "fc37df947bec078a6f2e907d23dc9e3c08b9288fd81501417b3199d1c4c2d417",
+    "legend-concepts-l8.png": "5ec56336a702d6e7b580312bac9cbdd5fa9916ad41d8e294ee682a3fe6ed480d",
+    "target-l8.png": "739ccc1122196374e294c7a70ad79d2d5a8732ae3ed8dc29a565e46d42c11404"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "id": "dragonfly",
+  "baseSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-481b9eca-76bf-4339-9f56-1f5eae73599f.png",
+  "basePrompt": "Photoreal natural-history whole-animal target contact sheet, 2 rows x4 columns, plain gray ground, every extremity uncropped. Adult top row, smaller age0 game target bottom. Columns: standing towards, standing away, walking towards, walking away. Camera elevated30degrees; body axis predominantly SIDE-ON left-right, head rotated34degrees towards/away FROM SIDE PROFILE, not head-on/rear portraits. Long lens approximate orthographic, no calibration claim. Concise row/column labels. Natural realistic anatomy, no fantasy effects. Emperor dragonfly Anax imperator, huge adjacent compound eyes, compact muscular green thorax, long slender blue segmented abdomen, FOUR transparent veined wings in TWO pairs attached to thorax, SIX small spiny legs clustered below front thorax, tiny antennae. Baby row explicitly label 'game small flying adult proxy, not aquatic nymph', smaller wings and abdomen. Since game all ages fly, show hovering neutral pose in standing columns and forward-flight stroke in walking columns, label neutral/locomotion not ground walking. Wings uncropped.",
+  "legendSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-4957458a-48c3-4463-b86a-ec2de881f5e8.png",
+  "legendPrompt": "Create a photoreal fantasy natural-history concept plate with THREE clearly separate alternative designs A, B, C, same species. One whole creature per panel, all limbs/extremities uncropped, plain gray background, raised camera30degrees, body mostly side-on turned34degrees towards viewer from side profile, game camera approximate. Ancient wisdom, age, scars and restrained power, recognizably same animal family, each alternative different idea not costume swaps. Anatomically correct limbs, no generic uniform. Titles short. No game screenshot or pixel art. Emperor dragonfly of mangrove water, four glassy wings in two pairs, six small thoracic legs, huge compound eyes, long slender segmented abdomen. Show flight torso level, head forward and legs tucked. A: ancient all-seeing hawker, enormous weathered emerald compound eyes reflecting countless past tides, long scarred blue abdomen, four huge transparent wings with a few repaired/tattered margins; power through vision. B: storm measurer, four glass wings with pale lightning-like veins, subtle charged tips, ancient scarred thorax, no extra wings. C: reed memory, long abdomen curves into a graceful reed-like arc, four smoky amber glass wings recording old flood lines. All hovering, no feathers or membrane fingers.",
+  "tool": "image_gen__imagegen",
+  "date": "2026-11-07",
+  "camera": "PITCH .52, YAW +/-.6 from side profile requested; approximate not calibrated",
+  "review": "Visually inspected in tool outputs. Generated anatomy may contain errors; species note corrections override image. No game/runtime evidence.",
+  "flight": {
+    "id": "dragonfly",
+    "path": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-efd3c509-4f96-4284-b696-e79e0536f76e.png",
+    "prompt": "Photoreal anatomy pose target sheet, emperor dragonfly, FOUR glass veined wings, SIX spiny thoracic legs, blue segmented abdomen, green thorax and huge eyes. Six equal panels all whole animal plain gray background, elevated30deg side-three-quarter camera34deg from side. Panels1 resting gripping a thin isolated reed with six feet, wings held OPEN sideways (dragonflies do NOT fold wings vertically like damselflies);2 held-wing glide level torso legs tucked head forward;3 upstroke;4 downstroke four wings distinguished as front/hind pair;5 takeoff feet releasing reed;6 landing feet reaching toward isolated reed, body path angled. Static pose targets NOT an animation proof. Correct anatomy and readable silhouettes, no motion blur."
+  },
+  "flightReview": "Static pose concepts only. Foot counts occluded. Swallowtail closed/rest target improved, flight plate cell order row-major: perch, glide, upstroke, downstroke, takeoff, landing. Dragonfly rests wings open, not folded like damselfly.",
+  "realPhotoComparison": {
+    "gallery": "https://commons.wikimedia.org/wiki/Anax_imperator",
+    "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f1/2018.06.19.-25-Zielfinger_Seen-Mengen-Ruflingen--Grosse_Koenigslibelle-Maennchen.jpg/120px-2018.06.19.-25-Zielfinger_Seen-Mengen-Ruflingen--Grosse_Koenigslibelle-Maennchen.jpg?utm_source=commons.wikimedia.org&utm_campaign=parser&utm_content=thumbnail",
+    "inspection": "Local thumbnail viewed; no photos committed. 120px except moth/scorpion/spider250px. Fine details and exact juvenile anatomy not validated; larger Commons requests403/429."
+  },
+  "currentLegend": {
+    "source": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
+    "method": "Browser-free Node: critter(id,3,0,st,towards); bake with in-memory createImageData/putImageData canvas; A channel encoded losslessly PNG",
+    "style": "defaultStyle merged config/style.json.style; artStyle bold; config/tuning.json.pixelSize",
+    "limits": "Awake unlit albedo, not screenshot or runtime/lighting proof; no equipment; independent image scales"
+  },
+  "pick": "A",
+  "files": {
+    "current-legend-l8.png": "413967c5e7325b0cb4ba362aff677c824986688f45c5649191ebb4566296fdfe",
+    "flight-targets-l8.png": "fb4b97ef7ac87dc1c1465850c2958db7aee4edbd01e395fd42b80fa2e97ea496",
+    "legend-comparison-l8.png": "45789ef15bdf033beb66e4478d735f9880e64cb26aeae519c8dc9ded494cc938",
+    "legend-concepts-l8.png": "95a41a3f094648eaeef3bc6d514231b0b053847506f562516f1b48185281e418",
+    "target-l8.png": "f8ac62ec0caa5d143608477c540d0f0331889a9d84cfe7be61aa7930960e9849"
+  },
+  "flightPhoto": "https://mynaturephotography.com/anax-imperator-blue-emperor/ (flight original viewed)"
+}

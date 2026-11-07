@@ -1,0 +1,30 @@
+{
+  "id": "crab",
+  "baseSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-dbc55066-38c3-4964-accc-a9bd4dcabe72.png",
+  "basePrompt": "Photoreal natural-history whole-animal target contact sheet, 2 rows x4 columns, plain gray ground, every extremity uncropped. Adult top row, smaller age0 game target bottom. Columns: standing towards, standing away, walking towards, walking away. Camera elevated30degrees; body axis predominantly SIDE-ON left-right, head rotated34degrees towards/away FROM SIDE PROFILE, not head-on/rear portraits. Long lens approximate orthographic, no calibration claim. Concise row/column labels. Natural realistic anatomy, no fantasy effects. Male fiddler crab Uca sensu lato, orange-red mangrove mudflat crab, broad flattened carapace and tall eye stalks. Exactly two front claw appendages: ONE enormous display claw and ONE tiny feeding claw, plus FOUR pairs slender lateral walking legs (8 legs). Adult top with asymmetric claw strongly obvious, juvenile bottom with both claws small and legs tucked closer as game target. Sideways scuttle; no lobster tail, no symmetric adult shore-crab claws. All limbs uncropped.",
+  "legendSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-664ea30e-2445-43c3-83a8-c49383a7b82c.png",
+  "legendPrompt": "Create a photoreal fantasy natural-history concept plate with THREE clearly separate alternative designs A, B, C, same species. One whole creature per panel, all limbs/extremities uncropped, plain gray background, raised camera30degrees, body mostly side-on turned34degrees towards viewer from side profile, game camera approximate. Ancient wisdom, age, scars and restrained power, recognizably same animal family, each alternative different idea not costume swaps. Anatomically correct limbs, no generic uniform. Titles short. No game screenshot or pixel art. Male fiddler crab, eight walking legs plus one tiny feeding claw and one huge display claw, tall eyestalks, broad low shell, no lobster tail. Mangrove swamp wet black roots and tidal mud. A: ancient tide herald, colossal asymmetric display claw bigger than entire body, worn ivory pincer edges engraved naturally by tide erosion, reef-aged shell with a few barnacles, slow raised beckoning pose. B: mudflat oracle, eye stalks high like paired watchtowers with tidal water gleam, shell weathered by centuries, display claw held low. C: rootbreaker, oversized broad digging feet and scarred armored claw, mangrove-root shaped natural claw ridges and one modest shell offering tied at joint. Keep crab silhouette and grounded sideways stance, no generic crown.",
+  "tool": "image_gen__imagegen",
+  "date": "2026-11-07",
+  "camera": "PITCH .52, YAW +/-.6 from side profile requested; approximate not calibrated",
+  "review": "Visually inspected in tool outputs. Generated anatomy may contain errors; species note corrections override image. No game/runtime evidence.",
+  "realPhotoComparison": {
+    "gallery": "https://commons.wikimedia.org/wiki/Carcinus_maenas",
+    "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/60/Common_shore_crab_1.JPG/120px-Common_shore_crab_1.JPG?utm_source=commons.wikimedia.org&utm_campaign=parser&utm_content=thumbnail",
+    "inspection": "Local thumbnail viewed; no photos committed. 120px except moth/scorpion/spider250px. Fine details and exact juvenile anatomy not validated; larger Commons requests403/429."
+  },
+  "currentLegend": {
+    "source": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
+    "method": "Browser-free Node: critter(id,3,0,st,towards); bake with in-memory createImageData/putImageData canvas; A channel encoded losslessly PNG",
+    "style": "defaultStyle merged config/style.json.style; artStyle bold; config/tuning.json.pixelSize",
+    "limits": "Awake unlit albedo, not screenshot or runtime/lighting proof; no equipment; independent image scales"
+  },
+  "pick": "A",
+  "files": {
+    "current-legend-l8.png": "a955ce911ac76809fd4b41c532c6d78eefd1b7d315c09cc57c7787e765d2e84f",
+    "legend-comparison-l8.png": "c6235cdebaa9fbcdbbb7ac8e700e10774c74452784afa08a19afcf3fca84cb64",
+    "legend-concepts-l8.png": "536dcefae6c11f1792737aa21df145589526edf600257bf091e607c951f81008",
+    "target-l8.png": "7505eba448541b93b6170f8c9bffe05556458bc9546b2d6e227dc1a10d0d88ae"
+  },
+  "additionalPhoto": "https://animaldiversity.org/collections/contributors/robert_bachand/Ocypodidae/74_Atlantic_fiddler_crab_Uca_pugilator_male/ (Robert Bachand; original viewed)"
+}

@@ -1,0 +1,29 @@
+{
+  "id": "woodlouse",
+  "baseSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-c7bbb84c-3072-4f29-b0cd-4a077501ead3.png",
+  "basePrompt": "Photoreal natural-history whole-animal target contact sheet, 2 rows x4 columns, plain gray ground, every extremity uncropped. Adult top row, smaller age0 game target bottom. Columns: standing towards, standing away, walking towards, walking away. Camera elevated30degrees; body axis predominantly SIDE-ON left-right, head rotated34degrees towards/away FROM SIDE PROFILE, not head-on/rear portraits. Long lens approximate orthographic, no calibration claim. Concise row/column labels. Natural realistic anatomy, no fantasy effects. Common woodlouse Oniscus asellus, low flattened oval slate gray armored terrestrial isopod, overlapping transverse dorsal plates, small head tucked front with TWO prominent jointed antennae, two short pointed rear uropods, exactly SEVEN pairs of short jointed walking legs adult under thoracic plates. Young game proxy pale rounded smaller body fewer visually emphasized plates; explicitly label game proxy not exact manca stage (real newly released manca has six pairs legs). No insect six-leg plan, no centipede long body, no spherical pillbug, realistic short leg wave gait.",
+  "legendSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-294ee44c-ccdb-4e3a-a513-8650b922af83.png",
+  "legendPrompt": "Create a photoreal fantasy natural-history concept plate with THREE clearly separate alternative designs A, B, C, same species. One whole creature per panel, all limbs/extremities uncropped, plain gray background, raised camera30degrees, body mostly side-on turned34degrees towards viewer from side profile, game camera approximate. Ancient wisdom, age, scars and restrained power, recognizably same animal family, each alternative different idea not costume swaps. Anatomically correct limbs, no generic uniform. Titles short. No game screenshot or pixel art. Common woodlouse, low oval segmented isopod, seven pairs short jointed legs, two long antennae and short rear uropods. Moor story moss, long grass, puddles/lake, moss mounds; later wispy forest home-carrying heritage. A: walking hearth, oversized overlapping weathered dorsal plates shaped like roof tiles, tiny warm glowing door/window inset in side shell without human house bolted on, long whip feelers, no crystals. B: fourteen-step keeper, fourteen short feet each tipped in faint light making a visible ripple wave, plates scarred slate gray with moss stains, no extra legs. C: rain vault, broad overlapping shield plates each holding one shallow reflected puddle, pale weathered rims and droplets, antennae arched forward. Keep recognizable woodlouse NOT armadillo/mammal, extended body not impossible pillbug ball.",
+  "tool": "image_gen__imagegen",
+  "date": "2026-11-07",
+  "camera": "PITCH .52, YAW +/-.6 from side profile requested; approximate not calibrated",
+  "review": "Visually inspected in tool outputs. Generated anatomy may contain errors; species note corrections override image. No game/runtime evidence.",
+  "realPhotoComparison": {
+    "gallery": "https://commons.wikimedia.org/wiki/Oniscus_asellus",
+    "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Oniscus_asellus_Furlbachtal01.jpg/120px-Oniscus_asellus_Furlbachtal01.jpg?utm_source=commons.wikimedia.org&utm_campaign=parser&utm_content=thumbnail",
+    "inspection": "Local thumbnail viewed; no photos committed. 120px except moth/scorpion/spider250px. Fine details and exact juvenile anatomy not validated; larger Commons requests403/429."
+  },
+  "currentLegend": {
+    "source": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
+    "method": "Browser-free Node: critter(id,3,0,st,towards); bake with in-memory createImageData/putImageData canvas; A channel encoded losslessly PNG",
+    "style": "defaultStyle merged config/style.json.style; artStyle bold; config/tuning.json.pixelSize",
+    "limits": "Awake unlit albedo, not screenshot or runtime/lighting proof; no equipment; independent image scales"
+  },
+  "pick": "A",
+  "files": {
+    "current-legend-l8.png": "4dc79fea710ce431b7351b9e1de7d425a063f920d269742957c6bea7b2298f1b",
+    "legend-comparison-l8.png": "0a6db975cb743813a5e3cc12659653a0c8f3b9ccd9363ae6f705b8c4b5398397",
+    "legend-concepts-l8.png": "02cd48eaf085a189b3196f174c14d03644116babe2d558a3a1516decac8209b7",
+    "target-l8.png": "163fad5ae524bb97482959f77157a694004d8b4dd1f4fa6bfcc75e35f18ee5c4"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "scorpion",
+  "baseSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-03f13783-86be-45b9-9d49-7ef8c1c2eab6.png",
+  "basePrompt": "Photoreal natural-history whole-animal target contact sheet, 2 rows x4 columns, plain gray ground, every extremity uncropped. Adult top row, smaller age0 game target bottom. Columns: standing towards, standing away, walking towards, walking away. Camera elevated30degrees; body axis predominantly SIDE-ON left-right, head rotated34degrees towards/away FROM SIDE PROFILE, not head-on/rear portraits. Long lens approximate orthographic, no calibration claim. Concise row/column labels. Natural realistic anatomy, no fantasy effects. European scorpion Euscorpius, low elongated dark brown body, exactly EIGHT walking legs (four pairs) plus TWO large clawed pedipalps at front, tiny chelicerae not extra legs. Segmented narrow tail of five segments plus bulbous stinger arches over back without emerging from thorax. Adult top, smaller paler juvenile below, no babies on back. Wide low stance, visible hard tergite plates and joints, grounded alternating walking. Tail attached to rear abdomen.",
+  "legendSource": "C:\\Users\\edsap\\.codex\\generated_images\\01a1971f-d0cd-7b73-9564-2382f7a9ee72\\exec-3b124048-4eba-4fb6-83cf-62d142853005.png",
+  "legendPrompt": "Create a photoreal fantasy natural-history concept plate with THREE clearly separate alternative designs A, B, C, same species. One whole creature per panel, all limbs/extremities uncropped, plain gray background, raised camera30degrees, body mostly side-on turned34degrees towards viewer from side profile, game camera approximate. Ancient wisdom, age, scars and restrained power, recognizably same animal family, each alternative different idea not costume swaps. Anatomically correct limbs, no generic uniform. Titles short. No game screenshot or pixel art. Red-brown canyon scorpion of dry badlands, eight walking legs plus two clawed pedipalps, segmented rear tail with stinger, low armored body. A: brood matriarch, colossal curled segmented tail protecting a small group of white baby scorpions on broad scarred back, faint blue-green fluorescence only at plate edges; wisdom as protector, no jewelry. B: venom keeper, vast worn translucent amber stinger containing a single suspended luminous venom drop, asymmetrical scarred pincers, otherwise brown armor. C: canyon archivist, dorsal plates weathered like canyon strata, immense sturdy pincer tips carved by centuries digging, one ancient hammered copper offering at tail base. Keep full anatomy, no extra tail.",
+  "tool": "image_gen__imagegen",
+  "date": "2026-11-07",
+  "camera": "PITCH .52, YAW +/-.6 from side profile requested; approximate not calibrated",
+  "review": "Visually inspected in tool outputs. Generated anatomy may contain errors; species note corrections override image. No game/runtime evidence.",
+  "realPhotoComparison": {
+    "gallery": "https://commons.wikimedia.org/wiki/Category:Euscorpius_italicus",
+    "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Euscorpius_fg02.jpg/250px-Euscorpius_fg02.jpg?utm_source=commons.wikimedia.org&utm_campaign=parser&utm_content=thumbnail",
+    "inspection": "Local thumbnail viewed; no photos committed. 120px except moth/scorpion/spider250px. Fine details and exact juvenile anatomy not validated; larger Commons requests403/429."
+  },
+  "currentLegend": {
+    "source": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
+    "method": "Browser-free Node: critter(id,3,0,st,towards); bake with in-memory createImageData/putImageData canvas; A channel encoded losslessly PNG",
+    "style": "defaultStyle merged config/style.json.style; artStyle bold; config/tuning.json.pixelSize",
+    "limits": "Awake unlit albedo, not screenshot or runtime/lighting proof; no equipment; independent image scales"
+  },
+  "pick": "A",
+  "files": {
+    "current-legend-l8.png": "8f277255cdc74572e2a8ab1a8a4ff1f70d483f6ef6b348bf046e229efe4103bc",
+    "legend-comparison-l8.png": "8aefa84166cf59fd75f98dc9b926b31508c1d838e1040923f538fb1e92ca142a",
+    "legend-concepts-l8.png": "9a5dd9af502201bbe04c58435e038928adc63871058956663a19998b2fa7ec4b",
+    "target-l8.png": "919f2d65f9e5c41f356647a0cb3336823c5e8082bf4e34abba8d58a42670a8cf"
+  }
+}
