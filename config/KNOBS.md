@@ -992,6 +992,18 @@ Code: `docs/ART-GUIDE.md`
 | `leafJitter.value` | number | 0 to … |
 | `leafJitter.hue` | number | 0 to 180 |
 
+### `treeNormals`
+
+Whether the trees are lit from their normal maps: true (the default) as ever, false flat, every tree pixel lit as if it faced the camera (the normal 128, 128, 255).
+
+1. Ed, 2026-11-07: "Make the normal maps switch." (to judge in play whether trees still look right without normal maps: dropping them would make the pre-baked tree art about 3 times smaller (PR #1884's measurement))
+A test switch: off, her glow, the campfires, the soundsystems and the moon light a tree flat. Live: the pause page's Tree normal maps toggle, or the link's d_treeNormals=0 (off) and d_treeNormals=1 (on). Only the forest's trees (their trunks, crowns and far crowns: the instances marked tree in render/view/scenery.ts) change; bushes, walls, set pieces, rocks, palms, creatures, the witch and the ground keep their normals. The normal map's alpha (the wind's sway code) is still read, so the trees sway as before. A shader uniform (uTreeNormals), so flipping it redraws nothing.
+Code: `render/sprites.ts`, `render/view/frameUniforms.ts`
+
+| knob | type | range |
+|---|---|---|
+| `treeNormals` | boolean |  |
+
 ### `wind`
 
 Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across; Walls and set pieces stand still. ?wind=0 turns it off.
