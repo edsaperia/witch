@@ -1,4 +1,22 @@
+@@
 # L6 skeleton targets
+
+## Third pass: readable legends (7 November)
+
+The latest coordinator ruling (1476 comments `6710686653`, `6710694651`, `6710701175`) supersedes the colossal scene-heavy pass for the new review material. The preserved reference, anatomy, flight and earlier legend plates remain useful history. This pass keeps every legend as a large, old animal whose silhouette and one or two defining features do the reading at 64–128px beside a roughly 50px witch. Armour, decorations and scars are small; magic is an accent; no temples, villages, rivers, galaxies, forests, landscapes or other scenes are carried on the body.
+
+The supplied current level-3 L6 sheet is the style anchor: [today's shipped L6 legends](https://raw.githubusercontent.com/edsaperia/witch/0b571d1838cfc8eabe8e4b0604f7662b487fc4de/previews/art-pass/legends-today/524b0ac/lane-L6.png). The full machine-readable concept manifest is [`l6-third-pass.json`](l6-third-pass.json); it records two candidates per species, the pick, the one-line readability rationale and the required body-plan emphasis.
+
+| species | readable candidates | proposed pick | silhouette feature | small detail |
+|---|---|---|---|---|
+| owl | Disc Warden / Timeworn Listener | B | round disc, compact barred chest, folded wings | brow ring, bill scar, faint rim |
+| raven | Iron Bill / Crownscratch | A | hooked bill, shaggy throat, wedge tail | neck torque, eye glint |
+| heron | Long-Reed Elder / Mere Watcher | A | S-neck, dagger bill, long legs | throat stripe, ankle band |
+| penguin | Epoch Wader / Ice-Scar Elder | A | upright emperor trunk, webbed feet, stiff flippers | worn gorget, aurora band |
+
+### Pixel-pick dependency
+
+The required towards/away night-pixel versions at true 1× and nearest-neighbour 4×, with three cel bands, dark outline and deliberate clusters, are specified in the manifest but are **not claimed complete**: the built-in image-generation endpoint returned HTTP 403 during this pass, and no canonical renderer slot was allocated. No substitute image is being labelled as a game render. The exact next condition is an available image-generation endpoint or a canonical art-render allocation; once available, each pick gets a native-size sheet beside the supplied current legend crop and a 4× nearest-neighbour copy.
 
 | Species | Reads-as target | Top3 priorities | MISSING GRAPH FEATURES |
 |---|---|---|---|

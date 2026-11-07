@@ -155,3 +155,6 @@ Exact scale/fantasy prompt:
 Exact foot correction prompt:
 
 > Correct anatomy ONLY in this6panel giant emperor penguin sheet, preserve every A/B/C design and hero/gameview, witch and foresttrees, colossal scale, lighting and composition. ALL SIX adult penguins must have broad black WEBBED PENGUIN FEET: THREE short forwardtoes joined by visibly continuous leathery webbing making a broad flattened paddle foot, tiny shortblunt nails not talons, no bird-of-prey claws. Both feet remain low beneath belly. Grey chicks also penguinfeet. Do not add any gianttalons or extra toes. Preserve all concept differences and entirebody framing. Anatomically emperor penguin despite giantfantasy.
+## Third-pass readable concepts
+
+Two game-camera candidates replace the scene-heavy revision for this review: **A Epoch Wader** (massive upright emperor trunk, broad webbed feet, stiff flippers, worn gorget, one offering bead and a small aurora band) and **B Ice-Scar Elder** (heavy chest, short grounded stance, chipped flipper edge, simple neck ring and one cold eye highlight). Pick A: upright emperor body, webbed feet and stiff flippers read first; the aurora band stays secondary. Body-plan notes: preserve upright compact trunk, short legs, broad webbed feet and rigid flippers; expose only gorget, offering, scar and small accent sockets—never raptor feet or aerial wings.
