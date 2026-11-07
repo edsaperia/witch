@@ -1,0 +1,8 @@
+{
+  "coordinatorComments": [6710686653, 6710694651, 6710701175, 6711392335],
+  "reportComment": 6711479809,
+  "reportBodySha256": "82c78b1201879077afa8783bcb6d773713efd11b1244f5790d13632b1815c23c",
+  "head": "d59419c1d",
+  "status": "planned-blocked-imagegen-http403",
+  "condition": "Await image-generator compatibility or canonical imagery before generating/publishing third-pass assets; do not claim completion."
+}
