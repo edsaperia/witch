@@ -493,6 +493,7 @@ export type SchemaTuning = {
     "value": number;
     "hue": number;
   };
+  "treeNormals": boolean;
   "wind": {
     "on": boolean;
     "strength": number;
