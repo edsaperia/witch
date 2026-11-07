@@ -1,0 +1,40 @@
+{
+  "tool": "image_gen__imagegen built-in",
+  "date": "2026-11-07",
+  "authority": [
+    "1476#6708227119",
+    "1476#6708229124"
+  ],
+  "purpose": "revised mythical-scale concept targets only, not game assets or approved implementation",
+  "file": "legend-scale-v2.png",
+  "sha256": "8a089462220fdc78894d05806235f6155e0509987e0a37a52646a5ac27c4d969",
+  "width": 1536,
+  "height": 1024,
+  "layout": {
+    "columns": [
+      "A",
+      "B",
+      "C"
+    ],
+    "rows": [
+      "low hero",
+      "approximate elevated game camera"
+    ]
+  },
+  "prompts": [
+    "Photoreal epic fantasy zoological concept comparison SHEET, exactly2rows x3columns six separated equal panels. SAME3concepts repeated: columns A/B/C; TOP ROW low near-ground hero view, BOTTOM ROW game camera elevated looking down30degrees, right-facing side rotated34degrees towards viewer, whole creature. Every panel shows ENTIRE giant with margins PLUS a tiny human WITCH in pointed hat beside its nearest foot and normal FOREST TREES around it for unmistakable scale. Legendary animal about20times its baby height and taller than tree crowns, colossal weight weathered like a landform, distant parts atmospheric haze. Witch and trees must be in ALL6 panels, not only first. No cropping giant/tail/ears. Keep concept identity same vertically. No text/labels. EUROPEAN HARE, unmistakable long blacktipped ears narrow muzzle lateral amber eyes huge haunches long hindfeet short tail. All giant ears/tail inside each panel, animal only60percent panel with margins. Bluebell glade/beech/holly story. A MAXIMUM FANTASY: primordial LISTENER whose two impossibly towering hare ears are living translucent violet listening sails, vein branches contain bluebell-shaped stars and echoes of ancient seasons; weathered ear notches/silver muzzle, carved tiny offerings at massive hindfeet, still furry hare not moth. B: old pathfinder hare whose huge coiled haunches step through a loop of afterimages of its past lives, luminous trails circle giant feet, scars and bronze anklet, no extra real limbs. C: moon custodian hare, ears curve around one huge pale moon held above head, old silvered fur/holly berry offerings, not same sail anatomy as A. In ALL6panels tiny WITCH at foot AND normal beech FOREST TREES below shoulders/ears. Hero top vs elevated30degree game camera bottom of SAME designs. Colossal torso/haunch mass older than land, not ordinary rabbits made big, no text.",
+    "Edit exact6panel hare sheet retaining A violet listening-sail ears/Bpast-life afterimages/Cmoon between ears. Zoom OUT35percent each panel, whole animal including ENTIRE extraordinary ear tips, tail and all feet with15percent clear margin; top-row ears currently cut must be reconstructed fully. Forest trees should be visibly MUCH SMALLER than giant, whole tree crowns below hare shoulders/ears; remove tall foreground framing trees, use smaller beech/holly forest around hare. Preserve tiny pointed-hat witch beside foot in EACH6panel. Top row low hero, bottom elevated30degree downward GAME projection of same designs. Keep recognisable hare head/haunches/long hindfeet and immense weathered landform mass, no redesign, no text."
+  ],
+  "inspection": {
+    "witchAndForestCues": "visually inspected in all six panels",
+    "wholeCreature": "full silhouette inspected, hidden far limbs/tiny tails can be naturally occluded",
+    "maximumFantasyColumn": "A"
+  },
+  "limits": [
+    "Requested20x baby height is design target, not measured from generated image; no baby silhouette calibration",
+    "Witch is generic pointed-hat scale cue, not imported game sprite",
+    "Camera/perspective and paired views are approximate, not identical calibrated geometry",
+    "Concept stills do not prove game visibility, gait, collision, cost or graph support",
+    "Old anatomy/flight/v1legend records preserved; current shipped-legend comparison remains separately pending"
+  ]
+}

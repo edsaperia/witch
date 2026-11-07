@@ -1,0 +1,39 @@
+{
+  "tool": "image_gen__imagegen built-in",
+  "date": "2026-11-07",
+  "authority": [
+    "1476#6708227119",
+    "1476#6708229124"
+  ],
+  "purpose": "revised mythical-scale concept targets only, not game assets or approved implementation",
+  "file": "legend-scale-v2.png",
+  "sha256": "b4b4e6bbfdc877acf1d368adaedcbdbc42ec9cb364fac7103a9e94a2cbf54a65",
+  "width": 2172,
+  "height": 724,
+  "layout": {
+    "columns": [
+      "A",
+      "B",
+      "C"
+    ],
+    "rows": [
+      "low hero",
+      "approximate elevated game camera"
+    ]
+  },
+  "prompts": [
+    "Photoreal epic fantasy zoological concept comparison SHEET, exactly2rows x3columns six separated equal panels. SAME3concepts repeated: columns A/B/C; TOP ROW low near-ground hero view, BOTTOM ROW game camera elevated looking down30degrees, right-facing side rotated34degrees towards viewer, whole creature. Every panel shows ENTIRE giant with margins PLUS a tiny human WITCH in pointed hat beside its nearest foot and normal FOREST TREES around it for unmistakable scale. Legendary animal about20times its baby height and taller than tree crowns, colossal weight weathered like a landform, distant parts atmospheric haze. Witch and trees must be in ALL6 panels, not only first. No cropping giant/tail/ears. Keep concept identity same vertically. No text/labels. ARMADILLO ninebanded family: low dome, pointed long snout upright narrow ears short stout claws ringed tapering tail. HUGE EMPTY margins entire tail/snout all panels giant occupies60percent width. Forest scale trees mesquite/juniper crown below dome, tiny WITCH beside forefoot in ALL6panels, no giant foreground trees. Scrub wash cracked clay/sandybanks/sun-split boulders. A MAXIMUM FANTASY: epoch rolling worldshield, enormous true shoulder/pelvic shields and flexible TRANSVERSE middle armor bands weathered like red sediment cliffs; glowing amber seams reveal ancient carved histories and miniature shrines inset in broad shields; halfcurl with head/ears and tail still visible, a fantasy ball state implied not pangolin leaf scales. B: earthshaper armadillo immense digging foreclaws like stone plough blades, levitating dry clay rings rise from ground as it tunnels; sparse cracks of ochre light, whole animal aboveground. C: star-forged sentinel whose shield is meteoric dark iron etched by epochs with tiny silver votive bells, no glowing ring uniform. Colossal rooted mass species recognisable, hero top/game30degree bottom same3designs. No text."
+  ],
+  "inspection": {
+    "witchAndForestCues": "visually inspected in all six panels",
+    "wholeCreature": "full silhouette inspected, hidden far limbs/tiny tails can be naturally occluded",
+    "maximumFantasyColumn": "A"
+  },
+  "limits": [
+    "Requested20x baby height is design target, not measured from generated image; no baby silhouette calibration",
+    "Witch is generic pointed-hat scale cue, not imported game sprite",
+    "Camera/perspective and paired views are approximate, not identical calibrated geometry",
+    "Concept stills do not prove game visibility, gait, collision, cost or graph support",
+    "Old anatomy/flight/v1legend records preserved; current shipped-legend comparison remains separately pending"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "tool": "image_gen__imagegen built-in",
+  "date": "2026-11-07",
+  "authority": [
+    "1476#6708227119",
+    "1476#6708229124"
+  ],
+  "purpose": "revised mythical-scale concept targets only, not game assets or approved implementation",
+  "file": "legend-scale-v2.png",
+  "sha256": "26e96ca3b004473f019f0d4e463c82fa079414aac5f1f5341111f7909a824a9a",
+  "width": 1536,
+  "height": 1024,
+  "layout": {
+    "columns": [
+      "A",
+      "B",
+      "C"
+    ],
+    "rows": [
+      "low hero",
+      "approximate elevated game camera"
+    ]
+  },
+  "prompts": [
+    "Photoreal epic fantasy zoological concept comparison SHEET, exactly2rows x3columns six separated equal panels. SAME3concepts repeated: columns A/B/C; TOP ROW low near-ground hero view, BOTTOM ROW game camera elevated looking down30degrees, right-facing side rotated34degrees towards viewer, whole creature. Every panel shows ENTIRE giant with margins PLUS a tiny human WITCH in pointed hat beside its nearest foot and normal FOREST TREES around it for unmistakable scale. Legendary animal about20times its baby height and taller than tree crowns, colossal weight weathered like a landform, distant parts atmospheric haze. Witch and trees must be in ALL6 panels, not only first. No cropping giant/tail/ears. Keep concept identity same vertically. No text/labels. POLAR BEAR Ursus maritimus, long forward neck small low tapered head black nose, tiny round ears, immense paws, creamywhite fur NO grizzly hump. Every creature occupies ONLY65percent panel width with generous margins so entire rump/tail/feet fit. Pack-ice story blackwater leads, pressure ridges, wind-combed snow; normal forest trees on distant SHORE and tiny witch on nearest floe beside paw in ALL6panels. A MAXIMUM FANTASY: a walking GLACIER FLEECE, immense wind-combed coat hardened into layered ice/snow strata with dark tidal leads glowing deepblue between locks; frozen ancient offerings embedded in collar, bear head/legs recognizable, no ice cube replacement body. B: star navigator whose broad paws carry slowly orbiting tiny aurora constellations and carved ice wayfinding marks, scarce blue light no huge crown. C: polar matriarch bearing translucent pressure-ridge crystal shoulder fins grown through old coat, weathered bronze offering chain, restrained blizzard spirit haze. Giants older than shore trees, body above canopy, atmosphericdepth, distinct each own. BOTH views all3 concepts, witch+trees every panel.",
+    "Edit exact6panel polar bear concepts preserving A glacierfleece/Bstarnavigator/Ccrystalpressure-ridge identities. Correct FRAMING AND HEADPOSTURE: zoom OUT enough for complete rump/tiny tail/allpaws/head/icefins in every panel with15percent margin, especially top row. Head carried forward LOW on long neck, not high on doglike neck, ears tiny round, no grizzlyhump. Preserve tiny witch beside paw and normal shoreforest TREES shorter than giant in ALL6panels. Lowhero top/elevated30degree gameview bottom, same designs vertically, atmospheric packice. No cropping, no new costume or text. This is a colossal polar bear, not a white grizzly with standard crystal crown."
+  ],
+  "inspection": {
+    "witchAndForestCues": "visually inspected in all six panels",
+    "wholeCreature": "full silhouette inspected, hidden far limbs/tiny tails can be naturally occluded",
+    "maximumFantasyColumn": "A"
+  },
+  "limits": [
+    "Requested20x baby height is design target, not measured from generated image; no baby silhouette calibration",
+    "Witch is generic pointed-hat scale cue, not imported game sprite",
+    "Camera/perspective and paired views are approximate, not identical calibrated geometry",
+    "Concept stills do not prove game visibility, gait, collision, cost or graph support",
+    "Old anatomy/flight/v1legend records preserved; current shipped-legend comparison remains separately pending"
+  ]
+}
