@@ -20,7 +20,7 @@ Target review only: no graph candidate or shipped-art likeness acceptance. Four 
 
 Generated pose sheets are adult anatomy suggestions, not animation clips or runtime acceptance.
 
-## Proposed legend picks — Ed review pending
+## Previous-iteration legend picks — preserved
 
 | Species | Pick | Signature element | Defining trait / story | Missing graph features |
 |---|---|---|---|---|
@@ -30,3 +30,27 @@ Generated pose sheets are adult anatomy suggestions, not animation clips or runt
 | penguin | A: Deep-song elder | Deep-song gorget with sheltered chick | This follows Ed’s own example: a penguin worshipped for surviving epochs, carrying ancient songs and protecting young | Scar/weathering masks, curved gorget emissive band placement, individual offering sockets, chick child-instance attachment with independent readable body; stiff flipper and protective pose support. No generic aerial wing rig required. |
 
 Twelve concepts in four three-panel sheets; current-legend raster comparison montage PENDING canonical cloud evidence1901#6708035999. No substitution of generated art for today. Available other-lane L1/L9 summaries had no signature picks at inspection; canonical cross-lane spread check remains.
+
+## Current colossal revision picks (Ed judges)
+
+| Species | Proposed pick | Signature element | Top3 priorities | Missing graph features |
+|---|---|---|---|---|
+| owl | C: Time-Seer | Concentric feather disc showing different times | Species silhouette; witch/trees colossal mass; maximum-fantasy nature | Concentric feather-disc layers with bounded time/light material; feather strata/overgrowth masks; shrine attachment sockets aligned to curved mantle, silhouette LOD and colossal bounds/culling; giant posture must retain flight/ground state compatibility. |
+| raven | C: Omen Archivist | Impossible hoard-gravity sphere held in the raven’s bill | Species silhouette; witch/trees colossal mass; maximum-fantasy nature | Rigid offering instancing and bounded orbit/hoard anchor at bill; feather plate wear/scars; beak gape articulation independent of skull; giant bounds and reduced-detail distant representations. Sphere remains visual art target, not gameplay attraction or a new mechanic. |
+| heron | C: Tide-Scribe | River-like neck and suspended living-water ribbon at dagger bill | Species silhouette; witch/trees colossal mass; maximum-fantasy nature | Poseable long-neck local frames, anchored flowing-water surface and restrained fish-light instances, contact-aligned ripple visual; feather wear, long bird leg/toe support, giant bounds/LOD and flight-to-ground transitions. No water simulation/gameplay is implemented. |
+| penguin | C: Epoch Singer | Aurora-like deep-song strata in the emperor’s breast and gorget | Species silhouette; witch/trees colossal mass; maximum-fantasy nature | Curved breast/gorget song material and bounded projected sound contours; weathered layered feather surface, world-grown tree/moss attachment sockets with LOD, independent chick child instance, rigid flippers and webbed feet; colossal bounds and camera visibility. These are art targets only, no new sound or game system authorized. |
+
+Twelve revised concepts, each with witch+trees, with game-camera versions for all12 (four6panel sheets). At leastC in every species is maximum fantasy. Prior plain plates remain previousiteration. Current-source comparisons are now actual albedo beside generated references, not a pending cloud dependency.
+
+Cross-lane spread recheck: available L1/L3/L7/L8/L9 summaries inspected before these picks. L8 mentions moose water-palms from L4: heron uses water for its specific fishing/river-neck strike, not a repeated basin shape. L9 sphinx uses sandstone weathering; geological age here is a shared age cue, not the primary signature. Owl time-disc/raven hoard-gravity/heron living-water/penguin deep-song differ; owl and penguin overgrowth belongs to shrine/shore worlds and must not become universal back-trees. No claim of completed64species motif audit; canonical checks later picks.
+
+## Final review index
+
+[Evidence manifest](l6-evidence.json) records exact current source, extraction settings, dimensions and hashes; four comparison generated-panel pixel copies verified row-for-row. All new scale concepts and comparison sheets visually inspected. Earlier pending-raster statements are historical and resolved by browser-free source extraction. Full target package ready for coordinator/Ed review, not implementation acceptance.
+
+| Species | Current proposed pick | Signature element | Top3 priorities | Missing graph features | Comparison |
+|---|---|---|---|---|---|
+| owl | C Time-Seer | Time-bearing feather disc | Owl face; epochs; colossal silhouette | Layered disc material/shrine sockets/LOD | [sheet](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/owl/legend-comparison-v2.png) |
+| raven | C Omen Archivist | Hoard-gravity at bill | Heavy bill; collected objects; giant mass | Bill anchor/orbit instances/feather wear | [sheet](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/raven/legend-comparison-v2.png) |
+| heron | C Tide-Scribe | River neck and bill water ribbon | S-neck; trailing legs; mere magic | Neck local frames/water anchor/bird feet | [sheet](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/heron/legend-comparison-v2.png) |
+| penguin | C Epoch Singer | Deep-song breast/gorget | Emperor silhouette; webbed feet; protective landform | Song surface/overgrowth/chick instance | [sheet](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/penguin/legend-comparison-v2.png) |

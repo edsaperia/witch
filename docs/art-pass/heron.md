@@ -1,3 +1,5 @@
+> Current legend direction: second-pass colossal/fantasy concepts below supersede the restrained first-pass pick. Prior anatomy/flight targets and plates are preserved.
+
 # heron: skeleton target
 
 Target: **Grey heron (Ardea cinerea)**. Real anatomy wins over both generated images and today's sprite.
@@ -103,7 +105,7 @@ Authority1476#6707981581, corrected by6707992824: fit and VARIETY, not a blanket
 
 art/areas/mangrove-heronry/recipe.js text: mud/reed litter, mere edge, reeds/rushes, tall mangroves and elms with nests, old jetty. This recipe is the current area story reached through areas/index.js, not an invented icy lake.
 
-### Proposed strongest pick: A — Mere keeper
+### Previous-iteration pick: A — Mere keeper
 
 Stillness, a long neck and the sudden dagger-bill strike become the source of power. The narrow water-light throat is unlike the raven’s object-hoard or owl’s radial disc. Scarred bill and worn reed ankle bands make it old without making it a generic armoured wader. The living-jetty concept is strong but risks turning legs into literal wood; ink plumes are less clearly the animal’s defining trait.
 
@@ -137,3 +139,39 @@ Legend sheet provenance: built-in image_gen.imagegen,2026-11-07, one three-conce
 Exact legend prompt:
 
 > Create one polished photoreal-fantasy creature concept comparison sheet, THREE distinct whole-creature panels A B C, plain neutral warm grey background, no environment. Species heron, clearly recognisable bird anatomy, camera looking down30degrees and longitudinal axis turned35degrees towards viewer, orthographic-like long lens, every toe/wing/tail visible inside margins. Each concept ancient wise powerful and mysterious, evolved silhouette not merely adult enlarged; distinct designs, no common uniform. A: Mere keeper: ancient grey heron with impossibly long still S-neck and dagger bill, worn knotted reed bands at ankles, long scar on bill, water-reflection light held as a thin stripe along throat; stillness before strike, mangrove mere. B: Jetty sentinel: giant old heron with driftwood-coloured weathered legs and a small battered brass fishermans ring around bill base, subtle barnacle ankle crust; no tree on back; stands like a living pier. C: Tide scribe: narrow heron with long ink-dark calligraphic throat plumes and translucent water-thread feather tips, slow wise posture and chipped bill; reedbeds and old jetty. Small A B C labels only, no prose. Grounded poses. Animal-specific nature and area story must drive optional magic/jewellery. These are proposed legend targets, not today's game sprites.
+
+## Colossal maximum-fantasy revision (7November)
+
+Authority1476#6708227119 and later6708229124, overriding strict plain-background/no-scale-props for these revised concepts. Source ART-GUIDE0b/0c, DESIGN (legend about20times baby height and above treetops), area story above.
+
+[Three revised concepts, hero and game-camera rows](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/heron/legend-scale-v2.png). Top A/B/C: near-ground hero. Bottom A-game/B-game/C-game: generated approx30degree downward views of the same design ideas. Each panel includes witch plus forest trees. These are generated concepts, not actual game screenshots.
+
+### Current proposed pick — C: Tide-Scribe
+
+The long S-neck and patient fishing strike turn into impossible command of water above the mangrove mere. The water ribbon/fish lights arise from heron nature and place, rather than a decoration shared by every legend. A is the restrained luminous throat; B is a relic-covered jetty sentinel. C makes power visible without changing the family.
+
+Signature element: **River-like neck and suspended living-water ribbon at dagger bill**. Ed judges; no approval/activation inferred.
+
+Chosen legend checklist: Long narrow S-neck, small head and dagger bill must remain heron; long thin avian legs and toes reach through the canopy; water ribbon comes from bill and reaches mere with fish-light silhouettes; slate-like feather mantle carries age; witch stays visible near feet; avoid a straight crane neck.
+
+Body plan: Neck arc1.5–2B, visible legs1.1–1.5B, bill .45–.65B. Most mass remains the narrow trunk/wing roots; exaggerate surface age and reach rather than inflating legs to tree trunks. About20 own baby heights, taller than trees, to be measured on future graph output.
+
+New graph requirements: Poseable long-neck local frames, anchored flowing-water surface and restrained fish-light instances, contact-aligned ripple visual; feather wear, long bird leg/toe support, giant bounds/LOD and flight-to-ground transitions. No water simulation/gameplay is implemented.
+
+### Actual image inspection and limits
+
+All6panels show a witch and mangrove trees beneath the giant. C-game still exposes the S-neck and water ribbon from above. Heron top bill is close to panel edge; camera and exact scale vary. The water ribbon is a concept effect, not evidence the renderer can afford it. Reflection motif overlaps L4 moose water palms in element only, but here it is a flowing bill-to-mere strike rather than static antler pools.
+
+The six panels are independent generated views, not exact multiview reconstruction. Witch/tree cues establish intended colossal size; there is no baby specimen in every panel and no metric20:1 proof. Future graph output must measure that ratio against the species age0 model. No native-size gameplay/readability/performance claim.
+
+### Source-labelled current comparison
+
+[Current albedo PNG](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/heron/current-legend-albedo.png) and [side-by-side comparison](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/heron/legend-comparison-v2.png): panel1 left is actual source albedo at2x nearest-neighbor; panel2 right is the generated6panel sheet unresized. Different independent picture scales deliberately do NOT establish current versus target world scale.
+
+Current source524b0acaa43bb9975e7b2834ff9a55cbca4b3319, confirmed equal to freshly fetched prototype for art/style/tuning at extraction; age3/frame0/towards, defaultStyle plus config/style style, explicitBold and tuningpixel3. Browser-free critter/speciesColours/bake with minimal in-memory createImageData/putImageData canvases; lossless RGBA→PNG. This is unlit albedo, not runtime lighting or proof of default artStyle. No browser/server/allocation used. Prior cloud-comparison request6708035999 is now resolved by this read-only lightweight extraction. The earlier raster-pending text is historical.
+
+Second-pass provenance: built-in image_gen.imagegen,2026-11-07, one six-panel generation; original PNG inspected. No game rendering. SHA256 1337f7789b7065ed0dc59eca0ca10f3de4908b30c94dc61023c6c96e806eed44.
+
+Exact scale/fantasy prompt:
+
+> Six-panel fantasy creature design review sheet for heron. THREE distinct legend concepts A B C shown twice: top row three low-near-ground heroic views; bottom row SAME3 designs at game camera looking DOWN30degrees, heading35degrees towardsviewer from side. In EVERY panel include a clearly visible tiny adult WITCH with pointed hat beside creature's FOOT and full FOREST TREES around its feet for absolute scale. Legends roughly20times babybirdheight, roughly12witchheights and taller than trees: treetops reach about lowerhalf giant, witch tiny1/12height; do NOT draw ordinary animal-sized beside witch. Whole giant including feet/tail/wingtips inside EACH frame, generous margins. Painterly photoreal-fantasy concept art, species instantlyrecognizable, colossal landform mass and weathering not just scaledadult. Ground and sparse areaenvironment allowed, atmospheric depth on farbody, readable bold silhouette. Concepts: A Mere Keeper: colossal grey heron, impossibly long S-neck bearing a slender ribbon of reflected-water light, dagger bill scarred like worn stone, long legs like ancient jetty piles but still avian, sparse reed bands; mangrove mere. B Jetty Sentinel: heron giant with old bronze fishing rings and barnacled ankle armour, drowned wood patina on feather edges, long narrow trunk, living still pier, no tree on back. C MAXIMUM FANTASY Tide-Scribe: unmistakable heron striding above a flooded mangrove forest, impossibly long S-neck bends like a river, its dagger bill holds a suspended vertical ribbon of water with tiny fish-shaped lights; feathered wing mantle like eroded wet slate, long legs wade through forest canopy, stillness commands the mere, no raven sphere. Keep bird anatomy2legs2wings. Penguin ifpresent: WEBBED feet no raptor claws. Owl ifpresent: feathered not mammal ears. Labels top A B C, bottom A-game B-game C-game. No prose. Eachconcept itsownsignature, show supernaturalpower. Everypanel mustshow witch AND trees, camera variation no detachedportraits.

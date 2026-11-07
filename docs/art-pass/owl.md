@@ -1,3 +1,5 @@
+> Current legend direction: second-pass colossal/fantasy concepts below supersede the restrained first-pass pick. Prior anatomy/flight targets and plates are preserved.
+
 # owl: skeleton target
 
 Target: **Spotted owl (Strix occidentalis)**. Real anatomy wins over both generated images and today's sprite.
@@ -102,7 +104,7 @@ Authority1476#6707981581, corrected by6707992824: fit and VARIETY, not a blanket
 
 art/areas.js stone-shrine text: grassy/stony floor, mossy henges, little/big stones and a shrine; current roster also places the spotted owl in cold rainforest. The target combines the shrine association with the quiet forest listener, without attaching a tree to its back.
 
-### Proposed strongest pick: A — Henge listener
+### Previous-iteration pick: A — Henge listener
 
 It makes the owl’s own extraordinary listening and facial disc feel ancient and powerful. Worn feather edges and a healed bill scar carry age; a great quiet disc is mysterious without borrowing a universal crystal crown. The spirit-wing alternative is allowed, but less specific than the animal’s own listening apparatus; the stone collar is plausible yet weaker in silhouette.
 
@@ -136,3 +138,39 @@ Legend sheet provenance: built-in image_gen.imagegen,2026-11-07, one three-conce
 Exact legend prompt:
 
 > Create one polished photoreal-fantasy creature concept comparison sheet, THREE distinct whole-creature panels A B C, plain neutral warm grey background, no environment. Species owl, clearly recognisable bird anatomy, camera looking down30degrees and longitudinal axis turned35degrees towards viewer, orthographic-like long lens, every toe/wing/tail visible inside margins. Each concept ancient wise powerful and mysterious, evolved silhouette not merely adult enlarged; distinct designs, no common uniform. A: Henge listener: gigantic rounded facial disc feathered like concentric sound-catching bowls, silver worn feather edges, one old healed bill scar; quiet moss-tone spotted owl with folded cloak wings, no added eyes; ancient shrine guardian whose listening is power. B: Moon witness: spotted owl with translucent spirit-wing echoes precisely following its own feather fans, not extra limbs; old barred cloak and weathered dark disc, shrine moon oracle. C: Stone vigil: massive spotted owl with worn stone prayer collar and battered small bronze brow ornament, deep chest and huge talons, no horns; guardian of mossy henges. Small A B C labels only, no prose. Grounded poses. Animal-specific nature and area story must drive optional magic/jewellery. These are proposed legend targets, not today's game sprites.
+
+## Colossal maximum-fantasy revision (7November)
+
+Authority1476#6708227119 and later6708229124, overriding strict plain-background/no-scale-props for these revised concepts. Source ART-GUIDE0b/0c, DESIGN (legend about20times baby height and above treetops), area story above.
+
+[Three revised concepts, hero and game-camera rows](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/owl/legend-scale-v2.png). Top A/B/C: near-ground hero. Bottom A-game/B-game/C-game: generated approx30degree downward views of the same design ideas. Each panel includes witch plus forest trees. These are generated concepts, not actual game screenshots.
+
+### Current proposed pick — C: Time-Seer
+
+The owl’s forward-looking face becomes impossible sight across epochs. A and B remain valid quieter choices: A exaggerates listening, B uses spirit-feather memories. C carries the clearest maximum-fantasy distance from an ordinary old owl, while its two natural eyes, hooked bill, barred chest and folded wings still read as owl.
+
+Signature element: **Concentric feather disc showing different times**. Ed judges; no approval/activation inferred.
+
+Chosen legend checklist: Protect the round feather disc and two natural eyes; keep multiple dawn/night bands inside the disc rather than generic extra eyeballs; shoulders become old feather strata with small shrine ledges; scarred talons support immense chest; tiny witch and henges sit below the feet; upper body exceeds forest canopy.
+
+Body plan: Trunk remains a deep owl mass, not a thin pillar. Disc .9–1.2B, massive layered shoulder mantle1.3–1.6B wide; B is chest-to-rump. Model whole height about20 own baby heights per DESIGN, not20 witch heights. Apparent illustration ratios are not calibrated geometry.
+
+New graph requirements: Concentric feather-disc layers with bounded time/light material; feather strata/overgrowth masks; shrine attachment sockets aligned to curved mantle, silhouette LOD and colossal bounds/culling; giant posture must retain flight/ground state compatibility.
+
+### Actual image inspection and limits
+
+All6panels contain witch and trees; head exceeds canopy and ground bodies are legible. C-game shows the disc from above, but some terrain/time bands change between hero and game rows: these are matched design variants, not identical geometry. A/B eyes are paler than spotted-owl anatomy; selectedC keeps dark natural eyes. Spirit echoes can approach panel edges; no exact camera/scale proof.
+
+The six panels are independent generated views, not exact multiview reconstruction. Witch/tree cues establish intended colossal size; there is no baby specimen in every panel and no metric20:1 proof. Future graph output must measure that ratio against the species age0 model. No native-size gameplay/readability/performance claim.
+
+### Source-labelled current comparison
+
+[Current albedo PNG](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/owl/current-legend-albedo.png) and [side-by-side comparison](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/owl/legend-comparison-v2.png): panel1 left is actual source albedo at2x nearest-neighbor; panel2 right is the generated6panel sheet unresized. Different independent picture scales deliberately do NOT establish current versus target world scale.
+
+Current source524b0acaa43bb9975e7b2834ff9a55cbca4b3319, confirmed equal to freshly fetched prototype for art/style/tuning at extraction; age3/frame0/towards, defaultStyle plus config/style style, explicitBold and tuningpixel3. Browser-free critter/speciesColours/bake with minimal in-memory createImageData/putImageData canvases; lossless RGBA→PNG. This is unlit albedo, not runtime lighting or proof of default artStyle. No browser/server/allocation used. Prior cloud-comparison request6708035999 is now resolved by this read-only lightweight extraction. The earlier raster-pending text is historical.
+
+Second-pass provenance: built-in image_gen.imagegen,2026-11-07, one six-panel generation; original PNG inspected. No game rendering. SHA256 5ddb098b3a11f7534bb22cd9760bdf380c9bbf03a325c8d5f38743e19aa56fbc.
+
+Exact scale/fantasy prompt:
+
+> Six-panel fantasy creature design review sheet for owl. THREE distinct legend concepts A B C shown twice: top row three low-near-ground heroic views; bottom row SAME3 designs at game camera looking DOWN30degrees, heading35degrees towardsviewer from side. In EVERY panel include a clearly visible tiny adult WITCH with pointed hat beside creature's FOOT and full FOREST TREES around its feet for absolute scale. Legends roughly20times babybirdheight, roughly12witchheights and taller than trees: treetops reach about lowerhalf giant, witch tiny1/12height; do NOT draw ordinary animal-sized beside witch. Whole giant including feet/tail/wingtips inside EACH frame, generous margins. Painterly photoreal-fantasy concept art, species instantlyrecognizable, colossal landform mass and weathering not just scaledadult. Ground and sparse areaenvironment allowed, atmospheric depth on farbody, readable bold silhouette. Concepts: A Henge Listener: owl giant with enormous layered sound-catching feather disc, furrowed basalt-like brown feather mantle, moss in old feather ridges, ancient stone offerings under talons; listening makes air ripple, shrine story. B Moon Witness: owl giant whose own feathered wings have pale translucent spirit echoes showing earlier wing positions, scarred round face, moonlit bars; distinct spirit-feather memory. C MAXIMUM FANTASY Time-Seer: unmistakable spotted owl as living ancient henge, massive round facial disc contains concentric feather rings displaying different dawns/stars/time, two natural dark eyes remain; cloak wings like weathered stratified cliffs with small mossy shrine ledges, no extra literal eyeballs, animal sees across epochs. Keep bird anatomy2legs2wings. Penguin ifpresent: WEBBED feet no raptor claws. Owl ifpresent: feathered not mammal ears. Labels top A B C, bottom A-game B-game C-game. No prose. Eachconcept itsownsignature, show supernaturalpower. Everypanel mustshow witch AND trees, camera variation no detachedportraits.

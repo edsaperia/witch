@@ -1,3 +1,5 @@
+> Current legend direction: second-pass colossal/fantasy concepts below supersede the restrained first-pass pick. Prior anatomy/flight targets and plates are preserved.
+
 # penguin: skeleton target
 
 Target: **Emperor penguin (Aptenodytes forsteri)**. Real anatomy wins over both generated images and today's sprite.
@@ -75,7 +77,7 @@ Authority1476#6707981581, corrected by6707992824: fit and VARIETY, not a blanket
 
 art/areas/rookery/recipe.js text: snow over dark wet shingle, black sea rocks, tussock grass/pebbles, wind-stunted trees and a ring of pebble nests. It is a shore, not polar-bear pack ice. Ed’s explicit elder-god penguin knows deep songs and the age of stars.
 
-### Proposed strongest pick: A — Deep-song elder
+### Previous-iteration pick: A — Deep-song elder
 
 This follows Ed’s own example: a penguin worshipped for surviving epochs, carrying ancient songs and protecting young. Sea-worn back and scarred white breast show age, while low song-lines in its natural orange neck patch are its power. Shell/pebble offerings belong to the rookery. Ice armour is allowed but is a less precise fit to the shingle shore; star ornament risks being a generic astronomy badge.
 
@@ -113,3 +115,43 @@ Exact generation prompt:
 Exact correction prompt:
 
 > Edit this three-concept emperor penguin legend sheet. Preserve all three designs A/B/C, markings, necklaces, chicks, whole-body framing and plain background. Correct ONLY anatomy of feet of ALL adult penguins and chicks: replace clawed bird-of-prey/raptor talons with correct emperor penguin short broad BLACK WEBBED FEET, three forward toes visibly joined by continuous webbing, low under belly, short blunt nails only, no long curling claws, no extra toes. Preserve emperor species, no mammalian feet. This correction is mandatory for every panel. Keep whole feet within frame.
+
+## Colossal maximum-fantasy revision (7November)
+
+Authority1476#6708227119 and later6708229124, overriding strict plain-background/no-scale-props for these revised concepts. Source ART-GUIDE0b/0c, DESIGN (legend about20times baby height and above treetops), area story above.
+
+[Three revised concepts, hero and game-camera rows](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/penguin/legend-scale-v2.png). Top A/B/C: near-ground hero. Bottom A-game/B-game/C-game: generated approx30degree downward views of the same design ideas. Each panel includes witch plus forest trees. These are generated concepts, not actual game screenshots.
+
+### Current proposed pick — C: Epoch Singer
+
+This pushes Ed’s elder-god example to a living coastal landform: deep songs become visible through the old white breast, while stunted shore trees inhabit ancient back seams and a chick is sheltered below. A keeps a more earthly song/offerings version; B tests ice-armoured protection. C is maximum fantasy and unmistakably a penguin, with stiff flippers rather than magical aerial wings.
+
+Signature element: **Aurora-like deep-song strata in the emperor’s breast and gorget**. Ed judges; no approval/activation inferred.
+
+Chosen legend checklist: Emperor black back/white belly/orange gorget and upright outline remain visible; feet broad black webbed rather than raptor talons; song bands follow breast and throat instead of generic starfield coating; sheltered grey chick remains separate; shore trees are tiny against back; witch at foot establishes scale; old feather strata suggest epochs.
+
+Body plan: Low heavy belly and near-vertical trunk; head .20–.26B, stiff flippers .55–.75B, short visible legs .08–.15B. Whole height about20 own baby heights, not20times chick depicted at foot unless the illustration is calibrated. The generated chick is symbolic and larger than strict game ratio in some panels; graph acceptance must use actual age0 model.
+
+New graph requirements: Curved breast/gorget song material and bounded projected sound contours; weathered layered feather surface, world-grown tree/moss attachment sockets with LOD, independent chick child instance, rigid flippers and webbed feet; colossal bounds and camera visibility. These are art targets only, no new sound or game system authorized.
+
+### Actual image inspection and limits
+
+All6panels include witch and trees and show a mass above treetops. The first v2 attempt again suggested sharp talons; a targeted webbed-foot correction is required and retained in provenance. Hero/game versions vary in exact chick scale and tree arrangement, so not a calibrated before/after or exact game projection. C’s luminous throat ring risks reading as a halo: the chosen implementation target is outgoing low song contours anchored to gorget, not universal jewellery.
+
+The six panels are independent generated views, not exact multiview reconstruction. Witch/tree cues establish intended colossal size; there is no baby specimen in every panel and no metric20:1 proof. Future graph output must measure that ratio against the species age0 model. No native-size gameplay/readability/performance claim.
+
+### Source-labelled current comparison
+
+[Current albedo PNG](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/penguin/current-legend-albedo.png) and [side-by-side comparison](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/penguin/legend-comparison-v2.png): panel1 left is actual source albedo at2x nearest-neighbor; panel2 right is the generated6panel sheet unresized. Different independent picture scales deliberately do NOT establish current versus target world scale.
+
+Current source524b0acaa43bb9975e7b2834ff9a55cbca4b3319, confirmed equal to freshly fetched prototype for art/style/tuning at extraction; age3/frame0/towards, defaultStyle plus config/style style, explicitBold and tuningpixel3. Browser-free critter/speciesColours/bake with minimal in-memory createImageData/putImageData canvases; lossless RGBA→PNG. This is unlit albedo, not runtime lighting or proof of default artStyle. No browser/server/allocation used. Prior cloud-comparison request6708035999 is now resolved by this read-only lightweight extraction. The earlier raster-pending text is historical.
+
+Second-pass provenance: built-in image_gen.imagegen,2026-11-07, one six-panel generation plus one targeted correction of webbedfeet; revised PNG inspected. No game rendering. SHA256 857c0fcd571e212600a62ee4d3e06876732c4165022b3042e3e84142c914f8bf.
+
+Exact scale/fantasy prompt:
+
+> Six-panel fantasy creature design review sheet for penguin. THREE distinct legend concepts A B C shown twice: top row three low-near-ground heroic views; bottom row SAME3 designs at game camera looking DOWN30degrees, heading35degrees towardsviewer from side. In EVERY panel include a clearly visible tiny adult WITCH with pointed hat beside creature's FOOT and full FOREST TREES around its feet for absolute scale. Legends roughly20times babybirdheight, roughly12witchheights and taller than trees: treetops reach about lowerhalf giant, witch tiny1/12height; do NOT draw ordinary animal-sized beside witch. Whole giant including feet/tail/wingtips inside EACH frame, generous margins. Painterly photoreal-fantasy concept art, species instantlyrecognizable, colossal landform mass and weathering not just scaledadult. Ground and sparse areaenvironment allowed, atmospheric depth on farbody, readable bold silhouette. Concepts: A Deep-Song Elder: colossal emperor penguin sea-worn like a black coastal cliff, orange gorget projects broad low glowing song-contours through air, shell/pebble offerings grown into old feather folds, grey chick protected between broad BLACK WEBBED feet. B Rookery Shield: emperor penguin giant with protective stiff flippers around small rookery kin, natural ice armour only on shoulders, scarred white belly, low black shingle body mass, correct BLACK WEBBED penguin feet not talons. C MAXIMUM FANTASY Epoch Singer: unmistakable emperor penguin elder god towering over shore forest, black back like a glaciated headland with tiny wind-stunted trees in ancient moss seams, white breast holds slow aurora-like geological song bands, orange neck patch opens into resonant gold sound-rings rather than necklace halo, grey chick at broad BLACK WEBBED feet, wise elongated bill, flippers remain stiff penguin flippers, cosmic deep songs not aerial wings. Keep bird anatomy2legs2wings. Penguin ifpresent: WEBBED feet no raptor claws. Owl ifpresent: feathered not mammal ears. Labels top A B C, bottom A-game B-game C-game. No prose. Eachconcept itsownsignature, show supernaturalpower. Everypanel mustshow witch AND trees, camera variation no detachedportraits.
+
+Exact foot correction prompt:
+
+> Correct anatomy ONLY in this6panel giant emperor penguin sheet, preserve every A/B/C design and hero/gameview, witch and foresttrees, colossal scale, lighting and composition. ALL SIX adult penguins must have broad black WEBBED PENGUIN FEET: THREE short forwardtoes joined by visibly continuous leathery webbing making a broad flattened paddle foot, tiny shortblunt nails not talons, no bird-of-prey claws. Both feet remain low beneath belly. Grey chicks also penguinfeet. Do not add any gianttalons or extra toes. Preserve all concept differences and entirebody framing. Anatomically emperor penguin despite giantfantasy.

@@ -1,0 +1,157 @@
+{
+  "source": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
+  "scope": "reference targets only; generated scale cues not metric20to1 proof",
+  "comparison": "1 actualBoldalbedo2xnearest /2 exactgenerated6panel sheet",
+  "entries": [
+    {
+      "species": "owl",
+      "current": {
+        "species": "owl",
+        "source": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
+        "level": 3,
+        "frame": 0,
+        "facing": "towards",
+        "style": "explicit Bold albedo; not runtime lighting/default-style proof",
+        "pixel": 3,
+        "width": 259,
+        "height": 299,
+        "elapsedMs": 376.8188
+      },
+      "files": {
+        "legend-scale-v2": {
+          "sha256": "5ddb098b3a11f7534bb22cd9760bdf380c9bbf03a325c8d5f38743e19aa56fbc",
+          "bytes": 3475145
+        },
+        "comparison-v2": {
+          "sha256": "27db3c46b7f982edf2eef2f85e76ce4272a5c50f4960a1658c9de91efe63504f",
+          "bytes": 3734872
+        },
+        "current": {
+          "sha256": "a3a0079aec348dc9f4056b5c96e9cd51dd8741e33ddc89bd0654d289acdec099",
+          "bytes": 15685
+        }
+      }
+    },
+    {
+      "species": "raven",
+      "current": {
+        "species": "raven",
+        "source": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
+        "level": 3,
+        "frame": 0,
+        "facing": "towards",
+        "style": "explicit Bold albedo; not runtime lighting/default-style proof",
+        "pixel": 3,
+        "width": 393,
+        "height": 311,
+        "elapsedMs": 880.2202
+      },
+      "files": {
+        "legend-scale-v2": {
+          "sha256": "7fc79fca27ce788563bb84f3542066befb8a401cfcb994fb4a2d0149c9300aff",
+          "bytes": 3344310
+        },
+        "comparison-v2": {
+          "sha256": "7950e1a60ffabcd3e3636498428577c2c404b5290425c730a853dbc89e49649b",
+          "bytes": 3659424
+        },
+        "current": {
+          "sha256": "341970bd725c29d274e156a4053da4edaeff929825d17de64efcdf4af35b161a",
+          "bytes": 19008
+        }
+      }
+    },
+    {
+      "species": "heron",
+      "current": {
+        "species": "heron",
+        "source": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
+        "level": 3,
+        "frame": 0,
+        "facing": "towards",
+        "style": "explicit Bold albedo; not runtime lighting/default-style proof",
+        "pixel": 3,
+        "width": 158,
+        "height": 262,
+        "elapsedMs": 338.66790000000003
+      },
+      "files": {
+        "legend-scale-v2": {
+          "sha256": "1337f7789b7065ed0dc59eca0ca10f3de4908b30c94dc61023c6c96e806eed44",
+          "bytes": 3311962
+        },
+        "comparison-v2": {
+          "sha256": "3096312be20c22913d812f690aca5aab24d96afce188b419b8e23058f4710030",
+          "bytes": 3591258
+        },
+        "current": {
+          "sha256": "21933ee4641664d650b3a1626b9f269a2f6712e29a37772110097f78df643a73",
+          "bytes": 7597
+        }
+      }
+    },
+    {
+      "species": "penguin",
+      "current": {
+        "species": "penguin",
+        "source": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
+        "level": 3,
+        "frame": 0,
+        "facing": "towards",
+        "style": "explicit Bold albedo; not runtime lighting/default-style proof",
+        "pixel": 3,
+        "width": 187,
+        "height": 272,
+        "elapsedMs": 655.7759000000001
+      },
+      "files": {
+        "legend-scale-v2": {
+          "sha256": "857c0fcd571e212600a62ee4d3e06876732c4165022b3042e3e84142c914f8bf",
+          "bytes": 3278852
+        },
+        "comparison-v2": {
+          "sha256": "d27023a8f622bcda14331ab32e5975ea8e41566cc98ea6df745b76d52771f0a3",
+          "bytes": 3589326
+        },
+        "current": {
+          "sha256": "37ff2759250fe0d2c747307802646ab18e28cabd29880b67cb2a4d5e62ee916e",
+          "bytes": 14462
+        }
+      }
+    }
+  ],
+  "pixelIntegrity": [
+    {
+      "id": "owl",
+      "width": 2336,
+      "height": 1104,
+      "sourcePanel": "1 left actual albedo2x nearest; originalPNG separately available",
+      "generatedPanel": "2 right exact unchanged generated6panel sheet",
+      "conceptPixelRowsVerified": true
+    },
+    {
+      "id": "raven",
+      "width": 2362,
+      "height": 1104,
+      "sourcePanel": "1 left actual albedo2x nearest; originalPNG separately available",
+      "generatedPanel": "2 right exact unchanged generated6panel sheet",
+      "conceptPixelRowsVerified": true
+    },
+    {
+      "id": "heron",
+      "width": 2336,
+      "height": 1104,
+      "sourcePanel": "1 left actual albedo2x nearest; originalPNG separately available",
+      "generatedPanel": "2 right exact unchanged generated6panel sheet",
+      "conceptPixelRowsVerified": true
+    },
+    {
+      "id": "penguin",
+      "width": 2336,
+      "height": 1104,
+      "sourcePanel": "1 left actual albedo2x nearest; originalPNG separately available",
+      "generatedPanel": "2 right exact unchanged generated6panel sheet",
+      "conceptPixelRowsVerified": true
+    }
+  ]
+}
