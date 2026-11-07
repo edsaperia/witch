@@ -1,0 +1,43 @@
+{
+  "tool": "image_gen__imagegen (built-in imagegen)",
+  "date": "2026-11-07",
+  "purpose": "synthetic anatomy/comparison reference only; never a game asset",
+  "prompt": "Create a photorealistic zoological brown-bear anatomy reference board, one image with an exact 2 by 2 grid of equal rectangular panels and generous plain warm-gray backgrounds. No text, no labels, no grid lines. Top row: the SAME adult brown/grizzly bear (Ursus arctos) in two matching full-body neutral four-foot standing poses. Bottom row: the SAME young brown-bear cub in the corresponding poses. ALL animals face right. Left column camera: orthographic-like three-quarter side view, yaw 0.6 radians towards viewer from strict right-facing profile, camera looking downward 0.52 radians (30 degrees). Right column: same side profile rotated 0.6 radians away from viewer, camera still looking downward 30 degrees; see rump/other side but animal still faces right. Natural anatomy, four legs and four paws, broad heavy shoulders with highest muscular hump over forelegs, smoothly descending back to lower rounded rump, low hanging round belly with no canine tuck, heavy shorter forearms broad paws and long front claws, plantigrade heel-down rear feet with correct hock angles. Adult head held forward and slightly down at/below shoulder hump, massive round skull tapering continuously through a straight/slightly dished brown-to-tan muzzle to dark nose, small round adult ears on upper sides of skull, small natural eyes with catchlight. Tail is very short and barely visible. Cub has rounder compact body, shorter legs, proportionately larger round head, shorter muzzle and relatively larger round ears; not a miniature dog, no Mickey-Mouse adult ears. Whole body including every paw and ears visible with margins in each panel, level ground, unobtrusive contact shadow, no scenery/grass/props, no accessories, no stylization, no cartoon proportions. Real wildlife-photo anatomy is the priority. This is a synthetic comparison-only reference board, not game art.",
+  "layout": {
+    "rows": [
+      "adult",
+      "cub"
+    ],
+    "columns": [
+      "towards",
+      "away"
+    ]
+  },
+  "cameraRequested": {
+    "yawRadians": [
+      0.6,
+      -0.6
+    ],
+    "pitchRadians": 0.52
+  },
+  "limits": [
+    "Generated perspective is approximate, not numerically calibrated.",
+    "Generated cub appears juvenile; exact age cannot be verified.",
+    "Real NPS photos override generated anatomy.",
+    "NPS cub photo is a yearling/front view; it does not verify all cub feet or the requested camera."
+  ],
+  "realPhotoSources": [
+    {
+      "url": "https://www.nps.gov/articles/bear-identification.htm",
+      "credit": "NPS / Lake Clark / Jim Pfeiffenberger",
+      "observed": "high muscular shoulder, lower rump, hanging belly, head forward/down, long foreclaws; whole walking adult",
+      "stored": "local comparison only; not committed or published"
+    },
+    {
+      "url": "https://npgallery.nps.gov/AssetDetail/e16e471c-d4dc-4668-9a65-2d6f1ee271a9",
+      "credit": "NPS / Ken Conger",
+      "observed": "broad cub head, round lateral ears, continuous muzzle and dark nose, small eye catchlights",
+      "stored": "local comparison only; not committed or published"
+    }
+  ]
+}
