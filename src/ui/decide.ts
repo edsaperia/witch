@@ -1,6 +1,6 @@
 // Ed's decisions panel (Ed, 2026-10-06: "give me labelled sliders or toggle switches down the side of the game screen, with a
 // button next to it that lets me confirm my preference"). ?decide or F2 opens a slim panel down the right edge, driven by
-// config/decisions.json: each entry a toggle, a choice of 2 to 4 options or a slider. A change applies at once: a tuning knob
+// config/decisions.json: each entry a toggle, a choice of 2 to 5 options or a slider. A change applies at once: a tuning knob
 // on the running game, or a URL switch (live where the game can take it then, else by reloading with it). Every choice is
 // kept in the URL (d_<id> for knobs, the switch's own param otherwise), so a reload or a shared link keeps it.
 // Confirm opens a new GitHub issue, labelled decision, filled in with the choice, the game's version and seed and the whole

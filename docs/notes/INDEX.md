@@ -383,6 +383,7 @@ says what each note covers.
 - Cooldown trail
 - Trail colours
 - Tree normal maps switch
+- Tree normal directions
 
 ## [The witch's art](witch-art.md)
 

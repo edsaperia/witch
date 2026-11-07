@@ -19,6 +19,8 @@ export interface Atlas { albedo: THREE.DataTexture; normal: THREE.DataTexture; a
  *  the JavaScript heap is what made the browser stop for its big collections (100 ms and more), not the frames' own garbage. */
 let keepPixels = false;
 export function keepAtlasPixels(keep: boolean): void { keepPixels = keep; }
+/** Whether they're kept (render/treeNormalDirs.ts uploads a tree atlas's normals again the same way). */
+export const atlasPixelsKept = (): boolean => keepPixels;
 const freePixels = (t: THREE.Texture): void => { if (!keepPixels) (t.image as { data: Uint8Array | null }).data = null; t.onUpdate = null; }; // (once: three.js calls it after each upload)
 
 /** An RGBA plane, or (red) an index plane: R8, its rows packed tight (three.js uploads it with texStorage2D, one level). */

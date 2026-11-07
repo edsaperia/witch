@@ -1,5 +1,5 @@
 {
-  "version": null,
+  "version": 7645,
   "items": [
     "A test switch on the pause page turns the trees' normal maps off, so the trees are lit flat, to judge whether they still look right without them. Normal maps stay on by default."
   ]

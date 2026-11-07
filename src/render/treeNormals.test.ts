@@ -1,27 +1,34 @@
 import { expect, it } from "vitest";
 import { DECISION_LIST, applyKnobParams, currentValue, setKnob } from "../ui/decisions";
 import { withTuning, TUNING } from "../rules/tuning";
-import { SPRITE_UNIFORMS, SpriteBatch, treeNormalsUniform } from "./sprites";
+import { SPRITE_UNIFORMS, SpriteBatch, treeNormalDirections, treeNormalsUniform } from "./sprites";
 import * as THREE from "three";
 
-// Ed, 2026-11-07: "Make the normal maps switch." The pause toggle and its link reach the tuning, the tuning the trees' shader uniform.
-it("wires the pause toggle and its link to the tree-normals uniform", () => {
-  expect(TUNING.treeNormals).toBe(true); // the default look: normal maps on
+// Ed, 2026-11-07: "Make the normal maps switch.", then "Normal maps do improve things, can we try a low number (16? 32? 64?)". The
+// pause choice and its link reach the tuning, the tuning the trees' shader uniform and their palette's size (render/treeNormalDirs.ts).
+it("wires the pause choice and its link to the tree-normals uniform and directions", () => {
+  expect(TUNING.treeNormals).toBe("full"); // the default look: the normal maps as drawn
   const d = DECISION_LIST.find(x => x.id === "treeNormals")!;
   expect(d.apply).toEqual({ knob: "treeNormals" });
-  expect(d.control).toEqual({ type: "toggle" });
-  expect(d.default).toBe(true);
+  expect(d.control).toEqual({ type: "choice", options: [{ value: "full", label: "Full" }, { value: "64", label: "64" }, { value: "32", label: "32" }, { value: "16", label: "16" }, { value: "0", label: "Off" }] });
+  expect(d.default).toBe("full");
   const t = withTuning({});
-  expect(treeNormalsUniform(t)).toBe(1);
-  setKnob(t, d.apply.knob!, false);
-  expect(currentValue(d, t, new URLSearchParams())).toBe(false);
+  expect([treeNormalsUniform(t), treeNormalDirections(t)]).toEqual([1, 0]);
+  for (const [v, dirs, u] of [["64", 64, 1], ["32", 32, 1], ["16", 16, 1], ["0", -1, 0], ["full", 0, 1]] as const) {
+    setKnob(t, d.apply.knob!, v);
+    expect(currentValue(d, t, new URLSearchParams())).toBe(v);
+    expect([treeNormalDirections(t), treeNormalsUniform(t)]).toEqual([dirs, u]);
+  }
+  applyKnobParams(t, new URLSearchParams("d_treeNormals=0")); // (the switch's old link: still off)
+  expect(t.treeNormals).toBe("0");
   expect(treeNormalsUniform(t)).toBe(0);
-  applyKnobParams(t, new URLSearchParams("d_treeNormals=1"));
-  expect(treeNormalsUniform(t)).toBe(1);
-  applyKnobParams(t, new URLSearchParams("d_treeNormals=0"));
-  expect(t.treeNormals).toBe(false);
-  expect(treeNormalsUniform(t)).toBe(0);
-  expect(treeNormalsUniform({})).toBe(1); // absent: on, as ever
+  applyKnobParams(t, new URLSearchParams("d_treeNormals=32"));
+  expect(treeNormalDirections(t)).toBe(32);
+  applyKnobParams(t, new URLSearchParams("d_treeNormals=1")); // (the old link's on: not a choice, so the default)
+  expect(t.treeNormals).toBe("full");
+  expect([treeNormalDirections(t), treeNormalsUniform(t)]).toEqual([0, 1]);
+  expect([treeNormalDirections({}), treeNormalsUniform({})]).toEqual([0, 1]); // absent: full, as ever
+  expect(treeNormalDirections({ treeNormals: false as never })).toBe(-1); // (the switch's old value)
 });
 
 it("lights only tree instances flat, from the shared uniform, and keeps reading the sway code", () => {
