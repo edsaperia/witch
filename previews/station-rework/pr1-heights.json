@@ -1,0 +1,86 @@
+{
+ "mirror:fresh": {
+  "visible": 601,
+  "content": 510,
+  "ratio": 0.85,
+  "lines": 14
+ },
+ "mirror:owned": {
+  "visible": 601,
+  "content": 510,
+  "ratio": 0.85,
+  "lines": 14
+ },
+ "dressingTable:fresh": {
+  "visible": 601,
+  "content": 562,
+  "ratio": 0.94,
+  "lines": 8
+ },
+ "dressingTable:owned": {
+  "visible": 601,
+  "content": 562,
+  "ratio": 0.94,
+  "lines": 8
+ },
+ "basin:fresh": {
+  "visible": 601,
+  "content": 520,
+  "ratio": 0.87,
+  "lines": 13
+ },
+ "basin:owned": {
+  "visible": 601,
+  "content": 520,
+  "ratio": 0.87,
+  "lines": 13
+ },
+ "wardrobe:fresh": {
+  "visible": 601,
+  "content": 431,
+  "ratio": 0.72,
+  "lines": 11
+ },
+ "wardrobe:owned": {
+  "visible": 601,
+  "content": 431,
+  "ratio": 0.72,
+  "lines": 11
+ },
+ "shoeRack:fresh": {
+  "visible": 601,
+  "content": 431,
+  "ratio": 0.72,
+  "lines": 11
+ },
+ "shoeRack:owned": {
+  "visible": 601,
+  "content": 431,
+  "ratio": 0.72,
+  "lines": 11
+ },
+ "cloakPegs:fresh": {
+  "visible": 601,
+  "content": 588,
+  "ratio": 0.98,
+  "lines": 14
+ },
+ "cloakPegs:owned": {
+  "visible": 601,
+  "content": 550,
+  "ratio": 0.92,
+  "lines": 13
+ },
+ "bags:fresh": {
+  "visible": 601,
+  "content": 524,
+  "ratio": 0.87,
+  "lines": 8
+ },
+ "bags:owned": {
+  "visible": 601,
+  "content": 524,
+  "ratio": 0.87,
+  "lines": 8
+ }
+}
