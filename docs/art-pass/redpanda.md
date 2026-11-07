@@ -61,7 +61,50 @@ Use case: photorealistic-natural. Asset: red panda (Ailurus fulgens) skeleton an
 
 </details>
 
+## Legend concepts v2 — colossal fantasy and scale
+
+**Current second-pass proposal C — The stair that balances the world. Signature element: Suspended mountain terraces on a balancing tail.** This follows the FULL [fantasy feedback6708227119](https://github.com/edsaperia/witch/issues/1476#issuecomment-6708227119) and later [scale addition6708229124](https://github.com/edsaperia/witch/issues/1476#issuecomment-6708229124). These explicitly allow world-grown trees/rock/moss, scale props and ground-level hero views; they supersede the v1 plain-background constraint. [Current lane review sheet](l1-legends-v2.md). Earlier plates/picks remain below as history, not current approval.
+
+![redpanda revised A B C maximum fantasy and D game-camera study with witch and trees](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/redpanda/legend-scale-v2.png)
+
+- A: Keeper of steps — a monumental ringed tail holds mist shelves above a witch and forest.
+- B: Cliff elder — eroded slate shoulder plates and polished climbing claws.
+- C: Stair that balances the world — MAXIMUM FANTASY: one ringed tail holds impossible suspended mountain terraces, stairs and cairns in mist; D studies C from above.
+
+**Why propose C for Ed:** C makes balance/climbing into the power to hold the area's stepped mountain world in suspension. The tail's rings still connect the architecture to red-panda nature; silver cheeks, eroded paths and cairns make it feel older than the forest. Unlike the fox's enclosed passages, this is an exposed balancing route across height and mist. Ed judges the choice; no implementation or activation.
+
+Current chosen checklist:
+
+1. Rust trunk, black belly/short black legs, broad short pale face and pale ear rims remain red panda.
+2. One ringed tail connects visibly to its root and supports the suspended path.
+3. Terraces/stairs emerge from the tail concept rather than a detached monument behind it.
+4. Weathered stone/cairns/silver face show epochs and reverence.
+5. Witch and below-shoulder fir/rowan/birch scale groups occur in every panel.
+6. D shows the C body and full curving terrace tail from an elevated camera.
+
+**Body-plan/scale target:** Maintain a long red-panda trunk and stout dark feet under landscape-scale mass; the tail is an articulated secondary structure, not a fixed tower. Keep enough gap and root continuity to read one creature. The20baby-height intent is not a pixel measurement or game switch. [DESIGN, Art and scale](../../DESIGN.md) says: “Legendary creatures are about 20 times a baby's height, taller than the treetops.” ART-GUIDE sections 0b/0c supply the evolution and elder brief. A witch is a comparative standing figure, not a calibrated replacement for the baby ruler. No change to current tuning or actual source sizing is proposed.
+
+**Graph needs:** Stable tail-local surface/attachment frames over a large curved chain, suspended ledge/cairn instances and mist layers with separate LOD/occlusion; tail/coat versus hard-surface distinction. Existing ring painting must remain on the animal, not be replaced by arbitrary stone stripes.
+
+**Actual output review:** Reframing restores B rear/tail and all options' margins. Generated proportions are bear-like in the hero shots; protect short muzzle, pale facial markings and long ringed tail. D is a generated interpretation, not a shared-model projection test. Whole silhouettes, witch figures and smaller forest groups were visually checked in the published final image. D is an actual generated elevated study, not a current game capture or a render from identical3D geometry; angle/scale equality across panels is not proven. Current-source legend comparison remains pending root/cloud pixels, independently of these completed new options.
+
+### v2 provenance
+
+Built-in imagegen,7 November2026. One new4panel image plus one targeted imagegen edit for framing/scale cues, with exact prompts and source filenames in [v2 manifest](l1-legend-v2-evidence.json). No real photograph, prior game sprite or other lane image was supplied. No CLI fallback, model/seed not exposed. The v1 and anatomy manifests are preserved unchanged.
+
+<details><summary>Exact v2 generation and edit prompts</summary>
+
+Four-panel equal2x2 epic fantasy legend concept sheet RED PANDA, labels A, B, C MAXIMUM FANTASY, D C GAME CAMERA. ONE WHOLE colossal red panda per cell, ALL ears black feet long ringed tail fit inside panel with15%space, full silhouette not close-up. In EVERY panel a tiny pointed-hat WITCH/cloak/broom stands beside forefoot, about1/12 animal height, AND full groups of forest FIR/ROWAN/BIRCH trees at feet with crowns BELOW shoulder. Beast towers above forest canopy, intended20baby heights. No giant foreground/background trees. A/B/C low hero viewpoint; D SAME C from elevated30degree-down nearorthographic gamecamera yaw35degrees, same witch+trees and all tail fit. Species unmistakable: rust-red long furry trunk, BLACK belly and short sturdy BLACK legs, short broad pale face, large white-rim ears, ONE extraordinary ringed balancing tail. Ancient silver cheek fur, worn ears and scars, coat seams weathered like mountain ledges; not raccoon/fox/bear. Area misty terraces: stepped mossy mountain ledges, fir/rowan/birch, old flat-stone cairns, mist in hollows. A Keeper of steps: enormous curled ringed tail with horizontal mist shelves, silver face, tiny cairn offerings at paws. B Cliff elder: low monumental red panda with dark slate shoulder plates eroded over epochs, climbing claws polished by ages and old carved route marks, tail broad low and ringed. C MAXIMUM FANTASY The stair that balances the world: living colossal red panda supports ONE impossible gigantic arcing ringed tail that becomes a chain of FLOATING MOSSY MOUNTAIN TERRACES IN MIST, connected by warm rust-red fur rings, miniature pilgrimage stairs and weathered cairns along tail's upper curve, loose stone ledges hang impossibly in balance without covering foxlike short red-panda FACE. Main body immense black-footed red panda with moss seams, wise silver cheek ruff, not a building wearing an animal face. Nature of balancing and climbing transformed into impossible suspended mountain path; not generic crown/wings. D sameC whole redpanda and tail terraces from clearly above, witch+smallforest scaled beside feet. Keep all tail/terraces in borders, no cropping, no UI, labels only. Atmospheric far-tail depth. Concept illustration not game render.
+
+Edit prompt (applied to the new generated image above):
+
+Edit this RED PANDA four-panel sheet preserving all concepts, C/D's impossible ringed tail of suspended mist terraces, species black legs/rust body/pale face, witch+forest size cues, labels and camera distinction. ONLY reframe: zoom back ALL four panels so each ENTIRE creature including tail tip and rear feet fits with visible margin, especially B whose rear/tail is cropped at right and A whose upper tail crowds the frame. C and D stay exact same concept, D clearly viewed30degrees down. Keep one tiny witch with broom beside forefoot in EACH panel and complete forest groups below the giant's shoulder, no newly enlarged trees. Keep C/D whole tail terraces visible, no clipping. No new designs, no added jewelry or scenery changes beyond necessary framing.
+
+</details>
+
 ## Legend concepts — 7 November addition
+
+**Preserved v1 iteration; current second-pass proposal is above.**
 
 **Three actual generated options; provisional owner pick A, not Ed's approval.** [Legend lane table and review contact sheet](l1-legends.md). [Original instruction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and [later fit-and-variety correction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824): crystals, flames and spirit wings are allowed when fitting; none is a uniform. This later ruling supersedes the blanket wording in ART-GUIDE0c. The historical legend audit is a source of questions/ideas, not today's resolved sprite.
 

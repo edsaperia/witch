@@ -1,5 +1,7 @@
 # L1 legend concepts: review contact sheet
 
+**Preserved v1 iteration. [Current colossal-fantasy/scale revision](l1-legends-v2.md) supersedes these picks for six species; badger/otter remain blocked before v2 output.** These older images are kept as history, not erased or presented as meeting the later scale brief.
+
 **24 generated concepts completed, eight provisional picks for Ed — comparison checkpoint, not READY.** Same [PR1898](https://github.com/edsaperia/witch/pull/1898), `codex/art-pass-l1`. [Anatomy targets](l1-summary.md) and all photo/camera cautions remain. No game or graph implementation, no activation.
 
 Read both complete briefs: [6707981581](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and later [6707992824](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824). **Fit and variety win over the older blanket ban.** Crystals, flame crests and spirit wings may fit particular animals/stories. No common legend uniform. Ed judges these owner recommendations.

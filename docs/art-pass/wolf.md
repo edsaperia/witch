@@ -61,7 +61,50 @@ Use case: photorealistic-natural. Asset: grey wolf (Canis lupus) skeleton anatom
 
 </details>
 
+## Legend concepts v2 — colossal fantasy and scale
+
+**Current second-pass proposal C — The howl that holds the night. Signature element: Starfield pack carried by the howl.** This follows the FULL [fantasy feedback6708227119](https://github.com/edsaperia/witch/issues/1476#issuecomment-6708227119) and later [scale addition6708229124](https://github.com/edsaperia/witch/issues/1476#issuecomment-6708229124). These explicitly allow world-grown trees/rock/moss, scale props and ground-level hero views; they supersede the v1 plain-background constraint. [Current lane review sheet](l1-legends-v2.md). Earlier plates/picks remain below as history, not current approval.
+
+![wolf revised A B C maximum fantasy and D game-camera study with witch and trees](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/wolf/legend-scale-v2.png)
+
+- A: Voice of winters — massive weathered wolf with monumental sound waves and a worn throat torc.
+- B: Ancestors of the pack — spectral pack memories flow along a mountainlike coat.
+- C: Howl that holds the night — MAXIMUM FANTASY: the ancient wolf's voice releases a starfield pack above a ruff bearing old pack totems; D views C from above.
+
+**Why propose C for Ed:** C binds ancient power to the wolf's voice and pack, rather than generic wings or a random constellation crown. Pack totems and weathered shoulder layers suggest generations of reverence, while the howl carries their memory into the night. Head, legs, chest, ears and low tail remain wolf; the celestial wolves are an emitted image, not physical extra heads. Ed judges the choice; no implementation or activation.
+
+Current chosen checklist:
+
+1. Deep chest, long digitigrade legs, heavy muzzle and moderate pointed ears remain wolf.
+2. Four planted paws and one low brush tail, distinct from spectral pack imagery.
+3. Starfield originates in the open muzzle, not an unattached halo.
+4. Shoulder strata/totems show age/reverence without hiding the back profile.
+5. Witch and fir/pine groups below shoulder height appear in each panel.
+6. D preserves the C whole wolf and emitted pack at elevated game-camera study.
+
+**Body-plan/scale target:** Colossal torso/ruff carries cliff-like layered mass, but retain narrow flank and a real neck rather than a bear barrel. Voice volume extends beyond body and must remain an independent effect envelope. Intended20baby-height/above-canopy direction is not a measured output or gameplay change. [DESIGN, Art and scale](../../DESIGN.md) says: “Legendary creatures are about 20 times a baby's height, taller than the treetops.” ART-GUIDE sections 0b/0c supply the evolution and elder brief. A witch is a comparative standing figure, not a calibrated replacement for the baby ruler. No change to current tuning or actual source sizing is proposed.
+
+**Graph needs:** Posed jaw/muzzle-local effect attachment, bounded sound/starfield geometry and pack-afterimage instances; shoulder-local carving/totem sockets and scale-aware LOD. Do not turn ghost wolves into limbs/heads of the main anatomy. Existing head/leg/torso functions need hierarchy/effect semantics, not a new species hand-builder.
+
+**Actual output review:** Framing edit restores rear body/tail and keeps all main silhouettes in frame. Spectral wolves and fine totems are dense and untested at native size. Game-camera panel is generated rather than a render from one shared3D asset. Whole silhouettes, witch figures and smaller forest groups were visually checked in the published final image. D is an actual generated elevated study, not a current game capture or a render from identical3D geometry; angle/scale equality across panels is not proven. Current-source legend comparison remains pending root/cloud pixels, independently of these completed new options.
+
+### v2 provenance
+
+Built-in imagegen,7 November2026. One new4panel image plus one targeted imagegen edit for framing/scale cues, with exact prompts and source filenames in [v2 manifest](l1-legend-v2-evidence.json). No real photograph, prior game sprite or other lane image was supplied. No CLI fallback, model/seed not exposed. The v1 and anatomy manifests are preserved unchanged.
+
+<details><summary>Exact v2 generation and edit prompts</summary>
+
+Four-panel 2x2 epic fantasy design sheet for legendary GREY WOLF. Labels A, B, C MAXIMUM FANTASY, D C GAME CAMERA. ONE WHOLE colossal primary wolf per panel, animal fills only65% of panel so ENTIRE ears, paws, tail and all magic fit with broad margins. EVERY panel has ONE small pointy-hat WITCH with broom standing next to a forepaw, clearly visible about1/12 wolf height, AND a cluster of nearby full forest FIR/PINE trees with crowns BELOW its shoulders. Wolf towers above forest canopy, intended about20baby heights. No huge foreground trees. A/B/C low heroic viewpoint; D repeats same selected C from elevated30degree-down nearorthographic game view, yaw35degrees towards, with same witch and smaller trees. Keep recognisable long-legged digitigrade WOLF, deep chest, heavy muzzle, moderate pointed ears, low long brush tail, NOT bear/dog/humanoid. Snowy taiga: light snow pine needles, juniper and ancient firs/larches. Epoch weathering: grey scarred muzzle, chipped ear, shoulder fur looks like eroded mountain strata, cracks lit with old blue light, sparse tiny firs rooted in ancient accumulated earth along far shoulders only. A Voice of winters: giant wolf with engraved old iron throat torc, slow monumental howl with three broad sound waves rippling across fog, worn paw shrines. B Ancestors of the pack: living wolf body with fur edges dissolving into many smaller spectral wolf memories moving beside flanks; low brush turns into pale path of remembered tracks, ancient healed battle scars. C MAXIMUM FANTASY The howl that holds the night: an immense weathered wolf whose huge shoulder ruff forms a cliff-like observatory of old pack totems and small pilgrim carvings; its raised open muzzle releases an IMPOSSIBLE RIVER OF STARFIELD SOUND, curling into a clearly wolf-shaped constellation pack above its back, strong celestial glow confined to howl path. Main beast remains whole living grey wolf, black paws planted, immense chest and narrow flank; no wings, no random eye halo. D same C whole wolf + star-howl and tiny witch/trees at game camera, not merely another low portrait. No cropping, no UI, labels only. Bold fantastical concept, not game pixels.
+
+Edit prompt (applied to the new generated image above):
+
+Edit this four-panel WOLF sheet ONLY to correct framing. Keep A/B/C/D concepts, tiny witch and fir-tree scale cues, old-wolf body, scars, voice effects/ghost pack/totems, labels and D elevated game-camera view. Pull ALL four views back so the ENTIRE living primary wolf from tail tip and rear paws to muzzle and ears is inside each own panel with clear8%margin. In C especially uncrop the left rear body, left tail and rear foot; in B keep ear tips below top border. Keep all sound/constellation effects within panel too. Do not remove witch or trees: witch still beside front foot in EVERY panel, trees below shoulders, beast still towers above canopy. D preserves same C beast from30degree-down game camera, no redesign. No new motifs, no extra physical limbs. Whole creature framing is mandatory.
+
+</details>
+
 ## Legend concepts — 7 November addition
+
+**Preserved v1 iteration; current second-pass proposal is above.**
 
 **Three actual generated options; provisional owner pick A, not Ed's approval.** [Legend lane table and review contact sheet](l1-legends.md). [Original instruction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and [later fit-and-variety correction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824): crystals, flames and spirit wings are allowed when fitting; none is a uniform. This later ruling supersedes the blanket wording in ART-GUIDE0c. The historical legend audit is a source of questions/ideas, not today's resolved sprite.
 

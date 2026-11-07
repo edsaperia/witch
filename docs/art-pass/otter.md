@@ -61,7 +61,15 @@ Use case: photorealistic-natural. Asset: smooth-coated otter (Lutrogale perspici
 
 </details>
 
+## Legend concepts v2 — blocked before image generation
+
+The new fantasy/scale briefs6708227119 and later6708229124 were read and applied to an exact four-panel prompt: three revised options including maximum-fantasy C, plus a game-camera study of C, all with witch/tree scale cues. **The built-in image tool returned HTTP403 Forbidden before producing an image. No v2 image or revised visual pick exists for this species.** [Failed prompt/status](l1-legend-v2-evidence.json), [current lane checkpoint](l1-legends-v2.md). No CLI/API fallback, repeated poll or new permission route used.
+
+Previous three concepts below are preserved v1 output and **do not satisfy the new scale/fantasy revision**. Resume by producing/inspecting actual v2 images after built-in imagegen access is restored. Do not count the failed prompt as completed art or claim new game-camera evidence.
+
 ## Legend concepts — 7 November addition
+
+**Preserved v1 iteration, awaiting the actual v2 revision.**
 
 **Three actual generated options; provisional owner pick C, not Ed's approval.** [Legend lane table and review contact sheet](l1-legends.md). [Original instruction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and [later fit-and-variety correction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824): crystals, flames and spirit wings are allowed when fitting; none is a uniform. This later ruling supersedes the blanket wording in ART-GUIDE0c. The historical legend audit is a source of questions/ideas, not today's resolved sprite.
 

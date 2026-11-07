@@ -61,7 +61,50 @@ Use case: photorealistic-natural. Asset: fennec fox (Vulpes zerda) skeleton anat
 
 </details>
 
+## Legend concepts v2 — colossal fantasy and scale
+
+**Current second-pass proposal C — Two suns at the last oasis. Signature element: Paired living ear-hearth amphitheatres.** This follows the FULL [fantasy feedback6708227119](https://github.com/edsaperia/witch/issues/1476#issuecomment-6708227119) and later [scale addition6708229124](https://github.com/edsaperia/witch/issues/1476#issuecomment-6708229124). These explicitly allow world-grown trees/rock/moss, scale props and ground-level hero views; they supersede the v1 plain-background constraint. [Current lane review sheet](l1-legends-v2.md). Earlier plates/picks remain below as history, not current approval.
+
+![fennec revised A B C maximum fantasy and D game-camera study with witch and trees](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/fennec/legend-scale-v2.png)
+
+- A: Last hearth — colossal worn ear sails hold ember warmth, with old traveller marks and oasis scale cues.
+- B: Far listener — crystalline ear lenses hold layered echoes/star maps, a permitted different magical direction.
+- C: Two suns at the last oasis — MAXIMUM FANTASY: ear pinnae become impossible ember-hearth amphitheatres with pilgrim rims and living membranes; D studies C from above.
+
+**Why propose C for Ed:** C makes the fennec's most unusual anatomy impossible, while using the erg's actual old-hearth/oasis story. Weathered ear rims and traveller carvings imply a revered keeper that has sheltered people for ages. Flame belongs inside its hearing sails, not as a uniform crest. 'Two suns' is a metaphor for two ear hearths, not a proposed change to the world's sky. Ed judges the choice; no implementation or activation.
+
+Current chosen checklist:
+
+1. Fine sand-fox face, small black nose, black-tipped brush and four legs remain instantly fennec.
+2. Two enormous ear cups have believable roots on the skull; do not become detached buildings.
+3. Heath light stays in paired inner-ear vessels, with no extra astronomical suns.
+4. Worn terraces/carvings and soot-dark rims show history/reverence.
+5. Witch and below-shoulder palms/junipers appear in every panel.
+6. D shows the same paired-ear concept from above with complete animal and scale cues.
+
+**Body-plan/scale target:** The tiny-species silhouette is transformed by colossal mass, engraved weathering and vast pinna cups rather than a uniformly scaled normal fennec. Preserve fine muzzle and light core under huge ear surfaces. Intended20baby height is a design target; the sheet has no baby ruler and cannot prove the number. [DESIGN, Art and scale](../../DESIGN.md) says: “Legendary creatures are about 20 times a baby's height, taller than the treetops.” ART-GUIDE sections 0b/0c supply the evolution and elder brief. A witch is a comparative standing figure, not a calibrated replacement for the baby ruler. No change to current tuning or actual source sizing is proposed.
+
+**Graph needs:** Curved, thickened head-parented ear membranes with inner cavities, translucent/emissive regions and local shrine/rim attachments; controlled worn-edge masks. Existing four-face triangular ear cups are a starting point, not a complete amphitheatre/pinna hierarchy. Ear silhouette must win over architecture.
+
+**Actual output review:** Framing edit uncropped ear/tail margins and removed extraneous background suns. The C ear terraces risk replacing anatomy with buildings; D needs Ed's critical check for fennec likeness and readable ear roots. No numeric camera/scale acceptance. Whole silhouettes, witch figures and smaller forest groups were visually checked in the published final image. D is an actual generated elevated study, not a current game capture or a render from identical3D geometry; angle/scale equality across panels is not proven. Current-source legend comparison remains pending root/cloud pixels, independently of these completed new options.
+
+### v2 provenance
+
+Built-in imagegen,7 November2026. One new4panel image plus one targeted imagegen edit for framing/scale cues, with exact prompts and source filenames in [v2 manifest](l1-legend-v2-evidence.json). No real photograph, prior game sprite or other lane image was supplied. No CLI fallback, model/seed not exposed. The v1 and anatomy manifests are preserved unchanged.
+
+<details><summary>Exact v2 generation and edit prompts</summary>
+
+Four-panel2x2 fantasy legend design sheet for FENNEC FOX, labels A, B, C MAXIMUM FANTASY, D C GAME CAMERA. ONE ENTIRE colossal fennec in EACH panel, all ears feet black tail tips fit within own border with8%margin. EVERY panel has one tiny POINTY-HAT WITCH with broom beside front paw, easily visible, about1/12 beast height, and small forest OASIS TREES/date palms/junipers beside it, tree tops BELOW shoulders. Beast taller than forest canopy, intended20baby heights, heavy and epoch-weathered, NOT a normal tiny fox at normal scale. A B C low heroic camera with atmospheric depth; D repeats same C from elevated30degrees looking DOWN35degree yaw, near orthographic, wholecreature + witch + small trees. Fennec still immediately recognisable: fine pointed muzzle, sand coat, immense broad cupped ears, tiny black nose, black-tipped brush, four slim but colossal legs. Area golden dunes/oasis edge, old hearth in a ring of wind-worn stones. A Last hearth: giant worn ear sails each carry a deep amber hearth-light, soot-black tips, dune-strata fur and old traveller carvings around forepaw cuffs. B Desert's far listener: vast translucent crystalline ear lenses contain layered echoes like star maps, weathered low sandstone-coloured body, one huge low dark-tipped brush, old turquoise offerings at feet. C MAXIMUM FANTASY Two suns at the last oasis: ear cups become TWO impossible enormous curved living SANDSTONE HEARTH AMPHITHEATRES, inner ear membranes still visible as thin ember-lit sails with miniature carved pilgrimage terraces around rims and tiny sacred fire hovering INSIDE each cup; ears attach naturally to FOX skull, not horns or buildings replacing head. Body immense weathered dune-like mass with sand ripples in fur, old scars and tiny palms along protected back seam, reverent offerings small at paws. Magic light from heat held by ear cups, not a generic flame crest. D same C clear overhead game projection including small witch and canopy-below-shoulders trees. No full humanoid armor, no ear/tail clipping, no camera close-ups, labels only. Fantastical illustration, not actual game pixels.
+
+Edit prompt (applied to the new generated image above):
+
+Edit this FENNEC four-panel sheet preserving A/B/C/D concepts and designs. Presentation corrections ONLY: zoom out ALL four panels enough that EVERY giant fox's COMPLETE ears, four feet and entire black-tipped tail are inside its own border with visible margin. Especially uncrop top ear tips in A/B and left ear and right tail in C. The full silhouettes must not touch borders. Keep exactly one small witch beside a front paw and several small date palms/juniper forest trees in EACH panel; tree tops below shoulders, fox taller than canopy. D remains overhead30degree-down game-camera version of same C. Remove the TWO extraneous suns floating in C background: ear hearth fires are the only 'two suns' metaphor, no astronomical disks in sky. Retain area desert/oasis but don't let large foreground trees mask limbs. Keep current concepts, no new ornaments or people inside the ear arenas apart from tiny carved reliefs. C's ears are living fennec pinnae with fantasy rims, not detached buildings. All whole creatures fit; no clipping.
+
+</details>
+
 ## Legend concepts — 7 November addition
+
+**Preserved v1 iteration; current second-pass proposal is above.**
 
 **Three actual generated options; provisional owner pick B, not Ed's approval.** [Legend lane table and review contact sheet](l1-legends.md). [Original instruction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and [later fit-and-variety correction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824): crystals, flames and spirit wings are allowed when fitting; none is a uniform. This later ruling supersedes the blanket wording in ART-GUIDE0c. The historical legend audit is a source of questions/ideas, not today's resolved sprite.
 

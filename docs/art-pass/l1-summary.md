@@ -1,5 +1,7 @@
 # L1 skeleton targets
 
+**Latest legend work: [colossal fantasy v2](l1-legends-v2.md), six revised species/18concepts+6game-camera studies, badger/otter image generation blocked403. Earlier legend table below is v1 history. No READY claim.**
+
 **Provisional checkpoint, 7 November 2026 — not READY.** Branch `codex/art-pass-l1`, [PR1898](https://github.com/edsaperia/witch/pull/1898), base524b0acaa. Eight species: fox, arcticfox, fennec, wolf, raccoon, redpanda, badger and the game's **smooth-coated otter**.
 
 Authority: [original brief](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707737381), superseded in scope by [skeleton-first ruling](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707758462). Targets for1866; no current-art fixes or graph/game changes. Old sprite review omitted. Native-size recognition and exact camera fit are untested.

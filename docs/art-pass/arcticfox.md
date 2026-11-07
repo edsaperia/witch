@@ -61,7 +61,50 @@ Use case: photorealistic-natural. Asset: arctic fox (Vulpes lagopus) skeleton an
 
 </details>
 
+## Legend concepts v2 — colossal fantasy and scale
+
+**Current second-pass proposal C — Winter that remembers. Signature element: Aurora-lit polar storm brush.** This follows the FULL [fantasy feedback6708227119](https://github.com/edsaperia/witch/issues/1476#issuecomment-6708227119) and later [scale addition6708229124](https://github.com/edsaperia/witch/issues/1476#issuecomment-6708229124). These explicitly allow world-grown trees/rock/moss, scale props and ground-level hero views; they supersede the v1 plain-background constraint. [Current lane review sheet](l1-legends-v2.md). Earlier plates/picks remain below as history, not current approval.
+
+![arcticfox revised A B C maximum fantasy and D game-camera study with witch and trees](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/arcticfox/legend-scale-v2.png)
+
+- A: Shelter of winters — a colossal drift-layered brush shelters cold light above a witch and small firs.
+- B: Frozen listener — ear ice-lenses and frost carvings, a valid crystal-led alternative.
+- C: Winter that remembers — MAXIMUM FANTASY: a living white fox merges its broad brush with an aurora-lit polar storm front and accumulated snow/firs; D repeats C overhead.
+
+**Why propose C for Ed:** C exaggerates insulation, wind-shaped coat and a low brush into winter itself. Small firs and old frozen carvings suggest the snowfield has accumulated on this creature over epochs. Its storm is not a generic aura pasted on a wolf; it grows from the compact white fox's coat and cold habitat. The familiar muzzle and tiny rounded ears remain essential. Ed judges the choice; no implementation or activation.
+
+Current chosen checklist:
+
+1. Short broad fox muzzle, tiny rounded ears and compact furred limbs, not polar bear anatomy.
+2. One broad low brush continues into a bounded polar-storm volume.
+3. Aurora light flows within snow/fur layers rather than forming a common head halo.
+4. Accumulated snow, sparse fir growth and worn stone offerings communicate epochs.
+5. Witch and below-shoulder fir groups are clearly visible in every panel.
+6. D shows C's full body and storm tail from above, with scale cues retained.
+
+**Body-plan/scale target:** Use a compact living fox core with a very broad layered brush/coat envelope, not a spherical torso inflated to match the effect. The snow/storm extension can be a distinct volume beyond the anatomy. Intended design scale20baby heights/above canopy is qualitative here; no actual runtime size changed. [DESIGN, Art and scale](../../DESIGN.md) says: “Legendary creatures are about 20 times a baby's height, taller than the treetops.” ART-GUIDE sections 0b/0c supply the evolution and elder brief. A witch is a comparative standing figure, not a calibrated replacement for the baby ruler. No change to current tuning or actual source sizing is proposed.
+
+**Graph needs:** Tail/coat pose envelope, translucent aurora/storm layers with local attachment and bounded depth/silhouette extent; snow/old-growth child attachments and frost wear masks. A giant scalar radius tail cannot express all these volumes, and effect/decoration should not corrupt anatomy or occupied-size calibration.
+
+**Actual output review:** A subsequent edit restored a clearly visible D witch and brought complete tail silhouettes into frame, while shrinking surrounding tree scale. D remains illustrative, not measured projection. Frost/particle detail and growing firs need a separate game-cost/readability decision. Whole silhouettes, witch figures and smaller forest groups were visually checked in the published final image. D is an actual generated elevated study, not a current game capture or a render from identical3D geometry; angle/scale equality across panels is not proven. Current-source legend comparison remains pending root/cloud pixels, independently of these completed new options.
+
+### v2 provenance
+
+Built-in imagegen,7 November2026. One new4panel image plus one targeted imagegen edit for framing/scale cues, with exact prompts and source filenames in [v2 manifest](l1-legend-v2-evidence.json). No real photograph, prior game sprite or other lane image was supplied. No CLI fallback, model/seed not exposed. The v1 and anatomy manifests are preserved unchanged.
+
+<details><summary>Exact v2 generation and edit prompts</summary>
+
+Fantasy concept-art FOUR-PANEL sheet, equal2x2 grid labeled A, B, C MAXIMUM FANTASY, D C GAME CAMERA. ARCTIC FOX species. Each cell shows ONE WHOLE gigantic ancient fox with a TINY POINTY-HAT WITCH standing with broom beside a front paw AND a cluster of forest FIR TREES at its feet for scale. Fox towers ABOVE trees: nearby forest tops below shoulder, NO enormous foreground trees, witch roughly1/12 fox height. Intended scale about20baby heights; don't use an ordinary fox beside giant trees. All ears paws tail entire within borders with8%margin. A/B/C low heroic ground camera; D repeats SAME chosen C creature clearly from ABOVE30degrees down, near orthographic35degree towards yaw, whole creature and witch+trees. White compact arctic fox: tiny rounded ears, short muzzle, short furred legs, huge brush, no polar bear head. Snowfield story: deep wind drifts, frozen old stones, dwarf birch and lone snow-laden firs. Epoch age as glacial weathering/scarred silver muzzle, old soft fur strata like snow deposits, distant flank in atmospheric haze. A Shelter of winters: titanic low crescent brush shelters cold blue light, body fur wind-layered like drifts, old stone offerings beside feet. B The frozen listener: short fox ears become translucent jagged ice acoustic lenses, white stone-weathered torso with old carvings in frost, one broad low brush, reflected aurora in lenses. C MAXIMUM FANTASY Winter that remembers: unmistakeable gigantic white FOX with body mass like a wind-carved snow ridge; ONE immense broad brush unfurls behind into an impossible AURORA-LIT POLAR STORM FRONT, layered fur and drifting snow merge at its far edge, scattered tiny firs rooted in ancient accumulated snow along tail ridge, worn stone shrine carvings at paw bases, spectral blue-green light INSIDE fur strata, not ordinary floating halo. Head/paws remain living fox. D game-camera version of SAME C including storm-tail and tiny witch+forest. Full silhouette, no cropping and no generic human armor. Three genuinely different mythic options, not only scaled old animals. Concept illustration, not game screenshot; labels only.
+
+Edit prompt (applied to the new generated image above):
+
+Edit this exact four-panel ARCTIC FOX sheet, preserving A/B/C/D concepts, snow/aurora weathering and labels. Correct ONLY framing and scale figures. Pull back ALL four views enough to put each ENTIRE fox and ENTIRE tail/storm-brush edge within its own panel, no cropped head, paw or tail at any border, small margin. In EACH panel show exactly one clearly visible small pointy-hatted WITCH with broom standing beside a forepaw; especially ADD the missing witch in panel D at lower right of front paws, clearly separate from stones and snow. Witch must be only about1/12 creature height, visible at least15pixels tall. Keep nearby forest FIR TREE clusters with their tops BELOW the giant's shoulder in EVERY panel, never taller than giant. No bigger foreground tree. A B C low hero views; D still an elevated30degree-down game-camera version of same C white fox/storm tail. No new concepts or extra ornaments. Preserve species fox, not polar bear. All giant silhouettes whole in frame; no cropped tail on left.
+
+</details>
+
 ## Legend concepts — 7 November addition
+
+**Preserved v1 iteration; current second-pass proposal is above.**
 
 **Three actual generated options; provisional owner pick A, not Ed's approval.** [Legend lane table and review contact sheet](l1-legends.md). [Original instruction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and [later fit-and-variety correction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824): crystals, flames and spirit wings are allowed when fitting; none is a uniform. This later ruling supersedes the blanket wording in ART-GUIDE0c. The historical legend audit is a source of questions/ideas, not today's resolved sprite.
 

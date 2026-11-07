@@ -61,7 +61,50 @@ Use case: photorealistic-natural. Asset: red fox (Vulpes vulpes) skeleton anatom
 
 </details>
 
+## Legend concepts v2 — colossal fantasy and scale
+
+**Current second-pass proposal C — Hollow-oak world. Signature element: Hollow woodland passages inside one brush.** This follows the FULL [fantasy feedback6708227119](https://github.com/edsaperia/witch/issues/1476#issuecomment-6708227119) and later [scale addition6708229124](https://github.com/edsaperia/witch/issues/1476#issuecomment-6708229124). These explicitly allow world-grown trees/rock/moss, scale props and ground-level hero views; they supersede the v1 plain-background constraint. [Current lane review sheet](l1-legends-v2.md). Earlier plates/picks remain below as history, not current approval.
+
+![fox revised A B C maximum fantasy and D game-camera study with witch and trees](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/fox/legend-scale-v2.png)
+
+- A: Old-path watcher — the previous whorl-brush idea now a weathered giant among much smaller oaks and a witch.
+- B: Nine roads — many silver-tipped brushes carry glowing woodland paths and stone offerings.
+- C: Hollow-oak world — MAXIMUM FANTASY: a single monumental brush contains impossible hollow passages, pilgrim carvings and old oaks/shrines; D studies C from above.
+
+**Why propose C for Ed:** C turns a defining fox brush and the old-oaks area's hollow trunks into somewhere generations could journey and worship. The animal is a landform of remembered woodland paths, not simply a larger old fox. Warm passage light and scarred silver muzzle suggest mystery and epochs; the pointed fox face, black legs and tucked body still anchor the family. Ed judges the choice; no implementation or activation.
+
+Current chosen checklist:
+
+1. Fox wedge muzzle/pointed ears/black lower legs survive the landform silhouette.
+2. One whorled brush, with actual negative-space passages rather than several accidental tail roots.
+3. Layered weathered fur/barklike flow; old oak/root shrines belong to the tail ridge, not an arbitrary head crown.
+4. Carvings and offerings are subordinate signs of reverence; the body remains living fox.
+5. Whole giant, witch and forest oaks are visible in all four panels; giant exceeds nearby canopy.
+6. D preserves the C body/tail idea from an elevated game-camera study.
+
+**Body-plan/scale target:** New scale is intended about20× a baby and above treetops, per DESIGN and the later briefing; not20× the witch and not a measured ratio in the generated pixels. Keep fox forequarters clear while the brush is a low landscape-scale secondary mass. Ear/head/foot anatomy stays fox; scale is conveyed by heavy layered fur, passages and old growth rather than just uniform enlargement. [DESIGN, Art and scale](../../DESIGN.md) says: “Legendary creatures are about 20 times a baby's height, taller than the treetops.” ART-GUIDE sections 0b/0c supply the evolution and elder brief. A witch is a comparative standing figure, not a calibrated replacement for the baby ruler. No change to current tuning or actual source sizing is proposed.
+
+**Graph needs:** A hollow, potentially self-overlapping tail volume with controlled negative space; stable tail-local carved surface masks and attached roots/offerings/shrines. Existing circular tapered cone chains and tip/region painting alone do not encode this worldlike whorl. Needs hierarchical attachment/LOD separation and silhouette/occlusion review; no proposal to import generated buildings as game assets.
+
+**Actual output review:** One framing/scale edit removed misleading oversized trees and brought tail tips within panels. Hero and D views are generated interpretations, not guaranteed identical geometry or numeric30° calibration. Small shrines/carvings may need radical simplification. Whole silhouettes, witch figures and smaller forest groups were visually checked in the published final image. D is an actual generated elevated study, not a current game capture or a render from identical3D geometry; angle/scale equality across panels is not proven. Current-source legend comparison remains pending root/cloud pixels, independently of these completed new options.
+
+### v2 provenance
+
+Built-in imagegen,7 November2026. One new4panel image plus one targeted imagegen edit for framing/scale cues, with exact prompts and source filenames in [v2 manifest](l1-legend-v2-evidence.json). No real photograph, prior game sprite or other lane image was supplied. No CLI fallback, model/seed not exposed. The v1 and anatomy manifests are preserved unchanged.
+
+<details><summary>Exact v2 generation and edit prompts</summary>
+
+Create a detailed fantasy concept-art FOUR-PANEL sheet, clear equal 2x2 grid, labeled A, B, C MAXIMUM FANTASY, D C GAME CAMERA. Species RED FOX. Each panel contains ONE WHOLE colossal fox, a TINY WITCH in pointed hat/cloak with broom standing BESIDE a forefoot, and several actual FOREST OAK TREES for scale. All ears feet tail tips and scale witch inside frame. The fox is a landform-sized elder god, taller than canopy, about20 baby-fox heights; witch roughly1/12 fox height, nearby oaks roughlyhalf its height. Not ordinary animal at normal scale. PanelsA/B/C can have low ground hero camera, D repeats EXACT SAME CONCEPT C seen from above at30degrees down, near orthographic, yaw35degrees toward viewer, including witch and trees. Consistent fox body proportions within C/D, not a different animal. C must visibly be far more fantastical than A. Ancient gnarled-oak forest story: acorns, fallen branches, great hollow trunks, leaf litter. Every option retains red fox narrow muzzle, pointed ears, black slender lower legs, tucked waist and great brush. Weathered like ancient landform, scarred silver muzzle, worn ears, body creases bearing epochs, atmospheric depth on far flank. A Old-path watcher: colossal fox with one enormous low whorled brush, moss in fur seams and one weathered bronze shrine bell. B Nine roads: nine enormous silver-tipped brushes flow behind as winding luminous woodland paths, with ancient carved stone offerings hanging at roots, not fire wings. C MAXIMUM FANTASY Hollow-oak world: ONE titanic curling brush whose layered barklike FUR WHORLS form impossible luminous hollow-oak passages, small old oaks/root shrines anchored only along the tail's ridge; body is still unmistakably FOX, forequarters rise above trees, old bronze pilgrimage carvings embedded in natural tail fur seams, warm woodland light deep in the whorl. Not a log replacing head/body, not an owl, not floating eyes. D GAME CAMERA repeats C whole fox/tail/shrine plus scale witch and forest oaks at game camera, clear silhouette, no cropped body. Rich tangible fur/stone/weathering, restrained story-specific magic. No generic crown or full humanoid armor. No UI, no captions other than panel labels, not game screenshots.
+
+Edit prompt (applied to the new generated image above):
+
+Edit this 2x2 FOX legend sheet, preserve all FOUR panels A/B/C/D and each distinct fox concept, fox anatomy, old-oak passages/shrines in C/D and witch scale figures. Fix ONLY framing and SCALE-CUE CLARITY: EVERY whole fox, all tail tips, ears and paws fit inside its own panel with8% margin, including rightmost tail of C and D. Pull camera back as needed. Remove all giant foreground/background trees taller than the fox. Instead show several SMALLER forest oaks NEXT TO its feet, their tops below its shoulder; preserve tiny oaks on C/D's enormous tail ridge. The fox MUST tower ABOVE forest treetops in all four panels; the standing pointy-hat witch must remain clearly visible beside its forefoot and only about1/12 fox height. A B C retain ground hero views, D C GAME CAMERA must be unmistakably overhead 30-degree down three-quarter view of the SAME whole C giant and its witch+small forest trees. Forest atmospheric haze allowed but not giant trees masking the fox. Preserve C's single impossible hollow whorled tail, don't add more tails or generic ornaments. Entire animals within borders. No new creative concepts, no UI.
+
+</details>
+
 ## Legend concepts — 7 November addition
+
+**Preserved v1 iteration; current second-pass proposal is above.**
 
 **Three actual generated options; provisional owner pick B, not Ed's approval.** [Legend lane table and review contact sheet](l1-legends.md). [Original instruction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and [later fit-and-variety correction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824): crystals, flames and spirit wings are allowed when fitting; none is a uniform. This later ruling supersedes the blanket wording in ART-GUIDE0c. The historical legend audit is a source of questions/ideas, not today's resolved sprite.
 

@@ -62,7 +62,50 @@ Use case: photorealistic-natural. Asset: raccoon (Procyon lotor) skeleton anatom
 
 </details>
 
+## Legend concepts v2 — colossal fantasy and scale
+
+**Current second-pass proposal C — The washer of years. Signature element: A creek woven between dexterous hands.** This follows the FULL [fantasy feedback6708227119](https://github.com/edsaperia/witch/issues/1476#issuecomment-6708227119) and later [scale addition6708229124](https://github.com/edsaperia/witch/issues/1476#issuecomment-6708229124). These explicitly allow world-grown trees/rock/moss, scale props and ground-level hero views; they supersede the v1 plain-background constraint. [Current lane review sheet](l1-legends-v2.md). Earlier plates/picks remain below as history, not current approval.
+
+![raccoon revised A B C maximum fantasy and D game-camera study with witch and trees](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/raccoon/legend-scale-v2.png)
+
+- A: First hand — giant clever hands leave luminous carved prints in old creek stones.
+- B: Lost things remember — a weathered elder carries a sparse accumulated hoard on its ringed tail.
+- C: Washer of years — MAXIMUM FANTASY: naturally seated raccoon hands cradle an impossible luminous creek loop carrying fish-lights and polished memories; D studies C overhead.
+
+**Why propose C for Ed:** C turns the creek raccoon's dexterity into an impossible act of holding and washing time. Its grey moss-seamed bulk is an old riverbank, not just a bigger raccoon, and small offerings give reverence without a common costume. The mask, round ears, low pointed face and ringed tail keep its family clear. It does not borrow a sea otter's belly-stone behaviour. Ed judges the choice; no implementation or activation.
+
+Current chosen checklist:
+
+1. Grey raccoon mass, black transverse eye mask, round ears and ringed tail remain unmistakable.
+2. Natural seated haunches rather than a standing humanoid posture.
+3. Forehands require five digits and believable contact with the creek loop.
+4. Transparent flowing loop is held between hands, not a head halo or rigid solid torus.
+5. Witch and small cedar/spruce groups are present in every panel.
+6. D shows the same seated C creature, hands, loop and full tail from above.
+
+**Body-plan/scale target:** The seated mass should feel like a weathered riverbank with huge but still raccoon forehands, not muscular human arms. Scale grows in landform texture and thick supports as well as height. Intention20baby heights is unmeasured; the witch/tree cues communicate a giant. [DESIGN, Art and scale](../../DESIGN.md) says: “Legendary creatures are about 20 times a baby's height, taller than the treetops.” ART-GUIDE sections 0b/0c supply the evolution and elder brief. A witch is a comparative standing figure, not a calibrated replacement for the baby ruler. No change to current tuning or actual source sizing is proposed.
+
+**Graph needs:** Distinct digit/forehand/hindfoot family, seated pelvis/leg pose, hand-local transparent water-loop effect anchors and material flow coordinates; wear/moss/offerings sockets. It is a reference for visual magic, not an approved gameplay river manipulation mechanic.
+
+**Actual output review:** Edit removes misleading tall forest trees and reframes full tails. Generated hands/prints still have uncertain counts; five is a target, not a pass claim. C risks bear/primate bulk and needs the mask/tail/hand anatomy protected in implementation. Whole silhouettes, witch figures and smaller forest groups were visually checked in the published final image. D is an actual generated elevated study, not a current game capture or a render from identical3D geometry; angle/scale equality across panels is not proven. Current-source legend comparison remains pending root/cloud pixels, independently of these completed new options.
+
+### v2 provenance
+
+Built-in imagegen,7 November2026. One new4panel image plus one targeted imagegen edit for framing/scale cues, with exact prompts and source filenames in [v2 manifest](l1-legend-v2-evidence.json). No real photograph, prior game sprite or other lane image was supplied. No CLI fallback, model/seed not exposed. The v1 and anatomy manifests are preserved unchanged.
+
+<details><summary>Exact v2 generation and edit prompts</summary>
+
+Epic fantasy FOUR-PANEL equal2x2 concept sheet for RACCOON. Labels A, B, C MAXIMUM FANTASY, D C GAME CAMERA. Each cell ONE WHOLE colossal raccoon, ENTIRE body ears tail and feet fit well within borders, animal fills ONLY60% panel with20%clear space. Every panel has ONE small pointy-hat WITCH with broom beside forefoot, about1/12 beast height, and a GROUP OF forest CEDAR/SPRUCE trees beside its feet, crowns BELOW its shoulder. Beast towers above canopy, intended20baby heights. No oversized foreground trees. A/B/C low hero views; D same C from unmistakably elevated30degree-down nearorthographic game camera yaw35degrees, witch AND trees still present. Stocky grizzled GREY raccoon, high rump arched back low pointed head, ROUND ears, clear black eye mask, dark FIVE-DIGIT dexterous forehands, moderate ringed tail. Not red panda/bear/human. Old mossy-creek story: wet stones, cold stream, ferns, moss-covered cedars/spruces and logjam. Epoch-weathered body like an old moss-seamed granite bank but living fur face/paws, scarred white muzzle and chipped ear. A First hand: enormous clever forehands lay luminous five-finger handprint carvings into ancient creek stones, worn offerings at feet, ordinary ringed tail. B Lost things remember: immense crouching raccoon whose ringed tail supports a sparse ancient hoard of worn votive keys/spoons/shells like a tide of lost memories, grey scarred head and an oversized weathered copper mask rim, not humanoid clothing. C MAXIMUM FANTASY The washer of years: ancient raccoon naturally SITTING on haunches, gigantic five-finger hands cradle and weave an IMPOSSIBLE LOOP OF THE ENTIRE LUMINOUS CREEK between them, moving water carries tiny fish-shaped lights and round polished memory stones; black eye mask gleams like wet obsidian, shoulders massively weathered and moss-seamed, clever hands unmistakable, river is transparent above hands not a solid ring floating over head. One tiny witch stands safely at hindfoot beside cedar trees and small offered riverstones. D SAME C seated animal/river-loop from ABOVE30degrees with full ringed tail, witch+forest scale. Keep whole outlines and all effects INSIDE panel, no cropping, no UI. No generic wings/crystal crown. Mythic animal not giant old ordinary raccoon, not game screenshot.
+
+Edit prompt (applied to the new generated image above):
+
+Edit this RACCOON4panel sheet; preserve all A/B/C/D concepts, C/D impossible water creek loop in five-fingered hands, species mask/ringed tail, witch figures, mossweathering and labels. ONLY fix framing and tree SCALE: zoom back so ENTIRE primary raccoon body, all paws and FULL ringed tail are inside EACH border with8%margin; uncrop C tail at left and D tail at right. REMOVE all tall background forest trunks/canopy above beast. Replace surrounding forest trees with small complete cedar/spruce groups planted NEXT TO animal's feet, tops no higher than its shoulder; the beast visibly taller than forest canopy, not a normal raccoon in tall woods. Keep one clear pointy-hat witch beside fore/hindfoot in EVERY panel, very small but visible. Show open air/atmospheric mist ABOVE the giant rather than an enormous tree canopy. D stays clearly above30degree-down gamecamera of SAME seated C beast/waterloop. No new designs or ornaments; don't shrink animal relative to witch. Wholecreature and scale cues mandatory.
+
+</details>
+
 ## Legend concepts — 7 November addition
+
+**Preserved v1 iteration; current second-pass proposal is above.**
 
 **Three actual generated options; provisional owner pick A, not Ed's approval.** [Legend lane table and review contact sheet](l1-legends.md). [Original instruction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and [later fit-and-variety correction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824): crystals, flames and spirit wings are allowed when fitting; none is a uniform. This later ruling supersedes the blanket wording in ART-GUIDE0c. The historical legend audit is a source of questions/ideas, not today's resolved sprite.
 
