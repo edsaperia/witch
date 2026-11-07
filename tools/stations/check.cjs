@@ -2,7 +2,7 @@
 // feet, and so when you're zoomed close her head is off screen"; "When choosing clothes etc I can't select them, I can only move the
 // selector around"). For each of her dressing stations (the bedroom's, the basin, the mirror, the cloak pegs and the bags; ?shot=object:<id>, app/shot.ts), the loop running as in play:
 //  - no scrolling (Ed, 2026-11-07: "no station menu is taller than the screen at 1280×720, so there's no scrolling"): its panel's
-//    body never scrolls, with the focus walked over every line (the detail at each card's foot as tall as it gets), on a fresh save and
+//    body never scrolls, with the focus walked over every line and along each line of cards (the detail at each card's foot as tall as it gets), on a fresh save and
 //    again with everything owned (the pause page's Unlock everything, app/debugUnlock.ts, read as the panel opens again); shots of both,
 //    <out>/<station>-fresh.png and -owned.png, and the heights in <out>/heights.json;
 //  - framing: once she's choosing, the part of her the station changes framed in the right half (camera.station.parts, Ed 2026-11-07:
@@ -72,10 +72,25 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         const m = () => page.evaluate(() => { const b = document.querySelector("#station-panel .sp-body"), kids = [...b.children], content = kids.length ? Math.ceil(Math.max(...kids.map(k => k.getBoundingClientRect().bottom)) - b.getBoundingClientRect().top + 2) : 0; return { client: b.clientHeight, scroll: Math.max(b.scrollHeight > b.clientHeight ? b.scrollHeight : 0, content), /* (what it holds: its scroll height when it scrolls, else its cards' extent) */ lines: new Set([...document.querySelectorAll("#station-panel [data-line]")].map(e => e.dataset.line)).size }; });
         let worst = await m(), at0 = null;
         for (let i = 0; i < 80; i++) { await page.keyboard.press("ArrowUp"); await page.waitForTimeout(60); const a = await page.evaluate(() => document.querySelector("#station-panel .focus")?.dataset.line); if (a === at0) break; at0 = a; }
+        // (along a line of cards too, each card's detail in turn: the longest detail showing, the coordinator for Ed, 2026-11-07, "The
+        // no-scroll rule must hold with everything owned and the longest detail showing"; then back to its start)
+        const across = async () => {
+          if (!(await page.evaluate(() => !!document.querySelector("#station-panel .focus.sp-card")))) return;
+          let moved = 0;
+          for (let i = 0; i < 12; i++) {
+            const was = await page.evaluate(() => document.querySelector("#station-panel .focus")?.dataset.col);
+            await page.keyboard.press("ArrowRight"); await page.waitForTimeout(250);
+            if (await page.evaluate(() => document.querySelector("#station-panel .focus")?.dataset.col) === was) break;
+            moved++; const n = await m(); if (n.scroll > worst.scroll) worst = n;
+          }
+          for (let i = 0; i < moved; i++) { await page.keyboard.press("ArrowLeft"); await page.waitForTimeout(60); }
+        };
+        await across();
         for (let i = 0; i < 120; i++) {
           const before = await page.evaluate(() => { const f = document.querySelector("#station-panel .focus"); return f ? `${f.dataset.line}:${f.dataset.col}` : null; });
           await page.keyboard.press("ArrowDown"); await page.waitForTimeout(250);
           const n = await m(); if (n.scroll > worst.scroll) worst = n;
+          await across();
           const after = await page.evaluate(() => { const f = document.querySelector("#station-panel .focus"); return f ? `${f.dataset.line}:${f.dataset.col}` : null; });
           if (after === before) break;
         }
