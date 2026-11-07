@@ -4517,10 +4517,14 @@ Drawing-only coloured patterns on existing lights, controlled from the pause pag
 - **`patternLight.strength`**: How strongly coloured spokes shape existing lights, from 0 (ordinary lighting) to 4.
   1. Ed, 2026-11-05: "this is imperceptible atm; put it live with a strength slider and I'll just test it in game." (Colour spokes on by default; strength 0–4, default 3, at most three existing light slots and no extra lights.)
   Changes immediately from the pause page; reduced flashing disables all patterns. Strength 1 preserves original 0.9 contrast; default 3 brightens only the colour-spokes lit bands threefold, with dark gaps and centre fade preserved; at most three existing light slots, no added lights or shadows.
+- **`patternLight.beatsPerTurn`**: How many beats the coloured-spokes wheel round a playing soundsystem takes to turn once, so it turns faster as the tempo rises.
+  1. Ed, 2026-11-07: "Patterned lighting around treestumps; it should rotate, speed scaled by bpm" (One turn every 2 bars (8 beats: 4 s at 120 bpm); it was one turn every 128 beats, too slow to see.)
+  Read from the game's beat clock, so it follows the record's bpm and her knockdowns' tempo rises. The other ?patternlight= looks share the phase and speed up by the same factor.
 
 | knob | type | range |
 |---|---|---|
 | `patternLight.strength` | number | 0 to 4 |
+| `patternLight.beatsPerTurn` | number | 1 to 256 |
 
 ### `lightBudget`
 

@@ -18,7 +18,7 @@ it('defaults to full colour spokes and scales all selected slots live down to ex
   expect(patternOptions('')).toBe('colour-spokes');
   expect(TUNING.patternLight.strength).toBe(3);
   const v=view(), tuning=v.game.tuning;
-  tuning.patternLight={strength:1};
+  tuning.patternLight={strength:1,beatsPerTurn:8};
   const patterned={...light(0,6),pattern:speakerPattern(newBeatClock(120),10,'colour-spokes',false)};
   setLights(v,[patterned,light(1,4)],0,0,'colour-spokes');
   const full=LIGHT_PATTERN_UNIFORMS.uLightPattern.value.slice(0,2).map(p=>p.z);
