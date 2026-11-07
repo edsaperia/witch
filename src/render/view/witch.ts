@@ -32,7 +32,8 @@ import { HAT_BESIDE } from "../view";
 import { hatFlight } from "../hatFlight";
 import { atDecksFrom, koIris } from "../koIris";
 import { spinAt, spinFacing, spinLift } from "../spin";
-import { bedLift, inBedPose } from "../bedPose";
+import { bedHush, bedLift, inBedPose } from "../bedPose";
+import { WAKE_DEFAULT } from "../../rules/wakeUp";
 
 /** The player asked for less motion (the knockout's iris then a plain cut: render/koIris.ts). */
 const REDUCED = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -103,6 +104,12 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // (put to bed for a morning still to come, a sail's dive, or asleep at the night's end, its wake-up long over: asleep there as the
   // wake-up's first beats have her, View.asleepInBed)
   const wk = g.wake, bedPose = inBedPose(wk, v.asleepInBed);
+  // (in bed, her own glow and its lift partly off her, given back as she gets up: render/bedPose.ts bedHush, the tuning's witch.bedGlow)
+  { const K = t.opening?.wake ?? WAKE_DEFAULT, stretched = bedPose === "bedStretch" && wk ? (ht - wk.at) / Math.max(0.1, K.stretch) : 0;
+    v.bedHush = bedHush(bedPose, stretched, v.bedHush, Math.min(0.1, Math.max(0, ht - v.bedHushTime))); v.bedHushTime = ht;
+    const off = v.bedHush * (1 - (t.witch.bedGlow ?? 1));
+    v.post.bedBloom = 1 - v.bedHush * (1 - (t.witch.bedBloom ?? 1)); // (her nightie and the pillows by her bloomed to white over her)
+    for (const b of [v.witchBatch, v.bareBatch]) if (b) setWitchHush(b.meshes, off); }
   // In the house (Ed, 2026-10-21: "she shouldn't use her broom until she steps off the balcony, and stop using it when she steps
   // on"): landed on its floor she's on foot, standing (idle) or walking, no broom; stepping off the balcony's rim she takes off
   // (the takeoff frames, as she rises), and coming down onto it she lands (the land frames) and walks.
@@ -426,6 +433,11 @@ export function footShare(want: number, inBed: boolean, was: number, dt: number)
   if (inBed) return 1;
   const f = was + (want - was) * Math.min(1, dt * 8);
   return Math.abs(want - f) < 0.01 ? want : f;
+}
+/** Her own glow taken off her (render/bedPose.ts bedHush) on her batch's every pass (render/witchLight.ts uWitchHush): her batch's own
+ *  materials only, so a friend's, the party's witches and everything else keep theirs. */
+export function setWitchHush(meshes: readonly object[], off: number): void {
+  for (const o of meshes) for (const m of ([] as unknown[]).concat((o as { material?: unknown }).material ?? [])) { const u = (m as { uniforms?: Record<string, { value: unknown }> }).uniforms?.uWitchHush; if (u) u.value = off; }
 }
 /** Her share of the decks' seat as drawn (View.seatK): 1 while she sits there, easing to 0 over a second as she takes off (down
  *  from the studio, some 7 m up); 0 at once in her bed (`inBed`, the wake-up's pose). A night's game starts her seated at the decks

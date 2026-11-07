@@ -9,6 +9,7 @@ import { Model, render, v3 } from "./model3d.js";
 import { witchGenome, genomeLook } from "./witchGenome.js";
 import { HUMAN_SKINS } from "./skinTones.js";
 import { BROOM_KINDS, SIT_IN, PARKED } from "./brooms.js";
+import { COVERS_ON_HER } from "./bedColours.js";
 
 // Her parts and the material each is drawn in. The last few are a party outfit's: its pattern and trim (sequins, a mesh,
 // a poncho's stripes), the flowers on a hat, a party cup, two glow-stick neons, sunglasses' lenses and frames.
@@ -36,6 +37,7 @@ export function witchColours(st, outfit = DEFAULT_OUTFIT, { styleHues = true } =
   const c = {}; for (const [part, mat] of Object.entries(WITCH_PARTS)) { const [h, s, v] = o[part]; c[mat] = hsv2rgb(hue[part] ?? h, s, v); }
   c[M.EYE] = [24, 18, 30]; c[M.GLINT] = [255, 255, 245]; c[M.NOSE] = [20, 16, 24]; c[M.MAGIC] = hsv2rgb(st.glowHue ?? .13, .5, 1); c[M.MAGIC2] = hsv2rgb(st.glowHue ?? .13, .15, 1); c[BAND] = c[M.WEB];
   c[M.BELLY] = [245, 245, 240]; // sneaker soles, headphone band highlights
+  c[M.SHELL] = COVERS_ON_HER.duvet; c[M.THORAX] = COVERS_ON_HER.stripe; // the bed's covers over her in bed (footModel: covers)
   return c;
 }
 
@@ -487,6 +489,7 @@ function fastModel(frame, L = DEFAULT_LOOK) {
 //                her hands in her lap, breathing (Ed's playtest of v7645, 2026-11-07, of the seat's sit drawn there: "Is this meant to be
 //                the witch lying in bed?": its legs hung down to the floor, so she stood in the middle of her bed)
 //   bedStretch   in bed still, stretching as she gets up: arms up over her head, a yawn; then arms wide
+//                (both under the bed's covers to her waist, in its colours: art/bedColours.js; Ed, 2026-11-07, on #1908)
 // The party (Ed: "another witch flies in to the dancefloor. At random they will: dance on their own with a variety of simple
 // moves, dance with other witches, fly around in circles, run about, talk to each other, drink, hug each other, hold hands, other
 // party activities"; and our witch does the same when left to idle near the dancefloor). Dancing, her broom is put down (the game
@@ -602,12 +605,12 @@ const FOOT_FRAMES = {
   // in bed: sat on the mattress (her seat at its top, render/view/witch.ts bedLift), leaning back a little against her pillows, both legs
   // out straight before her, no broom
   inBed: [0, 1].map(f => ({ sit: true, seat: .02, broom: null, bend: -.2, look: [.04, .1][f], tilt: [.12, -.12][f], sway: [.01, .02][f], breathe: [0, .008][f],
-    feet: [[.42, .06, -.08], [.43, .06, .08]], free: [.24, .16, .13], hand: "rest", far: [.22, .16, -.13], farHand: "rest" })),
+    feet: [[.42, .06, -.08], [.43, .06, .08]], free: [.24, .17, .13], hand: "rest", far: [.22, .17, -.13], farHand: "rest", covers: true })),
   bedStretch: [
     { sit: true, seat: .02, broom: null, bend: -.06, look: .3, shut: true, mouth: "laugh", sway: .01, breathe: .012, feet: [[.42, .06, -.08], [.43, .06, .08]],
-      free: [.02, .86, .1], hand: "palm", far: [.02, .86, -.1], farHand: "palm" },                                                    // arms up over her head, a yawn
+      free: [.02, .86, .1], hand: "palm", far: [.02, .86, -.1], farHand: "palm", covers: true },                                                    // arms up over her head, a yawn
     { sit: true, seat: .02, broom: null, bend: -.1, look: .2, sway: .02, breathe: .008, feet: [[.42, .06, -.08], [.43, .06, .08]],
-      free: [.04, .74, .3], hand: "palm", far: [.04, .74, -.3], farHand: "palm" },                                                    // arms wide
+      free: [.04, .74, .3], hand: "palm", far: [.04, .74, -.3], farHand: "palm", covers: true },                                                    // arms wide
   ],
   // ---- the party ----
   twoStep: [0, 1, 2, 3].map(f => { const s = [1, 0, -1, 0][f]; return { broom: null, crouch: [.12, 0, .12, 0][f], hop: [0, .02, 0, .02][f], roll: s * .08, tilt: s * .3, sway: [.02, .035, .02, .035][f], look: .05,
@@ -789,6 +792,13 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
     m.seg(tier, low, .145, .172, M.BELLY, { group: 1 });
   } else m.ell(hips, [.1, .08, .105], M.JEANS, { group: 1 });
   if (!L.nightie) m.ell(chest, [.1, .15 + K.breathe * .5, .115], M.JACKET, { dir: fwd, group: 1, paint: torsoPaint(L, chest, fwd) });
+  // in bed: the bed's covers over her legs and lap to her waist (its colours, art/bedColours.js: the duvet and its stripes), a mound
+  // over her lap and lower over her legs
+  if (K.covers) {
+    const duvet = { group: 18, paint: p => (Math.abs((((p[0] + p[2]) * 4) % 1 + 1) % 1 - .5) < .08 ? M.THORAX : undefined) };
+    m.ell([.14, .085, 0], [.2, .075, .22], M.SHELL, duvet); // over her lap
+    m.box([.36, .055, 0], [.22, .055, .21], M.SHELL, { ...duvet, round: .05 }); // over her legs and feet, out to the foot of the bed
+  }
   // the jacket's hem hanging behind, stirring (a poncho or a cape instead)
   if (!L.nightie && L.top !== "poncho" && L.top !== "cape") m.chain([[...v3.add(chest, v3.add(v3.mul(fwd, -.07), v3.mul(spine, -.08))), .07], [...v3.add(chest, v3.add(v3.mul(fwd, -.11 - sway), v3.mul(spine, -.2))), .05], [...v3.add(chest, v3.add(v3.mul(fwd, -.13 - sway * 1.6), v3.mul(spine, -.29))), .025]], M.JACKET, { group: 12 });
   if (!L.nightie) drawWrap(m, L, chest, fwd, spine, false);

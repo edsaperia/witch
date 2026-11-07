@@ -17,3 +17,15 @@ export function bedLift(g: Game, W: Witch = g.witches[0]): number {
   const bed = bedOf(g, W);
   return bed ? bedSeat(bed.h) : 0; // (the guests' beds are home's, drawn alike: art/furniture.js)
 }
+/** How much of her own glow and its lift is off her own sprite, before the knob's share (witch.bedGlow; Ed, 2026-11-07, on #1908: "fix
+ *  the glow in #1908 first": in bed her white nightie clipped to white under them). 1 in bed, taken at once as she's put there (under
+ *  the loading screen or the sleep's veil, as her pose is: nothing seen to change); over the stretch eased to half; then, up beside the
+ *  bed, back to 0 over its last half second at HUSH_BACK a second, so nothing pops. `was` the last frame's, `dt` the frame's seconds;
+ *  `stretched` the share of the stretch gone (0 to 1). */
+export function bedHush(pose: "inBed" | "bedStretch" | null, stretched: number, was: number, dt: number): number {
+  if (pose === "inBed") return 1;
+  const want = pose === "bedStretch" ? 1 - 0.5 * Math.min(1, Math.max(0, stretched)) : 0;
+  return want >= was ? want : Math.max(want, was - HUSH_BACK * dt);
+}
+/** How fast her glow comes back once she's out of bed (a share a second). */
+export const HUSH_BACK = 1;

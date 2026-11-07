@@ -8,9 +8,11 @@ import { smallWorld } from "../test/worlds";
 import { TUNING } from "../rules/tuning";
 import { installEdLayout } from "../rules/houseRooms";
 import { homeBed, startWake, stepWake, tuckIn, WAKE_DEFAULT } from "../rules/wakeUp";
-import { bedLift, inBedPose } from "./bedPose";
-import { witchModel, WITCH_FOOT_POSES } from "../../art/witch.js";
-import { BED_MATTRESS } from "../../art/furniture.js";
+import { bedHush, bedLift, HUSH_BACK, inBedPose } from "./bedPose";
+import { witchColours, witchModel, WITCH_FOOT_POSES } from "../../art/witch.js";
+import { M } from "../../art/core.js";
+import { BED_COVERS, COVERS_ON_HER } from "../../art/bedColours.js";
+import { BED_MATTRESS, furnitureColours } from "../../art/furniture.js";
 const newGame = smallWorld(fullGame, "Her wake-up in bed: only the treehouse matters.");
 
 type Part = { type: string; group: number; c?: number[]; a?: number[]; b?: number[] };
@@ -72,4 +74,41 @@ it("sitting up in her bed she faces its foot (as Ed's layout turns it), her back
     expect(W.body.facing).toBe(foot.x < 0 ? -1 : 1);
     expect(W.body.facing).toBe(-1); // (Ed's layout: its foot down the screen to the left; she faced right, across it)
   } finally { installEdLayout(false); }
+});
+
+// Ed, 2026-11-07, on #1908: "fix the glow in #1908 first, and maybe draw covers over her legs, then publish."
+it("in bed the bed's covers lie over her legs, in the bed's own colours", () => {
+  const SHELL = (M as Record<string, number>).SHELL, THORAX = (M as Record<string, number>).THORAX;
+  for (const pose of ["inBed", "bedStretch"]) for (let f = 0; f < 2; f++) {
+    const parts = ((witchModel as (o: object) => unknown)({ pose, frame: f, look: { nightie: true, barefoot: true } }) as { parts: (Part & { mat: number; r?: number[]; h?: number[] })[] }).parts;
+    const covers = parts.filter(p => p.mat === SHELL);
+    expect(covers.length, `${pose} ${f}: covers`).toBeGreaterThan(0);
+    const top = Math.max(...covers.map(p => p.c![1] + (p.r ?? p.h)![1])), x1 = Math.max(...covers.map(p => p.c![0] + (p.r ?? p.h)![0]));
+    const leg = parts.filter(p => p.type === "cone" && (p.group === 4 || p.group === 6)).flatMap(p => [p.a!, p.b!]);
+    for (const q of leg) { expect(q[1], `${pose} ${f}: a leg over the covers`).toBeLessThan(top); expect(q[0]).toBeLessThan(x1); }
+  }
+  // the bed's duvet and stripe (art/bedColours.js), on her as the house's light shows them on the bed, a guest's bed alike
+  const her = (witchColours as (st: object) => Record<number, number[]>)({}), colours = furnitureColours as (st?: object, id?: string, state?: string) => Record<number, number[]>;
+  expect(her[SHELL]).toEqual(COVERS_ON_HER.duvet); expect(her[THORAX]).toEqual(COVERS_ON_HER.stripe);
+  for (const [id, state] of [["bed", undefined], ["bedroom2Bed", "open"], ["bedroom3Bed", "open"]]) {
+    expect(colours({}, id, state)[M.CLOTH]).toEqual(BED_COVERS.duvet); expect(colours({}, id, state)[M.BODY3]).toEqual(BED_COVERS.stripe);
+  }
+});
+
+it("in bed her own glow and the bloom are partly off her, taken at once and given back over the stretch and after, never popping", () => {
+  expect(bedHush("inBed", 0, 0, 0)).toBe(1); // (put in bed: at once, as her pose is)
+  let k = 1;
+  for (let s = 0; s <= 1.0001; s += 0.05) { const n = bedHush("bedStretch", s, k, 0.15); expect(k - n).toBeLessThanOrEqual(0.026); k = n; }
+  expect(k).toBeCloseTo(0.5);
+  for (let i = 0; i < 40; i++) { const n = bedHush(null, 0, k, 1 / 30); expect(k - n).toBeLessThanOrEqual(HUSH_BACK / 30 + 1e-9); k = n; }
+  expect(k).toBe(0);
+  expect(bedHush(null, 0, 0, 0.1)).toBe(0); // (anywhere else: none)
+  for (const k of [TUNING.witch.bedGlow, TUNING.witch.bedBloom]) { expect(k).toBeGreaterThanOrEqual(0); expect(k).toBeLessThan(1); }
+  // the bloom too (her nightie and the pillows by her bloomed to white over her): its share kept in bed, eased with the same hush
+  expect(readFileSync("src/render/post.ts", "utf8")).toMatch(/t\.bloom\.strength \* this\.bedBloom/);
+  expect(readFileSync("src/render/view/witch.ts", "utf8")).toMatch(/v\.post\.bedBloom = 1 - v\.bedHush \* \(1 - \(t\.witch\.bedBloom \?\? 1\)\)/);
+  // her own batch's materials only (render/sprites.ts: each material its own uWitchHush), read by her shading (render/witchLight.ts)
+  expect(readFileSync("src/render/sprites.ts", "utf8")).toMatch(/uWitchHush: \{ value: 0 \}/);
+  expect(readFileSync("src/render/witchLight.ts", "utf8")).toMatch(/uWitchGlow \* own/);
+  expect(readFileSync("src/render/view/witch.ts", "utf8")).toMatch(/for \(const b of \[v\.witchBatch, v\.bareBatch\]\) if \(b\) setWitchHush\(b\.meshes, off\)/);
 });

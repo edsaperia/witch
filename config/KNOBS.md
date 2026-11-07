@@ -1300,6 +1300,14 @@ Speeds per mode, and how long rising and descending take. The witch is lit by th
   2. Ed: "don't make it stop at scenery"
   The witch knocked back and staggered by a blow [1]: thrown straight away from the blow, base metres for any blow (bites, swipes, shots) plus scale times the attack's own knockback (combat.json; so a maul, quake or slam sits in between), at least charge metres when it rams her (a charge, or a leap landing on her), at most max; eased off at ease a second (like a creature's knockback), straight through scenery [2], nudged to the nearest clear spot at the end if she'd rest inside a trunk, rock, speaker, soundsystem or the treehouse (the blink's clearances). Staggered (no moving, blinking or 💌s, a wobble and stars) stunBase seconds plus stunScale a metre thrown past base, at most stunMax; then not staggered again for immune seconds (the blows still count), so a pack can't stun-lock her. A blink dodges it all; the blow that knocks her out throws nothing. on false, or ?knock=0, turns it off.
   Code: `rules/knock.ts`
+- **`witch.bedGlow`**: In her bed (asleep, the alarm, a snooze, the stretch), the share of her own glow and its lift on her kept, so her white nightie keeps its shading.
+  1. Ed, 2026-11-07: "fix the glow in #1908 first" (her nightie clipped to white in bed under her own glow and its lift)
+  Only her own sprite and only in bed: 1 keeps all of it (as anywhere else), 0 none. Taken off at once as she's put in bed; given back over the stretch (half of what's off) and the second after she's up beside the bed, so nothing pops. Her glow's pool on the world round her is unchanged.
+  Code: `render/bedPose.ts`
+- **`witch.bedBloom`**: In her bed, the share of the picture's bloom kept: her white nightie and the pillows beside her bloomed to white over her.
+  1. Ed, 2026-11-07: "fix the glow in #1908 first" (her nightie clipped to white in bed)
+  Eased with witch.bedGlow (taken at once as she's put in bed, given back over the stretch and the second after she's up), so nothing pops. 1 keeps all of it; anywhere but her bed, all of it.
+  Code: `render/post.ts`, `render/bedPose.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -1316,6 +1324,8 @@ Speeds per mode, and how long rising and descending take. The witch is lit by th
 | `witch.lightFloor` | number | 0 to … |
 | `witch.lightTint` | number | 0 to … |
 | `witch.lightRim` | number | 0 to … |
+| `witch.bedGlow` | number | 0 to 1 |
+| `witch.bedBloom` | number | 0 to 1 |
 | `witch.heightSmooth` | number | 0 to … |
 | `witch.heightLookAhead` | number | 0 to … |
 | `witch.heightClearance` | number | 0 to … |

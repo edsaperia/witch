@@ -14,6 +14,7 @@
 import { M, Sprite, hsv2rgb, hash2 } from "./core.js";
 import { Model, render } from "./model3d.js";
 import { SHEETED_PIECES, SHEETED_COLOURS } from "./sheeted.js";
+import { BED_COVERS } from "./bedColours.js";
 
 /** House.json's footprints over a real piece's: the pieces drawn twice their real size (Ed, 2026-10-23: "about 2x, as big as in her
  *  old creator bedroom"), so a piece is built at its footprint over this and drawn this many times over. */
@@ -856,12 +857,12 @@ export const FURNITURE_STATES = { curtains: ["open", "shut"], invitations: ["8,8
 // Glowing: WOKEN bulbs and flames, COLLAR neon and fairy lights, MAGIC and MAGIC2 magic, GLINT a screen, GLOW lamps, RUNE runes.
 // The woods take Golf's floors' browns (render/houseArt.ts), a step darker and lighter.
 const BASE = {
-  [M.BARKD]: [58, 38, 30], [M.WOOD]: [138, 96, 60], [M.HAIR]: [98, 70, 52], [M.CLOTH]: [92, 40, 96], [M.ACCENT]: [160, 36, 64], [M.BODY]: [104, 22, 46],
-  [M.BELLY]: [236, 226, 206], [M.FLOWER]: [222, 176, 78], [M.FRAME]: [196, 200, 212], [M.CRYSTAL]: [176, 220, 240], [M.WEB]: [176, 196, 226], [M.WATER]: [30, 44, 92],
+  [M.BARKD]: [58, 38, 30], [M.WOOD]: [138, 96, 60], [M.HAIR]: [98, 70, 52], [M.CLOTH]: BED_COVERS.duvet, [M.ACCENT]: [160, 36, 64], [M.BODY]: [104, 22, 46],
+  [M.BELLY]: BED_COVERS.sheet, [M.FLOWER]: [222, 176, 78], [M.FRAME]: [196, 200, 212], [M.CRYSTAL]: [176, 220, 240], [M.WEB]: [176, 196, 226], [M.WATER]: [30, 44, 92],
   [M.STONE]: [118, 112, 108], [M.STONED]: [44, 38, 38], [M.MOSS]: hsv2rgb(.27, .5, .45), [M.BROOM]: [128, 84, 50], [M.STRAW]: [214, 180, 112],
   [M.JACKET]: [236, 186, 62], [M.TOP]: [60, 46, 70], [M.HAT]: [64, 40, 98], [M.HAT2]: [120, 84, 168], [M.POM]: [252, 132, 200], [M.IRIS]: [80, 136, 226],
   [M.PHONES]: [255, 92, 176], [M.SHOES]: [240, 240, 248], [M.SOLE]: [246, 246, 246], [M.SHADES]: [34, 30, 40], [M.HAT1]: [92, 210, 200], [M.BODY2]: [204, 124, 84],
-  [M.BODY3]: [110, 78, 132], [M.LEAF]: hsv2rgb(.3, .6, .52), [M.LEAF2]: hsv2rgb(.26, .55, .7), [M.LEAF3]: hsv2rgb(.36, .65, .34),
+  [M.BODY3]: BED_COVERS.stripe, [M.LEAF]: hsv2rgb(.3, .6, .52), [M.LEAF2]: hsv2rgb(.26, .55, .7), [M.LEAF3]: hsv2rgb(.36, .65, .34),
   [M.WOKEN]: [255, 222, 160], [M.COLLAR]: [255, 110, 214], [M.MAGIC]: [178, 120, 255], [M.MAGIC2]: [236, 220, 255], [M.GLINT]: [160, 226, 255], [M.GLOW]: [255, 184, 100], [M.RUNE]: [110, 255, 196],
   [M.LINE]: [24, 20, 30], [M.NOSE]: [14, 12, 18],
 };

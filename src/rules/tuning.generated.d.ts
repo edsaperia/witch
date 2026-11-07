@@ -599,6 +599,8 @@ export type SchemaTuning = {
     "lightFloor": number;
     "lightTint": number;
     "lightRim": number;
+    "bedGlow"?: number;
+    "bedBloom"?: number;
     "heightSmooth": number;
     "heightLookAhead": number;
     "heightClearance": number;
