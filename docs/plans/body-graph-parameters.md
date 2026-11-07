@@ -18,6 +18,7 @@ builders. Acceptance presets are data in `acceptance.js`.
 | Area | Parameters |
 | --- | --- |
 | Torso | length, width, depth, leg height, neck reach, agePlans overrides |
+| Dorsal profile | existing q.spine scalar or hip/loin/waist/ribcage/shoulder heights; positive crest, negative parent-local groove; explicit plan.dorsal override |
 | Regional tissue | volumes: region name, axial at0..1, size, softness, depth/width weights, lift; up to12 layers |
 | Ruff/mane | ruff.size, ruff.softness: a neck-region envelope layer |
 | Fur shell | furShell.thickness, softness (surface amplitude) |

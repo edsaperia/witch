@@ -96,6 +96,9 @@ export function boundTreeBlendGroups(model,limit=3){
   if(!Number.isInteger(limit)||limit<1||limit>4)throw Error("Blend-group limit must be1..4");
   const counts=new Map(),chunks=new Map();let next=Math.max(1,...model.parts.map(p=>p.group),...model.flats.map(p=>p.group))+1;
   for(const part of model.parts){
+    // Subtractions use max(), never smooth-min: keep parent cuts attached to
+    // the original torso group; they contribute no additive blend bulge.
+    if(part.cut)continue;
     const original=part.group,chunk=chunks.get(original)??original,n=counts.get(chunk)??0;
     if(n>=limit){const group=next++;chunks.set(original,group);part.group=group;counts.set(group,1);}
     else {part.group=chunk;counts.set(chunk,n+1);}

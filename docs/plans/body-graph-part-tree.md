@@ -72,10 +72,14 @@ Selected graph models use parent-tree groups. The body is one group of three
 masses; sibling legs/necks have distinct groups. A skull and its muzzle/jaw may
 share a bounded group, while eyes, ears and other crisp features receive
 separate groups after the body. Feature metadata names its parent head. Every
-group is capped at three primitives (stronger than an overlap-only bound), then
+group is capped at three additive primitives (stronger than an overlap-only bound), then
 IDs are compacted into the sprite's eight-bit group channel. The cap is applied
 again after evolution/gear additions. Default legacy graphs keep their existing
 compiler path; no shipped group/blend behavior changes when graphs are off.
+
+Parent-local subtractive cuts stay with their parent group: subtraction uses
+max, so these do not contribute to the additive smooth-min bulge or its cap.
+The shared dorsal crest/groove feature is documented in `body-graph-dorsal.md`.
 
 Ruff is now a separate post-body collar mass rather than another globally
 blended tissue layer. There is no sibling neck/limb soft union. Round-cone

@@ -6,6 +6,7 @@ import {compileGraph,LEG_FAMILIES} from "./graph.js";
 import {poseGraph} from "./gait.js";
 import {headParameters,shapeEnvelope,tailPoints,buildFamilyHead,familyAntlers,familyMarking,familyFeet,familyCollars} from "./expressiveness.js";
 import {acceptancePartTree,boundTreeBlendGroups,partMuscles} from "./part-tree.js";
+import {selectedDorsalProfile,addDorsalProfile} from "./dorsal.js";
 
 export const ACCEPTANCE_IDS = Object.freeze(["bear","wolf","stag","bat","snail","hydra"]);
 const ACCEPTANCE_PLANS = {
@@ -164,6 +165,7 @@ export function buildAcceptanceModel(S,age,frame=0){
   const {graph,meta,plan}=acceptanceGraph(S,age,frame);
   const compiled=meta.family==="quadruped"?poseGraph(graph,frame*.16,{stride:.16,duty:.65,lift:.075}):compileGraph(graph);
   const m=compiled.model,heads=[];
+  addDorsalProfile(m,graph,selectedDorsalProfile(S,age,plan));
   m.partTree=graph.partTree.map(part=>({...part}));
   for(const h of meta.heads){
     const at=compiled.sockets[h.id],start=m.parts.length;

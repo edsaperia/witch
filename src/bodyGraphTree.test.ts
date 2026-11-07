@@ -46,7 +46,7 @@ describe("research-based opt-in part tree",()=>{
     expect(new Set(limbs.map(s=>built.groups[s.id])).size).toBe(limbs.length);
     for(const age of [0,1,2,3]){
       const {model}=buildAcceptanceModel(pack[id].graph,age,0),counts=new Map<number,number>();
-      for(const p of model.parts){counts.set(p.group,(counts.get(p.group)??0)+1);expect(p.group).toBeLessThan(256);}
+      for(const p of model.parts){if(!p.cut)counts.set(p.group,(counts.get(p.group)??0)+1);expect(p.group).toBeLessThan(256);}
       expect(Math.max(...counts.values())).toBeLessThanOrEqual(3);
     }
   });
