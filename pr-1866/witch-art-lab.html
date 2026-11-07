@@ -2664,6 +2664,17 @@ function witchGenomeProblems(g) {
 
 
 
+// ---- inlined from art/bedColours.js ----
+// The bed's covers' colours: its duvet, the duvet's stripe and its sheets and pillows' linen (art/furniture.js, the house's
+// palette: CLOTH, BODY3 and BELLY), shared with her in-bed frames (art/witch.js inBed and bedStretch: the covers over her legs and lap), so
+// the covers on her are the bed's own (Ed, 2026-11-07, on #1908: "maybe draw covers over her legs").
+const BED_COVERS = { duvet: [92, 40, 96], stripe: [110, 78, 132], sheet: [236, 226, 206] };
+/** The duvet and its stripe on her: as the bed shows them in the house's warm light (render/housePieces.ts roomLight, baked into the
+ *  bed's pixels: measured beside her at the alarm, about [143, 54, 59] and [184, 90, 82]), less what her own light does to a colour
+ *  (her shading, render/witchLight.ts, warm and dimmer in blue), so her covers look the bed's own beside it. */
+const COVERS_ON_HER = { duvet: [146, 50, 82], stripe: [188, 84, 112] };
+
+
 // Her parts and the material each is drawn in. The last few are a party outfit's: its pattern and trim (sequins, a mesh,
 // a poncho's stripes), the flowers on a hat, a party cup, two glow-stick neons, sunglasses' lenses and frames.
 const WITCH_PARTS = { hair: M.HAIR, hat: M.HAT, headphones: M.PHONES, top: M.TOP, jacket: M.JACKET, jeans: M.JEANS, sneakers: M.SHOES, broom: M.BROOM, bristles: M.STRAW, skin: M.SKIN,
@@ -2690,6 +2701,7 @@ function witchColours(st, outfit = DEFAULT_OUTFIT, { styleHues = true } = {}) {
   const c = {}; for (const [part, mat] of Object.entries(WITCH_PARTS)) { const [h, s, v] = o[part]; c[mat] = hsv2rgb(hue[part] ?? h, s, v); }
   c[M.EYE] = [24, 18, 30]; c[M.GLINT] = [255, 255, 245]; c[M.NOSE] = [20, 16, 24]; c[M.MAGIC] = hsv2rgb(st.glowHue ?? .13, .5, 1); c[M.MAGIC2] = hsv2rgb(st.glowHue ?? .13, .15, 1); c[BAND] = c[M.WEB];
   c[M.BELLY] = [245, 245, 240]; // sneaker soles, headphone band highlights
+  c[M.SHELL] = COVERS_ON_HER.duvet; c[M.THORAX] = COVERS_ON_HER.stripe; // the bed's covers over her in bed (footModel: covers)
   return c;
 }
 
@@ -3137,6 +3149,11 @@ function fastModel(frame, L = DEFAULT_LOOK) {
 //   talk         four gestures: an open palm, pointing up (an idea), a wave, a hand on her chest; her head tilts between them
 //   placeSigil   reaching up to the stack over her head; drawing a sigil down; crouched, palm to the ground
 //   liftSigil    crouched, palm to the ground; rising with it; tossing it up into the stack
+//   inBed        in her bed (the wake-up, rules/wakeUp.ts): sitting up against her pillows, her legs out straight along the mattress,
+//                her hands in her lap, breathing (Ed's playtest of v7645, 2026-11-07, of the seat's sit drawn there: "Is this meant to be
+//                the witch lying in bed?": its legs hung down to the floor, so she stood in the middle of her bed)
+//   bedStretch   in bed still, stretching as she gets up: arms up over her head, a yawn; then arms wide
+//                (both under the bed's covers to her waist, in its colours: art/bedColours.js; Ed, 2026-11-07, on #1908)
 // The party (Ed: "another witch flies in to the dancefloor. At random they will: dance on their own with a variety of simple
 // moves, dance with other witches, fly around in circles, run about, talk to each other, drink, hug each other, hold hands, other
 // party activities"; and our witch does the same when left to idle near the dancefloor). Dancing, her broom is put down (the game
@@ -3165,7 +3182,7 @@ function fastModel(frame, L = DEFAULT_LOOK) {
 // her hat tip as anchors. frames and a suggested fps per pose; the party's poses loop, and say what they are
 // (party: dance, pair, social, move or rest); WITCH_PAIRS says how two witches meet (or three: the broom limbo).
 const WITCH_FOOT_POSES = {
-  stand: { frames: 3, fps: 3 }, idle: { frames: 3, fps: 2.5 }, walk: { frames: 6, fps: 9 }, idleBroom: { frames: 3, fps: 2.5 }, walkBroom: { frames: 6, fps: 9 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 }, sit: { frames: 2, fps: 1.5 },
+  stand: { frames: 3, fps: 3 }, idle: { frames: 3, fps: 2.5 }, walk: { frames: 6, fps: 9 }, idleBroom: { frames: 3, fps: 2.5 }, walkBroom: { frames: 6, fps: 9 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 }, sit: { frames: 2, fps: 1.5 }, inBed: { frames: 2, fps: 1.5 }, bedStretch: { frames: 2, fps: 1.5 },
   twoStep: { frames: 4, fps: 4, party: "dance" }, bounce: { frames: 2, fps: 4, party: "dance" }, shuffle: { frames: 4, fps: 6, party: "dance" }, spin: { frames: 4, fps: 6, party: "dance" },
   headbang: { frames: 2, fps: 4, party: "dance" }, jump: { frames: 3, fps: 5, party: "dance" },
   dancePair: { frames: 4, fps: 4, party: "pair" }, holdHands: { frames: 2, fps: 2, party: "pair" }, hug: { frames: 2, fps: 1.5, party: "pair" }, highFive: { frames: 2, fps: 3, party: "pair" },
@@ -3249,6 +3266,16 @@ const FOOT_FRAMES = {
   ],
   sit: [0, 1].map(f => ({ sit: true, swing: [.06, -.06][f], bend: -.08, look: [.02, .1][f], tilt: [.15, -.2][f], sway: [.01, .03][f], breathe: [0, .008][f],
     broom: { binding: [-.24, .31, -.3], dir: [.32, 1, -.06] }, free: [.2, WITCH_SEAT_HEIGHT + .14, .15], far: [.18, WITCH_SEAT_HEIGHT + .14, -.13], hand: "rest" })), // leaning back, hands on her knees
+  // in bed: sat on the mattress (her seat at its top, render/view/witch.ts bedLift), leaning back a little against her pillows, both legs
+  // out straight before her, no broom
+  inBed: [0, 1].map(f => ({ sit: true, seat: .02, broom: null, bend: -.2, look: [.04, .1][f], tilt: [.12, -.12][f], sway: [.01, .02][f], breathe: [0, .008][f],
+    feet: [[.42, .06, -.08], [.43, .06, .08]], free: [.24, .17, .13], hand: "rest", far: [.22, .17, -.13], farHand: "rest", covers: true })),
+  bedStretch: [
+    { sit: true, seat: .02, broom: null, bend: -.06, look: .3, shut: true, mouth: "laugh", sway: .01, breathe: .012, feet: [[.42, .06, -.08], [.43, .06, .08]],
+      free: [.02, .86, .1], hand: "palm", far: [.02, .86, -.1], farHand: "palm", covers: true },                                                    // arms up over her head, a yawn
+    { sit: true, seat: .02, broom: null, bend: -.1, look: .2, sway: .02, breathe: .008, feet: [[.42, .06, -.08], [.43, .06, .08]],
+      free: [.04, .74, .3], hand: "palm", far: [.04, .74, -.3], farHand: "palm", covers: true },                                                    // arms wide
+  ],
   // ---- the party ----
   twoStep: [0, 1, 2, 3].map(f => { const s = [1, 0, -1, 0][f]; return { broom: null, crouch: [.12, 0, .12, 0][f], hop: [0, .02, 0, .02][f], roll: s * .08, tilt: s * .3, sway: [.02, .035, .02, .035][f], look: .05,
     feet: [[0, .07, -.1 - (s < 0 ? .12 : 0)], [.04, .07, .1 + (s > 0 ? .12 : 0)]], free: [.18, .64 + (s > 0 ? .08 : 0), .19], elbow: [-.02, .6, .24], far: [.16, .64 + (s < 0 ? .08 : 0), -.19], farElbow: [-.02, .6, -.24] }; }),
@@ -3429,6 +3456,13 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
     m.seg(tier, low, .145, .172, M.BELLY, { group: 1 });
   } else m.ell(hips, [.1, .08, .105], M.JEANS, { group: 1 });
   if (!L.nightie) m.ell(chest, [.1, .15 + K.breathe * .5, .115], M.JACKET, { dir: fwd, group: 1, paint: torsoPaint(L, chest, fwd) });
+  // in bed: the bed's covers over her legs and lap to her waist (its colours, art/bedColours.js: the duvet and its stripes), a mound
+  // over her lap and lower over her legs
+  if (K.covers) {
+    const duvet = { group: 18, paint: p => (Math.abs((((p[0] + p[2]) * 4) % 1 + 1) % 1 - .5) < .08 ? M.THORAX : undefined) };
+    m.ell([.14, .085, 0], [.2, .075, .22], M.SHELL, duvet); // over her lap
+    m.box([.36, .055, 0], [.22, .055, .21], M.SHELL, { ...duvet, round: .05 }); // over her legs and feet, out to the foot of the bed
+  }
   // the jacket's hem hanging behind, stirring (a poncho or a cape instead)
   if (!L.nightie && L.top !== "poncho" && L.top !== "cape") m.chain([[...v3.add(chest, v3.add(v3.mul(fwd, -.07), v3.mul(spine, -.08))), .07], [...v3.add(chest, v3.add(v3.mul(fwd, -.11 - sway), v3.mul(spine, -.2))), .05], [...v3.add(chest, v3.add(v3.mul(fwd, -.13 - sway * 1.6), v3.mul(spine, -.29))), .025]], M.JACKET, { group: 12 });
   if (!L.nightie) drawWrap(m, L, chest, fwd, spine, false);
@@ -10214,11 +10248,11 @@ function poseFlightModel(model,pose){
 
 const ACCEPTANCE_IDS = Object.freeze(["bear","wolf","stag","bat","snail","hydra"]);
 const ACCEPTANCE_PLANS = {
-  bear:{family:"quadruped",template:"ursid",priors:[{kind:"reference",weight:.6},{kind:"compact",weight:.4}],ribcage:{depth:1.1,width:.95},flank:{depth:.9,width:.98},muscles:[{from:.62,to:.88,angle:.1,radius:.045,depth:.6}],neck:-.05,neckForward:.36,coat:"muzzle",feet:"plantigrade",length:1.25,width:.39,depth:.36,leg:.39,head:.35,muzzle:.31,ears:"round",tail:.17,
+  bear:{family:"quadruped",template:"ursid",priors:[{kind:"reference",weight:.6},{kind:"compact",weight:.4}],ribcage:{depth:1.1,width:.95},flank:{depth:.9,width:.86},muscles:[{from:.62,to:.88,angle:.1,radius:.045,depth:.6}],neck:-.05,neckForward:.36,coat:"muzzle",feet:"plantigrade",length:1.25,width:.39,depth:.36,leg:.51,head:.35,muzzle:.31,ears:"round",tail:.17,
     headShape:{family:"ursine",skull:[1,1.05,1],muzzle:[1,.34,.46],muzzleTaper:.52,muzzleSlope:-.12,jaw:.2,ears:{kind:"round",size:.78,position:[-.05,.7,.87]},eyes:{size:.095,position:[.8,.32,.76],glint:.028}},
     stance:1.12,limbRadius:.16,limbProfile:[1,1.08,1],hindBend:-.14,footShape:{kind:"paw",width:.19,length:.24,pads:true,claws:true},tailShape:{kind:"stub",length:.19,thickness:.085,drop:.04},
     furShell:{thickness:.02,softness:.12},volumes:[{region:"neck",at:.95,size:.035,softness:.15,width:1,depth:1},{region:"shoulder",at:.79,size:.1,softness:.18,lift:.25,width:.8,depth:1},{region:"chest",at:.72,size:.06,softness:.2,lift:-.45},{region:"belly",at:.43,size:.085,softness:.24,lift:-.8},{region:"haunch",at:.08,size:.035,softness:.2,lift:-.12,width:1.1}],
-    agePlans:[{length:.83,head:.42,width:.37,depth:.33,leg:.4,limbRadius:.145,neck:-.02,muzzle:.2,headShape:{family:"ursine",skull:[1,1.08,1.08],muzzle:[.85,.35,.5],muzzleTaper:.6,muzzleSlope:-.08,jaw:.2,ears:{kind:"round",size:1,position:[-.06,.77,.84]},eyes:{size:.1,position:[.8,.32,.8],glint:.028}},tailShape:{kind:"stub",length:.16,thickness:.075,drop:.04}},{length:1.15,head:.35,width:.36,leg:.4},{},{width:.42,head:.37,limbRadius:.18}],markingSoftness:.045,
+    agePlans:[{length:.83,head:.455,width:.37,depth:.33,leg:.64,limbRadius:.145,neck:-.02,muzzle:.2,headShape:{family:"ursine",skull:[1,1.08,1.08],muzzle:[.85,.35,.5],muzzleTaper:.6,muzzleSlope:-.08,jaw:.2,ears:{kind:"round",size:1.14,position:[-.06,.77,.84]},eyes:{size:.1,position:[.8,.32,.8],glint:.028}},tailShape:{kind:"stub",length:.16,thickness:.075,drop:.04}},{length:1.15,head:.35,width:.36,leg:.51},{},{width:.42,head:.37,limbRadius:.18}],markingSoftness:.045,
     markings:[{space:"head",kind:"mask",centre:[1.05,-.15,0],radius:[.85,.45,.58],softness:.22,mat:"BODYL"}]},
   wolf:{family:"quadruped",coat:"saddle",feet:"digitigrade",width:.22,depth:.25,leg:.66,head:.22,muzzle:.32,ears:"point",tail:.58,headShape:{family:"canid"},tailShape:{kind:"bushy"},ruff:{size:.04,softness:.12},markings:[{space:"body",kind:"saddle",centre:[0,.85,0],radius:[.52,.7,1.2],softness:.15,mat:"BODY3"},{space:"body",kind:"mask",centre:[0,-.9,0],radius:[.65,.65,1.3],softness:.12,mat:"BELLY"},{space:"head",kind:"mask",centre:[.8,-.5,0],radius:[1,.5,.75],softness:.15,mat:"BELLY"}]},
   stag:{family:"quadruped",coat:"fawn",feet:"hoof",width:.21,depth:.25,leg:.86,head:.19,muzzle:.29,ears:"point",tail:.18,neck:.37,antlers:true,headShape:{family:"cervid",ears:{kind:"leaf",size:1.2}},antlerShape:{branches:4,spread:.34,curve:-.1,tineLength:.18,glow:true},footShape:{kind:"hoof",width:.065,length:.09},markingSoftness:.035},
@@ -10230,6 +10264,7 @@ function acceptanceGraphGenome(base){
   if(!ACCEPTANCE_IDS.includes(base.id))throw Error("Outside body-graph acceptance batch");
   const out=structuredClone(base);
   out.look={...out.look,bodyGraphAcceptance:{version:1,...ACCEPTANCE_PLANS[base.id]}};
+  if(base.id==="bear")out.palette={...out.palette,hue:.07,sat:.5,val:.43,over:{...out.palette?.over,BODYL:[151,119,87],BODY2:[125,92,61],BELLY:[190,151,104]}};
   return out;
 }
 function createAcceptanceVariants(genomes){
