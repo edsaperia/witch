@@ -82,9 +82,13 @@ describe("how the game takes input during the zoom and the dive", () => {
   });
   it("the game: E or circle at the table puts the chart down only while it may; nothing skips the dive", () => {
     const main = src("../main.ts");
-    expect(main).toMatch(/if \(chartAt && chartOpen\(\) && putChartDown\(\)\) chartAt = null;/);
+    expect(main).toMatch(/function frameBody\(now: number\): void \{ return a4_frameBody\(pageHost, now\); \}/);
+    expect(main).toMatch(/get chartAt\(\): typeof chartAt \{ return chartAt; \}, set chartAt\(value: typeof chartAt\) \{ chartAt = value; \}/);
+    expect(src("./pageFrame.ts")).toMatch(/if \(pageHost\.chartAt && chartOpen\(\) && putChartDown\(\)\) pageHost\.chartAt = null;/);
     expect(main).not.toMatch(/armSkip|arrival\.skip\(\); \}, \{ capture/);
-    const gesture = main.slice(main.indexOf("const armGesture"), main.indexOf("if (bootArrival) armGesture();"));
+    expect(main).toMatch(/const armGesture = \(\): void => a4_armGesture\(pageHost\);/);
+    const night = src("./pageNight.ts"), gesture = night.slice(night.indexOf("export function armGesture("), night.indexOf("export function armBack("));
+    expect(gesture).toMatch(/pageHost\.gestured = true;/);
     expect(gesture).not.toMatch(/skip/);
     expect(src("../ui/chartOverlay.ts")).toMatch(/if \(!open \|\| !open\.view\.closable\(\)\) return false;/);
   });
