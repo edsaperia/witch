@@ -119,7 +119,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         await page.evaluate(() => { window.__padOn = false; }); await page.waitForTimeout(600);
       }
       // Choosing: what's in focus, what she wears, and what's drawn on her.
-      const state = () => page.evaluate(() => { const p = document.querySelector("#station-panel"), f = p.querySelector(".focus"); return { worn: [...p.querySelectorAll(".sp-card.worn")].map(e => `${e.dataset.line}:${e.dataset.col}`), focus: f ? `${f.dataset.line}:${f.dataset.col}` : null, locked: !!f?.classList.contains("locked"), detail: p.querySelector(".sp-detail")?.innerText ?? "", saved: localStorage.getItem("witch.genome"), drawn: JSON.stringify(window.witch.view.assets.witchGenome ?? null), witch: { y: window.witch.game.witch.mode, perch: !!window.witch.game.witch.perch } }; });
+      const state = () => page.evaluate(() => { const p = document.querySelector("#station-panel"), f = p.querySelector(".focus"); return { worn: [...p.querySelectorAll(".sp-card.worn")].map(e => `${e.dataset.line}:${e.dataset.col}`), focus: f ? `${f.dataset.line}:${f.dataset.col}` : null, unfound: !!f?.classList.contains("unfound"), detail: p.querySelector(".sp-detail")?.innerText ?? "", saved: (() => { const I = "witch.saves.v1", k = Object.keys(localStorage).find(x => x.endsWith(I)), pre = k ? k.slice(0, -I.length) : ""; let act = "s1"; try { act = JSON.parse(localStorage.getItem(k)).active || act; } catch { /* no index */ } return localStorage.getItem(`${pre}witch.save.${act}.witch.genome`) ?? localStorage.getItem(pre + "witch.genome"); })() /* (her look as saved: the active save's, app/saveSlots.ts slotKey) */, drawn: JSON.stringify(window.witch.view.assets.witchGenome ?? null), witch: { y: window.witch.game.witch.mode, perch: !!window.witch.game.witch.perch } }; });
       const owned = await page.evaluate(() => [...document.querySelectorAll("#station-panel .sp-card:not(.unfound):not(.sp-toggle):not(.sp-trail)")].map(e => `${e.dataset.line}:${e.dataset.col}`));
       const s0 = await state();
       if (owned.length >= 2) {
@@ -133,7 +133,9 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         ok(s.saved && JSON.stringify(JSON.parse(s.saved)) === s.drawn, `${id}: her drawn look is the one chosen`);
         await page.mouse.move(W - 20, H - 20); // (the pointer off the panel: the arrows next)
         // (Ed, 2026-10-28: "she should change only when I press the 'choose' button": an arrow only moves the focus, Space puts it on)
-        await page.keyboard.press("ArrowLeft"); await settle();
+        await page.keyboard.press("ArrowLeft"); await page.waitForTimeout(800);
+        if ((await state()).focus === other) await page.keyboard.press("ArrowRight"); // (at its line's start: the other way)
+        await settle();
         s = await state();
         ok(s.worn.includes(other) && s.focus !== other, `${id}: an arrow key moves the focus and changes nothing on her (worn ${s.worn}, focus ${s.focus})`);
         const to = s.focus;
