@@ -2,7 +2,7 @@
   "direction": "third-pass-readable-legends",
   "sourceLegendSheet": "https://raw.githubusercontent.com/edsaperia/witch/0b571d1838cfc8eabe8e4b0604f7662b487fc4de/previews/art-pass/legends-today/524b0ac/lane-L6.png",
   "sourceSha": "524b0acaa43bb9975e7b2834ff9a55cbca4b3319",
-  "status": "reference-package-pixel-render-blocked",
+  "status": "reference-package-pixel-evidence-published",
   "scaleTest": "64-128px concept silhouette beside 50px witch",
   "concepts": {
     "owl": [
@@ -27,7 +27,14 @@
     "views": ["towards", "away"],
     "sizes": ["1x", "4x-nearest-neighbour"],
     "style": ["limited night palette", "three cel bands", "dark outline", "deliberate clusters"],
-    "status": "not-generated-imagegen-403",
-    "nextCondition": "image-generation endpoint available or canonical art-render allocation"
+    "status": "published-native-albedo-evidence",
+    "method": "pure Node native generator; current level-3 albedo composited with witch scale, towards/away, true 1x and nearest-neighbour 4x; this is a schematic evidence sheet, not a new concept render",
+    "links": {
+      "owl": "https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/l6-third-pass/owl-pixel-pick.png",
+      "raven": "https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/l6-third-pass/raven-pixel-pick.png",
+      "heron": "https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/l6-third-pass/heron-pixel-pick.png",
+      "penguin": "https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/l6-third-pass/penguin-pixel-pick.png"
+    },
+    "nextCondition": "Ed/coordinator review; no adoption or visual acceptance inferred"
   }
 }

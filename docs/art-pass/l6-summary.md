@@ -14,9 +14,9 @@ The supplied current level-3 L6 sheet is the style anchor: [today's shipped L6 l
 | heron | Long-Reed Elder / Mere Watcher | A | S-neck, dagger bill, long legs | throat stripe, ankle band |
 | penguin | Epoch Wader / Ice-Scar Elder | A | upright emperor trunk, webbed feet, stiff flippers | worn gorget, aurora band |
 
-### Pixel-pick dependency
+### Pixel-pick evidence
 
-The required towards/away night-pixel versions at true 1× and nearest-neighbour 4×, with three cel bands, dark outline and deliberate clusters, are specified in the manifest but are **not claimed complete**: the built-in image-generation endpoint returned HTTP 403 during this pass, and no canonical renderer slot was allocated. No substitute image is being labelled as a game render. The exact next condition is an available image-generation endpoint or a canonical art-render allocation; once available, each pick gets a native-size sheet beside the supplied current legend crop and a 4× nearest-neighbour copy.
+The bounded CPU slot produced four evidence sheets: [owl](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/l6-third-pass/owl-pixel-pick.png), [raven](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/l6-third-pass/raven-pixel-pick.png), [heron](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/l6-third-pass/heron-pixel-pick.png), [penguin](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/l6-third-pass/penguin-pixel-pick.png). Each is a pure-Node native albedo sheet with towards/away, true 1× and nearest-neighbour 4×, plus witch scale. These are **schematic evidence of the current pipeline/style**, not newly authored concept art, final art, visual acceptance or adoption. Imagegen remained HTTP 403; no substitute claim is made.
 
 | Species | Reads-as target | Top3 priorities | MISSING GRAPH FEATURES |
 |---|---|---|---|
