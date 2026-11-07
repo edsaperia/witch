@@ -4,6 +4,79 @@ PR1906, branch codex/art-pass-l3, worktree work/art-pass-l3, source524b0acaa43bb
 
 Ed’s 7 November correction wins over ART-GUIDE0c’s older blanket wording: crystals/flames/spirit wings are allowed where animal/story fit; avoid a uniform. Three generated proposals per species, one recommendation each for Ed to judge. The generated sheets are concepts, not imported assets.
 
+## Iteration2: current colossal-fantasy recommendations
+
+New feedback6708227119/6708229124: preserve iteration1, push further into myth/epoch age, witch+trees in EVERY concept, approximately20×baby height/taller than treetops as design target, plus game-camera version of selected pick. All seven boards now contain A/B/C three concepts with C maximum fantasy and D a higher-camera version of C. All28panels were visually inspected; five boards received one framing correction. Full prompts and candid per-species output limits are above iteration1 in each note. No numerical scale/camera/native-pixel acceptance is claimed.
+
+| Species | Current pick | SIGNATURE ELEMENT | MISSING GRAPH FEATURES / integration needs |
+|---|---|---|---|
+| [Sand cat](cat.md) | C (D camera check) | Lost dune worlds inside low ear bowls | Nested ear-local surfaces/volumes, interior landscape and emissive-region attachment, rim-carved niche sockets, bounded particle curves and weathered material/geometry regions. Generic pointed ears do not provide this complete contract. |
+| [Eurasian lynx](lynx.md) | C (D camera check) | Scree lifted by terraced mountain paws | Foot/ankle-local layered fur/rock/vegetation sockets and clearance envelopes; a separately bounded airborne scree field linked to planted/raised state; asymmetric wear/offerings. Existing two-bone diagnostic legs lack the complete accessory/clearance contract. |
+| [Cheetah](cheetah.md) | C (D camera check) | Wind-wells within solid-spot coat | Coat-region inset/emissive volumes for spots, head-local stream roots, waist-relative bounded wind field, sparse necklace sockets and scar/weathering masks. This is beyond existing spot paint, while reusing its mapping rather than replacing the pattern system. |
+| [Black jaguar](jaguar.md) | C (D camera check) | Deep river pools within black rosettes | Inset coat volumes and water/emissive layer mapping, head-local whisker/flow roots, accessory torque/mini-shrine sockets and clearance, aged jade/bronze/scar regions. Existing rosette paint/tail markings should remain the basis. |
+| [Lion](lion.md) | C (D camera check) | Broken solar corona within monumental mane | Nested neck/mane radial frame and discontinuous corona geometry, accessory sundial/carving sockets, emissive interior regions, sparse vegetation ledge attachments and age/weathering. Existing mane primitives are not the whole graph contract. |
+| [Tiger](tiger.md) | C (D camera check) | Tiger stripes become sacred relief architecture | Surface-region-following relief meshes with age/weathering and cavity/niche data; nested votive lights/ferns, accessory throat curves, deformation/clearance constraints across shoulders. Existing stripe paint supplies coordinates but not carved architecture. |
+| [Snow leopard](snowleopard.md) | C (D camera check) | Glacial paw vaults lifting an avalanche | Foot-local translucent cavity volumes/ice-claw attachment, bounded avalanche field, coat crevasse-region depth/light, cylindrical-tail surface layering and sparse wrist votive sockets. Reuse existing tail chains/rosette mapping; do not invent a new bespoke species renderer. |
+
+C is recommended in each revised board because it best answers Ed’s request to explore beyond a merely big old animal. A/B remain alternatives, not rejected by Ed. The seven recommendations remain proposals pending Ed/coordinator judgement and canonical cross-lane spread.
+
+Variety: sand-cat ear worlds, lynx scree-lifting paws, cheetah wind-wells, jaguar river-pools, lion solar mane, tiger stripe architecture and snow-leopard glacial pads. Paw magic repeats for lynx/snowleopard because both have unusually large feet; dry-rock levitation versus glacial vault/avalanche is the distinction. Miniature shrines recur as signs of reverence, but their supporting animal feature differs (ear rims, river torque, tiger stripes); avoid the same temple-building costume across all. Vegetation on lion/lynx supports specific weathering/landform ideas; it is not a mandatory back ornament. Water/air/ice use distinct host regions and behaviour. Coordinator must check eventual other-lane signatures.
+
+Scale: witch+nearby tree groups demonstrate intended colossal mass. Some foreground or background canopy is taller through depth/variable tree size; do not equate every tree crown to a common-height ruler. No baby appears, so20× is unmeasured. Current game size settings are not changed or asserted to match this concept target. The D panels are generated approximations, not captures.
+
+Iteration2 adds seven PNGs under own species paths, preserving all old plates/history. Publication/hash receipt follows below. Missing photos, exact-current legend comparisons and cat area mapping remain explicit conditions; independent legend revision is complete and reviewable while those wait.
+
+## Iteration2 published integrity
+
+Safe publisher added exactly7 PNGs, no deletions or iteration1 overwrites; shots commit 4cf4e44eaff9061e3c99fdc753b8c1fc1ef1efe1. All selected boards were visually inspected, including five framing edits.
+
+Iteration2 checks PASS: `npm run typecheck`; `git diff --check`; seven species with three concepts per iteration and seven game-camera counterparts; all21 published PNG hashes/dimensions and28 pinned species-image Git links. No unit/build/smoke/browser/art-render run for this documentation/reference-only revision. Twenty-eight panel scale-cue inspections were visual, not automated image measurements.
+
+| Selected board | PNG size | SHA256 |
+|---|---|---|
+| cat/legends-scale-v2.png | 1254×1254 | 396772b9d4dcc5596d1d78321f126fbbe01ac97f8adfd20c448160ad18eb0cc4 |
+| lynx/legends-scale-v2.png | 1536×1024 | 1143512abc743f237674e3a2f1dba9cab85150c5268b7aa7e626b49c49f27dd0 |
+| cheetah/legends-scale-v2.png | 1536×1024 | a57320ed052148f59d47889aee539088c946220dbb27a9c0c6bc1c031d6d67fc |
+| jaguar/legends-scale-v2.png | 1536×1024 | b83ef39eefa9b215e08f9814f2a7b1043e80dffbd81a9647258d49b2c4012a65 |
+| lion/legends-scale-v2.png | 1536×1024 | 43a72bc6161250ebee5d5b22f0995f524821a16da56f43d9bc0ff24751bc645f |
+| tiger/legends-scale-v2.png | 1536×1024 | dd09f806673cca26e31bfc9aab984ec802ea5825d605c588bdc6d2629dcc14a3 |
+| snowleopard/legends-scale-v2.png | 1536×1024 | 6fbabb36dc4f589b7c8a7baec8592b31df46d48c38a56e829aba5a8bc3b57cb6 |
+
+## Iteration2 review contact sheet
+
+Three candidates per board; C lower-left is proposed maximum-fantasy pick, D lower-right is its approximate game-camera counterpart. Ed may select A/B instead or request another direction.
+
+### cat: recommend C, D checks game-camera projection
+
+![cat iteration2 concept board](https://raw.githubusercontent.com/edsaperia/witch/4cf4e44eaff9061e3c99fdc753b8c1fc1ef1efe1/previews/art-pass/cat/legends-scale-v2.png)
+
+### lynx: recommend C, D checks game-camera projection
+
+![lynx iteration2 concept board](https://raw.githubusercontent.com/edsaperia/witch/4cf4e44eaff9061e3c99fdc753b8c1fc1ef1efe1/previews/art-pass/lynx/legends-scale-v2.png)
+
+### cheetah: recommend C, D checks game-camera projection
+
+![cheetah iteration2 concept board](https://raw.githubusercontent.com/edsaperia/witch/4cf4e44eaff9061e3c99fdc753b8c1fc1ef1efe1/previews/art-pass/cheetah/legends-scale-v2.png)
+
+### jaguar: recommend C, D checks game-camera projection
+
+![jaguar iteration2 concept board](https://raw.githubusercontent.com/edsaperia/witch/4cf4e44eaff9061e3c99fdc753b8c1fc1ef1efe1/previews/art-pass/jaguar/legends-scale-v2.png)
+
+### lion: recommend C, D checks game-camera projection
+
+![lion iteration2 concept board](https://raw.githubusercontent.com/edsaperia/witch/4cf4e44eaff9061e3c99fdc753b8c1fc1ef1efe1/previews/art-pass/lion/legends-scale-v2.png)
+
+### tiger: recommend C, D checks game-camera projection
+
+![tiger iteration2 concept board](https://raw.githubusercontent.com/edsaperia/witch/4cf4e44eaff9061e3c99fdc753b8c1fc1ef1efe1/previews/art-pass/tiger/legends-scale-v2.png)
+
+### snowleopard: recommend C, D checks game-camera projection
+
+![snowleopard iteration2 concept board](https://raw.githubusercontent.com/edsaperia/witch/4cf4e44eaff9061e3c99fdc753b8c1fc1ef1efe1/previews/art-pass/snowleopard/legends-scale-v2.png)
+
+
+## Iteration1 retained checkpoint
+
 | Species | Reads-as TARGET | Top3 priorities | Pick | SIGNATURE ELEMENT | MISSING GRAPH FEATURES / integration needs |
 |---|---|---|---|---|---|
 | [Sand cat](cat.md) | Low sandy cat with broad flat face and very large low ears | low broad ears; flat face; short-legged sandy body | A | Ear-interior sound contours | Head-local low ear cups and furred paw envelope; worn ear-edge and ear-interior magic attachments for legend. |

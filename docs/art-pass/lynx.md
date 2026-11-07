@@ -47,7 +47,39 @@ Adult photograph visibly confirms pointed tufted ears, short black-ended tail, c
 
 [Expert species description](https://www.catsg.org/living-species-eurasianlynx) supports the identifying traits; ratios above are our design estimates. Commons photos are comparison-only, kept private and never published in this PR or shots.
 
-## Three legend concepts and existing comparison
+## Iteration2: colossal fantasy concepts — current recommendation
+
+Later Ed feedback on7November2026, COORDINATOR6708227119/6708229124, supersedes iteration1’s modest fantasy/plain-background direction. [DESIGN.md](../../DESIGN.md#look) says legends are about20times a baby’s height and taller than treetops; ART-GUIDE0b/0c asks for a recognisable animal’s nature made fantastic, epoch age, wisdom, power and reverence. These are proposed designs, not changes to game sizes.
+
+![Iteration2 A/B/C and C at game camera](https://raw.githubusercontent.com/edsaperia/witch/4cf4e44eaff9061e3c99fdc753b8c1fc1ef1efe1/previews/art-pass/lynx/legends-scale-v2.png)
+
+2×2 board: A upper-left, B upper-right, C MAXIMUM FANTASY lower-left; D lower-right repeats C at an approximate game-camera elevation29.8° down/yaw34.4° from side-on. **Exactly three designs; D is another view, not a fourth concept.** Witch and trees are included in every panel. A/B/C use low hero views to convey mass, far-side haze and landscape weathering. The witch is a scale stand-in, not an exact render of the game’s witch.
+
+- A: ridge listener with aurora caught on long black ear quills and worn cheek offerings.
+- B: frostbeard oracle with layered slate-like cheek-fur ledges and old snow.
+- C MAXIMUM FANTASY: Ridge Walker; broad paws carry terraced scree/pine-root ledges and lift stones in a mountain spiral.
+
+**Recommend C for Ed’s second-pass review; signature element: Scree lifted by terraced mountain paws.** C turns the lynx’s huge paws and rocky-slope movement into earth-shaping power. High rump, long legs, spotted fur, pointed tufted ears and short black bobtail survive the landform treatment. An ancient mountain walker is more distinct from the sand cat’s listening magic than another ear-only pick. A remains an elegant lower-fantasy alternative; B risks reading as a generic shaggy cat.
+
+Chosen legend body-plan/checklist: Keep tall digitigrade legs and short black bobtail; enlarge paws broadly, not into hooves. Place rock ledges/rooted vegetation around ankle fur, with raised paw still separate from suspended scree. Thin ear quills catch aurora without replacing ear cups. Worn climbing votives remain sparse.
+
+MISSING GRAPH FEATURES / shared integration needs: Foot/ankle-local layered fur/rock/vegetation sockets and clearance envelopes; a separately bounded airborne scree field linked to planted/raised state; asymmetric wear/offerings. Existing two-bone diagnostic legs lack the complete accessory/clearance contract.
+
+Actual inspected output/projection limits: Witch and pines appear in all four panels. C/D retain short tail and high rump. Pine foreground overlaps feet; the levitating-scree spiral is readable in D, but exact contact and the difference between ankle foliage and ground trees need a graph render. A’s fine auroral tips reach the upper margin; do not treat glow extent as calibrated geometry.
+
+Scale assessment: all four panels visibly contain a witch and trees; selected C/D read as colossal against the nearby witch and tree groups. Perspective/depth/variable tree size prevent an exact height comparison; no baby is depicted, so **20× baby height is a design prompt, not a verified measurement**. Native game projection, coverage/contact, accessory motion, occlusion and20× size must be tested on graph renders by the canonical owner. No local browser was allocated/run.
+
+### Iteration2 exact generation prompt
+
+```text
+Witch videogame legendary creature second-pass design board. FOUR equal panels in a 2x2 grid, labelled A (upper left), B (upper right), C MAXIMUM FANTASY (lower left), D GAME CAMERA (lower right); no other text. A B C are THREE DIFFERENT concepts of SAME species; D repeats C's exact design from higher game camera. Every panel shows the ENTIRE huge creature including ALL ears/paws/tail, within ample margins. CRITICAL SCALE IN EVERY PANEL: a tiny human WITCH with pointed dark purple hat/dress holding broom STANDS on SAME ground plane next to front paw, clearly distinct and NOT riding animal; multiple complete FOREST TREES near paws and flank, with normal trunks/crowns and readable silhouettes. Creature head/shoulders TOWER ABOVE tree crowns; landscape-scale body mass, approximately20times a baby animal height, NOT a normal pet by a human. Trees about quarter to half creature shoulderheight, witch about one tenth to one fifteenth. Compose enough ground area to show scale without cropping creature. A B C cinematic slightly low/near-ground threequarter HERO viewpoint with atmospheric depth/haze on distant body, large weight-bearing landformlike masses. D SAME C at approximate actual game projection, elevation29.8deg DOWN, near-orthographic long lens, heading34.4deg from side-on facing viewer; whole giant+witch+trees still visible. Concept art: bold controlled painterly/small readable shape clusters, rich twilight with local magic light. Very ancient wise powerful mythical elder, animal's defining nature impossible, species instantly identifiable. No generic uniform, no gore, no modern buildings. Trees/environment support scale not hide anatomy. EURASIAN LYNX: very short black-tipped BOBTAIL, high rump, long feline legs, broad cheek ruff, pointed ears with thin black tufts, spotted tawny grey coat, HUGE furred paws. Rocky slope with scree/moss, boulders/pines. A: ancient ridge listener with ear tufts towering as black curved quills that catch pale aurora, weathered muzzle, tiny worn stone offerings on cheek ruff. B: frostbeard oracle, cheek ruff grown into cascading slate-and-fur ledges streaked with old snow, glowing amber eyes above dwarfed pines, no long tail. C MAXIMUM FANTASY RECOMMENDED: Ridge Walker, massive lynx crossing high scree; each huge furred paw carries terraced rock ridges and little pine roots in its ankle fur, loose scree stones levitate upward beneath lifted paw in a mountain-shaped spiral, dark ear tufts tuned like two slim aurora needles. The legs and head are recognisably long-legged LYNX, not bear or lion; full short black bobtail visible. Geological weathering and grey ruff show epochs, few hand-carved climbing offerings embedded at ankles. D same C in game camera.
+```
+
+Selected first iteration2 generation; no framing edit.
+
+Generation: built-in imagegen,7November2026, model/seed unreported; text-only initial prompt; framing edits referenced only the species’ generated board, no real photos or game captures. No generated concept is activated.
+
+## Iteration1: three historical concepts and existing comparison
 
 Area/story: Rocky slope: scree and moss, boulders, rocks, pines and rocky outcrop (art/areas.js).
 
@@ -61,7 +93,7 @@ The right-hand sheet is **archival**, source/served SHA aad8b13327282d13d7d6a4e2
 - B Scree Oracle — angular grey cheek ruff recalling layered shale.
 - C Silent Tracker — enormous paws displacing suspended grit, pine-seed whisker beads.
 
-**Recommended A; signature element: Luminous ear-tuft quills.** The lynx’s ear tufts become a tall, austere silhouette above its silent body; greying beard and worn face give an old ridge guardian. Unlike the sand cat, magic is at narrow hair tips, not inside broad listening cups.
+**Historical iteration1 recommendation A; signature element: Luminous ear-tuft quills.** The lynx’s ear tufts become a tall, austere silhouette above its silent body; greying beard and worn face give an old ridge guardian. Unlike the sand cat, magic is at narrow hair tips, not inside broad listening cups.
 
 Chosen legend checklist/body plan: Keep bobtail, high rump and large paws. Grow two curved ear-tuft chains from the actual ear tips, keep ears below them visible, weather the cheeks and muzzle. Reduce the generated extra beard if it overwhelms the lynx face.
 

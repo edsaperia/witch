@@ -46,7 +46,45 @@ Earlier domestic-cat adult/kitten photos were visually inspected but REJECTED as
 
 [Expert species description](https://www.catsg.org/living-species-sandcat) supports the identifying traits; ratios above are our design estimates. Commons photos are comparison-only, kept private and never published in this PR or shots.
 
-## Three legend concepts and existing comparison
+## Iteration2: colossal fantasy concepts — current recommendation
+
+Later Ed feedback on7November2026, COORDINATOR6708227119/6708229124, supersedes iteration1’s modest fantasy/plain-background direction. [DESIGN.md](../../DESIGN.md#look) says legends are about20times a baby’s height and taller than treetops; ART-GUIDE0b/0c asks for a recognisable animal’s nature made fantastic, epoch age, wisdom, power and reverence. These are proposed designs, not changes to game sizes.
+
+![Iteration2 A/B/C and C at game camera](https://raw.githubusercontent.com/edsaperia/witch/4cf4e44eaff9061e3c99fdc753b8c1fc1ef1efe1/previews/art-pass/cat/legends-scale-v2.png)
+
+2×2 board: A upper-left, B upper-right, C MAXIMUM FANTASY lower-left; D lower-right repeats C at an approximate game-camera elevation29.8° down/yaw34.4° from side-on. **Exactly three designs; D is another view, not a fourth concept.** Witch and trees are included in every panel. A/B/C use low hero views to convey mass, far-side haze and landscape weathering. The witch is a scale stand-in, not an exact render of the game’s witch.
+
+- A: epoch-worn listening bowls with carved votive niches and gold sound contours.
+- B: broad-pawed burrow elder with shrine-like sandstone wrist armour.
+- C MAXIMUM FANTASY: Ears of the Lost Desert; immense low ears contain miniature lost dunes and rising sandstorm light.
+
+**Recommend C for Ed’s second-pass review; signature element: Lost dune worlds inside low ear bowls.** C makes hearing an impossible landscape rather than adding a generic halo. The deep weathered ears hold a lost world; lamps along their rims suggest generations of reverence. Flat short face, low body, ringed tail and broad low ears remain sand-cat cues. A is clearer and quieter; B is dominated by wearable architecture. C is a recommendation for Ed, not approval.
+
+Chosen legend body-plan/checklist: Retain low feline chassis and broad short face; ear cups become deeply concave landscape volumes, anchored on the head’s low lateral sockets. Votive niches follow cup rims, sand/light stays within/above ear-local bounds. Do not stretch muzzle into a fox or bury eyes under ear cliffs. Weathering/scars on a furry low body supply mass and history.
+
+MISSING GRAPH FEATURES / shared integration needs: Nested ear-local surfaces/volumes, interior landscape and emissive-region attachment, rim-carved niche sockets, bounded particle curves and weathered material/geometry regions. Generic pointed ears do not provide this complete contract.
+
+Actual inspected output/projection limits: All four panels show witch/trees; framed edit restores ear/tail margins. D exposes ear bowls clearly but miniature buildings/dunes may merge into bright gold at native size. Rear legs are naturally occluded; no gait proof. Cat’s desert-versus-legacy-Meadow mapping is still a coordinator decision, not silently resolved here.
+
+Scale assessment: all four panels visibly contain a witch and trees; selected C/D read as colossal against the nearby witch and tree groups. Perspective/depth/variable tree size prevent an exact height comparison; no baby is depicted, so **20× baby height is a design prompt, not a verified measurement**. Native game projection, coverage/contact, accessory motion, occlusion and20× size must be tested on graph renders by the canonical owner. No local browser was allocated/run.
+
+### Iteration2 exact generation prompt
+
+```text
+Witch videogame legendary creature second-pass design board. FOUR equal panels in a 2x2 grid, labelled A (upper left), B (upper right), C MAXIMUM FANTASY (lower left), D GAME CAMERA (lower right); no other text. A B C are THREE DIFFERENT concepts of SAME species; D repeats C's exact design from higher game camera. Every panel shows the ENTIRE huge creature including ALL ears/paws/tail, within ample margins. CRITICAL SCALE IN EVERY PANEL: a tiny human WITCH with pointed dark purple hat/dress holding broom STANDS on SAME ground plane next to front paw, clearly distinct and NOT riding animal; multiple complete FOREST TREES near paws and flank, with normal trunks/crowns and readable silhouettes. Creature head/shoulders TOWER ABOVE tree crowns; landscape-scale body mass, approximately20times a baby animal height, NOT a normal pet by a human. Trees about quarter to half creature shoulderheight, witch about one tenth to one fifteenth. Compose enough ground area to show scale without cropping creature. A B C cinematic slightly low/near-ground threequarter HERO viewpoint with atmospheric depth/haze on distant body, large weight-bearing landformlike masses. D SAME C at approximate actual game projection, elevation29.8deg DOWN, near-orthographic long lens, heading34.4deg from side-on facing viewer; whole giant+witch+trees still visible. Concept art: bold controlled painterly/small readable shape clusters, rich twilight with local magic light. Very ancient wise powerful mythical elder, animal's defining nature impossible, species instantly identifiable. No generic uniform, no gore, no modern buildings. Trees/environment support scale not hide anatomy. SAND CAT Felis margarita: flat broad short face, enormous LOW sideways ears, low stocky sandy body, short legs, medium ringed tail. Source current animal is desert sand cat (legacy Meadow mapping unresolved; don't imply mapping decision). Sparse real acacia and woodland-edge trees used as scale markers. A: colossal scarred dune listener, huge weathered ear bowls lined with ancient carved ear-rim votive niches and gold sound contours, sandy fur weathered into dune folds. B: nocturnal burrow elder, immense fur-soled paws half encased in worn sandstone armour, a few old listening shrines at wrists, tail ring patterns dimly lit. C MAXIMUM FANTASY RECOMMENDED: the Ears of the Lost Desert: each immense low ear is a coherent concave furry ear containing a DEPTHFUL miniature sandstorm and rotating map of vanished dunes, auroral sand pours upward between the ear rims, ear edges weathered like ancient sandstone cliffs with tiny votive lamps. Flat cat face remains visible BELOW ears; broad furry body, immense paws and tail all complete, no fennecfox muzzle. D exactly C with same ear-sandstorm design from higher game camera.
+```
+
+### Selected framing correction
+
+Built-in imagegen edit of this species’ generated iteration2 board, preserving original privately; correction selected after visual inspection.
+
+```text
+Framing correction ONLY to this four-panel A/B/C/D concept board. Preserve all three designs, C/D matching identity, colours, camera elevations, witch/tree scale relationships and landscapes. In EACH panel pull the camera BACK about25percent and recompose so the ENTIRE animal fits with at least8percent empty sky/ground margin around ALL ears, mane/corona, paws and COMPLETE tail including tip. Several current hero panels crop animal/tail/mane at edges: restore them from the same design, no added limbs/tails. Keep each witch and nearby tree group same relative physical size to animal, but visible and inside frame. Body still towers above nearby tree crowns. Keep A B C cinematic low views; D same C higher game-camera view. Keep the FOUR panel labels A/B/C MAXIMUM FANTASY/D GAME CAMERA and 2x2 layout. Do not zoom any panel close. Do not enlarge head, change anatomy or turn tree scale cues into mere shrubs. It is a wider framing of same scenes, not a new concept. All animal silhouettes must be bounded by air/ground, not panel edges.
+```
+
+Generation: built-in imagegen,7November2026, model/seed unreported; text-only initial prompt; framing edits referenced only the species’ generated board, no real photos or game captures. No generated concept is activated.
+
+## Iteration1: three historical concepts and existing comparison
 
 Area/story: art/areas.js still calls cat the Meadow creature: grass/wildflowers, scattered hawthorn and lone oaks. However art/creatures/cat/genome.js explicitly identifies Sand cat/desert and contains older meadow-queen comments. Treat this as a source mapping discrepancy for the coordinator, not permission to rewrite biome or species. Dune/listening concepts follow the current animal identity; do not invent desert ruins as this cat’s area.
 
@@ -60,7 +98,7 @@ The right-hand sheet is **archival**, source/served SHA aad8b13327282d13d7d6a4e2
 - B Burrow Keeper — broad furred paws with bronze guards and glowing tracks.
 - C Night Navigator — a constellation suspended between the low ears.
 
-**Recommended A; signature element: Ear-interior sound contours.** Hearing and low broad ears become the mystery. Chipped ear rims and pale muzzle show age; the tiny animal listens to a desert older than it. B risks generic equipment, C risks a decorative constellation unrelated to the body.
+**Historical iteration1 recommendation A; signature element: Ear-interior sound contours.** Hearing and low broad ears become the mystery. Chipped ear rims and pale muzzle show age; the tiny animal listens to a desert older than it. B risks generic equipment, C risks a decorative constellation unrelated to the body.
 
 Chosen legend checklist/body plan: Exaggerate ear width and concavity, not leg length. Retain low sandy body, ringed tail and broad short face. Bind sound contours to inner ear surface; scars break the ear rim and muzzle fur. The generated ears are intentionally fantastical, not adult anatomy.
 

@@ -47,7 +47,45 @@ Adult photo is cropped at rump/paws: confirms small ears, broad face, dense coat
 
 [Expert species description](https://www.catsg.org/living-species-snowleopard) supports the identifying traits; ratios above are our design estimates. Commons photos are comparison-only, kept private and never published in this PR or shots.
 
-## Three legend concepts and existing comparison
+## Iteration2: colossal fantasy concepts — current recommendation
+
+Later Ed feedback on7November2026, COORDINATOR6708227119/6708229124, supersedes iteration1’s modest fantasy/plain-background direction. [DESIGN.md](../../DESIGN.md#look) says legends are about20times a baby’s height and taller than treetops; ART-GUIDE0b/0c asks for a recognisable animal’s nature made fantastic, epoch age, wisdom, power and reverence. These are proposed designs, not changes to game sizes.
+
+![Iteration2 A/B/C and C at game camera](https://raw.githubusercontent.com/edsaperia/witch/4cf4e44eaff9061e3c99fdc753b8c1fc1ef1efe1/previews/art-pass/snowleopard/legends-scale-v2.png)
+
+2×2 board: A upper-left, B upper-right, C MAXIMUM FANTASY lower-left; D lower-right repeats C at an approximate game-camera elevation29.8° down/yaw34.4° from side-on. **Exactly three designs; D is another view, not a fourth concept.** Witch and trees are included in every panel. A/B/C use low hero views to convey mass, far-side haze and landscape weathering. The witch is a scale stand-in, not an exact render of the game’s witch.
+
+- A: Snowstep, immense raised furred paw with ice-filled pads.
+- B: Pass Rememberer, very long curved tail, contour-like rosettes and weathered stone offerings.
+- C MAXIMUM FANTASY: Glacier Dreamer; paw pads become glacial vaults, crevasse rosettes hold blue light and a heavy cylindrical tail becomes a sinuous furred glacier.
+
+**Recommend C for Ed’s second-pass review; signature element: Glacial paw vaults lifting an avalanche.** C turns the snow leopard’s immense insulated paws and balancing tail into the moving high glacier. Small round ears, broad short face, smoky rosetted fur and long thick tail retain the species. Carved stone wrist votives and weathering suggest the guardian of a pass remembered for epochs. A is a narrower extension of the paw; B depends mostly on offerings and markings.
+
+Chosen legend body-plan/checklist: Keep broad feline face, small round ears, four limbs and a long round-section tail with visible root/tip. Layer ice vaults inside raised paw/soles and crevasse-like rosette regions; bounded avalanche spirals below wrist remain separate from extra toes or limbs. Fur stays the body surface; glacier does not replace animal chassis.
+
+MISSING GRAPH FEATURES / shared integration needs: Foot-local translucent cavity volumes/ice-claw attachment, bounded avalanche field, coat crevasse-region depth/light, cylindrical-tail surface layering and sparse wrist votive sockets. Reuse existing tail chains/rosette mapping; do not invent a new bespoke species renderer.
+
+Actual inspected output/projection limits: Framing edit improves head/tail margins; witch and cold-region conifers appear in all views. C/D show long curved tail and paw-vault light clearly. A tail termination remains visually ambiguous and B’s tail is coiled; use C/D for selected tail target. D’s raised paw is very dominant; contact, four-limb topology and avalanche direction need future geometry/animation proof.
+
+Scale assessment: all four panels visibly contain a witch and trees; selected C/D read as colossal against the nearby witch and tree groups. Perspective/depth/variable tree size prevent an exact height comparison; no baby is depicted, so **20× baby height is a design prompt, not a verified measurement**. Native game projection, coverage/contact, accessory motion, occlusion and20× size must be tested on graph renders by the canonical owner. No local browser was allocated/run.
+
+### Iteration2 exact generation prompt
+
+```text
+Witch videogame legendary creature second-pass design board. FOUR equal panels in a 2x2 grid, labelled A (upper left), B (upper right), C MAXIMUM FANTASY (lower left), D GAME CAMERA (lower right); no other text. A B C are THREE DIFFERENT concepts of SAME species; D repeats C's exact design from higher game camera. Every panel shows the ENTIRE huge creature including ALL ears/paws/tail, within ample margins. CRITICAL SCALE IN EVERY PANEL: a tiny human WITCH with pointed dark purple hat/dress holding broom STANDS on SAME ground plane next to front paw, clearly distinct and NOT riding animal; multiple complete FOREST TREES near paws and flank, with normal trunks/crowns and readable silhouettes. Creature head/shoulders TOWER ABOVE tree crowns; landscape-scale body mass, approximately20times a baby animal height, NOT a normal pet by a human. Trees about quarter to half creature shoulderheight, witch about one tenth to one fifteenth. Compose enough ground area to show scale without cropping creature. A B C cinematic slightly low/near-ground threequarter HERO viewpoint with atmospheric depth/haze on distant body, large weight-bearing landformlike masses. D SAME C at approximate actual game projection, elevation29.8deg DOWN, near-orthographic long lens, heading34.4deg from side-on facing viewer; whole giant+witch+trees still visible. Concept art: bold controlled painterly/small readable shape clusters, rich twilight with local magic light. Very ancient wise powerful mythical elder, animal's defining nature impossible, species instantly identifiable. No generic uniform, no gore, no modern buildings. Trees/environment support scale not hide anatomy. SNOW LEOPARD: broad short feline face, SMALL ROUND ears, smoky pale fur with dark rosettes, immense furred paws, VERY LONG THICK CYLINDRICAL ringed tail (NOT plume). Icefall glacier/old snow/moraine/cairns/weathered prayer posts, wind-bent spruce/juniper/larch as scale trees. A: immense Snowstep, one vast furry paw raised revealing glacier crystals in sole, worn muzzle and ears, snow slips from fur. B: Pass Rememberer, thick ringed tail coils like a natural long stole, sparse ancient stone beads and frayed prayer knots, grey fur patterned as icy contour lines. C MAXIMUM FANTASY RECOMMENDED: Glacier Dreamer, a colossal snow leopard with paw pads grown into blue glacial vaults and translucent ice claws, each step suspends a miniature avalanche flowing UPWARD into the paw-fur; massive pale body weathered by epochs with rosettes resembling deep blue crevasses, the extremely long thick ROUND tail curls behind as a sinuous glacier, ice inclusions inside fur but still recognisably tail. Cairn-like worn stone votives cluster at the raised wrist. Fur/head/round ears and four legs remain clearly animal, no mountain replacing torso. D same C game camera.
+```
+
+### Selected framing correction
+
+Built-in imagegen edit of this species’ generated iteration2 board, preserving original privately; correction selected after visual inspection.
+
+```text
+Framing correction ONLY to this four-panel A/B/C/D concept board. Preserve all three designs, C/D matching identity, colours, camera elevations, witch/tree scale relationships and landscapes. In EACH panel pull the camera BACK about25percent and recompose so the ENTIRE animal fits with at least8percent empty sky/ground margin around ALL ears, mane/corona, paws and COMPLETE tail including tip. Several current hero panels crop animal/tail/mane at edges: restore them from the same design, no added limbs/tails. Keep each witch and nearby tree group same relative physical size to animal, but visible and inside frame. Body still towers above nearby tree crowns. Keep A B C cinematic low views; D same C higher game-camera view. Keep the FOUR panel labels A/B/C MAXIMUM FANTASY/D GAME CAMERA and 2x2 layout. Do not zoom any panel close. Do not enlarge head, change anatomy or turn tree scale cues into mere shrubs. It is a wider framing of same scenes, not a new concept. All animal silhouettes must be bounded by air/ground, not panel edges.
+```
+
+Generation: built-in imagegen,7November2026, model/seed unreported; text-only initial prompt; framing edits referenced only the species’ generated board, no real photos or game captures. No generated concept is activated.
+
+## Iteration1: three historical concepts and existing comparison
 
 Area/story: Icefall: glacier ice/old snow, moraine, stones, cairns and standing stones, wind-bent trees, ring of weathered posts around stone (art/areas/icefall/recipe.js).
 
@@ -61,7 +99,7 @@ The right-hand sheet is **archival**, source/served SHA aad8b13327282d13d7d6a4e2
 - B Snowstep — immense furred paws with glacier crystals within raised sole.
 - C Pass Rememberer — rosettes become contour loops, frayed cloth knot at foreleg.
 
-**Recommended B; signature element: Glacier crystals within paw fur.** Snow travel and immense furred paws become the power of the high ice. Crystals fit this animal/place and are confined to soles, not another dorsal crystal uniform. A risks tail topology and a swallowed face; C risks markings too fine to read.
+**Historical iteration1 recommendation B; signature element: Glacier crystals within paw fur.** Snow travel and immense furred paws become the power of the high ice. Crystals fit this animal/place and are confined to soles, not another dorsal crystal uniform. A risks tail topology and a swallowed face; C risks markings too fine to read.
 
 Chosen legend checklist/body plan: Keep low pale cat, small round ears and full cylindrical tail. Raise one broad paw to expose restrained blue crystal growth between pads, attached to foot-local frame; use weathered muzzle/old scar rather than more jewellery.
 

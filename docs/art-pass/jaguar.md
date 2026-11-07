@@ -47,7 +47,39 @@ Tawny adult photo clearly shows broad head, heavy shoulders, short stout legs, t
 
 [Expert species description](https://www.catsg.org/living-species-jaguar) supports the identifying traits; ratios above are our design estimates. Commons photos are comparison-only, kept private and never published in this PR or shots.
 
-## Three legend concepts and existing comparison
+## Iteration2: colossal fantasy concepts — current recommendation
+
+Later Ed feedback on7November2026, COORDINATOR6708227119/6708229124, supersedes iteration1’s modest fantasy/plain-background direction. [DESIGN.md](../../DESIGN.md#look) says legends are about20times a baby’s height and taller than treetops; ART-GUIDE0b/0c asks for a recognisable animal’s nature made fantastic, epoch age, wisdom, power and reverence. These are proposed designs, not changes to game sizes.
+
+![Iteration2 A/B/C and C at game camera](https://raw.githubusercontent.com/edsaperia/witch/4cf4e44eaff9061e3c99fdc753b8c1fc1ef1efe1/previews/art-pass/jaguar/legends-scale-v2.png)
+
+2×2 board: A upper-left, B upper-right, C MAXIMUM FANTASY lower-left; D lower-right repeats C at an approximate game-camera elevation29.8° down/yaw34.4° from side-on. **Exactly three designs; D is another view, not a fourth concept.** Witch and trees are included in every panel. A/B/C use low hero views to convey mass, far-side haze and landscape weathering. The witch is a scale stand-in, not an exact render of the game’s witch.
+
+- A: Deep River Jaw, colossal grey muzzle, worn jade torque and river-reflection coat.
+- B: Root Warden, asymmetric ancient bronze shoulder guard with rooted offerings.
+- C MAXIMUM FANTASY: Drowned Constellation; river pools in rosettes, rootlike whiskers and a chin-to-coat water cascade above a shrine torque.
+
+**Recommend C for Ed’s second-pass review; signature element: Deep river pools within black rosettes.** C makes a black jungle river manifest in its heavy hunter’s coat. The short stout legs, broad crushing jaw, black fur and moderate tail remain unmistakable panther anatomy; rooted whiskers, worn shrines and water give age and reverence. Unlike a generic blue starfield, the glints belong to river pools and fish currents. A is less transformative; B obscures the shoulder with equipment.
+
+Chosen legend body-plan/checklist: Maintain broad low feline head/neck/forequarters. Place inset water-pool volumes inside existing rosette coordinates, not holes through the skeleton. Rootlike whiskers hang clear of mouth; throat/shoulder torque carries sparse eroded shrines. Cascade direction is a magical concept; image cannot prove upward flow.
+
+MISSING GRAPH FEATURES / shared integration needs: Inset coat volumes and water/emissive layer mapping, head-local whisker/flow roots, accessory torque/mini-shrine sockets and clearance, aged jade/bronze/scar regions. Existing rosette paint/tail markings should remain the basis.
+
+Actual inspected output/projection limits: All four panels show witch and jungle trees; C/D show full tail and big black head. Near trees partially hide rear limbs. D shows pool shapes but cannot establish fish detail or water flow direction; C’s cascade reads visually downward despite the upward-flow prompt. Do not claim that requested motion succeeded.
+
+Scale assessment: all four panels visibly contain a witch and trees; selected C/D read as colossal against the nearby witch and tree groups. Perspective/depth/variable tree size prevent an exact height comparison; no baby is depicted, so **20× baby height is a design prompt, not a verified measurement**. Native game projection, coverage/contact, accessory motion, occlusion and20× size must be tested on graph renders by the canonical owner. No local browser was allocated/run.
+
+### Iteration2 exact generation prompt
+
+```text
+Witch videogame legendary creature second-pass design board. FOUR equal panels in a 2x2 grid, labelled A (upper left), B (upper right), C MAXIMUM FANTASY (lower left), D GAME CAMERA (lower right); no other text. A B C are THREE DIFFERENT concepts of SAME species; D repeats C's exact design from higher game camera. Every panel shows the ENTIRE huge creature including ALL ears/paws/tail, within ample margins. CRITICAL SCALE IN EVERY PANEL: a tiny human WITCH with pointed dark purple hat/dress holding broom STANDS on SAME ground plane next to front paw, clearly distinct and NOT riding animal; multiple complete FOREST TREES near paws and flank, with normal trunks/crowns and readable silhouettes. Creature head/shoulders TOWER ABOVE tree crowns; landscape-scale body mass, approximately20times a baby animal height, NOT a normal pet by a human. Trees about quarter to half creature shoulderheight, witch about one tenth to one fifteenth. Compose enough ground area to show scale without cropping creature. A B C cinematic slightly low/near-ground threequarter HERO viewpoint with atmospheric depth/haze on distant body, large weight-bearing landformlike masses. D SAME C at approximate actual game projection, elevation29.8deg DOWN, near-orthographic long lens, heading34.4deg from side-on facing viewer; whole giant+witch+trees still visible. Concept art: bold controlled painterly/small readable shape clusters, rich twilight with local magic light. Very ancient wise powerful mythical elder, animal's defining nature impossible, species instantly identifiable. No generic uniform, no gore, no modern buildings. Trees/environment support scale not hide anatomy. BLACK MELANISTIC JAGUAR: broad round crushing jaw, huge stout forequarters, thick short legs and paws, moderate long tail, rounded small ears, black-on-charcoal rosettes. River jungle with canopy rainforest trees/lianas, dark river/fallen giant trees. A: grey-muzzled Deep River Jaw wearing colossal tarnished jade throat torque, dark rosettes ripple like river reflections, heavy scars. B: Root Warden, one asymmetric root-shaped ancient bronze pauldron, fallen branches and river offerings embedded at its edge, huge low powerful black feline body. C MAXIMUM FANTASY RECOMMENDED: Drowned Constellation, a colossal black jaguar whose rosettes contain deep pools of midnight RIVER WATER with glowing silver fish currents, its huge heavy jowls hang above a waterfall flowing UPWARDS from its chin into the rosette pools; rootlike whiskers trailing droplets, weathered jade fragments and worn river-stone shrines sit along the massive collarbone but never hide black cat head. Rear body disappears slightly into cool atmospheric haze yet full tail visible. No wings, no leopard yellow fur, no bear anatomy. D same C game camera.
+```
+
+Selected first iteration2 generation; no framing edit.
+
+Generation: built-in imagegen,7November2026, model/seed unreported; text-only initial prompt; framing edits referenced only the species’ generated board, no real photos or game captures. No generated concept is activated.
+
+## Iteration1: three historical concepts and existing comparison
 
 Area/story: River jungle: dark wet loam, river banks, ferns/reeds, rainforest giants hung with lianas, mossed fallen giants (art/areas/river-jungle/recipe.js).
 
@@ -61,7 +93,7 @@ The right-hand sheet is **archival**, source/served SHA aad8b13327282d13d7d6a4e2
 - B Underwater Shadow — river-dark rosettes with tiny silver fish glints.
 - C Fallen Giant — asymmetric worn root-shaped shoulder armour.
 
-**Recommended B; signature element: River life within dark rosettes.** A hidden river appears in the coat of the river’s stealthy hunter. The massive low jaw and scarred old body remain primary; tiny fish glints add mystery rather than a uniform costume. A repeats ceremonial collars, C obscures shoulder anatomy.
+**Historical iteration1 recommendation B; signature element: River life within dark rosettes.** A hidden river appears in the coat of the river’s stealthy hunter. The massive low jaw and scarred old body remain primary; tiny fish glints add mystery rather than a uniform costume. A repeats ceremonial collars, C obscures shoulder anatomy.
 
 Chosen legend checklist/body plan: Retain low muscular black body and crushing jaw. Place sparse fish-like glints inside rosette regions with sufficient contrast, never replace fur with literal aquarium panels. Grey muzzle, scarred brow, ears and full tail stay clear.
 

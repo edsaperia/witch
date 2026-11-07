@@ -48,7 +48,45 @@ Adult photo is sitting in tall grass: useful small head/round ears/tears/spots, 
 
 [Expert species description](https://www.catsg.org/living-species-cheetah) supports the identifying traits; ratios above are our design estimates. Commons photos are comparison-only, kept private and never published in this PR or shots.
 
-## Three legend concepts and existing comparison
+## Iteration2: colossal fantasy concepts — current recommendation
+
+Later Ed feedback on7November2026, COORDINATOR6708227119/6708229124, supersedes iteration1’s modest fantasy/plain-background direction. [DESIGN.md](../../DESIGN.md#look) says legends are about20times a baby’s height and taller than treetops; ART-GUIDE0b/0c asks for a recognisable animal’s nature made fantastic, epoch age, wisdom, power and reverence. These are proposed designs, not changes to game sizes.
+
+![Iteration2 A/B/C and C at game camera](https://raw.githubusercontent.com/edsaperia/witch/4cf4e44eaff9061e3c99fdc753b8c1fc1ef1efe1/previews/art-pass/cheetah/legends-scale-v2.png)
+
+2×2 board: A upper-left, B upper-right, C MAXIMUM FANTASY lower-left; D lower-right repeats C at an approximate game-camera elevation29.8° down/yaw34.4° from side-on. **Exactly three designs; D is another view, not a fourth concept.** Witch and trees are included in every panel. A/B/C use low hero views to convey mass, far-side haze and landscape weathering. The witch is a scale stand-in, not an exact render of the game’s witch.
+
+- A: horizon runner, tear-line wind ribbons and ancient narrow scarred frame.
+- B: storm rudder, long ringed tail steering a huge dust arc and weathered windchimes.
+- C MAXIMUM FANTASY: Still Wind; luminous wind-wells open within the spot pattern, air hangs through/around a tightly tucked waist.
+
+**Recommend C for Ed’s second-pass review; signature element: Wind-wells within solid-spot coat.** C makes the cheetah’s narrow sprinting body a still vessel for impossible wind. Tiny head, long thin limbs, deep chest, tucked waist and long ringed tail are retained; luminous spots are the fantasy extension of solid spots, not leopard rosettes. Suspended leaves and worn windchimes imply a force people have revered for ages. A is more restrained, while B lets the tail overwhelm the body.
+
+Chosen legend body-plan/checklist: Keep torso continuously connected across the very narrow waist; never literally remove its load-bearing bridge. Confine wind-wells to coat regions and curve two tear-line streams clear of eyes. Use one thin ringed tail and four limbs; do not turn echo light into additional legs. Let old scars/windworn planes convey epochs.
+
+MISSING GRAPH FEATURES / shared integration needs: Coat-region inset/emissive volumes for spots, head-local stream roots, waist-relative bounded wind field, sparse necklace sockets and scar/weathering masks. This is beyond existing spot paint, while reusing its mapping rather than replacing the pattern system.
+
+Actual inspected output/projection limits: Framing edit restores complete tail and head margins. Witch/acacia groups are visible in all panels, with body over nearby crowns. D preserves narrow silhouette and long tail, but wind-wells look like luminous gems at this scale; a future native render must distinguish air depth from jewellery. No exact20x baby measurement or accurate sprint physics is claimed.
+
+Scale assessment: all four panels visibly contain a witch and trees; selected C/D read as colossal against the nearby witch and tree groups. Perspective/depth/variable tree size prevent an exact height comparison; no baby is depicted, so **20× baby height is a design prompt, not a verified measurement**. Native game projection, coverage/contact, accessory motion, occlusion and20× size must be tested on graph renders by the canonical owner. No local browser was allocated/run.
+
+### Iteration2 exact generation prompt
+
+```text
+Witch videogame legendary creature second-pass design board. FOUR equal panels in a 2x2 grid, labelled A (upper left), B (upper right), C MAXIMUM FANTASY (lower left), D GAME CAMERA (lower right); no other text. A B C are THREE DIFFERENT concepts of SAME species; D repeats C's exact design from higher game camera. Every panel shows the ENTIRE huge creature including ALL ears/paws/tail, within ample margins. CRITICAL SCALE IN EVERY PANEL: a tiny human WITCH with pointed dark purple hat/dress holding broom STANDS on SAME ground plane next to front paw, clearly distinct and NOT riding animal; multiple complete FOREST TREES near paws and flank, with normal trunks/crowns and readable silhouettes. Creature head/shoulders TOWER ABOVE tree crowns; landscape-scale body mass, approximately20times a baby animal height, NOT a normal pet by a human. Trees about quarter to half creature shoulderheight, witch about one tenth to one fifteenth. Compose enough ground area to show scale without cropping creature. A B C cinematic slightly low/near-ground threequarter HERO viewpoint with atmospheric depth/haze on distant body, large weight-bearing landformlike masses. D SAME C at approximate actual game projection, elevation29.8deg DOWN, near-orthographic long lens, heading34.4deg from side-on facing viewer; whole giant+witch+trees still visible. Concept art: bold controlled painterly/small readable shape clusters, rich twilight with local magic light. Very ancient wise powerful mythical elder, animal's defining nature impossible, species instantly identifiable. No generic uniform, no gore, no modern buildings. Trees/environment support scale not hide anatomy. CHEETAH: extremely slim narrow body, VERY deep narrow chest, extreme tucked waist, long thin legs, tiny round short-muzzled head, solid black spots not rosettes, tear lines, long ringed rudder tail. Short gold-green plains with scattered whistling thorn/acacia trees and termite mounds, plus a few woodland-edge trees for scale. A: enormous Horizon Runner, wind filaments trail from glowing tear marks, very old silver muzzle and scars, enormous thin legs stride over thorn crowns. B: rudder of storms, elongated ringed tail curves through air and steers a visible immense arc of dust, small eroded bronze votives hang near tail base, keep tail slender not squirrel plume. C MAXIMUM FANTASY RECOMMENDED: the Still Wind, a towering CHEETAH whose huge deep chest and thin tucked body are solid sculptural tawny fur and wind-worn stone, its SOLID BLACK spots become tiny dark open wind-wells spiralling cloudlight, a continuous transparent wind ribbon runs through the narrow WAIST around but never severs torso; pale dust and little leaves hang suspended under high striding legs, tear-lines stream backward in two broad elegant auroral bands. Keep tiny head/round ears and great long curved ringed tail clearly visible. Epoch-carved flank scars and a sparse necklace of tiny windchimes. D same C game camera.
+```
+
+### Selected framing correction
+
+Built-in imagegen edit of this species’ generated iteration2 board, preserving original privately; correction selected after visual inspection.
+
+```text
+Framing correction ONLY to this four-panel A/B/C/D concept board. Preserve all three designs, C/D matching identity, colours, camera elevations, witch/tree scale relationships and landscapes. In EACH panel pull the camera BACK about25percent and recompose so the ENTIRE animal fits with at least8percent empty sky/ground margin around ALL ears, mane/corona, paws and COMPLETE tail including tip. Several current hero panels crop animal/tail/mane at edges: restore them from the same design, no added limbs/tails. Keep each witch and nearby tree group same relative physical size to animal, but visible and inside frame. Body still towers above nearby tree crowns. Keep A B C cinematic low views; D same C higher game-camera view. Keep the FOUR panel labels A/B/C MAXIMUM FANTASY/D GAME CAMERA and 2x2 layout. Do not zoom any panel close. Do not enlarge head, change anatomy or turn tree scale cues into mere shrubs. It is a wider framing of same scenes, not a new concept. All animal silhouettes must be bounded by air/ground, not panel edges.
+```
+
+Generation: built-in imagegen,7November2026, model/seed unreported; text-only initial prompt; framing edits referenced only the species’ generated board, no real photos or game captures. No generated concept is activated.
+
+## Iteration1: three historical concepts and existing comparison
 
 Area/story: Plains: short gold-green grass, whistling thorns, grass tufts, small termite mounds and a cluster of tall mounds (art/areas/plains/recipe.js).
 
@@ -62,7 +100,7 @@ The right-hand sheet is **archival**, source/served SHA aad8b13327282d13d7d6a4e2
 - B Wind Rudder — exaggerated curved fur tail with small bronze rings.
 - C Last Sprint — silver mantle and faint leg afterimages.
 
-**Recommended A; signature element: Wind trailing from tear lines.** The tear marks and plains speed become one animal-specific magical cue. A scarred narrow frame retains the cheetah’s nature without a common flame crest. B overwhelms the body with tail, C partly repeats juvenile mantle.
+**Historical iteration1 recommendation A; signature element: Wind trailing from tear lines.** The tear marks and plains speed become one animal-specific magical cue. A scarred narrow frame retains the cheetah’s nature without a common flame crest. B overwhelms the body with tail, C partly repeats juvenile mantle.
 
 Chosen legend checklist/body plan: Retain thin limbs/deep narrow chest and tiny head. Extend two cheek tear regions into short trailing curves, readable from towards/away. Keep them clear of eyes and avoid a second full creature or extra legs. Pale muzzle and few healed scars supply age.
 

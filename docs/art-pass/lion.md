@@ -47,7 +47,45 @@ Adult male reclining photo confirms mane/face/round ears but hides weight-bearin
 
 [Expert species description](https://www.catsg.org/living-species-lions) supports the identifying traits; ratios above are our design estimates. Commons photos are comparison-only, kept private and never published in this PR or shots.
 
-## Three legend concepts and existing comparison
+## Iteration2: colossal fantasy concepts — current recommendation
+
+Later Ed feedback on7November2026, COORDINATOR6708227119/6708229124, supersedes iteration1’s modest fantasy/plain-background direction. [DESIGN.md](../../DESIGN.md#look) says legends are about20times a baby’s height and taller than treetops; ART-GUIDE0b/0c asks for a recognisable animal’s nature made fantastic, epoch age, wisdom, power and reverence. These are proposed designs, not changes to game sizes.
+
+![Iteration2 A/B/C and C at game camera](https://raw.githubusercontent.com/edsaperia/witch/4cf4e44eaff9061e3c99fdc753b8c1fc1ef1efe1/previews/art-pass/lion/legends-scale-v2.png)
+
+2×2 board: A upper-left, B upper-right, C MAXIMUM FANTASY lower-left; D lower-right repeats C at an approximate game-camera elevation29.8° down/yaw34.4° from side-on. **Exactly three designs; D is another view, not a fourth concept.** Witch and trees are included in every panel. A/B/C use low hero views to convey mass, far-side haze and landscape weathering. The witch is a scale stand-in, not an exact render of the game’s witch.
+
+- A: Noon Elder, ragged sun-disc mane and ancient votives.
+- B: Kopje King, sandstone-like mane braids bearing worn carvings and offerings.
+- C MAXIMUM FANTASY: Walking Solstice; immense mane becomes a fractured blazing solar corona with ancient sundial fragments and weathered shoulder ledges.
+
+**Recommend C for Ed’s second-pass review; signature element: Broken solar corona within monumental mane.** C turns the lion’s own mane and the sun-warmed savanna into sovereign, epoch-old solar power. Tawny trunk, round ears, short cat muzzle and thin tuft-ended tail remain visible. The broken corona and eroded sundials suggest time lived through; small rooted acacias on mane ledges indicate geological age, not a general trees-on-back uniform. A is a simpler sun elder; B trades magic for jewellery.
+
+Chosen legend body-plan/checklist: Separate skull and face from mane/corona mass; keep dark face readable inside the broken sun. Corona is layered around neck/shoulders, not a flat disc replacing head. A few shoulder-mane ledges support rooted vegetation; no forest hides the torso. Keep one long narrow tail ending in black tuft.
+
+MISSING GRAPH FEATURES / shared integration needs: Nested neck/mane radial frame and discontinuous corona geometry, accessory sundial/carving sockets, emissive interior regions, sparse vegetation ledge attachments and age/weathering. Existing mane primitives are not the whole graph contract.
+
+Actual inspected output/projection limits: Framing edit restores full corona rays and tail. Witch and savanna trees show in all views; D keeps face and tuft tail visible. C/D corona rays are partly hard sundial geometry and partly flame-like energy, so implementation must preserve both rather than treating it as ordinary fur. Small shoulder trees compete with mane edges from above.
+
+Scale assessment: all four panels visibly contain a witch and trees; selected C/D read as colossal against the nearby witch and tree groups. Perspective/depth/variable tree size prevent an exact height comparison; no baby is depicted, so **20× baby height is a design prompt, not a verified measurement**. Native game projection, coverage/contact, accessory motion, occlusion and20× size must be tested on graph renders by the canonical owner. No local browser was allocated/run.
+
+### Iteration2 exact generation prompt
+
+```text
+Witch videogame legendary creature second-pass design board. FOUR equal panels in a 2x2 grid, labelled A (upper left), B (upper right), C MAXIMUM FANTASY (lower left), D GAME CAMERA (lower right); no other text. A B C are THREE DIFFERENT concepts of SAME species; D repeats C's exact design from higher game camera. Every panel shows the ENTIRE huge creature including ALL ears/paws/tail, within ample margins. CRITICAL SCALE IN EVERY PANEL: a tiny human WITCH with pointed dark purple hat/dress holding broom STANDS on SAME ground plane next to front paw, clearly distinct and NOT riding animal; multiple complete FOREST TREES near paws and flank, with normal trunks/crowns and readable silhouettes. Creature head/shoulders TOWER ABOVE tree crowns; landscape-scale body mass, approximately20times a baby animal height, NOT a normal pet by a human. Trees about quarter to half creature shoulderheight, witch about one tenth to one fifteenth. Compose enough ground area to show scale without cropping creature. A B C cinematic slightly low/near-ground threequarter HERO viewpoint with atmospheric depth/haze on distant body, large weight-bearing landformlike masses. D SAME C at approximate actual game projection, elevation29.8deg DOWN, near-orthographic long lens, heading34.4deg from side-on facing viewer; whole giant+witch+trees still visible. Concept art: bold controlled painterly/small readable shape clusters, rich twilight with local magic light. Very ancient wise powerful mythical elder, animal's defining nature impossible, species instantly identifiable. No generic uniform, no gore, no modern buildings. Trees/environment support scale not hide anatomy. ADULT MALE LION: tawny muscular forequarters, enormous true mane around head/neck, round ears, cat muzzle, long thin tail with black tuft. Savanna tall gold grass, flat acacias, baobabs and warm boulder kopje plus forest trees as size cues. A: giant Noon Elder with ragged sun-disc mane, healed scars, tiny old votive discs in coarse fur. B: epoch-worn kopje king, mane hair becomes long layered sandstone braids bearing carved offerings, large tufted tail, wise scarred face. C MAXIMUM FANTASY RECOMMENDED: the Walking Solstice, a vast lion with a mane that is BOTH monumental coarse golden hair and a blazing broken SOLAR CORONA arch around head/shoulders; huge open rays contain fragments of ancient sun-dials and ember-red daylight, dark weathered face and round ears remain clearly visible in centre. Torso fur weathered in great dry-grass/rock striations, pale scars, a few acacias rooted in outer shoulder mane-ledges (NOT trees replacing animal), the tail long and thin with a single coal-black tuft catching gold light. Full animal identifiable immediately, sovereign calm, not human king. D same C game camera.
+```
+
+### Selected framing correction
+
+Built-in imagegen edit of this species’ generated iteration2 board, preserving original privately; correction selected after visual inspection.
+
+```text
+Framing correction ONLY to this four-panel A/B/C/D concept board. Preserve all three designs, C/D matching identity, colours, camera elevations, witch/tree scale relationships and landscapes. In EACH panel pull the camera BACK about25percent and recompose so the ENTIRE animal fits with at least8percent empty sky/ground margin around ALL ears, mane/corona, paws and COMPLETE tail including tip. Several current hero panels crop animal/tail/mane at edges: restore them from the same design, no added limbs/tails. Keep each witch and nearby tree group same relative physical size to animal, but visible and inside frame. Body still towers above nearby tree crowns. Keep A B C cinematic low views; D same C higher game-camera view. Keep the FOUR panel labels A/B/C MAXIMUM FANTASY/D GAME CAMERA and 2x2 layout. Do not zoom any panel close. Do not enlarge head, change anatomy or turn tree scale cues into mere shrubs. It is a wider framing of same scenes, not a new concept. All animal silhouettes must be bounded by air/ground, not panel edges.
+```
+
+Generation: built-in imagegen,7November2026, model/seed unreported; text-only initial prompt; framing edits referenced only the species’ generated board, no real photos or game captures. No generated concept is activated.
+
+## Iteration1: three historical concepts and existing comparison
 
 Area/story: Savanna: tall gold grass, thorn scrub, acacias, baobabs and sun-warmed boulder kopje (art/areas/savanna/recipe.js).
 
@@ -61,7 +99,7 @@ The right-hand sheet is **archival**, source/served SHA aad8b13327282d13d7d6a4e2
 - B Kopje King — worn votive clasps in a heavy dark mane.
 - C Drought Rememberer — bleached seed-braided mane and coal-like tail tuft.
 
-**Recommended A; signature element: Sun within ragged mane.** The lion’s existing mane becomes sun-warmed savanna power. Scars, chipped tooth and old face carry epochs rather than a new generic back crest. The glow belongs within mane hair; keep it distinct from literal loose flames.
+**Historical iteration1 recommendation A; signature element: Sun within ragged mane.** The lion’s existing mane becomes sun-warmed savanna power. Scars, chipped tooth and old face carry epochs rather than a new generic back crest. The glow belongs within mane hair; keep it distinct from literal loose flames.
 
 Chosen legend checklist/body plan: Broaden layered mane around neck/shoulders without swallowing face/ears. Keep long narrow black-tufted tail, paws and tawny flank exposed. Put light into large inner mane clusters; outer hair stays weathered and irregular.
 
