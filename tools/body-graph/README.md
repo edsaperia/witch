@@ -38,6 +38,10 @@ CLOUD ONLY after coordinator assignment.
 
 Source-only numeric allocation audit.
 
+## `flight-review.mjs`
+
+Canonical cloud only: fixed-native-scale bat flap or state contact sheet.
+
 ## `iterate.mjs`
 
 One-species reference/graph/shipped comparison.

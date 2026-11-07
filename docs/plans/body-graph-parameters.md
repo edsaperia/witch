@@ -30,6 +30,7 @@ builders. Acceptance presets are data in `acceptance.js`.
 | Tail | tailShape.kind stub/bushy/whip/fluffy, length, thickness, drop |
 | Painted regions | markings: target space head/body/legs/tail, centre, radius, kind saddle/mask/socks/spots/bands, softness, material; spots scale/radius, bands frequency/width |
 | Wings | wing span plus wingShape.arm, finger, membraneMat |
+| Diagnostic flight | state, phase0..1, progress0..1, pathAngle±pi/3, trailing/tucked legs; wingShape.kind membrane/feathered/glassy/scaled/dragon; see body-graph-flight-missing.md for unimplemented optical/live-game features |
 | Shell | spiral.turns per age, flare, aperture; aperture cuts into shell group with a dark interior |
 | Multiple necks | fan and existing age head counts, reptile mouth/jaw parameters, collars.size/thickness/at |
 | Serpent surface | banding: frequency, width, softness, material, painted onto body |

@@ -7,6 +7,7 @@ import {poseGraph} from "./gait.js";
 import {headParameters,shapeEnvelope,tailPoints,buildFamilyHead,familyAntlers,familyMarking,familyFeet,familyCollars} from "./expressiveness.js";
 import {acceptancePartTree,boundTreeBlendGroups,partMuscles} from "./part-tree.js";
 import {selectedDorsalProfile,addDorsalProfile} from "./dorsal.js";
+import {flightPose,flightWings,poseFlightModel} from "./flight.js";
 
 export const ACCEPTANCE_IDS = Object.freeze(["bear","wolf","stag","bat","snail","hydra"]);
 const ACCEPTANCE_PLANS = {
@@ -18,7 +19,7 @@ const ACCEPTANCE_PLANS = {
     markings:[{space:"head",kind:"mask",centre:[1.05,-.15,0],radius:[.85,.45,.58],softness:.22,mat:"BODYL"}]},
   wolf:{family:"quadruped",coat:"saddle",feet:"digitigrade",width:.22,depth:.25,leg:.66,head:.22,muzzle:.32,ears:"point",tail:.58,headShape:{family:"canid"},tailShape:{kind:"bushy"},ruff:{size:.04,softness:.12},markings:[{space:"body",kind:"saddle",centre:[0,.85,0],radius:[.52,.7,1.2],softness:.15,mat:"BODY3"},{space:"body",kind:"mask",centre:[0,-.9,0],radius:[.65,.65,1.3],softness:.12,mat:"BELLY"},{space:"head",kind:"mask",centre:[.8,-.5,0],radius:[1,.5,.75],softness:.15,mat:"BELLY"}]},
   stag:{family:"quadruped",coat:"fawn",feet:"hoof",width:.21,depth:.25,leg:.86,head:.19,muzzle:.29,ears:"point",tail:.18,neck:.37,antlers:true,headShape:{family:"cervid",ears:{kind:"leaf",size:1.2}},antlerShape:{branches:4,spread:.34,curve:-.1,tineLength:.18,glow:true},footShape:{kind:"hoof",width:.065,length:.09},markingSoftness:.035},
-  bat:{family:"winged",width:.15,depth:.22,head:.15,muzzle:.17,ears:"round",wing:1.15,headShape:{family:"bat",ears:{kind:"bigbat",size:.8}},wingShape:{arm:.025,finger:.012,membraneMat:"BODY3"}},
+  bat:{family:"winged",width:.15,depth:.22,head:.15,muzzle:.17,ears:"round",wing:1.15,headShape:{family:"bat",ears:{kind:"bigbat",size:.8}},wingShape:{kind:"membrane",arm:.025,finger:.012,membraneMat:"BODY3"}},
   snail:{family:"gastropod",width:.25,depth:.09,shell:.34,spiral:{turns:[1.2,2,3,4.2],flare:.8,aperture:.15}},
   hydra:{family:"branching",width:.12,depth:.09,head:.075,fan:1.65,headShape:{family:"reptile",mouth:true,ears:{kind:"none"}},collars:{size:.035,thickness:.006,at:.7},banding:{kind:"bands",frequency:24,width:.3,softness:.12,mat:"BODY3"}},
 };
@@ -47,7 +48,7 @@ function head(graph,id,parent,r,offset=[0,0,0]){
 }
 
 /** A complete graph description, without rendering, globals or old builders. */
-export function acceptanceGraph(S,age,frame=0){
+export function acceptanceGraph(S,age,frame=0,poseOptions={}){
   const source=S.look?.bodyGraphAcceptance;
   if(source?.version!==1)throw Error("Selected acceptance graph required");
   if(!Number.isInteger(age)||age<0||age>3)throw Error("Graph age must be 0..3");
@@ -76,22 +77,16 @@ export function acceptanceGraph(S,age,frame=0){
     }
     Object.assign(meta,{length,top:leg+depth*2,width:p.width,depth,antlers:p.antlers});
   }else if(p.family==="winged"){
+    const pose=flightPose({phase:(frame%2)*.5,...poseOptions});meta.flight=pose;
     graph.spine=stations(.45,.38,p.width,p.depth);
-    neck(graph,"neck","spine-14",[0,.08,0],[.1,.13,0],.12,.1);
+    neck(graph,"neck","spine-14",[0,.025,0],[.17,.015,0],.12,.1);
     head(graph,"head","neck",headParameters(p.headShape).skull.map(k=>k*p.head));meta.heads.push({id:"head",r:p.head,muzzle:p.muzzle});
-    const flap=frame?.18:-.1,span=p.wing*(baby?.7:1);
+    const span=p.wing*(baby?.7:1);
     for(const side of [-1,1]){
-      graph.sockets.push(socket(`hindlimb-${side}`,"tail","spine-1",[0,-.06,side*.1],{part:"body",points:[[0,0,0,.026],[-.12,-.18,side*.09,.018],[-.19,-.23,side*.12,.012]]}));
-      const shoulder=[.13,.43,side*.13],elbow=[-.02,.43+flap,side*span*.52],wrist=[.24,.38+flap,side*span];
-      const root=graph.spine[10],offset=v3.sub(shoulder,root.at),id=`arm-${side}`;
-      const arm=p.wingShape?.arm??.025,finger=p.wingShape?.finger??.012;
-      graph.sockets.push(socket(id,"tail",root.id,offset,{part:"body",points:[[0,0,0,arm],[...v3.sub(elbow,shoulder),arm*.8],[...v3.sub(wrist,shoulder),arm*.52]]}));
-      const tips=[wrist,[-.08,.28+flap,side*span*.95],[-.37,.2+flap,side*span*.72],[-.44,.23,side*.27]];
-      for(let i=0;i<tips.length-1;i++){
-        graph.sockets.push(socket(`membrane-${side}-${i}`,"membrane",root.id,offset,{part:"body",vertices:[[0,0,0],v3.sub(tips[i],shoulder),v3.sub(tips[i+1],shoulder)],mat:M[p.wingShape?.membraneMat??"BODY3"]}));
-        graph.sockets.push(socket(`finger-${side}-${i}`,"tail",root.id,offset,{part:"body",points:[[0,0,0,finger],[...v3.sub(tips[i],shoulder),finger*.58]],mat:M.BODY2}));
-      }
+      const air=pose.airborne,tucked=pose.legs==="tucked",end=tucked?[-.08,-.07,side*.07]:[-.24,-.055,side*.14];
+      graph.sockets.push(socket(`hindlimb-${side}`,"tail","spine-1",[0,-.06,side*.1],{part:"body",points:[[0,0,0,.026],[-.08,-.09,side*.06,.018],[end[0]*air-.06*(1-air),end[1]*air-.2*(1-air),end[2],.012]]}));
     }
+    flightWings(graph,p.wingShape??{},span,pose);
   }else if(p.family==="gastropod"){
     graph.spine=stations(.95,.11,p.width,p.depth);
     // The broad foot extends in the second baked crawl pose; the shell remains
@@ -161,8 +156,8 @@ export function acceptanceCoat(plan,age,meta,point,part){
 }
 
 /** Produces model/landmarks through the same graph compiler and gait clock. */
-export function buildAcceptanceModel(S,age,frame=0){
-  const {graph,meta,plan}=acceptanceGraph(S,age,frame);
+export function buildAcceptanceModel(S,age,frame=0,poseOptions={}){
+  const {graph,meta,plan}=acceptanceGraph(S,age,frame,poseOptions);
   const compiled=meta.family==="quadruped"?poseGraph(graph,frame*.16,{stride:.16,duty:.65,lift:.075}):compileGraph(graph);
   const m=compiled.model,heads=[];
   addDorsalProfile(m,graph,selectedDorsalProfile(S,age,plan));
@@ -234,5 +229,6 @@ export function buildAcceptanceModel(S,age,frame=0){
   }
   m.bodyGraph=graph;
   boundTreeBlendGroups(m);
+  if(meta.flight)poseFlightModel(m,meta.flight);
   return {model:m,meta};
 }
