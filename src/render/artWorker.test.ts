@@ -43,6 +43,24 @@ describe("cache-first art worker", () => {
     expect(mocks.put).toHaveBeenCalledTimes(2);
     expect(mocks.put.mock.invocationCallOrder[0]).toBeLessThan(mocks.post.mock.invocationCallOrder[0]);
   });
+  it("forgets a failed import, so the next job loads the drawing modules again and is drawn", async () => {
+    const fail = () => { throw new TypeError("Failed to fetch dynamically imported module"); };
+    mocks.load.mockImplementationOnce(fail).mockImplementationOnce(fail); // both tries of the first job
+    await send();
+    expect(mocks.post).toHaveBeenLastCalledWith(expect.objectContaining({ error: expect.any(String) }), []); // (vitest rewords a failing mock's message)
+    expect(mocks.run).not.toHaveBeenCalled();
+    await send();
+    expect(mocks.load).toHaveBeenCalledTimes(3); expect(mocks.run).toHaveBeenCalledTimes(1);
+    expect(mocks.post).toHaveBeenLastCalledWith(expect.objectContaining({ result: expect.anything(), ms: expect.any(Number) }), expect.any(Array));
+    await send();
+    expect(mocks.load).toHaveBeenCalledTimes(3); expect(mocks.run).toHaveBeenCalledTimes(2); // loaded once it succeeds
+  });
+  it("retries a failed import once within the same job", async () => {
+    mocks.load.mockImplementationOnce(() => { throw new TypeError("Failed to fetch dynamically imported module"); });
+    await send();
+    expect(mocks.load).toHaveBeenCalledTimes(2); expect(mocks.run).toHaveBeenCalledTimes(1);
+    expect(mocks.post.mock.calls.some(([reply]) => "error" in reply)).toBe(false);
+  });
   it("keeps the existing error reply when drawing fails", async () => {
     mocks.run.mockImplementation(() => { throw new Error("draw failed"); });
     await send();

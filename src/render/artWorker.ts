@@ -13,7 +13,11 @@ const mk = (w: number, h: number) => new OffscreenCanvas(w, h);
 const post = (m: unknown, t: Transferable[] = []) => (self as unknown as Worker).postMessage(m, t);
 // Hits and cache-only misses never load drawing modules. Concurrent misses share
 // the first import, just as later misses reuse the already loaded module.
+// A failed import (a dropped chunk fetch, a deploy replacing the hashed chunks under an open page) is forgotten, not kept:
+// a rejected promise left here would fail every later job sent to this worker, and render/assets.ts would draw each of those
+// sets on the page instead, for the rest of the session. Each job tries the import twice before replying with an error.
 let drawing: Promise<typeof import("./artBuild")> | undefined;
+const loadDrawing = () => drawing ??= import("./artBuild").catch(err => { drawing = undefined; throw err; });
 
 self.onmessage = async (e: MessageEvent<ArtJob & CacheHint>) => {
   const job = e.data, key = job.cacheKey ?? null;
@@ -22,7 +26,7 @@ self.onmessage = async (e: MessageEvent<ArtJob & CacheHint>) => {
   try {
     if (key) { const hit = await traceAsync(trace, 'cache-read', () => cacheGet(key)); if (hit?.px) { reply({ job, result: hit, ms: 0, cached: true }, transferables(hit), 'cached'); return; } }
     if (job.cacheOnly) { reply({ job, miss: true }, [], 'cache-miss'); return; } // (only if it's kept: render/assets.ts tonight)
-    const { runJob } = await traceAsync(trace, 'load:art', () => drawing ??= import("./artBuild"));
+    const { runJob } = await traceAsync(trace, 'load:art', () => loadDrawing().catch(() => loadDrawing()));
     const t0 = performance.now(), result = traceSync(trace, 'compute:art', () => runJob(job, mk)), ms = performance.now() - t0;
     if (key) await traceAsync(trace, 'cache-write', () => cachePut(key, result)); // (copied as it's put, before its buffers are sent on)
     reply({ job, result, ms }, transferables(result));
