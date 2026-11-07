@@ -55,4 +55,25 @@ describe("research-based opt-in part tree",()=>{
     boundTreeBlendGroups(m);const counts=new Map<number,number>();for(const p of m.parts)counts.set(p.group,(counts.get(p.group)??0)+1);
     expect([...counts.values()]).toEqual([3,3,3,3]);
   });
+  it("bear preset exposes the face and tail beyond torso masses, with broad supported feet at every age",()=>{
+    for(const age of [0,1,2,3]){
+      const {graph,plan}=acceptanceGraph(pack.bear.graph,age),compiled=compileGraph(graph);
+      const tree=graph as typeof graph & {bodyMasses:{at:number[];r:number[]}[]};
+      const head=compiled.sockets.head,front=Math.max(...tree.bodyMasses.map(m=>m.at[0]+m.r[0]));
+      expect(head[0]).toBeGreaterThan(front);
+      const highest=Math.max(...tree.bodyMasses.map(m=>m.at[1]+m.r[1]));
+      expect(head[1]+plan.head*.8).toBeGreaterThan(highest);
+      const tail=(graph.sockets as {id:string;points:number[][]}[]).find(s=>s.id==="tail");
+      if(!tail)throw Error("Missing tail");
+      const tip=compiled.sockets.tail[0]+tail.points.at(-1)![0];
+      expect(tip).toBeLessThan(Math.min(...tree.bodyMasses.map(m=>m.at[0]-m.r[0])));
+      const {model}=buildAcceptanceModel(pack.bear.graph,age);
+      expect(model.anchors.feet).toHaveLength(4);
+      expect(plan.limbRadius).toBeGreaterThanOrEqual(.13);
+      expect(plan.footShape.pads).toBe(true);
+      expect(plan.footShape.claws).toBe(true);
+    }
+    const cub=acceptanceGraph(pack.bear.graph,0).plan,adult=acceptanceGraph(pack.bear.graph,2).plan;
+    expect(cub.head/cub.width).toBeGreaterThan(adult.head/adult.width);
+  });
 });

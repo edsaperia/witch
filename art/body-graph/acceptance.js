@@ -9,12 +9,12 @@ import {acceptancePartTree,boundTreeBlendGroups,partMuscles} from "./part-tree.j
 
 export const ACCEPTANCE_IDS = Object.freeze(["bear","wolf","stag","bat","snail","hydra"]);
 const ACCEPTANCE_PLANS = {
-  bear:{family:"quadruped",template:"ursid",priors:[{kind:"broad",weight:.7},{kind:"compact",weight:.3}],muscles:[{from:.62,to:.88,angle:.1,radius:.045,depth:.6}],neck:.02,coat:"muzzle",feet:"plantigrade",length:1.25,width:.4,depth:.36,leg:.43,head:.34,muzzle:.23,ears:"round",tail:.17,
-    headShape:{family:"ursine",skull:[1,1.05,1],ears:{kind:"round",size:1.15,position:[-.25,.82,.7]},eyes:{size:.075,position:[.65,.22,.74]}},
-    stance:1.12,limbRadius:.105,limbProfile:[1,.92,.75],footShape:{kind:"paw",width:.13,length:.18,pads:true,claws:true},tailShape:{kind:"stub",length:.17,thickness:.09},
-    furShell:{thickness:.025,softness:.12},volumes:[{region:"neck",at:.95,size:.065,softness:.2,width:1,depth:1},{region:"shoulder",at:.78,size:.13,softness:.18,lift:.25,width:.8,depth:1},{region:"chest",at:.75,size:.08,softness:.23,lift:-.35},{region:"belly",at:.45,size:.06,softness:.3,lift:-.5},{region:"haunch",at:.12,size:.07,softness:.2,width:1.2}],
-    agePlans:[{length:.92,head:.36,leg:.37},{length:1.2,head:.32,width:.33,leg:.5},{},{width:.44,head:.36}],markingSoftness:.045,
-    markings:[{space:"head",kind:"mask",centre:[1,-.3,0],radius:[.8,.55,.7],softness:.15,mat:"BELLY"}]},
+  bear:{family:"quadruped",template:"ursid",priors:[{kind:"reference",weight:.65},{kind:"compact",weight:.35}],ribcage:{depth:.86,width:.88},flank:{depth:1.03,width:1.04},muscles:[{from:.62,to:.88,angle:.1,radius:.045,depth:.6}],neck:.18,neckForward:.34,coat:"muzzle",feet:"plantigrade",length:1.25,width:.38,depth:.34,leg:.55,head:.35,muzzle:.25,ears:"round",tail:.17,
+    headShape:{family:"ursine",skull:[1,1.05,1],ears:{kind:"round",size:1.3,position:[-.1,.94,.76]},eyes:{size:.11,position:[.8,.32,.76]}},
+    stance:1.12,limbRadius:.145,limbProfile:[1,.95,.85],footShape:{kind:"paw",width:.16,length:.21,pads:true,claws:true},tailShape:{kind:"stub",length:.33,thickness:.105,drop:.02},
+    furShell:{thickness:.02,softness:.12},volumes:[{region:"neck",at:.95,size:.04,softness:.12,width:1,depth:1},{region:"shoulder",at:.8,size:.12,softness:.1,lift:.3,width:.8,depth:1},{region:"chest",at:.76,size:.07,softness:.12,lift:-.35},{region:"belly",at:.45,size:.025,softness:.14,lift:-.5},{region:"haunch",at:.1,size:.08,softness:.1,width:1.2}],
+    agePlans:[{length:.88,head:.4,width:.34,depth:.29,leg:.55,limbRadius:.135,neck:.2,tailShape:{kind:"stub",length:.24,thickness:.095,drop:.02}},{length:1.2,head:.35,width:.34,leg:.57},{},{width:.42,head:.37,limbRadius:.16}],markingSoftness:.045,
+    markings:[{space:"head",kind:"mask",centre:[1.1,-.2,0],radius:[.95,.62,.9],softness:.15,mat:"BELLY"}]},
   wolf:{family:"quadruped",coat:"saddle",feet:"digitigrade",width:.22,depth:.25,leg:.66,head:.22,muzzle:.32,ears:"point",tail:.58,headShape:{family:"canid"},tailShape:{kind:"bushy"},ruff:{size:.04,softness:.12},markings:[{space:"body",kind:"saddle",centre:[0,.85,0],radius:[.52,.7,1.2],softness:.15,mat:"BODY3"},{space:"body",kind:"mask",centre:[0,-.9,0],radius:[.65,.65,1.3],softness:.12,mat:"BELLY"},{space:"head",kind:"mask",centre:[.8,-.5,0],radius:[1,.5,.75],softness:.15,mat:"BELLY"}]},
   stag:{family:"quadruped",coat:"fawn",feet:"hoof",width:.21,depth:.25,leg:.86,head:.19,muzzle:.29,ears:"point",tail:.18,neck:.37,antlers:true,headShape:{family:"cervid",ears:{kind:"leaf",size:1.2}},antlerShape:{branches:4,spread:.34,curve:-.1,tineLength:.18,glow:true},footShape:{kind:"hoof",width:.065,length:.09},markingSoftness:.035},
   bat:{family:"winged",width:.15,depth:.22,head:.15,muzzle:.17,ears:"round",wing:1.15,headShape:{family:"bat",ears:{kind:"bigbat",size:.8}},wingShape:{arm:.025,finger:.012,membraneMat:"BODY3"}},
@@ -57,7 +57,7 @@ export function acceptanceGraph(S,age,frame=0){
     const leg=p.leg*(baby?.65:1),depth=p.depth*(baby?1.08:young?.9:1),length=p.length??(baby?.75:young?1.04:1.12);
     graph.spine=stations(length,leg+depth,p.width,depth);
     const first=graph.spine[0].id,last=graph.spine.at(-1).id;
-    const hr=p.head*(baby?1.18:1),tip=[.15,p.neck??.16,0];
+    const hr=p.head*(baby?1.18:1),tip=[p.neckForward??.15,p.neck??.16,0];
     neck(graph,"neck",last,[0,.04,0],tip,hr*.8,hr*.65);
     head(graph,"head","neck",headParameters(p.headShape).skull.map(k=>k*hr));meta.heads.push({id:"head",r:hr,muzzle:p.muzzle*(baby?.65:1)});
     graph.sockets.push(socket("tail","tail",first,[-.04,0,0],{part:"tail",points:tailPoints(p.tailShape,p.tail,p.width*.25,frame)}));
