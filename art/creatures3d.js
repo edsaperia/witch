@@ -5,6 +5,8 @@ import { Model, render, v3, spotty, masks } from "./model3d.js";
 import { faceUp, JAW_FACES } from "./genome/expressions.js";
 import { textureLumps } from "./genome/texture.js";
 import { compileGraph } from "./body-graph/graph.js";
+import { buildAcceptanceModel } from "./body-graph/acceptance.js";
+import { boundTreeBlendGroups } from "./body-graph/part-tree.js";
 import { quadrupedTorsoGraph, quadrupedEarSocket, triangularEarMask, triangularEarFaces, wrappedRosette, regionMarking, rosetteSizing, bibCoordinates } from "./body-graph/quadruped.js";
 import { mandiblePart } from "./body-graph/mandibles.js";
 import { paintTailParts } from "./body-graph/tail-markings.js";
@@ -1222,12 +1224,26 @@ const eyesOn = (m, c, r, dirs, size, mat, group = 1) => {
   m.anchors.head ||= { c, r, group }; m.anchors.eyes ||= { pts: dirs.map(d => Model.surface(c, r, v3.norm(d))), size }; // expressions follow the rendered smooth-union head surface
 };
 const shadow = (m, x, w) => m.ell([x, .005, 0], [w, .005, w * .6], M.NOSE, { group: 0 }); // a flyer's shadow on the ground
+// Only explicitly selected graph genomes reach this path. Legacy builders stay intact.
+export function acceptanceGraph3d(S, level, frame, st, facing = "towards") {
+  const {model:m,meta}=buildAcceptanceModel(S,level,frame);
+  if(meta.family==="quadruped"&&S.levelFeatures?.[level]?.length){
+    const H=m.rig.head.H,hr=m.rig.head.hr,len=meta.length/2,top=meta.top,bw=meta.width;
+    const backAt=t=>[-len*.9+t*len*1.65,top,0];
+    evolve3d(m,S.levelFeatures[level],{H,hr,sn:v3.add(H,[hr,0,0]),L:hr,Dm:hr,nb:m.rig.head.nb,tb:m.rig.tail,
+      tuskTips:[],hornTips:[],tuskPaths:[],hornPaths:[],antlerPaths:[],earTips:[],
+      backAt,len,top,chest:top-meta.depth*2,tuck:top-meta.depth,bw,frame,front:1,level});
+  }
+  return finish(m,S,level,st,1,facing);
+}
 function finish(m, S, level, st, k, facing, ref = null, scaleOverride = null) {
-  if (S.sizes.build[level] !== 1) beef(m, S.sizes.build[level]); // the adult's and legend's heavier build (its template's size curve)
+  const build = S.sizes.build?.[level] ?? 1;
+  if (build !== 1) beef(m, build); // absent bulk curve means the authored model, as on shipped quadrupeds
   gearUp(m);
+  if(m.bodyGraph?.blendPolicy==="parent-tree")boundTreeBlendGroups(m);
   // ref: a model in the walk's first pose, its scale taken for every frame (a cycle's frames at one scale, not each fitted to its own height)
   let scale = scaleOverride ?? undefined;
-  if (ref) { if (S.sizes.build[level] !== 1) beef(ref, S.sizes.build[level]); scale = render(ref, { height: drawHeight(level, st, k), facing, measure: true }).s; }
+  if (ref) { if (build !== 1) beef(ref, build); scale = render(ref, { height: drawHeight(level, st, k), facing, measure: true }).s; }
   const sp = drawForm(m, { height: drawHeight(level, st, k), facing, scale }, S, level, st);
   return sp;
 }

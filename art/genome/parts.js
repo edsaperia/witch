@@ -59,6 +59,7 @@ function rigShoe(leg, style, s, st) {
 // its sleeping look, not an expression; the rig keeps the plain head for the rest (render/rig/rigView.ts withFace).
 function rigFaces(id, level, st, pivot, s, gear, faces = true) {
   const out = {}, S = speciesFor(id, st, level);
+  if(S.look?.bodyGraphAcceptance)return out; // no expression-head construction in acceptance graphs
   for (const face of EXPRESSIONS) if (face !== "neutral" && (face !== "asleep" || level === 3) && (faces || face === "asleep")) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S, level, st });
   if (faces && S?.plan === "quad" && !S?.q?.beak) for (const face of Object.keys(JAW_FACES)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S, level, st }); // (the open jaw: a bite, a roar, a yawn; the snouted four-legged ones)
   return out;

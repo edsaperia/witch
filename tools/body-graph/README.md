@@ -2,6 +2,10 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
+## `acceptance-review.mjs`
+
+Capture the six default-off body-graph comparisons; canonical cloud only.
+
 ## `age-size-audit.mjs`
 
 Numeric CPU render + real bake palette audit, no browser or image export.
@@ -33,6 +37,14 @@ CLOUD ONLY after coordinator assignment.
 ## `fit-size-audit.mjs`
 
 Source-only numeric allocation audit.
+
+## `flight-review.mjs`
+
+Canonical cloud only: fixed-native-scale bat flap or state contact sheet.
+
+## `iterate.mjs`
+
+One-species reference/graph/shipped comparison.
 
 ## `size-candidate-audit.mjs`
 

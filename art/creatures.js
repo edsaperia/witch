@@ -4,6 +4,7 @@
 import { M, hsv2rgb, rng } from "./core.js";
 import { GENOMES, GENOME_BY_ID, speciesOf, selectedCreatureGenome } from "./genome/index.js";
 import { textureSprite } from "./genome/texture.js";
+import { acceptanceGraph3d } from "./creatures3d.js";
 import { napForm } from "./naps.js";
 export const textureSeed = id => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) & 0xffff;
 import { withForm, withGear, withTexture, withView, viewKey, height3d, quad3d, owl3d, hedgehog3d, toad3d, troll3d, raven3d, heron3d, HERON_GAIT, bat3d, mole3d, sentinel3d, armadillo3d, beetle3d, scarab3d, snail3d, woodlouse3d, snake3d, hydra3d, moth3d, spider3d, dragonfly3d, crab3d, rattlesnake3d, rattle3d, scorpion3d, penguin3d, quetzal3d } from "./creatures3d.js";
@@ -16,7 +17,9 @@ const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad
 export const IDLE_BUILDERS = { sentinel: sentinel3d, rattle: rattle3d };
 
 // Builds one creature's sprite (uncached): its body plan's builder.
-export const buildCreature = (S, level, frame, st, facing = "towards") => S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing);
+export const buildCreature = (S, level, frame, st, facing = "towards") => S.look?.bodyGraphAcceptance
+  ? acceptanceGraph3d(S,level,frame,st,facing)
+  : S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing);
 
 // ================= the bestiary: 30 species, each a genome record (art/genome/species.js) =================
 // The records hold each species' template, palette, proportions and parts as data (#79 stage 1);
