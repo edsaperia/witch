@@ -4,6 +4,7 @@ import { wornGenome } from "../rules/clothesPile";
 import { onTerrace, deckOf } from "../rules/treehouse";
 import { witchRoomPass } from "./witchRoomPass";
 import type { WitchArt } from "./homeArt";
+import { inBedPose } from "./bedPose";
 
 export const remoteRoomPass = witchRoomPass;
 
@@ -24,7 +25,7 @@ export function remoteWitchFrame(game: Game, W: Witch, art: WitchArt, phase: { t
   const wake = wakeOf(game, W), ko = W.ko;
   if (ko && time < ko.teleportAt) index = frame("sit");
   else if (ko && time < ko.inAt && !ko.moved) hidden = true;
-  else if (wake && !wake.open) index = frame(wake.beat === "stretch" ? "liftSigil" : "sit", time - wake.at, wake.beat !== "stretch");
+  else if (inBedPose(wake, false)) { const pose = inBedPose(wake, false)!; index = frame(pose, time - wake!.at, pose !== "bedStretch"); } // (sitting up in bed: render/bedPose.ts, drawn up on its mattress by otherWitches.ts)
   else if (phase.transition && time - phase.transitionAt! < .35) index = frame(phase.transition, time - phase.transitionAt!, false);
   else if (foot) {
     phase.walk = speed < .6 ? 0 : phase.walk + dt * (art.foot.walk?.fps ?? 6) * speed / Math.max(.5, deck?.house?.stride ?? 5);

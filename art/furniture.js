@@ -26,6 +26,12 @@ export const GROW_ALL = 1.5;
 /** A piece's own scale: its footprint's metres over the real piece's. */
 export const sizeOf = id => SIZE * (GROW[id] ?? (id.startsWith("bedroom") ? 1 : GROW_ALL));
 
+/** The bed's mattress top, a share of its height (the bed's model, PIECES.bed). */
+export const BED_MATTRESS = .78;
+/** Where she sits in a bed `h` high on the house's plan (its object's h): on its mattress, a little into the duvet, in the house's metres
+ *  (the piece is built at h over sizeOf and drawn sizeOf times over). Her seat in it as she wakes (render/view/witch.ts bedLift). */
+export const bedSeat = h => h * BED_MATTRESS + .05 * sizeOf("bed");
+
 const X = [1, 0, 0], Y = [0, 1, 0], Z = [0, 0, 1];
 const rotY = (v, a) => [v[0] * Math.cos(a) + v[2] * Math.sin(a), v[1], -v[0] * Math.sin(a) + v[2] * Math.cos(a)];
 /** A light at model point c: its colour, its reach in pixels (at the house's pixel, before SIZE) and its power (art/lighting.js shade's). */
@@ -110,7 +116,7 @@ const PIECES = {
   // drawn back to the head posts, a moth-eaten canopy over its head half; ivy up a foot post, leaves breaking out at the top; her
   // hoodie flung on the duvet, her phone on the pillow glowing, its lead trailing to the floor.
   bed(m, { W, D, H }) {
-    const x0 = -W / 2 + .07, x1 = W / 2 - .07, zb = -D / 2 + .07, zf = D / 2 - .07, top = 2.25, mat = H * .78, base = .26;
+    const x0 = -W / 2 + .07, x1 = W / 2 - .07, zb = -D / 2 + .07, zf = D / 2 - .07, top = 2.25, mat = H * BED_MATTRESS, base = .26;
     m.box([0, base, 0], [W / 2 - .1, .11, D / 2 - .1], M.BARKD, { round: .02, group: 1, paint: p => (Math.abs(p[1] - base) < .02 ? M.WOOD : undefined) });
     m.box([0, mat - .08, -.05], [W / 2 - .16, .1, D / 2 - .18], M.BELLY, { round: .06, group: 2 });
     m.box([0, mat + .02, .25], [W / 2 - .12, .07, D / 2 - .45], M.CLOTH, { round: .07, group: 3, paint: p => (Math.abs(p[2] - (-D / 2 + .7)) < .07 ? M.BELLY : Math.abs(((p[0] + p[2]) * 2.5 % 1 + 1) % 1 - .5) < .07 ? M.BODY3 : undefined) });

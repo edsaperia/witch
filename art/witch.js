@@ -483,6 +483,10 @@ function fastModel(frame, L = DEFAULT_LOOK) {
 //   talk         four gestures: an open palm, pointing up (an idea), a wave, a hand on her chest; her head tilts between them
 //   placeSigil   reaching up to the stack over her head; drawing a sigil down; crouched, palm to the ground
 //   liftSigil    crouched, palm to the ground; rising with it; tossing it up into the stack
+//   inBed        in her bed (the wake-up, rules/wakeUp.ts): sitting up against her pillows, her legs out straight along the mattress,
+//                her hands in her lap, breathing (Ed's playtest of v7645, 2026-11-07, of the seat's sit drawn there: "Is this meant to be
+//                the witch lying in bed?": its legs hung down to the floor, so she stood in the middle of her bed)
+//   bedStretch   in bed still, stretching as she gets up: arms up over her head, a yawn; then arms wide
 // The party (Ed: "another witch flies in to the dancefloor. At random they will: dance on their own with a variety of simple
 // moves, dance with other witches, fly around in circles, run about, talk to each other, drink, hug each other, hold hands, other
 // party activities"; and our witch does the same when left to idle near the dancefloor). Dancing, her broom is put down (the game
@@ -511,7 +515,7 @@ function fastModel(frame, L = DEFAULT_LOOK) {
 // her hat tip as anchors. frames and a suggested fps per pose; the party's poses loop, and say what they are
 // (party: dance, pair, social, move or rest); WITCH_PAIRS says how two witches meet (or three: the broom limbo).
 export const WITCH_FOOT_POSES = {
-  stand: { frames: 3, fps: 3 }, idle: { frames: 3, fps: 2.5 }, walk: { frames: 6, fps: 9 }, idleBroom: { frames: 3, fps: 2.5 }, walkBroom: { frames: 6, fps: 9 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 }, sit: { frames: 2, fps: 1.5 },
+  stand: { frames: 3, fps: 3 }, idle: { frames: 3, fps: 2.5 }, walk: { frames: 6, fps: 9 }, idleBroom: { frames: 3, fps: 2.5 }, walkBroom: { frames: 6, fps: 9 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 }, sit: { frames: 2, fps: 1.5 }, inBed: { frames: 2, fps: 1.5 }, bedStretch: { frames: 2, fps: 1.5 },
   twoStep: { frames: 4, fps: 4, party: "dance" }, bounce: { frames: 2, fps: 4, party: "dance" }, shuffle: { frames: 4, fps: 6, party: "dance" }, spin: { frames: 4, fps: 6, party: "dance" },
   headbang: { frames: 2, fps: 4, party: "dance" }, jump: { frames: 3, fps: 5, party: "dance" },
   dancePair: { frames: 4, fps: 4, party: "pair" }, holdHands: { frames: 2, fps: 2, party: "pair" }, hug: { frames: 2, fps: 1.5, party: "pair" }, highFive: { frames: 2, fps: 3, party: "pair" },
@@ -595,6 +599,16 @@ const FOOT_FRAMES = {
   ],
   sit: [0, 1].map(f => ({ sit: true, swing: [.06, -.06][f], bend: -.08, look: [.02, .1][f], tilt: [.15, -.2][f], sway: [.01, .03][f], breathe: [0, .008][f],
     broom: { binding: [-.24, .31, -.3], dir: [.32, 1, -.06] }, free: [.2, WITCH_SEAT_HEIGHT + .14, .15], far: [.18, WITCH_SEAT_HEIGHT + .14, -.13], hand: "rest" })), // leaning back, hands on her knees
+  // in bed: sat on the mattress (her seat at its top, render/view/witch.ts bedLift), leaning back a little against her pillows, both legs
+  // out straight before her, no broom
+  inBed: [0, 1].map(f => ({ sit: true, seat: .02, broom: null, bend: -.2, look: [.04, .1][f], tilt: [.12, -.12][f], sway: [.01, .02][f], breathe: [0, .008][f],
+    feet: [[.42, .06, -.08], [.43, .06, .08]], free: [.24, .16, .13], hand: "rest", far: [.22, .16, -.13], farHand: "rest" })),
+  bedStretch: [
+    { sit: true, seat: .02, broom: null, bend: -.06, look: .3, shut: true, mouth: "laugh", sway: .01, breathe: .012, feet: [[.42, .06, -.08], [.43, .06, .08]],
+      free: [.02, .86, .1], hand: "palm", far: [.02, .86, -.1], farHand: "palm" },                                                    // arms up over her head, a yawn
+    { sit: true, seat: .02, broom: null, bend: -.1, look: .2, sway: .02, breathe: .008, feet: [[.42, .06, -.08], [.43, .06, .08]],
+      free: [.04, .74, .3], hand: "palm", far: [.04, .74, -.3], farHand: "palm" },                                                    // arms wide
+  ],
   // ---- the party ----
   twoStep: [0, 1, 2, 3].map(f => { const s = [1, 0, -1, 0][f]; return { broom: null, crouch: [.12, 0, .12, 0][f], hop: [0, .02, 0, .02][f], roll: s * .08, tilt: s * .3, sway: [.02, .035, .02, .035][f], look: .05,
     feet: [[0, .07, -.1 - (s < 0 ? .12 : 0)], [.04, .07, .1 + (s > 0 ? .12 : 0)]], free: [.18, .64 + (s > 0 ? .08 : 0), .19], elbow: [-.02, .6, .24], far: [.16, .64 + (s < 0 ? .08 : 0), -.19], farElbow: [-.02, .6, -.24] }; }),
