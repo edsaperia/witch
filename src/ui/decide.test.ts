@@ -10,7 +10,7 @@ import { slotStorage } from "../app/saveSlots";
 const PARAMS: Record<string, string[]> = { style: ["bold", "ref"], fightScale: [], fightSpeed: [], fightMomentum: [], treetopSpeed: [], areaSize: [] };
 
 describe("the decisions panel", () => {
-  it("has sound entries: unique ids, 2 to 4 options, a default inside its control, a real knob or switch", () => {
+  it("has sound entries: unique ids, 2 to 5 options, a default inside its control, a real knob or switch", () => {
     const ids = DECISION_LIST.map(d => d.id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const d of DECISION_LIST) {
@@ -20,7 +20,7 @@ describe("the decisions panel", () => {
       const c = d.control;
       if (c.type === "choice") {
         expect(c.options.length, d.id).toBeGreaterThanOrEqual(2);
-        expect(c.options.length, d.id).toBeLessThanOrEqual(4);
+        expect(c.options.length, d.id).toBeLessThanOrEqual(5); // (five: the Tree normal maps choice, short labels so they fit a line)
         expect(c.options.map(o => o.value), d.id).toContain(d.default);
       } else if (c.type === "slider") {
         expect(c.min, d.id).toBeLessThan(c.max);
