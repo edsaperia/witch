@@ -14,7 +14,7 @@ import { combatProfile } from "./combat";
 import { beatAt, timeAt, type BeatClock } from "./beat";
 import { LEGEND, heal, type Creature, type Level } from "./creatures";
 import { gaitRate, leashSpeed } from "./leash";
-import type { ForestMap } from "./map";
+import { stumpClearance, type ForestMap } from "./map";
 import { rng } from "./random";
 import type { Tuning } from "./tuning";
 import { addPip, pipCount, pipFuel, wantsPip } from "./buffs";
@@ -155,9 +155,6 @@ function nextQueued(s: BerryState, id: number): void {
   if (l && !l.length) s.queue!.delete(id);
 }
 
-/** The berry bushes and the berries on them, from the seed: in every area of the playable map,
- *  berries.bushesPerArea bushes at spots a bush may grow (in its own area, not on a path or in a
- *  kept clearing), and berries.perArea (a seeded number in that range) berries on distinct ones. */
 /** The berries' tuning with its per-area counts for this map's areas: they're for an area 112 m
  *  across, and a bigger one has more, by its ground (Ed, 2026-10-05: bigger areas), so the berries
  *  are as thick on the ground as before. */
@@ -166,34 +163,84 @@ export function berryCounts(map: ForestMap, t: Tuning): Tuning["berries"] {
   return { ...B, bushesPerArea: Math.round(B.bushesPerArea * k), perArea: B.perArea.map(v => Math.round(v * k)) };
 }
 
-export function newBerries(map: ForestMap, t: Tuning): BerryState {
-  const B = berryCounts(map, t), r = rng(map.seed * 6151 + 29), bushes: BerryBush[] = [], berries: Berry[] = [];
-  const P = B.patch;
+/** A patch of berry bushes (berryPatches): its area, its centre, and its bushes, bushes[from] to bushes[to - 1]. */
+export interface BerryPatch { cell: readonly [number, number]; x: number; z: number; from: number; to: number }
+
+/** Candidate spots weighed for each patch centre (the best-candidate sampler below). */
+const PATCH_CANDIDATES = 24;
+
+/** Where a bush may stand in area (cx, cy): in that area, not on hardClear ground (kept clearings, lakes and their shores, the
+ *  beach, the stump's roots), not within 1.5 m of a path, and `clear` metres or more from every stump (map.stoneGap: its own area's
+ *  and its neighbours', measured from the stump; stumpClearance). */
+const bushGround = (map: ForestMap, cx: number, cy: number, clear: number, x: number, z: number): boolean => {
+  const c = map.areaAt(x, z).cell;
+  if (c[0] !== cx || c[1] !== cy || map.stoneGap(x, z) < clear) return false;
+  return !map.hardClear(x, z) && !map.paths.at(x, z, 1.5);
+};
+
+/** The berry bushes, in patches, from the seed: in every area of the playable map but home's centre, berries.bushesPerArea (scaled by
+ *  berryCounts) in patches of patch.bushes [min, max] within patch.radius of a centre (Ed, v233), so she finds several berries in reach
+ *  together. Spread evenly over the area (Ed, 2026-11-06: "I think we should change this process to more evenly distribute patches in
+ *  the area, and also increase the clearance from the stump (not the middle)."): each patch centre is the best of PATCH_CANDIDATES
+ *  random spots on the area's bush ground, the one farthest from every patch already placed (its own area's and its neighbours'), and
+ *  never nearer one than patch.spacing metres (Mitchell's best-candidate sampling: blue noise, every patch as far from the others as the
+ *  ground allows). A centre keeps its whole patch on that ground: patch.radius inside its area's rim and stumpClearance (rules/map.ts) +
+ *  patch.radius from every stump (map.soundsystemSpot, where the stump stands, not the area's middle), so no bush grows in a stump's
+ *  fighting arena. An area that runs out of room stops short of its bushes rather than grow them nearer (the coordinator, for Ed,
+ *  2026-11-06). Bushes are made area by area, in map.cells order, each area's patches together. */
+export function berryPatches(map: ForestMap, t: Tuning): { bushes: BerryBush[]; patches: BerryPatch[] } {
+  const B = berryCounts(map, t), P = B.patch, A = map.areaSize, bushes: BerryBush[] = [], patches: BerryPatch[] = [];
+  const spacing = P.spacing, clear = stumpClearance(t), R = P.radius;
   for (const [cx, cy] of map.cells) {
     if (cx === map.centreCell[0] && cy === map.centreCell[1]) continue; // home: the dancefloor's clearing
     const s = map.siteOf(cx, cy), ar = rng(map.seed * 3571 + cx * 389 + cy * 7741 + 17), first = bushes.length;
-    // In patches (Ed, v233): a few bushes clustered within patch.radius of a centre, so a sigil in
-    // the middle of one is a feeding spot. Patch centres lie out in the area's woods, between its
-    // clearing and its edge.
-    for (let tries = 0; tries < B.bushesPerArea * 12 && bushes.length - first < B.bushesPerArea; tries++) {
-      const a = ar() * Math.PI * 2, d = map.areaSize * (0.15 + ar() * 0.5), px = s.x + Math.cos(a) * d, pz = s.z + Math.sin(a) * d;
-      const at = map.areaAt(px, pz);
-      if (at.cell[0] !== cx || at.cell[1] !== cy || map.hardClear(px, pz) || map.paths.at(px, pz, 1.5)) continue;
-      if (bushes.slice(first).some(b => Math.hypot(b.x - px, b.z - pz) < P.radius * 2.5)) continue; // patches apart
+    // (the patches near enough to matter: its neighbours' already placed, and its own as they come)
+    const near = patches.filter(p => Math.abs(p.x - s.x) < A * 2 && Math.abs(p.z - s.z) < A * 2);
+    const gap = (x: number, z: number) => { let d = Infinity; for (const p of near) d = Math.min(d, Math.hypot(p.x - x, p.z - z)); return d; };
+    const centreOk = (x: number, z: number) => {
+      if (!bushGround(map, cx, cy, clear + R, x, z)) return false;
+      for (let i = 0; i < 6; i++) { const c = map.areaAt(x + Math.cos(i * Math.PI / 3) * R, z + Math.sin(i * Math.PI / 3) * R).cell; if (c[0] !== cx || c[1] !== cy) return false; } // (off its rim)
+      return true;
+    };
+    while (bushes.length - first < B.bushesPerArea) {
+      let px = 0, pz = 0, best = -1;
+      for (let tries = 0, seen = 0; seen < PATCH_CANDIDATES && tries < PATCH_CANDIDATES * 40; tries++) {
+        const x = s.x + (ar() * 2 - 1) * A, z = s.z + (ar() * 2 - 1) * A;
+        if (!centreOk(x, z)) continue;
+        seen++;
+        const d = gap(x, z);
+        if (d >= spacing && d > best) { best = d; px = x; pz = z; }
+      }
+      if (best < 0) break; // (no room left at patch.spacing)
       const want = Math.min(B.bushesPerArea - (bushes.length - first), P.bushes[0] + Math.floor(ar() * (P.bushes[1] - P.bushes[0] + 1))), from = bushes.length;
       for (let k = 0; k < want * 8 && bushes.length - from < want; k++) {
-        const ba = ar() * Math.PI * 2, bd = bushes.length === from ? 0 : P.radius * (0.35 + 0.65 * ar());
-        const x = px + Math.cos(ba) * bd, z = pz + Math.sin(ba) * bd, here = map.areaAt(x, z);
-        if (here.cell[0] !== cx || here.cell[1] !== cy || map.hardClear(x, z) || map.paths.at(x, z, 1.5)) continue;
+        const ba = ar() * Math.PI * 2, bd = bushes.length === from ? 0 : R * (0.35 + 0.65 * ar());
+        const x = px + Math.cos(ba) * bd, z = pz + Math.sin(ba) * bd;
+        if (!bushGround(map, cx, cy, clear, x, z)) continue;
         if (bushes.slice(from).some(b => Math.hypot(b.x - x, b.z - z) < 1.2)) continue;
-        bushes.push({ x, z, type: here.type, variant: Math.floor(ar() * 1e6), flip: ar() < 0.5 });
+        bushes.push({ x, z, type: map.areaAt(x, z).type, variant: Math.floor(ar() * 1e6), flip: ar() < 0.5 });
       }
+      const patch = { cell: [cx, cy] as const, x: px, z: pz, from, to: bushes.length };
+      patches.push(patch); near.push(patch);
     }
-    const here = bushes.length - first, want = Math.min(here, B.perArea[0] + Math.floor(ar() * (B.perArea[1] - B.perArea[0] + 1)));
+  }
+  return { bushes, patches };
+}
+
+/** The berry bushes (berryPatches) and the berries on them, from the seed: in each area, berries.perArea (a seeded number in that
+ *  range, scaled by berryCounts) berries on distinct ones of its bushes. */
+export function newBerries(map: ForestMap, t: Tuning): BerryState {
+  const B = berryCounts(map, t), r = rng(map.seed * 6151 + 29), { bushes, patches } = berryPatches(map, t), berries: Berry[] = [];
+  for (let i = 0; i < patches.length;) {
+    // (an area's patches lie together: its bushes are bushes[first] to bushes[end - 1])
+    const [cx, cy] = patches[i].cell, first = patches[i].from;
+    while (i < patches.length && patches[i].cell[0] === cx && patches[i].cell[1] === cy) i++;
+    const here = patches[i - 1].to - first, ar = rng(map.seed * 3571 + cx * 389 + cy * 7741 + 23);
+    const want = Math.min(here, B.perArea[0] + Math.floor(ar() * (B.perArea[1] - B.perArea[0] + 1)));
     // A seeded shuffle of this area's bushes; the first `want` carry berries.
-    const order = Array.from({ length: here }, (_, i) => first + i);
-    for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(ar() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
-    for (let i = 0; i < want; i++) berries.push({ id: berries.length, bush: order[i], claimedBy: null });
+    const order = Array.from({ length: here }, (_, k) => first + k);
+    for (let k = order.length - 1; k > 0; k--) { const j = Math.floor(ar() * (k + 1)); [order[k], order[j]] = [order[j], order[k]]; }
+    for (let k = 0; k < want; k++) berries.push({ id: berries.length, bush: order[k], claimedBy: null });
   }
   const onBush = new Int32Array(bushes.length).fill(-1);
   for (const b of berries) onBush[b.bush] = b.id;

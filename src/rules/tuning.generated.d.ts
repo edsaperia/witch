@@ -787,7 +787,9 @@ export type SchemaTuning = {
     "patch": {
       "bushes": Array<number>;
       "radius": number;
+      "spacing": number;
     };
+    "stumpClear": number;
     "eatTime": number;
     "cost": {
       "by": "power" | "value";
