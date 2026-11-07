@@ -79,6 +79,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
           const after = await page.evaluate(() => { const f = document.querySelector("#station-panel .focus"); return f ? `${f.dataset.line}:${f.dataset.col}` : null; });
           if (after === before) break;
         }
+        for (let i = 0, was = null; i < 80; i++) { await page.keyboard.press("ArrowUp"); await page.waitForTimeout(60); const f = await page.evaluate(() => document.querySelector("#station-panel .focus")?.dataset.line); if (f === was) break; was = f; } // (back to the top: the checks after start from the first card)
         heights[`${id}:${state}`] = { visible: worst.client, content: worst.scroll, ratio: +(worst.scroll / worst.client).toFixed(2), lines: worst.lines };
         ok(worst.scroll <= worst.client + 1, `${id} (${state}): its panel doesn't scroll (content ${worst.scroll} px in ${worst.client} px, ${worst.lines} lines)`);
       };

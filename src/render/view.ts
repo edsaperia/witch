@@ -732,6 +732,9 @@ export class View {
   /** Brushing her teeth at the basin (Ed, 2026-11-07: "a short brushing animation with a little sparkle"; main.ts sets it on the
    *  basin's Teeth button): her brush frames from `from` till `until` (her time, s) while she stands still (render/view/witch.ts). */
   readonly brush = { from: -Infinity, until: -Infinity };
+  /** At a station, how far across (m) the camera's aim is moved so she's drawn `camera.station.whole.at` of the screen's width across
+   *  (render/view/camera.ts: measured on screen a frame at a time); 0 away from one. */
+  stationShift = 0;
   /** What she plays with, for the use prompts' button (platform/input.ts device): the use button as bound (E, the pad's ✕) or a tap on the prompt itself. */
   useDevice: "keys" | "pad" | "touch" = "keys";
   /** A tap on a use prompt (touch): down and up, as the touch sigil button's (main.ts sets it). */
