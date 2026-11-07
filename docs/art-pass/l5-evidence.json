@@ -1,0 +1,143 @@
+{
+  "date": "2026-11-07",
+  "shotsCommit": "48ae7574720dbde8ce78f6e4813bff817f0514bd",
+  "scope": "reference/concept only; current shipped legend comparison pending",
+  "generatedSheets": 13,
+  "reusedBearSheets": 1,
+  "legendConcepts": 18,
+  "records": [
+    {
+      "species": "armadillo",
+      "path": "previews/art-pass/armadillo/legend-concepts-v1.png",
+      "sha256": "e87d4d8a1742ab119f8ae52500ce5efa5dbe7e96d555b9fa9759ca55415a12c3",
+      "width": 2172,
+      "height": 724
+    },
+    {
+      "species": "armadillo",
+      "path": "previews/art-pass/armadillo/provenance.json",
+      "sha256": "5fb4fb3adde7bacde2279c7accda92f32b615c7f10621945262b83849782de8b"
+    },
+    {
+      "species": "armadillo",
+      "path": "previews/art-pass/armadillo/ref-board-v2.png",
+      "sha256": "771fba5d7d574e431eb081ce5f4a5be50a0e79e8aed2286df3b8c0be5e2fa968",
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "species": "bat",
+      "path": "previews/art-pass/bat/legend-concepts-v1.png",
+      "sha256": "fc5846cf1ef8e035fea6efb043c3d0451b888641877a819e5c9446524b27fc27",
+      "width": 1199,
+      "height": 1312
+    },
+    {
+      "species": "bat",
+      "path": "previews/art-pass/bat/provenance.json",
+      "sha256": "2d843d6200bbe840eea6c3ed36eeb2974740f598436e93cfdd4075abd5dfe492"
+    },
+    {
+      "species": "bat",
+      "path": "previews/art-pass/bat/ref-board-v2.png",
+      "sha256": "cc02d9af65a5b715c3ae67e36277a08acba277c53720294ce27fd35d1adeb9ec",
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "species": "bat",
+      "path": "previews/art-pass/bat/ref-flight-ground-v1.png",
+      "sha256": "6394facb4e7ed8708924854e783c029843ed84279f45240babafa296255da169",
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "species": "bear",
+      "path": "previews/art-pass/bear/legend-concepts-v1.png",
+      "sha256": "edde2bd87d8f98efb8eaf637651fdd8dc6b29edd2c45e77559e30b14977fa7b3",
+      "width": 2172,
+      "height": 724
+    },
+    {
+      "species": "bear",
+      "path": "previews/art-pass/bear/provenance.json",
+      "sha256": "a8840b8c8b1c3dc4f21f2c9c80e50ef88b9b10caaaf4f2bd1708d6c3c7faf38e"
+    },
+    {
+      "species": "bear",
+      "path": "previews/art-pass/bear/ref-board.png",
+      "sha256": "f766324629426a1a3fcab2bd020850f0826f1a5b86b935f2cb5a4a05046af81f",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "species": "bear",
+      "path": "previews/art-pass/bear/ref-provenance.json",
+      "sha256": "836636387029eb9a8a56bdc2d0517c4fbdfed9c33333e3f1394e74bb54413b99"
+    },
+    {
+      "species": "bear",
+      "path": "previews/art-pass/bear/ref-walk.png",
+      "sha256": "a0f5a6475fe2d58ad3b8141c0ca9b3f7aea0dea572c54be013910c575ca53c9d",
+      "width": 1312,
+      "height": 1199
+    },
+    {
+      "species": "beaver",
+      "path": "previews/art-pass/beaver/legend-concepts-v1.png",
+      "sha256": "2e2d20ec4e57320e85aad09bb5f8c0abb46bf716091a9cecda6c0e4f3ae92168",
+      "width": 724,
+      "height": 2172
+    },
+    {
+      "species": "beaver",
+      "path": "previews/art-pass/beaver/provenance.json",
+      "sha256": "cb6ab449e66b924c8f86b97ea7c91a16cfe250df54619853c635d3dd224b857a"
+    },
+    {
+      "species": "beaver",
+      "path": "previews/art-pass/beaver/ref-board-v2.png",
+      "sha256": "c310a5f9aa892b8390408ddfab6fecd3a1399b4195bb9eea5ec6921549e018c7",
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "species": "hare",
+      "path": "previews/art-pass/hare/legend-concepts-v1.png",
+      "sha256": "551d10a5748e944da8092412a2b91ed6d9400e87f9d9ed0d83532daf191ffb3d",
+      "width": 1234,
+      "height": 1274
+    },
+    {
+      "species": "hare",
+      "path": "previews/art-pass/hare/provenance.json",
+      "sha256": "b2158a13852aa5b6684eea4f31042f6d9bc7f495c85fb948ae53ce2cb5fbe675"
+    },
+    {
+      "species": "hare",
+      "path": "previews/art-pass/hare/ref-board-v2.png",
+      "sha256": "83bca0558c30d1f47fb710e330355f554946505d0fa7f23e6f4dada8b1a0c2ec",
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "species": "polarbear",
+      "path": "previews/art-pass/polarbear/legend-concepts-v1.png",
+      "sha256": "72c0550b16c891f1f3594d25def8730faf812a357c0e672c9aa6c02534495c39",
+      "width": 2149,
+      "height": 732
+    },
+    {
+      "species": "polarbear",
+      "path": "previews/art-pass/polarbear/provenance.json",
+      "sha256": "41915fdbc92a96539e6df2a0516d9e537cc9c770004103f1b7abd43240f4c1ec"
+    },
+    {
+      "species": "polarbear",
+      "path": "previews/art-pass/polarbear/ref-board-v2.png",
+      "sha256": "f3151e37f2532d0fa323c218392f8b74429694c399b277fd8fb32931f9c69809",
+      "width": 1774,
+      "height": 887
+    }
+  ]
+}
