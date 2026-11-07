@@ -88,12 +88,15 @@ describe("the wardrobe", () => {
     expect(human).toEqual(HUMAN_SKINS);
     expect(Array.from({ length: GRID_ROWS }, (_, r) => skinSwatch(2, r))).toEqual(FANTASY_SKINS);
     const lum = (c: number[]) => { const [r, g, b] = (Art.hsv2rgb as (h: number, s: number, v: number) => number[])(c[0], c[1], c[2]); return .2126 * r + .7152 * g + .0722 * b; };
-    for (let r = 1; r < GRID_ROWS; r++) for (let c = 0; c < SKIN_COLS; c++) expect(lum(skinSwatch(c, r)), `${c},${r}`).toBeLessThan(lum(skinSwatch(c, r - 1))); // (each column darker down)
+    for (let r = 1; r < GRID_ROWS; r++) for (let c = 0; c < SKIN_COLS; c++) if (!(c === 2 && r === 3)) expect(lum(skinSwatch(c, r)), `${c},${r}`).toBeLessThan(lum(skinSwatch(c, r - 1))); // (each column darker down, but for the light green, Ed's default, in the moss green's place: Ed, 2026-11-07)
     skinSwatch(0, 0)[0] = 9; expect(skinSwatch(0, 0)[0]).not.toBe(9); // (a copy: changing one changes no list)
   });
-  it("her starting skin is one of the grid's swatches (config/default-look.json)", () => {
+  it("her starting skin is one of the grid's swatches (config/default-look.json): the light green (Ed, 2026-11-07: \"the default skin should be a light green\")", () => {
     const skin = (DEFAULT_LOOK.genome as { palette: Record<string, number[]> }).palette.skin, all = Array.from({ length: GRID_ROWS }, (_, r) => Array.from({ length: SKIN_COLS }, (_, c) => skinSwatch(c, r))).flat();
     expect(all).toContainEqual(skin);
+    expect(skin).toEqual(skinSwatch(2, 3));
+    const hex = (c: number[]) => "#" + (Art.hsv2rgb as (h: number, s: number, v: number) => number[])(c[0], c[1], c[2]).map(x => x.toString(16).padStart(2, "0")).join("");
+    expect(hex(skin)).toBe("#a8d08d");
   });
 });
 

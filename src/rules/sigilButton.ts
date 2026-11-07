@@ -6,7 +6,7 @@
 import { wakeOf, settleSleepingBed } from "./wakeUp";
 import { guestMotionReady } from "./onlineInputSteps";
 import { houseObjectFor } from "./guestFurniture";
-import { isDressingTable } from "./clothesPile";
+import { isBasin, isDressingTable } from "./clothesPile";
 import { atZooExit } from "./zoo";
 import { mushroomButton } from "./mushrooms";
 import { needsBag, takeBroom, takeInvites } from "./kit";
@@ -90,7 +90,8 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
       if (at.use.kind === "invites" && needsBag(W)) relicEvents.push({ kind: "needBag", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id }); // (no bag to carry them: the desk says so, rules/kit.ts NEED_BAG)
       else if (at.use.kind === "invites" ? takeInvites(W) : at.id === "lathe" && takeBroom(g, W)) relicEvents.push({ kind: "kit", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.use.kind === "invites" ? "invites" : "broom" });
       relicEvents.push({ kind: "house", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id });
-      const waking = wakeOf(g, W); if (isDressingTable(at.id) && waking) waking.styled = true; // (her skin and hair seen to: the first morning's first step, rules/guidance.ts)
+      const waking = wakeOf(g, W); if (isDressingTable(at.id) && waking) waking.styled = true; // (her hair seen to: a first morning's step, rules/guidance.ts)
+      if (isBasin(at.id) && waking) waking.washed = true; // (the basin used: the first morning's first step, Ed 2026-11-07)
     }
     // A missing guest quantum pauses her clock; it is not a released use key.
     const slept = (W !== g.witches[1] || guestMotionReady(g)) && (inHouse || W.house) && stepBed(W, at?.use.kind === "bed", !!c.sigilHeld && inHouse, ht).slept;

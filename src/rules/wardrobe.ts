@@ -38,7 +38,7 @@ export const itemById = (id: string): WardrobeItem | undefined => BY_ID.get(id);
  *  across, the creator's 12 hues and its grey column, its rows these of the creator's 9 (ui/creator.ts swatchAt). Skin (Ed,
  *  2026-11-07: "skin tone range plus some fantasy tones"; art/skinTones.js) is 3 across, palest at the top: the Monk scale's ten
  *  human tones two to a row in order (Monk 1 and 2, 3 and 4 ... 9 and 10), then a fantasy tone each row (frost blue, lilac, ash
- *  grey, moss green, night indigo). */
+ *  grey, light green, night indigo: the light green her starting skin, Ed 2026-11-07, so its column is palest at the top but for it). */
 export const GRID_ROWS = 5;
 export const CLOTH_COLS = 13, CLOTH_ROWS = [1, 3, 4, 6, 8];
 export const SKIN_COLS = 3;

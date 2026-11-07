@@ -22,6 +22,8 @@ export const STATION_SLOT: Readonly<Record<string, PileSlot>> = { wardrobe: "top
  *  and shoe racks"); the home's own id as it is. */
 export const homeStation = (id: string): string => { const m = /^bedroom[23]([A-Z].*)$/.exec(id); return m ? m[1][0].toLowerCase() + m[1].slice(1) : id; };
 export const isDressingTable = (id: string | undefined): boolean => !!id && homeStation(id) === "dressingTable";
+/** The basin, hers or a guest bedroom's (the first morning's first step: rules/guidance.ts FIRST_MORNING). */
+export const isBasin = (id: string | undefined): boolean => !!id && homeStation(id) === "basin";
 
 /** She's dressed: nothing of last night's left in the pile (an old wake-up, with no pile, counts as dressed). */
 export const dressed = (w: { pile?: PileSlot[] } | null | undefined): boolean => !w?.pile?.length;

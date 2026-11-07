@@ -54,6 +54,9 @@ export interface WakeState {
   /** She's used the dressing table this morning (E there, its panel opened: rules/sigilButton.ts): her first morning's first guidance
    *  step, skin and hair (Ed, 2026-10-29; rules/guidance.ts FIRST_MORNING). */
   styled?: boolean;
+  /** She's used the basin this morning (E there: rules/sigilButton.ts): her first morning's first guidance step, before the dressing
+   *  table (Ed, 2026-11-07: "first morning should have the basin as the first thing in the path"; rules/guidance.ts FIRST_MORNING). */
+  washed?: boolean;
 }
 
 /** The wake-up's knobs (the tuning's opening.wake): a snooze's seconds (Ed: 5), the stretch's, and how long the alarm rings before E

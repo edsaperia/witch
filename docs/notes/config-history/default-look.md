@@ -9,3 +9,7 @@ What a brand-new witch starts with (Ed, 2026-10-29: "Please give me an easy way 
 ## 2026-11-07: her skin snapped to Monk 4
 
 Ed's "skin tone range plus some fantasy tones" replaced the dressing table's skin grid with the Monk Skin Tone Scale's ten tones and five fantasy tones (`art/skinTones.js`). Her starting skin, `[0.07, 0.22, 0.96]` (#f5d6bf, the old grid's palest), was no longer a swatch, so it was snapped to the nearest one by the panel's own colour distance (`ui/stationPanel.ts` chosenSwatch): Monk 4, #eadaba, `[0.1111, 0.2051, 0.9176]`. `src/rules/wardrobeShelves.test.ts` checks it stays a swatch.
+
+## 2026-11-07: her skin light green
+
+Ed, 2026-11-07: "the default skin should be a light green." The fantasy column's moss green (`[0.25, 0.38, 0.6]`, #7c995f) became a light green, #a8d08d, `[0.2662, 0.3221, 0.8157]`, in the same place (the skin grid's fourth row, third column: still 3 × 5, `art/skinTones.js`), and her starting skin is that swatch (it was Monk 4, #eadaba). Random witches, the creator's Randomise and the party witches still take the ten human tones only. `src/rules/wardrobeShelves.test.ts` checks her starting skin is that swatch, #a8d08d.
