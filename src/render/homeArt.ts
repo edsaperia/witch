@@ -59,9 +59,10 @@ export function witchSprites(style: Style, genome: unknown, bare: boolean, mk: M
   const sprites = [0, 1, 2].map(frame => wb({ frame })).concat([0, 1, 2].map(frame => wb({ frame, facing: "away" })), [wb({ lean: true }), wb({ lean: true, facing: "away" })],
     ...["rise", "descend"].flatMap(pose => ["towards", "away"].flatMap(facing => [0, 1].map(frame => wb({ pose, frame, facing })))));
   // On foot, from 16: standing, landing, taking off, talking, putting a sigil down, lifting one, sitting; standing and walking
-  // with no broom (the treehouse's rooms: Ed, 2026-10-21), and carrying it (the Terrace: Ed, 2026-10-23).
+  // with no broom (the treehouse's rooms: Ed, 2026-10-21), and carrying it (the Terrace: Ed, 2026-10-23); in her bed, sitting up and
+  // stretching (the wake-up: render/view/witch.ts inBedPose).
   const FOOT = Art.WITCH_FOOT_POSES as Record<string, { frames: number; fps: number }>;
-  for (const pose of ["stand", "land", "takeoff", "talk", "placeSigil", "liftSigil", "sit", "idle", "walk", "idleBroom", "walkBroom"]) {
+  for (const pose of ["stand", "land", "takeoff", "talk", "placeSigil", "liftSigil", "sit", "idle", "walk", "idleBroom", "walkBroom", "inBed", "bedStretch"]) {
     const n = FOOT[pose].frames, entry = { towards: [] as number[], away: [] as number[], fps: FOOT[pose].fps };
     for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
     W.foot[pose] = entry;
