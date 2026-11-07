@@ -1,0 +1,110 @@
+{
+  "source": "4a95ed595 rules-map and local half-float HeightSamples reconstruction; not captured live GPU state",
+  "seed": 723288,
+  "world": 1268398697,
+  "x": 1880.614562082186,
+  "z": 2736.032513442069,
+  "elapsedMs": 592.3724000000001,
+  "localTexels": 18,
+  "points": [
+    {
+      "x": 1880,
+      "z": 2736,
+      "h": -0.451904296875
+    },
+    {
+      "x": 1880,
+      "z": 2740,
+      "h": -0.356201171875
+    },
+    {
+      "x": 1884,
+      "z": 2736,
+      "h": -0.2357177734375
+    },
+    {
+      "x": 1884,
+      "z": 2740,
+      "h": -0.01018524169921875
+    }
+  ],
+  "triangle": [
+    0,
+    1,
+    2
+  ],
+  "weights": [
+    0.8382311189362213,
+    0.008128360517275723,
+    0.153640520546503
+  ],
+  "sampledGround": -0.4182957290137256,
+  "groundTriangle": -0.41791137737629386,
+  "pointSampleMinusTriangle": -0.0003843516374317235,
+  "contactFrames": [
+    {
+      "frame": 0,
+      "spriteGroundSample": -0.5118710927600139,
+      "sink": 0.5343750000000003,
+      "baseZ": 2736.0491215332286,
+      "contacts": [
+        {
+          "x": 1880.520812082186,
+          "z": 2736.030182481906,
+          "bodyY": -0.4369073399609651,
+          "groundTriangleY": -0.4230370966535457,
+          "gapMetres": -0.013870243307419372
+        },
+        {
+          "x": 1880.427062082186,
+          "z": 2736.030182481906,
+          "bodyY": -0.4369073399609651,
+          "groundTriangleY": -0.4281039682966122,
+          "gapMetres": -0.00880337166435291
+        }
+      ],
+      "shadow": {
+        "x": 1880.877062082186,
+        "z": 2736.032513442069,
+        "y": -0.3243065630585358,
+        "groundTriangleY": -0.4037272125598596,
+        "gapMetres": 0.07942064950132383
+      }
+    },
+    {
+      "frame": 1,
+      "spriteGroundSample": -0.5118710927600139,
+      "sink": 0.5343750000000003,
+      "baseZ": 2736.0491215332286,
+      "contacts": [
+        {
+          "x": 1880.520812082186,
+          "z": 2736.030182481906,
+          "bodyY": -0.4369073399609651,
+          "groundTriangleY": -0.4230370966535457,
+          "gapMetres": -0.013870243307419372
+        },
+        {
+          "x": 1880.427062082186,
+          "z": 2736.030182481906,
+          "bodyY": -0.4369073399609651,
+          "groundTriangleY": -0.4281039682966122,
+          "gapMetres": -0.00880337166435291
+        }
+      ],
+      "shadow": {
+        "x": 1880.886437082186,
+        "z": 2736.032513442069,
+        "y": -0.3238069499887149,
+        "groundTriangleY": -0.40322052539556036,
+        "gapMetres": 0.07941357540684546
+      }
+    }
+  ],
+  "curve": 0.0029332888102817823,
+  "limitations": [
+    "Moving height-window centre/edge fade, float32 instance quantization, pixelSnap, GPU depth and view interpolation were not saved.",
+    "Body contact uses the lowest baked opaque texel centres, including outline, not a claim about the visible GPU silhouette after depth testing.",
+    "Shadow value is its centre vertex, not the entire shadow mesh or its alpha boundary."
+  ]
+}

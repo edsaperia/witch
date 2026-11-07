@@ -1,0 +1,109 @@
+{
+  "source": "geometry-only model reconstruction; not baked-pixel/GPU contact",
+  "style": {
+    "size": 8,
+    "growth": 20,
+    "pixel": 3
+  },
+  "scale": 30.475606508246337,
+  "mpp": 0.09375,
+  "metresPerModelUnit": 2.8570881101480943,
+  "frames": [
+    {
+      "frame": 0,
+      "primitiveBottomModel": 0.14200643315374634,
+      "primitiveBottomMetres": 0.40572489172810877,
+      "conservativeBottomModel": 0.015000000000000013,
+      "lowest": [
+        {
+          "i": 35,
+          "type": "cone",
+          "group": 11,
+          "material": 28,
+          "bounds": [
+            0.14200643315374634,
+            0.3681394757726796
+          ]
+        },
+        {
+          "i": 33,
+          "type": "ell",
+          "group": 11,
+          "material": 28,
+          "bounds": [
+            0.26265884897227476,
+            0.7188372093092957
+          ]
+        },
+        {
+          "i": 34,
+          "type": "cone",
+          "group": 11,
+          "material": 28,
+          "bounds": [
+            0.2781394757726796,
+            0.5757480291407853
+          ]
+        },
+        {
+          "i": 18,
+          "type": "cone",
+          "group": 15,
+          "material": 1,
+          "bounds": [
+            0.2944894161962748,
+            0.37874599738948117
+          ]
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "primitiveBottomModel": 0.14020643315374637,
+      "primitiveBottomMetres": 0.4005821331298423,
+      "conservativeBottomModel": 0.015000000000000013,
+      "lowest": [
+        {
+          "i": 35,
+          "type": "cone",
+          "group": 11,
+          "material": 28,
+          "bounds": [
+            0.14020643315374637,
+            0.3663394757726796
+          ]
+        },
+        {
+          "i": 33,
+          "type": "ell",
+          "group": 11,
+          "material": 28,
+          "bounds": [
+            0.2630299008236786,
+            0.7148661574578918
+          ]
+        },
+        {
+          "i": 34,
+          "type": "cone",
+          "group": 11,
+          "material": 28,
+          "bounds": [
+            0.27633947577267964,
+            0.5739480291407852
+          ]
+        },
+        {
+          "i": 18,
+          "type": "cone",
+          "group": 15,
+          "material": 1,
+          "bounds": [
+            0.2944894161962748,
+            0.37874599738948117
+          ]
+        }
+      ]
+    }
+  ]
+}
