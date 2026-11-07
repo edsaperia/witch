@@ -10,6 +10,7 @@ beforeEach(async () => {
   vi.resetModules(); vi.clearAllMocks();
   vi.doMock("./artCacheStorage", () => ({ cacheGet: mocks.get, cachePut: mocks.put }));
   vi.doMock("./artBuild", () => { mocks.load(); return { runJob: mocks.run }; });
+  mocks.load.mockImplementation(() => undefined);
   mocks.get.mockResolvedValue(null); mocks.put.mockResolvedValue(undefined); mocks.run.mockImplementation(result);
   worker = { postMessage: mocks.post, onmessage: async () => {} };
   vi.stubGlobal("self", worker);
@@ -48,5 +49,23 @@ describe("cache-first art worker", () => {
     await send();
     expect(mocks.post).toHaveBeenCalledWith(expect.objectContaining({ error: "Error: draw failed" }), []);
     expect(mocks.put).not.toHaveBeenCalled();
+  });
+  it("retries a failed drawing import once within the same job", async () => {
+    mocks.load.mockImplementationOnce(() => { throw new Error("chunk fetch failed"); });
+    await send();
+    expect(mocks.load).toHaveBeenCalledTimes(2); expect(mocks.run).toHaveBeenCalledTimes(1);
+    expect(mocks.post).toHaveBeenCalledWith(expect.objectContaining({ result: expect.anything(), ms: expect.any(Number) }), expect.any(Array));
+    expect(mocks.post.mock.calls.some(([reply]) => "error" in reply)).toBe(false);
+  });
+  it("forgets an import that failed twice, so the next job imports again and is drawn", async () => {
+    mocks.load.mockImplementationOnce(() => { throw new Error("chunk fetch failed"); })
+      .mockImplementationOnce(() => { throw new Error("chunk fetch failed again"); });
+    await send();
+    expect(mocks.post).toHaveBeenLastCalledWith(expect.objectContaining({ error: expect.any(String) }), []);
+    expect(mocks.run).not.toHaveBeenCalled();
+    await send();
+    expect(mocks.load).toHaveBeenCalledTimes(3); expect(mocks.run).toHaveBeenCalledTimes(1); expect(mocks.put).toHaveBeenCalledTimes(1);
+    expect(mocks.post).toHaveBeenLastCalledWith(expect.objectContaining({ result: expect.anything(), ms: expect.any(Number) }), expect.any(Array));
+    await send(); expect(mocks.load).toHaveBeenCalledTimes(3); // loaded once it succeeds
   });
 });
