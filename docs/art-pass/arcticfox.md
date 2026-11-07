@@ -61,6 +61,59 @@ Use case: photorealistic-natural. Asset: arctic fox (Vulpes lagopus) skeleton an
 
 </details>
 
+## Legend concepts — 7 November addition
+
+**Three actual generated options; provisional owner pick A, not Ed's approval.** [Legend lane table and review contact sheet](l1-legends.md). [Original instruction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and [later fit-and-variety correction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824): crystals, flames and spirit wings are allowed when fitting; none is a uniform. This later ruling supersedes the blanket wording in ART-GUIDE0c. The historical legend audit is a source of questions/ideas, not today's resolved sprite.
+
+![arcticfox three generated legend options A B C](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/arcticfox/legend-concepts-v1.png)
+
+**Today's legend comparison:** source-matched current image pending root/cloud response to [QUESTION6708031078](https://github.com/edsaperia/witch/pull/1898#issuecomment-6708031078). No current sprite was fabricated by imagegen; no historical sheet is relabelled today. The triptych is the completed three-concept portion of the requested comparison sheet. Current fourth panel and final beside-today layout remain incomplete.
+
+**Source-only current design note (not a visual review):** Base level3 uses a vast low plume, deep white ruff, frost/grizzle and stone beads. The default roster patch shortens/rounds ears. The old audit's generic crystals label must not be substituted for current resolved source. Read [species genome](../../art/creatures/arcticfox/genome.js) together with [roster defaults](../../art/roster/presets.js). No game or graph changes.
+
+### Area and three alternatives
+
+[Snowfield area text](../../art/areas/snowfield/recipe.js): Deep snow with grass and needles, drifts and frozen stones, snowy tussocks, snow-laden junipers/firs and dwarf birch; old stones half buried in a drift. These ingredients inform the design but do not add scenery to the reference backdrop; a historical set-piece mention is story inspiration, not a claim it still spawns by default.
+
+- A Shelter of winters: a vast single crescent brush layered like wind-carved snow, blue light sheltered inside.
+- B Ice-listener: worn short ears carrying small frost crystals and a cloudy old eye; allowed by the correction but less distinctive than the shelter silhouette.
+- C Keeper of buried stones: shaggy elder with a stone throat bead and glowing footprints; clear but relies more on an offering.
+
+### Provisional pick: A — Shelter of winters
+
+**Signature element: One drift-layered shelter brush.** A exaggerates the Arctic fox's insulating brush into shelter rather than borrowing the red fox's extra tails. Wind-layered fur carries the snowfield story, scars and grey muzzle carry age, and the protected inner light suggests ancient winter power. It is visibly a compact white fox rather than a polar-bear-shaped animal with a crown.
+
+The owner recommendation is for Ed to judge. It is not an activation decision, a production candidate or proof that this beats the shipped legend at native size.
+
+Chosen legend checklist:
+
+1. Compact fox body, short broad muzzle and very small rounded ears remain visible.
+2. One dense tail sweeps into a protective crescent; no extra tail roots.
+3. Layered fur suggests wind-shaped drift strata without adding trees or stone scenery.
+4. Old grey muzzle, worn ear and healed facial scar read as a survivor of winters.
+5. Cold light stays inside the shelter brush, not a common outer halo.
+6. Paws and the body-tail connection remain legible beneath the fur.
+
+Body-plan target: Retain compact adult body and short limbs; concept brush length about0.9–1.2L with a very large controllable coat envelope. Do not thicken the underlying torso to make the tail work. This is magical exaggeration, not winter-fox zoology.
+
+Missing graph features / existing capabilities to reuse: Independent tail curl/volume envelope and layered coat flow, with a local inner emissive zone; head-local worn-ear/scar masks. Tapered tail chains and torso station profiles exist; do not replace them with a one-off species builder.
+
+**Output review:** Initial generation added scenery and clipped the tail; a built-in edit removed scenery and reframed whole animals. Selected final version is plain-background and whole, but not calibrated to exact game camera or pixel scale. All three are concept illustrations at requested approximate camera, not the game's material/pixel render; no exact camera-angle or native-size acceptance is claimed. Anatomy/Commons429 limits above remain unchanged.
+
+### Legend generation provenance
+
+Built-in `image_gen.imagegen`, 7 November2026; three options in one new triptych. No CLI/API fallback, no current game sprite or Commons photo supplied to generation. One subsequent built-in edit removed scenery and reframed the generated triptych; only that corrected version is published. Exact prompts below; file SHA256/source name/size in [legend manifest](l1-legend-evidence.json). Model identifier/seed not exposed.
+
+<details><summary>Exact legend prompts</summary>
+
+Use case: stylized-concept. Three DISTINCT ancient legendary ARCTIC FOX concepts A/B/C, one whole creature per column in one landscape triptych on plain pale warm grey background. Labels A B C only. Camera elevated looking DOWN30degrees, near orthographic, body broadside muzzle turned35degrees toward viewer, entire feet ears tails visible with margins. Real compact arctic fox anatomy, tiny rounded ears, short broad muzzle, short furred legs, dense white fur, not polar bear or white red fox. Area: a vast quiet snowfield, deep snow and frozen old stones, lone snow-laden firs, dwarf birch. Age from weathered coat, scarred muzzle, worn ear, slow powerful stillness; each concept remains fox. A Shelter of winters: one ENORMOUS broad dense white brush bends into a low protective crescent around the standing fox, wind-carved layered fur like drift strata, old grey muzzle, soft internal blue light at tail roots, no jewelry, no crown, no extra limbs/tails. B Ice-listener: low sturdy old fox with short ears rimmed by a few translucent frost crystals shaped by wind, narrow scars and one cloudy eye, ordinary full brush, weathering and cold patience, crystals confined to ears not a crown or back forest. C Keeper of buried stones: compact fox with long shaggy neck ruff and a single worn stone throat bead, silver-grey pawprints glow softly under FOUR planted feet, tail long straight and low, no crystals. Rich tangible fur and restraint, clear mass silhouettes. No full landscape, no trees on back, no generic wings, no armor suit, no neon fog. Concept art NOT screenshot and NOT zoological evidence.
+
+Edit prompt used on the initial generated sheet (not a real photograph):
+
+Edit this arctic-fox three-concept sheet. Preserve the three distinct A B C creatures and their identifying concepts, realistic fur, grey muzzle/scars, giant single crescent brush in A, ear frost in B, stone throat bead and small glowing footprints in C. CHANGE ONLY presentation: remove ALL scenery, snow ground texture, trees, plants, rocks, landscape, horizon and surrounding props. Put each whole animal on a flat uniform light warm-grey studio background with only a subtle contact shadow. Three clean separated columns labeled A B C. Pull framing BACK so EVERY whole creature including A's ENTIRE giant tail and ALL paws is inside its own column with at least8% margin. Keep elevated game-camera-looking-down view. No tail clipping, no foliage/rocks, no newly added body features. No environment is allowed.
+
+</details>
+
 ## Remaining / wake condition
 
 Complete adult and mobile-young Commons visual checks, resolve the output cautions, then have the coordinator/1866 owner assess the target. Wake when the comparison photos are accessible without HTTP429, or root supplies cloud photo-review evidence. No graph implementation or switch-on until that review; old sprite critique omitted under the later skeleton-first ruling.

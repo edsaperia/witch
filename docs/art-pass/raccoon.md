@@ -62,6 +62,55 @@ Use case: photorealistic-natural. Asset: raccoon (Procyon lotor) skeleton anatom
 
 </details>
 
+## Legend concepts — 7 November addition
+
+**Three actual generated options; provisional owner pick A, not Ed's approval.** [Legend lane table and review contact sheet](l1-legends.md). [Original instruction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and [later fit-and-variety correction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824): crystals, flames and spirit wings are allowed when fitting; none is a uniform. This later ruling supersedes the blanket wording in ART-GUIDE0c. The historical legend audit is a source of questions/ideas, not today's resolved sprite.
+
+![raccoon three generated legend options A B C](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/raccoon/legend-concepts-v1.png)
+
+**Today's legend comparison:** source-matched current image pending root/cloud response to [QUESTION6708031078](https://github.com/edsaperia/witch/pull/1898#issuecomment-6708031078). No current sprite was fabricated by imagegen; no historical sheet is relabelled today. The triptych is the completed three-concept portion of the requested comparison sheet. Current fourth panel and final beside-today layout remain incomplete.
+
+**Source-only current design note (not a visual review):** Base source's raccoon elder is handled by the elder hook rather than a new list of generic legend features; roster overrides neutral-grey coat, mask and ordinary tail rings. Historical source comments about a future elder are not proof of a current render. Read [species genome](../../art/creatures/raccoon/genome.js) together with [roster defaults](../../art/roster/presets.js). No game or graph changes.
+
+### Area and three alternatives
+
+[Mossy creek area text](../../art/areas/mossy-creek/recipe.js): Deep moss and wet stones, a creek, sword ferns and tall mossy cedars/spruces; a mossy logjam where water pools. These ingredients inform the design but do not add scenery to the reference backdrop; a historical set-piece mention is story inspiration, not a claim it still spawns by default.
+
+- A First hand: dexterous forehands leave luminous handprints under an old masked raccoon.
+- B Washer of the moon: a naturally seated raccoon examines a creek pebble as water curls between its fingers.
+- C Lost-and-found elder: worn spoon/key/cap offerings and a curled ringed tail; recognisable, but the trinket trope may be more valuable for the raven lane.
+
+### Provisional pick: A — The first hand
+
+**Signature element: Luminous handprints.** A makes clever touch and tracks the mystery. The animal leaves a memory in the wet creek ground, while its worn mask, ears and scarred hands show age. It remains a low-headed grey raccoon; neither a humanoid thief nor an otter using a belly stone. The magic lives in the hands rather than a shared neck ornament.
+
+The owner recommendation is for Ed to judge. It is not an activation decision, a production candidate or proof that this beats the shipped legend at native size.
+
+Chosen legend checklist:
+
+1. Grey rump-high body, low pointed muzzle and transverse black mask.
+2. Small round ears and a moderate ringed tail; no red-panda colours or huge plume.
+3. Five foredigits with recognisable raccoon hands, distinct from the elongated hind sole.
+4. Prints are placed by forehand contact, not unrelated floating symbols.
+5. Weathered mask edges, ear wear and healed scars carry age.
+6. The main quadruped stays visible without equipment obscuring its hands.
+
+Body-plan target: Keep the stocky adult torso and modest tail. Enlarge forehand readability rather than the entire forearm; prints should stay near one hand-span and never require giant cartoon paws. Concept contact light is separate from anatomical scale.
+
+Missing graph features / existing capabilities to reuse: Five-digit hand family with fore/hind foot distinction and contact-linked decal/effect sockets; scar/worn-ear masks. Existing plantigrade family and tail-ring painter are reusable. Contact effect is visual design only, no gameplay trail feature approved.
+
+**Output review:** Generated luminous prints appear to have uncertain digit counts and hands need real reference checking; five digits is the textual target, not an accepted count in the pixels. B is seated and C crouches despite the differing prompt poses; do not infer exact gait from any. All three are concept illustrations at requested approximate camera, not the game's material/pixel render; no exact camera-angle or native-size acceptance is claimed. Anatomy/Commons429 limits above remain unchanged.
+
+### Legend generation provenance
+
+Built-in `image_gen.imagegen`, 7 November2026; three options in one new triptych. No CLI/API fallback, no current game sprite or Commons photo supplied to generation. Published triptych is the original unedited output. Exact prompts below; file SHA256/source name/size in [legend manifest](l1-legend-evidence.json). Model identifier/seed not exposed.
+
+<details><summary>Exact legend prompt</summary>
+
+Use case: stylized-concept. THREE DISTINCT ancient legendary RACCOONS in one clean landscape three-column triptych A B C, one whole raccoon per panel, neutral plain warm-grey studio background only, subtle contact shadow, no forest scenery or large pool. Camera elevated looking DOWN30degrees, near orthographic, body broadside turned35degrees towards viewer; whole ears feet tail and small magic entirely within frame with margins. Raccoon anatomy: stocky grey body high rump low pointed head, round ears, transverse black eye mask, dark slender finger-like hands, modest bushy ringed tail. Not red panda or bear. Old weathered grey muzzle, chipped ear and healed scars, wise unhurried presence. Area: mossy creek, wet stones, sword ferns, towering mossy cedars and spruces, logjam and pooled water. A The first hand: strong dark forehands with FIVE long fingers, two soft luminous handprints on the plain ground immediately beneath it, mask pale rim faintly lit, tail ordinary; no jewelry, no water ribbon. Power is memory left by clever hands. B Washer of the moon: raccoon SITTING naturally on haunches, holding one pale creek pebble between both dexterous hands, thin clear water curls only BETWEEN the fingers, old scarred knuckles, pale mask, no floating pool or sea-otter belly pose. C The lost-and-found elder: old four-footed raccoon with long ringed tail curled beside it and three very worn human trinkets tied sparsely on a frayed cord at throat: spoon, key and bottle cap, battered and tiny not treasure armor; plain hands, no handprint glow, no water. Each concept unmistakable raccoon, distinct magic/story signature, no common crown, no crystal back forest, no spirit wings, no floating eye rings, no humanoid stance. Small A B C labels only; not game screenshots.
+
+</details>
+
 ## Remaining / wake condition
 
 Complete adult and mobile-young Commons visual checks, resolve the output cautions, then have the coordinator/1866 owner assess the target. Wake when the comparison photos are accessible without HTTP429, or root supplies cloud photo-review evidence. No graph implementation or switch-on until that review; old sprite critique omitted under the later skeleton-first ruling.

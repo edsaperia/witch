@@ -33,6 +33,23 @@ Eight generated eight-cell sheets: adult/mobile-young × standing/walking × tow
 
 This audit describes **published base524b0acaa**, not the unmerged1866 candidate. Route gaps to that owner through this PR; no duplicate candidate or worktree edits.
 
+## Legend addition: provisional picks
+
+Three actual generated concepts per species (24 total) are in the [legend review contact sheet](l1-legends.md), with the chosen checklist/body-plan/graph gaps on each species page. These picks are recommendations for Ed. Source-matched today's-legend panels are pending root/cloud response; no historical image is called today. Fit-and-variety correction6707992824 supersedes the older generic-motif ban.
+
+| Species | Provisional pick | Signature element |
+|---|---|---|
+| fox | B: Hollow-oak listener | Wood-grain whorl within one immense brush |
+| arcticfox | A: Shelter of winters | One drift-layered shelter brush |
+| fennec | B: The last hearth | Ember light held inside ear sails |
+| wolf | A: Voice of winters | A howl made visible |
+| raccoon | A: The first hand | Luminous handprints |
+| redpanda | A: Keeper of the steps | Mist terraces released by tail rings |
+| badger | A: Keeper of the old sett | Epoch-worn spade foreclaws |
+| otter | C: The water reader | Light droplets on sensing whiskers |
+
+Tail-based picks have distinct animal-specific reasons: fox memory in fur, Arctic fox shelter, red panda balance. Other-lane committed picks were checked at14:20UTC; none matching the pick/signature markers was available then. Global spread still needs coordinator review; see the contact sheet for exact limits.
+
 ## Remaining / wake condition
 
 Complete six blocked adult and eight juvenile visual comparisons when Commons is accessible without429 or root supplies cloud evidence; resolve per-sheet cautions and settle camera fit with1866 owner. Then coordinator assesses READY. No local browser/heavy run requested or used. No idle monitor.

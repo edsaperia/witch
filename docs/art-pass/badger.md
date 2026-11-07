@@ -62,6 +62,55 @@ Use case: photorealistic-natural. Asset: European badger (Meles meles) skeleton 
 
 </details>
 
+## Legend concepts — 7 November addition
+
+**Three actual generated options; provisional owner pick A, not Ed's approval.** [Legend lane table and review contact sheet](l1-legends.md). [Original instruction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and [later fit-and-variety correction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824): crystals, flames and spirit wings are allowed when fitting; none is a uniform. This later ruling supersedes the blanket wording in ART-GUIDE0c. The historical legend audit is a source of questions/ideas, not today's resolved sprite.
+
+![badger three generated legend options A B C](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/badger/legend-concepts-v1.png)
+
+**Today's legend comparison:** source-matched current image pending root/cloud response to [QUESTION6708031078](https://github.com/edsaperia/witch/pull/1898#issuecomment-6708031078). No current sprite was fabricated by imagegen; no historical sheet is relabelled today. The triptych is the completed three-concept portion of the requested comparison sheet. Current fourth panel and final beside-today layout remain incomplete.
+
+**Source-only current design note (not a visual review):** Base level3 includes a broad grizzled/scarred elder with stripes extending down the back, long claws and a bronze torc/elder treatment. Historical audit's standing-stones kit is older and must not be labelled today's source. Read [species genome](../../art/creatures/badger/genome.js) together with [roster defaults](../../art/roster/presets.js). No game or graph changes.
+
+### Area and three alternatives
+
+[Wispy forest area text](../../art/areas.js): Dry leaves, tall thin wispy trees and thick trees with several trunks. These ingredients inform the design but do not add scenery to the reference backdrop; a historical set-piece mention is story inspiration, not a claim it still spawns by default.
+
+- A Keeper of the old sett: massive digging forelimbs and worn ivory spade claws, with faint mineral light only in old claw scratches.
+- B White road: the facial blaze continues as long softly glowing fur bands along the back.
+- C Rootwarden: dark compacted-earth shoulder plates and a worn bronze leg band; strong bulk, but risks generic armour.
+
+### Provisional pick: A — Keeper of the old sett
+
+**Signature element: Epoch-worn spade foreclaws.** A makes the badger's own digging power the sacred thing. Its claws look worked, not pristine weapons; a scarred low wedge head and heavy shoulders imply age spent beneath the old roots. It needs no stone monument on its back, and the restrained mineral gleam is subordinate to anatomy.
+
+The owner recommendation is for Ed to judge. It is not an activation decision, a production candidate or proof that this beats the shipped legend at native size.
+
+Chosen legend checklist:
+
+1. Very low wide elongated badger body on short heavy black limbs.
+2. Long wedge muzzle and longitudinal black face stripes remain distinct from a raccoon mask.
+3. Forelimbs carry the mass and digging claws grow from broad forefeet.
+4. Claws show chips and polishing from use, with only restrained light in old scratches.
+5. Grey muzzle, worn ear and healed shoulder scar give age.
+6. No carried boulders/trees, tall bear posture or human armoured silhouette.
+
+Body-plan target: Maintain the low adult target, enlarge shoulder breadth and forefoot/claw silhouette rather than raise the animal. Artist target foreclaw reach roughly0.12–0.18L, exaggerated beyond natural anatomy; retain room for planted feet and a short stub tail.
+
+Missing graph features / existing capabilities to reuse: Digit/claw-bearing forefoot with independent curved spade-claw taper, wear/chip masks and local material accents; shoulder mass/profile control. Legacy claws and worn/scar features exist, so the work is fitting them into graph/pose semantics, not declaring those ideas absent.
+
+**Output review:** A still has a high shoulder dome; keep the textual low/long badger checklist ahead of the generated fur silhouette. The claws are candidate design, not accepted foot anatomy or proven walk clearance. All three are concept illustrations at requested approximate camera, not the game's material/pixel render; no exact camera-angle or native-size acceptance is claimed. Anatomy/Commons429 limits above remain unchanged.
+
+### Legend generation provenance
+
+Built-in `image_gen.imagegen`, 7 November2026; three options in one new triptych. No CLI/API fallback, no current game sprite or Commons photo supplied to generation. Published triptych is the original unedited output. Exact prompts below; file SHA256/source name/size in [legend manifest](l1-legend-evidence.json). Model identifier/seed not exposed.
+
+<details><summary>Exact legend prompt</summary>
+
+Use case: stylized-concept. THREE DISTINCT ancient legendary EUROPEAN BADGERS (Meles meles) in one A B C landscape three-column triptych. One WHOLE quadruped per column, all claws ears stub tails in frame, generous margins, flat plain neutral grey studio background ONLY, no surrounding landscape. Elevated looking-DOWN30degree near-orthographic camera, broadside muzzle turned35degrees towards viewer. Very LOW WIDE long badger, massive shoulders on SHORT black digging legs, long wedge head held low, two longitudinal black head stripes separated by white blaze, tiny rounded ears, short stub tail; NOT a bear or raccoon. Great age: scars, old chipped claws, worn ear, greying whiskers, weathered coat; still dignified wise and powerfully rooted. Area inspiration: dry fallen leaves, tall thin wispy trees and ancient thick multi-trunk trees. A Keeper of the old sett: enormously developed digging FOREARMS and long worn ivory spade-like foreclaws, dark forefeet broad, tiny amber mineral gleam ONLY within old scratches on claws; one healed shoulder scar and plain grey body, no jewelry or things on back. Ground remains neutral with small contact shadow, no flying dirt. B The white road: ancient broad low badger whose two head stripes and white blaze flow naturally into two wide softly luminous pale longitudinal fur bands along spine, low rippling light within fur like remembered paths under roots, ordinary heavy claws, no jewelry or stones. C Rootwarden: low broad badger with irregular interlocking dark earthen shoulder armor plates like compacted ancient soil, NOT rocks stacked on back, one cracked bronze foreleg band offering, long grey whiskers, head scars, no glowing stripes or claw light. Species anatomy and digging nature first. No generic crown, crystals, wings, trees on back, full human armor suit or humanoid pose. Small A B C labels only; concept art not screenshot.
+
+</details>
+
 ## Remaining / wake condition
 
 Complete adult and mobile-young Commons visual checks, resolve the output cautions, then have the coordinator/1866 owner assess the target. Wake when the comparison photos are accessible without HTTP429, or root supplies cloud photo-review evidence. No graph implementation or switch-on until that review; old sprite critique omitted under the later skeleton-first ruling.

@@ -61,6 +61,55 @@ Use case: photorealistic-natural. Asset: smooth-coated otter (Lutrogale perspici
 
 </details>
 
+## Legend concepts — 7 November addition
+
+**Three actual generated options; provisional owner pick C, not Ed's approval.** [Legend lane table and review contact sheet](l1-legends.md). [Original instruction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and [later fit-and-variety correction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824): crystals, flames and spirit wings are allowed when fitting; none is a uniform. This later ruling supersedes the blanket wording in ART-GUIDE0c. The historical legend audit is a source of questions/ideas, not today's resolved sprite.
+
+![otter three generated legend options A B C](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/otter/legend-concepts-v1.png)
+
+**Today's legend comparison:** source-matched current image pending root/cloud response to [QUESTION6708031078](https://github.com/edsaperia/witch/pull/1898#issuecomment-6708031078). No current sprite was fabricated by imagegen; no historical sheet is relabelled today. The triptych is the completed three-concept portion of the requested comparison sheet. Current fourth panel and final beside-today layout remain incomplete.
+
+**Source-only current design note (not a visual review):** Base legend source includes the old ribbons list and a pearl body patch, with the smooth-coated low body and current chocolate/pale-throat palette. Compare the actual resolved default legend before saying precisely which ribbons appear in today's render. Read [species genome](../../art/creatures/otter/genome.js) together with [roster defaults](../../art/roster/presets.js). No game or graph changes.
+
+### Area and three alternatives
+
+[Mangrove channel area text](../../art/areas.js): Soft grey mud and a brackish channel, reeds/mangrove seedlings, drowned willows/young mangroves/alders, a fallen-log bridge. These ingredients inform the design but do not add scenery to the reference backdrop; a historical set-piece mention is story inspiration, not a claim it still spawns by default.
+
+- A Memory of tides: an extended muscular tail carries a close water wake; aquatic and clear, but overlaps other water-ribbon treatments.
+- B Crossing keeper: worn shell offerings and shoulder scars; an elder, but the necklace supplies most of its legend identity.
+- C Water reader: a low smooth-coated otter senses distant currents through broad silver whisker fans with a few suspended droplets of light.
+
+### Provisional pick: C — The water reader
+
+**Signature element: Light droplets on sensing whiskers.** C puts magic in tactile whiskers and current-sensing, an otter trait, rather than importing the sea-otter belly-stone cliché from the historical audit. Its low body and massive tapering tail retain the mangrove swimmer; scarred muzzle and worn silver whiskers suggest old knowledge of the channels. Droplets are carried on the sensing hairs, not a generic ring of floating stars.
+
+The owner recommendation is for Ed to judge. It is not an activation decision, a production candidate or proof that this beats the shipped legend at native size.
+
+Chosen legend checklist:
+
+1. Long low smooth-coated brown body, broad flattened muzzle and tiny round ears.
+2. Short webbed feet and a broad muscular tapering tail remain visible.
+3. Whiskers project from real muzzle pads, not a separate moustache ornament.
+4. Only a few light droplets sit on whisker tips; no whole-head halo.
+5. Grey muzzle, old narrow scars and worn ear show age.
+6. No back-floating sea-otter pose, belly stone, furry fox tail or beaver paddle.
+
+Body-plan target: Retain long low adult ratios and muscular flattened tail. Artist target whisker fan span around0.45–0.65L, substantially exaggerated; simplify to several legible arcs for game-size testing rather than every generated hair.
+
+Missing graph features / existing capabilities to reuse: Muzzle-local whisker attachment with a few stable curved paths and tip effect anchors, noncircular muscular tail section, webbed feet and scar/wear masks. Existing whiskers are legacy detail, but socket/pose/effect semantics must be shared; no implementation here.
+
+**Output review:** Generated C's tail nearly reaches the sheet edge and its whiskers are too fine for assumed native-scale readability. Body/tail flattening and actual toe count remain unverified; the concept is not a new anatomical reference. All three are concept illustrations at requested approximate camera, not the game's material/pixel render; no exact camera-angle or native-size acceptance is claimed. Anatomy/Commons429 limits above remain unchanged.
+
+### Legend generation provenance
+
+Built-in `image_gen.imagegen`, 7 November2026; three options in one new triptych. No CLI/API fallback, no current game sprite or Commons photo supplied to generation. Published triptych is the original unedited output. Exact prompts below; file SHA256/source name/size in [legend manifest](l1-legend-evidence.json). Model identifier/seed not exposed.
+
+<details><summary>Exact legend prompt</summary>
+
+Use case: stylized-concept. THREE DISTINCT ancient legendary SMOOTH-COATED OTTERS (Lutrogale perspicillata), one whole otter per A B C column, landscape triptych. PLAIN uniform light warm-grey studio backdrop ONLY, no water landscape, no trees, no horizon. Soft contact shadows. Elevated camera looking clearly DOWN30degrees, near orthographic body broadside35degrees towards viewer; whole broad muzzle, webbed feet and entire tapering tail inside frame, generous margins. Long LOW sleek brown quadruped, broad flattened head, tiny rounded ears, pale throat, strong whisker pads, very short limbs, thick muscular flattened tail, not a sea otter, not a seal. Never back-floating or using a belly stone. Ancient silver muzzle/whiskers, old narrow scars, worn ear, wise still powerful presence. Area inspiration: mangrove channel, brackish water, soft grey mud, reeds, drowned willows and mangroves, fallen-log bridge. A Memory of tides: exceptionally long powerful low sweeping tail with a SINGLE clear water wake hugging only its lower edge, a few faint ripple lines along tail like remembered channels, scarred flanks, no jewelry or great magic halo. B The crossing keeper: broad old otter with a few tiny worn shell offerings tied to one rough cord low at throat, pale worn shoulder scars like old river crossings, stronger forelimbs and low smooth tail, no water ribbon and no whisker glow. C The water reader: low elongated old otter with unusually broad silver tactile whisker fans sweeping FORWARD from its muzzle, several small droplets of light caught at their tips suggesting it feels distant currents, no eye rings, no floating stars around head, no jewelry, no water ribbon; substantial low tapering tail and tiny ears retained. These three powers come from swimming/current sensing, not generic adornments. No wings/crystal crown/armour suit/trees carried on back, no standing humanoid pose, no sea-otter behavior. Small A B C labels only. Tangible detailed concept art, not game screenshot.
+
+</details>
+
 ## Remaining / wake condition
 
 Complete adult and mobile-young Commons visual checks, resolve the output cautions, then have the coordinator/1866 owner assess the target. Wake when the comparison photos are accessible without HTTP429, or root supplies cloud photo-review evidence. No graph implementation or switch-on until that review; old sprite critique omitted under the later skeleton-first ruling.

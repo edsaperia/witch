@@ -61,6 +61,55 @@ Use case: photorealistic-natural. Asset: fennec fox (Vulpes zerda) skeleton anat
 
 </details>
 
+## Legend concepts — 7 November addition
+
+**Three actual generated options; provisional owner pick B, not Ed's approval.** [Legend lane table and review contact sheet](l1-legends.md). [Original instruction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and [later fit-and-variety correction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824): crystals, flames and spirit wings are allowed when fitting; none is a uniform. This later ruling supersedes the blanket wording in ART-GUIDE0c. The historical legend audit is a source of questions/ideas, not today's resolved sprite.
+
+![fennec three generated legend options A B C](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/fennec/legend-concepts-v1.png)
+
+**Today's legend comparison:** source-matched current image pending root/cloud response to [QUESTION6708031078](https://github.com/edsaperia/witch/pull/1898#issuecomment-6708031078). No current sprite was fabricated by imagegen; no historical sheet is relabelled today. The triptych is the completed three-concept portion of the requested comparison sheet. Current fourth panel and final beside-today layout remain incomplete.
+
+**Source-only current design note (not a visual review):** Base level3 has enlarged sail ears, pale mask/eye glow, beads, small ruff and wisps along a mane; current roster overrides ear dimensions and dark tail-tip material. Exact current image is pending. Read [species genome](../../art/creatures/fennec/genome.js) together with [roster defaults](../../art/roster/presets.js). No game or graph changes.
+
+### Area and three alternatives
+
+[Erg area text](../../art/areas/erg/recipe.js): Rippled dune sand at an oasis edge, dry grass and saltbush, date palms/olives/thorn trees/junipers; wind-worn stones around an old hearth. These ingredients inform the design but do not add scenery to the reference backdrop; a historical set-piece mention is story inspiration, not a claim it still spawns by default.
+
+- A Far listener: luminous acoustic veins and a sound ripple between huge ear cups; compelling hearing theme, but overlaps the wolf's sound signature.
+- B Last hearth: warm ember light within worn ear sails, darkened tips and a scarred pale muzzle.
+- C Dune memory: sand-strata ear markings, turquoise offering and a long sand-trailing tail; restrained but the offering does more storytelling than the animal.
+
+### Provisional pick: B — The last hearth
+
+**Signature element: Ember light held inside ear sails.** B puts the magic in the fennec's defining ears and ties it to the erg's old hearth. Its soot-worn rims and silver muzzle imply a keeper that outlasted many travellers. This uses flame because it fits this story; it is not the generic back crest criticised in the old audit. Ear-held warmth is deliberate fantasy, not a claim about real thermoregulation.
+
+The owner recommendation is for Ed to judge. It is not an activation decision, a production candidate or proof that this beats the shipped legend at native size.
+
+Chosen legend checklist:
+
+1. Tiny sand-fox body and fine muzzle remain beneath the enormous ears.
+2. Broad cupped ears attach convincingly to the skull; no detached wing shape.
+3. Ember light is contained by the inner pinna/rim, with restrained thin wisps.
+4. Dark weathered ear edges and muzzle scars show age without a uniform crown.
+5. Black-tipped brush and furred small paws preserve fennec family cues.
+6. Keep the face clear of the effect and avoid a wall of glow at native size.
+
+Body-plan target: Keep the light adult torso; exaggerate ear height to roughly one head-and-muzzle length or more as an artistic target, while controlling broad base and cup depth separately. No numeric zoological ear ratio is asserted. Low ordinary tail is the secondary mass.
+
+Missing graph features / existing capabilities to reuse: Head-parented broad cupped pinna with independent rim/inner material/emissive mask and bounded local wisp attachment; worn-edge masks. Existing quadruped ear width/height/depth and socket angles are useful, not absent. Flame is local ear content, not a new crest applied to all species.
+
+**Output review:** Generator added unrequested typography and very large ear surfaces, and the camera is shallower than requested. B is a usable concept direction, not a calibrated pose or accepted ear proportions. All three are concept illustrations at requested approximate camera, not the game's material/pixel render; no exact camera-angle or native-size acceptance is claimed. Anatomy/Commons429 limits above remain unchanged.
+
+### Legend generation provenance
+
+Built-in `image_gen.imagegen`, 7 November2026; three options in one new triptych. No CLI/API fallback, no current game sprite or Commons photo supplied to generation. Published triptych is the original unedited output. Exact prompts below; file SHA256/source name/size in [legend manifest](l1-legend-evidence.json). Model identifier/seed not exposed.
+
+<details><summary>Exact legend prompt</summary>
+
+Use case: stylized-concept. Make one three-column legend concept sheet, A B C, three DISTINCT ancient FENNEC FOXES, one whole creature per column, ALL huge ears and tail tips within frame, pale flat neutral studio background ONLY, subtle contact shadows, no desert scenery or plants. Elevated camera looking DOWN30degrees, near orthographic, body broadside muzzle turned35degrees toward viewer. Natural tiny sand fox body, enormous broad cupped triangular ears, very fine muzzle, small furred paws, cream sandy coat and black-tipped brush; do not turn it into a rabbit or red fox. Area inspiration ONLY: rippled dunes, oasis, date palms, wind-worn stones around an ancient hearth. Show age with greying fur, fine muzzle scars, worn ear edges, wise calm heavy presence. A The far listener: ear cups enormous and ribbed with fine pale star-like acoustic veins, a translucent sound ripple held between the ears; old plain sand-coloured body, no jewellery and no flames. B The last hearth: ears as vast warm amber-lit cupped sails, ember light glowing INSIDE their thin worn rims and one slender flame-like wisp in each ear cup as if guarding the oasis's last warmth; soot-darkened ear tips, scarred white muzzle, ordinary black-tipped tail, no crown and no flame crest on back. C The dune memory: wide weathered ears marked with natural sand-strata fur lines, only one turquoise shard pendant on a worn cord at throat, an extraordinarily long low tail trailing a few grains of luminous sand, no flames or sound rings. Distinct silhouettes and magical signatures, old and powerful rather than cute; jewel only C. No generic crystal forest, wings, armored humanoid, floating eyeballs, scenery, moon backdrop or oversized props. Render tangible detailed concept art, NOT game screenshot.
+
+</details>
+
 ## Remaining / wake condition
 
 Complete adult and mobile-young Commons visual checks, resolve the output cautions, then have the coordinator/1866 owner assess the target. Wake when the comparison photos are accessible without HTTP429, or root supplies cloud photo-review evidence. No graph implementation or switch-on until that review; old sprite critique omitted under the later skeleton-first ruling.

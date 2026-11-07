@@ -61,6 +61,55 @@ Use case: photorealistic-natural. Asset: red panda (Ailurus fulgens) skeleton an
 
 </details>
 
+## Legend concepts — 7 November addition
+
+**Three actual generated options; provisional owner pick A, not Ed's approval.** [Legend lane table and review contact sheet](l1-legends.md). [Original instruction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and [later fit-and-variety correction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824): crystals, flames and spirit wings are allowed when fitting; none is a uniform. This later ruling supersedes the blanket wording in ART-GUIDE0c. The historical legend audit is a source of questions/ideas, not today's resolved sprite.
+
+![redpanda three generated legend options A B C](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/redpanda/legend-concepts-v1.png)
+
+**Today's legend comparison:** source-matched current image pending root/cloud response to [QUESTION6708031078](https://github.com/edsaperia/witch/pull/1898#issuecomment-6708031078). No current sprite was fabricated by imagegen; no historical sheet is relabelled today. The triptych is the completed three-concept portion of the requested comparison sheet. Current fourth panel and final beside-today layout remain incomplete.
+
+**Source-only current design note (not a visual review):** Base level3 is a large mountain sage with pale ruff/beard, long claws, grizzle, wreath and leg beads; the target deliberately gives more narrative weight to the tail rather than adding more offerings. Read [species genome](../../art/creatures/redpanda/genome.js) together with [roster defaults](../../art/roster/presets.js). No game or graph changes.
+
+### Area and three alternatives
+
+[Misty terraces area text](../../art/areas/misty-terraces/recipe.js): Moss on stepped mountain ledges, ferns and rocks, wild cherry/fir/rowan/birch, a flat-stone cairn; mist in hollows. These ingredients inform the design but do not add scenery to the reference backdrop; a historical set-piece mention is story inspiration, not a claim it still spawns by default.
+
+- A Keeper of the steps: a huge ringed counterbalance tail with small horizontal mist shelves at its rings.
+- B Cliff elder: worn slate shoulder plates and climbing claws; strong mountain weight, but plates overshadow the balancing animal.
+- C Memory on the bough: silver cheek beard, high curled tail and sparse rowan offerings; gentler, but repeats a familiar jewellery/foliage solution.
+
+### Provisional pick: A — Keeper of the steps
+
+**Signature element: Mist terraces released by tail rings.** A draws from the red panda's long balancing tail and its stepped misty habitat. The rings become remembered ledges, while the grizzled cheeks and worn ear show age. Unlike the fox's memory-whorl or Arctic fox's shelter, this tail is about balance and height. No tree is placed on its back and no generic crest supplies the fantasy.
+
+The owner recommendation is for Ed to judge. It is not an activation decision, a production candidate or proof that this beats the shipped legend at native size.
+
+Chosen legend checklist:
+
+1. Rust-red trunk, black belly/legs and short broad pale face remain unmistakable.
+2. One long thick ringed tail is the dominant counterbalance.
+3. Small horizontal mist shelves stay attached to tail rings rather than forming a generic whole-body halo.
+4. Silver cheek fur, worn ear and subtle scars show an elder, not a decorated juvenile.
+5. Feet remain short/sturdy and the back remains long; no fox stilts.
+6. Tail root must articulate believably; the body must not become a plinth for a separate tower.
+
+Body-plan target: Keep adult red-panda torso and paw proportions. Artist target tail length about1.0–1.3L before curl, exaggerated from the anatomical target; do not simply scale the entire animal. Curl and mist shelf spacing need independent controls.
+
+Missing graph features / existing capabilities to reuse: Tail pose hierarchy and stable tail-distance marking/effect coordinates for a few mist shelves, age/grizzle masks and worn-ear attachment. Tail rings already exist in tail-markings.js; reuse them. The mist needs its own effect layer, not stone blocks added as anatomy.
+
+**Output review:** A's mist makes a vertical stack and the tail is more upright than real balance posture; this is fantasy, not anatomical evidence. C's tail crowds the outer margin. Selected A needs native-scale simplification to avoid a candy-striped tower. All three are concept illustrations at requested approximate camera, not the game's material/pixel render; no exact camera-angle or native-size acceptance is claimed. Anatomy/Commons429 limits above remain unchanged.
+
+### Legend generation provenance
+
+Built-in `image_gen.imagegen`, 7 November2026; three options in one new triptych. No CLI/API fallback, no current game sprite or Commons photo supplied to generation. Published triptych is the original unedited output. Exact prompts below; file SHA256/source name/size in [legend manifest](l1-legend-evidence.json). Model identifier/seed not exposed.
+
+<details><summary>Exact legend prompt</summary>
+
+Use case: stylized-concept. Three DISTINCT ancient legendary RED PANDAS (Ailurus fulgens) in one clean A B C landscape triptych. One whole quadruped per column, plain uniform pale neutral studio background and soft contact shadow ONLY. Camera elevated looking DOWN30degrees, near orthographic broadside35degree towards view; whole ears black feet and full tails with generous margins. Animal nature first: long-backed rust-red furry body, black belly and short black legs, broad round pale masked face SHORT muzzle, pale-rimmed rounded pointed ears, very long thick ringed tail. Not raccoon or fox. Great age shown by silver cheek fur, worn ear and subtle scars; calm wise presence. Area inspiration: cool mountain misty terraces, mossy stepped ledges under fir, wild cherry, rowan and birch, old flat-stone cairn. A Keeper of the steps: tail grows into a magnificent long curled ringed counterbalance, each broad tail ring releases one small HORIZONTAL shelf of mist held close around the tail, like remembered mountain contour terraces; black sturdy paws and silver muzzle, no jewelry, no trees/rocks carried on body. B The cliff elder: low-bodied broad-shouldered red panda with one old cracked dark slate shoulder plate on each side, worn bindings and polished long climbing claws, scarred silver face; ordinary full ringed tail, no mist or jewelry. C Memory on the bough: ancient red panda with a huge silver cheek ruff/beard and a tail curving high like a balanced question mark, tiny rowan-seed offerings woven sparsely into the tail fur, nothing at neck, no armor, no mist. Keep species family unmistakable, exaggerate balancing tail/climbing nature not random magic crown. Do not show whole trees, scenery, ghost animals, crystals, wings or full armor suit. Labels A B C only, no extra text. Concept art, not screenshot.
+
+</details>
+
 ## Remaining / wake condition
 
 Complete adult and mobile-young Commons visual checks, resolve the output cautions, then have the coordinator/1866 owner assess the target. Wake when the comparison photos are accessible without HTTP429, or root supplies cloud photo-review evidence. No graph implementation or switch-on until that review; old sprite critique omitted under the later skeleton-first ruling.

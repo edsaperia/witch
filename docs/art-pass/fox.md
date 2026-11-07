@@ -61,6 +61,55 @@ Use case: photorealistic-natural. Asset: red fox (Vulpes vulpes) skeleton anatom
 
 </details>
 
+## Legend concepts — 7 November addition
+
+**Three actual generated options; provisional owner pick B, not Ed's approval.** [Legend lane table and review contact sheet](l1-legends.md). [Original instruction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and [later fit-and-variety correction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824): crystals, flames and spirit wings are allowed when fitting; none is a uniform. This later ruling supersedes the blanket wording in ART-GUIDE0c. The historical legend audit is a source of questions/ideas, not today's resolved sprite.
+
+![fox three generated legend options A B C](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/fox/legend-concepts-v1.png)
+
+**Today's legend comparison:** source-matched current image pending root/cloud response to [QUESTION6708031078](https://github.com/edsaperia/witch/pull/1898#issuecomment-6708031078). No current sprite was fabricated by imagegen; no historical sheet is relabelled today. The triptych is the completed three-concept portion of the requested comparison sheet. Current fourth panel and final beside-today layout remain incomplete.
+
+**Source-only current design note (not a visual review):** Base genome level3 is already a nine-tail shrine fox, with grizzle, ruff, worn ear, throat cord/bell and ear ornaments; compare the actual default variant when a source-matched panel arrives. The old audit's seven-tail wording is historical, not today's authority. Read [species genome](../../art/creatures/fox/genome.js) together with [roster defaults](../../art/roster/presets.js). No game or graph changes.
+
+### Area and three alternatives
+
+[Old oaks area text](../../art/areas.js): Leaf litter, acorns and fallen branches beneath ancient gnarled oaks with hollow trunks; a great hollow oak. These ingredients inform the design but do not add scenery to the reference backdrop; a historical set-piece mention is story inspiration, not a claim it still spawns by default.
+
+- A Nine-path ancestor: multiple silver-tipped tails and a shrine bell; recognisably fox, but close to the existing kitsune direction and several tails merge in the image.
+- B Hollow-oak listener: one enormous curling brush whose fur whorl echoes the hollow oak; scarred eye, worn ear and silver whiskers.
+- C Acorn pact keeper: three tails and acorn offerings; stronger ornament signal, but the necklace competes with the animal.
+
+### Provisional pick: B — Hollow-oak listener
+
+**Signature element: Wood-grain whorl within one immense brush.** B makes an elder out of the fox's own brush and woodland watchfulness. The hollow whorl suggests remembered paths and generations of shelter without placing a tree on its back. The quiet scarred face gives age and wisdom; the extraordinary single tail gives power without another jewellery uniform. It changes the existing multi-tail direction rather than treating that as perfection.
+
+The owner recommendation is for Ed to judge. It is not an activation decision, a production candidate or proof that this beats the shipped legend at native size.
+
+Chosen legend checklist:
+
+1. Keep the narrow fox muzzle, large triangular ears and slender black lower legs.
+2. One tail only, massive enough to form a low embracing sweep while the body remains readable.
+3. The whorl is fur/magical grain, not a literal wooden log or an extra eye.
+4. Silver muzzle/whiskers and one old facial scar communicate age without a generic crown.
+5. Worn ear and low attentive posture suggest a survivor, not a snarling combat upgrade.
+6. Tail mass must not hide all four feet or erase the tucked waist.
+
+Body-plan target: Keep adult torso/leg ratios as the anatomical base; propose a single brush roughly1.0–1.3L long with an exaggerated broad fur envelope, low enough to preserve the body. These are concept-design ranges, not measurements from the image. The current image's curl is denser than a final native sprite should be.
+
+Missing graph features / existing capabilities to reuse: A spatially controlled tail fur/marking field for the whorl; separate tail pose and fur-envelope control; head-local scar/worn-ear masks. Existing tail chain, region painting, grizzle and worn-ear concepts should be reused; no nine-tail socket system is needed for this pick.
+
+**Output review:** A does not establish exactly nine separable tails, and C has several merging tail roots. B is the selected single-tail design; its magical whorl must not become a literal wood insert. Sheet camera is approximate and shallower than a calibrated30° render. All three are concept illustrations at requested approximate camera, not the game's material/pixel render; no exact camera-angle or native-size acceptance is claimed. Anatomy/Commons429 limits above remain unchanged.
+
+### Legend generation provenance
+
+Built-in `image_gen.imagegen`, 7 November2026; three options in one new triptych. No CLI/API fallback, no current game sprite or Commons photo supplied to generation. Published triptych is the original unedited output. Exact prompts below; file SHA256/source name/size in [legend manifest](l1-legend-evidence.json). Model identifier/seed not exposed.
+
+<details><summary>Exact legend prompt</summary>
+
+Use case: stylized-concept. Asset: THREE DISTINCT legendary RED FOX concepts A/B/C on one high-quality landscape triptych, plain pale neutral background, one whole fox per column, no environment scene, no cropping of tail tips or ears. Small readable A/B/C labels. Game camera target: elevated looking DOWN 30 degrees, near orthographic, animal broadside with muzzle turned 35 degrees towards viewer. All four feet and body silhouette readable. Grounded realistic fox anatomy with imaginative legendary features, natural fur, solemn ancient powerful presence, NO humanoid body. The area story is ancient gnarled hollow oaks, fallen branches, acorns and leaf litter. Each fox must remain instantly a slender red fox with pointed ears, narrow muzzle and dark legs; weathered grey muzzle, old scars and worn ear give great age. A: Nine-path ancestor: NINE distinct long dense fox brushes fanned LOW behind the fox like winding old woodland paths, reddish fur fading to silver tips, immense worn neck ruff, a SINGLE old red shrine cord with tiny dull bronze bell. No flames, no trees on back. B: Hollow-oak listener: only ONE huge sweeping fox tail curled protectively beside its feet, natural dark fur grain on tail resembling ancient hollow-oak whorls, one closed scarred eye, broad silver whiskers, no jewelry and no extra tails. C: Acorn pact keeper: three gracefully curved silver-tipped fox tails, heavy greying ruff carrying a few old acorn-shaped amber offerings on a worn bronze throat chain, black feet, fox head low in wise stillness. Not a uniform across all concepts, each different silhouette and signature. Avoid generic crystal crown, wings, floating eyeballs, armor suit, neon glow fog. These are design candidates, not game screenshots or biological reference photos.
+
+</details>
+
 ## Remaining / wake condition
 
 Complete adult and mobile-young Commons visual checks, resolve the output cautions, then have the coordinator/1866 owner assess the target. Wake when the comparison photos are accessible without HTTP429, or root supplies cloud photo-review evidence. No graph implementation or switch-on until that review; old sprite critique omitted under the later skeleton-first ruling.

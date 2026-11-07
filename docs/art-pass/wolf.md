@@ -61,6 +61,55 @@ Use case: photorealistic-natural. Asset: grey wolf (Canis lupus) skeleton anatom
 
 </details>
 
+## Legend concepts — 7 November addition
+
+**Three actual generated options; provisional owner pick A, not Ed's approval.** [Legend lane table and review contact sheet](l1-legends.md). [Original instruction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707981581) and [later fit-and-variety correction](https://github.com/edsaperia/witch/issues/1476#issuecomment-6707992824): crystals, flames and spirit wings are allowed when fitting; none is a uniform. This later ruling supersedes the blanket wording in ART-GUIDE0c. The historical legend audit is a source of questions/ideas, not today's resolved sprite.
+
+![wolf three generated legend options A B C](https://raw.githubusercontent.com/edsaperia/witch/claude/ed-shots/previews/art-pass/wolf/legend-concepts-v1.png)
+
+**Today's legend comparison:** source-matched current image pending root/cloud response to [QUESTION6708031078](https://github.com/edsaperia/witch/pull/1898#issuecomment-6708031078). No current sprite was fabricated by imagegen; no historical sheet is relabelled today. The triptych is the completed three-concept portion of the requested comparison sheet. Current fourth panel and final beside-today layout remain incomplete.
+
+**Source-only current design note (not a visual review):** Base level3 already has stronger shoulders, spiky mane/ruff, grizzle/frost/scars and a howl feature; the old legacy legend list mentions wings but levels[3] overrides that list. Compare resolved default source, not the stale list. Read [species genome](../../art/creatures/wolf/genome.js) together with [roster defaults](../../art/roster/presets.js). No game or graph changes.
+
+### Area and three alternatives
+
+[Snowy taiga area text](../../art/areas.js): Pine needles under light snow, juniper scrub, firs/pines/larches/rowans/aspens at the boreal edge. These ingredients inform the design but do not add scenery to the reference backdrop; a historical set-piece mention is story inspiration, not a claim it still spawns by default.
+
+- A Voice of winters: an ancient planted wolf with pale sound rings emerging from its howl and a frosted muzzle.
+- B Memory of the pack: ghost-wolf afterimages flank the elder; strong pack story but more scene/effect complexity.
+- C Iron trail keeper: a battered shoulder guard and worn notches; readable, but equipment becomes the main signature.
+
+### Provisional pick: A — Voice of winters
+
+**Signature element: A howl made visible.** A comes from the wolf's voice and its connection to a pack across the cold taiga. The battered muzzle and grey ruff suggest epochs; the visible howl gives power without turning the wolf into a winged generic beast. It follows the old audit's useful animal-specific howl idea while treating Ed's later motif correction as the authority.
+
+The owner recommendation is for Ed to judge. It is not an activation decision, a production candidate or proof that this beats the shipped legend at native size.
+
+Chosen legend checklist:
+
+1. Long-legged digitigrade wolf, deep chest, heavy muzzle and moderate ears remain the foundation.
+2. Four paws planted; the howl lifts the muzzle rather than standing the wolf upright.
+3. Low brush tail and lean abdomen prevent husky/bear drift.
+4. Sound originates at the jaws and recedes in thin waves; no ring of eyes or generic head halo.
+5. Grey muzzle, ear wear and healed scars show age without excess accessories.
+6. Ruff supports the shoulder mass without hiding the wolf neck entirely.
+
+Body-plan target: Use the adult deep-chested, long-legged wolf blockout. Enlarge shoulder/neck fur, not the underlying head to a bear shape; a controlled neck/head lift supplies the howl pose. Rings are separate effect geometry, not body mass.
+
+Missing graph features / existing capabilities to reuse: Head/neck pose hierarchy with jaw/muzzle effect attachment and independently fading sound-wave instances; worn-ear/scar material masks. Existing gait/torso and grizzle features should be reused. Particle/sound rings are a concept request, not an implemented gameplay or audio mechanic.
+
+**Output review:** A's waves approach the frame boundary and their count is not a hard target. Camera and fur scale remain approximate. B's ghost anatomy is an effect concept, not extra physical limbs on the main wolf. All three are concept illustrations at requested approximate camera, not the game's material/pixel render; no exact camera-angle or native-size acceptance is claimed. Anatomy/Commons429 limits above remain unchanged.
+
+### Legend generation provenance
+
+Built-in `image_gen.imagegen`, 7 November2026; three options in one new triptych. No CLI/API fallback, no current game sprite or Commons photo supplied to generation. Published triptych is the original unedited output. Exact prompts below; file SHA256/source name/size in [legend manifest](l1-legend-evidence.json). Model identifier/seed not exposed.
+
+<details><summary>Exact legend prompt</summary>
+
+Use case: stylized-concept. One landscape three-column concept triptych A B C, THREE DISTINCT legendary GREY WOLVES, one whole primary wolf per column. Plain uniform warm grey studio background, no environment, no forest or sky. Elevated camera clearly LOOKING DOWN30degrees so broad back surfaces and four paws are visible, near orthographic, body broadside turned35degrees towards viewer. Whole ears feet and tails and magic fit each column with margins. Area-story inspiration: snowy taiga, pine needles under light snow, juniper, fir/pine/larch/rowan/aspen. Natural wolf silhouette: long robust digitigrade legs, deep chest, lean waist, heavy neck and muzzle, moderate ears, low bushy tail. Ancient powerful wise, not snarling monster dog, no husky curled tail. Grey muzzle, worn ear, healed scars, dense weathered coat. A Voice of winters: wolf planted firmly, muzzle raised slightly in a howl, THREE thin pale concentric sound rings emerging from its open jaws and climbing above it; frosted muzzle, immense but natural shoulder ruff, no jewelry or flames. B Memory of the pack: old broad-chested wolf with two small translucent wolf afterimages immediately along its flanks, suggesting many generations remembered, four real paws distinct from ghosts; no sound rings, no wings. C The iron trail keeper: quiet wolf head carried low, scarred shoulder, one worn hammered-iron shoulder guard strapped behind foreleg with a few simple carved trail notches, one missing ear tip, long grizzled chest fur; no glow rings, no ghosts, no full armor suit. Each distinctive, animal nature first; age/wisdom/power not a common crystal/flame crown. No additional captions beyond A B C, no game UI, not game screenshot.
+
+</details>
+
 ## Remaining / wake condition
 
 Complete adult and mobile-young Commons visual checks, resolve the output cautions, then have the coordinator/1866 owner assess the target. Wake when the comparison photos are accessible without HTTP429, or root supplies cloud photo-review evidence. No graph implementation or switch-on until that review; old sprite critique omitted under the later skeleton-first ruling.
