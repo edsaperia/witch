@@ -1,0 +1,12 @@
+{
+  "pass": "third",
+  "status": "documentation-complete-image-generation-blocked",
+  "species": ["featheredserpent","frosttroll","frostwyrm","griffin","hydra","sphinx","unicorn"],
+  "brief": "Two readable ancient/huge silhouettes per species; one or two existing-feature exaggerations; restrained armour/decorations/scars; small magic accents; no body-carried scenes.",
+  "pixel_spec": "towards and away, game camera 35deg yaw / 30deg down, true 1x and nearest-neighbour 4x, limited palette, three cel bands, dark outline, deliberate clusters",
+  "style_anchor": "https://raw.githubusercontent.com/edsaperia/witch/0b571d1838cfc8eabe8e4b0604f7662b487fc4de/previews/art-pass/legends-today/524b0ac/lane-L9.png",
+  "generated_raster": false,
+  "blocker": "Built-in image generation returned HTTP 403 on this pass; no fresh raster is represented as completed evidence.",
+  "source_history_preserved": ["docs/art-pass/l9-legends-v2.md", "previews/art-pass/*/legend-concepts-v2.png"],
+  "acceptance_claim": false
+}
