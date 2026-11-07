@@ -84,6 +84,8 @@ Fanning one task out to many Codex agents at once multiplies the cost, and image
 
 **Ed's ruling for legends** (#1476 comments 6710686653 and 6710701175): "stay a bit closer to the brief; large size, exaggerations of existing features, armour, decorations, scars, etc." They must read at game size. Make pixel-art versions at true game size (a legend about 64–128 px, the witch about 50 px beside it).
 
+**Correction (coordinator, after review):** the third-pass "pixel" images are stand-ins, because image generation returned 403 in every lane. L2 is one recoloured placeholder; L4 and L6 are today's level-3 sprites re-rendered; L8 is the second-pass paintings pixelated. Only the written concepts are new: keep 8, close 11, redo 9 of 28, and L4 wrote none (review in the coordinator's scratchpad `legendreview3/review.md`). The brief's "64–128 px legend" was wrong: today's legends are 222–444 px tall natively (about 20× a baby), and redraws must match that scale beside the real witch sprite.
+
 **Third pass at the stop:**
 - L2, L4, L6 and L8 had pushed third-pass pixel sheets: ed-shots commits 43b0c8eba (L4), c4818aced (L8), 358509479..6aa59ae7f (L6), and L2 head 213b3d348.
 - The others had not finished.
