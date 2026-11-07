@@ -1,5 +1,9 @@
 # Fruit bat / flying fox — Pteropus body-plan target
 
+## Third-pass pixel pick brief
+
+Concept A turns the fox face and membrane rays into a scar-mapped dusk archive; concept B uses folded membrane and hanging feet as a weathered roost elder. No vertical-flight body scene or ornamental wing replacement is allowed. Review at 1x and nearest 4x, toward/away, approximate game camera and witch scale cue. Provisional pick A only if level-flight silhouette remains bat-readable; B only if the hanging pose retains real feet and membrane topology. No rendered sheet is claimed here.
+
 
 ## Current legend revision — mythic scale v2
 

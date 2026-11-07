@@ -1,5 +1,9 @@
 # European brown hare — Lepus europaeus
 
+## Third-pass pixel pick brief
+
+Concept A turns the existing rear-heavy haunch and long ears into season-listening ear sails; concept B exaggerates hindfeet and slim forequarters into a wind-cut burrow sentinel. Keep ears paired and anatomical, with weathering/magic subordinate. Review at 1x and nearest 4x, toward/away, approximate game camera and witch scale cue. Provisional pick A only if the haunch still dominates. No rendered sheet is claimed here.
+
 
 ## Current legend revision — mythic scale v2
 

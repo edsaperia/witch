@@ -1,5 +1,9 @@
 # Polar bear — Ursus maritimus
 
+## Third-pass pixel pick brief
+
+Concept A lengthens the existing neck and directional fleece into an ice-worn elder; concept B exaggerates broad feet and the narrow head into a salt-wind shelf walker. Both are silhouette-first, with restrained weathering and magic, no scenic body scene. Review at native 1x and nearest 4x in the established legend crop, toward/away and approximate game camera, with a tiny witch scale cue. Provisional pick A only if fleece remains contour rather than a cloak and the long neck survives the crop. No rendered sheet is claimed here.
+
 
 ## Current legend revision — mythic scale v2
 

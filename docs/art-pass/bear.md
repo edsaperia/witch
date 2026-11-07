@@ -1,5 +1,9 @@
 # Brown bear — Ursus arctos
 
+## Third-pass pixel pick brief
+
+Two restrained concepts remain: **A**, shoulder hump plus broad forepaw exaggerated into a weathered root-claw bearer; **B**, low belly plus scarred shoulder strata framed by an old stone collar. No body-scene, forest, crowd or costume is part of either concept. Pixel review must use the existing legend crop at true 1x and nearest 4x, toward/away, approximate game camera, with a tiny witch scale cue. Provisional pick A: shoulder mass must read before scars and the paw must retain a clear support contact. No rendered sheet is claimed by this docs-only checkpoint.
+
 
 ## Current legend revision — mythic scale v2
 

@@ -1,5 +1,9 @@
 # Beaver — Castor fiber anatomy target
 
+## Third-pass pixel pick brief
+
+Concept A makes the existing thin paddle tail and low body a terraced reservoir keeper; concept B makes the blunt head, incisors and webbed feet a weathered dam mason. Reject upright human posture and scenic dam dioramas. Review at 1x and nearest 4x, toward/away, approximate game camera and witch scale cue. Provisional pick A only if the tail remains a paddle and the low rodent silhouette survives. No rendered sheet is claimed here.
+
 
 ## Current legend revision — mythic scale v2
 

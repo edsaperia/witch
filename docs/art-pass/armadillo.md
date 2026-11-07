@@ -1,5 +1,9 @@
 # Armadillo — nine-banded body-plan target
 
+## Third-pass pixel pick brief
+
+Concept A enlarges existing shield bands and ring tail into a dry-wash worldshield; concept B uses the low digger snout and flexible bands as a seam-worn burrow vault. Plates remain transverse shields, never leaflike scenery; magic and weathering stay restrained. Review at 1x and nearest 4x, toward/away, approximate game camera and witch scale cue. Provisional pick A only if the low digger reads first. No rendered sheet is claimed here.
+
 
 ## Current legend revision — mythic scale v2
 
