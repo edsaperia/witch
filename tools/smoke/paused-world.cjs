@@ -82,7 +82,7 @@ async function measure(browser, url, sha, candidate) {
       const { game, guide, view } = window.witch;
       const pin = guide.pin();
       return game.clock.time > 2 && game.wake?.open && game.party.spellAt === null && pin.key.startsWith('dress:') &&
-        pin.key.includes('dressingTable') && pin.strength > 0 && view.pins.size > 0;
+        pin.key.includes('basin') /* (her first morning's first pin: the basin, Ed 2026-11-07) */ && pin.strength > 0 && view.pins.size > 0;
     }, null, wakeWait);
     await page.evaluate(tracePixels => {
       const view = window.witch.view, render = view.render.bind(view);
