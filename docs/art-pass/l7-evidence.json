@@ -1,0 +1,400 @@
+{
+  "sourceBase": "524b0acaa",
+  "graphReviewHead": "de27db5154a3e8b1aa94255263bd2601b92aec36",
+  "evidenceCommit": "7684b8266f4f5f88503e48b5937c8371bdf1125b",
+  "colossalEvidenceCommit": "1fbac49a6103ee8b4f8a672f2f8439a3a694b542",
+  "basePlates": 8,
+  "baseViews": 64,
+  "firstPassLegendConcepts": 24,
+  "colossalLegendBoards": 8,
+  "colossalLegendConcepts": 24,
+  "legendConcepts": 48,
+  "files": [
+    {
+      "species": "crocodile",
+      "path": "previews/art-pass/crocodile/refs-l7-v1.png",
+      "sha256": "457ebe358e8f4a17f034f434195292a7cfded847ddab80f76600084e226effe6",
+      "bytes": 2222406,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    {
+      "species": "crocodile",
+      "path": "previews/art-pass/crocodile/legends-l7-v1.png",
+      "sha256": "480ba7746047689f80714e05d120ace1b1634572eb68a74c0b563ffaa5457fc9",
+      "bytes": 2411436,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    {
+      "species": "crocodile",
+      "path": "previews/art-pass/crocodile/legends-colossal-l7-v2.png",
+      "sha256": "2e2a0832d2e22c6998c1db8c0b65987d3d9e0580a0a28436f7dcc7eb14e633f6",
+      "bytes": 3457496,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    {
+      "species": "crocodile",
+      "path": "previews/art-pass/crocodile/provenance.json",
+      "sha256": "e4b9bbb70b69e7d53a73d3cb573169b31607ddf9c821821581262fbc47de7cba",
+      "bytes": 1721
+    },
+    {
+      "species": "crocodile",
+      "path": "previews/art-pass/crocodile/legend-provenance.json",
+      "sha256": "5d9290b53080e4d4224e525aa4169a9341aef001698c449177970578b542f6ac",
+      "bytes": 1980
+    },
+    {
+      "species": "crocodile",
+      "path": "previews/art-pass/crocodile/colossal-provenance.json",
+      "sha256": "e0d96e5a80eed90def3e255232747fd7565ff1aba1cb1ca8f4027ff529eb995a",
+      "bytes": 2738
+    },
+    {
+      "species": "komodo",
+      "path": "previews/art-pass/komodo/refs-l7-v1.png",
+      "sha256": "4f3315f3aec2a23f4c197543f2cb6541e6b98f0d152556baa63f7686ee3df8a1",
+      "bytes": 2041812,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    {
+      "species": "komodo",
+      "path": "previews/art-pass/komodo/legends-l7-v1.png",
+      "sha256": "aaaf98f2bc3e64b966a765e246ea0939566ba82ab62ffe752092cb1d9fbbf717",
+      "bytes": 2520814,
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "species": "komodo",
+      "path": "previews/art-pass/komodo/legends-colossal-l7-v2.png",
+      "sha256": "0e2879215d59d9ef31343f2792493d3b79a1e9636449efc464e4e997d8011dc5",
+      "bytes": 3884004,
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "species": "komodo",
+      "path": "previews/art-pass/komodo/provenance.json",
+      "sha256": "a5e8aa618c9566705200d614f7bba91c5c5956359c7aab149c6dec3e3d2c2c32",
+      "bytes": 1778
+    },
+    {
+      "species": "komodo",
+      "path": "previews/art-pass/komodo/legend-provenance.json",
+      "sha256": "cf6ec53f460820eacc9f6677866a081cf2024ea21ff5c540408ef942e3674aa4",
+      "bytes": 2596
+    },
+    {
+      "species": "komodo",
+      "path": "previews/art-pass/komodo/colossal-provenance.json",
+      "sha256": "90f3dd291ce05d631c9125f52da1f7c419c07a5f6411b90ce53c0a5afb0167fe",
+      "bytes": 2919
+    },
+    {
+      "species": "snake",
+      "path": "previews/art-pass/snake/refs-l7-v1.png",
+      "sha256": "0ae48c2d6e639d0f268192528749c3ddf009715da9d6544a669f12d4730b6be1",
+      "bytes": 2119246,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    {
+      "species": "snake",
+      "path": "previews/art-pass/snake/legends-l7-v1.png",
+      "sha256": "a101a6b98e5ca0b6a277715af25695cab14fdd0e38b2c7227a46bf4a80c259d2",
+      "bytes": 2585809,
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "species": "snake",
+      "path": "previews/art-pass/snake/legends-colossal-l7-v2.png",
+      "sha256": "c83eed8e2ee8f4824473250630509f4ad448a436018051e2efad282f5fea8655",
+      "bytes": 3744438,
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "species": "snake",
+      "path": "previews/art-pass/snake/provenance.json",
+      "sha256": "259bc13d8c546bfd12bf45cff1f3b46153722562f884739065164595de0b91aa",
+      "bytes": 1855
+    },
+    {
+      "species": "snake",
+      "path": "previews/art-pass/snake/legend-provenance.json",
+      "sha256": "27d4b19f8401d7505052779ee437d6f243a831d013ac5961e05e1efe9568d363",
+      "bytes": 2532
+    },
+    {
+      "species": "snake",
+      "path": "previews/art-pass/snake/colossal-provenance.json",
+      "sha256": "e03a144e687fe294b3a3ab010dee2cba1229c0261ca4cb7c345c378276d6c220",
+      "bytes": 2895
+    },
+    {
+      "species": "rattlesnake",
+      "path": "previews/art-pass/rattlesnake/refs-l7-v1.png",
+      "sha256": "172986ba12e8a0d88a4e7e8632281151cfe7a3df93c97244fd2f9b0a4166e4c3",
+      "bytes": 1954955,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    {
+      "species": "rattlesnake",
+      "path": "previews/art-pass/rattlesnake/legends-l7-v1.png",
+      "sha256": "d8bef201aeafb6dea70ddceae6732cba3a63c3426f9f95ef1ab6a3b3ac994758",
+      "bytes": 2754213,
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "species": "rattlesnake",
+      "path": "previews/art-pass/rattlesnake/legends-colossal-l7-v2.png",
+      "sha256": "b88587251a4a167dd9a4eb4a5f9b0201543df2abf8fd7b825f63c7ee3d847b1e",
+      "bytes": 3759530,
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "species": "rattlesnake",
+      "path": "previews/art-pass/rattlesnake/provenance.json",
+      "sha256": "19c3c6a8745b5bdaca75e0282251cfda2a9d6e590ab4708cc9026c44b4279036",
+      "bytes": 1935
+    },
+    {
+      "species": "rattlesnake",
+      "path": "previews/art-pass/rattlesnake/legend-provenance.json",
+      "sha256": "6bb0792424383fc4aaea522d4023c3a67721bf7567fdff8945b9b36fb861e963",
+      "bytes": 2061
+    },
+    {
+      "species": "rattlesnake",
+      "path": "previews/art-pass/rattlesnake/colossal-provenance.json",
+      "sha256": "74473814990fdd4a42b0b1aa03c7132b01368c1d43b1ce715d80cd69f4807d9a",
+      "bytes": 2886
+    },
+    {
+      "species": "newt",
+      "path": "previews/art-pass/newt/refs-l7-v1.png",
+      "sha256": "477d02cdfc978c733c2cefc83aab90d2dbfd588b91e0e7a7af136f99f68d62eb",
+      "bytes": 1908370,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    {
+      "species": "newt",
+      "path": "previews/art-pass/newt/legends-l7-v1.png",
+      "sha256": "4378f0b5545f90fcd196cd3b8b230eed520f9ad212ac3d64301b34ad9e69f259",
+      "bytes": 1950721,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    {
+      "species": "newt",
+      "path": "previews/art-pass/newt/legends-colossal-l7-v2.png",
+      "sha256": "e3a6e78e93ae5f1211cdbf9fa2725dcd9d797924dda76d1dc389f6207fd6f898",
+      "bytes": 3300863,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    {
+      "species": "newt",
+      "path": "previews/art-pass/newt/provenance.json",
+      "sha256": "b7672856e94e25aac158325487cd65a026aa062b36e17dbbabf06017ccb90425",
+      "bytes": 1987
+    },
+    {
+      "species": "newt",
+      "path": "previews/art-pass/newt/legend-provenance.json",
+      "sha256": "70593b9b440086943fc20886bc16714a0f8a322b25745703b18c6b9ee3eed286",
+      "bytes": 2059
+    },
+    {
+      "species": "newt",
+      "path": "previews/art-pass/newt/colossal-provenance.json",
+      "sha256": "3451be1643a8e1ac844ae0727dd8874e90fa6777663fcbbac0aa73cd85612d34",
+      "bytes": 2754
+    },
+    {
+      "species": "salamander",
+      "path": "previews/art-pass/salamander/refs-l7-v1.png",
+      "sha256": "69940786b41938a96e35a64d2b495d026d774f0121279989de7be35c41ceed1b",
+      "bytes": 1945829,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    {
+      "species": "salamander",
+      "path": "previews/art-pass/salamander/legends-l7-v1.png",
+      "sha256": "e9aaeb74685b4610a27527221a50baa17817a5404d6163aea4f277389184f941",
+      "bytes": 2123674,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    {
+      "species": "salamander",
+      "path": "previews/art-pass/salamander/legends-colossal-l7-v2.png",
+      "sha256": "cf34d8299d658bf43e35100c2e5034c7ed0e4a00d7d2e19ea387bc4ec0eef6c2",
+      "bytes": 3359876,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    {
+      "species": "salamander",
+      "path": "previews/art-pass/salamander/provenance.json",
+      "sha256": "bddd24d5ace6f15d8ae129bc6d5dd7572c8053fc02a9e69b2a439b818b082931",
+      "bytes": 2791
+    },
+    {
+      "species": "salamander",
+      "path": "previews/art-pass/salamander/legend-provenance.json",
+      "sha256": "6a5c504267091b237fadbad37fc161894ab7315589dc996e6e24a74afb67fb54",
+      "bytes": 2178
+    },
+    {
+      "species": "salamander",
+      "path": "previews/art-pass/salamander/colossal-provenance.json",
+      "sha256": "3bdf1e5306cd247e791cefe4eb7a7fbdac9d923361a85ac0e2cea67fa2c31cc2",
+      "bytes": 2819
+    },
+    {
+      "species": "toad",
+      "path": "previews/art-pass/toad/refs-l7-v1.png",
+      "sha256": "c3208124b5ffdb9d4c5e79cec90d318a443efde9c33f52bdb426556d76b138a3",
+      "bytes": 2299709,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    {
+      "species": "toad",
+      "path": "previews/art-pass/toad/legends-l7-v1.png",
+      "sha256": "40094479bd1c324545d6bc864ef2638445f1d0a47933dbd73674b028c2de6a2a",
+      "bytes": 2404238,
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "species": "toad",
+      "path": "previews/art-pass/toad/legends-colossal-l7-v2.png",
+      "sha256": "1c750e3551452125d8045119a53e1b909007250b586051772e27dbff37aa93d0",
+      "bytes": 3560032,
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "species": "toad",
+      "path": "previews/art-pass/toad/provenance.json",
+      "sha256": "64e09987adeabc9704b6654461bc2d25a1f6ec7d0e3fb2417f7544e270bc55b5",
+      "bytes": 2009
+    },
+    {
+      "species": "toad",
+      "path": "previews/art-pass/toad/legend-provenance.json",
+      "sha256": "d0dc0f2a2d46fefe6e2f4a011db7e2d5207c3a90ffeb6641cd8564abcb339bb2",
+      "bytes": 2094
+    },
+    {
+      "species": "toad",
+      "path": "previews/art-pass/toad/colossal-provenance.json",
+      "sha256": "0f53a8c7162b6ebee3fc9bc6be8bb8180f16c4b3ad4c5b4ec2816c7684c0571a",
+      "bytes": 2782
+    },
+    {
+      "species": "stegosaurus",
+      "path": "previews/art-pass/stegosaurus/refs-l7-v1.png",
+      "sha256": "c17c63cb4898f2ae2a13d81eb485fc081339379b690ca93bf8c061fdab76dfb0",
+      "bytes": 1927281,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    {
+      "species": "stegosaurus",
+      "path": "previews/art-pass/stegosaurus/legends-l7-v1.png",
+      "sha256": "7b374848d5c4ab476c3e134e9ea21907aecb7ede13a354d0af55d7679605fc5e",
+      "bytes": 2479228,
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "species": "stegosaurus",
+      "path": "previews/art-pass/stegosaurus/legends-colossal-l7-v2.png",
+      "sha256": "eac50ec6f5b2499703f237b9a9d495aac39c74e71b297a860c37cbc02513619d",
+      "bytes": 3559921,
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "species": "stegosaurus",
+      "path": "previews/art-pass/stegosaurus/provenance.json",
+      "sha256": "bc09a6ac943e746a6116e77035c05b12011c1f1b4e9c0ebb30688791878b5e25",
+      "bytes": 2294
+    },
+    {
+      "species": "stegosaurus",
+      "path": "previews/art-pass/stegosaurus/legend-provenance.json",
+      "sha256": "e7bf80a79b74fcad9e54e0e6d082151473a3e968793ec94f01dd64e003fe1c9a",
+      "bytes": 2276
+    },
+    {
+      "species": "stegosaurus",
+      "path": "previews/art-pass/stegosaurus/colossal-provenance.json",
+      "sha256": "f7f49a6ef6a456868d45dd51cbda840399bfe64967ba3b943c5e454bfaa12a9d",
+      "bytes": 2878
+    }
+  ],
+  "checks": "8 species sections/checklists/local links; 24 PNG decoded with CRC checks; 24 provenance JSON; SHA256 all48 files",
+  "remaining": "Exact-current legend comparison question6708034797; coordinator signature spread; Ed picks"
+}
