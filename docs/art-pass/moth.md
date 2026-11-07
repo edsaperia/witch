@@ -40,11 +40,11 @@ Flight: level/path-angled thorax, forward head and tucked six legs; fore/hind wi
 
 Audit of `art/body-graph/graph.js` and `acceptance.js` at #1866 head `de27db5154a3e8b1aa94255263bd2601b92aec36`, not a claim about later work. No butterfly/scaled-wing family in #1866. Bat membranes do not supply four overlapping scaled wing lobes, club antennae, proboscis or six legs. Need wing pattern following deforming surfaces, folded rest, held-wing glide, readable flap sequence and ground/flight transitions.
 
-## Three legend concepts and recommended pick
+## First-pass legend concepts (preserved history)
 
 [Three concepts beside current legend](https://github.com/edsaperia/witch/blob/c3a631ae97fde88263918c22f4fa0b886bd0bcfc/previews/art-pass/moth/legend-comparison-l8.png). A: eyespot oracle with enormous luminous blue hindwing eyespots and frayed tails. B: pollen pilgrim with exaggerated clubbed antennae. C: wind elder with long continuous hindwing tails.
 
-**Recommend A — A develops the existing elder eyespot idea directly from the patterned wings. Worn scale fields and tattered tails show age, while the gaze belongs on the wings rather than a generic floating ring of eyes.** Ed judges the recommendation. Signature element: **Luminous hindwing eyespots**.
+**First-pass recommendation A — A develops the existing elder eyespot idea directly from the patterned wings. Worn scale fields and tattered tails show age, while the gaze belongs on the wings rather than a generic floating ring of eyes.** Ed judges the recommendation. Signature element: **Luminous hindwing eyespots**.
 
 **Chosen legend checklist/body plan:** Open span 3.0–3.6L; paired eyespots approximately 0.45–0.65L across on the hindwing fields. Keep black/yellow veins, tails, club antennae, six tucked legs and small central body. Shape frayed margins without making the butterfly look like a moth or feathered bird.
 
@@ -54,3 +54,17 @@ Audit of `art/body-graph/graph.js` and `acceptance.js` at #1866 head `de27db5154
 
 **Comparison limits:** Concept A is closer to a dorsal presentation than calibrated game camera; the generator's worn tails are fragile design suggestions. Current albedo preserves yellow/black butterfly identity but does not prove the new folded or flight states. Current comparison is an actual source-produced awake age3/frame0/towards Bold albedo sprite from prototype `524b0acaa43bb9975e7b2834ff9a55cbca4b3319`, extracted without a browser using `critter`/`speciesColours`/`bake`. Independent panel scales; no runtime lighting, gait performance or visual acceptance claim. No game-visible text changed.
 
+
+## Legend concepts v2: colossal fantasy revision
+
+Read1476#6708227119 and6708229124. This section supersedes the earlier legend recommendation; anatomy targets remain. [Revised three concepts and current comparison](https://github.com/edsaperia/witch/blob/0551b51eaed88be82398fad335db46827238dc1e/previews/art-pass/moth/legend-comparison-l8-v2.png), [full plate](https://github.com/edsaperia/witch/blob/0551b51eaed88be82398fad335db46827238dc1e/previews/art-pass/moth/legend-concepts-l8-v2.png), [exact prompt/provenance](https://github.com/edsaperia/witch/blob/0551b51eaed88be82398fad335db46827238dc1e/previews/art-pass/moth/provenance-l8-v2.json). Three columns A/B/C, hero view above and approximate game-camera view below. Every C is the maximum-fantasy alternative.
+
+A eyespots showing possible futures; B life-seeding pollen between club antennae; C dream-mapped wings and starlight tails (maximum fantasy).
+
+**Current proposed pick B. Signature element: Life-seeding pollen carried between giant clubbed antennae.** The swallowtail becomes a keeper of flowering clearings through its own pollinator nature. A and C are strong options, but pollen gives this lane a signature distinct from the dragonfly's four time-windows and the snail's cosmos. Ed judges this proposal; no selection is implemented or activated.
+
+**Chosen legend checklist/body plan:** Keep scaled yellow/black four-wing anatomy, blue crescents, hindwing tails and six small legs. Antennae extend0.7–1.0L as an evolved legend target and remain clubbed rather than feathery. A bounded gold pollen arc links the clubs and trails toward the meadow. Keep central body narrow and age visible as worn scales/tails.
+
+**Additional graph needs:** Articulated clubbed antennae with local pollen emission anchors, surface-following scale wear, sparse decorative pollen trail, folded/resting wing patterns and the flight states already listed. No actual seed spawning or ecology mechanic.
+
+**Inspection and scale limits:** All six cells contain witch/trees. Upper views are strongly dorsal and wing tips reach borders; lower row drifts to an upright wing pose rather than level flight. Use the separate flight/rest sheet to correct torso/leg posture; this is a fantasy/camera exploration, not a validated flight frame. Giant scale follows the newly relayed intent, roughly20times game baby height and above the treetops, with witch/trees as qualitative cues. No baby calibration measurement, exact projection, runtime size/lighting or performance is proven; lower-view labels are requests, not verified camera parameters. Absolute sizing needs separate acceptance against DESIGN and current size rules.

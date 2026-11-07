@@ -34,11 +34,11 @@ Commons Euscorpius dorsal photo shows eight walking legs separate from paired pi
 
 Audit of `art/body-graph/graph.js` and `acceptance.js` at #1866 head `de27db5154a3e8b1aa94255263bd2601b92aec36`, not a claim about later work. No arachnid/scorpion family in #1866. Generic tail chains can curve but do not declare five armored metasomal segments plus telson, hinged pincer digits, eight multi-joint walking legs, or separate pedipalp gait/attack controls.
 
-## Three legend concepts and recommended pick
+## First-pass legend concepts (preserved history)
 
 [Three concepts beside current legend](https://github.com/edsaperia/witch/blob/c3a631ae97fde88263918c22f4fa0b886bd0bcfc/previews/art-pass/scorpion/legend-comparison-l8.png). A: brood matriarch with huge protective curled tail and pale young on scarred back. B: venom keeper with amber stinger. C: canyon archivist with stratum-like plates and copper offering.
 
-**Recommend A — A carries the animal's real maternal brood behavior into the existing game elder brief. Scars and a protective tail communicate age and authority; blue-green plate-edge magic stays subordinate to the family relationship.** Ed judges the recommendation. Signature element: **Brood sheltered beneath an enormous curled tail**.
+**First-pass recommendation A — A carries the animal's real maternal brood behavior into the existing game elder brief. Scars and a protective tail communicate age and authority; blue-green plate-edge magic stays subordinate to the family relationship.** Ed judges the recommendation. Signature element: **Brood sheltered beneath an enormous curled tail**.
 
 **Chosen legend checklist/body plan:** Tail arc length 1.7–2.2L, pincers 0.8–1.1L, broad back approximately 0.50L wide. Keep five tail segments plus telson even though the concept image oversegments it. Brood sits on the broad back, never on free-floating sockets; eight adult feet support the body.
 
@@ -48,3 +48,17 @@ Audit of `art/body-graph/graph.js` and `acceptance.js` at #1866 head `de27db5154
 
 **Comparison limits:** The concept image has too many tail segments and heavily rock-like plates: retain the brood/tail story but correct those before modelling. Brood size/count is concept design, not measured zoology. Current albedo's curled sting and forward pincers are worth keeping. Current comparison is an actual source-produced awake age3/frame0/towards Bold albedo sprite from prototype `524b0acaa43bb9975e7b2834ff9a55cbca4b3319`, extracted without a browser using `critter`/`speciesColours`/`bake`. Independent panel scales; no runtime lighting, gait performance or visual acceptance claim. No game-visible text changed.
 
+
+## Legend concepts v2: colossal fantasy revision
+
+Read1476#6708227119 and6708229124. This section supersedes the earlier legend recommendation; anatomy targets remain. [Revised three concepts and current comparison](https://github.com/edsaperia/witch/blob/0551b51eaed88be82398fad335db46827238dc1e/previews/art-pass/scorpion/legend-comparison-l8-v2.png), [full plate](https://github.com/edsaperia/witch/blob/0551b51eaed88be82398fad335db46827238dc1e/previews/art-pass/scorpion/legend-concepts-l8-v2.png), [exact prompt/provenance](https://github.com/edsaperia/witch/blob/0551b51eaed88be82398fad335db46827238dc1e/previews/art-pass/scorpion/provenance-l8-v2.json). Three columns A/B/C, hero view above and approximate game-camera view below. Every C is the maximum-fantasy alternative.
+
+A ancestral brood shelter; B fossil memories inside a venom stinger; C impossible night valley under the tail (maximum fantasy).
+
+**Current proposed pick B. Signature element: Epoch fossils suspended inside an amber venom stinger.** The scorpion's own venom becomes a memory older than the forest. This separates it from shelter/portal motifs elsewhere while scars and canyon-like plates communicate survival. A preserves the maternal story as an option; C offers Ed the furthest fantasy. Ed judges this proposal; no selection is implemented or activated.
+
+**Chosen legend checklist/body plan:** Keep eight walking legs, two pincers and a five-segment rear tail plus telson. Enlarge only the terminal venom bulb to0.30–0.45L, using the earlier legend tail arc1.7–2.2L. Its translucent amber contains a few fossil silhouettes; no extra external claws or disconnected floating sting.
+
+**Additional graph needs:** Distinct telson mesh/material and internal bounded fossil-mask layer, articulated discrete tail segments, worn pincer/plate surfaces, colossal contact/bounds. This is a visual memory image, not a venom simulation or new combat effect.
+
+**Inspection and scale limits:** Witch and trees appear in every cell. The generator still adds too many tail segments and over-rocky armor. Rebuild five segments plus telson from anatomy before any model adoption; do not treat fossil silhouettes as a zoological claim. Giant scale follows the newly relayed intent, roughly20times game baby height and above the treetops, with witch/trees as qualitative cues. No baby calibration measurement, exact projection, runtime size/lighting or performance is proven; lower-view labels are requests, not verified camera parameters. Absolute sizing needs separate acceptance against DESIGN and current size rules.

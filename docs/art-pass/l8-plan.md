@@ -1,8 +1,5 @@
-# L8 graph targets — work in progress
+# L8 graph-target work record
 
-Branch: `codex/art-pass-l8`. Base: `524b0acaa` (exact SHA recorded in PR PLAN).
-Species: beetle, crab, dragonfly, moth, scorpion, snail, spider, woodlouse.
+Branch: codex/art-pass-l8; PR1903. Base524b0acaa43bb9975e7b2834ff9a55cbca4b3319.
 
-Follow coordinator6707758462, superseding the exhaustive shipped-art critique in6707737381: finish the skeleton first. Deliver per-species generated reference evidence, real-photo cross-check, identifying checklist, ratio-based body plan, mass distribution and verified missing shared graph features. No source, graph or game changes.
-
-Pending: inspect actual camera/heading and shared graph capabilities; generate adult and age-zero reference sheets with standing/walking toward/away views; validate anatomy against Commons photos; publish only owned evidence through the safe shots tool; complete species docs and summary table. Generated imagery is a target aid, not zoological evidence or proof of camera calibration. Do not mark READY before actual images, cross-check and documentation checks exist.
+The completed anatomy, flight/rest, first legend pass and revised colossal fantasy targets are indexed in [L8 summary](l8-summary.md). Initial plan/checkpoint6ca312633 and first substantive passdc94bcec4 remain in branch history. No game, graph or creature code changed. Ed judges current proposed picks; reference limits and missing graph features are explicit per species.
