@@ -178,6 +178,7 @@ says what each note covers.
 - Find sets
 - Sleeping before the party
 - Finds pool
+- The broom's stations
 - Workshop
 - Invitations and brooms / her night's kit
 - Broom parts / slots

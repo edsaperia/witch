@@ -133,6 +133,8 @@ export class Sfx {
   twinkle(i: number, pan = 0): void { chimes.twinkle(this.k, i, pan); }
   /** Brushing her teeth at the basin: scrubs and a glint (chimes.ts brushTeeth). */
   brushTeeth(pan = 0, len = 1.2): void { chimes.brushTeeth(this.k, pan, len); }
+  /** The hydraulic lift going up or down (chimes.ts hiss). */
+  hiss(up: boolean, pan = 0): void { chimes.hiss(this.k, up, pan); }
 
   // ——— legends ———
   windup(pan = 0, near = 1): void { this.whales.windup(pan, near); }

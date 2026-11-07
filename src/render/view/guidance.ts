@@ -95,7 +95,7 @@ export const WINGS = [
  *  rack, 🧥 the cloak pegs, 👜 the bags and the hats' floor the hat pointers' own hat. Emoji drawn in pixels as the thrown 💌 is
  *  (render/indicator.ts emoji), each with a glyph of ours in its place where the browser has no such emoji. */
 const EMOJI: Partial<Record<GuideKind, string>> = { bed: "💤", desk: "💌", chart: "🧭", hat: "🎁", part: "🎁", wearable: "🎁" };
-const GLYPH: Record<GuideKind, readonly string[]> = { bed: BED, dress: SHIRT, desk: LETTER, lathe: WINGS, hat: GIFT, part: GIFT, wearable: GIFT, chart: MAP, decks: NOTES };
+const GLYPH: Record<GuideKind, readonly string[]> = { bed: BED, dress: SHIRT, desk: LETTER, rack: WINGS, hat: GIFT, part: GIFT, wearable: GIFT, chart: MAP, decks: NOTES };
 const DRESS: Record<string, { emoji?: string; glyph: readonly string[] }> = { basin: { emoji: "🪥", glyph: SHIRT }, dressingTable: { emoji: "💇", glyph: SHIRT }, wardrobe: { emoji: "👗", glyph: SHIRT }, shoeRack: { emoji: "👠", glyph: SHIRT }, cloakPegs: { emoji: "🧥", glyph: SHIRT }, bags: { emoji: "👜", glyph: SHIRT }, hats: { glyph: HAT } };
 /** The pair of wings: 🪽 and 🪽 mirrored, spread either side, one pixel sprite (render/bubbles.ts pixelSprite, served as an emoji is). */
 const wings = (): string => pixelSprite("🪽pair", EMOJI_PX, (x, n) => {
@@ -106,7 +106,7 @@ const wings = (): string => pixelSprite("🪽pair", EMOJI_PX, (x, n) => {
 /** A guide's icon: its emoji (none: the glyph alone) and its glyph. */
 export function guideIcon(guide: Guide): { emoji?: string; glyph: readonly string[] } {
   if (guide.kind === "dress") return "object" in guide.target ? DRESS[guide.target.object] ?? { glyph: SHIRT } : DRESS.hats; // (a point: her hat lying, rules/guidance.ts hatGuide)
-  if (guide.kind === "lathe") return { emoji: wings(), glyph: WINGS };
+  if (guide.kind === "rack") return { emoji: wings(), glyph: WINGS };
   return { emoji: EMOJI[guide.kind], glyph: GLYPH[guide.kind] };
 }
 

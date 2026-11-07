@@ -58,7 +58,7 @@ describe("guidance pins", () => {
     wearFromStation(g.wake!, "cloakPegs");
     expect(at()).toBe("hats");
     g.wake!.pile = [];
-    expect(at()).toBe("lathe");
+    expect(at()).toBe("broomRack") // (the broom rack: Ed, 2026-11-07);
     broom = true;
     expect(at()).toBe("decks");
   });
@@ -158,13 +158,13 @@ describe("guidance pins", () => {
     });
   });
 
-  it("the invitations desk, then the lathe, each till it's done (Lima's pickups; skipped while they say done)", () => {
+  it("the invitations desk, then the broom rack, each till it's done (Lima's pickups; skipped while they say done)", () => {
     const g = up(true);
     let inv = false, broom = false;
     const hooks = { invitationsReady: () => inv, broomTaken: () => broom };
     expect(guidanceOf(g, 0, emptyGuide(), [], hooks)).toEqual({ kind: "desk", target: { object: "invitations" } });
     inv = true;
-    expect(guidanceOf(g, 0, emptyGuide(), [], hooks)).toEqual({ kind: "lathe", target: { object: "lathe" } });
+    expect(guidanceOf(g, 0, emptyGuide(), [], hooks)).toEqual({ kind: "rack", target: { object: "broomRack" } });
     broom = true;
     expect(guidanceOf(g, 0, emptyGuide(), [], hooks)?.kind).toBe("decks");
     // (the hooks are her night's kit, rules/kit.ts: a night with none has both; one that waits for her spell, each till she takes it)
@@ -175,7 +175,7 @@ describe("guidance pins", () => {
     g.witches[0].spells.bag = "satchel";
     expect(guidanceOf(g, 0, emptyGuide(), [])).toEqual({ kind: "desk", target: { object: "invitations" } });
     takeInvites(g.witches[0]);
-    expect(guidanceOf(g, 0, emptyGuide(), [])).toEqual({ kind: "lathe", target: { object: "lathe" } });
+    expect(guidanceOf(g, 0, emptyGuide(), [])).toEqual({ kind: "rack", target: { object: "broomRack" } });
     takeBroom(g, g.witches[0]);
     expect(guidanceOf(g, 0, emptyGuide(), [])?.kind).toBe("decks");
   });

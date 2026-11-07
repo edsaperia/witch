@@ -16,7 +16,7 @@ import { bareHeadAt, CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, shownItems, SKIN_COLS, s
 import { BOARD, partById, type Fitted } from "../rules/broomParts";
 import type { Tuning } from "../rules/tuning";
 import { broomColours, partCanvas } from "../render/workshopArt";
-import { broomSummary, CARD_SHOW, cardAt, itemAt, panelPad, stationTitle, partStats, setChips, setsOf, spellLine, type Line } from "./stationLines";
+import { broomSummary, CARD_SHOW, cardAt, fromTo, itemAt, panelPad, stationTitle, partStats, setChips, setsOf, spellLine, type Line } from "./stationLines";
 import { PanelChoice } from "./stationChoice";
 import { bindings } from "../platform/bindings";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
@@ -292,7 +292,7 @@ export class StationPanel {
       if (l.shelf !== shelf) {
         if (shelf >= 0) html += shut(shelf);
         shelf = l.shelf;
-        const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name ?? "Empty" : s.trail ? trailPreset(this.trailNow).name : s.toggle ? shownItems(s).filter(it => this.c.wears(it)).map(it => it.short ?? it.name).join(", ") : shownItems(s).find(it => this.c.wears(it))?.name;
+        const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name ?? "Empty" : s.trail && !s.colour ? trailPreset(this.trailNow).name : s.toggle ? shownItems(s).filter(it => this.c.wears(it)).map(it => it.short ?? it.name).join(", ") : shownItems(s).find(it => this.c.wears(it))?.name;
         const note = s.always ? "every colour" : s.slot ? SLOT_ROLE[s.slot] : s.board ? "north up" : "";
         html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}" data-shelf="${l.shelf}"><div class="sp-lab" data-card="${i}">${s.id === "hat" && (this.g.hat as { shape?: string } | undefined)?.shape !== "none" ? `<span class="sp-hatpic" data-thumb="hatpic:now:${hash(JSON.stringify(this.g))}"></span>` : ""}<b>${esc(s.label)}</b>${worn ? `<span>${esc(worn)}</span>` : ""}${note ? `<em>${esc(note)}</em>` : ""}</div>`;
       }
@@ -339,7 +339,7 @@ export class StationPanel {
   /** "Her broom" (the bay): every number her parts change, bare → now, up green and down red, and her spell. */
   private summary(ws: WorkshopCtx): string {
     const rows = broomSummary(ws.fitted, ws.tuning);
-    return `<div class="sp-sum"><div class="sp-sub">Her broom<em>bare → now</em></div>${rows.length ? rows.map(r => `<div class="${r.better ? "up" : "down"}"><span>${esc(r.name)}</span><b>${esc(r.from)} → ${esc(r.to)}</b></div>`).join("") : `<div><span>A bare broom</span><b>as it comes</b></div>`}<div class="${spellLine(ws.fitted).startsWith("none") ? "" : "up"}"><span>Spell (R)</span><b>${esc(spellLine(ws.fitted))}</b></div></div>`;
+    return `<div class="sp-sum"><div class="sp-sub">Her broom<em>bare → now</em></div>${rows.length ? rows.map(r => `<div class="${r.better ? "up" : "down"}"><span>${esc(r.name)}</span><b>${esc(fromTo(r.from, r.to))}</b></div>`).join("") : `<div><span>A bare broom</span><b>as it comes</b></div>`}<div class="sp-spell${spellLine(ws.fitted).startsWith("none") ? "" : " up"}"><span>Spell (R)</span><b>${esc(spellLine(ws.fitted))}</b></div></div>`;
   }
   private paintDetail(): void {
     const at = this.hover ?? this.at, l = this.lines()[at.line];
@@ -363,14 +363,14 @@ export class StationPanel {
         else if (!this.found_().has(p.id)) { title = "Not found yet."; unfound = true; } // (not found yet: a silhouette, no hint)
         else { title = p.name; sub = `${p.slot}${setsOf(p.id).length ? ` · ${setsOf(p.id).join(", ")} set${setsOf(p.id).length > 1 ? "s" : ""}` : ""}`; stats = this.ws ? partStats(p.id, this.ws.tuning) : []; text = this.ws?.fitted[p.slot] === p.id ? "On her broom." : "Choose it to fit it."; }
       } else if (l.kind === "chips") { const x = setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null })[at.col]; title = `${x.name} · ${x.spell}`; text = x.whole ? `Whole: R casts ${x.spell}.` : `${x.fitted} of its ${x.of} parts on her broom.`; }
-      else if (l.kind === "trail") { const p = TRAIL_PRESETS[at.col]; title = `${p.name} ${p.emoji}`; text = p.id === this.trailNow ? "Her trail's colours, front to back: the first band as she flies, then a band for each dodge still to come back." : "Choose it for her trail's colours."; }
+      else if (l.kind === "trail") { const p = TRAIL_PRESETS[at.col]; title = `${p.name} ${p.emoji}`; text = p.id === this.trailNow ? "Wearing." : "Choose it for her trail's colours."; } // (short, one line: the lift's panel fits the screen, Ed 2026-11-07)
       else if (l.kind === "parts") { const p = s.colour![at.col]; title = `Colour: ${PART_NAMES[p] ?? p}`; text = p === this.partOf(s) ? "The colours below are for this." : "Choose it to colour it below."; }
-      else if (l.kind === "grid") { const [sc, sr] = this.c.chosenSwatch(s); title = `${s.label}: colour`; text = !this.c.awaitingDress && sc === at.col && sr === l.row ? "Wearing." : "Every colour is hers: choose to put it on."; }
-      else { const on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g); title = FIT_NAMES[l.axis!] ?? l.axis!; text = on ? "◀ ▶ or drag to change it." : "Put it on first."; }
+      // (a colour or a slider in focus: no detail, the swatch's worn mark and the slider say it all, so the broom's stations fit the
+      // screen: Ed, 2026-11-07, "no station menu is taller than the screen at 1280×720")
     }
-    box.className = `sp-detail${unfound ? " unfound" : ""}${preview ? " sp-withpreview" : ""}${!preview && !stats.length && !sub ? " sp-brief" : ""}`;
+    box.className = `sp-detail${unfound ? " unfound" : ""}${preview ? " sp-withpreview" : ""}${!preview && !stats.length && !sub ? " sp-brief" : ""}${stats.length ? " sp-stats" : ""}`;
     if (!title && !text && !stats.length) { box.remove(); this.placePreviews(); return; }
-    box.innerHTML = `${preview ? `<span class="sp-preview" data-preview="${esc(preview)}"></span>` : ""}<div><h3>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ""}</h3>${stats.map(r => `<p class="${r.better ? "up" : "down"}">${r.better ? "▲" : "▼"} ${esc(r.name)} ${esc(r.from)} → ${esc(r.to)}</p>`).join("")}${text ? `<p>${esc(text)}</p>` : ""}</div>`;
+    box.innerHTML = `${preview ? `<span class="sp-preview" data-preview="${esc(preview)}"></span>` : ""}<div><h3>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ""}</h3>${stats.map(r => `<p class="${r.better ? "up" : "down"}">${r.better ? "▲" : "▼"} ${esc(r.name)} ${esc(fromTo(r.from, r.to))}</p>`).join("")}${text ? `<p>${esc(text)}</p>` : ""}</div>`;
     this.placePreviews();
   }
 
@@ -467,7 +467,7 @@ body.paused #station-panel { visibility: hidden; }
   background: linear-gradient(90deg, rgba(11,7,22,.72) 0%, rgba(11,7,22,.55) 80%, rgba(11,7,22,0) 100%); }
 #station-panel .sp-banner { color: var(--gold); font-size: .9em; }
 #station-panel .sp-head { display: flex; align-items: baseline; gap: .6em; }
-#station-panel .sp-head b { font-size: 1.6em; color: var(--gold); letter-spacing: 1px; } #station-panel .sp-head span { margin-left: auto; font-size: .8em; opacity: .85; }
+#station-panel .sp-head b { font-size: 1.4em; color: var(--gold); letter-spacing: 1px; } #station-panel .sp-head span { margin-left: auto; font-size: .8em; opacity: .85; }
 #station-panel .sp-body { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(232,180,106,.5) transparent; display: flex; flex-direction: column; gap: .5em; padding: 2px 4px 2px 2px; }
 #station-panel .sp-shelf { flex: none; display: flex; flex-direction: column; gap: .35em; padding: .45em .9em .55em; border-radius: .7em; background: rgba(26,18,44,.88); box-shadow: inset 0 0 0 1px rgba(232,226,244,.16), 0 2px 10px rgba(0,0,0,.35); }
 #station-panel .sp-shelf.on { background: rgba(38,26,62,.94); box-shadow: inset 0 0 0 2px rgba(232,180,106,.85), 0 2px 14px rgba(0,0,0,.45); }
@@ -478,7 +478,7 @@ body.paused #station-panel { visibility: hidden; }
 #station-panel .sp-sub { font-size: .8em; display: flex; gap: .5em; opacity: .9; } #station-panel .sp-sub em { margin-left: auto; font-style: normal; opacity: .75; }
 #station-panel .sp-row { display: flex; flex-wrap: wrap; gap: .45em; }
 #station-panel .sp-card { position: relative; width: 4em; height: 4em; border-radius: .5em; background: rgba(11,7,22,.55); box-shadow: inset 0 0 0 1px rgba(232,226,244,.14); display: grid; place-items: center; cursor: pointer; box-sizing: border-box; }
-#station-panel .sp-card.sp-trail { width: 6.4em; } #station-panel .sp-card.sp-trail canvas { height: 1.5em; width: 6em; max-width: 6em; }
+#station-panel .sp-card.sp-trail { width: 4.2em; height: 1.7em; } #station-panel .sp-card.sp-trail canvas { height: 1.1em; width: 3.9em; max-width: 3.9em; } #station-panel .sp-card.sp-trail .sp-tick { top: -.45em; right: -.45em; }
 #station-panel .sp-card canvas { image-rendering: pixelated; width: auto; height: 3.6em; max-width: 3.7em; object-fit: contain; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
 #station-panel .sp-card.unfound canvas { filter: brightness(0) invert(.32) drop-shadow(1px 0 0 rgba(214,204,240,.6)) drop-shadow(-1px 0 0 rgba(214,204,240,.6)) drop-shadow(0 1px 0 rgba(214,204,240,.6)) drop-shadow(0 -1px 0 rgba(214,204,240,.6)); } /* (one not found yet: a grey silhouette, a shade softer than a disabled one, no padlock: Ed, 2026-11-07, "they're good foreshadowing") */
 #station-panel .focus { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 12px rgba(255,255,255,.75), inset 0 0 0 1px var(--ol); }
@@ -496,13 +496,16 @@ body.paused #station-panel { visibility: hidden; }
    white box with a glow round the outside: Ed, 2026-11-07, "make it clearly distinct from the white focus box") */
 #station-panel .sp-grid i.sel { z-index: 1; box-shadow: inset 0 0 0 2px var(--ol), inset 0 0 0 4px var(--gold); } #station-panel .sp-grid i.sel::after { content: "✓"; position: absolute; left: 50%; top: 50%; width: 1.05em; height: 1.05em; margin: -.525em 0 0 -.525em; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 1.5px var(--ol); display: grid; place-items: center; font: normal 700 .75em/1 ui-monospace, Menlo, Consolas, monospace; color: #1a1430; text-shadow: none; }
 #station-panel .sp-grid i.focus { outline: 3px solid #fff; outline-offset: 1px; z-index: 2; box-shadow: 0 0 10px 2px rgba(255,255,255,.85); } #station-panel .sp-grid i.sel.focus { box-shadow: inset 0 0 0 2px var(--ol), inset 0 0 0 4px var(--gold), 0 0 10px 2px rgba(255,255,255,.85); }
-#station-panel .sp-fit { display: flex; align-items: center; gap: .8em; padding: .25em .3em; border-radius: .4em; cursor: pointer; } #station-panel .sp-fit.off { opacity: .45; cursor: default; }
+#station-panel .sp-fit { display: flex; align-items: center; gap: .8em; padding: .12em .3em; border-radius: .4em; cursor: pointer; } #station-panel .sp-fit.off { opacity: .45; cursor: default; }
 #station-panel .sp-fit span { width: 8em; font-size: .9em; } #station-panel .sp-fit .bar { position: relative; flex: 1; height: .35em; background: rgba(232,226,244,.55); border-radius: .2em; box-shadow: 0 0 0 1px var(--ol); }
 #station-panel .sp-fit .bar i { position: absolute; top: -.45em; width: .7em; height: 1.25em; margin-left: -.35em; border-radius: .2em; background: var(--gold); box-shadow: 0 0 0 1px var(--ol); }
 #station-panel .sp-detail { padding: .3em .6em; border-radius: .45em; background: rgba(11,7,22,.5); } #station-panel .sp-detail.sp-brief h3, #station-panel .sp-detail.sp-brief p { display: inline; } #station-panel .sp-detail.sp-brief h3 { margin-right: .6em; } /* (a title and a line: one line, so the panel fits the screen: Ed, 2026-11-07) */ #station-panel .sp-detail.sp-withpreview { display: flex; gap: .8em; align-items: center; } #station-panel .sp-detail h3 { margin: 0 0 .15em; font-size: 1em; font-weight: 600; } #station-panel .sp-detail p { margin: 0; font-size: .85em; opacity: .9; }
 #station-panel .sp-preview { flex: none; width: 12em; height: 6em; border-radius: .4em; overflow: hidden; background: rgba(11,7,22,.6); }
 #station-panel .sp-preview > * { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-#station-panel .sp-wide { width: 6.4em; height: 3.8em; } #station-panel .sp-wide canvas { height: auto; width: auto; max-width: 5.9em; max-height: 3.3em; }
+#station-panel .sp-wide { width: 5.2em; height: 2.7em; } #station-panel .sp-wide canvas { height: auto; width: auto; max-width: 4.8em; max-height: 2.35em; }
+/* (the broom's stations a little tighter, and a part's detail one flowing paragraph, its name, its numbers and its line, so the lathe and the lift fit the screen with everything found: Ed, 2026-11-07) */
+#station-panel:is([data-station="broomBay"], [data-station="lathe"], [data-station="broomLift"]) .sp-shelf { padding: .35em .8em .4em; gap: .28em; } #station-panel:is([data-station="broomBay"], [data-station="lathe"], [data-station="broomLift"]) .sp-body { gap: .4em; } #station-panel:is([data-station="broomBay"], [data-station="lathe"], [data-station="broomLift"]) .sp-lab b { font-size: 1em; } #station-panel:is([data-station="broomBay"], [data-station="lathe"], [data-station="broomLift"]) .sp-fit { padding: 0 .3em; } #station-panel:is([data-station="broomBay"], [data-station="lathe"], [data-station="broomLift"]) .sp-fit span { font-size: .8em; line-height: 1.15; } #station-panel:is([data-station="broomBay"], [data-station="lathe"], [data-station="broomLift"]) .sp-fit .bar i { top: -.32em; height: 1em; }
+#station-panel .sp-detail.sp-stats h3 { display: inline; margin-right: .6em; } #station-panel .sp-detail.sp-stats p { display: inline-block; margin-right: .9em; font-size: .78em; }
 #station-panel .sp-board { flex-wrap: nowrap; gap: .45em; } #station-panel .sp-cell { flex: 1; position: relative; min-height: 6.2em; border: 1px solid rgba(232,226,244,.3); border-radius: .45em; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: .3em .2em; cursor: default; background: rgba(11,7,22,.5); }
 #station-panel .sp-cell small { font-size: .65em; line-height: 1.15; text-align: center; text-transform: uppercase; letter-spacing: .5px; opacity: .85; } #station-panel .sp-cell b { font-size: .75em; font-weight: normal; text-align: center; }
 #station-panel .sp-cell canvas { image-rendering: pixelated; max-width: 6.5em; max-height: 2.8em; width: auto; height: auto; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
@@ -515,10 +518,10 @@ body.paused #station-panel { visibility: hidden; }
   animation: sp-glint 1.7s steps(5) infinite; }
 #station-panel .loaned::before { top: 7px; left: 8px; } #station-panel .loaned::after { bottom: 9px; right: 7px; animation-delay: -.85s; }
 @keyframes sp-glint { 0%, 100% { opacity: 0; transform: scale(.6); } 50% { opacity: 1; transform: scale(1); } }
-#station-panel .sp-chips { display: flex; flex-wrap: wrap; gap: .45em; } #station-panel .sp-chips span { font-size: .85em; padding: .15em .7em; border-radius: 1em; border: 1px solid rgba(232,226,244,.35); opacity: .8; }
+#station-panel .sp-chips { display: flex; flex-wrap: wrap; gap: .3em; } #station-panel .sp-chips span { font-size: .66em; padding: 0 .45em; border-radius: 1em; border: 1px solid rgba(232,226,244,.35); opacity: .8; }
 #station-panel .sp-chips span.some { opacity: .95; } #station-panel .sp-chips span.whole { opacity: 1; color: #1d1408; background: var(--gold); text-shadow: none; border-color: var(--gold); }
-#station-panel .sp-detail h3 small { font-size: .8em; font-weight: normal; margin-left: .5em; opacity: .8; } #station-panel .sp-detail p.up, #station-panel .sp-sum .up b { color: #8fe39a; } #station-panel .sp-detail p.down, #station-panel .sp-sum .down b { color: #ff9a8a; }
-#station-panel .sp-sum { padding: .45em .6em; border-radius: .45em; background: rgba(11,7,22,.5); font-size: .85em; display: flex; flex-direction: column; gap: .1em; } #station-panel .sp-sum > div:not(.sp-sub) { display: flex; gap: .5em; } #station-panel .sp-sum > div > b { margin-left: auto; font-weight: normal; }
+#station-panel .sp-detail h3 small { font-size: .8em; font-weight: normal; margin-left: .5em; opacity: .8; } #station-panel .sp-detail p.up, #station-panel .sp-detail p.down { display: inline-block; margin-right: .9em; font-size: .78em; } /* (a part's numbers two or three to a line) */ #station-panel .sp-detail p.up, #station-panel .sp-sum .up b { color: #8fe39a; } #station-panel .sp-detail p.down, #station-panel .sp-sum .down b { color: #ff9a8a; }
+#station-panel .sp-sum { padding: .25em .6em; border-radius: .45em; background: rgba(11,7,22,.5); font-size: .7em; display: flex; flex-wrap: wrap; column-gap: 1.1em; row-gap: 0; } #station-panel .sp-sum > .sp-sub { flex-basis: 100%; } #station-panel .sp-sum > div:not(.sp-sub) { display: flex; gap: .4em; white-space: nowrap; } #station-panel .sp-sum > div > b { font-weight: normal; } /* (its numbers about three to a line, so the broom's stations fit the screen: Ed, 2026-11-07; true columns overflow the half screen, their widest entries 73 characters a row) */
 #station-panel .sp-foot { font-size: .8em; display: flex; align-items: center; gap: .4em; flex-wrap: wrap; opacity: .9; }
 #station-panel .sp-foot img.kc { transform: scale(1.4); margin: 0 .3em; }
 `;

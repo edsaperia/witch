@@ -22,7 +22,7 @@ export const SIZE = 2;
 /** Each piece drawn this much bigger again (Ed, 2026-10-26: "I think they're too small, which makes it hard to see what they are"):
  *  house.json's footprint is the real piece's times SIZE times this, so the piece is the same, drawn bigger, its details chunkier.
  *  The bed's already big; the small ones grow most. */
-export const GROW = { bed: 1, telephone: 1.8, microphone: 1.6, book: 1.7, telescope: 1.6, hats: 1, drumKit: 1.1, synthRack: 1.4, broomBay: 1.35, lathe: 1.2, pegboard: 1.4, cauldron: 1.4, teaTable: 1.4, cardTable: 1.4, invitations: 1 };
+export const GROW = { bed: 1, telephone: 1.8, microphone: 1.6, book: 1.7, telescope: 1.6, hats: 1, drumKit: 1.1, synthRack: 1.4, broomBay: 1.35, lathe: 1.2, broomRack: 1.2, broomLift: 1.3, pegboard: 1.4, cauldron: 1.4, teaTable: 1.4, cardTable: 1.4, invitations: 1 };
 export const GROW_ALL = 1.5;
 /** A piece's own scale: its footprint's metres over the real piece's. */
 export const sizeOf = id => SIZE * (GROW[id] ?? (id.startsWith("bedroom") ? 1 : GROW_ALL));
@@ -519,36 +519,93 @@ const PIECES = {
     sprig(m, [W / 2 + .06, y0 * .5, zb + .05], 4, .1, 33, .2);
   },
 
-  // The broom bay (Hotel's Workshop): two trestles that hold her broom across them at waist height (the mark `rest`: Hotel draws her
-  // broom there), a mechanic's creeper on the floor in front, a red tool chest at one end, an inspection lamp clamped to a trestle;
-  // ivy up a trestle's leg.
+  // The workbench (Ed, 2026-11-07: "a garage workbench with a vice and a red rolling tool chest beside it", replacing the old bay's
+  // trestles; the broom's tip is fitted here): a thick wooden top on square legs, a shelf under it with a toolbox and a coil of rope, a
+  // steel bench vice bolted at one end (her broom clamped in it while she's at it: the mark `rest`), a hammer, a spanner and a
+  // screwdriver laid out, a jar of screws; a clamp-on lamp glowing; beside it the red rolling tool chest, drawers and chrome handles, on
+  // castors, a spanner and a can on top.
   broomBay(m, { W, D, H }) {
-    const rest = H * .82, xs = [-W * .28, W * .18];
-    for (const [i, x] of xs.entries()) {
-      for (const s of [-1, 1]) for (const zz of [-1, 1]) m.seg([x + s * .05, rest - .05, 0], [x + s * .22, 0, zz * D * .2], .03, .03, M.WOOD, { group: 1 + i });
-      m.box([x, rest - .05, 0], [.06, .04, D * .22], M.WOOD, { round: .01, group: 1 + i });
-      m.ell([x, rest - .01, 0], [.07, .04, .12], M.ACCENT, { group: 3 + i }); // (a padded cradle)
-    }
-    (m.marks ??= {}).rest = [(xs[0] + xs[1]) / 2, rest + .04, 0];
-    ivy(m, xs[0] - .2, D * .2, .05, rest * .8, 5, .05);
-    // the creeper: a low board on castors, a padded headrest
-    m.box([-W * .05, .07, D * .32], [.45, .025, .17], M.BARKD, { round: .02, group: 10, paint: p => (p[0] < -W * .05 - .3 ? M.ACCENT : undefined) });
-    for (const [dx, dz] of [[-.38, -.12], [.38, -.12], [-.38, .12], [.38, .12]]) m.ell([-W * .05 + dx, .03, D * .32 + dz], [.03, .03, .03], M.SHADES, { group: 11 });
-    // the tool chest: red drawers, chrome handles, a spanner and a can on top
-    const tx = W / 2 - .22;
-    m.box([tx, .45, -D * .1], [.2, .43, .18], M.ACCENT, { round: .02, group: 20, paint: p => (Math.abs(((p[1] / .14) % 1 + 1) % 1 - .5) > .45 ? M.BARKD : undefined) });
-    for (let i = 0; i < 6; i++) m.box([tx, .14 + i * .14, -D * .1 + .19], [.08, .01, .01], M.FRAME, { group: 21 });
-    m.seg([tx - .1, .9, -D * .1], [tx + .08, .9, -D * .1 + .06], .015, .015, M.FRAME, { group: 22 });
-    can(m, tx + .08, -D * .1 - .05, .88, 1, .045, M.FLOWER, { group: 23 });
-    // the inspection lamp, clamped to the right trestle, glowing
-    m.seg([xs[1] + .1, rest - .05, -.05], [xs[1] + .25, rest + .35, -.1], .012, .012, M.SHADES, { group: 30 });
-    m.seg([xs[1] + .25, rest + .35, -.1], [xs[1] + .2, rest + .25, .05], .05, .08, M.SHADES, { group: 31 });
-    bulb(m, [xs[1] + .2, rest + .24, .07], .035, M.WOKEN, 32, [WARM, 14, .4]);
+    const bw = W * .66, bx = -W / 2 + bw / 2 + .04, top = H * .32, zb = -D / 2 + .08;
+    m.box([bx, top, 0], [bw / 2, .045, D / 2 - .04], M.WOOD, { round: .015, group: 1, paint: planks(.22) });
+    for (const x of [bx - bw / 2 + .06, bx + bw / 2 - .06]) for (const z of [-D / 2 + .1, D / 2 - .12]) m.box([x, top / 2, z], [.035, top / 2, .035], M.WOOD, { group: 2 });
+    m.box([bx, top * .28, 0], [bw / 2 - .06, .02, D / 2 - .1], M.WOOD, { group: 3 });
+    m.box([bx - bw * .22, top * .28 + .08, 0], [.16, .06, .1], M.HAT1, { round: .015, group: 4 }); // (a toolbox on the shelf)
+    m.ell([bx + bw * .2, top * .28 + .05, .02], [.1, .04, .09], M.STRAW, { group: 5 }); // (a coil of rope)
+    // the vice at its left end: a steel body, its jaws, the screw's bar
+    const vx = bx - bw / 2 + .2, vy = top + .045;
+    m.box([vx, vy + .06, D / 2 - .18], [.09, .06, .09], M.FRAME, { round: .02, group: 10 });
+    for (const z of [-.06, .06]) m.box([vx, vy + .15, D / 2 - .18 + z], [.08, .04, .015], M.SHADES, { group: 11 });
+    m.seg([vx, vy + .08, D / 2 - .04], [vx, vy + .08, D / 2 + .08], .015, .015, M.FRAME, { group: 12 });
+    m.seg([vx - .08, vy + .08, D / 2 + .08], [vx + .08, vy + .08, D / 2 + .08], .012, .012, M.FRAME, { group: 12 });
+    (m.marks ??= {}).rest = [vx + bw * .3, vy + .2, D / 2 - .18];
+    // tools laid out: a hammer, a spanner, a screwdriver; a jar of screws
+    m.seg([bx + .05, vy + .02, .05], [bx + .3, vy + .02, .1], .014, .014, M.WOOD, { group: 20 }); m.box([bx + .3, vy + .03, .1], [.025, .02, .06], M.FRAME, { group: 20 });
+    m.seg([bx - .2, vy + .015, -.08], [bx + .02, vy + .015, -.12], .012, .012, M.FRAME, { group: 21 }); m.ell([bx - .22, vy + .015, -.075], [.03, .01, .03], M.FRAME, { group: 21 });
+    m.seg([bx + .35, vy + .02, -.1], [bx + .5, vy + .02, -.05], .015, .012, M.ACCENT, { group: 22 }); m.seg([bx + .5, vy + .02, -.05], [bx + .6, vy + .02, -.02], .006, .006, M.FRAME, { group: 22 });
+    can(m, bx + bw / 2 - .15, zb + .1, vy, vy + .12, .045, M.CRYSTAL, { group: 23, paint: p => (hash2(Math.round(p[0] * 60), Math.round(p[1] * 60), 2) > .6 ? M.FRAME : undefined) });
+    // the clamp-on lamp at the back, glowing
+    m.seg([bx + bw * .15, vy, zb], [bx + bw * .15, vy + .5, zb], .012, .012, M.SHADES, { group: 30 });
+    m.seg([bx + bw * .15, vy + .5, zb], [bx + bw * .05, vy + .42, zb + .1], .05, .08, M.SHADES, { group: 31 });
+    bulb(m, [bx + bw * .04, vy + .4, zb + .13], .035, M.WOKEN, 32, [WARM, 14, .4]);
+    ivy(m, bx + bw / 2 - .06, -D / 2 + .1, .05, top * .9, 5, .05);
+    // the red rolling tool chest beside it: drawers, chrome handles, castors; a spanner and a can on top
+    const tx = W / 2 - .24, th = H * .36;
+    m.box([tx, .06 + th / 2, 0], [.2, th / 2, .2], M.ACCENT, { round: .02, group: 40, paint: p => (Math.abs(((p[1] / .12) % 1 + 1) % 1 - .5) > .44 ? M.BARKD : undefined) });
+    for (let i = 0; i < Math.floor(th / .12); i++) m.box([tx, .12 + i * .12, .21], [.09, .01, .01], M.FRAME, { group: 41 });
+    for (const [dx, dz] of [[-.15, -.15], [.15, -.15], [-.15, .15], [.15, .15]]) m.ell([tx + dx, .03, dz], [.03, .03, .03], M.SHADES, { group: 42 });
+    m.seg([tx - .1, .08 + th, 0], [tx + .08, .08 + th, .06], .015, .015, M.FRAME, { group: 43 });
+    can(m, tx + .1, -.06, .07 + th, .19 + th, .045, M.FLOWER, { group: 44 });
   },
 
-  // The lathe (Hotel's Workshop): a sturdy bench, the lathe on it (a headstock, its bed, a tailstock: her broom lies between them,
-  // the mark `rest`), a row of paint tins with drips down their sides, brushes in a jar, a rag; shavings curling on the floor.
-  lathe(m, { W, D, H }, state) {
+  // The broom rack (Ed, 2026-11-07: "E takes her plain broom for the night. No menu, like the invitations desk"): a freestanding rack of
+  // dark wood, two posts and a top rail with three pairs of brass hooks, a plain broom hung bristles down on each (the state, the brooms
+  // left: "3" to "0", gone as each witch takes hers), a drip tray at its foot, ivy up one post.
+  broomRack(m, { W, D, H }, state) {
+    const left = Number(state ?? 3), rail = H * .88, xs = [-W / 2 + .06, W / 2 - .06];
+    for (const x of xs) { m.seg([x, 0, 0], [x, rail + .06, 0], .035, .035, M.BARKD, { group: 1 }); m.box([x, .02, 0], [.05, .02, D / 2 - .04], M.BARKD, { group: 1 }); m.ell([x, rail + .1, 0], [.045, .05, .045], M.FLOWER, { group: 1 }); }
+    m.seg([xs[0], rail, 0], [xs[1], rail, 0], .03, .03, M.BARKD, { group: 2 });
+    m.box([0, .03, D * .1], [W / 2 - .1, .015, D / 2 - .1], M.FRAME, { group: 3 }); // (a drip tray)
+    ivy(m, xs[0], .03, .1, rail * .85, 4, .05);
+    const n = 3, span = W - .4;
+    for (let i = 0; i < n; i++) {
+      const x = -span / 2 + (i + .5) * span / n;
+      for (const s of [-1, 1]) m.seg([x + s * .04, rail, 0], [x + s * .04, rail - .05, .05], .012, .01, M.FLOWER, { group: 10 + i });
+      if (i >= left) continue;
+      const a = [x, rail - .02, .06], b = [x, .1, .1], t = [x, rail - (rail - .1) * .72, .085];
+      m.seg(a, t, .055, .06, M.BARKD, { group: 20 + i * 3 });
+      m.seg(t, [x, t[1] - .03, .087], .075, .075, M.FRAME, { group: 21 + i * 3 });
+      m.seg([x, t[1] - .02, .087], b, .08, .16, M.STRAW, { group: 22 + i * 3, paint: p => (hash2(Math.round(p[0] * 60), Math.round(p[1] * 60), 7 + i) > .8 ? M.BROOM : undefined) });
+    }
+  },
+
+  // The hydraulic lift (Ed, 2026-11-07: "a little garage ramp the broom goes up on, bristles toward the player. It can hiss up and down
+  // when she uses it"; the broom's exhaust is fitted here): a steel base plate with yellow-and-black hazard edges, a scissor of steel
+  // arms, a platform with two rubber cradles, a hydraulic ram under it and its hose to a pump box with a gauge and a lever. Its state:
+  // "down", resting low, or "up", raised (while she's at it: her broom on its cradles, the mark `rest`, render/workshopArt.ts).
+  broomLift(m, { W, D, H }, state) {
+    const up = state === "up", ph = up ? H * .62 : H * .2, pw = W * .34, px = -W * .1;
+    const bd = D * .32; // (the base plate's half depth)
+    m.box([px, .03, 0], [pw + .1, .03, bd], M.FRAME, { round: .01, group: 1, paint: p => (Math.abs(p[2]) > bd - .06 || Math.abs(p[0] - px) > pw + .04 ? (Math.floor((p[0] + p[2]) * 9) % 2 === 0 ? M.FLOWER : M.SHADES) : undefined) });
+    // the scissor: two pairs of crossed arms, front and back
+    for (const z of [-D * .2, D * .2]) { m.seg([px - pw * .8, .06, z], [px + pw * .8, ph - .04, z], .025, .025, M.SHADES, { group: 2 }); m.seg([px + pw * .8, .06, z], [px - pw * .8, ph - .04, z], .025, .025, M.SHADES, { group: 2 }); m.ell([px, (ph + .02) / 2, z], [.03, .03, .03], M.FRAME, { group: 2 }); }
+    m.seg([px, .06, 0], [px, ph - .06, 0], .045, .035, M.FRAME, { group: 3 }); // (the ram)
+    m.box([px, ph, 0], [pw, .035, D * .22], M.HAT1, { round: .01, group: 4 });
+    for (const x of [px - pw * .55, px + pw * .55]) m.box([x, ph + .05, 0], [.06, .03, D * .16], M.SHADES, { round: .02, group: 5 }); // (rubber cradles)
+    (m.marks ??= {}).rest = [px, ph + .09, 0];
+    // the pump box, its gauge and lever, the hose to the ram
+    const bx2 = W / 2 - .18;
+    m.box([bx2, .22, -D * .15], [.13, .2, .12], M.FLOWER, { round: .02, group: 10, paint: p => (p[1] > .38 ? M.SHADES : undefined) });
+    m.ell([bx2, .32, -D * .15 + .125], [.05, .05, .01], M.BELLY, { group: 11, paint: p => (Math.abs(p[0] - bx2) < .008 && p[1] > .32 ? M.ACCENT : undefined) });
+    m.seg([bx2 + .08, .42, -D * .15], [bx2 + .14, .58, -D * .15 + (up ? .1 : -.05)], .012, .012, M.FRAME, { group: 12 }); m.ell([bx2 + .14, .59, -D * .15 + (up ? .1 : -.05)], [.03, .03, .03], M.ACCENT, { group: 12 });
+    m.chain([[bx2 - .1, .08, -D * .15, .02], [bx2 - .4, .04, -D * .05, .02], [px + .08, .08, 0, .02]], M.SHADES, { group: 13 });
+    // an oil can and a rag on the floor
+    can(m, bx2 - .05, D * .3, .02, .14, .045, M.HAT1, { group: 20 });
+    m.ell([px + pw + .25, .015, D * .25], [.1, .02, .07], M.BELLY, { group: 21, rough: .01 });
+  },
+
+  // The lathe (Hotel's Workshop; the broom's chassis fitted here since Ed, 2026-11-07): a sturdy bench, the lathe on it (a headstock, its
+  // bed, a tailstock: her broom lies between them, the mark `rest`), a row of paint tins with drips down their sides, brushes in a jar, a rag; shavings curling on the floor.
+  lathe(m, { W, D, H }) { // (her night's brooms on the rack since Ed, 2026-11-07: broomRack)
     const top = H * .45;
     m.box([0, top, 0], [W / 2, .04, D / 2], M.WOOD, { round: .015, group: 1, paint: planks(.3) });
     for (const x of [-W / 2 + .08, W / 2 - .08]) for (const z of [-D / 2 + .06, D / 2 - .06]) m.seg([x, 0, z], [x, top, z], .04, .04, M.WOOD, { group: 2 });
@@ -567,17 +624,6 @@ const PIECES = {
     for (let i = 0; i < 3; i++) m.seg([W * .42 + (i - 1) * .02, sit + .08, D * .2], [W * .42 + (i - 1) * .05, sit + .3, D * .2], .01, .016, i ? M.WOOD : M.STRAW, { group: 31 + i });
     m.ell([W * .1, sit + .02, D * .25], [.12, .025, .08], M.BELLY, { group: 35, rough: .01, paint: p => (hash2(Math.round(p[0] * 40), Math.round(p[2] * 40), 4) > .7 ? M.ACCENT : undefined) });
     for (let i = 0; i < 6; i++) { const a = i * 1.1; m.ell([lx + Math.cos(a) * .3, .015, D * .35 + Math.sin(a) * .15], [.05, .012, .03], M.STRAW, { group: 40, dir: [Math.cos(a), 0, Math.sin(a)] }); }
-    // Her night's brooms (Ed, 2026-10-26: "three basic brooms, one on the lathe, two resting nearby, they disappear as each witch takes one"): the
-    // state the brooms left ("3", "2", "1", "0"); the first on the lathe, the others leaning on the table's ends
-    const left = Number(state ?? 3), broom = (a, b, g) => { // a plain broom, its handle from a to its bristles' end b
-      const t = [a[0] + (b[0] - a[0]) * .72, a[1] + (b[1] - a[1]) * .72, a[2] + (b[2] - a[2]) * .72];
-      m.seg(a, t, .06, .065, M.BARKD, { group: g }); // (a dark handle, thick enough to read at the house's camera, against the lit tabletop)
-      m.seg(t, [t[0] + (b[0] - a[0]) * .03, t[1] + (b[1] - a[1]) * .03, t[2] + (b[2] - a[2]) * .03], .08, .08, M.FRAME, { group: g + 1 });
-      m.seg(t, b, .09, .17, M.STRAW, { group: g + 2, paint: p => (hash2(Math.round(p[0] * 60), Math.round(p[1] * 60), 7) > .8 ? M.BROOM : undefined) });
-    };
-    if (left >= 1) broom([lx - len * .55, sit + .42, .12], [lx + len * .6, sit + .36, .12], 50); // (up on its centres, clear of the rails)
-    if (left >= 2) broom([-W / 2 - .02, top + .55, D / 2 - .1], [-W / 2 - .28, .02, D / 2 + .25], 54);
-    if (left >= 3) broom([W / 2 + .02, top + .55, D / 2 - .1], [W / 2 + .3, .02, D / 2 + .2], 58);
   },
 
   // The record shelf: a tall shelf of records, their spines every colour, a turntable on top with a record on it, a crate of vinyl at its
@@ -879,7 +925,7 @@ export const PARTS = { light, bulb, candle, sprig, ivy, can, disc, planks, WARM,
 /** The ids drawn as art (every interactive object of the house; the hats on the hats' floor are its own, render/houseRooms.ts). */
 export const FURNITURE_IDS = Object.keys(PIECES);
 /** Each piece's states, drawn once each (the first the default). */
-export const FURNITURE_STATES = { curtains: ["open", "shut"], invitations: ["8,8,8", "4,8,8", "0,8,8", "8,3,0", "0,0,0"], lathe: ["3", "2", "1", "0"], ...Object.fromEntries([...GUEST_FURNITURE].map(id => [id, ["sheeted", "open"]])) };
+export const FURNITURE_STATES = { curtains: ["open", "shut"], invitations: ["8,8,8", "4,8,8", "0,8,8", "8,3,0", "0,0,0"], broomRack: ["3", "2", "1", "0"], broomLift: ["down", "up"], ...Object.fromEntries([...GUEST_FURNITURE].map(id => [id, ["sheeted", "open"]])) };
 
 // ---------- colours: one palette for the whole house ----------
 // One palette (Ed, 2026-11-03: the house one room, "I don't think the zones are doing anything"; it was one a room, Ed's "per room"

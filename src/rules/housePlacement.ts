@@ -1,6 +1,7 @@
 import type { HouseConfig, HouseObject } from "./houseRooms";
 import proposal from "../../config/house/layouts/ed-current.json";
 import baseline from "../../config/house/layouts/editor-v1-baseline.json";
+import provisional from "../../config/house/layouts/provisional.json";
 import { roomAt } from "../../config/house/shape.js";
 import { publishedGuestFurnitureId } from "./guestFurnitureMigration";
 
@@ -35,6 +36,14 @@ export function applyEdLayout(source: HouseConfig, on = edLayoutRequested()): Ho
     // The unused guest chest is replaced in place by Ed's requested dressing table.
     const placedId = publishedGuestFurnitureId(o.id);
     const p = proposal.objects.find(p => p.id === placedId), original = baseline.items.find(q => q.id === placedId);
+    // An object new since Ed's export, with a provisional pose in his arrangement (config/house/layouts/provisional.json: the broom rack
+    // and the hydraulic lift, Ed 2026-11-07), placed so, its front (where she stands) to its rotation's south.
+    const prov = !p ? provisional.objects.find(q => q.id === o.id) : undefined;
+    if (prov) {
+      const front = rotatePlacement(0, o.d / 2 + 0.5, prov.rotation);
+      o.placement = { rotation: prov.rotation, baseRotation: prov.rotation, foot: { w: o.w, d: o.d, h: o.h }, curve: 0, anchor: { x: prov.x + front.x, z: prov.z + front.z }, sourceRoom: o.room };
+      o.x = prov.x; o.z = prov.z; o.room = roomAt(H.shape, prov.x, prov.z)?.id ?? o.room; continue;
+    }
     if (!p || !original) continue;
     if (o.id === "cauldron") {
       // Current large-pot data, never the held stale version-1 placeholder.

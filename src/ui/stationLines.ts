@@ -22,7 +22,7 @@ import { TRAIL_PRESETS } from "../render/trailColours";
 export const CARD_SHOW: Readonly<Record<string, "bust" | "legs" | "back" | "jacket" | "bag">> = { hair: "bust", skin: "bust", face: "bust", earrings: "bust", shoes: "legs", cloak: "back", scarf: "back", jacket: "jacket", bag: "bag" };
 
 /** Each station's panel's heading, by its home id (a guests' bedroom's piece by its home namesake's: rules/clothesPile.ts homeStation). */
-export const STATION_NAMES: Readonly<Record<string, string>> = { basin: "Basin", mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Broom", pegboard: "Pegboard" };
+export const STATION_NAMES: Readonly<Record<string, string>> = { basin: "Basin", mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "Workbench", lathe: "Lathe", broomLift: "Hydraulic lift", pegboard: "Pegboard" };
 export const stationTitle = (id: string): string => STATION_NAMES[homeStation(id)] ?? id;
 
 /** One focusable line of the panel. `readOnly`: focus only, nothing chosen (the pegboard). */
@@ -42,7 +42,6 @@ export function stationLines(shelves: readonly Shelf[], ctx: LineCtx): Line[] {
     if (s.slot) out.push({ shelf: i, kind: "cards", n: 1 + partsFor(s.slot).length });
     if (s.board) for (let r = 0; r < 3; r++) out.push({ shelf: i, kind: "cards", n: 3, row: r, readOnly: true });
     if (s.sets) out.push({ shelf: i, kind: "chips", n: SETS.length, readOnly: true });
-    if (s.trail) out.push({ shelf: i, kind: "trail", n: TRAIL_PRESETS.length }); // (her trail's colours, a preset a tile: Ed, 2026-11-03)
     if (itemsToChoose(s, ctx.owned)) {
       const items = shownItems(s);
       for (let k = 0; k < items.length; k += ITEMS_PER_LINE) out.push({ shelf: i, kind: "items", n: Math.min(ITEMS_PER_LINE, items.length - k), ...(k ? { from: k } : {}), ...(s.readOnly ? { readOnly: true } : {}) });
@@ -53,6 +52,7 @@ export function stationLines(shelves: readonly Shelf[], ctx: LineCtx): Line[] {
       for (let r = 0; r < rows; r++) out.push({ shelf: i, kind: "grid", n: cols, row: r });
     }
     for (const a of s.fit ?? []) if (ctx.fitOn(a)) out.push({ shelf: i, kind: "fit", n: 1, axis: a });
+    if (s.trail) out.push({ shelf: i, kind: "trail", n: TRAIL_PRESETS.length }); // (her trail's colours, a preset a tile: Ed, 2026-11-03; on the lift's Trim card, after its colours and bristle size, since Ed, 2026-11-07)
     if (s.action) out.push({ shelf: i, kind: "action", n: 1 }); // (the basin's Teeth button: Ed, 2026-11-07)
   });
   return out;
@@ -64,13 +64,22 @@ export const itemAt = (s: Shelf, l: Line, col: number) => shownItems(s)[(l.from 
  *  items line's cards, a grid row, a fit slider...), with the tallest detail box at a card's foot: the no-scroll rule's estimate
  *  (Ed, 2026-11-07: "no station menu is taller than the screen at 1280×720"; src/ui/stationFit.test.ts, beside the panel measured
  *  in the built game by tools/stations/check.cjs). Rough by a line or so: the DOM measure is the judge. */
-export const LINE_EM: Record<Line["kind"], number> = { items: 4 + 0.35, parts: 1.55 + 0.35, grid: 0.74 + 0.11, fit: 2 + 0.35, cards: 3.8 + 0.35, chips: 1.6 + 0.35, trail: 4 + 0.35, action: 1.75 + 0.35 };
+export const LINE_EM: Record<Line["kind"], number> = { items: 4 + 0.35, parts: 1.55 + 0.35, grid: 0.74 + 0.11, fit: 1.6 + 0.35, cards: 3.2 + 0.35, chips: 2.4 + 0.35, trail: 1.7 + 0.35, action: 1.75 + 0.35 };
 /** A card's own (its title, its padding, the gap to the next), the panel's heading, foot and padding (the rest of the screen's height at
  *  1280×720: its body is 601 px of 720 there), and the tallest detail box (two lines). */
 export const CARD_EM = 1.55 + 1.0 + 0.5, HEAD_EM = 4.8, FOOT_EM = 1.6, DETAIL_EM = 4.3;
-export function panelEm(shelves: readonly Shelf[], lines: readonly Line[], detail = DETAIL_EM): number {
+/** The broom's stations (their tighter CSS: ui/stationPanel.ts), measured in the built game with the most "Her broom" can show (a
+ *  part of three numbers in each slot: the hobby-horse head, the ladder and the jet nozzles) and a part's three numbers in focus: a
+ *  card's own, a line of part cards, a grid row, a slider, the trail's line, the sets' chips (two lines), "Her broom" (its title,
+ *  nine numbers and her spell) and the tallest detail (a part's name, its numbers and its line). */
+export const BROOM_EM = { card: 2.8, cards: 3.0, grid: 0.81, fit: 1.2, trail: 2.0, chips: 2.6, summary: 5.7, detail: 4.65 };
+export function panelEm(shelves: readonly Shelf[], lines: readonly Line[], detail?: number): number {
   const cards = new Set(lines.map(l => l.shelf)).size;
-  return HEAD_EM + FOOT_EM + cards * CARD_EM + lines.reduce((a, l) => a + (l.kind === "items" && shelves[l.shelf].toggle ? 1.9 + 0.35 : LINE_EM[l.kind]), 0) + detail;
+  if (shelves.some((s, i) => s.sets && lines.some(l => l.shelf === i))) { // (the broom's stations: their own tighter CSS, "Her broom" and a part's numbers)
+    const B = BROOM_EM;
+    return HEAD_EM + FOOT_EM + cards * B.card + lines.reduce((a, l) => a + (B[l.kind as keyof typeof B] ?? LINE_EM[l.kind]), 0) + B.summary + (detail ?? B.detail);
+  }
+  return HEAD_EM + FOOT_EM + cards * CARD_EM + lines.reduce((a, l) => a + (l.kind === "items" && shelves[l.shelf].toggle ? 1.9 + 0.35 : LINE_EM[l.kind]), 0) + (detail ?? DETAIL_EM);
 }
 /** The part on a cards line's cell: the bay's slot (null, the empty slot, first; then its parts) or the pegboard's cell (row by
  *  row from the north-west). */
@@ -130,6 +139,12 @@ export const partStats = (id: string, base: Tuning): StatLine[] => {
 export const broomSummary = (f: Fitted, base: Tuning): StatLine[] => {
   const keys = new Set(SLOTS.flatMap(s => Object.keys(partById(f[s])?.stats ?? {})));
   return [...keys].map(k => statLine(k, base, f)).filter((x): x is StatLine => !!x && x.better !== null);
+};
+/** "48 m/s → 53 m/s" as "48→53 m/s" (the same unit once), "3 → 1.5" as "3→1.5", "×1.7 → ×1.5" as "×1.7→1.5", so "Her broom" and a
+ *  part's detail take fewer lines (Ed, 2026-11-07: every panel fits the screen). */
+export const fromTo = (a: string, b: string): string => {
+  const u = /[^\d.]*$/.exec(a)?.[0] ?? "", p = /^[^\d]*/.exec(a)?.[0] ?? "";
+  return b.endsWith(u) && b.startsWith(p) ? `${a.slice(0, a.length - u.length)}→${b.slice(p.length, b.length - u.length)}${u}` : `${a} → ${b}`;
 };
 /** The sets as chips: name, pieces fitted of how many, its spell's name, whole or not ("Rocket 3/3 · Speed"). */
 export const setChips = (f: Fitted): { id: string; name: string; fitted: number; of: number; spell: string; whole: boolean }[] =>

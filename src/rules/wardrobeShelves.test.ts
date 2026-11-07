@@ -110,10 +110,11 @@ describe("Ed's redo (2026-10-23): nothing with no choice in it, the broom till t
     expect(itemsToChoose({ ...face, items: face.items.slice(0, 1) }, new Set(STARTING_SET))).toBe(false); // (one item, hers: no choice)
     expect(itemsToChoose(SHELVES.makeup, new Set(STARTING_SET))).toBe(true); // (each toggle a choice by itself)
   });
-  it("the lathe is the one broom station, the old stand, bay and separate pegboard gone; no station offers a broom's power or shape", () => {
+  it("the broom's three stations (the workbench, the lathe, the lift: Ed, 2026-11-07), the old stand and the pegboard's panel gone; no station offers a broom's power or shape", () => {
     expect(shelvesAt("broomStand")).toBeNull();
-    expect(shelvesAt("lathe")!.map(s => s.id)).toEqual(["tip", "chassis", "exhaust", "sets", "broomBody", "broomTrim", "broomFit", "trail", "pegboard"]); // (one broom station: Ed, 2026-10-29, "one for colours, the other for components")
-    for (const id of ["broomBay", "pegboard"]) expect(shelvesAt(id), id).toBeNull();
+    expect(shelvesAt("lathe")!.map(s => s.id)).toEqual(["chassis", "broomBody", "sets"]); // (the broom over three stations since Ed, 2026-11-07: the workbench, the lathe, the lift)
+    expect(shelvesAt("broomBay")!.map(s => s.id)).toEqual(["tip", "sets"]); expect(shelvesAt("broomLift")!.map(s => s.id)).toEqual(["exhaust", "broomTrim", "sets"]); // (was one station: Ed, 2026-10-29, "one for colours, the other for components")
+    expect(shelvesAt("pegboard")).toBeNull(); expect(shelvesAt("broomRack")).toBeNull();
     for (const s of Object.values(SHELVES)) { expect((s as unknown as Record<string, unknown>).power, s.id).toBeUndefined(); for (const i of s.items) expect(i.set["broom.kind"], i.id).toBeUndefined(); }
   });
   it("every shelf names the part of her the camera zooms on, one the tuning has", () => {

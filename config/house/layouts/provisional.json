@@ -1,0 +1,17 @@
+{
+  "_": "Provisional poses in Ed's arrangement for objects new since his last export (Ed arranges them in the house editor; his next export places them and these are then unread): the broom rack on the Terrace by where she steps off, the hydraulic lift on the Terrace's east side, between the rack and his lathe (Ed, 2026-11-07, the broom stations). x, z plan metres; rotation absolute clockwise degrees, zero facing south (the camera), as config/house/layouts/ed-current.json.",
+  "objects": [
+    {
+      "id": "broomRack",
+      "x": 5,
+      "z": 1,
+      "rotation": 0
+    },
+    {
+      "id": "broomLift",
+      "x": 11.5,
+      "z": -3,
+      "rotation": 0
+    }
+  ]
+}

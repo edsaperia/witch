@@ -9,34 +9,32 @@ import { BOARD, PARTS, bareBroom, fittedKey, fittedOf, partById } from "../rules
 import { setParts } from "../rules/spells";
 import { SHELVES, shelvesAt, type Shelf } from "../rules/wardrobe";
 import { HOUSE_ROOMS } from "../rules/houseRooms";
-import { broomSummary, canChoose, cardAt, choose, ITEMS_PER_LINE, itemAt, panelPad, partStats, setChips, stationLines, type Line } from "./stationLines";
+import { broomSummary, canChoose, cardAt, choose, fromTo, ITEMS_PER_LINE, itemAt, panelPad, partStats, setChips, stationLines, type Line } from "./stationLines";
 
 const newGame = smallWorld(fullGame, "Station menu integration reads fitted broom stats on one witch, independent of world extent.");
 const ctx = (owned: string[] = []) => ({ owned: new Set(owned), fitOn: () => true, grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 3 : 13, rows: 5 }) });
 const linesAt = (id: string) => { const sh = shelvesAt(id)!; return { sh, L: stationLines(sh, ctx()) }; };
 const cards = (sh: Shelf[], l: Line) => Array.from({ length: l.n }, (_, c) => cardAt(sh[l.shelf], l, c));
 
-describe("the broom's parts (the lathe's first cards: the broom one station since Ed, 2026-10-29)", () => {
-  it("has a line of cards for each slot, the empty slot first then its three parts, and a line of the five sets' chips", () => {
-    const { sh, L } = linesAt("lathe");
-    expect(L.slice(0, 4).map(l => l.kind)).toEqual(["cards", "cards", "cards", "chips"]);
-    expect(L.slice(0, 3).map(l => sh[l.shelf].slot)).toEqual(["tip", "chassis", "exhaust"]);
-    for (const l of L.slice(0, 3)) {
-      const ids = cards(sh, l);
+describe("the broom's parts, a slot at each of its three stations (Ed, 2026-11-07: the workbench the tip, the lathe the chassis, the lift the exhaust)", () => {
+  it("each station's first line its slot's cards, the empty slot first then its three parts; the sets' chips its last", () => {
+    for (const [id, slot] of [["broomBay", "tip"], ["lathe", "chassis"], ["broomLift", "exhaust"]] as const) {
+      const { sh, L } = linesAt(id), l = L[0], ids = cards(sh, l);
+      expect(l.kind, id).toBe("cards"); expect(sh[l.shelf].slot, id).toBe(slot);
       expect(ids[0]).toBeNull();
-      expect(ids.slice(1)).toEqual(PARTS.filter(p => p.slot === sh[l.shelf].slot).map(p => p.id));
+      expect(ids.slice(1)).toEqual(PARTS.filter(p => p.slot === slot).map(p => p.id));
       expect(l.readOnly).toBeFalsy();
+      expect(L[L.length - 1], id).toMatchObject({ kind: "chips", n: 5, readOnly: true }); // ("The sets line and 'Her broom' sit at the bottom of all three")
     }
-    expect(L[3]).toMatchObject({ n: 5, readOnly: true });
     expect(SHELVES.tip.frame).toBe("broom");
   });
   it("only the empty slot and the parts she's found can be chosen (an unfound one is a silhouette)", () => {
-    const { sh, L } = linesAt("lathe"), tip = L[0], found = new Set(["missile"]);
+    const { sh, L } = linesAt("broomBay"), tip = L[0], found = new Set(["missile"]), chips = L[L.length - 1];
     expect(canChoose(sh[tip.shelf], tip, 0, found)).toBe(true); // ∅
     expect(canChoose(sh[tip.shelf], tip, 1, found)).toBe(true); // the Missile nose, found
     expect(canChoose(sh[tip.shelf], tip, 2, found)).toBe(false);
     expect(canChoose(sh[tip.shelf], tip, 3, found)).toBe(false);
-    expect(canChoose(sh[L[3].shelf], L[3], 0, found)).toBe(false); // (the chips only focus)
+    expect(canChoose(sh[chips.shelf], chips, 0, found)).toBe(false); // (the chips only focus)
   });
   it("a card chosen fits the part in its slot (∅ empties it); on her, the set and its spell come at once, mid-night", () => {
     let f = bareBroom();
@@ -67,19 +65,22 @@ describe("the broom's parts (the lathe's first cards: the broom one station sinc
   });
 });
 
-describe("the lathe", () => {
-  it("is the broom's one station: its parts and sets, then its two colour grids (body and trim, 5 rows each) and its fit, its trail's colours, then the pegboard; no items, no shapes, no power", () => {
-    const { sh, L } = linesAt("lathe");
-    expect(sh.map(s => s.id)).toEqual(["tip", "chassis", "exhaust", "sets", "broomBody", "broomTrim", "broomFit", "trail", "pegboard"]); // (her trail's colours, the Trail row: Ed, 2026-11-03)
-    expect(L.filter(l => l.kind === "grid").length).toBe(10);
-    expect(L.filter(l => l.kind === "fit").map(l => l.axis)).toEqual(["broomLength", "broomThickness", "broomBend", "bristles"]);
-    expect(L.some(l => l.kind === "items")).toBe(false);
+describe("the broom's three stations (Ed, 2026-11-07)", () => {
+  it("the workbench the tip; the lathe the chassis, the Body colour and its length, thickness and bend; the lift the exhaust, the Trim colour, its bristle size and the trail; the sets and her broom at each one's foot; no items, no shapes, no power, no pegboard", () => {
+    expect(shelvesAt("broomBay")!.map(s => s.id)).toEqual(["tip", "sets"]);
+    expect(shelvesAt("lathe")!.map(s => s.id)).toEqual(["chassis", "broomBody", "sets"]);
+    expect(shelvesAt("broomLift")!.map(s => s.id)).toEqual(["exhaust", "broomTrim", "sets"]); // (her trail's colours, the Trail row: Ed, 2026-11-03)
+    const lathe = linesAt("lathe").L, lift = linesAt("broomLift").L;
+    expect(lathe.filter(l => l.kind === "grid").length).toBe(5); expect(lift.filter(l => l.kind === "grid").length).toBe(5);
+    expect(lathe.filter(l => l.kind === "fit").map(l => l.axis)).toEqual(["broomLength", "broomThickness", "broomBend"]);
+    expect(lift.filter(l => l.kind === "fit").map(l => l.axis)).toEqual(["bristles"]);
+    for (const id of ["broomBay", "lathe", "broomLift"]) { const { sh, L } = linesAt(id); expect(L.some(l => l.kind === "items"), id).toBe(false); expect(sh.some(s => s.board), id).toBe(false); }
   });
 });
 
 describe("the pegboard", () => {
-  it("is read-only: three lines of three cards, the 3 × 3 biome map row by row from the north-west (the lathe's last card)", () => {
-    const { sh, L: all } = linesAt("lathe"), L = all.filter(l => sh[l.shelf].board);
+  it("is read-only: three lines of three cards, the 3 × 3 biome map row by row from the north-west (its shelf, on no station's panel since Ed, 2026-11-07: scenery)", () => {
+    const sh = [SHELVES.pegboard], all = stationLines(sh, ctx()), L = all.filter(l => sh[l.shelf].board);
     expect(L.map(l => [l.kind, l.n, l.readOnly])).toEqual([["cards", 3, true], ["cards", 3, true], ["cards", 3, true]]);
     const order = L.flatMap(l => cards(sh, l));
     expect(order).toEqual(["oar", "ladder", "missile", "horse", "twigs", "fairing", "canoe", "curl", "nozzles"]);
@@ -106,9 +107,10 @@ describe("item lines wrap (Ed, 2026-11-07, the bags: \"compact cards like the ja
 });
 
 describe("the stations", () => {
-  it("the Workshop's lathe is the broom's one station (the bay and the pegboard scenery); the broom stand is gone", () => {
+  it("the broom's three modding stations (the workbench, the lathe, the lift), the pegboard scenery, the rack its pickup; the broom stand is gone", () => {
     const ids = HOUSE_ROOMS.objects.filter(o => o.use.kind === "creator").map(o => o.id);
-    expect(ids).toContain("lathe"); expect(ids).not.toContain("broomBay"); expect(ids).not.toContain("pegboard");
+    for (const id of ["broomBay", "lathe", "broomLift"]) expect(ids).toContain(id);
+    expect(ids).not.toContain("pegboard"); expect(ids).not.toContain("broomRack");
     expect(ids).not.toContain("broomStand");
     for (const id of ids) expect(shelvesAt(id), id).not.toBeNull();
   });
@@ -128,5 +130,11 @@ describe("panelPad (a gamepad on a station's panel)", () => {
     expect(panelPad(pressed(), [-0.1, -0.8, 0, 0]).dir).toBe("up");
     expect(panelPad(pressed(), [0.3, 0.2, 0, 0]).dir).toBe("");
     expect(panelPad(pressed(), [0, 0, 1, 0]).dir).toBe(""); // (the right stick no longer)
+  });
+});
+
+describe("a number's change, shortened (Ed, 2026-11-07: every panel fits the screen)", () => {
+  it("the unit once, no spaces round the arrow", () => {
+    expect([fromTo("48 m/s", "53 m/s"), fromTo("3", "1.5"), fromTo("×1.7", "×1.5"), fromTo("150°/s", "120°/s"), fromTo("2 s", "1 m")]).toEqual(["48→53 m/s", "3→1.5", "×1.7→1.5", "150→120°/s", "2 s → 1 m"]);
   });
 });

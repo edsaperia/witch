@@ -44,7 +44,7 @@ function pageCanvas(w: number, h: number): HTMLCanvasElement { const c = documen
  *  piece isn't baked yet. */
 export type MarkAt = (piece: string, mark: string, dx: number, dy: number) => V3 | null;
 /** What the Workshop shows: her parts, the ones she's found, tonight's (a part to find, not found yet) and where her broom rests. */
-export interface WorkshopState { fitted: Fitted; found: ReadonlySet<string>; tonight: string | null; /** where her broom rests (null: not here, she's elsewhere: rules/stations.ts broomWhere) */ at: "bay" | "lathe" | null; genome: unknown }
+export interface WorkshopState { fitted: Fitted; found: ReadonlySet<string>; tonight: string | null; /** where her broom rests (null: not here, she's elsewhere: rules/stations.ts broomWhere) */ at: "bay" | "lathe" | "lift" | null; genome: unknown }
 
 interface Pic { key: string; mesh: THREE.Mesh; pos: Float32Array; w: number; h: number; ox: number; oy: number; piece: string; mark: string; glow?: boolean }
 /** Asks the art workers for a picture (render/houseRooms.ts: Assets.oneOff, tracked); rejected without them. */
@@ -65,7 +65,7 @@ export class WorkshopArt {
    *  workers) and where (markAt). `order`: each host piece's draw order, its pictures just after it. `t`: her clock, for tonight's glow. */
   update(s: WorkshopState, st: Style, ppm: number, pitch: number, yawOf: (piece: string) => number, markAt: MarkAt, orderOf: (piece: string) => number, t: number, draw: DrawPic): void {
     const colours = broomColours(st, s.genome), ck = hashText(JSON.stringify(colours));
-    const host = s.at === "lathe" ? "lathe" : "broomBay";
+    const host = s.at === "lathe" ? "lathe" : s.at === "lift" ? "broomLift" : "broomBay"; // (her broom in the workbench's vice, on the lathe or up on the lift: Ed, 2026-11-07)
     this.want = !s.at ? [] : [{ key: `broom|${host}|${SLOTS.map(k => s.fitted[k] ?? "-").join(",")}|${ck}|${ppm.toFixed(3)}|${pitch.toFixed(3)}`, piece: host, mark: "rest",
       pic: { what: "broom", fitted: s.fitted, host, ppm, pitch, yaw: yawOf(host), colours } }];
     BOARD.forEach((cell, i) => {
