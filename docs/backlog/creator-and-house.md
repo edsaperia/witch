@@ -13,6 +13,7 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Rotators, arrows and live preview | **Partly built** | Old creator supports rotators; ordinary stations now use cards and explicit Choose, not changing on focus. #1076; choose revision v5303, cards v5440. Since 2 Nov the station cards picture the item on her (#1695, v7125). The original all-rotator presentation with a spinning live preview is not the default. |
 | Every slider for every option | **Partly built** | Station Fit controls are real but conditional by item (for example cloak length); exact every-slider-for-every-option promise is not met. `ui/stationPanel.ts`, `config/wardrobe.json`; #1076, v5440 follow-up. |
 | Five-row colour grids | **Built** | `config/wardrobe.json`, `ui/stationPanel.ts`; #1076, station-rows fragment v4103. |
+| Skin tone range plus fantasy tones (Ed, 2026-11-07) | **Built** | The Monk Skin Tone Scale's ten tones (CC BY 4.0) and five fantasy tones, one list in `art/skinTones.js`; the dressing table's skin grid is 3 × 5, random witches use the ten human tones only. Skin-tones fragment; first live version unverified. |
 | Hat shapes, fit and curl; Spartan helmet crest | **Partly built** | Hat fit/colour exists at mirror, power hats lie on floor; fit subset and fixed collectible identity replace the original 17-shape rotator/curl request. `art/witch.js`, wardrobe hatFit; #1044 v4187 and station cards v5440. Do not mark all original sliders complete. |
 | Hair choice and length | **Built** | Wardrobe hair items/Fit and art/witch.js hairLength; #1076, v4103 station rows (first hair-specific version unverified). |
 | Face, eyewear, headphones and earrings | **Partly built** | Skin/hair/earrings have a dressing table; complete eyewear/accessory relocation and list are not delivered as proposed. `config/wardrobe.json`; #1076, v4103. Eyewear/accessories remain a later dressing pass. |
@@ -48,7 +49,7 @@ Backlog (Ed, 2026-10-09). **Mixed implementation status; see the audit below. No
 - **Hat:** keep all 17 shapes as a rotator; keep height, brim, tilt and band sliders; add a curl slider.
 - **Spartan helmet** (Ed, 2026-10-15): a new hat kind; on it the brim slider sets the size of the crest and the plume (band) colour sets the crest's colour.
 - **Hair:** a rotator; add a length slider that works for every style.
-- **Face:** skin, plus an eyewear rotator (none, sunglasses, round glasses, visor, goggles...); headphones and earrings move here.
+- **Face:** skin (Ed, 2026-11-07: "skin tone range plus some fantasy tones": the Monk scale's ten and five fantasy tones, `art/skinTones.js`), plus an eyewear rotator (none, sunglasses, round glasses, visor, goggles...); headphones and earrings move here.
 - **Top and Cloak** are separate steps. Cloak: none / short / long becomes a length slider; add a collar option and a width slider.
 - **Shoes:** their own step, with a shoe-type rotator (trainers, boots, platforms, bare feet...).
 - **Scarf** keeps its own step.
