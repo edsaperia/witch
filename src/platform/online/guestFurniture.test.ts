@@ -62,7 +62,7 @@ it("keeps home bed/wardrobe dispatch; in solo the open guest rooms' furniture wa
 
 it("draws the guests' bedrooms' furniture uncovered once a visit starts and sheeted again once it ends, switching once each way", () => {
   const g = fresh(), ids = HOUSE_ROOMS.objects.filter(o => GUEST_FURNITURE.has(o.id)).map(o => o.id);
-  expect(ids).toHaveLength(6);
+  expect(ids).toHaveLength(10); // (each room's bed, wardrobe, dressing table, and its basin and shoe rack: Ed, 2026-11-07, "Guests need basins and shoe racks")
   for (const id of ids) expect(furnitureStates(id), id).toEqual(["sheeted", "open"]); // (both baked up front: the switch bakes nothing)
   const states: string[] = [], frame = () => states.push(ids.map(id => furnitureState(id, g)).join());
   frame(); frame();
