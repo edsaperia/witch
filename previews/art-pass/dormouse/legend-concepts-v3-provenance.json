@@ -1,0 +1,26 @@
+{
+  "pass": "v3",
+  "species": "dormouse",
+  "concepts": "A — oversized round ears and beaded tail. B — heavy cheeks, grey muzzle and brow band.",
+  "pick": "A",
+  "readability": {
+    "targetPx": "64–128px tall beside ~50px witch",
+    "rationale": "The ears and compact round body carry the dormouse identity at 64–128px."
+  },
+  "pixel": {
+    "towards1x": "previews/art-pass/dormouse/pixel-pick-v3-1x.png",
+    "towards4x": "previews/art-pass/dormouse/pixel-pick-v3-4x.png",
+    "away1x": "previews/art-pass/dormouse/pixel-pick-v3-away-1x.png",
+    "away4x": "previews/art-pass/dormouse/pixel-pick-v3-away-4x.png",
+    "note": "Deterministic local silhouette evidence; not runtime art or visual acceptance."
+  },
+  "bodyPlan": [
+    "large ear sockets",
+    "cheek volume",
+    "tail taper",
+    "bead socket",
+    "muzzle-weathering decal"
+  ],
+  "styleAnchor": "https://raw.githubusercontent.com/edsaperia/witch/0b571d1838cfc8eabe8e4b0604f7662b487fc4de/previews/art-pass/legends-today/524b0ac/lane-L2.png",
+  "generation": "Built-in imagegen was attempted and returned HTTP 403; local deterministic silhouette raster fallback is disclosed in the report."
+}

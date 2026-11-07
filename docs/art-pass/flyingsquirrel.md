@@ -137,3 +137,13 @@ Limb-bound folding patagium with translucent fur material, localized cloud/repai
 [Full v2 plate](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/flyingsquirrel/legend-concepts-v2.png), SHA256 `90a0436f986bf15964e71f77683fb9ce4afe85b17d0ce5ecf8b2559734495ec3`; [exact prompt](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/flyingsquirrel/legend-prompt-v2.txt); [provenance and3briefs](https://raw.githubusercontent.com/edsaperia/witch/eaae72457fe50d7f8312991168a7b41448ea6e62/previews/art-pass/flyingsquirrel/legend-provenance-v2.json). Built-in image_gen.imagegen on2026-11-07; model/version/seed not exposed. All requested second-pass plates actually generated/saved/inspected; no source image edit or real-photo input. Earlier v1/anatomy images and their immutable provenance remain intact.
 
 Second-pass reference milestone complete for review, with image defects/scale-camera limits above. Overall comparison remains PARTIAL until canonical exact-source today panels arrive and are placed beside v2. Ed acceptance and migration are separate; nothing activated.
+
+## Third pass — readable silhouette v3
+
+This supersedes neither v1 nor v2; it adds the coordinator's 7 Nov small-scale readability test. A — folded broad patagium and collar. B — larger membrane edge, tail and eye mark. Pick A: The folded membrane creates a clear flying-squirrel outline without a body scene.
+
+Body-plan additions remain graph requirements only: triangular membrane sockets, membrane edge curve, tail cross-section, collar, eye decal.
+
+Evidence: [v3 concept sheet](../../previews/art-pass/flyingsquirrel/legend-concepts-v3.png), [v3 sheet notes](../../previews/art-pass/flyingsquirrel/legend-concepts-v3.md), [towards 1× pixel pick](../../previews/art-pass/flyingsquirrel/pixel-pick-v3-1x.png), [towards nearest 4×](../../previews/art-pass/flyingsquirrel/pixel-pick-v3-4x.png), [away 1×](../../previews/art-pass/flyingsquirrel/pixel-pick-v3-away-1x.png), [away nearest 4×](../../previews/art-pass/flyingsquirrel/pixel-pick-v3-away-4x.png). Compare beside the immutable [shipped L2 legend sheet](https://raw.githubusercontent.com/edsaperia/witch/0b571d1838cfc8eabe8e4b0604f7662b487fc4de/previews/art-pass/legends-today/524b0ac/lane-L2.png).
+
+The local raster is a deterministic silhouette fallback because built-in imagegen returned HTTP 403; it is not final art or visual acceptance.

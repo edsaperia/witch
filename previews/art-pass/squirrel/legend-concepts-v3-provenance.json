@@ -1,0 +1,26 @@
+{
+  "pass": "v3",
+  "species": "squirrel",
+  "concepts": "A — enormous curled tail and shoulder pauldron. B — oversized ears, long forearms and acorn pendant.",
+  "pick": "A",
+  "readability": {
+    "targetPx": "64–128px tall beside ~50px witch",
+    "rationale": "The oversized curled tail is a single high-contrast squirrel read."
+  },
+  "pixel": {
+    "towards1x": "previews/art-pass/squirrel/pixel-pick-v3-1x.png",
+    "towards4x": "previews/art-pass/squirrel/pixel-pick-v3-4x.png",
+    "away1x": "previews/art-pass/squirrel/pixel-pick-v3-away-1x.png",
+    "away4x": "previews/art-pass/squirrel/pixel-pick-v3-away-4x.png",
+    "note": "Deterministic local silhouette evidence; not runtime art or visual acceptance."
+  },
+  "bodyPlan": [
+    "tail cross-section",
+    "ear assembly",
+    "forepaw/claw sockets",
+    "pauldron socket",
+    "pendant"
+  ],
+  "styleAnchor": "https://raw.githubusercontent.com/edsaperia/witch/0b571d1838cfc8eabe8e4b0604f7662b487fc4de/previews/art-pass/legends-today/524b0ac/lane-L2.png",
+  "generation": "Built-in imagegen was attempted and returned HTTP 403; local deterministic silhouette raster fallback is disclosed in the report."
+}

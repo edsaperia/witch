@@ -1,0 +1,26 @@
+{
+  "pass": "v3",
+  "species": "mole",
+  "concepts": "A — oversized shovel forepaws and cracked nose plate. B — broad shoulders, longer claws and wrist ring.",
+  "pick": "A",
+  "readability": {
+    "targetPx": "64–128px tall beside ~50px witch",
+    "rationale": "The two shovel palms are the immediate mole silhouette cue at small scale."
+  },
+  "pixel": {
+    "towards1x": "previews/art-pass/mole/pixel-pick-v3-1x.png",
+    "towards4x": "previews/art-pass/mole/pixel-pick-v3-4x.png",
+    "away1x": "previews/art-pass/mole/pixel-pick-v3-away-1x.png",
+    "away4x": "previews/art-pass/mole/pixel-pick-v3-away-4x.png",
+    "note": "Deterministic local silhouette evidence; not runtime art or visual acceptance."
+  },
+  "bodyPlan": [
+    "oriented palms",
+    "claw fan",
+    "low tube body",
+    "pink snout",
+    "wrist-ring socket"
+  ],
+  "styleAnchor": "https://raw.githubusercontent.com/edsaperia/witch/0b571d1838cfc8eabe8e4b0604f7662b487fc4de/previews/art-pass/legends-today/524b0ac/lane-L2.png",
+  "generation": "Built-in imagegen was attempted and returned HTTP 403; local deterministic silhouette raster fallback is disclosed in the report."
+}
