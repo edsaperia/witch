@@ -1,0 +1,16 @@
+{
+  "tool": "image_gen.imagegen",
+  "date": "2026-11-07",
+  "iteration": 2,
+  "authority": [
+    "1476#6708227119",
+    "1476#6708229124"
+  ],
+  "prompt": "Create a polished photoreal fantasy concept review board with 2 rows and 3 columns. Each COLUMN is ONE concept A B C, top row near-ground epic hero view, bottom row SAME creature design at game's camera looking downward29.8deg and yaw34.4deg from side. Three concepts for sphinx: lion trunk and four lion paws, human face, gold lapis striped nemes headcloth, feather wings, tufted tail. Source area story: buried sandstone city, fallen columns and colossus head, date palms and acacias. Variants: A living weathered sandstone guardian with worn cobra brow and torc; B impossibly patient long-bodied couched sphinx with age-eroded face and geometric feather carvings; C MAXIMUM FANTASY: walking buried-city colossus, leonine sandstone body carries relief-carved epochs and tiny worn shrine niches, starfield visible through deep lapis stripes of nemes, immense feather wings like city gates, wise human face and lion paws clearly visible. EVERY ONE OF SIX PANELS includes a clearly visible tiny witch in pointed hat with broom standing beside the giant's foot or coil, and several full forest trees at same depth as giant, not just foreground. Giant rises ABOVE THE TREETOPS, roughly20times a baby animal height. Witch only about one twentieth the giant's height, trees half to two thirds giant height; these are visual concept scale cues not calibrated measurements. Colossal thick weathered landform mass, epochs old, far limbs in atmospheric haze, animal-specific impossible nature magic and reverence. C must be visibly MAXIMUM FANTASY, distinct from A/B. Complete whole creature in each panel including tail horns wings and witch with generous margins; shrink composition if necessary. Surrounding forest scale markers, restrained area ground, no distracting scenery. Family identity unmistakable. No textual labels or letters. No modern objects, no uniform crystal crowns across designs. Not a game screenshot or implementation claim.",
+  "file": "legend-concepts-v2.png",
+  "layout": "A/B/C columns; top low hero view, bottom approximate game camera; witch+trees each panel",
+  "proposedPick": "C",
+  "signature": "Buried-city reliefs and star-bearing lapis nemes",
+  "inspection": "All panels contain witch and desert trees. C clearly adds impossible history and star-bearing nemes; A is an eroded guardian and B a patient couched colossus. Lower C retains four paws and lion tail but its trunk is too narrow and forelegs too long; body-plan targets override those synthetic proportions. Upper C wing tip clips; lower projection is approximate. Full lion mass and wing-root articulation remain unverified.",
+  "limits": "Qualitative scale; no baby shown, no measured20:1 ratio or exact camera/runtime proof. Current game comparison pending."
+}

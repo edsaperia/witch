@@ -1,0 +1,16 @@
+{
+  "tool": "image_gen.imagegen",
+  "date": "2026-11-07",
+  "iteration": 2,
+  "authority": [
+    "1476#6708227119",
+    "1476#6708229124"
+  ],
+  "prompt": "Create a polished photoreal fantasy concept review board with 2 rows and 3 columns. Each COLUMN is ONE concept A B C, top row near-ground epic hero view, bottom row SAME creature design at game's camera looking downward29.8deg and yaw34.4deg from side. Three concepts for frosttroll: friendly white shaggy troll with immense shoulders, long knuckle-bearing arms, round wise eyes, bulbous nose and long beard. Source area story: frozen spruce and larch forest, bridge over iced stream, boulders that may be sleeping trolls. Variants: A half-petrified elder with huge stone arm, weathered cracks and small traveler offerings; B beard like a frozen stream cascading over giant hands with pebbles carved by generations; C MAXIMUM FANTASY: moving mountain troll, one shoulder and arm a cliff face with miniature old spruces rooted in cracks, beard a frozen waterfall, mossed bridge carvings on stone knuckles, living kind face unmistakably troll. EVERY ONE OF SIX PANELS includes a clearly visible tiny witch in pointed hat with broom standing beside the giant's foot or coil, and several full forest trees at same depth as giant, not just foreground. Giant rises ABOVE THE TREETOPS, roughly20times a baby animal height. Witch only about one twentieth the giant's height, trees half to two thirds giant height; these are visual concept scale cues not calibrated measurements. Colossal thick weathered landform mass, epochs old, far limbs in atmospheric haze, animal-specific impossible nature magic and reverence. C must be visibly MAXIMUM FANTASY, distinct from A/B. Complete whole creature in each panel including tail horns wings and witch with generous margins; shrink composition if necessary. Surrounding forest scale markers, restrained area ground, no distracting scenery. Family identity unmistakable. No textual labels or letters. No modern objects, no uniform crystal crowns across designs. Not a game screenshot or implementation claim.",
+  "file": "legend-concepts-v2.png",
+  "layout": "A/B/C columns; top low hero view, bottom approximate game camera; witch+trees each panel",
+  "proposedPick": "C",
+  "signature": "Troll body becoming a waterfall-bearing mountain",
+  "inspection": "All six panels show witch and frozen forest. C has the strongest landform mass and rooted forest; A has partial stone but less mythic scale; B is a cupped-hand river guardian. C’s near hand reads as carved standing stones and must retain fingers/joints in the rig. Seated/stooped body and hidden rear feet do not validate full gait; camera and scale are qualitative.",
+  "limits": "Qualitative scale; no baby shown, no measured20:1 ratio or exact camera/runtime proof. Current game comparison pending."
+}
