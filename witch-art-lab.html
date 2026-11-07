@@ -2528,6 +2528,39 @@ const BROOM_KINDS = {
 };
 
 
+// ---- inlined from art/skinTones.js ----
+// The witches' skin tones (Ed, 2026-11-07: "skin tone range plus some fantasy tones"), one list for everything that picks a skin:
+// the party witches (witch.js partyWitch), the witch generator (witchGenome.js), the creator's Randomise (src/ui/looks.ts) and
+// the dressing table's skin grid (src/rules/wardrobe.ts skinSwatch).
+//   HUMAN_SKINS: the Monk Skin Tone Scale's ten tones, palest (Monk 1) to deepest (Monk 10), exactly as published.
+//     Monk, Ellis. "Monk Skin Tone Scale," 2019. https://skintone.google. Released by Google under the Creative Commons
+//     Attribution 4.0 International licence (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/): free to use, with credit.
+//     (Hex values and licence as Google publishes them with the scale; this copy checked against Google's own
+//     GoogleCloudPlatform/genmedia-creative-studio config/virtual_model_options.json, 2026-11-07.)
+//   FANTASY_SKINS: a witch's own, palest to deepest, from the forest's cold side of the colour grammar (src/render/colourGrammar.ts:
+//     its blues, purples and turquoise; the sleeping legend's pale lilac): frost blue, lilac, ash grey, moss green, night indigo.
+//     Only the dressing table offers them: a random witch is always one of the ten human tones.
+// Each a [hue, saturation, value] (0-1) as every palette is, rounded to 4 places (hsv2rgb gives the published hex back exactly).
+const MONK_HEX = ["#f6ede4", "#f3e7db", "#f7ead0", "#eadaba", "#d7bd96", "#a07e56", "#825c43", "#604134", "#3a312a", "#292420"];
+
+/** A "#rrggbb" as [hue, saturation, value], each 0-1 to 4 places. */
+function hexToHsv(hex) {
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255), mx = Math.max(r, g, b), d = mx - Math.min(r, g, b);
+  let h = 0;
+  if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [((h / 6) % 1 + 1) % 1, mx ? d / mx : 0, mx].map(x => +x.toFixed(4));
+}
+
+const HUMAN_SKINS = MONK_HEX.map(hexToHsv);
+const FANTASY_SKINS = [
+  [.58, .14, .95], // frost blue
+  [.75, .22, .86], // lilac (the old grid's lavender column)
+  [.62, .06, .72], // ash grey
+  [.25, .38, .6],  // moss green
+  [.69, .35, .42], // night indigo
+];
+
+
 // Ours: every axis as she is.
 const WITCH_GENOME = {
   hat: { shape: "classic", height: 1, brim: 1, tilt: 0, band: 1 },
@@ -2572,7 +2605,7 @@ const WITCH_RANDOM = {
   broom: ["classic", "fan", "twig", "round"], // (a broom: the other kinds, art/brooms.js, are the creator's)
   hatHeight: [.75, 1.6], hatBrim: [.75, 1.45], hatTilt: [-.25, .35], broomLength: [.85, 1.3], broomBend: [-.3, .6], bristles: [.8, 1.4], broomThickness: [.85, 1.3],
 };
-const SKINS = [[.07, .25, .96], [.07, .32, .9], [.07, .42, .78], [.06, .5, .62], [.05, .55, .47], [.05, .5, .34]];
+const SKINS = HUMAN_SKINS; // (the Monk scale's ten: art/skinTones.js)
 const HAIRS = [[.07, .4, .14], [.07, .6, .33], [.04, .7, .5], [.11, .45, .88], [.02, .75, .7], [.6, .04, .86], [.85, .5, .8], [.5, .5, .7]]; // black, brown, auburn, blonde, red, silver, pink, teal
 
 // (her hat's glowing band: hers is narrow; a generated witch's broader, so it shows whatever her hat)
@@ -2627,6 +2660,7 @@ function witchGenomeProblems(g) {
   if (g.palette) for (const [k, c] of Object.entries(g.palette)) if (!(Array.isArray(c) && c.length === 3 && c.every(v => v >= 0 && v <= 1))) out.push("palette " + k);
   return out;
 }
+
 
 
 
@@ -3755,7 +3789,7 @@ const PARTY_OUTFITS = [
     outfit: { hat: [.06, .55, .4], jacket: [.03, .55, .6], trim: [.12, .6, .9], pattern: [.45, .4, .7], jeans: [.6, .45, .55], sneakers: [.07, .45, .5], frame: [.07, .5, .5] } },
 ];
 const PARTY_OUTFIT_BY_ID = Object.fromEntries(PARTY_OUTFITS.map(o => [o.id, o]));
-const WITCH_SKINS = [[.07, .25, .96], [.07, .32, .9], [.07, .42, .78], [.06, .5, .62], [.05, .55, .47], [.05, .5, .34]];
+const WITCH_SKINS = HUMAN_SKINS; // (the Monk scale's ten: art/skinTones.js)
 const WITCH_HAIRS = [[.07, .4, .14], [.07, .6, .33], [.04, .7, .5], [.11, .45, .88], [.02, .75, .7], [.6, .04, .86]]; // black, brown, auburn, blonde, red, silver
 // A party witch: seed picks her outfit (or o.outfit, an id), jitters its colours, and picks her skin, her hair (unless the
 // outfit dyes it) and her glow sticks' neons. { id, seed, name, look, outfit, colours(st) }: draw her with
