@@ -1,0 +1,214 @@
+{
+  "lane": "L9",
+  "date": "2026-11-07",
+  "species": [
+    "featheredserpent",
+    "frosttroll",
+    "frostwyrm",
+    "griffin",
+    "hydra",
+    "sphinx",
+    "unicorn"
+  ],
+  "images": 17,
+  "legendConcepts": 21,
+  "files": [
+    {
+      "path": "previews/art-pass/featheredserpent/flight-v1.png",
+      "sha256": "8d7d7046f047d064ff53d3b2dfd86c6b576e0290f0bc0a3c205668dc73facbd6",
+      "bytes": 2347243,
+      "width": 1752,
+      "height": 897
+    },
+    {
+      "path": "previews/art-pass/featheredserpent/legend-concepts-v1.png",
+      "sha256": "e0e2430a42d63578068fd9ccb91ef4f3fc1c774a1831845d37e94a3d42cce0c8",
+      "bytes": 2729813,
+      "width": 2172,
+      "height": 724
+    },
+    {
+      "path": "previews/art-pass/featheredserpent/provenance.json",
+      "sha256": "dc015274ee6e3ad42c1575ea30d60f8cf1c83437d11052d6b10a1ca7e0279bc9",
+      "bytes": 3603
+    },
+    {
+      "path": "previews/art-pass/featheredserpent/reference-v1.png",
+      "sha256": "da0d74607b03388972d65326a99f526dac23c29e826409801d25f2fa1bef7e6d",
+      "bytes": 2388330,
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "path": "previews/art-pass/featheredserpent/review.html",
+      "sha256": "b2de10b5b9d6fefc5a9183ec63458a86887e4ad33094eec2362d5d3cfc12a9cb",
+      "bytes": 795
+    },
+    {
+      "path": "previews/art-pass/frosttroll/legend-concepts-v1.png",
+      "sha256": "6086353c92e3c19ce0310173cd0c27b5a0879d9baf775576220584567f76e2bb",
+      "bytes": 2902541,
+      "width": 2172,
+      "height": 724
+    },
+    {
+      "path": "previews/art-pass/frosttroll/provenance.json",
+      "sha256": "7df8dc945fa0bf7f6d6d8d2a265b51ad07eeb2d67deed1a41a4cccd700fba5ee",
+      "bytes": 2789
+    },
+    {
+      "path": "previews/art-pass/frosttroll/reference-v1.png",
+      "sha256": "f18b9a95fc0bee54ee8faec73bd76dd24ca0566d86b3b84676591c060f175e05",
+      "bytes": 3213050,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "path": "previews/art-pass/frosttroll/review.html",
+      "sha256": "8ddea6a41776058e1b2ffa7eca950d0b5c97b483f307d0f7387cb2c20f427f0c",
+      "bytes": 783
+    },
+    {
+      "path": "previews/art-pass/frostwyrm/legend-concepts-v1.png",
+      "sha256": "17b5c5378a742fda6984a46278e09d8250f59aa39a7dd84926fe42b9880aaf23",
+      "bytes": 2265722,
+      "width": 2172,
+      "height": 724
+    },
+    {
+      "path": "previews/art-pass/frostwyrm/provenance.json",
+      "sha256": "8eb43ff0b17500e8aa1d972322a67b58c1cf7842a201cbf20ee00ce7e0620302",
+      "bytes": 2788
+    },
+    {
+      "path": "previews/art-pass/frostwyrm/reference-v1.png",
+      "sha256": "c2971926e1e16d8c49fe5d4c0c0aac72f29deaa6080858ffe10aeb8c62bc3bc8",
+      "bytes": 2671114,
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "path": "previews/art-pass/frostwyrm/review.html",
+      "sha256": "de77bdcea6607b92c30a60fe30d675d44992b4177787ad9bff591545f3f50940",
+      "bytes": 781
+    },
+    {
+      "path": "previews/art-pass/griffin/flight-v1.png",
+      "sha256": "1f352436823ca4c78d5df62df8dca2d9e24321a15bdd43121b28c0e985ae26fb",
+      "bytes": 2346558,
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "path": "previews/art-pass/griffin/legend-concepts-v1.png",
+      "sha256": "415e58815d3813352da6a7349f869398b81a0753d045fa1b58f965e00b90e5c1",
+      "bytes": 2448624,
+      "width": 2188,
+      "height": 719
+    },
+    {
+      "path": "previews/art-pass/griffin/provenance.json",
+      "sha256": "5538ae945eda6e52856152f4986c0f6286dd2a3bb0bd2af564aa3019ab99cf49",
+      "bytes": 3678
+    },
+    {
+      "path": "previews/art-pass/griffin/reference-v1.png",
+      "sha256": "a1a8a51f8685b9072dd61ab51f13912b822fa943b2711835c90aed9d68ce7d0d",
+      "bytes": 2769077,
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "path": "previews/art-pass/griffin/review.html",
+      "sha256": "43aefea273b61ca610a29b5e70bb519c6b63cf38ae7ba155ab740e2fc66a9a43",
+      "bytes": 777
+    },
+    {
+      "path": "previews/art-pass/hydra/legend-concepts-v1.png",
+      "sha256": "f70ce55914b8ac2f2b258f8b3b193c04e94127ca307f531d9ed427332c9b1369",
+      "bytes": 2573460,
+      "width": 2172,
+      "height": 724
+    },
+    {
+      "path": "previews/art-pass/hydra/provenance.json",
+      "sha256": "89bfea5965296b65ab67d59485d928ba587aececeecff1de00ec5a5b264258a6",
+      "bytes": 2822
+    },
+    {
+      "path": "previews/art-pass/hydra/reference-v1.png",
+      "sha256": "bd9010a37a6e89788b2a8a0be6d9719e1ecd7c0147edec0278be7dd458eb6cef",
+      "bytes": 2743246,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "path": "previews/art-pass/hydra/review.html",
+      "sha256": "e9c09e8fe2bc1f71a8e9c7c4d131d451f79bfc1250426213bc4c0195d95d83cf",
+      "bytes": 773
+    },
+    {
+      "path": "previews/art-pass/sphinx/flight-v1.png",
+      "sha256": "92bc50127771918eac06370e06b289e1d0c47cd9d23623bee6316f5eb63e7f91",
+      "bytes": 2258623,
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "path": "previews/art-pass/sphinx/legend-concepts-v1.png",
+      "sha256": "60521888837fef6d4f00bed989722bb0b4985e9ff86b66bbae49cecde8b03f91",
+      "bytes": 2468421,
+      "width": 2172,
+      "height": 724
+    },
+    {
+      "path": "previews/art-pass/sphinx/provenance.json",
+      "sha256": "eb35e54227708d897906f1273dd54f617c05bcbe6ae49fada458a4ed29a796e0",
+      "bytes": 3657
+    },
+    {
+      "path": "previews/art-pass/sphinx/reference-v1.png",
+      "sha256": "9fef85999ae4a1e5b1c7bcc7dbac1938794703a2e5887c98fe6215dbd0fba3d0",
+      "bytes": 2690076,
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "path": "previews/art-pass/sphinx/review.html",
+      "sha256": "1e51ee263f57a970ded337685793082365094c8e7f6fbfcb01e4b787647235e9",
+      "bytes": 775
+    },
+    {
+      "path": "previews/art-pass/unicorn/legend-concepts-v1.png",
+      "sha256": "bec84379eb022d51f071710ff1948e482431d7f6663dec523586814dae684191",
+      "bytes": 2217308,
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "path": "previews/art-pass/unicorn/provenance.json",
+      "sha256": "be5bd3fb64f1c0aca1aa56ce6bc5aa36790e566e1ff54897f121e32ff1936e85",
+      "bytes": 2888
+    },
+    {
+      "path": "previews/art-pass/unicorn/reference-v1.png",
+      "sha256": "d07ead5cc762382b4a205f87450132724ff7bd0d9186f2b5277a9f8c5a51d61a",
+      "bytes": 2369957,
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "path": "previews/art-pass/unicorn/review.html",
+      "sha256": "e9efc1a0416a35c8a00cf263f7b05fa695c6ec1f628b6f11ffc9da06e131c2aa",
+      "bytes": 777
+    }
+  ],
+  "sourceBaseline": "524b0acaa",
+  "graphAudit": "ed9e35cb733f72944677efcd80b46eb13c4229e0",
+  "limits": [
+    "Fresh current legend images pending coordinator",
+    "Approximate camera, no runtime/animation proof",
+    "Frostwyrm wing identity pending coordinator"
+  ],
+  "checked": "seven docs required sections; local doc links; exact prompts; PNG signatures/dimensions; own path allowlist; SHA256"
+}
