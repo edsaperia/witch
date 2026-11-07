@@ -76,14 +76,9 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         // no-scroll rule must hold with everything owned and the longest detail showing"; then back to its start)
         const across = async () => {
           if (!(await page.evaluate(() => !!document.querySelector("#station-panel .focus.sp-card")))) return;
-          let moved = 0;
-          for (let i = 0; i < 12; i++) {
-            const was = await page.evaluate(() => document.querySelector("#station-panel .focus")?.dataset.col);
-            await page.keyboard.press("ArrowRight"); await page.waitForTimeout(250);
-            if (await page.evaluate(() => document.querySelector("#station-panel .focus")?.dataset.col) === was) break;
-            moved++; const n = await m(); if (n.scroll > worst.scroll) worst = n;
-          }
-          for (let i = 0; i < moved; i++) { await page.keyboard.press("ArrowLeft"); await page.waitForTimeout(60); }
+          const col = () => page.evaluate(() => document.querySelector("#station-panel .focus")?.dataset.col);
+          const go = async (key, wait) => { for (let i = 0; i < 14; i++) { const was = await col(); await page.keyboard.press(key); await page.waitForTimeout(wait); if (await col() === was) return; if (wait > 100) { const n = await m(); if (n.scroll > worst.scroll) worst = n; } } };
+          await go("ArrowLeft", 60); await go("ArrowRight", 250); await go("ArrowLeft", 60); // (to its start, along it measuring, back to its start)
         };
         await across();
         for (let i = 0; i < 120; i++) {
