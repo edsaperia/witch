@@ -155,6 +155,7 @@ says what each note covers.
 - The treehouse's rooms
 - The oak
 - Furniture: size, freestanding, mess and layout
+- The stations regrouped
 - Station menus
 - Starting bags
 - Found bags

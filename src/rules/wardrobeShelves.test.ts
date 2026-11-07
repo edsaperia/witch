@@ -56,7 +56,7 @@ describe("the wardrobe", () => {
   });
 
   it("starts her owning what she has on, on every shelf with items but the bags (she starts with none: Ed, 2026-10-29, \"Remove none\")", () => {
-    for (const s of Object.values(SHELVES).filter(q => q.items.length && q.id !== "bag")) {
+    for (const s of Object.values(SHELVES).filter(q => q.items.length && q.id !== "bag" && !q.toggle)) { // (the basin's makeup toggles: none on at first)
       expect(s.items.some(i => i.start && wears(CLASSIC, i)), s.id).toBe(true);
     }
     expect(SHELVES.bag.items.some(i => wears(CLASSIC, i))).toBe(false);
@@ -98,11 +98,14 @@ describe("the wardrobe", () => {
 });
 
 describe("Ed's redo (2026-10-23): nothing with no choice in it, the broom till the Workshop, her hat off for her face", () => {
-  it("an item row shows once two of its items are hers", () => {
-    const face = SHELVES.face, earrings = SHELVES.earrings;
-    expect(itemsToChoose(face, new Set(STARTING_SET))).toBe(false); // (bare only: the sunglasses still to find)
+  it("an item row shows once two of its items are hers, or while any is still to find (Ed, 2026-11-07: \"they're good foreshadowing\")", () => {
+    const face = SHELVES.face, earrings = SHELVES.earrings, shoes = SHELVES.shoes;
+    expect(itemsToChoose(face, new Set(STARTING_SET))).toBe(true); // (bare, and the sunglasses' silhouette)
+    expect(itemsToChoose(shoes, new Set(STARTING_SET))).toBe(true); // (her trainers, and the chunky ones' silhouette)
     expect(itemsToChoose(face, new Set([...STARTING_SET, "shades"]))).toBe(true);
     expect(itemsToChoose(earrings, new Set(STARTING_SET))).toBe(true);
+    expect(itemsToChoose({ ...face, items: face.items.slice(0, 1) }, new Set(STARTING_SET))).toBe(false); // (one item, hers: no choice)
+    expect(itemsToChoose(SHELVES.makeup, new Set(STARTING_SET))).toBe(true); // (each toggle a choice by itself)
   });
   it("the lathe is the one broom station, the old stand, bay and separate pegboard gone; no station offers a broom's power or shape", () => {
     expect(shelvesAt("broomStand")).toBeNull();

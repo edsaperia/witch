@@ -47,7 +47,7 @@ npm run build && node tools/house/forest-fade.cjs <out dir> [seed]     (ROOM=par
 The treehouse's furniture as a contact sheet, no browser: every piece drawn at its house.json footprint, lit by a plain light from the upper left, each art pixel `up` screen pixels wide.
 
 ```
-node tools/house/furniture-sheet.mjs [ppm] [up] [pitch] [out.png]   (ppm: art pixels a metre, the house's 10.67)   YAW=0 PER=6
+node tools/house/furniture-sheet.mjs [ppm] [up] [pitch] [out.png]   (ppm: art pixels a metre, the house's 10.67)   YAW=0 PER=6 ONLY=basin,bedroom2Basin
 ```
 
 ## `furniture-shots.cjs`

@@ -270,7 +270,7 @@ describe("the oak's rooms", () => {
   it("the other bedrooms' furniture waits under dust sheets in solo (Ed, 2026-11-03: \"open and usable in solo, but still have dust sheets on the furniture\"): a bed, wardrobe and dressing table that work on a visit (rules/guestFurniture.ts), crates; no station, E only says they wait for their witch", () => {
     for (const id of ["bedroom2", "bedroom3"]) {
       const mine = HOUSE_ROOMS.objects.filter(o => o.room === id);
-      expect(mine.map(o => o.id).sort(), id).toEqual(["Bed", "Crates", "DressingTable", "Wardrobe"].map(k => id + k));
+      expect(mine.map(o => o.id).sort(), id).toEqual(["Basin", "Bed", "Crates", "DressingTable", "ShoeRack", "Wardrobe"].map(k => id + k)); // (a basin and a shoe rack too: Ed, 2026-11-07, "Guests need basins and shoe racks")
       for (const o of mine) {
         const g = inHouse(0, 0), at = before(o); put(g, at.x, at.z);
         expect(houseObjectFor(g, o).use, o.id).toEqual({ kind: "say", line: "Waiting for its witch." });

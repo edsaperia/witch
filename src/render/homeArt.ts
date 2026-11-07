@@ -66,6 +66,8 @@ export function witchSprites(style: Style, genome: unknown, bare: boolean, mk: M
     for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
     W.foot[pose] = entry;
   }
+  // Brushing her teeth at the basin (Ed, 2026-11-07), facing us (its frames drawn heading towards: the same for either side).
+  if (FOOT.brush) { const entry = { towards: [] as number[], away: [] as number[], fps: FOOT.brush.fps }; for (let frame = 0; frame < FOOT.brush.frames; frame++) { const i = sprites.length; sprites.push(wb({ pose: "brush", frame, heading: "towards" })); entry.towards.push(i); entry.away.push(i); } W.foot.brush = entry; }
   // Treetop flight: fast (at boost: three frames) and brake (a skid: two frames), towards and away.
   for (const [pose, n] of [["fast", 3], ["brake", 2]] as const) {
     const entry = { towards: [] as number[], away: [] as number[], fps: pose === "fast" ? 10 : 8 };

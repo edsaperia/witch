@@ -9,7 +9,7 @@ import legacy from "../../config/house/layouts/editor-v1-baseline.json";
 import supplied from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v1.json";
 import proposal from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v2-proposal.json";
 import current from "../../config/house/layouts/ed-current.json";
-import { artKey, attachedPoint, cameraYaw, corners, defaultLayout, exportLayout, floorplanKey, hitItem, isHatZone, itemKind, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom, RETIRED_OBJECTS, rotate, zoneSlots } from "./houseLayout";
+import { ADDED_OBJECTS, artKey, attachedPoint, cameraYaw, corners, defaultLayout, exportLayout, floorplanKey, hitItem, isHatZone, itemKind, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom, RETIRED_OBJECTS, rotate, zoneSlots } from "./houseLayout";
 
 const items = layoutItems(), key = floorplanKey(HOUSE_ROOMS, items), defaults = () => defaultLayout(items, key);
 describe("treehouse authoring layouts", () => {
@@ -107,7 +107,8 @@ describe("treehouse authoring layouts", () => {
     // The retained proposal uses the registered pre-canonical identity; poses and all other metadata stay exact (less the retired doors,
     // and each object's lighting room: one palette for the whole house since Ed, 2026-11-03).
     const kept = proposal.objects.filter(p => !current.removed.includes(p.id) && !RETIRED_OBJECTS.includes(p.id)).map(p => { const { lightingRoom: _l, ...q } = p as typeof p & { lightingRoom?: string }; return { ...q, id: q.id === "bedroom2Chest" ? "bedroom2DressingTable" : q.id === "bedroom3Chest" ? "bedroom3DressingTable" : q.id }; });
-    expect({ ...proposal, floorplan: key, removed: current.removed, objects: kept }).toEqual(exportLayout(converted, items));
+    const ex = exportLayout(converted, items) as { objects: { id: string }[] }; // (less the objects new since: the basins and the guests' shoe racks, Ed 2026-11-07, at their defaults)
+    expect({ ...proposal, floorplan: key, removed: current.removed, objects: kept }).toEqual({ ...ex, objects: ex.objects.filter(p => !ADDED_OBJECTS.includes(p.id)) });
   });
   it("separates clutter into stable selectable/exportable pieces; moving a piece to another room changes neither its picture nor its function", () => {
     const clutter = items.filter(o => o.decor), repeated = layoutItems().filter(o => o.decor);

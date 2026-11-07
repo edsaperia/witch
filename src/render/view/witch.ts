@@ -117,6 +117,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     if (bedPose) wf = bedPose === "sit" || !wk ? pick("sit", Math.floor(ht * F.sit.fps) % F.sit[side].length) : pick("liftSigil", Math.floor((ht - wk.at) * F.liftSigil.fps));
     else if (acting && v.footAct) wf = pick(v.footAct.pose, Math.floor((ht - v.footAct.at) * F[v.footAct.pose].fps));
     else if (L.talk && still) wf = pick("talk", Math.floor(ht * F.talk.fps) % F.talk[side].length);
+    else if (indoors && still && !v.spin && F.brush && ht >= v.brush.from && ht < v.brush.until) wf = pick("brush", Math.floor((ht - v.brush.from) * F.brush.fps) % F.brush[side].length); // (brushing her teeth at the basin: main.ts, Ed 2026-11-07)
     else if (indoors && F.walk && F.idle) {
       // walking: her six frames at a pace by her speed (F.walk.fps at the walk they're drawn for, house.stride, so her steps keep up
       // with her pace and her feet don't slide), side-on or, going straight up or down the
