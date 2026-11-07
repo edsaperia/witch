@@ -64,3 +64,52 @@ Reference/target document complete for coordinator review; biological/photo and 
 ## Flight ruling applicability (7 November)
 
 1866#6707952715 does not make a penguin aerial. Emperor penguin remains flightless: stiff flattened flippers propel underwater, unlike fanned feathered airborne primaries or bat membrane/finger rays. Preserve upright grounded folded/resting-flipper and walking states from the existing photo-checked sheet. A future swimming pose would be horizontal with flippers sweeping and feet/tail steering, but no swimming implementation is authorized here. No takeoff/airborne-glide/landing cycle is requested for this species; do not apply a generic flyer animation. Missing graph semantics remain flipper rigidity, webbed feet, upright balance and tail brace; swimming support, if later assigned, needs its own evidence. No additional aerial reference is fabricated.
+
+## Legend concepts (new7November brief)
+
+Authority1476#6707981581, corrected by6707992824: fit and VARIETY, not a blanket ban on crystals/flame/spirit wings. Source ART-GUIDE0b/0c and historical legend-audit read. All are proposed concepts; Ed judges the pick, no implementation/activation.
+
+[Three concepts A/B/C](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/penguin/legend-concepts.png): Deep-song elder / Rookery shield / Star navigator.
+
+### Area and animal story
+
+art/areas/rookery/recipe.js text: snow over dark wet shingle, black sea rocks, tussock grass/pebbles, wind-stunted trees and a ring of pebble nests. It is a shore, not polar-bear pack ice. Ed’s explicit elder-god penguin knows deep songs and the age of stars.
+
+### Proposed strongest pick: A — Deep-song elder
+
+This follows Ed’s own example: a penguin worshipped for surviving epochs, carrying ancient songs and protecting young. Sea-worn back and scarred white breast show age, while low song-lines in its natural orange neck patch are its power. Shell/pebble offerings belong to the rookery. Ice armour is allowed but is a less precise fit to the shingle shore; star ornament risks being a generic astronomy badge.
+
+Signature element: **Deep-song gorget with sheltered chick**.
+
+### Chosen legend checklist
+
+1. Emperor-penguin upright oval body, black/white pattern and orange neck patch retained.
+2. Very old sea-worn back and healed breast scars remain feather/body surfaces, not a rock replacing the bird.
+3. Low song-lines stay within the gorget silhouette rather than becoming a universal halo.
+4. Small grey chick sheltered at feet is clearly separate offspring.
+5. Pebble/shell offerings differ in shape and size, sparse enough to reveal neck.
+6. Stiff flippers remain flippers; no aerial or spirit-flight anatomy implied.
+
+### Legend body plan and graph needs
+
+Legend near-vertical trunk remains dominant, head .20–.26B, flippers .55–.70B and visible legs .08–.15B. Broad low body shelters chick .30–.45 of elder body height. Larger scale alone is not the design: old surfaces, throat-song and protective posture supply evolution.
+
+Missing/needed graph features: Scar/weathering masks, curved gorget emissive band placement, individual offering sockets, chick child-instance attachment with independent readable body; stiff flipper and protective pose support. No generic aerial wing rig required. These are requirements for graph1866, not edits to current handwritten art.
+
+### Today comparison (source-labelled, raster pending)
+
+Current penguin genome levels3 already adds oar flippers, gorget, longer bill, elder and chick; penguin3d adds pebble/shell offerings. Sleeping legend is hunched over chick on a pebble nest, lichened like sea rock. ConceptA refines these explicit story cues, not a claim current code lacks them. The required side-by-side contact sheet must use a real source-labelled current legend PNG, never a generated imitation labelled today. Canonical cloud evidence requested in1901#6708035999; independent concepts are complete, comparison montage remains pending that evidence.
+
+### Variety check
+
+Inspected available other-lane local summary documents on7November before final selection; L1/L9 summaries had no signature-element picks yet. No claim of all-lane uniqueness: canonical will check cross-lane spread when their picks exist. Within L6, owl disc / raven hoard / heron throat reflection / penguin song-and-chick are different signatures. Raven and penguin both use objects, but raven’s mismatched found keys in hackles express collecting, while penguin’s shore offerings express rookery worship; keep those distinct or reduce the penguin ornaments if spread review finds excess jewellery.
+
+Legend provenance: built-in image_gen.imagegen,2026-11-07. Three concepts generated, then one targeted anatomy correction replaced erroneous raptor talons with broad webbed penguin feet in all panels; revised sheet inspected, first erroneous version is rejected. No game asset or runtime rendering. SHA256 9e5b34a2501b538dc4cd8920aa67446ddcaa82725697e054eb70bb354cec7bba. Exact camera match remains approximate; generated feather wear is exaggerated and foot details are not a rig specification.
+
+Exact generation prompt:
+
+> Create one polished photoreal-fantasy creature concept comparison sheet, THREE distinct whole-creature panels A B C, plain neutral warm grey background, no environment. Species penguin, clearly recognisable bird anatomy, camera looking down30degrees and longitudinal axis turned35degrees towards viewer, orthographic-like long lens, every toe/wing/tail visible inside margins. Each concept ancient wise powerful and mysterious, evolved silhouette not merely adult enlarged; distinct designs, no common uniform. A: Deep-song elder: colossal emperor penguin with deeply weathered black back like sea-worn stone, white scarred chest, orange gorget glowing as low-frequency song-lines, pebble-and-shell offerings necklace, chick sheltered at feet; knows deep songs and age of stars. B: Rookery shield: emperor penguin broad protective belly and ancient scarred stiff flippers held around chick, a few natural ice armour plates only on shoulder ridges, no crystals elsewhere; windswept shore protector. C: Star navigator: ancient emperor penguin with subtly star-speckled dark plumage, long worn beak and small shell astrolabe offering hanging from throat, orange neck patches and grey chick; no wings or crown. Small A B C labels only, no prose. Grounded poses. Animal-specific nature and area story must drive optional magic/jewellery. These are proposed legend targets, not today's game sprites.
+
+Exact correction prompt:
+
+> Edit this three-concept emperor penguin legend sheet. Preserve all three designs A/B/C, markings, necklaces, chicks, whole-body framing and plain background. Correct ONLY anatomy of feet of ALL adult penguins and chicks: replace clawed bird-of-prey/raptor talons with correct emperor penguin short broad BLACK WEBBED FEET, three forward toes visibly joined by continuous webbing, low under belly, short blunt nails only, no long curling claws, no extra toes. Preserve emperor species, no mammalian feet. This correction is mandatory for every panel. Keep whole feet within frame.

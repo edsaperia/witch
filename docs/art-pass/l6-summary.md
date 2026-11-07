@@ -19,3 +19,14 @@ Target review only: no graph candidate or shipped-art likeness acceptance. Four 
 | penguin | Flightless ground/flipper anatomy; no aerial pose | Flipper rigidity/webbed foot/stance, not generic feathered flight |
 
 Generated pose sheets are adult anatomy suggestions, not animation clips or runtime acceptance.
+
+## Proposed legend picks — Ed review pending
+
+| Species | Pick | Signature element | Defining trait / story | Missing graph features |
+|---|---|---|---|---|
+| owl | A: Henge listener | Exaggerated concentric listening disc | It makes the owl’s own extraordinary listening and facial disc feel ancient and powerful | Radial feather-disc surface/attachment, layer-specific wear and scar masks; adjustable head/neck counterbalance; cloak wing fold and primary fan. No extra biological ears required. Jewellery sockets optional only for rejected conceptC. |
+| raven | A: Keeper of lost names | Mismatched hoard caught in throat hackles | The raven is revered for intelligence and collecting: a few individually worn keys/coins caught in its own shaggy throat make that nature visible | Feather/hackle attachment sockets for individual rigid keys, rings and coins; per-instance material wear/scars; articulated feather wings/wedge tail. Orbiting hoard, if retained later, needs its own bounded attachment/animation path; not implied by sockets. |
+| heron | A: Mere keeper | Thin reflected-water light along the long throat | Stillness, a long neck and the sudden dagger-bill strike become the source of power | Articulated long neck with local-frame head attachment, thin emissive throat marking following curvature, bill-scar mask, ankle/reed accessory sockets, long avian toes/hock and flight/ground state transitions. |
+| penguin | A: Deep-song elder | Deep-song gorget with sheltered chick | This follows Ed’s own example: a penguin worshipped for surviving epochs, carrying ancient songs and protecting young | Scar/weathering masks, curved gorget emissive band placement, individual offering sockets, chick child-instance attachment with independent readable body; stiff flipper and protective pose support. No generic aerial wing rig required. |
+
+Twelve concepts in four three-panel sheets; current-legend raster comparison montage PENDING canonical cloud evidence1901#6708035999. No substitution of generated art for today. Available other-lane L1/L9 summaries had no signature picks at inspection; canonical cross-lane spread check remains.

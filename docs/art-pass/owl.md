@@ -91,3 +91,48 @@ Flight-sheet provenance: built-in image_gen.imagegen,2026-11-07; one generation,
 Exact flight-sheet prompt:
 
 > Photoreal natural history target sheet of Spotted owl Strix occidentalis, round head no tufts, broad rounded feathered wings with separated primaries, short tail, legs tucked. Six panels in2rows3columns: top row adult airborne upstroke, downstroke, held-wing glide; bottom row folded-wing grounded/perched, takeoff push-off, landing feet-forward flare. Entire bird and all wings/tips/feet in frame with generous margins, plain warmgrey background, soft daylight. Camera looking down30degrees, body predominantly left-right angled35degrees towards viewer, consistent wholeanimal scale. Flying torso level along path and head forward; feathered wing elbows/wrists naturally articulated, primaries visibly fanned. Exact2wings2legs, no mammal arms. Grounded wings truly folded. This is a set of anatomical pose targets not a validated animation sequence. No fantasy or scenery. Small accurate pose labels.
+
+## Legend concepts (new7November brief)
+
+Authority1476#6707981581, corrected by6707992824: fit and VARIETY, not a blanket ban on crystals/flame/spirit wings. Source ART-GUIDE0b/0c and historical legend-audit read. All are proposed concepts; Ed judges the pick, no implementation/activation.
+
+[Three concepts A/B/C](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/owl/legend-concepts.png): Henge listener / Moon witness / Stone vigil.
+
+### Area and animal story
+
+art/areas.js stone-shrine text: grassy/stony floor, mossy henges, little/big stones and a shrine; current roster also places the spotted owl in cold rainforest. The target combines the shrine association with the quiet forest listener, without attaching a tree to its back.
+
+### Proposed strongest pick: A — Henge listener
+
+It makes the owl’s own extraordinary listening and facial disc feel ancient and powerful. Worn feather edges and a healed bill scar carry age; a great quiet disc is mysterious without borrowing a universal crystal crown. The spirit-wing alternative is allowed, but less specific than the animal’s own listening apparatus; the stone collar is plausible yet weaker in silhouette.
+
+Signature element: **Exaggerated concentric listening disc**.
+
+### Chosen legend checklist
+
+1. Spotted-owl family remains clear: dark eyes, hooked bill, round disc and spotted folded wings.
+2. Disc substantially wider and deeper than the adult, formed of feathers not a stone helmet.
+3. Concentric feather bowls create a listening silhouette without extra literal eyes.
+4. Silver worn feather edges and healed bill scar suggest age rather than decay.
+5. Heavy chest and large gripping talons support the enlarged head.
+6. Grounded folded cloak and flight feather articulation remain compatible.
+
+### Legend body plan and graph needs
+
+B=trunk length. Proposed legend disc diameter .85–1.10B versus adult .45–.60B, head carried low-forward on a short concealed neck; trunk remains compact/deep. Feather bowl must clear the wings and feet in ground and glide. These are proposed art ratios, not accepted anatomy.
+
+Missing/needed graph features: Radial feather-disc surface/attachment, layer-specific wear and scar masks; adjustable head/neck counterbalance; cloak wing fold and primary fan. No extra biological ears required. Jewellery sockets optional only for rejected conceptC. These are requirements for graph1866, not edits to current handwritten art.
+
+### Today comparison (source-labelled, raster pending)
+
+Current source at524b0acaa: genome levels3 adds cloak, swept-back tufts and dish/disc rim; owl3d scales the disc1.75 and eyes1.45, plus moonlit wing edges. Historical audit flags the shared eye ring; current source, not that old audit alone, defines today. No current raster beside concepts yet. The required side-by-side contact sheet must use a real source-labelled current legend PNG, never a generated imitation labelled today. Canonical cloud evidence requested in1901#6708035999; independent concepts are complete, comparison montage remains pending that evidence.
+
+### Variety check
+
+Inspected available other-lane local summary documents on7November before final selection; L1/L9 summaries had no signature-element picks yet. No claim of all-lane uniqueness: canonical will check cross-lane spread when their picks exist. Within L6, owl disc / raven hoard / heron throat reflection / penguin song-and-chick are different signatures. Raven and penguin both use objects, but raven’s mismatched found keys in hackles express collecting, while penguin’s shore offerings express rookery worship; keep those distinct or reduce the penguin ornaments if spread review finds excess jewellery.
+
+Legend sheet provenance: built-in image_gen.imagegen,2026-11-07, one three-concept generation, no retouching; SHA256 2299fe42a0ba23c7c3064ed129335f37f1f2ea7e522c556b5db56a711e281ece. Whole-creature panels inspected; photoreal fantasy design, camera pitch approximate, not graph/game output.
+
+Exact legend prompt:
+
+> Create one polished photoreal-fantasy creature concept comparison sheet, THREE distinct whole-creature panels A B C, plain neutral warm grey background, no environment. Species owl, clearly recognisable bird anatomy, camera looking down30degrees and longitudinal axis turned35degrees towards viewer, orthographic-like long lens, every toe/wing/tail visible inside margins. Each concept ancient wise powerful and mysterious, evolved silhouette not merely adult enlarged; distinct designs, no common uniform. A: Henge listener: gigantic rounded facial disc feathered like concentric sound-catching bowls, silver worn feather edges, one old healed bill scar; quiet moss-tone spotted owl with folded cloak wings, no added eyes; ancient shrine guardian whose listening is power. B: Moon witness: spotted owl with translucent spirit-wing echoes precisely following its own feather fans, not extra limbs; old barred cloak and weathered dark disc, shrine moon oracle. C: Stone vigil: massive spotted owl with worn stone prayer collar and battered small bronze brow ornament, deep chest and huge talons, no horns; guardian of mossy henges. Small A B C labels only, no prose. Grounded poses. Animal-specific nature and area story must drive optional magic/jewellery. These are proposed legend targets, not today's game sprites.

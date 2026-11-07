@@ -92,3 +92,48 @@ Flight-sheet provenance: built-in image_gen.imagegen,2026-11-07; one generation,
 Exact flight-sheet prompt:
 
 > Photoreal natural history target sheet of Grey heron Ardea cinerea, long dagger bill pointing forward, neck retracted in an S (NOT crane straight-neck), broad feathered wings and fanned primaries, long legs trailing straight behind. Six panels in2rows3columns: top row adult airborne upstroke, downstroke, held-wing glide; bottom row folded-wing grounded/perched, takeoff push-off, landing feet-forward flare. Entire bird and all wings/tips/feet in frame with generous margins, plain warmgrey background, soft daylight. Camera looking down30degrees, body predominantly left-right angled35degrees towards viewer, consistent wholeanimal scale. Flying torso level along path and head forward; feathered wing elbows/wrists naturally articulated, primaries visibly fanned. Exact2wings2legs, no mammal arms. Grounded wings truly folded. This is a set of anatomical pose targets not a validated animation sequence. No fantasy or scenery. Small accurate pose labels.
+
+## Legend concepts (new7November brief)
+
+Authority1476#6707981581, corrected by6707992824: fit and VARIETY, not a blanket ban on crystals/flame/spirit wings. Source ART-GUIDE0b/0c and historical legend-audit read. All are proposed concepts; Ed judges the pick, no implementation/activation.
+
+[Three concepts A/B/C](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/art-pass/heron/legend-concepts.png): Mere keeper / Jetty sentinel / Tide scribe.
+
+### Area and animal story
+
+art/areas/mangrove-heronry/recipe.js text: mud/reed litter, mere edge, reeds/rushes, tall mangroves and elms with nests, old jetty. This recipe is the current area story reached through areas/index.js, not an invented icy lake.
+
+### Proposed strongest pick: A — Mere keeper
+
+Stillness, a long neck and the sudden dagger-bill strike become the source of power. The narrow water-light throat is unlike the raven’s object-hoard or owl’s radial disc. Scarred bill and worn reed ankle bands make it old without making it a generic armoured wader. The living-jetty concept is strong but risks turning legs into literal wood; ink plumes are less clearly the animal’s defining trait.
+
+Signature element: **Thin reflected-water light along the long throat**.
+
+### Chosen legend checklist
+
+1. Long S-neck and dagger bill remain unmistakably heron.
+2. Legs remain thin with spreading toes, not wooden columns.
+3. Long healed bill scar and weathered crest communicate age.
+4. Light is a thin throat reflection, not an eye beam or crystal crown.
+5. Reed ankle bands are sparse and fit the mere story.
+6. Folded-wing grounded stillness and trailing-leg flight remain distinct.
+
+### Legend body plan and graph needs
+
+Legend neck arc1.4–1.8B, exposed legs1.1–1.4B, bill .45–.60B; narrow trunk bulk around wing roots. Keep weight over feet during held still pose; elongated neck can retract in flight. Ratios are optional design targets requiring silhouette review, not a new rig specification.
+
+Missing/needed graph features: Articulated long neck with local-frame head attachment, thin emissive throat marking following curvature, bill-scar mask, ankle/reed accessory sockets, long avian toes/hock and flight/ground state transitions. These are requirements for graph1866, not edits to current handwritten art.
+
+### Today comparison (source-labelled, raster pending)
+
+Current sleeping LEGEND_HERON folds the neck along the back in reeds and carries a stick nest; current awake heron must be rendered separately. The historical audit says older heron legend had only scale/glowing eyes; that is historical, not proof of current raster. Comparison pending canonical cloud image. The required side-by-side contact sheet must use a real source-labelled current legend PNG, never a generated imitation labelled today. Canonical cloud evidence requested in1901#6708035999; independent concepts are complete, comparison montage remains pending that evidence.
+
+### Variety check
+
+Inspected available other-lane local summary documents on7November before final selection; L1/L9 summaries had no signature-element picks yet. No claim of all-lane uniqueness: canonical will check cross-lane spread when their picks exist. Within L6, owl disc / raven hoard / heron throat reflection / penguin song-and-chick are different signatures. Raven and penguin both use objects, but raven’s mismatched found keys in hackles express collecting, while penguin’s shore offerings express rookery worship; keep those distinct or reduce the penguin ornaments if spread review finds excess jewellery.
+
+Legend sheet provenance: built-in image_gen.imagegen,2026-11-07, one three-concept generation, no retouching; SHA256 b21d016e72d9103e3186f0441917c1cc0e3663fe0aa290c85303304b7c723cb4. Whole-creature panels inspected; photoreal fantasy design, camera pitch approximate, not graph/game output.
+
+Exact legend prompt:
+
+> Create one polished photoreal-fantasy creature concept comparison sheet, THREE distinct whole-creature panels A B C, plain neutral warm grey background, no environment. Species heron, clearly recognisable bird anatomy, camera looking down30degrees and longitudinal axis turned35degrees towards viewer, orthographic-like long lens, every toe/wing/tail visible inside margins. Each concept ancient wise powerful and mysterious, evolved silhouette not merely adult enlarged; distinct designs, no common uniform. A: Mere keeper: ancient grey heron with impossibly long still S-neck and dagger bill, worn knotted reed bands at ankles, long scar on bill, water-reflection light held as a thin stripe along throat; stillness before strike, mangrove mere. B: Jetty sentinel: giant old heron with driftwood-coloured weathered legs and a small battered brass fishermans ring around bill base, subtle barnacle ankle crust; no tree on back; stands like a living pier. C: Tide scribe: narrow heron with long ink-dark calligraphic throat plumes and translucent water-thread feather tips, slow wise posture and chipped bill; reedbeds and old jetty. Small A B C labels only, no prose. Grounded poses. Animal-specific nature and area story must drive optional magic/jewellery. These are proposed legend targets, not today's game sprites.
