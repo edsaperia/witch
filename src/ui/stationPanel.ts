@@ -368,7 +368,7 @@ export class StationPanel {
       else if (l.kind === "grid") { const [sc, sr] = this.c.chosenSwatch(s); title = `${s.label}: colour`; text = !this.c.awaitingDress && sc === at.col && sr === l.row ? "Wearing." : "Every colour is hers: choose to put it on."; }
       else { const on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g); title = FIT_NAMES[l.axis!] ?? l.axis!; text = on ? "◀ ▶ or drag to change it." : "Put it on first."; }
     }
-    box.className = `sp-detail${unfound ? " unfound" : ""}${preview ? " sp-withpreview" : ""}`;
+    box.className = `sp-detail${unfound ? " unfound" : ""}${preview ? " sp-withpreview" : ""}${!preview && !stats.length && !sub ? " sp-brief" : ""}`;
     if (!title && !text && !stats.length) { box.remove(); this.placePreviews(); return; }
     box.innerHTML = `${preview ? `<span class="sp-preview" data-preview="${esc(preview)}"></span>` : ""}<div><h3>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ""}</h3>${stats.map(r => `<p class="${r.better ? "up" : "down"}">${r.better ? "▲" : "▼"} ${esc(r.name)} ${esc(r.from)} → ${esc(r.to)}</p>`).join("")}${text ? `<p>${esc(text)}</p>` : ""}</div>`;
     this.placePreviews();
@@ -468,8 +468,8 @@ body.paused #station-panel { visibility: hidden; }
 #station-panel .sp-banner { color: var(--gold); font-size: .9em; }
 #station-panel .sp-head { display: flex; align-items: baseline; gap: .6em; }
 #station-panel .sp-head b { font-size: 1.6em; color: var(--gold); letter-spacing: 1px; } #station-panel .sp-head span { margin-left: auto; font-size: .8em; opacity: .85; }
-#station-panel .sp-body { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(232,180,106,.5) transparent; display: flex; flex-direction: column; gap: .6em; padding: 2px 4px 2px 2px; }
-#station-panel .sp-shelf { flex: none; display: flex; flex-direction: column; gap: .45em; padding: .55em .9em .65em; border-radius: .7em; background: rgba(26,18,44,.88); box-shadow: inset 0 0 0 1px rgba(232,226,244,.16), 0 2px 10px rgba(0,0,0,.35); }
+#station-panel .sp-body { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(232,180,106,.5) transparent; display: flex; flex-direction: column; gap: .5em; padding: 2px 4px 2px 2px; }
+#station-panel .sp-shelf { flex: none; display: flex; flex-direction: column; gap: .35em; padding: .45em .9em .55em; border-radius: .7em; background: rgba(26,18,44,.88); box-shadow: inset 0 0 0 1px rgba(232,226,244,.16), 0 2px 10px rgba(0,0,0,.35); }
 #station-panel .sp-shelf.on { background: rgba(38,26,62,.94); box-shadow: inset 0 0 0 2px rgba(232,180,106,.85), 0 2px 14px rgba(0,0,0,.45); }
 #station-panel .sp-lab { display: flex; gap: .6em; align-items: baseline; cursor: pointer; }
 #station-panel .sp-lab b { font-size: 1.15em; letter-spacing: .5px; } #station-panel .sp-shelf.on .sp-lab b { color: var(--gold); }
@@ -477,21 +477,21 @@ body.paused #station-panel { visibility: hidden; }
 #station-panel .sp-lab span { font-size: .85em; opacity: .9; } #station-panel .sp-lab em { margin-left: auto; font-style: normal; font-size: .75em; opacity: .75; }
 #station-panel .sp-sub { font-size: .8em; display: flex; gap: .5em; opacity: .9; } #station-panel .sp-sub em { margin-left: auto; font-style: normal; opacity: .75; }
 #station-panel .sp-row { display: flex; flex-wrap: wrap; gap: .45em; }
-#station-panel .sp-card { position: relative; width: 4.6em; height: 4.6em; border-radius: .5em; background: rgba(11,7,22,.55); box-shadow: inset 0 0 0 1px rgba(232,226,244,.14); display: grid; place-items: center; cursor: pointer; box-sizing: border-box; }
+#station-panel .sp-card { position: relative; width: 4em; height: 4em; border-radius: .5em; background: rgba(11,7,22,.55); box-shadow: inset 0 0 0 1px rgba(232,226,244,.14); display: grid; place-items: center; cursor: pointer; box-sizing: border-box; }
 #station-panel .sp-card.sp-trail { width: 6.4em; } #station-panel .sp-card.sp-trail canvas { height: 1.5em; width: 6em; max-width: 6em; }
-#station-panel .sp-card canvas { image-rendering: pixelated; width: auto; height: 4.2em; max-width: 4.3em; object-fit: contain; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
+#station-panel .sp-card canvas { image-rendering: pixelated; width: auto; height: 3.6em; max-width: 3.7em; object-fit: contain; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
 #station-panel .sp-card.unfound canvas { filter: brightness(0) invert(.32) drop-shadow(1px 0 0 rgba(214,204,240,.6)) drop-shadow(-1px 0 0 rgba(214,204,240,.6)) drop-shadow(0 1px 0 rgba(214,204,240,.6)) drop-shadow(0 -1px 0 rgba(214,204,240,.6)); } /* (one not found yet: a grey silhouette, a shade softer than a disabled one, no padlock: Ed, 2026-11-07, "they're good foreshadowing") */
 #station-panel .focus { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 12px rgba(255,255,255,.75), inset 0 0 0 1px var(--ol); }
 #station-panel .sp-card.worn:not(.focus) { outline: 2px solid rgba(232,180,106,.8); outline-offset: 1px; }
 #station-panel .sp-none { font-style: normal; font-size: 1.8em; }
 #station-panel .sp-tick { position: absolute; top: .15em; right: .15em; width: 1.2em; height: 1.2em; border-radius: 50%; background: var(--gold); color: #1a1430; font-size: .75em; display: grid; place-items: center; text-shadow: none; box-shadow: 0 0 0 1px var(--ol); }
-#station-panel .sp-toggle { width: auto; min-width: 4.6em; height: 2.1em; padding: 0 .9em; } #station-panel .sp-short { font-size: .9em; }
+#station-panel .sp-toggle { width: auto; min-width: 4.6em; height: 1.9em; padding: 0 .9em; } #station-panel .sp-short { font-size: .9em; }
 #station-panel .sp-toggle .sp-tick { top: -.45em; right: -.45em; }
-#station-panel .sp-action { align-self: flex-start; padding: .3em 1em; border-radius: .5em; background: rgba(11,7,22,.55); box-shadow: inset 0 0 0 1px rgba(232,226,244,.3); cursor: pointer; font-size: .95em; }
+#station-panel .sp-action { align-self: flex-start; padding: .2em 1em; border-radius: .5em; background: rgba(11,7,22,.55); box-shadow: inset 0 0 0 1px rgba(232,226,244,.3); cursor: pointer; font-size: .95em; }
 #station-panel .sp-parts { display: flex; gap: .5em; flex-wrap: wrap; } #station-panel .sp-parts span { display: inline-flex; gap: .4em; align-items: center; font-size: .9em; padding: .15em .6em; border-radius: 1em; cursor: pointer; background: rgba(11,7,22,.45); opacity: .85; }
 #station-panel .sp-parts span.on { opacity: 1; color: var(--gold); box-shadow: inset 0 0 0 1px rgba(232,180,106,.7); } #station-panel .sp-parts i { width: .85em; height: .85em; border-radius: 50%; box-shadow: 0 0 0 1px var(--ol); }
-#station-panel .sp-grid { --sw: 2.1em; display: grid; width: max-content; gap: 2px; padding: 2px; background: var(--ol); border-radius: 4px; } #station-panel .sp-grid + .sp-grid { margin-top: calc(-.45em - 2px); }
-#station-panel .sp-grid i { height: .95em; cursor: pointer; position: relative; display: block; }
+#station-panel .sp-grid { --sw: 2.1em; display: grid; width: max-content; gap: 2px; padding: 2px; background: var(--ol); border-radius: 4px; } #station-panel .sp-grid + .sp-grid { margin-top: calc(-.35em - 2px); }
+#station-panel .sp-grid i { height: .74em; cursor: pointer; position: relative; display: block; }
 /* (the colour she has on: a gold ring inside a dark one and a gold badge with a dark tick, readable on any swatch, pale or dark; the focus a
    white box with a glow round the outside: Ed, 2026-11-07, "make it clearly distinct from the white focus box") */
 #station-panel .sp-grid i.sel { z-index: 1; box-shadow: inset 0 0 0 2px var(--ol), inset 0 0 0 4px var(--gold); } #station-panel .sp-grid i.sel::after { content: "✓"; position: absolute; left: 50%; top: 50%; width: 1.05em; height: 1.05em; margin: -.525em 0 0 -.525em; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 1.5px var(--ol); display: grid; place-items: center; font: normal 700 .75em/1 ui-monospace, Menlo, Consolas, monospace; color: #1a1430; text-shadow: none; }
@@ -499,7 +499,7 @@ body.paused #station-panel { visibility: hidden; }
 #station-panel .sp-fit { display: flex; align-items: center; gap: .8em; padding: .25em .3em; border-radius: .4em; cursor: pointer; } #station-panel .sp-fit.off { opacity: .45; cursor: default; }
 #station-panel .sp-fit span { width: 8em; font-size: .9em; } #station-panel .sp-fit .bar { position: relative; flex: 1; height: .35em; background: rgba(232,226,244,.55); border-radius: .2em; box-shadow: 0 0 0 1px var(--ol); }
 #station-panel .sp-fit .bar i { position: absolute; top: -.45em; width: .7em; height: 1.25em; margin-left: -.35em; border-radius: .2em; background: var(--gold); box-shadow: 0 0 0 1px var(--ol); }
-#station-panel .sp-detail { padding: .45em .6em; border-radius: .45em; background: rgba(11,7,22,.5); } #station-panel .sp-detail.sp-withpreview { display: flex; gap: .8em; align-items: center; } #station-panel .sp-detail h3 { margin: 0 0 .15em; font-size: 1em; font-weight: 600; } #station-panel .sp-detail p { margin: 0; font-size: .85em; opacity: .9; }
+#station-panel .sp-detail { padding: .3em .6em; border-radius: .45em; background: rgba(11,7,22,.5); } #station-panel .sp-detail.sp-brief h3, #station-panel .sp-detail.sp-brief p { display: inline; } #station-panel .sp-detail.sp-brief h3 { margin-right: .6em; } /* (a title and a line: one line, so the panel fits the screen: Ed, 2026-11-07) */ #station-panel .sp-detail.sp-withpreview { display: flex; gap: .8em; align-items: center; } #station-panel .sp-detail h3 { margin: 0 0 .15em; font-size: 1em; font-weight: 600; } #station-panel .sp-detail p { margin: 0; font-size: .85em; opacity: .9; }
 #station-panel .sp-preview { flex: none; width: 12em; height: 6em; border-radius: .4em; overflow: hidden; background: rgba(11,7,22,.6); }
 #station-panel .sp-preview > * { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
 #station-panel .sp-wide { width: 6.4em; height: 3.8em; } #station-panel .sp-wide canvas { height: auto; width: auto; max-width: 5.9em; max-height: 3.3em; }

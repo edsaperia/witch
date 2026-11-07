@@ -141,6 +141,12 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     const s = Math.min(1, Math.max(0, g.camera.station ?? 0)), sk = s * s * (3 - 2 * s);
     const feet = new THREE.Vector3(v.witchBase.x, v.witchBase.y, v.witchBase.z).sub(target).dot(up);
     target.addScaledVector(up, feet * sk + pose.aim * v.witchTall);
+    // and across: from where she's drawn too (the camera looks north, so across is the world's x), put `at` of the screen's width
+    // across (camera.station.whole.at: the right half's middle, the panel the left half). The rules' aim follows her place in the rules,
+    // and in the house she's drawn off it (render/view/witch.ts houseCam, eased in past the hub's wall): zoomed in on a part of her
+    // (camera.station.parts, Ed 2026-11-07), that gap put her off the side of the screen at the cloak pegs.
+    const across = 2 * pose.distance * Math.tan((fov * Math.PI) / 360) * (v.width / Math.max(1, v.height)), at = t.camera.station?.whole?.at ?? 0.75;
+    target.x += (v.witchBase.x - (at - 0.5) * across - target.x) * sk;
   }
   // The world's bend: only over the treetops (Ed, 2026-10-04), eased in as she rises; from the
   // camera's focus, along its forward on the ground.
