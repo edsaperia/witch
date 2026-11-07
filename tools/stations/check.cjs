@@ -165,7 +165,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
       for (let i = 0; i < 5 && !(await panelIn()); i++) { await page.keyboard.press("KeyE"); for (let j = 0; j < 40 && !(await panelIn()); j++) await page.waitForTimeout(500); } /* (one E, then up to 20 s for a slow frame to see it: E closes it too) */
       ok(await panelIn(), `${id}: and E there opens it again`);
       // Everything owned: the pause page's Unlock everything (app/debugUnlock.ts), read as the panel opens again.
-      log(id, "unlock:", await page.evaluate(() => { const pre = [...new Set(Object.keys(localStorage).map(k => (/^(witch\.fresh\.[a-z0-9]+\.)/.exec(k) || [])[1]).filter(Boolean))]; for (const p of ["", ...pre]) localStorage.setItem(p + "witch.debug.unlockAll", "1"); return location.search + " " + pre.join(","); })); // (in a fresh game's namespace too: platform/storageScope.ts)
+      log(id, "unlock:", await page.evaluate(() => { const pre = [...new Set(Object.keys(localStorage).map(k => (/^(witch\.fresh\.[a-z0-9]+\.)/.exec(k) || [])[1]).filter(Boolean))]; for (const p of ["", ...pre]) for (const k of ["", "witch.save.s1.", "witch.save.s2.", "witch.save.s3.", "witch.save.s4.", "witch.save.s5."]) localStorage.setItem(p + k + "witch.debug.unlockAll", "1"); return location.search + " " + pre.join(","); })); // (the switch is a save's own, app/saveSlots.ts slotKey: set in every slot, and in a fresh game's namespace too, platform/storageScope.ts)
       await reopen(); await settle();
       await page.screenshot({ path: path.join(out, `${id}-owned.png`), timeout: 300000 });
       await noScroll("owned");
