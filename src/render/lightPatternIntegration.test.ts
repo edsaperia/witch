@@ -30,10 +30,10 @@ it('defaults to full colour spokes and scales all selected slots live down to ex
   expect(LIGHT_PATTERN_UNIFORMS.uLightPattern.value.every(p=>p.lengthSq()===0)).toBe(true);
   expect(LIGHT_UNIFORMS.uLightCol.value[0].toArray()).toEqual([.4,.7,1,1]);
 });
-it('uses one existing speaker slot for colour spokes and removes it for comfort/off', () => {
+it('patterns every speaker in the budget for colour spokes and removes them for comfort/off', () => {
   const v = view(4), lights = [light(0, 6), light(1), light(2, 4)];
   setLights(v, lights, 0, 0, 'colour-spokes');
-  expect(LIGHT_PATTERN_UNIFORMS.uLightPattern.value.slice(0, 3).map(p => p.x)).toEqual([6, 0, 4]);
+  expect(LIGHT_PATTERN_UNIFORMS.uLightPattern.value.slice(0, 3).map(p => p.x)).toEqual([6, 1, 4]);
   expect(v.stats.lights).toBe(3);
   comfort.reduceFlashing = true;
   setLights(v, lights, 0, 0, 'colour-spokes'); expect(patternedLightCount()).toBe(0);
@@ -55,12 +55,15 @@ it('uses an ordinary lit campfire for the gentle preview without requiring disab
   expect(v.forestLights[0].pattern?.[2]).toBe(0);
   expect({ ...v.forestLights[0], pattern: undefined }).toEqual({ ...original, pattern: undefined });
 });
-it('adds metadata only to one existing selected speaker and gentle slot, preserving budget and RGB', () => {
+it('adds metadata to the speakers and one gentle slot up to the cap of 3, preserving budget and RGB', () => {
   const v = view(4), lights = [light(0), light(1, 2), light(2, 4), light(3, 4), light(4)];
   setLights(v, lights, 0, 0, 'auto');
   expect(v.stats.lights).toBe(4); expect(LIGHT_UNIFORMS.uLightCount.value).toBe(4);
-  expect(patternedLightCount()).toBe(2);
-  expect(LIGHT_PATTERN_UNIFORMS.uLightPattern.value.slice(0, 4).map(v => v.x)).toEqual([1, 0, 4, 0]);
+  expect(patternedLightCount()).toBe(3);
+  expect(LIGHT_PATTERN_UNIFORMS.uLightPattern.value.slice(0, 4).map(v => v.x)).toEqual([1, 2, 4, 0]);
+  const four = view(6); setLights(four, [light(0, 6), light(1, 6), light(2, 6), light(3, 6)], 0, 0, 'colour-spokes'); // (four soundsystems: the nearest three)
+  expect(patternedLightCount()).toBe(3);
+  expect(LIGHT_PATTERN_UNIFORMS.uLightPattern.value.slice(0, 4).map(v => v.x)).toEqual([6, 6, 6, 0]);
   expect(LIGHT_UNIFORMS.uLightCol.value[0].toArray().slice(0, 3)).toEqual([.4, .7, 1]);
   expect(lights.every(l => l.strength === 1 && l.reach === 20)).toBe(true);
   setLights(v, [{ ...lights[0], pattern: undefined }], 0, 0, 'auto');
