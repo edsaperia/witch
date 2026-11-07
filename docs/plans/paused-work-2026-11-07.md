@@ -100,7 +100,11 @@ Fanning one task out to many Codex agents at once multiplies the cost, and image
 
 **Don't merge yet.** Decide first whether the docs go into prototype as one consolidated docs PR. They are targets, not game changes.
 
-### A4 split (#1562, `codex/a4-split-dry-run`, head 0d2222f78)
+### A4 split (#1562, `codex/a4-split-dry-run`, head 0d2222f78): DONE, live in v7731 via #1917
+
+Finished by a Claude builder on `claude/a4-split` (#1917, head 36b2af5a6, CI green and bench unchanged), released as #1918 in v7731. It also restored the tree normal-directions code that Codex's last refresh had dropped. Codex's branch is untouched; #1562 can be closed.
+
+As it stood at the stop:
 
 - **Ed's go:** given 6 Nov ("Go 1880 1879 1875 1562").
 - **Done:** refreshed against prototype bee35dc43 with a normal merge.
@@ -122,7 +126,7 @@ Fanning one task out to many Codex agents at once multiplies the cost, and image
 
 ## Resume order (suggested)
 
-1. A4 split (#1562): CI only, then release.
+1. ~~A4 split~~: done (v7731).
 2. Body graph bear: cub and young ages, plus the grass-test leak.
 3. The five other test species, one at a time.
 4. Art-pass third pass, one lane at a time with an image estimate first, starting with the lanes whose creatures move to the skeleton next.
