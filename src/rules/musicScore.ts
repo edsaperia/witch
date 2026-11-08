@@ -124,6 +124,8 @@ export interface PartDef {
   role: "drum" | "bass" | "chord" | "arp" | "motif";
   /** Octaves above the style's root. */
   octave?: number;
+  /** bass: its chord tones counted from the key's own root, not the chord's (the haunted drop's sub, on the drone's root). */
+  tonic?: boolean;
   patterns: Record<string, string>;
 }
 
@@ -244,6 +246,43 @@ export interface MusicStyle {
   set?: SetDef;
   curated?: { island: string; waves: number; steps: CuratedStep[] };
   arc: ArcStep[];
+  /** The haunted treatment (Ed, 2026-11-08: "B, 1-6"): the quiet sections and the legends' clearings made more like the
+   *  vocalise demo he liked. */
+  haunted?: HauntedDef;
+}
+
+/** The haunted treatment (Ed, 2026-11-08, choosing "B, 1-6": all six of the ways to bring the music closer to the haunting
+ *  vocalise demo, in the quiet sections and a sleeping legend's clearing layer; docs/notes/music.md **Haunted**). */
+export interface HauntedDef {
+  /** The whole treatment on (the default) or off (the music as before: tuning music.haunted, ?haunted=0, the Music Lab). */
+  on?: boolean;
+  /** The quiet sections it plays in (wherever they fall: a breakdown, or a calm family's breaks or four). */
+  sections: string[];
+  /** 1. Space: the voice's own long dark reverb (the demo's: a pink-noise impulse `time` s long decaying as exp(-decay t),
+   *  band-passed `low` to `high` Hz), `wet` its send in these sections; a clearing's layer takes the same impulse. */
+  verb: { time: number; decay: number; low: number; high: number; wet: number };
+  /** 2. Room to breathe: the sung line's half-phrase rhythms here (whole notes and ties, rests at their ends: each half a
+   *  phrase long, 16 sixteenths a bar, x a note, - held, . a rest), and the drop: no drums for `afterBars` (at most half the
+   *  section, on a 4-bar line), then drum & bass (Ed, 2026-11-08: "make it a drop - no drums, and then drum and bass kicks
+   *  in"): `parts` over the section's (null takes one out), a riser over the last `riserBars` before it and an impact on it. */
+  rhythms: string[];
+  drop: { afterBars: number; riserBars: number; impact: boolean; /** the section's low-pass opened to this (Hz) from the drop */ cutoff?: number; parts: Record<string, PartUse | null> };
+  /** 3. The ghost voice: each sung note again `interval` scale steps away (-5 a sixth below, -2 a third), `delay` s late, at
+   *  `gain` of its level, low-passed at `lowpass` Hz, panned to `pan`, on `vowel`; in place of the breakdown's wash. A clearing's
+   *  lead part is ghosted the same way at `circle.ghost` of its level. */
+  ghost: { interval: number; delay: number; gain: number; lowpass: number; pan: number; vowel?: string };
+  /** 4. The drone: the key's root, its fifth (`fifth` of the root's level) and the octave (`octaveUp`), `octave` octaves over the
+   *  style's root, each a sine a side `detune` cents apart, each swelling at its own `swell` Hz by `swellDepth`, fading in over
+   *  `attack` s, at `gain`; under a clearing's layer at `circle` of that. */
+  drone: { gain: number; octave: number; fifth: number; octaveUp: number; detune: number; swell: number[]; swellDepth: number; attack: number; circle: number };
+  /** 5. The scale's colour (Ed, 2026-11-08: notes outside dorian here only): the sung line's 2nd flattened (Phrygian) or its
+   *  7th raised (harmonic minor's leading tone), a cadence's notes with this chance, any other note with `colourElse`. */
+  colour: number;
+  colourElse: number;
+  /** 6. The voice in front: its level lifted by `lift` dB and its presence (3 kHz) by `presence` dB in these sections. */
+  voice: { lift: number; presence: number };
+  /** A clearing's layer: its reverb's send (×) and its ghost's level. */
+  circle: { wet: number; ghost: number };
 }
 
 /** The melodies' form (Ed, 2026-10-09: "Melodies should be 8 bars long, with a 32 bar ABAC structure, and include rests.
@@ -327,6 +366,8 @@ export interface NoteEvent {
   fx?: "pure" | "dark";
   /** A wash voice: this note doubles a sung note a fifth or an octave up (the breakdown's three voices). */
   double?: true;
+  /** The haunted ghost voice (HauntedDef.ghost): a sung note again, below, late, quieter, low-passed and panned away. */
+  ghost?: true;
   /** Played straight, without the swing (a triplet's notes). */
   straight?: boolean;
   /** Risers: the build's progress from and to over this note (0-1). */
@@ -363,6 +404,43 @@ export function resolveSection(style: MusicStyle, name: string): Resolved {
 }
 
 export const arcStep = (style: MusicStyle, arc: number): ArcStep => style.arc[Math.max(0, Math.min(style.arc.length - 1, arc))];
+
+/** The haunted treatment, when it's on (Ed, 2026-11-08: "B, 1-6"). */
+export const hauntedOn = (style: MusicStyle): HauntedDef | null => (style.haunted && style.haunted.on !== false ? style.haunted : null);
+/** Whether a section is one of the haunted quiet ones (with the treatment on). */
+export const isHaunted = (style: MusicStyle, section: string): boolean => !!hauntedOn(style)?.sections.includes(section);
+/** The bar (into a haunted section) its drum & bass drops on: `afterBars`, at most half the section, on a block line; Infinity
+ *  for none (a section too short to have a quiet half and a drop). */
+export function hauntedDrop(style: MusicStyle, bars: number): number {
+  const H = style.haunted, B = Math.max(1, style.blockBars);
+  if (!H) return Infinity;
+  const at = Math.floor(Math.min(H.drop.afterBars, bars / 2) / B) * B;
+  return at >= B && at < bars ? at : Infinity;
+}
+/** The form's bar whose chord a haunted section plays in form bar `formBar` (slower chords: a phrase's opening chord through its
+ *  first half, its cadence chord, the question or the answer, through its second), so the phrases still land on their lines. */
+export function hauntedBar(F: FormDef, formBar: number): number {
+  const P = F.phraseBars, cb = Math.max(1, F.chordBars), inP = ((formBar % P) + P) % P;
+  return formBar - inP + (inP < P / 2 ? 0 : Math.max(0, P - cb));
+}
+/** The semitones a haunted note's scale step is coloured by (Ed, 2026-11-08, notes outside dorian in the haunted places only):
+ *  -1 its 2nd flattened (Phrygian ♭2), +1 its minor 7th raised (the leading tone), 0 as it is; `r` a seeded 0-1, a cadence's
+ *  note at the style's `colour` chance, another at `colourElse`. */
+export function hauntedColour(style: MusicStyle, scale: number[], deg: number, cadence: boolean, r: number): number {
+  const H = style.haunted;
+  if (!H || r >= (cadence ? H.colour : H.colourElse)) return 0;
+  const d = ((deg % scale.length) + scale.length) % scale.length;
+  return d === 1 && scale[1] === 2 ? -1 : d === 6 && scale[6] === 10 ? 1 : 0;
+}
+const HAUNT_AS = new WeakMap<MusicStyle, MusicStyle>();
+/** The style with the haunted treatment on or off (tuning music.haunted, ?haunted=0, the Music Lab's A/B); the style itself when
+ *  it already is, or has none. */
+export function withHaunted(style: MusicStyle, on: boolean | undefined): MusicStyle {
+  if (on === undefined || !style.haunted || (style.haunted.on !== false) === on) return style;
+  let out = HAUNT_AS.get(style);
+  if (!out) HAUNT_AS.set(style, (out = { ...style, haunted: { ...style.haunted, on } }));
+  return out;
+}
 
 const use = (u: PartUse) => (typeof u === "string" ? { p: u, level: 1, from: 0, energy: 0 } : { p: u.p, level: u.level ?? 1, from: u.from ?? 0, energy: u.energy ?? 0 });
 
@@ -463,7 +541,7 @@ export function formChord(style: MusicStyle, seed: number, formBar: number, seve
 
 /** A note of a phrase: scale steps above the root, its length in sixteenths, and how far after its sixteenth it starts
  *  (a triplet's: a fraction of a sixteenth). */
-export interface PhraseNote { deg: number; dur: number; off: number }
+export interface PhraseNote { deg: number; dur: number; off: number; /** a half-phrase's last two notes (the haunted colour's cadences) */ cad?: true }
 
 /** One phrase of the form for a seed: a note or null (a rest or a held note) on each of its sixteenths. A seeded walk
  *  over the form's chords, landing on chord tones on the beats, in bar-long rhythm cells (mostly slow: whole notes, halves and triplets; its part's `pace` of them busier)
@@ -534,11 +612,56 @@ export function formPhrase(style: MusicStyle, seed: number, letter: string, hook
   return out;
 }
 
+/** A phrase of the form in a haunted section (Ed, 2026-11-08, "room to breathe"): the sung line's narrow stepwise walk, as
+ *  formPhrase's, on the haunted half-phrase rhythms (whole notes and ties, a rest at each half's end) and the slower chords
+ *  (hauntedBar), its endings the form's (B on a question, C answering on the root), each half's last two notes its cadence. */
+export function hauntedPhrase(style: MusicStyle, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
+  const F = style.form!, H = style.haunted!, P = F.phraseBars, half = Math.floor(P / 2), salt = letter.charCodeAt(0) * 13 + 5;
+  const at = F.order.indexOf(letter) * P, hookBars = letter !== "A" && hookSeed !== undefined && hookSeed !== seed ? F.sung.hookBars ?? 0 : 0;
+  const sd = (b: number) => b < hookBars ? hookSeed! : seed;
+  const out: (PhraseNote | null)[] = new Array(P * 16).fill(null), onsets: number[] = [];
+  const [lo, hi] = F.range, SPAN = 4, mod7 = (d: number) => mod(d, 7), windows: number[] = [];
+  for (let w = lo; w + SPAN <= hi; w++) if (Array.from({ length: SPAN + 1 }, (_, k) => w + k).some(d => mod7(d) === 0)) windows.push(w);
+  const wlo = windows.length ? windows[Math.floor(hash2(sd(0), 437, salt) * windows.length)] : lo, whi = windows.length ? wlo + SPAN : hi;
+  let v = wlo + Math.floor(hash2(sd(0), 431, salt) * (whi - wlo + 1));
+  const nearest = (want: number, ok: (d: number) => boolean, near = 2): number => {
+    let best: number | null = null, bd = Infinity;
+    for (let d = wlo; d <= whi; d++) if (ok(d) && Math.abs(d - v) <= near && Math.abs(d - want) < bd) { bd = Math.abs(d - want); best = d; }
+    return best ?? (near === Infinity ? want : nearest(want, ok, Infinity));
+  };
+  for (let h = 0; h * half < P; h++) {
+    const b0 = h * half, rhythm = pick(H.rhythms, hash2(sd(b0) + h * 53, 471, salt)), mine: number[] = [];
+    for (let i = 0; i < rhythm.length && b0 * 16 + i < P * 16; i++) {
+      if (rhythm[i] !== "x") continue;
+      let dur = 1;
+      while (i + dur < rhythm.length && rhythm[i + dur] === "-") dur++;
+      const pos = b0 * 16 + i, b = Math.floor(pos / 16), r = hash2(sd(b) + pos * 7919, 433, salt);
+      const tones = formChord(style, seed, hauntedBar(F, at + b)).tones.map(t => mod(t, 7));
+      v = i % 8 === 0 ? nearest(v + pick([-2, -1, 0, 0, 1, 2], r), d => tones.includes(mod7(d))) : Math.max(wlo, Math.min(whi, v + pick([-1, -1, 0, 1, 1], r)));
+      out[pos] = { deg: v, dur, off: 0 };
+      onsets.push(pos); mine.push(pos);
+    }
+    for (const p of mine.slice(-2)) out[p]!.cad = true;
+  }
+  const last = onsets[onsets.length - 1];
+  if (last !== undefined) {
+    const n = out[last]!, chordEnd = formChord(style, seed, hauntedBar(F, at + P - 1)).tones.map(t => mod(t, 7));
+    const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : chordEnd.filter(t => t !== 0);
+    v = n.deg; n.deg = nearest(n.deg, d => ends.includes(mod7(d)));
+    for (let k = onsets.length - 2; k >= 0; k--) {
+      const cur = out[onsets[k]]!, nxt = out[onsets[k + 1]]!;
+      if (Math.abs(nxt.deg - cur.deg) <= 2) break;
+      cur.deg = nxt.deg + Math.sign(cur.deg - nxt.deg) * 2;
+    }
+  }
+  return out;
+}
+
 const phraseCache = new Map<string, (PhraseNote | null)[]>();
-function phraseFor(style: MusicStyle, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
-  const k = `${seed}|${letter}|${hookSeed ?? ""}`;
+function phraseFor(style: MusicStyle, seed: number, letter: string, hookSeed?: number, haunted = false): (PhraseNote | null)[] {
+  const k = `${seed}|${letter}|${hookSeed ?? ""}|${haunted ? "h" : ""}`;
   let p = phraseCache.get(k);
-  if (!p) { if (phraseCache.size > 64) phraseCache.clear(); phraseCache.set(k, p = formPhrase(style, seed, letter, hookSeed)); }
+  if (!p) { if (phraseCache.size > 64) phraseCache.clear(); phraseCache.set(k, p = haunted ? hauntedPhrase(style, seed, letter, hookSeed) : formPhrase(style, seed, letter, hookSeed)); }
   return p;
 }
 
@@ -546,9 +669,9 @@ function phraseFor(style: MusicStyle, seed: number, letter: string, hookSeed?: n
 export const musicSeed = (base: number, n: number): number => n <= 0 ? base : Math.floor(hash2(base, 433 + n, n * 7919) * 0x7fffffff);
 
 /** The form's note (if one starts) on the form's sixteenth `formStep`: its part, patch and MIDI note, and its length. */
-export function formNoteAt(style: MusicStyle, seed: number, formStep: number, transpose = 0, step?: Pick<ArcStep, "lead" | "vocal" | "scale">, opts?: { voice?: boolean; hookSeed?: number }): { part: string; patch: string; midi: number; deg: number; dur: number; off: number; letter: string } | null {
+export function formNoteAt(style: MusicStyle, seed: number, formStep: number, transpose = 0, step?: Pick<ArcStep, "lead" | "vocal" | "scale">, opts?: { voice?: boolean; hookSeed?: number; haunted?: boolean }): { part: string; patch: string; midi: number; deg: number; dur: number; off: number; letter: string; cad?: true } | null {
   const F = style.form!, fs = mod(formStep, formBars(F) * 16), letter = F.order[Math.floor(fs / (F.phraseBars * 16))];
-  const n = phraseFor(style, seed, letter, letter !== "A" ? opts?.hookSeed : undefined)[fs % (F.phraseBars * 16)];
+  const n = phraseFor(style, seed, letter, letter !== "A" ? opts?.hookSeed : undefined, !!opts?.haunted && !!style.haunted)[fs % (F.phraseBars * 16)];
   if (!n) return null;
   // (a night's set: the step's own instrument for A, its own singer, or none, the A instrument playing them too; since Ed's
   // singer review, 2026-10-14, the voice sings only where `opts.voice` says (the breakdowns and the build: sungHere), and in
@@ -557,7 +680,7 @@ export function formNoteAt(style: MusicStyle, seed: number, formStep: number, tr
   const sung = (opts?.voice ?? letter !== "A") && voice !== "none" && !!style.patches[voice], part = sung ? F.sung.part : lead, def = style.parts[part];
   const oct = sung ? F.sung.octave : Math.max(2, def?.octave ?? 3);
   const scale = style.scales[step?.scale ?? style.scale] ?? style.scales[style.scale];
-  return { part, patch: sung ? voice : def?.patch ?? "", midi: degreeToMidi(style, scale, n.deg, oct, transpose), deg: n.deg, dur: n.dur, off: n.off, letter };
+  return { part, patch: sung ? voice : def?.patch ?? "", midi: degreeToMidi(style, scale, n.deg, oct, transpose), deg: n.deg, dur: n.dur, off: n.off, letter, ...(n.cad ? { cad: true as const } : {}) };
 }
 
 /** A wave's own tune in a night's set (ArcStep.tune): the music's seed salted, so each wave has its own melodies and chords. */
@@ -644,7 +767,18 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   const progress = (barIn + s / 16) / Math.max(1, plan.bars), pass = plan.pass ?? 0;
   // the form's chords (Ed, 2026-10-09: the 32-bar ABAC form), or, with none, the section's own, a step on each pass round the loop
   const formBar = bar - (ctx.formStart ?? 0), form = style.form;
-  const chord = form ? formChord(style, ctx.seed, formBar, !!sec.sevenths) : chordAt(style, sec, a, barIn + pass * Math.max(1, sec.chordBars));
+  // the haunted treatment (Ed, 2026-11-08: "B, 1-6"): in its quiet sections the chords slower (a phrase's opening chord, then its
+  // cadence's), the drums out till the drum & bass drops, the melody held and coloured, the voice ghosted; a legend's clearing
+  // layer on the slower chords too, its lead ghosted, its melody coloured (rules here; its reverb, drone and voice lift the engine's)
+  const H = hauntedOn(style), haunt = !!H && H.sections.includes(plan.section) && ctx.only !== "circle";
+  const chordOf = (slow: boolean) => form ? formChord(style, ctx.seed, slow ? hauntedBar(form, formBar) : formBar, !!sec.sevenths) : chordAt(style, sec, a, barIn + pass * Math.max(1, sec.chordBars));
+  const chordMain = chordOf(haunt), circleChord = H && form ? chordOf(true) : chordMain;
+  const dropAt = haunt ? hauntedDrop(style, plan.bars) : Infinity, dropped = barIn >= dropAt;
+  let secParts = sec.parts;
+  if (haunt) { // (no drums; from the drop on, the drum & bass)
+    secParts = Object.fromEntries(Object.entries(sec.parts).filter(([k]) => style.parts[k]?.role !== "drum"));
+    if (dropped) for (const [k, u] of Object.entries(H!.drop.parts)) { if (u === null) delete secParts[k]; else secParts[k] = u; }
+  }
   let melody = 0; // (the form's melody: the loudest of the melodic parts playing here)
   // a long block (the boot's intro, up to five minutes) turns a new phrase every 16 bars: new melodies, its ? hits falling anew
   const phrase = pass + (plan.bars > 32 ? Math.floor(barIn / 16) : 0);
@@ -654,20 +788,22 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   const fillBar = ending === "fill";
   const muted = ending !== "none" && s >= 12 ? style.fill.mute : [];
   const onlyCircle = ctx.only === "circle";
-  const parts: [string, PartUse, number, NoteEvent["hook"]?][] = onlyCircle ? [] : Object.entries(sec.parts).map(([k, u]) => [k, u, 1]);
+  const parts: [string, PartUse, number, NoteEvent["hook"]?][] = onlyCircle ? [] : Object.entries(secParts).map(([k, u]) => [k, u, 1]);
   if (onlyCircle) { /* (the layer alone) */ } else if (ctx.siege > 0.01) for (const [k, u] of Object.entries(style.siege)) parts.push([k, u, ctx.siege, "siege"]);
-  if ((ctx.party ?? 0) > 0.01) for (const [k, u] of Object.entries(style.party ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx.party!, "party"]);
-  if ((ctx.legend ?? 0) > 0.01) for (const [k, u] of Object.entries(style.legend ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx.legend!, "legend"]);
+  if ((ctx.party ?? 0) > 0.01) for (const [k, u] of Object.entries(style.party ?? {})) if (!secParts[k]) parts.push([k, u, ctx.party!, "party"]);
+  if ((ctx.legend ?? 0) > 0.01) for (const [k, u] of Object.entries(style.legend ?? {})) if (!secParts[k]) parts.push([k, u, ctx.legend!, "legend"]);
   // the boot's intro: nothing before the first speaker, then a layer a speaker (other sections build as they always did)
   const build = ctx.build ?? 1, building = ctx.build !== undefined && plan.section === style.intro;
   const circle = ctx.circle && ctx.circle.level > 0.01 && ctx.only !== "main" ? ctx.circle : null, layer = new Set<string>();
-  if (circle) for (const [k, u] of circleParts(style, circle.species)) if (!sec.parts[k]) { parts.push([k, u, circle.level]); layer.add(k); }
+  if (circle) for (const [k, u] of circleParts(style, circle.species)) if (!secParts[k]) { parts.push([k, u, circle.level]); layer.add(k); }
+  // (the clearing's lead, ghosted when haunted: its first melodic part)
+  const ghostLead = circle && H ? [...layer].find(k => style.parts[k]?.role === "motif") : undefined;
   if (fillBar && !onlyCircle) parts.push([style.fill.part, { p: "__fill" }, 1]);
   for (const [name, u0, scaleLevel, hook] of parts) {
     const def = style.parts[name];
     if (!def) continue;
     const u = use(u0);
-    const own = layer.has(name);
+    const own = layer.has(name), chord = own ? circleChord : chordMain;
     if (!own && (building ? build <= 0 || build < u.from : progress < u.from)) continue;
     if (!own && (a.energy < u.energy || muted.includes(name))) continue;
     if (form && !own && def.role === "motif") { melody = Math.max(melody, u.level * scaleLevel * (building ? 0.45 + 0.55 * build : 1)); continue; }
@@ -696,7 +832,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     const oct = def.octave ?? 0, accent = ch === ch.toUpperCase() && ch !== ch.toLowerCase() ? 1 : s % 4 === 0 ? 0.9 : 0.78;
     if (def.role === "bass") {
       const k = BASS[ch] ?? (ch.toLowerCase() === "x" ? 0 : BASS[ch.toLowerCase()] ?? 0);
-      out.push({ ...base, midi: degreeToMidi(style, scale, chord.root + k, oct, transpose), vel: (ch in BASS ? 0.85 : VEL[ch] ?? 0.85) * level });
+      out.push({ ...base, midi: degreeToMidi(style, scale, (def.tonic ? 0 : chord.root) + k, oct, transpose), vel: (ch in BASS ? 0.85 : VEL[ch] ?? 0.85) * level });
     } else if (def.role === "chord") {
       for (const t of chord.tones) out.push({ ...base, midi: degreeToMidi(style, scale, t, oct, transpose), vel: (VEL[ch] ?? accent) * level });
     } else if (def.role === "arp") {
@@ -709,7 +845,11 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
       const m = motifFor(seed + phrase * 104729, plan.arc, name), pos = ((at % 64) + (own ? sh % 29 : 0)) % 32; // (a new melody each pass or phrase)
       const vary = barIn % 4 === 3 && s >= 8 ? (hash2(bar, plan.arc, ctx.seed + 5) < 0.5 ? 2 : -1) : 0; // every fourth bar ends differently
       const lift = own ? [0, 2, 4][(sh >>> 3) % 3] : 0, octOwn = own ? oct + ((sh >>> 5) % 2) - (oct > 2 ? 1 : 0) : oct;
-      out.push({ ...base, midi: degreeToMidi(style, scale, chord.root + m[pos] + vary + lift, octOwn, transpose), vel: (VEL[ch] ?? accent) * level });
+      const deg = chord.root + m[pos] + vary + lift, vel = (VEL[ch] ?? accent) * level;
+      // (a haunted clearing: its melody now and then coloured, its lead ghosted below, late and quieter)
+      const tint = own && H ? hauntedColour(style, scale, deg, false, hash2(at, 467, seed)) : 0;
+      out.push({ ...base, midi: degreeToMidi(style, scale, deg, octOwn, transpose) + tint, vel });
+      if (name === ghostLead && H!.circle.ghost > 0) out.push({ ...base, midi: degreeToMidi(style, scale, deg + H!.ghost.interval, octOwn, transpose), vel: vel * H!.circle.ghost, ghost: true });
     }
   }
   if (onlyCircle) return out;
@@ -717,6 +857,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   // instrument everywhere else; in a breakdown the voice sometimes holds the chord instead of a tune ("sometimes just the
   // chord"), and every sung note there is washed (doubled a fifth and an octave up, late and quieter: three voices)
   if (form?.sung.arpeggio && (a.vocal ?? form.sung.patch) !== "none") {
+    const chord = chordMain;
     // the lab's voice test: the chord's tones folded into the range, sorted, sung up and then down, a note every `rate`
     // sixteenths through every section, so a voice and its effects are heard without waiting for a breakdown
     const A = form.sung.arpeggio, rate = Math.max(1, Math.round((typeof A === "object" ? A.rate : undefined) ?? 2));
@@ -730,26 +871,36 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
       out.push({ part: form.sung.part, patch, step, offset: 0, dur: rate, midi: degreeToMidi(style, scale, deg, form.sung.octave, transpose), vel: (s % 4 === 0 ? 0.88 : 0.74) * level, fx });
     }
   } else if (melody > 0 && form) {
-    const place = sungHere(style, plan, a, sec), W = form.sung.wash, oct = form.sung.octave;
-    const vel = (s % 4 === 0 ? 0.9 : 0.78) * melody, hold = place === "breakdown" && hash2(ctx.seed, 457, pass) < 0.5;
+    const chord = chordMain;
+    const place = sungHere(style, plan, a, sec), W = form.sung.wash, oct = form.sung.octave, ghost = haunt && place !== null && H!.ghost.gain > 0 ? H!.ghost : null;
+    const vel = (s % 4 === 0 ? 0.9 : 0.78) * melody, hold = place === "breakdown" && !haunt && hash2(ctx.seed, 457, pass) < 0.5; // (haunted: always the held melody, its rests)
     const fx: NoteEvent["fx"] = style.voiceFxDark?.families?.includes(a.family ?? "") ? "dark" : "pure";
     const patch = a.vocal && style.patches[a.vocal] ? a.vocal : form.sung.patch;
-    const sing = (deg: number, dur: number, off: number, v: number) => { // (deg: a scale step over the root, in the sung octave)
-      out.push({ part: form.sung.part, patch, step, offset: off, dur, midi: degreeToMidi(style, scale, deg, oct, transpose), vel: v, fx, ...(dur % 1 ? { straight: true } : {}) });
-      if (place === "breakdown" && W) for (const iv of W.intervals) out.push({ part: form.sung.part, patch, step, offset: off + W.late, dur: Math.max(1, dur - W.late), midi: degreeToMidi(style, scale, deg + iv, oct, transpose), vel: v * W.level, fx, double: true, ...(dur % 1 ? { straight: true } : {}) });
+    const sing = (deg: number, dur: number, off: number, v: number, tint = 0) => { // (deg: a scale step over the root, in the sung octave)
+      out.push({ part: form.sung.part, patch, step, offset: off, dur, midi: degreeToMidi(style, scale, deg, oct, transpose) + tint, vel: v, fx, ...(dur % 1 ? { straight: true } : {}) });
+      // (haunted: the ghost in the wash's place, diatonic, below)
+      if (ghost) out.push({ part: form.sung.part, patch, step, offset: off, dur, midi: degreeToMidi(style, scale, deg + ghost.interval, oct, transpose), vel: v * ghost.gain, fx, ghost: true, ...(dur % 1 ? { straight: true } : {}) });
+      else if (place === "breakdown" && W) for (const iv of W.intervals) out.push({ part: form.sung.part, patch, step, offset: off + W.late, dur: Math.max(1, dur - W.late), midi: degreeToMidi(style, scale, deg + iv, oct, transpose), vel: v * W.level, fx, double: true, ...(dur % 1 ? { straight: true } : {}) });
     };
     const voiceOk = (a.vocal ?? form.sung.patch) !== "none";
     if (hold && voiceOk) {
       if (s === 0 && mod(formBar, form.chordBars) === 0) sing(chord.root, form.chordBars * 16 - 1, 0, 0.8 * melody);
     } else {
-      const fn = formNoteAt(style, ctx.seed, formBar * 16 + s, transpose, a, { voice: place !== null, hookSeed: nightSeed });
-      if (fn && fn.part === form.sung.part) sing(fn.deg, fn.dur, fn.off, fn.off ? 0.78 * melody : vel);
-      else if (fn) out.push({ part: fn.part, patch: fn.patch, step, offset: fn.off, dur: fn.dur, midi: fn.midi, vel: fn.off ? 0.78 * melody : vel, ...(fn.dur % 1 ? { straight: true } : {}) });
+      const fn = formNoteAt(style, ctx.seed, formBar * 16 + s, transpose, a, { voice: place !== null, hookSeed: nightSeed, haunted: haunt });
+      const tint = fn && haunt ? hauntedColour(style, scale, fn.deg, !!fn.cad, hash2(ctx.seed, formBar * 16 + s, 467)) : 0; // (the scale's colour: Ed, 2026-11-08)
+      if (fn && fn.part === form.sung.part) sing(fn.deg, fn.dur, fn.off, fn.off ? 0.78 * melody : vel, tint);
+      else if (fn) out.push({ part: fn.part, patch: fn.patch, step, offset: fn.off, dur: fn.dur, midi: fn.midi + tint, vel: fn.off ? 0.78 * melody : vel, ...(fn.dur % 1 ? { straight: true } : {}) });
     }
   }
   // the section's own events: a crash on its first beat, a riser over a build (one note a bar)
   if (s === 0 && barIn === 0 && sec.impact && style.patches.impact) out.push({ part: "impact", patch: "impact", step, offset: 0, dur: 16, midi: null, vel: 1 });
   if (s === 0 && sec.riser && style.patches.riser) out.push({ part: "riser", patch: "riser", step, offset: 0, dur: 16, midi: null, vel: 1, from: barIn / plan.bars, to: (barIn + 1) / plan.bars });
+  // the haunted drop (Ed, 2026-11-08: "no drums, and then drum and bass kicks in"): a riser over the bars before it, an impact on it
+  if (s === 0 && Number.isFinite(dropAt)) {
+    const rb = Math.max(0, Math.min(H!.drop.riserBars, dropAt)), k = barIn - (dropAt - rb);
+    if (k >= 0 && k < rb && style.patches.riser) out.push({ part: "riser", patch: "riser", step, offset: 0, dur: 16, midi: null, vel: 1, from: k / rb, to: (k + 1) / rb });
+    if (barIn === dropAt && H!.drop.impact && style.patches.impact) out.push({ part: "impact", patch: "impact", step, offset: 0, dur: 16, midi: null, vel: 1 });
+  }
   return out;
 }
 
@@ -799,6 +950,17 @@ export function checkStyle(style: MusicStyle): string[] {
       else if (!tripletsWhole(c)) errs.push(`form: cell ${k} "${c}": a triplet without its _s`);
     }
     for (const c of Object.values(F.cadence).flat()) if (!c.endsWith(".")) errs.push(`form: cadence "${c}" doesn't end on a rest`);
+  }
+  const H = style.haunted;
+  if (H) {
+    for (const n of H.sections) if (!style.sections[n]) errs.push(`haunted: no section "${n}"`);
+    const len = Math.floor((F?.phraseBars ?? 8) / 2) * 16;
+    if (!H.rhythms.length) errs.push("haunted: no rhythms");
+    for (const r of H.rhythms) if (r.length !== len || /[^x.\-]/.test(r) || r[0] === "-" || !r.endsWith("....")) errs.push(`haunted: rhythm "${r}" wants ${len} sixteenths of x - ., a beat's rest at its end`);
+    for (const [pn, u] of Object.entries(H.drop.parts)) if (u !== null) checkUse("haunted.drop", pn, u);
+    if (!(H.verb.time > 0 && H.verb.low > 0 && H.verb.high > H.verb.low)) errs.push("haunted.verb: wants a time and low < high");
+    if (!Number.isInteger(H.ghost.interval) || H.ghost.interval === 0) errs.push("haunted.ghost: interval wants whole scale steps, not 0");
+    if (H.drone.swell.length < 3) errs.push("haunted.drone: a swell rate for the root, fifth and octave");
   }
   style.arc.forEach((a, i) => {
     for (const [s, bars] of [...(a.arrive ?? []), ...(a.loop ?? []), ...(a.variants ?? []).flat(), [a.build, a.buildBars ?? style.buildBars] as [string, number]]) {

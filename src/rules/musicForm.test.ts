@@ -9,7 +9,7 @@ import { hitWitch, newGame as fullGame } from "./game";
 import { smallWorld } from "../test/worlds";
 const newGame = smallWorld(fullGame, "Music cue and knockdown tempo integration consumes one witch's beat state, not distant areas.");
 import { Conductor, formClock, musicCue, silentAt, type MusicCue } from "./musicPlan";
-import { arcStep, degreeToMidi, formBars, formChord, formInstrument, formNoteAt, formPhrase, musicSeed, notesAt, resolveSection, sungHere, type BlockPlan, type MusicStyle } from "./musicScore";
+import { arcStep, degreeToMidi, formBars, formChord, formInstrument, formNoteAt, formPhrase, isHaunted, musicSeed, notesAt, resolveSection, sungHere, withHaunted, type BlockPlan, type MusicStyle } from "./musicScore";
 import { TUNING, type Tuning } from "./tuning";
 
 const style = styleJson as unknown as MusicStyle, F = style.form!;
@@ -90,7 +90,7 @@ describe("the melodies' 32-bar ABAC form", () => {
 });
 
 describe("everything in dorian, each stage in its own key", () => {
-  it("every arc step, section and layer", () => {
+  it("every arc step, section and layer (the haunted places' colour aside: musicHaunted.test.ts)", () => {
     expect(style.scale).toBe("dorian");
     // (the key changes between stages stay: Ed, 2026-10-09, via the coordinator)
     expect(style.arc.map(a => a.transpose ?? 0)).toEqual([0, 0, 0, 0, 2, 3, 5, 0, 1]);
@@ -100,7 +100,9 @@ describe("everything in dorian, each stage in its own key", () => {
       const dorian = new Set(style.scales.dorian.map(d => (d + style.root + tr) % 12));
       for (let step = 0; step < 32 * 16; step += 1) {
         for (const e of notesAt(style, plan, null, step, { seed: 5 + arc, siege: 1, party: 1, legend: 1, circle: { species: "elk", level: 1 } })) {
-          if (e.midi !== null) expect(dorian.has(e.midi % 12), `${section} ${e.part} ${e.midi}`).toBe(true);
+          // (Ed, 2026-11-08, "B, 1-6": a haunted section's melody and a clearing's layer may take the flat 2nd or the raised 7th)
+          const colour = e.layer === "circle" || isHaunted(style, section) ? [1, 11].map(d => (d + style.root + tr) % 12) : [];
+          if (e.midi !== null) expect(dorian.has(e.midi % 12) || colour.includes(e.midi % 12), `${section} ${e.part} ${e.midi}`).toBe(true);
         }
       }
     }
@@ -286,10 +288,12 @@ describe("the singer's redesign (Ed, 2026-10-14: an alto in tune, stepwise, in t
     // the form's bars 0-15 (A and B) in the four-on-the-floor section: nothing sung
     expect(events(S.four[0], 0, 16).filter(e => e.part === F.sung.part)).toEqual([]);
     expect(events(S.four[0], 0, 16).some(e => style.parts[e.part]?.role === "motif")).toBe(true);
-    // bars 24-31 (C) in the breakdown: sung, each note washed a fifth and an octave up at half the level, in the pure chain
+    // bars 24-31 (C) in the breakdown: sung, each note washed a fifth and an octave up at half the level, in the pure chain (with
+    // the haunted treatment off: on, the ghost voice takes the wash's place, musicHaunted.test.ts)
     let sungIn = 0;
+    const plain = withHaunted(style, false);
     for (const seed of [7, 8, 9, 10]) {
-      const ev = Array.from({ length: 8 * 16 }, (_, i) => notesAt(style, { section: S.breakdown[0], start: 24, bars: 8, wave: 1, arc: 1 }, null, 24 * 16 + i, { seed, siege: 0, formStart: 0 })).flat().filter(e => e.part === F.sung.part);
+      const ev = Array.from({ length: 8 * 16 }, (_, i) => notesAt(plain, { section: S.breakdown[0], start: 24, bars: 8, wave: 1, arc: 1 }, null, 24 * 16 + i, { seed, siege: 0, formStart: 0 })).flat().filter(e => e.part === F.sung.part);
       if (!ev.length) continue;
       sungIn++;
       const leads = ev.filter(e => !e.double), wash = ev.filter(e => e.double);

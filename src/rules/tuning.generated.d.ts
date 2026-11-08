@@ -1933,6 +1933,7 @@ export type SchemaTuning = {
     "distort": number;
     "src": string;
     "singer": string;
+    "haunted": boolean;
     "over": {
       "stop": number;
       "floor": number;

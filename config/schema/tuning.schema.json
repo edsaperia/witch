@@ -9873,6 +9873,10 @@
           "type": "string",
           "description": "who sings the vocalise: empty for the music style's own singer (Chimera's notes since 2026-11-08), or a sung patch of the style in its place everywhere it sings (recordedVoice the old recorded singer, altoSampled the alto set); ?singer=recorded or ?singer=sampled for a load, to A/B."
         },
+        "haunted": {
+          "type": "boolean",
+          "description": "The haunted treatment in the quiet sections and a sleeping legend's clearing layer (the music style's haunted block, docs/notes/music.md Haunted); false plays the music as before, as does ?haunted=0 or the Music Lab's Haunted switch."
+        },
         "over": {
           "type": "object",
           "properties": {
@@ -9928,6 +9932,7 @@
         "distort",
         "src",
         "singer",
+        "haunted",
         "over",
         "beach"
       ],

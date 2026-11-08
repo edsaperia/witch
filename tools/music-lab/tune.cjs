@@ -17,7 +17,8 @@ const { join, resolve } = require("node:path");
 const root = resolve(__dirname, "../..");
 const args = process.argv.slice(2), voiceArg = args.find(a => a.startsWith("--voice="))?.slice(8), saveArg = args.find(a => a.startsWith("--save="))?.slice(7), rest = args.filter(a => !a.startsWith("--"));
 const [section = "breakdown", seed = "7", bars = "16", wave = "2"] = rest, voice = voiceArg || JSON.parse(readFileSync(join(root, "config/music-style.json"), "utf8")).form.sung.patch;
-const TOL = 20, LOW = 55, HIGH = 67, VIB = 0.2;
+// (HIGH: G4, or G#4 where the haunted colour raises the top note's 7th, Ed's exception of 2026-11-08: the leading tone)
+const TOL = 20, LOW = 55, HIGH = 68, VIB = 0.2;
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 let failed = 0;

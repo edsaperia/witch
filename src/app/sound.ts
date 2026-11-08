@@ -12,7 +12,7 @@ import { ShedValve } from "../platform/audio/shed";
 import { bufferHint, learnBuffer, learntBuffer, nextBuffer } from "../platform/audio/buffer";
 import { musicMix, partyOverEase } from "../rules/music";
 import type { MusicCue } from "../rules/musicPlan";
-import { withSinger, type MusicStyle } from "../rules/musicScore";
+import { withHaunted, withSinger, type MusicStyle } from "../rules/musicScore";
 import { nightStyle } from "../rules/musicSet";
 import { voiceRecordings } from "../platform/audio/voiceSamples";
 import type { Game } from "../rules/game";
@@ -95,7 +95,7 @@ export class Sound {
   /** The pause page's Music Lab (app/musicLab.ts; Ed, 2026-10-15), once opened: its settings over the night's style and cue,
    *  its levels on the engine's channels each frame, and its preview in the bedroom on a clock of its own. */
   lab: MusicLab | null = null;
-  private get playing(): MusicStyle { return this.night ?? withSinger(this.style, this.tuning.music.singer); }
+  private get playing(): MusicStyle { return this.night ?? withHaunted(withSinger(this.style, this.tuning.music.singer), this.tuning.music.haunted); }
 
 
   /** The sound effects, once there's an AudioContext (the creator's first click, or the start). */
@@ -216,7 +216,8 @@ export class Sound {
     // the night's set (Ed, 2026-10-11): the music plays its arc, from the next block; the Music Lab's settings over it (the same
     // object while nothing changes there)
     // (its singer the tuning's, music.singer: the style's own unless a link picks the old one, ?singer=)
-    const night0 = withSinger(nightStyle(this.style, game.musicSet), this.tuning.music.singer), night = this.lab ? this.lab.styled(night0, game.musicSet) : night0;
+    // (and the haunted treatment, on unless the tuning's music.haunted is false: ?haunted=0; Ed, 2026-11-08, "B, 1-6")
+    const night0 = withHaunted(withSinger(nightStyle(this.style, game.musicSet), this.tuning.music.singer), this.tuning.music.haunted), night = this.lab ? this.lab.styled(night0, game.musicSet) : night0;
     if (night !== this.night) { this.night = night; this.music?.engine?.setStyle(night); }
     if (this.music) { this.music.shed = this.valve.level; this.music.aheadAllowed = !this.lab; } // (the watchdog's rebuilt music too; the lab's levels are the live engine's)
     if (this.music?.engine && this.audio) this.music.engine.lead = (this.audio.baseLatency ?? 0) + ((this.audio as AudioContext & { outputLatency?: number }).outputLatency ?? 0); // (the notes sent early by the context's latency: heard on the beat shown)

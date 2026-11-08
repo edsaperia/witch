@@ -110,6 +110,11 @@ export function tuningFromLink(params: URLSearchParams) {
   // 2026-11-08: "Go ahead and swap them over"; tuning music.singer, app/sound.ts)
   const singerParam = SINGERS[params.get("singer") ?? ""];
   if (singerParam) tuning.music = { ...tuning.music, singer: singerParam };
+  // ?haunted=0: the quiet sections and the legends' clearings as before the haunted treatment (Ed, 2026-11-08: "B, 1-6"), to
+  // A/B; ?haunted=1 on (tuning music.haunted, app/sound.ts)
+  const hauntedParam = params.get("haunted");
+  if (hauntedParam === "0" || hauntedParam === "off") tuning.music = { ...tuning.music, haunted: false };
+  else if (hauntedParam === "1" || hauntedParam === "on") tuning.music = { ...tuning.music, haunted: true };
   if (musicParam === "off") tuning.music = { ...tuning.music, on: false };
   let musicCueNow: MusicCue | undefined;
   {

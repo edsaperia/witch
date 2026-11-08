@@ -55,6 +55,7 @@ function styleFor(s: LabState): MusicStyle {
   if (s.breath !== null && sungPatch && st.patches[sungPatch]) st.patches = { ...st.patches, [sungPatch]: { ...st.patches[sungPatch], breath: s.breath } };
   if (s.fofChoir && st.parts.choir && st.patches.fofChoir) st.parts = { ...st.parts, choir: { ...st.parts.choir, patch: "fofChoir" } };
   if (s.arpeggio && st.form) st.form = { ...st.form, sung: { ...st.form.sung, arpeggio: true } }; // (the voice test: constant arpeggios, every section)
+  if (st.haunted) st.haunted = { ...st.haunted, on: s.haunted }; // (the haunted treatment, to A/B: Ed, 2026-11-08)
   st.voiceFx = { ...st.voiceFx, ...s.voiceFx };
   if (s.chain !== "auto") delete st.voiceFxDark; // (pure: the one chain; dark: its values are the sliders' rest, chainFx)
   const v = st.sections[VICTORY];
@@ -219,7 +220,7 @@ let lastStyleKey = "";
 function changed(): void {
   save();
   showSettings();
-  const key = JSON.stringify([state.mode, state.witchHouse, state.victory, state.voice, state.fofChoir, state.breath, state.chain, state.arpeggio, FX.map(f => state.voiceFx[f] > 0)]); // (a voice effect's level is set live; one turned on or off rebuilds the voice's chain)
+  const key = JSON.stringify([state.mode, state.witchHouse, state.victory, state.voice, state.fofChoir, state.breath, state.chain, state.arpeggio, state.haunted, FX.map(f => state.voiceFx[f] > 0)]); // (a voice effect's level is set live; one turned on or off rebuilds the voice's chain)
   if (key !== lastStyleKey) { lastStyleKey = key; if (player?.playing) player.setStyle(styleFor(state)); }
 }
 
@@ -263,6 +264,7 @@ function build(): void {
   // the voice test (Ed, 2026-10-14: "the voice and its effects singing constant arpeggios"), the singer's breath (its voice's
   // own until moved; double-click the value for its own again) and the chain it goes through
   $("fx").append(el("label", { cls: "f", textContent: "Sings" }), choice(["form", "arpeggio"] as const, o => (o === "arpeggio" ? "Constant arpeggios (every section)" : "The form's melodies (breakdowns, builds)"), () => (state.arpeggio ? "arpeggio" : "form"), o => { state.arpeggio = o === "arpeggio"; }));
+  $("fx").append(el("label", { cls: "f", textContent: "Haunted (quiet sections, clearings)" }), choice(["on", "off"] as const, o => (o === "on" ? "On (as the game)" : "Off (as before)"), () => (state.haunted ? "on" : "off"), o => { state.haunted = o === "on"; }));
   $("fx").append(row("Breath", "breath", () => state.breath ?? ownBreath(state.voice), v => { state.breath = Number.isNaN(v) ? null : v; }, 1, NaN, undefined, false));
   $("fx").append(el("label", { cls: "f", textContent: "Chain (the sliders start at its own values)" }), choice(CHAINS, (c: Chain) => ({ auto: "As the game plays it", pure: "Pure (breakdowns, builds)", dark: "Dark (the dark families)" })[c], () => state.chain, c => { state.chain = c; state.voiceFx = chainFx(DEFAULTS, c); }));
   $("fx").append(el("label", { cls: "f", textContent: "Choir chords" }), choice(["synth", "fof"] as const, o => (o === "fof" ? "FOF choir" : "Synth choir"), () => (state.fofChoir ? "fof" : "synth"), o => { state.fofChoir = o === "fof"; }));
@@ -304,7 +306,7 @@ function build(): void {
   $("reset").onclick = () => { if (!confirm("Put every slider back as the game has it?")) return; state = defaultState(DEFAULTS); changed(); showAll(); if (player?.playing) restart(); };
   $("unsolo").onclick = () => { state.solo = []; state.mute = []; changed(); showAll(); };
   showAll();
-  lastStyleKey = JSON.stringify([state.mode, state.witchHouse, state.victory, state.voice, state.fofChoir, state.breath, state.chain, state.arpeggio, FX.map(f => state.voiceFx[f] > 0)]);
+  lastStyleKey = JSON.stringify([state.mode, state.witchHouse, state.victory, state.voice, state.fofChoir, state.breath, state.chain, state.arpeggio, state.haunted, FX.map(f => state.voiceFx[f] > 0)]);
 }
 
 build();

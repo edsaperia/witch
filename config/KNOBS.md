@@ -3359,6 +3359,11 @@ Code: `tools/music-lab/check.cjs`
 - **`music.singer`**: who sings the vocalise: empty for the music style's own singer (Chimera's notes since 2026-11-08), or a sung patch of the style in its place everywhere it sings (recordedVoice the old recorded singer, altoSampled the alto set); ?singer=recorded or ?singer=sampled for a load, to A/B.
   1. Ed, 2026-11-08: "yes, go for it. Go ahead and swap them over" (of the Chimera vocalise he'd heard ("This is surprisingly good!"); the old voice kept selectable to A/B)
   Code: `rules/musicScore.ts`, `app/sound.ts`
+- **`music.haunted`**: The haunted treatment in the quiet sections and a sleeping legend's clearing layer (the music style's haunted block, docs/notes/music.md Haunted); false plays the music as before, as does ?haunted=0 or the Music Lab's Haunted switch.
+  1. Ed, 2026-11-08: "B, 1-6" (of six ways to bring the music closer to the vocalise demo he liked and three places to apply them: all six, in the quiet sections and the legends' clearings; option 5 lets notes outside dorian into those places only)
+  2. Ed, 2026-11-08: "Instead of 50% of the time, make it a drop - no drums, and then drum and bass kicks in. (Agree, not in legend areas)" (the quiet sections' drums: silent, then a drum & bass drop; the clearings without drums)
+  In its sections (breakdown, ether, whisper): the voice's own long dark reverb, no drums and then a drum and bass drop on a 4-bar line, held notes and slower chords, a ghost voice a sixth below, a root-and-fifth drone, the flattened 2nd or raised 7th as colour (notes outside dorian there only), and the voice lifted.
+  Code: `rules/musicScore.ts`, `platform/audio/musicEngine.ts`, `app/sound.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -3385,6 +3390,7 @@ Code: `tools/music-lab/check.cjs`
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
 | `music.singer` | string |  |
+| `music.haunted` | boolean |  |
 | `music.over.stop` | number | 0 to … |
 | `music.over.floor` | number | 0 to … |
 | `music.beach.fade` | number | 0 to … |
