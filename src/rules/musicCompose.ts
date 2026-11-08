@@ -383,8 +383,9 @@ export function makeRiff(C: ComposeDef, kind: RiffKind, cell: number[], r: (k: n
     const groups = [[3, 3, 2, 3, 3, 2], [3, 3, 3, 3, 2, 2], [2, 3, 3, 2, 3, 3], [3, 3, 4, 3, 3]][Math.floor(r(1) * 4)];
     let pos = 0;
     groups.forEach((g, i) => { bar.push({ pos, dur: Math.min(g, 2 + Math.floor(r(20 + i) * 2)), rel: cell[i % cell.length] }); pos += g; });
-    // (the answer: the bar's first half, then an octave leap up to a held high note)
-    answer = [...bar.filter(n => n.pos < 8), { pos: 8, dur: 6, rel: top }];
+    // (the answer: the bar's first half, then the riff's first note an octave up, held high)
+    const first = bar.filter(n => n.pos < 8), leapTo = first[0].rel + 7;
+    answer = [...first, { pos: 8, dur: 6, rel: leapTo <= 11 ? leapTo : top }];
   } else if (kind === "pedal") {
     const pedal = r(1) < 0.5 ? 7 : 4, gate = [1, 3, 5, 7, 9, 11, 13, 15].filter(s => r(30 + s) < 0.75 || s % 4 === 3);
     for (let s = 0; s < 16; s += 2) bar.push({ pos: s, dur: 1, rel: cell[(s / 2) % cell.length] });
@@ -406,16 +407,16 @@ export function makeRiff(C: ComposeDef, kind: RiffKind, cell: number[], r: (k: n
     const nb = r(1) < 0.5 ? 1 : -1, low = cell.includes(4) ? -3 : -5;
     bar.push({ pos: 0, dur: 6, rel: 0 }, { pos: 6, dur: 2, rel: nb }, { pos: 8, dur: 4, rel: 0 });
     if (r(2) < 0.6) bar.push({ pos: 12, dur: 4, rel: low });
-    answer = [{ pos: 0, dur: 4, rel: 0 }, { pos: 4, dur: 4, rel: nb }, { pos: 8, dur: 6, rel: 0 }]; // (the answer: the step on the beat, then home)
+    answer = [{ pos: 0, dur: 4, rel: 0 }, { pos: 4, dur: 2, rel: 2 }, { pos: 6, dur: 2, rel: 2 + nb }, { pos: 8, dur: 6, rel: 0 }]; // (the answer: up a third, its step, then home)
   }
   // (a neighbour note off the beat is fine; on the beat, the cell's chord tone)
-  for (const n of [...bar, ...answer]) if (!n.abs && n.pos % 4 === 0 && ![0, 2, 4, 6, 7, 9, -3, -5].includes(n.rel)) n.rel = cell[0];
+  for (const n of [...bar, ...answer]) if (!n.abs && n.pos % 4 === 0 && ![0, 2, 4, 6].includes(m7(n.rel))) n.rel = cell[0];
   return { kind, bar, answer, octaveUp: up && (kind === "trance" || kind === "pedal"), cell };
 }
 
 /** A riff's turn for a phrase letter (repetition over development: A as it is, B turned over around its first note,
- *  C the same as A but its answers falling to the root), each bar's notes moved onto its chord; the fourth and eighth bars the
- *  answer, ending on the chord's root; the second half an octave up where the riff says. Returns, per sixteenth, a note (scale
+ *  C the same as A but its last answer falling to the root), each bar's notes moved onto its chord; the fourth and eighth
+ *  bars the answer, the eighth's ending on the chord's root; the second half an octave up where the riff says. Returns, per sixteenth, a note (scale
  *  steps over the key's root) or null. `rootOf(b)` the chord's root in bar b. */
 export function riffLine(R: Riff, letter: string, bars: number, rootOf: (b: number) => number, tonesOf: (b: number) => number[]): ({ deg: number; dur: number; off: number } | null)[] {
   const out: ({ deg: number; dur: number; off: number } | null)[] = new Array(bars * 16).fill(null);
@@ -428,7 +429,7 @@ export function riffLine(R: Riff, letter: string, bars: number, rootOf: (b: numb
     const oct = up && b >= bars / 2 ? 7 : 0;
     notes.forEach((n, i) => {
       let rel = n.abs ? n.rel : turn(n.rel);
-      if (ans && i === notes.length - 1 && !n.abs) rel = letter === "C" || rel < 5 ? 0 : 7; // (the answer home, on the chord's root)
+      if (ans && b === bars - 1 && i === notes.length - 1 && !n.abs) rel = letter === "C" || rel < 5 ? 0 : 7; // (the phrase's last answer home, on the chord's root)
       let deg = n.abs ? rel + oct : rel + shift + oct;
       if (!n.abs && n.pos % 4 === 0 && !tones.includes(((deg % 7) + 7) % 7)) { // (moved onto the chord: the nearest chord tone)
         for (const d of [0, 1, -1, 2, -2]) if (tones.includes((((deg + d) % 7) + 7) % 7)) { deg += d; break; }
@@ -449,14 +450,16 @@ export function hookLine(lo: number, hi: number, bars: number, tonesOf: (b: numb
   for (let d = lo; d <= hi; d++) if (PENT.includes(m7(d))) pent.push(d);
   const high = pent.filter(d => d >= hi - 3), cellNotes: { pos: number; dur: number }[] = [];
   for (let s = 0; s < 16; s++) if (rhythm[s] === "x") { let dur = 1; while (s + dur < 16 && rhythm[s + dur] === "-") dur++; cellNotes.push({ pos: s, dur }); }
-  let cur = high[Math.floor(r(2) * high.length)] ?? hi;
-  const cell = cellNotes.map((_, k) => { if (k) { const i = pent.indexOf(cur), j = Math.max(0, Math.min(pent.length - 1, i + (r(10 + k) < 0.55 ? -1 : 1))); cur = pent[j]; } return cur; });
+  // (the cell: a high pentatonic note, its neighbour on the scale, and the other neighbour: a, b, a, c in turn)
+  const a = high[Math.floor(r(2) * high.length)] ?? hi, ia = pent.indexOf(a), upFirst = r(3) < 0.6 && ia + 1 < pent.length;
+  const b = pent[upFirst ? ia + 1 : Math.max(0, ia - 1)] ?? a, c = pent[upFirst ? Math.max(0, ia - 1) : Math.min(pent.length - 1, ia + 1)] ?? a;
+  const cell = cellNotes.map((_, k) => [a, b, a, c][k % 4]);
   const out: ({ deg: number; dur: number; off: number } | null)[] = new Array(bars * 16).fill(null);
   let lastAt = -1;
   for (let b = 0; b < bars; b++) cellNotes.forEach((n, k) => {
     let deg = cell[k];
     const tones = tonesOf(b);
-    if (n.pos % 4 === 0 && !tones.includes(m7(deg))) for (const d of [-1, 1, -2, 2]) if (deg + d >= lo && deg + d <= hi && tones.includes(m7(deg + d))) { deg += d; break; }
+    if (n.pos % 4 === 0 && !tones.includes(m7(deg))) for (const d of [-1, 1, -2, 2]) if (deg + d >= lo && deg + d <= hi && tones.includes(m7(deg + d)) && (k === 0 || deg + d !== out[lastAt]?.deg)) { deg += d; break; }
     out[b * 16 + n.pos] = { deg, dur: n.dur, off: 0 };
     lastAt = b * 16 + n.pos;
   });
