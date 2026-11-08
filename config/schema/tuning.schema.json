@@ -9880,10 +9880,11 @@
         "melody": {
           "type": "string",
           "enum": [
-            "new",
+            "dance",
+            "lyrical",
             "old"
           ],
-          "description": "Whose melodies and basslines the music plays: \"new\" the composer's (the music style's compose block, docs/notes/music.md The composer), \"old\" the seeded walk and the one-bar basslines as before, as does ?melody=old."
+          "description": "Whose melodies and basslines the music plays: \"dance\" the composer's riffs and hooks (the default), \"lyrical\" its planned phrases (the music style's compose block, docs/notes/music.md The composer), \"old\" the seeded walk and the one-bar basslines as before; ?melody= likewise."
         },
         "over": {
           "type": "object",

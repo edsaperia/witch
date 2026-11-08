@@ -645,7 +645,7 @@ export class MusicEngine {
       const e = events[i];
       if (taken.has(e)) continue;
       const p = this.style.patches[e.patch];
-      if (p?.kind === "synth" && !p.drive && !p.glide && e.midi !== null) {
+      if (p?.kind === "synth" && !p.drive && !p.glide && e.glide === undefined && e.midi !== null) {
         const mates = events.filter((f, j) => j > i && !taken.has(f) && f.part === e.part && f.patch === e.patch && f.layer === e.layer && f.offset === e.offset && f.dur === e.dur && f.vel === e.vel && f.midi !== null);
         if (mates.length) { for (const f of mates) taken.add(f); this.play(e, at(e), e.dur * sps, sps, mates.map(f => f.midi!)); continue; }
       }
@@ -738,7 +738,7 @@ export class MusicEngine {
       case "noise": this.noiseHit(t, p, peak, ch); break;
       case "snare": this.snare(t, p, peak, ch); break;
       case "bell": this.bell(t, p, peak, mtof(e.midi ?? 69) * pf, ch.in); break;
-      case "synth": this.synth(t, p, peak, chord.length ? [e.midi ?? 45, ...chord].map(m => mtof(m) * pf) : mtof(e.midi ?? 45) * pf, dur, ch); break;
+      case "synth": this.synth(t, e.glide !== undefined ? { ...p, glide: e.glide } : p, peak, chord.length ? [e.midi ?? 45, ...chord].map(m => mtof(m) * pf) : mtof(e.midi ?? 45) * pf, dur, ch); break;
       case "voice": this.voice(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch); break;
       case "fof": this.fof(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch); break;
       case "sample": this.sampled(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch); break;

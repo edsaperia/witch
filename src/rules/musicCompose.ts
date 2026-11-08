@@ -23,6 +23,35 @@ export interface ComposeDef {
   /** The bass's rules: the chance it steps into a new chord (`approach`), and each bass part's own (parts not listed play their
    *  pattern as before: the drones, the haunted drop's sub). */
   bass: { approach: number; parts: Record<string, BassRule> };
+  /** Which of the composer's ways leads (Ed, 2026-11-08, on the first: "more lyrical but not very dancey"): "dance" (the
+   *  default: the instrument plays a repeated riff, the voice now and then a short high hook) or "lyrical" (every melody
+   *  planned on a contour, as first built). Tuning music.melody, ?melody=dance|lyrical|old. */
+  melody?: "dance" | "lyrical";
+  /** The dance way's settings (DanceDef). */
+  dance?: DanceDef;
+}
+
+/** A riff's kind (Ed, 2026-11-08: "inspiration from trance anthem melodies, abstract hip-hop, witch house, and Grimes"; the
+ *  styles' traits only, never a song's): "trance" a syncopated bar (groups of 3, 3 and 2) repeated, an answer in the fourth,
+ *  an octave leap to a held note; "pedal" moving notes against a gated pedal; "poly" a three-note arpeggio against the
+ *  four-beat bar; "chop" a half-bar fragment looped with rests, laid back like a chopped sample; "ostinato" a sparse,
+ *  half-time two-to-four-note figure leaning on a step (witch house). */
+export type RiffKind = "trance" | "pedal" | "poly" | "chop" | "ostinato";
+
+/** The dance way (ComposeDef.dance). */
+export interface DanceDef {
+  /** The riff kinds a night's family deals from (`families`), else its section's (`sections`, by name), else `default`. */
+  riffs: { default: RiffKind[]; families: Record<string, RiffKind[]>; sections: Record<string, RiffKind[]> };
+  /** The chance a wave's singer sings a short repeated high hook (pentatonic, a bar long, with rests) instead of the long line. */
+  hook: number;
+  /** A chopped riff's lay-back: how late its notes fall, a share of a sixteenth. */
+  late: number;
+  /** The chance a trance or pedal riff's second half goes an octave up. */
+  octaveUp: number;
+  /** The chance a sleeping legend's clearing plays the witch-house ostinato in place of its planned motif. */
+  ostinato: number;
+  /** Bass rules over `bass.parts` by a night's family (hip-hop's kick-following slides, witch house's 808 glides). */
+  bass: Record<string, Record<string, BassRule>>;
 }
 
 /** A bass part's own rules (ComposeDef.bass.parts). */
@@ -41,6 +70,11 @@ export interface BassRule {
   octave?: number;
   /** Strike the held note again where the kick hits off the beat (the bass following a breakbeat's kick). */
   restrike?: boolean;
+  /** Play on the kick's hits instead of the pattern's (abstract hip-hop's bass, following the kick), with a syncopated note
+   *  answering it. */
+  follow?: boolean;
+  /** A slide (seconds) into each note that moves, on a patch without its own glide. */
+  glide?: number;
 }
 
 const m7 = (d: number) => ((d % 7) + 7) % 7;
@@ -241,7 +275,7 @@ export function beatMotif(C: ComposeDef, r: (k: number) => number): number[] {
 
 /** One bass note of a bar: scale steps over the chord's root (`abs`: over the key's, an approach into the next chord), its level
  *  (×) and length (sixteenths). */
-export interface BassNote { k: number; abs?: boolean; vel: number; dur: number }
+export interface BassNote { k: number; abs?: boolean; vel: number; dur: number; glide?: number }
 
 const BASS_STEPS: Record<string, number> = { "1": 0, "2": 1, "3": 2, "5": 4, "7": 6, "8": 7 };
 
@@ -261,6 +295,21 @@ export function bassBar(bar: string, rule: BassRule, approach: number, root: num
     while (s + dur < 16 && bar[s + dur] === "-") dur++;
     out[s] = { k: BASS_STEPS[c] ?? 0, vel: 1, dur };
     marks[s] = c;
+  }
+  // (following the kick: a note on each of its hits, the pattern's note there or the root, held to the next, and a syncopated
+  // answer an eighth before the bar's end or its middle)
+  if (rule.follow && kick) {
+    const held: number[] = [];
+    for (let s = 0, k = 0; s < 16; s++) { if (out[s]) k = out[s]!.k; held.push(k); }
+    const hits: number[] = [];
+    for (let s = 0; s < 16; s++) if (hit(s)) hits.push(s);
+    const pick = r(30) < 0.5 ? 14 : 7;
+    if (!hits.includes(pick) && !hit(pick + 1)) hits.push(pick);
+    hits.sort((x, y) => x - y);
+    if (hits.length) {
+      out.fill(null);
+      hits.forEach((s, i) => (out[s] = { k: s === pick ? (r(31) < 0.5 ? 7 : 4) : held[s], vel: s === pick ? 0.75 : 1, dur: Math.max(1, Math.min((hits[i + 1] ?? 16) - s, 6)) }));
+    }
   }
   const onsets = () => out.map((n, s) => (n ? s : -1)).filter(s => s >= 0);
   const cutBefore = (s: number) => { for (let j = s - 1; j >= 0; j--) if (out[j]) { out[j]!.dur = Math.min(out[j]!.dur, s - j); break; } };
@@ -301,5 +350,125 @@ export function bassBar(bar: string, rule: BassRule, approach: number, root: num
     }
   }
   for (const [s, c] of marks.entries()) if (c === "a" && out[s] && !out[s]!.abs) out[s]!.k = 0; // (an "a" with no new chord: the root)
+  if (rule.glide) { let prev: BassNote | null = null; for (const n of out) if (n) { if (prev && (prev.abs ? prev.k - root : prev.k) !== (n.abs ? n.k - root : n.k)) n.glide = rule.glide; prev = n; } }
   return out;
+}
+
+// ---------------------------------------------------------------- the dance way: riffs, hooks, ostinatos
+
+/** One note of a riff's bar: where it starts and how long (sixteenths), scale steps over the chord's root (or over the key's,
+ *  `abs`: a pedal), and how late (a share of a sixteenth). */
+export interface RiffNote { pos: number; dur: number; rel: number; abs?: boolean; late?: number }
+/** A riff: its bar, the answer its fourth bar plays, whether its second half goes an octave up, and its pitch cell. */
+export interface Riff { kind: RiffKind; bar: RiffNote[]; answer: RiffNote[]; octaveUp: boolean; cell: number[] }
+
+/** A riff's pitch cell (r a seeded 0-1 by index): four chord tones over the chord's root (0 2 4 7 9, with the seventh 6), a
+ *  small arpeggio shape the riffs arrange and the slow hook states. */
+export function pitchCell(C: ComposeDef, r: (k: number) => number): number[] {
+  const tones = C.sevenths ? [0, 2, 4, 6, 7, 9] : [0, 2, 4, 7, 9], out = [[0, 4, 7][Math.floor(r(1) * 3)]];
+  for (let k = 1; k < 4; k++) {
+    const p = out[k - 1], near = tones.filter(t => t !== p && Math.abs(t - p) <= 4 && !(k >= 2 && t === out[k - 2]));
+    out.push(near[Math.floor(r(k + 1) * near.length)] ?? p);
+  }
+  return out;
+}
+
+/** A riff of `kind` on a pitch cell (r a seeded 0-1 by index; `cell` the night's, so the breakdown's slow hook and the drop's
+ *  riff share it). The notes on the beats are chord tones; the rest the cell's, a neighbour note or the pedal. */
+export function makeRiff(C: ComposeDef, kind: RiffKind, cell: number[], r: (k: number) => number): Riff {
+  const D = C.dance!, up = r(9) < D.octaveUp, top = Math.max(...cell) >= 7 ? Math.max(...cell) : 7;
+  const bar: RiffNote[] = [];
+  let answer: RiffNote[];
+  if (kind === "trance") {
+    const groups = [[3, 3, 2, 3, 3, 2], [3, 3, 3, 3, 2, 2], [2, 3, 3, 2, 3, 3], [3, 3, 4, 3, 3]][Math.floor(r(1) * 4)];
+    let pos = 0;
+    groups.forEach((g, i) => { bar.push({ pos, dur: Math.min(g, 2 + Math.floor(r(20 + i) * 2)), rel: cell[i % cell.length] }); pos += g; });
+    // (the answer: the bar's first half, then an octave leap up to a held high note)
+    answer = [...bar.filter(n => n.pos < 8), { pos: 8, dur: 6, rel: top }];
+  } else if (kind === "pedal") {
+    const pedal = r(1) < 0.5 ? 7 : 4, gate = [1, 3, 5, 7, 9, 11, 13, 15].filter(s => r(30 + s) < 0.75 || s % 4 === 3);
+    for (let s = 0; s < 16; s += 2) bar.push({ pos: s, dur: 1, rel: cell[(s / 2) % cell.length] });
+    for (const s of gate) bar.push({ pos: s, dur: 1, rel: pedal, abs: true });
+    bar.sort((a, b) => a.pos - b.pos);
+    answer = [...bar.filter(n => n.pos < 8 && !n.abs), { pos: 8, dur: 6, rel: top }];
+  } else if (kind === "poly") {
+    const three = [...cell.slice(0, 3)].sort((a, b) => (r(2) < 0.5 ? a - b : b - a)), step = r(1) < 0.5 ? 1 : 2;
+    for (let s = 0, k = 0; s < 16; s += step, k++) bar.push({ pos: s, dur: step, rel: three[k % 3] });
+    // (three against four: the notes go round the three, so each beat falls on the next of them, all chord tones)
+    answer = [...bar.filter(n => n.pos < 8), { pos: 8, dur: 4, rel: top }];
+  } else if (kind === "chop") {
+    const frag = ["x..x..x.", "x.x...x.", "x...x.x.", "x..x....", "x.x.x..."][Math.floor(r(1) * 5)], late = D.late;
+    let k = 0;
+    for (let s = 0; s < 8; s++) if (frag[s] === "x") { const rel = s % 4 === 0 ? cell[k % cell.length] : r(40 + s) < 0.4 ? cell[k % cell.length] + (r(50 + s) < 0.5 ? 1 : -1) : cell[k % cell.length]; bar.push({ pos: s, dur: 1 + (frag[s + 1] === "." ? 1 : 0), rel, late }); k++; }
+    for (const n of [...bar]) bar.push({ ...n, pos: n.pos + 8 }); // (the fragment looped: twice a bar)
+    answer = bar.filter(n => n.pos < 8); // (the answer: the fragment once, then space)
+  } else { // ostinato
+    const nb = r(1) < 0.5 ? 1 : -1, low = cell.includes(4) ? -3 : -5;
+    bar.push({ pos: 0, dur: 6, rel: 0 }, { pos: 6, dur: 2, rel: nb }, { pos: 8, dur: 4, rel: 0 });
+    if (r(2) < 0.6) bar.push({ pos: 12, dur: 4, rel: low });
+    answer = [{ pos: 0, dur: 4, rel: 0 }, { pos: 4, dur: 4, rel: nb }, { pos: 8, dur: 6, rel: 0 }]; // (the answer: the step on the beat, then home)
+  }
+  // (a neighbour note off the beat is fine; on the beat, the cell's chord tone)
+  for (const n of [...bar, ...answer]) if (!n.abs && n.pos % 4 === 0 && ![0, 2, 4, 6, 7, 9, -3, -5].includes(n.rel)) n.rel = cell[0];
+  return { kind, bar, answer, octaveUp: up && (kind === "trance" || kind === "pedal"), cell };
+}
+
+/** A riff's turn for a phrase letter (repetition over development: A as it is, B turned over around its first note,
+ *  C the same as A but its answers falling to the root), each bar's notes moved onto its chord; the fourth and eighth bars the
+ *  answer, ending on the chord's root; the second half an octave up where the riff says. Returns, per sixteenth, a note (scale
+ *  steps over the key's root) or null. `rootOf(b)` the chord's root in bar b. */
+export function riffLine(R: Riff, letter: string, bars: number, rootOf: (b: number) => number, tonesOf: (b: number) => number[]): ({ deg: number; dur: number; off: number } | null)[] {
+  const out: ({ deg: number; dur: number; off: number } | null)[] = new Array(bars * 16).fill(null);
+  const pivot = R.bar.find(n => !n.abs)?.rel ?? 0, turn = (rel: number) => (letter === "B" ? pivot - (rel - pivot) : rel);
+  const highest = Math.max(...R.bar.filter(n => !n.abs).map(n => turn(n.rel))), shiftOf = (b: number) => { const r = rootOf(b); return r <= 3 ? r : r - 7; };
+  let up = R.octaveUp; // (the second time round an octave up, if no bar of it goes shrill)
+  for (let b = Math.ceil(bars / 2); b < bars && up; b++) if (highest + shiftOf(b) + 7 > 13) up = false;
+  for (let b = 0; b < bars; b++) {
+    const ans = b % 4 === 3, notes = ans ? R.answer : R.bar, root = rootOf(b), shift = root <= 3 ? root : root - 7, tones = tonesOf(b);
+    const oct = up && b >= bars / 2 ? 7 : 0;
+    notes.forEach((n, i) => {
+      let rel = n.abs ? n.rel : turn(n.rel);
+      if (ans && i === notes.length - 1 && !n.abs) rel = letter === "C" || rel < 5 ? 0 : 7; // (the answer home, on the chord's root)
+      let deg = n.abs ? rel + oct : rel + shift + oct;
+      if (!n.abs && n.pos % 4 === 0 && !tones.includes(((deg % 7) + 7) % 7)) { // (moved onto the chord: the nearest chord tone)
+        for (const d of [0, 1, -1, 2, -2]) if (tones.includes((((deg + d) % 7) + 7) % 7)) { deg += d; break; }
+      }
+      const at = b * 16 + n.pos;
+      out[at] = { deg, dur: Math.min(n.dur, 16 - n.pos), off: n.late ?? 0 };
+    });
+  }
+  return out;
+}
+
+/** A sung hook (Grimes' traits: short, high, repeated, pentatonic): a bar's two to four notes in the top of the singer's window
+ *  `[lo, hi]`, on the pentatonic steps (0 2 3 4 6 over the key), repeated each bar with rests, a note on the beat moved onto the
+ *  chord where it isn't on it, the last note one of `ends`. r a seeded 0-1 by index. */
+export function hookLine(lo: number, hi: number, bars: number, tonesOf: (b: number) => number[], ends: number[], r: (k: number) => number): ({ deg: number; dur: number; off: number } | null)[] {
+  const PENT = [0, 2, 3, 4, 6], rhythm = ["x-x-x---........", "x--x--x-........", "x-x-....x-x-....", "....x-x-x---....", "x---x-x-........"][Math.floor(r(1) * 5)];
+  const pent: number[] = [];
+  for (let d = lo; d <= hi; d++) if (PENT.includes(m7(d))) pent.push(d);
+  const high = pent.filter(d => d >= hi - 3), cellNotes: { pos: number; dur: number }[] = [];
+  for (let s = 0; s < 16; s++) if (rhythm[s] === "x") { let dur = 1; while (s + dur < 16 && rhythm[s + dur] === "-") dur++; cellNotes.push({ pos: s, dur }); }
+  let cur = high[Math.floor(r(2) * high.length)] ?? hi;
+  const cell = cellNotes.map((_, k) => { if (k) { const i = pent.indexOf(cur), j = Math.max(0, Math.min(pent.length - 1, i + (r(10 + k) < 0.55 ? -1 : 1))); cur = pent[j]; } return cur; });
+  const out: ({ deg: number; dur: number; off: number } | null)[] = new Array(bars * 16).fill(null);
+  let lastAt = -1;
+  for (let b = 0; b < bars; b++) cellNotes.forEach((n, k) => {
+    let deg = cell[k];
+    const tones = tonesOf(b);
+    if (n.pos % 4 === 0 && !tones.includes(m7(deg))) for (const d of [-1, 1, -2, 2]) if (deg + d >= lo && deg + d <= hi && tones.includes(m7(deg + d))) { deg += d; break; }
+    out[b * 16 + n.pos] = { deg, dur: n.dur, off: 0 };
+    lastAt = b * 16 + n.pos;
+  });
+  if (lastAt >= 0) { const n = out[lastAt]!; let best = n.deg, bd = Infinity; for (let d = lo; d <= hi; d++) if (ends.includes(m7(d)) && Math.abs(d - n.deg) < bd) { bd = Math.abs(d - n.deg); best = d; } n.deg = best; }
+  return out;
+}
+
+/** The witch-house ostinato for a clearing's layer: three or four notes cycled over two bars, one value a
+ *  sixteenth over the chord's root (as `beatMotif`): a chord tone, a step above or below it, the tone again, a note under,
+ *  each held one or two beats. */
+export function ostinatoMotif(r: (k: number) => number): number[] {
+  const a = [0, 2, 4, 7][Math.floor(r(3) * 4)], nb = r(1) < 0.5 ? 1 : -1, low = [-3, a - 2, -5][Math.floor(r(4) * 3)], unit = r(5) < 0.5 ? 8 : 4;
+  const cell = r(2) < 0.5 ? [a, a + nb, a, low] : [a, a + nb, low];
+  return Array.from({ length: 32 }, (_, i) => cell[Math.floor(i / unit) % cell.length]);
 }

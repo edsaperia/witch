@@ -1144,15 +1144,16 @@
    "name": "melody",
    "values": [
     "old",
-    "new"
+    "lyrical",
+    "dance"
    ],
-   "does": "The music's melodies and basslines by the old rules (old: the seeded walk and the one-bar basslines) or the composer's (new, the default), to A/B. Sets tuning music.melody.",
+   "does": "The music's melodies and basslines by the old rules (old: the seeded walk and the one-bar basslines), the composer's planned phrases (lyrical; new the same) or its riffs and hooks (dance, the default), to A/B. Sets tuning music.melody.",
    "group": "compare",
    "since": "2026-11-08",
    "readIn": [
     "src/app/linkParams.ts"
    ],
-   "decision": "The composer writes the melodies and basslines (Ed, 2026-11-08: \"smarter rules\"); the old rules kept to A/B"
+   "decision": "The composer writes the melodies and basslines (Ed, 2026-11-08: \"smarter rules\"), dancing (Ed, the same day: \"more lyrical but not very dancey\"); the lyrical way and the old rules kept to A/B"
   },
   {
    "name": "music",

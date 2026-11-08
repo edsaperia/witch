@@ -115,10 +115,12 @@ export function tuningFromLink(params: URLSearchParams) {
   const hauntedParam = params.get("haunted");
   if (hauntedParam === "0" || hauntedParam === "off") tuning.music = { ...tuning.music, haunted: false };
   else if (hauntedParam === "1" || hauntedParam === "on") tuning.music = { ...tuning.music, haunted: true };
-  // ?melody=old: the melodies and basslines by the old rules, before the composer (Ed, 2026-11-08: "smarter rules"), to A/B;
-  // ?melody=new the composer's (tuning music.melody, app/sound.ts)
+  // ?melody=old: the melodies and basslines by the old rules, before the composer (Ed, 2026-11-08: "smarter rules"); ?melody=
+  // lyrical the composer's planned phrases (new, its first name), ?melody=dance its riffs and hooks (the default; Ed: "not
+  // very dancey"), to A/B (tuning music.melody, app/sound.ts)
   const melodyParam = params.get("melody");
-  if (melodyParam === "old" || melodyParam === "new") tuning.music = { ...tuning.music, melody: melodyParam };
+  if (melodyParam === "old" || melodyParam === "lyrical" || melodyParam === "dance") tuning.music = { ...tuning.music, melody: melodyParam };
+  else if (melodyParam === "new") tuning.music = { ...tuning.music, melody: "lyrical" };
   if (musicParam === "off") tuning.music = { ...tuning.music, on: false };
   let musicCueNow: MusicCue | undefined;
   {

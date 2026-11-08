@@ -260,6 +260,26 @@
         "chipbass": {"fill": "arp", "fillChance": 0.7},
         "sub": {"approach": 0.5, "fill": "none"}
       }
+    },
+    "melody": "dance",
+    "dance": {
+      "riffs": {
+        "default": ["trance", "pedal", "poly", "chop"],
+        "families": {"grove": ["poly", "chop"], "ritual": ["chop", "ostinato"], "clearing": ["pedal", "poly", "chop"], "organic": ["chop", "poly"], "lanterns": ["trance", "poly"], "glow": ["chop", "poly"], "mist": ["chop", "ostinato"], "ether": ["poly", "ostinato"], "moonrise": ["trance", "pedal"], "nightdrive": ["trance", "pedal"], "stones": ["pedal", "trance"], "bog": ["pedal", "chop"], "breakbeat": ["chop", "trance"], "wires": ["pedal", "poly"], "chip": ["poly", "trance"], "industrial": ["pedal", "ostinato"], "phonk": ["chop", "ostinato"], "glitter": ["poly", "trance"], "thunder": ["pedal", "trance"], "stampede": ["trance", "chop"], "coven": ["ostinato", "chop"]},
+        "sections": {"forest": ["poly", "chop"], "forestBeat": ["poly", "chop"], "deep": ["pedal", "poly", "chop"], "drop": ["trance", "pedal"], "dark": ["trance", "pedal"], "darkDrop": ["trance", "pedal"], "chip": ["poly", "trance"], "chipDrop": ["poly", "trance"], "phonk": ["chop", "ostinato"], "industrial": ["pedal", "ostinato"], "breaks": ["chop", "trance"], "trance": ["trance"], "tranceDrop": ["trance"], "garage": ["chop"], "organic": ["chop", "poly"], "acidHouse": ["pedal", "chop"], "acidDrop": ["pedal", "chop"], "coven": ["ostinato"]}
+      },
+      "hook": 0.45,
+      "late": 0.2,
+      "octaveUp": 0.5,
+      "ostinato": 0.5,
+      "bass": {
+        "organic": {"bass": {"follow": true, "glide": 0.05, "fill": "none"}},
+        "glow": {"bass": {"follow": true, "glide": 0.05, "fill": "none"}},
+        "breakbeat": {"reese": {"follow": true, "glide": 0.06}},
+        "mist": {"sub": {"insert": true, "approach": 0.7}},
+        "coven": {"sub": {"insert": true, "approach": 0.8}, "reese": {"glide": 0.08}},
+        "phonk": {"sub": {"insert": true, "approach": 0.8}}
+      }
     }
   },
   "families": {

@@ -187,8 +187,9 @@ describe("the melodies' pace (Ed, 2026-10-09: \"keep the melodies relatively slo
       const ph = formPhrase(style, seed, "A");
       for (const n of ph) if (n && n.off) { expect(n.dur % 1).not.toBe(0); expect(n.off).toBeGreaterThan(0); expect(n.off).toBeLessThan(1); }
     }
-    const plan: BlockPlan = { section: "deep", start: 0, bars: 32, wave: 1, arc: 1 };
-    const ev = Array.from({ length: 32 * 16 }, (_, s) => notesAt(style, plan, null, s, { seed: 7, siege: 0 })).flat().filter(e => e.straight);
+    // (the composer's lyrical way and the old rules: the dance way's instrument plays riffs, straight sixteenths and eighths)
+    const plan: BlockPlan = { section: "deep", start: 0, bars: 32, wave: 1, arc: 1 }, lyrical = withMelody(style, "lyrical");
+    const ev = Array.from({ length: 32 * 16 }, (_, s) => notesAt(lyrical, plan, null, s, { seed: 7, siege: 0 })).flat().filter(e => e.straight);
     expect(ev.length).toBeGreaterThan(0);
     for (const e of ev) expect(e.dur % 1).not.toBe(0);
   });

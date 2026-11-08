@@ -225,6 +225,7 @@ says what each note covers.
 - Music style
 - Haunted
 - The composer
+- The dance way
 - Section
 - Boot-up
 - Form

@@ -116,7 +116,7 @@ node tools/music-lab/latency.cjs            (HINTS=interactive,balanced,playback
 
 ## `melody.mjs`
 
-The composer's A/B: node tools/music-lab/melody.mjs <out dir> [sections|night|all] [seed...] Renders tools/music-lab/melody.ts offline in headless Chromium with the game's singer and writes mp3s and a.txt of where things start to <out dir>, each passage…
+The composer's A/B: node tools/music-lab/melody.mjs <out dir> [sections|night|all] [seed...] Renders tools/music-lab/melody.ts offline in headless Chromium with the game's singer and writes mp3s and a.txt of where things start to <out dir>, each passage by…
 
 ## `melody.ts`
 

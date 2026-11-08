@@ -5,10 +5,11 @@
 // always the same music, and ?melody=old exactly the music before.
 import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
-import { bassBar, composeLine, LEAP, type BassRule, type LineSlot } from "./musicCompose";
-import { composedMotif, composeOn, degreeToMidi, formChord, formPhrase, hauntedBar, hauntedPhrase, notesAt, resolveSection, withMelody, type BlockPlan, type MusicStyle, type NoteEvent, type PhraseNote } from "./musicScore";
+import { nightStyle, planNight } from "./musicSet";
+import { bassBar, composeLine, LEAP, ostinatoMotif, type BassRule, type LineSlot, type RiffKind } from "./musicCompose";
+import { composedMotif, composeOn, melodyMode, degreeToMidi, formChord, formPhrase, hauntedBar, hauntedPhrase, hookPhrase, notesAt, resolveSection, riffFor, riffKind, riffPhrase, withMelody, type BlockPlan, type MusicStyle, type NoteEvent, type PhraseNote } from "./musicScore";
 
-const style = styleJson as unknown as MusicStyle, F = style.form!, C = style.compose!, old = withMelody(style, "old");
+const style = styleJson as unknown as MusicStyle, F = style.form!, C = style.compose!, old = withMelody(style, "old"), lyrical = withMelody(style, "lyrical");
 const P = F.phraseBars * 16, mod7 = (d: number) => ((d % 7) + 7) % 7;
 const SEEDS = Array.from({ length: 160 }, (_, i) => i * 37 + 3);
 
@@ -27,13 +28,17 @@ const phrases = function* () {
 };
 
 describe("the composer's melodies", () => {
-  it("is on in the game's style, and ?melody=old / tuning music.melody \"old\" brings back the old rules", () => {
+  it("is on in the game's style, the dance way leading, and ?melody=lyrical|old / tuning music.melody bring back the others", () => {
     expect(composeOn(style)).toBe(C);
     expect(composeOn(old)).toBeNull();
-    expect(withMelody(style, "new")).toBe(style);
+    expect(melodyMode(style)).toBe("dance");
+    expect(withMelody(style, "dance")).toBe(style);
     expect(withMelody(style, undefined)).toBe(style);
     expect(withMelody(style, "old")).toBe(old); // (the same object: the engine's style unchanged frame to frame)
-    expect(withMelody(old, "new").compose!.on).toBe(true);
+    expect(withMelody(style, "lyrical")).toBe(lyrical);
+    expect(withMelody(style, "new")).toBe(lyrical); // (the first name of the planned way)
+    expect(melodyMode(lyrical)).toBe("lyrical");
+    expect(melodyMode(withMelody(old, "dance"))).toBe("dance");
     let differ = 0;
     for (const seed of SEEDS.slice(0, 20)) if (JSON.stringify(formPhrase(style, seed, "A")) !== JSON.stringify(formPhrase(old, seed, "A"))) differ++;
     expect(differ).toBeGreaterThan(15);
@@ -252,5 +257,121 @@ describe("the composer's basslines", () => {
     expect(play(style, "deep", 1, 5, 0, 8)).toEqual(b0);
     for (const seed of SEEDS.slice(0, 10)) for (const L of "ABC") expect(formPhrase(style, seed, L)).toEqual(formPhrase(style, seed, L));
     expect(resolveSection(style, "darkDrop").parts.darkbass).toBe("drive");
+  });
+});
+
+// ---------------------------------------------------------------- the dance way (Ed, 2026-11-08: "more lyrical but not very dancey")
+
+describe("the dance way's riffs, hooks and ostinatos", () => {
+  const KINDS: RiffKind[] = ["trance", "pedal", "poly", "chop", "ostinato"];
+  const barsOf = (ph: (PhraseNote | null)[]) => Array.from({ length: F.phraseBars }, (_, b) => ph.slice(b * 16, b * 16 + 16));
+  const rhythm = (bar: (PhraseNote | null)[]) => bar.map(n => (n ? "x" : ".")).join("");
+  const shape = (bar: (PhraseNote | null)[]) => bar.filter(Boolean).map((n, k, a) => (k ? n!.deg - a[k - 1]!.deg : 0)).join();
+
+  it("repeats its riff every bar, the notes moved onto each chord, the shape kept; its fourth and eighth bars answer and breathe", () => {
+    let same = 0, pairs = 0;
+    for (const seed of SEEDS.slice(0, 60)) for (const kind of KINDS) for (const L of "ABC") {
+      const bars = barsOf(riffPhrase(style, seed, L, kind)), body = [0, 1, 2, 4, 5, 6];
+      for (const b of body) expect(rhythm(bars[b]), `${seed} ${kind} ${L} bar ${b}`).toBe(rhythm(bars[0])); // (the same rhythm every bar)
+      for (let k = 1; k < body.length; k++) { pairs++; if (shape(bars[body[k]]) === shape(bars[body[k - 1]])) same++; }
+      for (const b of [3, 7]) {
+        expect(rhythm(bars[b]), `${seed} ${kind} ${L} answer ${b}`).not.toBe(rhythm(bars[0]));
+        const sounding = new Array(16).fill(false);
+        bars[b].forEach((n, i) => { if (n) for (let j = 0; j < n.dur && i + j < 16; j++) sounding[i + j] = true; });
+        expect(sounding[15], `${seed} ${kind} ${L}: the answer ends in a rest`).toBe(false);
+      }
+    }
+    expect(same / pairs).toBeGreaterThan(0.5); // (the shape kept where the chords let it be)
+  });
+
+  it("is syncopated: the trance riff's groups of three, the pedal's off-sixteenths, the chopped loop laid back", () => {
+    for (const seed of SEEDS.slice(0, 60)) {
+      const bar0 = (kind: RiffKind) => riffPhrase(style, seed, "A", kind).slice(0, 16);
+      expect(bar0("trance").some((n, i) => n && i % 2 === 1), `${seed} trance`).toBe(true);
+      expect(bar0("pedal").some((n, i) => n && i % 2 === 1), `${seed} pedal`).toBe(true);
+      expect(bar0("chop").filter(Boolean).every(n => n!.off > 0), `${seed} chop`).toBe(true);
+      expect(bar0("chop").slice(8).map(n => (n ? "x" : ".")).join(""), `${seed} chop loops`).toBe(bar0("chop").slice(0, 8).map(n => (n ? "x" : ".")).join(""));
+      expect(bar0("chop").filter(Boolean).length).toBeLessThanOrEqual(8); // (space: half the sixteenths or fewer)
+    }
+  });
+
+  it("puts chord tones on the beats, in every kind and letter", () => {
+    for (const seed of SEEDS.slice(0, 60)) for (const kind of KINDS) for (const L of "ABC") {
+      const at = F.order.indexOf(L) * F.phraseBars, R = riffFor(C, kind, seed);
+      riffPhrase(style, seed, L, kind).forEach((n, i) => {
+        if (!n || i % 4 !== 0) return;
+        if (kind === "pedal" && R.bar.some(x => x.abs && x.pos === i % 16)) return;
+        expect(formChord(style, seed, at + Math.floor(i / 16), true).tones.map(mod7), `${seed} ${kind} ${L} at ${i}`).toContain(mod7(n.deg));
+      });
+      expect(riffPhrase(style, seed, L, kind)).toEqual(riffPhrase(style, seed, L, kind));
+    }
+  });
+
+  it("deals the riff kind by the night's family or the section, and plays it on the A instrument in the dance sections", () => {
+    expect(riffKind(C, "coven", "coven", 1)).toMatch(/ostinato|chop/);
+    expect(riffKind(C, undefined, "tranceDrop", 1)).toBe("trance");
+    expect(C.dance!.riffs.default.length).toBeGreaterThan(1);
+    const ev = play(style, "deep", 1, 7, 0, 8).filter(e => style.parts[e.part]?.role === "motif"), bars = [0, 1, 2].map(b => ev.filter(e => Math.floor(e.step / 16) === b).map(e => e.step % 16).join());
+    expect(bars[1]).toBe(bars[0]);
+    expect(bars[2]).toBe(bars[0]);
+    expect(ev.length).toBeGreaterThan(8 * 3);
+  });
+
+  it("plays the anthem's trick in a haunted breakdown: the voice states the hook slowly, then from the drop the instrument plays it as the riff", () => {
+    for (const seed of [7, 8, 9, 23]) {
+      const ev = play(style, "breakdown", 2, seed, 24, 8), drop = 4, bar = (e: NoteEvent) => Math.floor(e.step / 16) - 24;
+      const sung = ev.filter(e => e.part === F.sung.part && !e.ghost), riff = ev.filter(e => style.parts[e.part]?.role === "motif");
+      expect(sung.every(e => bar(e) < drop && e.dur >= 8), `${seed}: the slow hook before the drop`).toBe(true);
+      expect(riff.length, `${seed}: the riff after it`).toBeGreaterThan(4);
+      expect(riff.every(e => bar(e) >= drop)).toBe(true);
+    }
+  });
+
+  it("lets the singer sing a short, high, repeated hook now and then, in her range, ending as the phrases do", () => {
+    for (const seed of SEEDS.slice(0, 60)) for (const L of "BC") {
+      const ph = hookPhrase(style, seed, L, 4242), bars = barsOf(ph), ns = notesOf(ph);
+      for (let b = 1; b < bars.length; b++) expect(rhythm(bars[b])).toBe(rhythm(bars[0]));
+      expect(ns.filter(n => n.pos < 16).length).toBeLessThanOrEqual(4);
+      for (const n of ns) { const m = degreeToMidi(style, style.scales[style.scale], n.deg, F.sung.octave, 0); expect(m).toBeGreaterThanOrEqual(55); expect(m).toBeLessThanOrEqual(67); }
+      expect(L === "C" ? [0] : [1, 4]).toContain(mod7(ns[ns.length - 1].deg));
+      expect(hookPhrase(style, seed, "C", 4242).slice(0, 32)).toEqual(hookPhrase(style, 4242, "C", 4242).slice(0, 32)); // (the night's hook opening every wave's)
+    }
+  });
+
+  it("gives a clearing the witch-house ostinato now and then: three or four notes going round, a step among them", () => {
+    for (let s = 0; s < 40; s++) {
+      const m = ostinatoMotif(k => ((k * 7919 + s * 104729) % 997) / 997), cell = [...new Set(m)];
+      expect(cell.length).toBeGreaterThanOrEqual(2);
+      expect(cell.length).toBeLessThanOrEqual(4);
+      expect(cell.some((v, i) => cell.some((w, j) => i !== j && Math.abs(v - w) === 1))).toBe(true);
+    }
+  });
+
+  it("follows the kick with the bass where the family asks (abstract hip-hop), sliding into the notes that move", () => {
+    const kick = "x......x..x.....";
+    const line = bassBar("..1-..1-..5-..8-", { follow: true, glide: 0.05 }, 0, 0, null, kick, 0, k => (k === 30 ? 0.9 : 0.3));
+    const on = line.map((n, s) => (n ? s : -1)).filter(s => s >= 0);
+    for (const s of [0, 7, 10]) expect(on).toContain(s);
+    expect(on.filter(s => kick[s] !== "x").length).toBeLessThanOrEqual(1); // (the kick's hits and one syncopated answer)
+    expect(line.filter(n => n && n.glide).length).toBeGreaterThan(0);
+    expect(C.dance!.bass.organic.bass.follow).toBe(true);
+  });
+});
+
+describe("the dance way's basslines by family, in a night", () => {
+  it("has the hip-hop families' bass on the kick, sliding; the old and lyrical ways not", () => {
+    let found = 0;
+    for (let seed = 1; seed < 60 && found < 2; seed++) {
+      const night = nightStyle(style, planNight(style, { seed, island: "owl", waves: 10 })), w = night.arc.findIndex(a => a.family === "organic" || a.family === "glow");
+      if (w < 0) continue;
+      found++;
+      const a = night.arc[w], section = a.sections!.four[0], ev = play(night, section, w, seed, 0, 8), kicks = new Set(ev.filter(e => e.part === "kick").map(e => e.step));
+      const bass = ev.filter(e => e.part === "bass");
+      expect(bass.length, `${seed} ${a.family} ${section}`).toBeGreaterThan(8);
+      expect(bass.filter(e => kicks.has(e.step)).length / bass.length).toBeGreaterThan(0.6);
+      expect(bass.some(e => e.glide)).toBe(true);
+      for (const st of [withMelody(night, "lyrical"), withMelody(night, "old")]) expect(play(st, section, w, seed, 0, 8).some(e => e.glide)).toBe(false);
+    }
+    expect(found).toBeGreaterThan(0);
   });
 });

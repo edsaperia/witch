@@ -1,11 +1,13 @@
 // The composer's A/B (Ed, 2026-11-08: "smarter rules"): node tools/music-lab/melody.mjs <out dir> [sections|night|all] [seed...]
 // Renders tools/music-lab/melody.ts offline in headless Chromium with the game's singer and writes mp3s (192 kbps) and a .txt of
-// where things start to <out dir>, each passage twice, the old rules then the composer's, the same seed (default 7, 23, 101):
-//   sections  seed<N>-<a|b|c|d>-<old|new>.mp3: (a) a four-on-the-floor section, the A instrument and the bass (deep, wave 1);
+// where things start to <out dir>, each passage by the old rules, the composer's lyrical way and its dance way (MODES=, e.g.
+// MODES=old,dance), the same seed (default 7, 23, 101):
+//   sections  seed<N>-<a|b|c|d>-<mode>.mp3: (a) a four-on-the-floor section, the A instrument and the bass (deep, wave 1);
 //             (b) a sung breakdown (the haunted treatment off: the melody alone); (c) a bass-heavy section (acid house, dark
 //             electro or breakbeat's reese: seeds 7, 23 and 101 one each, others in turn); (d) a haunted breakdown through its drum
-//             & bass drop; ONLY=ac renders only those passages
-//   night     seed<N>-night-<old|new>.mp3: a night's start, the intro and two waves of 32 bars (about three minutes)
+//             & bass drop (the dance way: the singer's slow hook, then the drop's riff on it); ONLY=ac renders only those passages
+//   night     seed<N>-night-<mode>.mp3: a night's start, the intro and two waves of 32 bars (about three minutes), old and
+//             dance (NIGHT_MODES=)
 // Fails on a script error, NaN, clipping or silence. Nothing here touches the game.
 import { build } from "esbuild";
 import { execFileSync } from "node:child_process";
@@ -18,6 +20,8 @@ const here = dirname(fileURLToPath(import.meta.url)), root = resolve(here, "../.
 const [outArg, what = "all", ...seedArgs] = process.argv.slice(2);
 if (!outArg) { console.error("usage: node tools/music-lab/melody.mjs <out dir> [sections|night|all] [seed...]"); process.exit(2); }
 const out = resolve(outArg), seeds = seedArgs.length ? seedArgs.map(Number) : [7, 23, 101];
+const MODES = (process.env.MODES ?? "old,lyrical,dance").split(","), NIGHT_MODES = (process.env.NIGHT_MODES ?? "old,dance").split(",");
+const RULES = { old: "old rules (?melody=old)", lyrical: "composer's lyrical way (?melody=lyrical)", dance: "composer's dance way (?melody=dance, the default)", new: "composer's lyrical way" };
 mkdirSync(out, { recursive: true });
 const require = createRequire(import.meta.url);
 let playwright;
@@ -53,16 +57,16 @@ for (const [si, seed] of seeds.entries()) {
       ["c", heavy[0], heavy[1], 16, true, heavy[2]],
       ["d", "breakdown", 2, 16, true, "the haunted breakdown: the held sung line, then the drum & bass drop"],
     ];
-    for (const [tag, section, wave, bars, haunted, about] of passages.filter(p => !process.env.ONLY || process.env.ONLY.includes(p[0]))) for (const melody of ["old", "new"]) {
+    for (const [tag, section, wave, bars, haunted, about] of passages.filter(p => !process.env.ONLY || process.env.ONLY.includes(p[0]))) for (const melody of MODES) {
       const r = await page.evaluate(o => window.sectionRender(o), { section, wave, seed, bars, melody, haunted, samples });
       const name = `seed${seed}-${tag}-${melody}`;
-      save(r, name, [`${name}: ${about}; seed ${seed}, ${section} on wave ${wave}'s step, ${bars} bars at 120 bpm, the ${melody === "old" ? "old rules (?melody=old)" : "composer's rules"}; the A instrument ${r.lead}, bass ${r.bass}`, ...r.marks]);
+      save(r, name, [`${name}: ${about}; seed ${seed}, ${section} on wave ${wave}'s step, ${bars} bars at 120 bpm, the ${RULES[melody]}; the A instrument ${r.lead}, bass ${r.bass}`, ...r.marks]);
     }
   }
-  if (what === "night" || what === "all") for (const melody of ["old", "new"]) {
+  if (what === "night" || what === "all") for (const melody of NIGHT_MODES) {
     const r = await page.evaluate(o => window.nightRender(o), { island: "owl", waves: 2, seed, bars: 32, melody, samples });
     const name = `seed${seed}-night-${melody}`;
-    save(r, name, [`${name}: the owl island's night, seed ${seed}, its start and two waves of 32 bars at 120 bpm, the ${melody === "old" ? "old rules (?melody=old)" : "composer's rules"}`, ...r.marks]);
+    save(r, name, [`${name}: the owl island's night, seed ${seed}, its start and two waves of 32 bars at 120 bpm, the ${RULES[melody]}`, ...r.marks]);
   }
 }
 await browser.close();

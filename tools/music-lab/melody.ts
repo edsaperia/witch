@@ -1,6 +1,6 @@
 // The composer's A/B (Ed, 2026-11-08: better melodies and basslines, "smarter rules"; tools/music-lab/melody.mjs): the game's
 // engine renders, offline and with the game's singer, a passage of one section (or a night's start) with the melodies and
-// basslines by the old rules and by the composer's, the same seed, so they can be heard side by side. Lab-only: nothing here
+// basslines by the old rules and by the composer's (its lyrical and dance ways), the same seed, so they can be heard side by side. Lab-only: nothing here
 // changes the game.
 import { Music } from "../../src/platform/audio/music";
 import { MusicEngine } from "../../src/platform/audio/musicEngine";
@@ -9,7 +9,7 @@ import { mixAt } from "../../src/rules/music";
 import { newBeatClock, timeAt } from "../../src/rules/beat";
 import { Conductor, type MusicCue } from "../../src/rules/musicPlan";
 import { nightStyle, planNight } from "../../src/rules/musicSet";
-import { arcStep, formInstrument, hauntedDrop, isHaunted, resolveSection, withHaunted, withMelody, type MusicStyle } from "../../src/rules/musicScore";
+import { arcStep, danceOn, formInstrument, hauntedDrop, isHaunted, resolveSection, riffKind, withHaunted, withMelody, type MusicStyle } from "../../src/rules/musicScore";
 import styleJson from "../../config/music-style.json";
 
 const base = styleJson as unknown as MusicStyle;
@@ -56,6 +56,8 @@ async function sectionRender(o: { section: string; wave: number; seed: number; b
   for (let b = 0; b < o.bars; b += F.phraseBars) marks.push(`${mmss(b * 16 * spb).padStart(7)}  phrase ${F.order[(b / F.phraseBars) % F.order.length]}`);
   const drop = isHaunted(style, o.section) ? hauntedDrop(style, 16) : Infinity;
   if (Number.isFinite(drop)) marks.push(`${mmss(drop * 16 * spb).padStart(7)}  the drum & bass drop`);
+  const D = danceOn(style), riff = D ? riffKind(D, a.family, o.section, o.seed) : null;
+  if (riff) marks.unshift(`(the dance way: a ${riff} riff on the instrument${isHaunted(style, o.section) ? "; the singer's slow hook on its notes, then the riff from the drop" : ""})`);
   return result(await oc.startRendering(), { marks, lead: a.lead ?? formInstrument(F, o.seed), bass });
 }
 
