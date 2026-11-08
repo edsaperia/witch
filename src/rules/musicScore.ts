@@ -913,7 +913,7 @@ const VEL: Record<string, number> = { X: 1, x: 0.8, o: 0.45, r: 0.7, "?": 0.75 }
 const BASS: Record<string, number> = { "1": 0, "2": 1, "3": 2, "5": 4, "7": 6, "8": 7 };
 
 /** The composed bass bar each part last played (asked for sixteen times a bar, worked out once): what it was worked out from. */
-const bassMemo = new Map<string, { style: MusicStyle; seed: number; bar: number; section: string; start: number; pat: string; from: number; root: number; line: (BassNote | null)[] }>();
+const bassMemo = new Map<string, { style: MusicStyle; seed: number; bar: number; formBar: number; section: string; start: number; bars: number; arc: number; pass: number; pat: string; from: number; root: number; line: (BassNote | null)[] }>();
 
 export interface ScoreContext {
   seed: number;
@@ -1034,13 +1034,13 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     if (brule) {
       const from = i - (i % 16);
       let m = bassMemo.get(name);
-      if (!m || m.style !== style || m.seed !== ctx.seed || m.bar !== bar || m.section !== plan.section || m.start !== plan.start || m.pat !== pat || m.from !== from || m.root !== chord.root) {
+      if (!m || m.style !== style || m.seed !== ctx.seed || m.bar !== bar || m.formBar !== formBar || m.section !== plan.section || m.start !== plan.start || m.bars !== plan.bars || m.arc !== plan.arc || m.pass !== pass || m.pat !== pat || m.from !== from || m.root !== chord.root) {
         // (the next bar's chord, and the section's kick this bar)
         const next = form ? formChord(style, ctx.seed, haunt ? hauntedBar(form, formBar + 1) : formBar + 1).root : chordAt(style, sec, a, barIn + 1 + pass * Math.max(1, sec.chordBars)).root;
         const k = Object.entries(secParts).find(([n]) => style.patches[style.parts[n]?.patch ?? ""]?.kind === "kick"), kp = k && style.parts[k[0]].patterns[use(k[1]).p];
         const kick = kp ? kp.slice((barIn * 16) % kp.length, ((barIn * 16) % kp.length) + 16) : null, q = form ? mod(formBar, 4) : mod(barIn, 4), salt = name.length * 131 + name.charCodeAt(0) * 7 + q;
         const line = bassBar(pat.slice(from, from + 16), brule, comp!.bass.approach, chord.root, next === chord.root ? null : next, kick, q, x => hash2(bar * 64 + x, salt, ctx.seed + 977));
-        bassMemo.set(name, (m = { style, seed: ctx.seed, bar, section: plan.section, start: plan.start, pat, from, root: chord.root, line }));
+        bassMemo.set(name, (m = { style, seed: ctx.seed, bar, formBar, section: plan.section, start: plan.start, bars: plan.bars, arc: plan.arc, pass, pat, from, root: chord.root, line }));
       }
       const n = m.line[i % 16];
       if (!n) continue;
