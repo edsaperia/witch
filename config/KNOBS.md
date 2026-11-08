@@ -3364,6 +3364,10 @@ Code: `tools/music-lab/check.cjs`
   2. Ed, 2026-11-08: "Instead of 50% of the time, make it a drop - no drums, and then drum and bass kicks in. (Agree, not in legend areas)" (the quiet sections' drums: silent, then a drum & bass drop; the clearings without drums)
   In its sections (breakdown, ether, whisper): the voice's own long dark reverb, no drums and then a drum and bass drop on a 4-bar line, held notes and slower chords, a ghost voice a sixth below, a root-and-fifth drone, the flattened 2nd or raised 7th as colour (notes outside dorian there only), and the voice lifted.
   Code: `rules/musicScore.ts`, `platform/audio/musicEngine.ts`, `app/sound.ts`
+- **`music.melody`**: Whose melodies and basslines the music plays: "new" the composer's (the music style's compose block, docs/notes/music.md The composer), "old" the seeded walk and the one-bar basslines as before, as does ?melody=old.
+  1. Ed, 2026-11-08: "smarter rules" (of the ways to get better melodies and basslines: keep making the music live from the seed, but compose more like a person; the old rules kept to A/B)
+  The composer plans each phrase on a contour with one peak 60-75% through, builds it from a motif that comes back changed (repeated, moved to the next chord, turned over), puts chord tones on the strong beats and passing notes between, fills in a leap with a step back; the basslines step into each new chord, vary over four bars and sit with the kick.
+  Code: `rules/musicCompose.ts`, `rules/musicScore.ts`, `app/sound.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -3391,6 +3395,7 @@ Code: `tools/music-lab/check.cjs`
 | `music.src` | string |  |
 | `music.singer` | string |  |
 | `music.haunted` | boolean |  |
+| `music.melody` | string | "new" / "old" |
 | `music.over.stop` | number | 0 to … |
 | `music.over.floor` | number | 0 to … |
 | `music.beach.fade` | number | 0 to … |

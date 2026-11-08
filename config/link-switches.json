@@ -1141,6 +1141,20 @@
    "decision": "The haunted treatment is on (Ed, 2026-11-08: \"B, 1-6\"); off kept to A/B"
   },
   {
+   "name": "melody",
+   "values": [
+    "old",
+    "new"
+   ],
+   "does": "The music's melodies and basslines by the old rules (old: the seeded walk and the one-bar basslines) or the composer's (new, the default), to A/B. Sets tuning music.melody.",
+   "group": "compare",
+   "since": "2026-11-08",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "The composer writes the melodies and basslines (Ed, 2026-11-08: \"smarter rules\"); the old rules kept to A/B"
+  },
+  {
    "name": "music",
    "values": [
     "off",

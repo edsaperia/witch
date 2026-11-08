@@ -243,6 +243,25 @@
     "voice": {"lift": 2, "presence": 3},
     "circle": {"wet": 1.4, "ghost": 0.45}
   },
+  "compose": {
+    "_": "The composer's rules for the melodies and basslines (Ed, 2026-11-08: better melodies and basslines, \"smarter rules\"). Detailed notes and decisions: docs/notes/config-history/music-style.md#compose.",
+    "on": true,
+    "contours": {"arch": 3, "rise": 2, "fall": 1, "wave": 2},
+    "peak": [0.6, 0.75],
+    "sevenths": true,
+    "leap": 0.2,
+    "bass": {
+      "approach": 0.6,
+      "parts": {
+        "bass": {"insert": true, "fill": "walk", "fillChance": 0.7, "ghost": 0.15, "octave": 0.25},
+        "darkbass": {"fill": "octave", "fillChance": 0.6, "ghost": 0.1, "octave": 0.2},
+        "acid": {"fill": "octave", "fillChance": 0.6, "octave": 0.2},
+        "reese": {"insert": true, "fill": "walk", "fillChance": 0.5, "octave": 0.15, "restrike": true},
+        "chipbass": {"fill": "arp", "fillChance": 0.7},
+        "sub": {"approach": 0.5, "fill": "none"}
+      }
+    }
+  },
   "families": {
     "grove": {"name": "Grove (forest folk)", "palette": [0, 0.3], "energy": [0, 0.45], "land": "forestBeat", "four": ["forestBeat", "forestArp"], "breaks": ["forestBreaks"], "breakdown": ["whisper"], "build": "rise", "bass": ["sub808", "subSoft"], "leads": ["pluck", "flute", "keys", "bell", "vox", "lead"]},
     "ritual": {"name": "Ritual (frame drums)", "palette": [0, 0.35], "energy": [0, 0.5], "land": "ritualBeat", "four": ["ritualBeat", "ritual"], "breaks": ["ritualBreaks"], "breakdown": ["ether"], "build": "rise", "bass": ["subSoft", "sub808"], "leads": ["flute", "pluck", "bell", "lgHorn"]},

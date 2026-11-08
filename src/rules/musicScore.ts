@@ -6,6 +6,7 @@ import { hash2 } from "./random";
 import voices from "../../config/creature-voices.json";
 import { sectionOf } from "./creatureConfig";
 import type { CuratedStep, FamilyDef, SetDef } from "./musicSet";
+import { bassBar, beatMotif, cellNotes, composeLine, contourAt, motifShape, pickContour, varyCell, type BassNote, type ComposeDef, type LineRules, type LineSlot } from "./musicCompose";
 
 /** A synth patch: how one part sounds. Every field but kind and gain is optional. */
 export interface Patch {
@@ -116,7 +117,8 @@ export interface Patch {
 /** A part: a voice and its patterns. Patterns are 16 characters a bar (any whole number of bars):
  *  "." rest, "x" a hit, "X" an accent, "o" a ghost, "?" a hit as likely as the wave's energy, "r" a
  *  roll (two thirty-seconds), "-" holds the note before. Bass patterns name chord tones instead of
- *  x: "1" root, "2" the step above (a clash), "3", "5", "7", "8" the octave. */
+ *  x: "1" root, "2" the step above (a clash), "3", "5", "7", "8" the octave; "a" (the composer's, on a bar's last beat) steps
+ *  into the next bar's chord from a step above or below or its fifth, the root when the chord stays (the old rules: the root). */
 export interface PartDef {
   patch: string;
   /** drum: unpitched; bass: the pattern's chord tones; chord: the whole chord; arp: chord tones in
@@ -249,6 +251,9 @@ export interface MusicStyle {
   /** The haunted treatment (Ed, 2026-11-08: "B, 1-6"): the quiet sections and the legends' clearings made more like the
    *  vocalise demo he liked. */
   haunted?: HauntedDef;
+  /** The composer's rules for the melodies and basslines (Ed, 2026-11-08: "smarter rules"; rules/musicCompose.ts). None, or
+   *  off: the melodies' seeded walk and the basslines' one bar as before. */
+  compose?: ComposeDef;
 }
 
 /** The haunted treatment (Ed, 2026-11-08, choosing "B, 1-6": all six of the ways to bring the music closer to the haunting
@@ -442,6 +447,18 @@ export function withHaunted(style: MusicStyle, on: boolean | undefined): MusicSt
   return out;
 }
 
+/** The composer, when it's on (Ed, 2026-11-08: "smarter rules"). */
+export const composeOn = (style: MusicStyle): ComposeDef | null => (style.compose && style.compose.on !== false ? style.compose : null);
+const MEL_AS = new WeakMap<MusicStyle, MusicStyle>();
+/** The style with the composer's melodies and basslines ("new") or the old ones ("old": tuning music.melody, ?melody=old), to
+ *  A/B; the style itself when it already is, or has no composer. */
+export function withMelody(style: MusicStyle, mode: string | undefined): MusicStyle {
+  if ((mode !== "old" && mode !== "new") || !style.compose || (style.compose.on !== false) === (mode === "new")) return style;
+  let out = MEL_AS.get(style);
+  if (!out) MEL_AS.set(style, (out = { ...style, compose: { ...style.compose, on: mode === "new" } }));
+  return out;
+}
+
 const use = (u: PartUse) => (typeof u === "string" ? { p: u, level: 1, from: 0, energy: 0 } : { p: u.p, level: u.level ?? 1, from: u.from ?? 0, energy: u.energy ?? 0 });
 
 /** The singers a link can pick instead of the style's (`?singer=`, tuning music.singer; Ed, 2026-11-08: Chimera sings, the old
@@ -497,11 +514,20 @@ export function motif(seed: number, arc: number, part: string): number[] {
   return out;
 }
 
+/** The composer's motif for an arc step and part (Ed, 2026-11-08: "smarter rules"): as `motif`, one value a sixteenth over two
+ *  bars above the chord's root, but planned: the beats chord tones on a contour with one peak, the second bar the first moved or
+ *  turned over, passing and neighbour notes between (musicCompose.ts beatMotif). */
+export function composedMotif(C: ComposeDef, seed: number, arc: number, part: string): number[] {
+  let salt = 0;
+  for (let i = 0; i < part.length; i++) salt = (salt * 31 + part.charCodeAt(i)) | 0;
+  return beatMotif(C, k => hash2(seed + k * 7919, arc, salt + 3));
+}
+
 const motifCache = new Map<string, number[]>();
-function motifFor(seed: number, arc: number, part: string): number[] {
-  const k = `${seed}|${arc}|${part}`;
+function motifFor(style: MusicStyle, seed: number, arc: number, part: string): number[] {
+  const C = composeOn(style), k = `${seed}|${arc}|${part}|${C ? "c" : ""}`;
   let m = motifCache.get(k);
-  if (!m) { if (motifCache.size > 256) motifCache.clear(); motifCache.set(k, m = motif(seed, arc, part)); }
+  if (!m) { if (motifCache.size > 256) motifCache.clear(); motifCache.set(k, m = C ? composedMotif(C, seed, arc, part) : motif(seed, arc, part)); }
   return m;
 }
 
@@ -548,6 +574,12 @@ export interface PhraseNote { deg: number; dur: number; off: number; /** a half-
  *  (the 2nd half-phrase's echoing the 1st's now and then), each half-phrase ending on rests; A ends open (a chord tone
  *  not the root), B on a question (the 2nd or 5th), C answering it on the root. */
 export function formPhrase(style: MusicStyle, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
+  const C = composeOn(style);
+  return C ? composedPhrase(style, C, seed, letter, hookSeed) : walkedPhrase(style, seed, letter, hookSeed);
+}
+
+/** The old phrase (the composer off: ?melody=old): a seeded walk over the chords, as formPhrase describes. */
+function walkedPhrase(style: MusicStyle, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
   const F = style.form!, P = F.phraseBars, salt = letter.charCodeAt(0) * 13;
   const sungLetter = letter !== "A", part = sungLetter ? F.sung.part : formInstrument(F, seed), pace = F.pace[part] ?? F.pace.default ?? 0.25;
   const at = F.order.indexOf(letter) * P; // (its chords: its first place in the form)
@@ -616,6 +648,12 @@ export function formPhrase(style: MusicStyle, seed: number, letter: string, hook
  *  formPhrase's, on the haunted half-phrase rhythms (whole notes and ties, a rest at each half's end) and the slower chords
  *  (hauntedBar), its endings the form's (B on a question, C answering on the root), each half's last two notes its cadence. */
 export function hauntedPhrase(style: MusicStyle, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
+  const C = composeOn(style);
+  return C ? composedHaunted(style, C, seed, letter, hookSeed) : walkedHaunted(style, seed, letter, hookSeed);
+}
+
+/** The old haunted phrase (the composer off): the narrow walk on the held rhythms, as hauntedPhrase describes. */
+function walkedHaunted(style: MusicStyle, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
   const F = style.form!, H = style.haunted!, P = F.phraseBars, half = Math.floor(P / 2), salt = letter.charCodeAt(0) * 13 + 5;
   const at = F.order.indexOf(letter) * P, hookBars = letter !== "A" && hookSeed !== undefined && hookSeed !== seed ? F.sung.hookBars ?? 0 : 0;
   const sd = (b: number) => b < hookBars ? hookSeed! : seed;
@@ -657,9 +695,177 @@ export function hauntedPhrase(style: MusicStyle, seed: number, letter: string, h
   return out;
 }
 
+/** The sung line's window (Ed, 2026-10-14: "narrow and stepwise"): SPAN+1 scale steps inside the range holding a root (so C can
+ *  answer on it), set by `r` (a seeded 0-1); the instrument's whole range otherwise. */
+function sungWindow(F: FormDef, sung: boolean, r: number): [number, number] {
+  const [lo, hi] = F.range, SPAN = 4, windows: number[] = [];
+  for (let w = lo; w + SPAN <= hi; w++) if (Array.from({ length: SPAN + 1 }, (_, k) => w + k).some(d => mod(d, 7) === 0)) windows.push(w);
+  if (!sung || !windows.length) return [lo, hi];
+  const w = windows[Math.floor(r * windows.length)];
+  return [w, w + SPAN];
+}
+
+/** The highest the returning hook's bars may go (they're composed before the peak is placed, so they must stay under any peak
+ *  the rest can reach): the window's top when the question chord (in B's last bars and C's second half) can take the step above
+ *  it, else a step under. */
+function hookCeiling(F: FormDef, C: ComposeDef, wlo: number, whi: number, top: number): number {
+  const q = [F.question, F.question + 2, F.question + 4, ...(C.sevenths ? [F.question + 6] : [])].map(t => mod(t, 7));
+  return top > whi && q.includes(mod(whi + 1, 7)) ? whi : Math.max(wlo + 2, whi - 1);
+}
+
+/** A phrase's notes with its peak (its one highest note, ComposeDef.peak through it): the slots nearest `tp` (a share of the
+ *  phrase) and the chord tones they can take up to `top` tried in turn, preferring the higher, one reaching `want`, a strong beat
+ *  and a long note, at or after slot `from` and a note at least before the end, every other note under it, until the line
+ *  keeps all the rules (musicCompose.ts composeLine). The hook's slots (`b` under `seg`) stay under `ceil` and as `fixed`. */
+function peakedLine(slots: (LineSlot & { b: number })[], len: number, tp: number, top: number, from: number, want: number, seg: number, ceil: number, rules: Omit<LineRules, "peak" | "fixed" | "ends">, ends: number[], fixed: (number | undefined)[]): { degs: number[]; peak: number } {
+  const cands: { i: number; pk: number; sc: number }[] = [];
+  for (const [a, z, pen] of [[0.55, 0.82, 0], [0.4, 0.92, 50], [0, 1, 100]]) for (let i = pen > 50 ? fixed.length : from; i < slots.length - 1; i++) {
+    const S = slots[i], t = S.pos / len;
+    if (t < a || t > z || cands.some(c => c.i === i)) continue;
+    for (let h = top; h >= top - 3; h--) {
+      if (!S.tones.includes(mod(h, 7)) || fixed.some(f => f !== undefined && f >= h)) continue; // (a chord tone, over the hook: else it isn't the one peak)
+      cands.push({ i, pk: h, sc: (h >= want ? 4 : 0) + 2 * h - Math.abs(t - tp) * 10 + (S.strong ? 1 : 0) + (S.dur >= 4 ? 0.5 : 0) - pen });
+    }
+  }
+  cands.sort((x, y) => y.sc - x.sc || x.i - y.i);
+  const tgt = slots.map(S => S.target), los = slots.map(S => S.lo);
+  const bound = (pi: number, pk: number) => slots.forEach((S, i) => {
+    if (i === pi) { S.lo = S.hi = S.target = pk; return; }
+    S.lo = los[i];
+    S.hi = Math.min(pi >= 0 ? pk - 1 : top, S.b < seg ? ceil : Infinity);
+    S.target = Math.max(S.lo, Math.min(S.hi, tgt[i]));
+  });
+  for (const most of [2, 3, Infinity]) for (const c of cands.slice(0, 16)) { // (a peak that leaves the line moving, before one that doesn't)
+    bound(c.i, c.pk);
+    const degs = composeLine(slots, { ...rules, peak: c.i, ends, fixed, most }, true);
+    if (degs) return { degs, peak: c.i };
+  }
+  const c = cands[0] ?? { i: -1, pk: top };
+  bound(c.i, c.pk);
+  return { degs: composeLine(slots, { ...rules, peak: c.i, ends, fixed }), peak: c.i };
+}
+
+/** The composer's phrase (Ed, 2026-11-08: "smarter rules"; docs/notes/music.md **The composer**): planned, then filled. A motif
+ *  (a bar's rhythm, two for a slow part, and a shape of steps, thirds and, on an instrument, a leap filled in after) is stated,
+ *  repeated, moved to fit the next chord (a sequence), turned over (inverted) and its rhythm a little changed, each half-phrase
+ *  opening on it; a contour (arch, rise, fall or wave) sets where each statement sits and puts the phrase's one highest note
+ *  60-75% through; the strong beats chord tones, passing and neighbour notes between them; the cadence bars ending each half on
+ *  rests, A open, B on a question, C answering on the root. The sung letters (B and C) keep to the singer's narrow window (one
+ *  step more for the peak only, a fourth into it at most), their first `hookBars` bars composed on their own from the night's
+ *  seed (the returning hook). */
+function composedPhrase(style: MusicStyle, C: ComposeDef, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
+  const F = style.form!, P = F.phraseBars, half = Math.max(1, Math.floor(P / 2)), salt = letter.charCodeAt(0) * 13, len = P * 16;
+  const sung = letter !== "A", part = sung ? F.sung.part : formInstrument(F, seed), pace = F.pace[part] ?? F.pace.default ?? 0.25;
+  const at = F.order.indexOf(letter) * P;
+  const seg = sung ? Math.min(P - 1, F.sung.hookBars ?? 0) : 0, hooked = seg > 0 && hookSeed !== undefined && hookSeed !== seed;
+  const sd = (b: number) => (hooked && b < seg ? hookSeed! : seed), ms = sd(0); // (the motif's, contour's and window's: the hook's)
+  const kindOf = (s: number, b: number) => (hash2(s + b * 17, 423, salt) < pace ? "mid" : "slow");
+  // the motif: its rhythm (a bar, or two when the first says little) and its shape
+  const mCells = [pick(F.cells[kindOf(ms, 0)], hash2(ms, 419, salt))];
+  if (cellNotes(mCells[0]).length < 3 && P >= 4) mCells.push(pick(F.cells[kindOf(ms, 1)], hash2(ms + 31, 419, salt)));
+  const mNotes = mCells.map(cellNotes), mFirst = mNotes.map((_, j) => mNotes.slice(0, j).reduce((n, x) => n + x.length, 0));
+  const shape = motifShape(mNotes.flat().length, k => hash2(ms + k * 7919, 441, salt), sung ? 0 : C.leap, sung ? 3 : 5);
+  // the plan, bar by bar: the cadences, the climax bar (free, on the contour), and the motif's statements and their changes
+  type Bar = { cell: string; mbar: number; tf: "M" | "R" | "S" | "I" | "free" | "cad"; start: boolean };
+  const plan: Bar[] = [];
+  for (let b = 0; b < P; b++) {
+    const r = hash2(sd(b) + b * 31, 419, salt), r2 = hash2(sd(b) + b * 7, 421, salt), r3 = hash2(sd(b) + b * 13, 425, salt), kind = kindOf(sd(b), b);
+    const prev = plan[b - 1];
+    if (b % half === half - 1) plan.push({ cell: pick(F.cadence[kind], r), mbar: 0, tf: "cad", start: false });
+    else if (P >= 6 && b === P - 2) plan.push({ cell: pick(F.cells[kind], r), mbar: 0, tf: "free", start: false });
+    else if (mCells.length > 1 && prev && prev.start && prev.mbar === 0 && prev.tf !== "free" && prev.tf !== "cad") plan.push({ cell: r3 < 0.35 && b >= half ? varyCell(mCells[1], r) : mCells[1], mbar: 1, tf: prev.tf, start: false });
+    else {
+      const tf = b === 0 ? "M" : b % half === 0 ? pick(["M", "S", "I"] as const, r2) : b % half === 1 ? pick(["R", "S"] as const, r2) : pick(["S", "I", "R"] as const, r2);
+      plan.push({ cell: b > 0 && r3 < 0.4 ? varyCell(mCells[0], r) : mCells[0], mbar: 0, tf, start: true });
+    }
+  }
+  // the range: the singer's window (the peak may be a step over it), the instrument's whole range
+  const [wlo, whi] = sungWindow(F, sung, hash2(ms, 437, salt)), top = sung ? Math.min(whi + 1, F.range[1]) : F.range[1];
+  const kind = pickContour(C.contours, hash2(ms, 445, salt)), tp = C.peak[0] + (C.peak[1] - C.peak[0]) * hash2(seed, 443, salt);
+  const span = (sung ? whi : top - 1) - wlo, map = (h: number) => Math.round(wlo + Math.max(0, Math.min(1, h)) * span);
+  const tpAt = (b: number) => (b < seg ? (C.peak[0] + C.peak[1]) / 2 : tp); // (the hook's bars not on this wave's peak)
+  // the slots and their targets: each statement anchored on the contour (repeated, moved by a step or two toward it, or turned over)
+  const slots: (LineSlot & { b: number })[] = [];
+  let anchor = map(contourAt(kind, 0, tp));
+  for (let b = 0; b < P; b++) {
+    const B = plan[b], tones = formChord(style, seed, at + b, !!C.sevenths).tones.map(t => mod(t, 7)), notes = cellNotes(B.cell);
+    if (!notes.length) continue;
+    const t0 = (b * 16 + notes[0].pos) / len, hc = map(contourAt(kind, t0, tpAt(b)));
+    if (B.start) {
+      const r = hash2(sd(b) + b * 59, 447, salt), dir = Math.sign(hc - anchor) || (r < 0.5 ? 1 : -1);
+      if (B.tf === "M" || B.tf === "I") anchor = hc;
+      else if (B.tf === "S") anchor += dir * (r < 0.6 ? 1 : 2);
+      // (a statement starting on the beat starts on a chord tone: the sequence moved to fit its chord)
+      if (notes[0].strong && !tones.includes(mod(anchor, 7))) anchor += tones.includes(mod(anchor + dir, 7)) ? dir : -dir;
+    }
+    const mn = mNotes[B.mbar] ?? [], sg = B.tf === "I" ? -1 : 1;
+    for (const n of notes) {
+      let target = map(contourAt(kind, (b * 16 + n.pos) / len, tpAt(b)));
+      if (B.tf !== "free" && B.tf !== "cad" && mn.length) {
+        let k = 0;
+        while (k + 1 < mn.length && mn[k + 1].pos <= n.pos) k++;
+        const g = mFirst[B.mbar] + k, off = mn[k].pos === n.pos || k + 1 >= mn.length ? shape[g] : (shape[g] + shape[g + 1]) / 2;
+        target = Math.round(anchor + sg * off);
+      }
+      slots.push({ pos: b * 16 + n.pos, dur: n.dur, strong: n.strong, tones, lo: wlo, hi: top, target, b });
+    }
+  }
+  // the peak, and every other note under it; the hook's bars under its ceiling (so the hook can't reach the peak)
+  const ceil = hookCeiling(F, C, wlo, whi, top), nSeg = slots.filter(S => S.b < seg).length;
+  const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : formChord(style, seed, at + P - 1).tones.map(t => mod(t, 7)).filter(t => t !== 0);
+  const rules = { maxStep: sung ? 2 : 5, peakStep: sung ? 3 : 5, maxLeaps: sung ? 1 : 2 };
+  slots.forEach((S, i) => { if (i < nSeg) S.hi = Math.min(S.hi, ceil); });
+  const fixed: (number | undefined)[] = nSeg ? composeLine(slots.slice(0, nSeg), { ...rules, peak: -1 })! : [];
+  const { degs } = peakedLine(slots, len, tp, top, nSeg, sung ? ceil + 1 : top - 1, seg, ceil, rules, ends, fixed);
+  const out: (PhraseNote | null)[] = new Array(len).fill(null);
+  slots.forEach((S, i) => { out[Math.floor(S.pos)] = { deg: degs[i], dur: S.dur, off: S.pos - Math.floor(S.pos) }; });
+  return out;
+}
+
+/** The composer's haunted phrase: hauntedPhrase's held rhythms, slower chords, window and endings, planned as composedPhrase's
+ *  are (a contour with one peak in the second half, chord tones on the half-bars, a passing or neighbour note between, the
+ *  second half the first's shape moved toward the peak). */
+function composedHaunted(style: MusicStyle, C: ComposeDef, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
+  const F = style.form!, H = style.haunted!, P = F.phraseBars, half = Math.max(1, Math.floor(P / 2)), salt = letter.charCodeAt(0) * 13 + 5, len = P * 16;
+  const at = F.order.indexOf(letter) * P, seg = letter !== "A" ? Math.min(half, F.sung.hookBars ?? 0) : 0;
+  const hooked = seg > 0 && hookSeed !== undefined && hookSeed !== seed, sd = (b: number) => (hooked && b < seg ? hookSeed! : seed), ms = sd(0);
+  const [wlo, whi] = sungWindow(F, true, hash2(ms, 437, salt)), top = Math.min(whi + 1, F.range[1]);
+  const kind = pickContour(C.contours, hash2(ms, 445, salt)), tp = C.peak[0] + (C.peak[1] - C.peak[0]) * hash2(seed, 443, salt);
+  const map = (h: number) => Math.round(wlo + Math.max(0, Math.min(1, h)) * (whi - wlo));
+  const slots: (LineSlot & { b: number; h: number; k: number })[] = [], cads = new Set<number>();
+  for (let h = 0; h * half < P; h++) {
+    const b0 = h * half, rhythm = pick(H.rhythms, hash2(sd(b0) + h * 53, 471, salt)), mine: number[] = [];
+    for (let i = 0; i < rhythm.length && b0 * 16 + i < len; i++) {
+      if (rhythm[i] !== "x") continue;
+      let dur = 1;
+      while (i + dur < rhythm.length && rhythm[i + dur] === "-") dur++;
+      const pos = b0 * 16 + i, b = Math.floor(pos / 16), tones = formChord(style, seed, hauntedBar(F, at + b), !!C.sevenths).tones.map(t => mod(t, 7));
+      mine.push(slots.length);
+      slots.push({ pos, dur, strong: i % 8 === 0, tones, lo: wlo, hi: top, target: 0, b, h, k: mine.length - 1 });
+    }
+    for (const i of mine.slice(-2)) cads.add(i);
+  }
+  // the targets: the first half a shape from the contour's start, the second the same shape moved toward the peak
+  const n0 = slots.filter(S => S.h === 0).length, shape = motifShape(Math.max(1, n0), k => hash2(ms + k * 7919, 441, salt), 0, 3);
+  const a0 = map(contourAt(kind, 0, tp)), a1 = a0 + (hash2(seed, 449, salt) < 0.5 ? 1 : 2);
+  for (const S of slots) {
+    const c = map(contourAt(kind, S.pos / len, S.b < seg ? (C.peak[0] + C.peak[1]) / 2 : tp));
+    S.target = S.h === 0 ? Math.round((a0 + shape[S.k] + c) / 2) : S.k < n0 ? Math.round((a1 + shape[S.k] + c) / 2) : c;
+  }
+  const ceil = hookCeiling(F, C, wlo, whi, top), nSeg = slots.filter(S => S.b < seg).length;
+  const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : formChord(style, seed, hauntedBar(F, at + P - 1)).tones.map(t => mod(t, 7)).filter(t => t !== 0);
+  const rules = { maxStep: 2, peakStep: 3, maxLeaps: 1 };
+  slots.forEach((S, i) => { if (i < nSeg) S.hi = Math.min(S.hi, ceil); });
+  const fixed: (number | undefined)[] = nSeg ? composeLine(slots.slice(0, nSeg), { ...rules, peak: -1 })! : [];
+  const { degs } = peakedLine(slots, len, tp, top, Math.max(nSeg, n0), ceil + 1, seg, ceil, rules, ends, fixed);
+  const out: (PhraseNote | null)[] = new Array(len).fill(null);
+  slots.forEach((S, i) => { out[S.pos] = { deg: degs[i], dur: S.dur, off: 0, ...(cads.has(i) ? { cad: true as const } : {}) }; });
+  return out;
+}
+
 const phraseCache = new Map<string, (PhraseNote | null)[]>();
 function phraseFor(style: MusicStyle, seed: number, letter: string, hookSeed?: number, haunted = false): (PhraseNote | null)[] {
-  const k = `${seed}|${letter}|${hookSeed ?? ""}|${haunted ? "h" : ""}`;
+  const k = `${seed}|${letter}|${hookSeed ?? ""}|${haunted ? "h" : ""}|${composeOn(style) ? "c" : ""}`;
   let p = phraseCache.get(k);
   if (!p) { if (phraseCache.size > 64) phraseCache.clear(); phraseCache.set(k, p = haunted ? hauntedPhrase(style, seed, letter, hookSeed) : formPhrase(style, seed, letter, hookSeed)); }
   return p;
@@ -702,6 +908,9 @@ function hitAt(pat: string, i: number): { ch: string; dur: number } {
 
 const VEL: Record<string, number> = { X: 1, x: 0.8, o: 0.45, r: 0.7, "?": 0.75 };
 const BASS: Record<string, number> = { "1": 0, "2": 1, "3": 2, "5": 4, "7": 6, "8": 7 };
+
+/** The composed bass bar each part last played (asked for sixteen times a bar, worked out once): what it was worked out from. */
+const bassMemo = new Map<string, { style: MusicStyle; seed: number; bar: number; section: string; start: number; pat: string; from: number; root: number; line: (BassNote | null)[] }>();
 
 export interface ScoreContext {
   seed: number;
@@ -770,7 +979,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   // the haunted treatment (Ed, 2026-11-08: "B, 1-6"): in its quiet sections the chords slower (a phrase's opening chord, then its
   // cadence's), the drums out till the drum & bass drops, the melody held and coloured, the voice ghosted; a legend's clearing
   // layer on the slower chords too, its lead ghosted, its melody coloured (rules here; its reverb, drone and voice lift the engine's)
-  const H = hauntedOn(style), haunt = !!H && H.sections.includes(plan.section) && ctx.only !== "circle";
+  const H = hauntedOn(style), haunt = !!H && H.sections.includes(plan.section) && ctx.only !== "circle", comp = composeOn(style);
   const chordOf = (slow: boolean) => form ? formChord(style, ctx.seed, slow ? hauntedBar(form, formBar) : formBar, !!sec.sevenths) : chordAt(style, sec, a, barIn + pass * Math.max(1, sec.chordBars));
   const chordMain = chordOf(haunt), circleChord = H && form ? chordOf(true) : chordMain;
   const dropAt = haunt ? hauntedDrop(style, plan.bars) : Infinity, dropped = barIn >= dropAt;
@@ -816,6 +1025,28 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     const sh = own ? nameHash(circle!.species) : 0, phase = own ? (sh % 8) * 2 : 0;
     const at = own && ctx.circleStep !== undefined ? ctx.circleStep : barIn * 16 + s; // (the layer on its own clock, or the music's)
     const i = (at + phase) % pat.length;
+    // the composer's bassline (Ed, 2026-11-08: "smarter rules"): the part's pattern bar varied over a four-bar phrase, stepping
+    // into the next chord, sitting with the kick (musicCompose.ts bassBar); its notes may fall on the pattern's rests
+    const brule = comp && def.role === "bass" && !own && !def.tonic && u.p !== "__fill" ? comp.bass.parts[name] : undefined;
+    if (brule) {
+      const from = i - (i % 16);
+      let m = bassMemo.get(name);
+      if (!m || m.style !== style || m.seed !== ctx.seed || m.bar !== bar || m.section !== plan.section || m.start !== plan.start || m.pat !== pat || m.from !== from || m.root !== chord.root) {
+        // (the next bar's chord, and the section's kick this bar)
+        const next = form ? formChord(style, ctx.seed, haunt ? hauntedBar(form, formBar + 1) : formBar + 1).root : chordAt(style, sec, a, barIn + 1 + pass * Math.max(1, sec.chordBars)).root;
+        const k = Object.entries(secParts).find(([n]) => style.patches[style.parts[n]?.patch ?? ""]?.kind === "kick"), kp = k && style.parts[k[0]].patterns[use(k[1]).p];
+        const kick = kp ? kp.slice((barIn * 16) % kp.length, ((barIn * 16) % kp.length) + 16) : null, q = form ? mod(formBar, 4) : mod(barIn, 4), salt = name.length * 131 + name.charCodeAt(0) * 7 + q;
+        const line = bassBar(pat.slice(from, from + 16), brule, comp!.bass.approach, chord.root, next === chord.root ? null : next, kick, q, x => hash2(bar * 64 + x, salt, ctx.seed + 977));
+        bassMemo.set(name, (m = { style, seed: ctx.seed, bar, section: plan.section, start: plan.start, pat, from, root: chord.root, line }));
+      }
+      const n = m.line[i % 16];
+      if (!n) continue;
+      const r = hash2(step, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), ctx.seed + phrase * 7919);
+      const level = u.level * scaleLevel * (0.94 + 0.06 * r) * (building ? 0.45 + 0.55 * build : 1);
+      const patch = a.bass && sec.parts[name] && style.patches[a.bass] ? a.bass : def.patch;
+      out.push({ part: name, patch, step, offset: 0, dur: n.dur, ...(hook ? { hook } : {}), midi: degreeToMidi(style, scale, (n.abs ? 0 : chord.root) + n.k, def.octave ?? 0, transpose), vel: 0.85 * n.vel * level });
+      continue;
+    }
     const { ch, dur } = hitAt(pat, i);
     if (ch === "." || ch === "-") continue;
     const seed = own ? ctx.seed + nameHash(circle!.species) : ctx.seed; // (a legend's layer its species' own melody)
@@ -842,8 +1073,8 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
       const n = chord.tones.length, t = chord.tones[k % n] + 7 * (Math.floor(k / n) % 2);
       out.push({ ...base, midi: degreeToMidi(style, scale, t, oct, transpose), vel: (VEL[ch] ?? accent) * level });
     } else {
-      const m = motifFor(seed + phrase * 104729, plan.arc, name), pos = ((at % 64) + (own ? sh % 29 : 0)) % 32; // (a new melody each pass or phrase)
-      const vary = barIn % 4 === 3 && s >= 8 ? (hash2(bar, plan.arc, ctx.seed + 5) < 0.5 ? 2 : -1) : 0; // every fourth bar ends differently
+      const m = motifFor(style, seed + phrase * 104729, plan.arc, name), pos = ((at % 64) + (own ? sh % 29 : 0)) % 32; // (a new melody each pass or phrase)
+      const vary = !comp && barIn % 4 === 3 && s >= 8 ? (hash2(bar, plan.arc, ctx.seed + 5) < 0.5 ? 2 : -1) : 0; // every fourth bar ends differently (the composer's motif changes in itself)
       const lift = own ? [0, 2, 4][(sh >>> 3) % 3] : 0, octOwn = own ? oct + ((sh >>> 5) % 2) - (oct > 2 ? 1 : 0) : oct;
       const deg = chord.root + m[pos] + vary + lift, vel = (VEL[ch] ?? accent) * level;
       // (a haunted clearing: its melody now and then coloured, its lead ghosted below, late and quieter)

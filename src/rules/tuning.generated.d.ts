@@ -1934,6 +1934,7 @@ export type SchemaTuning = {
     "src": string;
     "singer": string;
     "haunted": boolean;
+    "melody": "new" | "old";
     "over": {
       "stop": number;
       "floor": number;
