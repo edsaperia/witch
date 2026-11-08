@@ -455,6 +455,26 @@ label.check input { accent-color: var(--accent); }
           chipbass: { fill: "arp", fillChance: 0.7 },
           sub: { approach: 0.5, fill: "none" }
         }
+      },
+      melody: "dance",
+      dance: {
+        riffs: {
+          default: ["trance", "pedal", "poly", "chop"],
+          families: { grove: ["poly", "chop"], ritual: ["chop", "ostinato"], clearing: ["pedal", "poly", "chop"], organic: ["chop", "poly"], lanterns: ["trance", "poly"], glow: ["chop", "poly"], mist: ["chop", "ostinato"], ether: ["poly", "ostinato"], moonrise: ["trance", "pedal"], nightdrive: ["trance", "pedal"], stones: ["pedal", "trance"], bog: ["pedal", "chop"], breakbeat: ["chop", "trance"], wires: ["pedal", "poly"], chip: ["poly", "trance"], industrial: ["pedal", "ostinato"], phonk: ["chop", "ostinato"], glitter: ["poly", "trance"], thunder: ["pedal", "trance"], stampede: ["trance", "chop"], coven: ["ostinato", "chop"] },
+          sections: { forest: ["poly", "chop"], forestBeat: ["poly", "chop"], deep: ["pedal", "poly", "chop"], drop: ["trance", "pedal"], dark: ["trance", "pedal"], darkDrop: ["trance", "pedal"], chip: ["poly", "trance"], chipDrop: ["poly", "trance"], phonk: ["chop", "ostinato"], industrial: ["pedal", "ostinato"], breaks: ["chop", "trance"], trance: ["trance"], tranceDrop: ["trance"], garage: ["chop"], organic: ["chop", "poly"], acidHouse: ["pedal", "chop"], acidDrop: ["pedal", "chop"], coven: ["ostinato"] }
+        },
+        hook: 0.45,
+        late: 0.2,
+        octaveUp: 0.5,
+        ostinato: 0.5,
+        bass: {
+          organic: { bass: { follow: true, glide: 0.05, fill: "none" } },
+          glow: { bass: { follow: true, glide: 0.05, fill: "none" } },
+          breakbeat: { reese: { follow: true, glide: 0.06 } },
+          mist: { sub: { insert: true, approach: 0.7 } },
+          coven: { sub: { insert: true, approach: 0.8 }, reese: { glide: 0.08 } },
+          phonk: { sub: { insert: true, approach: 0.8 } }
+        }
       }
     },
     families: {
@@ -3344,6 +3364,22 @@ label.check input { accent-color: var(--accent); }
       out[s] = { k: BASS_STEPS[c] ?? 0, vel: 1, dur };
       marks[s] = c;
     }
+    if (rule.follow && kick) {
+      const held = [];
+      for (let s = 0, k = 0; s < 16; s++) {
+        if (out[s]) k = out[s].k;
+        held.push(k);
+      }
+      const hits = [];
+      for (let s = 0; s < 16; s++) if (hit2(s)) hits.push(s);
+      const pick2 = r(30) < 0.5 ? 14 : 7;
+      if (!hits.includes(pick2) && !hit2(pick2 + 1)) hits.push(pick2);
+      hits.sort((x, y) => x - y);
+      if (hits.length) {
+        out.fill(null);
+        hits.forEach((s, i) => out[s] = { k: s === pick2 ? r(31) < 0.5 ? 7 : 4 : held[s], vel: s === pick2 ? 0.75 : 1, dur: Math.max(1, Math.min((hits[i + 1] ?? 16) - s, 6)) });
+      }
+    }
     const onsets = () => out.map((n, s) => n ? s : -1).filter((s) => s >= 0);
     const cutBefore = (s) => {
       for (let j = s - 1; j >= 0; j--) if (out[j]) {
@@ -3411,7 +3447,135 @@ label.check input { accent-color: var(--accent); }
       }
     }
     for (const [s, c] of marks.entries()) if (c === "a" && out[s] && !out[s].abs) out[s].k = 0;
+    if (rule.glide) {
+      let prev = null;
+      for (const n of out) if (n) {
+        if (prev && (prev.abs ? prev.k - root : prev.k) !== (n.abs ? n.k - root : n.k)) n.glide = rule.glide;
+        prev = n;
+      }
+    }
     return out;
+  }
+  function pitchCell(C2, r) {
+    const tones = C2.sevenths ? [0, 2, 4, 6, 7, 9] : [0, 2, 4, 7, 9], out = [[0, 4, 7][Math.floor(r(1) * 3)]];
+    for (let k = 1; k < 4; k++) {
+      const p = out[k - 1], near = tones.filter((t) => t !== p && Math.abs(t - p) <= 4 && !(k >= 2 && t === out[k - 2]));
+      out.push(near[Math.floor(r(k + 1) * near.length)] ?? p);
+    }
+    return out;
+  }
+  function makeRiff(C2, kind, cell, r) {
+    const D2 = C2.dance, up = r(9) < D2.octaveUp, top = Math.max(...cell) >= 7 ? Math.max(...cell) : 7;
+    const bar2 = [];
+    let answer;
+    if (kind === "trance") {
+      const groups = [[3, 3, 2, 3, 3, 2], [3, 3, 3, 3, 2, 2], [2, 3, 3, 2, 3, 3], [3, 3, 4, 3, 3]][Math.floor(r(1) * 4)];
+      let pos = 0;
+      groups.forEach((g, i) => {
+        bar2.push({ pos, dur: Math.min(g, 2 + Math.floor(r(20 + i) * 2)), rel: cell[i % cell.length] });
+        pos += g;
+      });
+      const first = bar2.filter((n) => n.pos < 8), leapTo = first[0].rel + 7;
+      answer = [...first, { pos: 8, dur: 6, rel: leapTo <= 11 ? leapTo : top }];
+    } else if (kind === "pedal") {
+      const pedal = r(1) < 0.5 ? 7 : 4, gate = [1, 3, 5, 7, 9, 11, 13, 15].filter((s) => r(30 + s) < 0.75 || s % 4 === 3);
+      for (let s = 0; s < 16; s += 2) bar2.push({ pos: s, dur: 1, rel: cell[s / 2 % cell.length] });
+      for (const s of gate) bar2.push({ pos: s, dur: 1, rel: pedal, abs: true });
+      bar2.sort((a, b) => a.pos - b.pos);
+      answer = [...bar2.filter((n) => n.pos < 8 && !n.abs), { pos: 8, dur: 6, rel: top }];
+    } else if (kind === "poly") {
+      const three = [...cell.slice(0, 3)].sort((a, b) => r(2) < 0.5 ? a - b : b - a), step2 = r(1) < 0.5 ? 1 : 2;
+      for (let s = 0, k = 0; s < 16; s += step2, k++) bar2.push({ pos: s, dur: step2, rel: three[k % 3] });
+      answer = [...bar2.filter((n) => n.pos < 8), { pos: 8, dur: 4, rel: top }];
+    } else if (kind === "chop") {
+      const frag = ["x..x..x.", "x.x...x.", "x...x.x.", "x..x....", "x.x.x..."][Math.floor(r(1) * 5)], late = D2.late;
+      let k = 0;
+      for (let s = 0; s < 8; s++) if (frag[s] === "x") {
+        const rel = s % 4 === 0 ? cell[k % cell.length] : r(40 + s) < 0.4 ? cell[k % cell.length] + (r(50 + s) < 0.5 ? 1 : -1) : cell[k % cell.length];
+        bar2.push({ pos: s, dur: 1 + (frag[s + 1] === "." ? 1 : 0), rel, late });
+        k++;
+      }
+      for (const n of [...bar2]) bar2.push({ ...n, pos: n.pos + 8 });
+      answer = bar2.filter((n) => n.pos < 8);
+    } else {
+      const nb = r(1) < 0.5 ? 1 : -1, low = cell.includes(4) ? -3 : -5;
+      bar2.push({ pos: 0, dur: 6, rel: 0 }, { pos: 6, dur: 2, rel: nb }, { pos: 8, dur: 4, rel: 0 });
+      if (r(2) < 0.6) bar2.push({ pos: 12, dur: 4, rel: low });
+      answer = [{ pos: 0, dur: 4, rel: 0 }, { pos: 4, dur: 2, rel: 2 }, { pos: 6, dur: 2, rel: 2 + nb }, { pos: 8, dur: 6, rel: 0 }];
+    }
+    for (const n of [...bar2, ...answer]) if (!n.abs && n.pos % 4 === 0 && ![0, 2, 4, 6].includes(m7(n.rel))) n.rel = cell[0];
+    return { kind, bar: bar2, answer, octaveUp: up && (kind === "trance" || kind === "pedal"), cell };
+  }
+  function riffLine(R, letter, bars, rootOf, tonesOf) {
+    const out = new Array(bars * 16).fill(null);
+    const pivot = R.bar.find((n) => !n.abs)?.rel ?? 0, turn = (rel) => letter === "B" ? pivot - (rel - pivot) : rel;
+    const highest = Math.max(...R.bar.filter((n) => !n.abs).map((n) => turn(n.rel))), shiftOf = (b) => {
+      const r = rootOf(b);
+      return r <= 3 ? r : r - 7;
+    };
+    let up = R.octaveUp;
+    for (let b = Math.ceil(bars / 2); b < bars && up; b++) if (highest + shiftOf(b) + 7 > 13) up = false;
+    for (let b = 0; b < bars; b++) {
+      const ans = b % 4 === 3, notes = ans ? R.answer : R.bar, root = rootOf(b), shift = root <= 3 ? root : root - 7, tones = tonesOf(b);
+      const oct = up && b >= bars / 2 ? 7 : 0;
+      notes.forEach((n, i) => {
+        let rel = n.abs ? n.rel : turn(n.rel);
+        if (ans && b === bars - 1 && i === notes.length - 1 && !n.abs) rel = letter === "C" || rel < 5 ? 0 : 7;
+        let deg = n.abs ? rel + oct : rel + shift + oct;
+        if (!n.abs && n.pos % 4 === 0 && !tones.includes((deg % 7 + 7) % 7)) {
+          for (const d of [0, 1, -1, 2, -2]) if (tones.includes(((deg + d) % 7 + 7) % 7)) {
+            deg += d;
+            break;
+          }
+        }
+        const at2 = b * 16 + n.pos;
+        out[at2] = { deg, dur: Math.min(n.dur, 16 - n.pos), off: n.late ?? 0 };
+      });
+    }
+    return out;
+  }
+  function hookLine(lo, hi, bars, tonesOf, ends, r) {
+    const PENT = [0, 2, 3, 4, 6], rhythm = ["x-x-x---........", "x--x--x-........", "x-x-....x-x-....", "....x-x-x---....", "x---x-x-........"][Math.floor(r(1) * 5)];
+    const pent = [];
+    for (let d = lo; d <= hi; d++) if (PENT.includes(m7(d))) pent.push(d);
+    const high = pent.filter((d) => d >= hi - 3), cellNotes2 = [];
+    for (let s = 0; s < 16; s++) if (rhythm[s] === "x") {
+      let dur = 1;
+      while (s + dur < 16 && rhythm[s + dur] === "-") dur++;
+      cellNotes2.push({ pos: s, dur });
+    }
+    const a = high[Math.floor(r(2) * high.length)] ?? hi, ia = pent.indexOf(a), upFirst = r(3) < 0.6 && ia + 1 < pent.length;
+    const b = pent[upFirst ? ia + 1 : Math.max(0, ia - 1)] ?? a, c = pent[upFirst ? Math.max(0, ia - 1) : Math.min(pent.length - 1, ia + 1)] ?? a;
+    const cell = cellNotes2.map((_, k) => [a, b, a, c][k % 4]);
+    const out = new Array(bars * 16).fill(null);
+    let lastAt = -1;
+    for (let b2 = 0; b2 < bars; b2++) cellNotes2.forEach((n, k) => {
+      let deg = cell[k];
+      const tones = tonesOf(b2);
+      if (n.pos % 4 === 0 && !tones.includes(m7(deg))) {
+        for (const d of [-1, 1, -2, 2]) if (deg + d >= lo && deg + d <= hi && tones.includes(m7(deg + d)) && (k === 0 || deg + d !== out[lastAt]?.deg)) {
+          deg += d;
+          break;
+        }
+      }
+      out[b2 * 16 + n.pos] = { deg, dur: n.dur, off: 0 };
+      lastAt = b2 * 16 + n.pos;
+    });
+    if (lastAt >= 0) {
+      const n = out[lastAt];
+      let best = n.deg, bd = Infinity;
+      for (let d = lo; d <= hi; d++) if (ends.includes(m7(d)) && Math.abs(d - n.deg) < bd) {
+        bd = Math.abs(d - n.deg);
+        best = d;
+      }
+      n.deg = best;
+    }
+    return out;
+  }
+  function ostinatoMotif(r) {
+    const a = [0, 2, 4, 7][Math.floor(r(3) * 4)], nb = r(1) < 0.5 ? 1 : -1, low = [-3, a - 2, -5][Math.floor(r(4) * 3)], unit = r(5) < 0.5 ? 8 : 4;
+    const cell = r(2) < 0.5 ? [a, a + nb, a, low] : [a, a + nb, low];
+    return Array.from({ length: 32 }, (_, i) => cell[Math.floor(i / unit) % cell.length]);
   }
 
   // src/rules/musicScore.ts
@@ -3461,6 +3625,24 @@ label.check input { accent-color: var(--accent); }
     return d === 1 && scale[1] === 2 ? -1 : d === 6 && scale[6] === 10 ? 1 : 0;
   }
   var composeOn = (style2) => style2.compose && style2.compose.on !== false ? style2.compose : null;
+  var danceOn = (style2) => {
+    const C2 = composeOn(style2);
+    return C2 && C2.melody !== "lyrical" && C2.dance ? C2 : null;
+  };
+  function riffKind(C2, family, section, seed2) {
+    const D2 = C2.dance, kinds = family && D2.riffs.families[family] || D2.riffs.sections[section] || D2.riffs.default;
+    return pick(kinds, hash2(seed2, 491, 17));
+  }
+  var riffCache = /* @__PURE__ */ new Map();
+  function riffFor(C2, kind, seed2, cellSeed = seed2) {
+    const k = `${kind}|${seed2}|${cellSeed}|${C2.sevenths ? 1 : 0}`;
+    let R = riffCache.get(k);
+    if (!R) {
+      if (riffCache.size > 128) riffCache.clear();
+      riffCache.set(k, R = makeRiff(C2, kind, pitchCell(C2, (i) => hash2(cellSeed + i * 7919, 493, 11)), (i) => hash2(seed2 + i * 7919, 495, kind.length)));
+    }
+    return R;
+  }
   var use = (u) => typeof u === "string" ? { p: u, level: 1, from: 0, energy: 0 } : { p: u.p, level: u.level ?? 1, from: u.from ?? 0, energy: u.energy ?? 0 };
   function degreeToMidi(style2, scale, degree2, octave, transpose) {
     const n = scale.length, o = Math.floor(degree2 / n), d = degree2 - o * n;
@@ -3489,12 +3671,13 @@ label.check input { accent-color: var(--accent); }
     return beatMotif(C2, (k) => hash2(seed2 + k * 7919, arc, salt + 3));
   }
   var motifCache = /* @__PURE__ */ new Map();
-  function motifFor(style2, seed2, arc, part) {
-    const C2 = composeOn(style2), k = `${seed2}|${arc}|${part}|${C2 ? "c" : ""}`;
+  function motifFor(style2, seed2, arc, part, own = false) {
+    const C2 = composeOn(style2), D2 = danceOn(style2), ost = !!D2 && own && hash2(seed2, arc, 497) < D2.dance.ostinato;
+    const k = `${seed2}|${arc}|${part}|${C2 ? "c" : ""}${ost ? "o" : ""}`;
     let m = motifCache.get(k);
     if (!m) {
       if (motifCache.size > 256) motifCache.clear();
-      motifCache.set(k, m = C2 ? composedMotif(C2, seed2, arc, part) : motif(seed2, arc, part));
+      motifCache.set(k, m = ost ? ostinatoMotif((x) => hash2(seed2 + x * 7919, arc, 499)) : C2 ? composedMotif(C2, seed2, arc, part) : motif(seed2, arc, part));
     }
     return m;
   }
@@ -3586,9 +3769,9 @@ label.check input { accent-color: var(--accent); }
     }
     return out;
   }
-  function hauntedPhrase(style2, seed2, letter, hookSeed) {
+  function hauntedPhrase(style2, seed2, letter, hookSeed, cell) {
     const C2 = composeOn(style2);
-    return C2 ? composedHaunted(style2, C2, seed2, letter, hookSeed) : walkedHaunted(style2, seed2, letter, hookSeed);
+    return C2 ? composedHaunted(style2, C2, seed2, letter, hookSeed, cell) : walkedHaunted(style2, seed2, letter, hookSeed);
   }
   function walkedHaunted(style2, seed2, letter, hookSeed) {
     const F = style2.form, H = style2.haunted, P = F.phraseBars, half = Math.floor(P / 2), salt = letter.charCodeAt(0) * 13 + 5;
@@ -3742,7 +3925,7 @@ label.check input { accent-color: var(--accent); }
     });
     return out;
   }
-  function composedHaunted(style2, C2, seed2, letter, hookSeed) {
+  function composedHaunted(style2, C2, seed2, letter, hookSeed, cell) {
     const F = style2.form, H = style2.haunted, P = F.phraseBars, half = Math.max(1, Math.floor(P / 2)), salt = letter.charCodeAt(0) * 13 + 5, len = P * 16;
     const at2 = F.order.indexOf(letter) * P, seg = letter !== "A" ? Math.min(half, F.sung.hookBars ?? 0) : 0;
     const hooked = seg > 0 && hookSeed !== void 0 && hookSeed !== seed2, sd = (b) => hooked && b < seg ? hookSeed : seed2, ms = sd(0);
@@ -3756,9 +3939,9 @@ label.check input { accent-color: var(--accent); }
         if (rhythm[i] !== "x") continue;
         let dur = 1;
         while (i + dur < rhythm.length && rhythm[i + dur] === "-") dur++;
-        const pos = b0 * 16 + i, b = Math.floor(pos / 16), tones = formChord(style2, seed2, hauntedBar(F, at2 + b), !!C2.sevenths).tones.map((t) => mod(t, 7));
+        const pos = b0 * 16 + i, b = Math.floor(pos / 16), ch = formChord(style2, seed2, hauntedBar(F, at2 + b), !!C2.sevenths), tones = ch.tones.map((t) => mod(t, 7));
         mine.push(slots.length);
-        slots.push({ pos, dur, strong: i % 8 === 0, tones, lo: wlo, hi: top, target: 0, b, h, k: mine.length - 1 });
+        slots.push({ pos, dur, strong: i % 8 === 0, tones, lo: wlo, hi: top, target: 0, b, h, k: mine.length - 1, root: ch.root });
       }
       for (const i of mine.slice(-2)) cads.add(i);
     }
@@ -3767,6 +3950,12 @@ label.check input { accent-color: var(--accent); }
     for (const S of slots) {
       const c = map(contourAt(kind, S.pos / len, S.b < seg ? (C2.peak[0] + C2.peak[1]) / 2 : tp));
       S.target = S.h === 0 ? Math.round((a0 + shape[S.k] + c) / 2) : S.k < n0 ? Math.round((a1 + shape[S.k] + c) / 2) : c;
+      if (cell) {
+        let d = cell[S.k % cell.length] + (S.root <= 3 ? S.root : S.root - 7);
+        while (d > whi + 1) d -= 7;
+        while (d < wlo) d += 7;
+        S.target = d;
+      }
     }
     const ceil = hookCeiling(F, C2, wlo, whi, top), nSeg = slots.filter((S) => S.b < seg).length;
     const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : formChord(style2, seed2, hauntedBar(F, at2 + P - 1)).tones.map((t) => mod(t, 7)).filter((t) => t !== 0);
@@ -3783,22 +3972,50 @@ label.check input { accent-color: var(--accent); }
     return out;
   }
   var phraseCache = /* @__PURE__ */ new Map();
-  function phraseFor(style2, seed2, letter, hookSeed, haunted = false) {
-    const k = `${seed2}|${letter}|${hookSeed ?? ""}|${haunted ? "h" : ""}|${composeOn(style2) ? "c" : ""}`;
+  function phraseFor(style2, seed2, letter, hookSeed, haunted = false, cell) {
+    const k = `${seed2}|${letter}|${hookSeed ?? ""}|${haunted ? "h" : ""}|${composeOn(style2) ? "c" : ""}|${cell?.join() ?? ""}`;
     let p = phraseCache.get(k);
     if (!p) {
       if (phraseCache.size > 64) phraseCache.clear();
-      phraseCache.set(k, p = haunted ? hauntedPhrase(style2, seed2, letter, hookSeed) : formPhrase(style2, seed2, letter, hookSeed));
+      phraseCache.set(k, p = haunted ? hauntedPhrase(style2, seed2, letter, hookSeed, cell) : formPhrase(style2, seed2, letter, hookSeed));
     }
     return p;
   }
+  function riffPhrase(style2, seed2, letter, kind, cellSeed = seed2, haunted = false) {
+    const F = style2.form, C2 = composeOn(style2) ?? style2.compose, at2 = F.order.indexOf(letter) * F.phraseBars, R = riffFor(C2, kind, seed2, cellSeed);
+    const bar2 = (b) => haunted ? hauntedBar(F, at2 + b) : at2 + b;
+    return riffLine(R, letter, F.phraseBars, (b) => formChord(style2, seed2, bar2(b)).root, (b) => formChord(style2, seed2, bar2(b), !!C2.sevenths).tones.map((t) => mod(t, 7)));
+  }
+  function hookPhrase(style2, seed2, letter, hookSeed) {
+    const F = style2.form, C2 = composeOn(style2) ?? style2.compose, salt = letter.charCodeAt(0) * 13, at2 = F.order.indexOf(letter) * F.phraseBars;
+    const ms = letter !== "A" && hookSeed !== void 0 ? hookSeed : seed2, [wlo, whi] = sungWindow(F, true, hash2(ms, 437, salt)), hi = Math.min(whi + 1, F.range[1]);
+    const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : formChord(style2, seed2, at2 + F.phraseBars - 1).tones.map((t) => mod(t, 7)).filter((t) => t !== 0);
+    return hookLine(wlo, hi, F.phraseBars, (b) => formChord(style2, seed2, at2 + b, !!C2.sevenths).tones.map((t) => mod(t, 7)), ends, (i) => hash2(ms + i * 7919, 489, salt));
+  }
+  var danceCache = /* @__PURE__ */ new Map();
+  function dancePhraseFor(key, make) {
+    let p = danceCache.get(key);
+    if (!p) {
+      if (danceCache.size > 64) danceCache.clear();
+      danceCache.set(key, p = make());
+    }
+    return p;
+  }
+  var lastPhrase = null;
   var musicSeed = (base, n) => n <= 0 ? base : Math.floor(hash2(base, 433 + n, n * 7919) * 2147483647);
   function formNoteAt(style2, seed2, formStep, transpose = 0, step2, opts) {
     const F = style2.form, fs = mod(formStep, formBars(F) * 16), letter = F.order[Math.floor(fs / (F.phraseBars * 16))];
-    const n = phraseFor(style2, seed2, letter, letter !== "A" ? opts?.hookSeed : void 0, !!opts?.haunted && !!style2.haunted)[fs % (F.phraseBars * 16)];
-    if (!n) return null;
     const lead = step2?.lead && style2.parts[step2.lead] ? step2.lead : formInstrument(F, seed2), voice = step2?.vocal ?? F.sung.patch;
     const sung = (opts?.voice ?? letter !== "A") && voice !== "none" && !!style2.patches[voice], part = sung ? F.sung.part : lead, def = style2.parts[part];
+    const haunted = !!opts?.haunted && !!style2.haunted, hook = letter !== "A" ? opts?.hookSeed : void 0, riff = opts?.riff, i = fs % (F.phraseBars * 16);
+    let L2 = lastPhrase;
+    if (!L2 || L2.style !== style2 || L2.seed !== seed2 || L2.letter !== letter || L2.hook !== hook || L2.haunted !== haunted || L2.riff !== riff || L2.sung !== sung) {
+      const D2 = danceOn(style2), cellSeed = haunted && hook !== void 0 ? hook : seed2;
+      const notes = D2 && riff && !sung ? dancePhraseFor(`r|${seed2}|${letter}|${riff}|${cellSeed}|${haunted}|${D2.sevenths ? 1 : 0}`, () => riffPhrase(style2, seed2, letter, riff, cellSeed, haunted)) : D2 && sung && !haunted && hash2(seed2, 487, 3) < D2.dance.hook ? dancePhraseFor(`h|${seed2}|${letter}|${hook ?? ""}|${D2.sevenths ? 1 : 0}`, () => hookPhrase(style2, seed2, letter, hook)) : phraseFor(style2, seed2, letter, hook, haunted, D2 && haunted && riff ? riffFor(D2, riff, seed2, cellSeed).cell : void 0);
+      lastPhrase = L2 = { style: style2, seed: seed2, letter, hook, haunted, riff, sung, notes };
+    }
+    const n = L2.notes[i];
+    if (!n) return null;
     const oct = sung ? F.sung.octave : Math.max(2, def?.octave ?? 3);
     const scale = style2.scales[step2?.scale ?? style2.scale] ?? style2.scales[style2.scale];
     return { part, patch: sung ? voice : def?.patch ?? "", midi: degreeToMidi(style2, scale, n.deg, oct, transpose), deg: n.deg, dur: n.dur, off: n.off, letter, ...n.cad ? { cad: true } : {} };
@@ -3817,6 +4034,14 @@ label.check input { accent-color: var(--accent); }
   }
   var VEL = { X: 1, x: 0.8, o: 0.45, r: 0.7, "?": 0.75 };
   var BASS = { "1": 0, "2": 1, "3": 2, "5": 4, "7": 6, "8": 7 };
+  var DANCE_RULES = /* @__PURE__ */ new WeakMap();
+  function danceRule(base, over) {
+    let m = DANCE_RULES.get(over);
+    if (!m) DANCE_RULES.set(over, m = /* @__PURE__ */ new Map());
+    let r = m.get(base);
+    if (!r) m.set(base, r = { ...base, ...over });
+    return r;
+  }
   var bassMemo = /* @__PURE__ */ new Map();
   var VOICE_FAMILIES = { ...creature_voices_default.species, ...sectionOf("voice") };
   var nameHash = (name) => {
@@ -3851,7 +4076,8 @@ label.check input { accent-color: var(--accent); }
     ctx2 = a.tune ? { ...ctx2, seed: tuneSeed(ctx2.seed, a.tune) } : ctx2;
     const progress = (barIn + s / 16) / Math.max(1, plan.bars), pass = plan.pass ?? 0;
     const formBar = bar2 - (ctx2.formStart ?? 0), form = style2.form;
-    const H = hauntedOn(style2), haunt = !!H && H.sections.includes(plan.section) && ctx2.only !== "circle", comp = composeOn(style2);
+    const H = hauntedOn(style2), haunt = !!H && H.sections.includes(plan.section) && ctx2.only !== "circle", comp = composeOn(style2), dance = danceOn(style2);
+    const danceBass = dance ? dance.dance.bass[a.family ?? ""] : void 0;
     const chordOf = (slow) => form ? formChord(style2, ctx2.seed, slow ? hauntedBar(form, formBar) : formBar, !!sec.sevenths) : chordAt(style2, sec, a, barIn + pass * Math.max(1, sec.chordBars));
     const chordMain = chordOf(haunt), circleChord = H && form ? chordOf(true) : chordMain;
     const dropAt = haunt ? hauntedDrop(style2, plan.bars) : Infinity, dropped = barIn >= dropAt;
@@ -3906,7 +4132,9 @@ label.check input { accent-color: var(--accent); }
       const sh = own ? nameHash(circle.species) : 0, phase = own ? sh % 8 * 2 : 0;
       const at2 = own && ctx2.circleStep !== void 0 ? ctx2.circleStep : barIn * 16 + s;
       const i = (at2 + phase) % pat.length;
-      const brule = comp && def.role === "bass" && !own && !def.tonic && u.p !== "__fill" ? comp.bass.parts[name] : void 0;
+      const over = danceBass?.[name];
+      const base0 = comp && def.role === "bass" && !own && !def.tonic && u.p !== "__fill" ? comp.bass.parts[name] : void 0;
+      const brule = comp && def.role === "bass" && !own && !def.tonic && u.p !== "__fill" && (base0 || over) ? over ? danceRule(base0, over) : base0 : void 0;
       if (brule) {
         const from = i - i % 16;
         let m = bassMemo.get(name);
@@ -3922,7 +4150,7 @@ label.check input { accent-color: var(--accent); }
         const r2 = hash2(step2, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), ctx2.seed + phrase * 7919);
         const level2 = u.level * scaleLevel * (0.94 + 0.06 * r2) * (building ? 0.45 + 0.55 * build : 1);
         const patch2 = a.bass && sec.parts[name] && style2.patches[a.bass] ? a.bass : def.patch;
-        out.push({ part: name, patch: patch2, step: step2, offset: 0, dur: n.dur, ...hook ? { hook } : {}, midi: degreeToMidi(style2, scale, (n.abs ? 0 : chord.root) + n.k, def.octave ?? 0, transpose), vel: 0.85 * n.vel * level2 });
+        out.push({ part: name, patch: patch2, step: step2, offset: 0, dur: n.dur, ...hook ? { hook } : {}, ...n.glide ? { glide: n.glide } : {}, midi: degreeToMidi(style2, scale, (n.abs ? 0 : chord.root) + n.k, def.octave ?? 0, transpose), vel: 0.85 * n.vel * level2 });
         continue;
       }
       const { ch, dur } = hitAt(pat, i);
@@ -3957,7 +4185,7 @@ label.check input { accent-color: var(--accent); }
         const n = chord.tones.length, t = chord.tones[k % n] + 7 * (Math.floor(k / n) % 2);
         out.push({ ...base, midi: degreeToMidi(style2, scale, t, oct, transpose), vel: (VEL[ch] ?? accent) * level });
       } else {
-        const m = motifFor(style2, seed2 + phrase * 104729, plan.arc, name), pos = (at2 % 64 + (own ? sh % 29 : 0)) % 32;
+        const m = motifFor(style2, seed2 + phrase * 104729, plan.arc, name, own), pos = (at2 % 64 + (own ? sh % 29 : 0)) % 32;
         const vary = !comp && barIn % 4 === 3 && s >= 8 ? hash2(bar2, plan.arc, ctx2.seed + 5) < 0.5 ? 2 : -1 : 0;
         const lift = own ? [0, 2, 4][(sh >>> 3) % 3] : 0, octOwn = own ? oct + (sh >>> 5) % 2 - (oct > 2 ? 1 : 0) : oct;
         const deg = chord.root + m[pos] + vary + lift, vel = (VEL[ch] ?? accent) * level;
@@ -3998,7 +4226,8 @@ label.check input { accent-color: var(--accent); }
       if (hold && voiceOk) {
         if (s === 0 && mod(formBar, form.chordBars) === 0) sing(chord.root, form.chordBars * 16 - 1, 0, 0.8 * melody);
       } else {
-        const fn = formNoteAt(style2, ctx2.seed, formBar * 16 + s, transpose, a, { voice: place !== null, hookSeed: nightSeed, haunted: haunt });
+        const riff = dance ? riffKind(dance, a.family, plan.section, ctx2.seed) : void 0;
+        const fn = formNoteAt(style2, ctx2.seed, formBar * 16 + s, transpose, a, { voice: place !== null && !(dance && dropped), hookSeed: nightSeed, haunted: haunt, riff });
         const tint = fn && haunt ? hauntedColour(style2, scale, fn.deg, !!fn.cad, hash2(ctx2.seed, formBar * 16 + s, 467)) : 0;
         if (fn && fn.part === form.sung.part) sing(fn.deg, fn.dur, fn.off, fn.off ? 0.78 * melody : vel, tint);
         else if (fn) out.push({ part: fn.part, patch: fn.patch, step: step2, offset: fn.off, dur: fn.dur, midi: fn.midi + tint, vel: fn.off ? 0.78 * melody : vel, ...fn.dur % 1 ? { straight: true } : {} });
@@ -5607,7 +5836,7 @@ registerProcessor("witch-fof", WitchFof);
         const e = events[i];
         if (taken.has(e)) continue;
         const p = this.style.patches[e.patch];
-        if (p?.kind === "synth" && !p.drive && !p.glide && e.midi !== null) {
+        if (p?.kind === "synth" && !p.drive && !p.glide && e.glide === void 0 && e.midi !== null) {
           const mates = events.filter((f, j) => j > i && !taken.has(f) && f.part === e.part && f.patch === e.patch && f.layer === e.layer && f.offset === e.offset && f.dur === e.dur && f.vel === e.vel && f.midi !== null);
           if (mates.length) {
             for (const f of mates) taken.add(f);
@@ -5737,7 +5966,7 @@ registerProcessor("witch-fof", WitchFof);
           this.bell(t, p, peak, mtof(e.midi ?? 69) * pf, ch.in);
           break;
         case "synth":
-          this.synth(t, p, peak, chord.length ? [e.midi ?? 45, ...chord].map((m) => mtof(m) * pf) : mtof(e.midi ?? 45) * pf, dur, ch);
+          this.synth(t, e.glide !== void 0 ? { ...p, glide: e.glide } : p, peak, chord.length ? [e.midi ?? 45, ...chord].map((m) => mtof(m) * pf) : mtof(e.midi ?? 45) * pf, dur, ch);
           break;
         case "voice":
           this.voice(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch);
@@ -12604,7 +12833,7 @@ registerProcessor("witch-fof", WitchFof);
       src: "",
       singer: "",
       haunted: true,
-      melody: "new",
+      melody: "dance",
       over: {
         stop: 0.6,
         floor: 0.15
