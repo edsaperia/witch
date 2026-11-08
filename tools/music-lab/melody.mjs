@@ -3,7 +3,8 @@
 // where things start to <out dir>, each passage twice, the old rules then the composer's, the same seed (default 7, 23, 101):
 //   sections  seed<N>-<a|b|c|d>-<old|new>.mp3: (a) a four-on-the-floor section, the A instrument and the bass (deep, wave 1);
 //             (b) a sung breakdown (the haunted treatment off: the melody alone); (c) a bass-heavy section (acid house, dark
-//             electro or breakbeat's reese, one a seed); (d) a haunted breakdown through its drum & bass drop
+//             electro or breakbeat's reese: seeds 7, 23 and 101 one each, others in turn); (d) a haunted breakdown through its drum
+//             & bass drop; ONLY=ac renders only those passages
 //   night     seed<N>-night-<old|new>.mp3: a night's start, the intro and two waves of 32 bars (about three minutes)
 // Fails on a script error, NaN, clipping or silence. Nothing here touches the game.
 import { build } from "esbuild";
@@ -45,14 +46,14 @@ const save = (r, name, lines) => {
 const HEAVY = [["acidDrop", 5, "acid house: the acid line"], ["darkDrop", 3, "dark electro: the dark bass"], ["breaks", 6, "breakbeat: the reese under the break"]];
 for (const [si, seed] of seeds.entries()) {
   if (what === "sections" || what === "all") {
-    const heavy = HEAVY[si % HEAVY.length];
+    const heavy = HEAVY[[7, 23, 101].includes(seed) ? [7, 23, 101].indexOf(seed) : si % HEAVY.length];
     const passages = [
       ["a", "deep", 1, 16, true, "deep house, wave 1: the A instrument plays A then B, the house bass under it"],
       ["b", "breakdown", 2, 16, false, "the breakdown with the haunted treatment off: the singer sings A then B (the melody alone, washed)"],
       ["c", heavy[0], heavy[1], 16, true, heavy[2]],
       ["d", "breakdown", 2, 16, true, "the haunted breakdown: the held sung line, then the drum & bass drop"],
     ];
-    for (const [tag, section, wave, bars, haunted, about] of passages) for (const melody of ["old", "new"]) {
+    for (const [tag, section, wave, bars, haunted, about] of passages.filter(p => !process.env.ONLY || process.env.ONLY.includes(p[0]))) for (const melody of ["old", "new"]) {
       const r = await page.evaluate(o => window.sectionRender(o), { section, wave, seed, bars, melody, haunted, samples });
       const name = `seed${seed}-${tag}-${melody}`;
       save(r, name, [`${name}: ${about}; seed ${seed}, ${section} on wave ${wave}'s step, ${bars} bars at 120 bpm, the ${melody === "old" ? "old rules (?melody=old)" : "composer's rules"}; the A instrument ${r.lead}, bass ${r.bass}`, ...r.marks]);
