@@ -58,13 +58,21 @@ describe("the melodies' 32-bar ABAC form", () => {
       expect(parts).toEqual(new Set([inst, F.sung.part]));
     }
     expect([...seen].sort()).toEqual(["bell", "chiplead", "lead", "lgHorn", "pluck", "vox"]);
-    // (a woman's voice: since Ed's pick, 2026-10-11, "e Recorded + ethereal", a recording of one, sung "laa" and "loo"; the formant
-    // soprano before it, higher than the old vox, still singing till the recording loads)
+    // (a woman's voice: since Ed's swap, 2026-11-08, "Go ahead and swap them over", Chimera's, a note rendered on every semitone
+    // of the alto's reach, G3 to G5, on "ah" and on "ooh", so no note is retuned; the vowels as the old recorded singer's, "aa" and
+    // "oo" in turn; the formant soprano before it, higher than the old vox, still singing till the recordings load)
     const sung = style.patches[F.sung.patch];
     expect(sung.kind).toBe("sample");
-    expect(sung.sample).toBe("female-note");
-    expect(sung.onset).toBe("l");
     expect(sung.vowels).toEqual(["aa", "aa", "oo"]);
+    for (const vowel of ["aa", "oo"]) {
+      const notes = sung.notes!.filter(n => n.vowel === vowel);
+      expect(notes.map(n => n.midi), vowel).toEqual(Array.from({ length: 25 }, (_, i) => 55 + i));
+      for (const n of notes) expect(n.sample).toBe(`chimera-${vowel === "aa" ? "ah" : "ooh"}-${n.midi}`);
+    }
+    // (the old singer kept, to A/B: ?singer=recorded, the woman's G4 retuned, "laa" and "loo")
+    const old = style.patches.recordedVoice;
+    expect(old.sample).toBe("female-note");
+    expect(old.onset).toBe("l");
     expect(style.patches.soprano.formantShift!).toBeGreaterThan(style.patches.vox.formantShift!);
   });
 

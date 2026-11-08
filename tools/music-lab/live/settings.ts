@@ -12,10 +12,12 @@ export const LAYER_NAMES: Record<Layer, string> = {
 };
 /** Who sings the form's melody: the game's singer as it is, the FOF voice, Pink Trombone (5), the recorded woman's note (5b),
  *  and the singer's A/B (Ed, 2026-10-14, "build two and A/B them"): the alto's sample set (the woman's note shifted with its
- *  formants kept, every two semitones) or the vocal-tract voice (Pink Trombone in a worklet, an alto's tract). */
-export const VOICES = ["synth", "fof", "pinkTrombone", "recorded", "sampled", "tract"] as const;
+ *  formants kept, every two semitones) or the vocal-tract voice (Pink Trombone in a worklet, an alto's tract); and since the swap
+ *  (Ed, 2026-11-08: "Go ahead and swap them over"), Chimera's notes (the game's singer now) and the old singer beside it (the
+ *  woman's G4 retuned, as the game sang till then), whichever the game's singer is. */
+export const VOICES = ["synth", "fof", "pinkTrombone", "recorded", "sampled", "tract", "chimera", "oldSinger"] as const;
 /** The voices the engine sings itself (the player's own are Pink Trombone's worker and the one retuned note). */
-export const engineSings = (v: Voice): boolean => v === "synth" || v === "fof" || v === "sampled" || v === "tract";
+export const engineSings = (v: Voice): boolean => v === "synth" || v === "fof" || v === "sampled" || v === "tract" || v === "chimera" || v === "oldSinger";
 /** Which effects chain the singer goes through: as the game plays it (pure, dark in the dark families), or one of them forced. */
 export const CHAINS = ["auto", "pure", "dark"] as const;
 export type Chain = typeof CHAINS[number];
@@ -30,7 +32,9 @@ export const FX_NAMES: Record<Fx, string> = {
 export type Voice = typeof VOICES[number];
 export const MODES = ["dorian", "aeolian", "phrygian"] as const;
 /** The sung patch each voice picks (the rest sing the game's, or the lab player's own). */
-export const SUNG_PATCH: Partial<Record<Voice, string>> = { fof: "fofSoprano", sampled: "altoSampled", tract: "altoTract" };
+export const SUNG_PATCH: Partial<Record<Voice, string>> = { fof: "fofSoprano", sampled: "altoSampled", tract: "altoTract", chimera: "chimeraVoice", oldSinger: "recordedVoice" };
+/** The Vocalise picker's words for the voices it offers. */
+export const VOICE_WORDS: Record<Voice, string> = { synth: "The game's singer", chimera: "Chimera (the new singer)", oldSinger: "Recorded G4 (the old singer)", sampled: "Alto, sampled", tract: "Alto, vocal tract", fof: "FOF voice", pinkTrombone: "Pink Trombone (5)", recorded: "Recorded voice (5b)" };
 /** The voice effects' ethereal preset (the voices' A/B's: tools/music-lab/voices.mjs). */
 export const ETHEREAL: Record<Fx, number> = { chorus: 0.5, saturation: 0.15, air: 0.5, delay: 0.35, hall: 0.6, shimmer: 0.5, duck: 0.3, swells: 0.6, freeze: 0.5, whisper: 0.25, octave: 0.3 };
 /** The parts' roles in words, in the order the lab lists them. */

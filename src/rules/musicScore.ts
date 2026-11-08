@@ -81,8 +81,10 @@ export interface Patch {
   sample?: string;
   root?: number;
   /** A sample set (Ed's singer review, 2026-10-14: the alto's, every two semitones with the formants kept): each recording
-   *  and the MIDI note it sings; a note plays the nearest, bent at most a semitone. With none, `sample` at `root` plays every note. */
-  notes?: { midi: number; sample: string }[];
+   *  and the MIDI note it sings; a note plays the nearest, bent at most a semitone. With none, `sample` at `root` plays every note.
+   *  A recording with a `vowel` sings it itself (Ed, 2026-11-08: Chimera's set, "ah" and "ooh" on every semitone): a note takes
+   *  the nearest of its vowel's (the patch's `vowels` in turn), unfiltered; those without are filtered to the vowel. */
+  notes?: { midi: number; sample: string; vowel?: string }[];
   presence?: number;
   /** A consonant opening each note ("l": Ed, 2026-10-11, "Can it go laa?"), shaped by a filter opening over its first moment. */
   onset?: string;
@@ -363,6 +365,32 @@ export function resolveSection(style: MusicStyle, name: string): Resolved {
 export const arcStep = (style: MusicStyle, arc: number): ArcStep => style.arc[Math.max(0, Math.min(style.arc.length - 1, arc))];
 
 const use = (u: PartUse) => (typeof u === "string" ? { p: u, level: 1, from: 0, energy: 0 } : { p: u.p, level: u.level ?? 1, from: u.from ?? 0, energy: u.energy ?? 0 });
+
+/** The singers a link can pick instead of the style's (`?singer=`, tuning music.singer; Ed, 2026-11-08: Chimera sings, the old
+ *  voices kept to A/B): a link value to its sung patch. */
+export const SINGERS: Record<string, string> = { recorded: "recordedVoice", sampled: "altoSampled" };
+const SUNG_AS = new WeakMap<MusicStyle, Map<string, MusicStyle>>();
+/** The style with `patch` singing wherever its own singer (the form's sung patch) does: the form, the set's and the families'
+ *  voices, the hand-picked night's steps and the arc (a night's, made from the set). The same object for the same pair; the style
+ *  itself for no patch, an unknown one or its own. */
+export function withSinger(style: MusicStyle, patch: string | undefined): MusicStyle {
+  const own = style.form?.sung.patch;
+  if (!patch || !own || patch === own || !style.patches[patch]) return style;
+  let m = SUNG_AS.get(style);
+  if (!m) SUNG_AS.set(style, (m = new Map()));
+  let out = m.get(patch);
+  if (out) return out;
+  const swap = <T extends string | undefined>(v: T): T => (v === own ? patch : v) as T;
+  out = {
+    ...style, form: { ...style.form!, sung: { ...style.form!.sung, patch } },
+    arc: style.arc.map(a => (a.vocal === own ? { ...a, vocal: patch } : a)),
+    ...(style.set ? { set: { ...style.set, vocals: style.set.vocals.map(swap) } } : {}),
+    ...(style.families ? { families: Object.fromEntries(Object.entries(style.families).map(([k, f]) => [k, f.vocals ? { ...f, vocals: f.vocals.map(swap) } : f])) } : {}),
+    ...(style.curated ? { curated: { ...style.curated, steps: style.curated.steps.map(c => ({ ...c, vocal: swap(c.vocal) })) } } : {}),
+  };
+  m.set(patch, out);
+  return out;
+}
 
 /** The scale degree (0 the root) of a chord tone or a melody's step, as a MIDI note. */
 export function degreeToMidi(style: MusicStyle, scale: number[], degree: number, octave: number, transpose: number): number {

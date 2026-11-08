@@ -897,20 +897,25 @@ export class MusicEngine {
    *  (its own length at most), through a presence lift; a phrase (after a rest of a beat or more) swelling in, the last one's
    *  end frozen, as the voice effects ask. Until the recording's loaded, the formant voice sings it. */
   private sampled(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, ch: Channel, held?: Held): void {
-    // the recording: the sample set's nearest note (bent at most a semitone), else the one recording at its root
-    const want = 69 + 12 * Math.log2(freq / 440), near = p.notes?.length ? p.notes.reduce((a, b) => Math.abs(b.midi - want) < Math.abs(a.midi - want) ? b : a) : null;
+    // its vowel (Ed, 2026-10-11: "stick to aa and oo"), the patch's taken in turn through the phrase (a phrase starts after a rest
+    // of more than a beat)
+    const beat = 60 / Math.max(40, this.bpmNow), phrase = ch.lastEnd === undefined || t - ch.lastEnd > beat;
+    const vs = p.vowels?.length ? p.vowels : [], vowel = vs.length ? vs[(phrase ? 0 : (ch.sung ?? 0) + 1) % vs.length] : "";
+    // the recording: the sample set's nearest note (bent at most a semitone), of the vowel where the set sings its vowels itself
+    // (Chimera's: Ed, 2026-11-08), else the one recording at its root
+    const want = 69 + 12 * Math.log2(freq / 440), voiced = p.notes?.filter(n => n.vowel === vowel), pool = voiced?.length ? voiced : p.notes;
+    const near = pool?.length ? pool.reduce((a, b) => Math.abs(b.midi - want) < Math.abs(a.midi - want) ? b : a) : null;
     const rec = this.recordings.get(near?.sample ?? p.sample ?? "") ?? (near ? this.recordings.get(p.sample ?? "") : undefined), root = near && this.recordings.has(near.sample) ? near.midi : p.root ?? 69;
     if (!rec) { this.voice(t, { ...p, kind: "voice", vowels: ["ah", "oh", "ee", "eh", "oo"], formantShift: 1.18, q: 10, vibrato: 24, attack: 0.06, decay: 0.4, sustain: 0.85, release: 0.3 }, peak, freq, dur, step, ch); return; }
     const c = this.ctx, rate = freq / mtof(root), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = held ? 3600 : Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
     if (len < 0.05) return;
     if (!ch.presence) { ch.presence = c.createBiquadFilter(); ch.presence.type = "peaking"; ch.presence.frequency.value = 3000; ch.presence.Q.value = 0.8; ch.presence.gain.value = p.presence ?? 0; ch.presence.connect(ch.in); }
-    const fx = ch.fx, beat = 60 / Math.max(40, this.bpmNow), onBus = !fx && this.stems && ch.part ? this.sink : null; // (a renderer's: its effects the bus's)
-    if ((fx || onBus) && (ch.lastEnd === undefined || t - ch.lastEnd > beat)) {
+    const fx = ch.fx, onBus = !fx && this.stems && ch.part ? this.sink : null; // (a renderer's: its effects the bus's)
+    if ((fx || onBus) && phrase) {
       if (ch.lastEnd !== undefined) { if (fx) fx.release(ch.lastEnd); else onBus!.fxRelease?.(ch.part!, ch.lastEnd); }
       const swell = Math.min(4 * beat, Math.max(beat, t - (ch.lastEnd ?? t - 4 * beat) - 0.1));
       if (fx) this.swellInto(fx, rec, rate, t, swell, peak); else onBus!.fxSwell?.(ch.part!, rec, rate, t, swell, peak);
     }
-    const phrase = ch.lastEnd === undefined || t - ch.lastEnd > beat;
     ch.lastEnd = Math.max(ch.lastEnd ?? -Infinity, t + (held ? 0.5 : len));
     ch.sung = phrase ? 0 : (ch.sung ?? 0) + 1;
     const src = c.createBufferSource(), g = c.createGain();
@@ -923,20 +928,20 @@ export class MusicEngine {
       if (!held) { gain.setValueAtTime(top, t + Math.max(rise, len - fall)); gain.linearRampToValueAtTime(0, t + len); }
     };
     envelope(g.gain, peak);
-    // its vowel (Ed, 2026-10-11: "stick to aa and oo"), the patch's taken in turn through the phrase: the recording sings a dark
-    // vowel (its partials strong to 800 Hz, weak past 1 kHz), opened to "aa" by lifts at aa's formants (800 and 1150 Hz) or closed
-    // to "oo" by a low-pass; and its onset ("l": the filter opening from a muffle over its first 80 ms, "laa")
-    const vs = p.vowels?.length ? p.vowels : [], vowel = vs.length ? vs[ch.sung % vs.length] : "";
+    // its vowel: a recording singing it itself (its note's `vowel`) as it is; else the woman's, a dark vowel (its partials strong
+    // to 800 Hz, weak past 1 kHz), opened to "aa" by lifts at aa's formants (800 and 1150 Hz) or closed to "oo" by a low-pass; and
+    // its onset ("l": the filter opening from a muffle over its first 80 ms, "laa")
+    const own = !!near?.vowel && near.vowel === vowel && this.recordings.has(near.sample), shaped = own ? "" : vowel;
     const nodes: AudioNode[] = [src, g];
     src.connect(g);
     let last: AudioNode = g;
-    const open = vowel === "oo" ? 750 : 16000;
-    if (p.onset === "l" || vowel === "oo") {
+    const open = shaped === "oo" ? 750 : 16000;
+    if (p.onset === "l" || shaped === "oo") {
       const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 0.7;
       if (p.onset === "l") { lp.frequency.setValueAtTime(420, t); lp.frequency.exponentialRampToValueAtTime(open, t + 0.08); } else lp.frequency.value = open;
       last.connect(lp); last = lp; nodes.push(lp);
     }
-    if (vowel === "aa" || vowel === "ah") for (const [f, db] of [[800, 4], [1150, 8]]) {
+    if (shaped === "aa" || shaped === "ah") for (const [f, db] of [[800, 4], [1150, 8]]) {
       const pk = c.createBiquadFilter(); pk.type = "peaking"; pk.frequency.value = f; pk.Q.value = 2.2; pk.gain.value = db;
       last.connect(pk); last = pk; nodes.push(pk);
     }

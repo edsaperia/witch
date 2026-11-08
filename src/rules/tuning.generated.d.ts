@@ -1932,6 +1932,7 @@ export type SchemaTuning = {
     "clear": number;
     "distort": number;
     "src": string;
+    "singer": string;
     "over": {
       "stop": number;
       "floor": number;
