@@ -234,11 +234,13 @@ says what each note covers.
 - The singer's redesign
 - Music Lab
 - The singer's A/B
+- The Chimera singer
 - Music Studio
 - Live Music Lab
 - Music ahead
 - Voices
 - The alto set
+- The Chimera set
 - A/B renders
 
 ## [Two-browser prototype](online-prototype.md)
