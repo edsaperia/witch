@@ -9873,6 +9873,10 @@
           "type": "string",
           "description": "who sings the vocalise: empty for the music style's own singer (Chimera's notes since 2026-11-08), or a sung patch of the style in its place everywhere it sings (recordedVoice the old recorded singer, altoSampled the alto set); ?singer=recorded or ?singer=sampled for a load, to A/B."
         },
+        "haunted": {
+          "type": "boolean",
+          "description": "the haunted treatment, in the quiet sections (the music style's haunted.sections: breakdown, ether, whisper) and a sleeping legend's clearing layer: the voice's own long dark reverb (haunted.verb), no drums and then a drum & bass drop on a 4-bar line (haunted.drop), held notes and slower chords (haunted.rhythms), a ghost voice a sixth below (haunted.ghost), a root-and-fifth drone (haunted.drone), the 2nd flattened or the 7th raised as colour (haunted.colour, colourElse; notes outside dorian there only), the voice lifted (haunted.voice)."
+        },
         "over": {
           "type": "object",
           "properties": {
@@ -9928,6 +9932,7 @@
         "distort",
         "src",
         "singer",
+        "haunted",
         "over",
         "beach"
       ],

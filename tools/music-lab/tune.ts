@@ -34,7 +34,8 @@ const b64 = (s: string) => { const bin = atob(s), u = new Uint8Array(bin.length)
 async function tuneRender(o: TuneOptions) {
   const style = clone(base);
   if (!o.fx) { style.voiceFx = { chorus: 0, saturation: 0, air: 0, delay: 0, hall: 0, shimmer: 0, duck: 0, swells: 0, freeze: 0, whisper: 0, octave: 0 }; delete style.voiceFxDark; }
-  if (!o.wash) delete style.form!.sung.wash;
+  if (!o.wash) { delete style.form!.sung.wash; if (style.haunted) style.haunted.ghost.gain = 0; } // (one voice for the tracker: no wash, no haunted ghost)
+  if (!o.mix && style.haunted) style.haunted.drone.gain = 0; // (nor the haunted drone, which no solo silences: it's the bus's)
   if (o.voice && style.patches[o.voice]) style.form!.sung.patch = o.voice;
   const spb = 60 / style.bpm / 4, seconds = o.bars * 16 * spb + 2;
   const oc = new OfflineAudioContext(1, Math.ceil(seconds * RATE), RATE);
@@ -45,9 +46,10 @@ async function tuneRender(o: TuneOptions) {
   if (!o.mix) e.solo = new Set([sung]);
   e.setRecordings(samples); if (samples.whispers) e.setWhisper(samples.whispers);
   const notes: { at: number; dur: number; midi: number; double: boolean }[] = [];
+  const sp = style.patches[style.form!.sung.patch], longest = sp?.kind === "sample" && sp.notes?.length ? Math.max(0.1, Math.min(...sp.notes.map(n => samples[n.sample]?.duration ?? Infinity)) - 0.05) : Infinity;
   const play = (e as unknown as { play: (ev: NoteEvent, t: number, dur: number, sps: number, chord?: number[]) => void }).play.bind(e);
   (e as unknown as { play: typeof play }).play = (ev, t, dur, sps, chord) => {
-    if (ev.part === sung && ev.midi !== null) notes.push({ at: t, dur, midi: ev.midi, double: !!ev.double });
+    if (ev.part === sung && ev.midi !== null) notes.push({ at: t, dur: Math.min(dur, longest), midi: ev.midi, double: !!(ev.double || ev.ghost) }); // (a held note sounds as long as its recording at most)
     play(ev, t, dur, sps, chord);
   };
   const cue: MusicCue = { waves: Array.from({ length: o.wave }, () => 0), nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, forceWave: o.wave, forceSection: o.section };

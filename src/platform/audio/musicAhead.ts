@@ -18,10 +18,14 @@ import { MusicEngine, type MusicSink } from "./musicEngine";
 const AHEAD = 6, START = 2.5, TAIL = 2.5;
 /** Bars rendering at once, at most. */
 const RENDERING = 2;
+/** The stems' channels: four stereo pairs (the ducked parts, the rest, the reverb's send, the delay's), the haunted ghost voice's
+ *  pair, and the voice line (mono) last. */
+const STEMS = 11, VOICE = 10;
 
 type Ev = { kind: "tone"; f0: number; f1: number; t: number; dur: number } | { kind: "duck"; t: number; depth: number; sps: number } | { kind: "gate"; open: boolean; t: number }
   | { kind: "fx"; part: string; fx: "pure" | "dark"; t: number } | { kind: "release"; part: string; t: number }
-  | { kind: "swell"; part: string; rec: AudioBuffer; rate: number; t: number; swell: number; peak: number };
+  | { kind: "swell"; part: string; rec: AudioBuffer; rate: number; t: number; swell: number; peak: number }
+  | { kind: "haunt"; on: boolean; root: number; t: number };
 
 interface Bar {
   bar: number;
@@ -127,20 +131,22 @@ export class MusicAhead {
   /** Bar `b` drawn: its notes queued on a renderer (carrying on from the bar before's), rendered off the page's thread. */
   private render(b: number, cue: MusicCue, clock: BeatClock): void {
     const E = this.engine, sr = this.ctx.sampleRate, g = timeAt(clock, b * 4), dur = timeAt(clock, (b + 1) * 4) - g;
-    const oc = new OfflineAudioContext(9, Math.ceil(sr * (dur + TAIL)), sr), merge = oc.createChannelMerger(9);
+    const oc = new OfflineAudioContext(STEMS, Math.ceil(sr * (dur + TAIL)), sr), merge = oc.createChannelMerger(STEMS);
     merge.connect(oc.destination);
-    // the stems: the parts the kick ducks, the rest, the reverb's send and the delay's, a stereo pair each; the voice line, mono
+    // the stems: the parts the kick ducks, the rest, the reverb's send and the delay's, the haunted ghost voice, a stereo pair
+    // each; the voice line, mono
     const pair = (i: number) => { const n = oc.createGain(), sp = oc.createChannelSplitter(2); n.channelCount = 2; n.channelCountMode = "explicit"; n.connect(sp); sp.connect(merge, 0, 2 * i); sp.connect(merge, 1, 2 * i + 1); return n; };
-    const voice = oc.createGain(); voice.channelCount = 1; voice.channelCountMode = "explicit"; voice.connect(merge, 0, 8);
+    const voice = oc.createGain(); voice.channelCount = 1; voice.channelCountMode = "explicit"; voice.connect(merge, 0, VOICE);
     const events: Ev[] = [];
     const sink: MusicSink = {
-      duck: pair(0), dry: pair(1), reverb: pair(2), delay: pair(3), voice: () => voice,
+      duck: pair(0), dry: pair(1), reverb: pair(2), delay: pair(3), ghost: pair(4), voice: () => voice,
       tone: (f0, f1, t, d) => events.push({ kind: "tone", f0, f1, t, dur: d }),
       duckAt: (t, depth, sps) => events.push({ kind: "duck", t, depth, sps }),
       gate: (open, t) => events.push({ kind: "gate", open, t }),
       fxChain: (part, fx, t) => events.push({ kind: "fx", part, fx, t }),
       fxRelease: (part, t) => events.push({ kind: "release", part, t }),
       fxSwell: (part, rec, rate, t, swell, peak) => events.push({ kind: "swell", part, rec, rate, t, swell, peak }),
+      haunt: (on, root, t) => events.push({ kind: "haunt", on, root, t }),
     };
     const r = new MusicEngine(oc, oc.destination, E.style, E.seed, oc.destination, sink);
     r.setRecordings(E.recorded); r.shed = E.shed;
@@ -162,10 +168,11 @@ export class MusicAhead {
     if (at < now) this.stats.late++;
     if (at + B.dur < now) { B.state = "dropped"; return; } // (the whole bar past: the hitch was longer than the queue)
     const bus = E.bus, sung = E.style.form?.sung.part, voiceIn = sung ? E.voiceIn(sung) : null;
-    const src = c.createBufferSource(), sp = c.createChannelSplitter(9), nodes: AudioNode[] = [sp];
+    const src = c.createBufferSource(), sp = c.createChannelSplitter(STEMS), nodes: AudioNode[] = [sp];
     src.buffer = buf; src.connect(sp);
-    [bus.duck, bus.dry, bus.reverb, bus.delay].forEach((d, i) => { const m = c.createChannelMerger(2); sp.connect(m, 2 * i, 0); sp.connect(m, 2 * i + 1, 1); m.connect(d); nodes.push(m); });
-    if (voiceIn) sp.connect(voiceIn, 8);
+    const ghost = E.style.haunted ? E.ghostIn() : null; // (the haunted ghost voice's stem: only a style with the treatment has one)
+    [bus.duck, bus.dry, bus.reverb, bus.delay, ghost].forEach((d, i) => { if (!d) return; const m = c.createChannelMerger(2); sp.connect(m, 2 * i, 0); sp.connect(m, 2 * i + 1, 1); m.connect(d); nodes.push(m); });
+    if (voiceIn) sp.connect(voiceIn, VOICE);
     src.onended = () => { for (const n of nodes) try { n.disconnect(); } catch { /* gone */ } };
     if (at >= now) src.start(at); else src.start(now, now - at);
     for (const e of B.events) {
@@ -175,6 +182,7 @@ export class MusicAhead {
       else if (e.kind === "gate") bus.gate(e.open, Math.max(now, t));
       else if (e.kind === "fx") bus.fxChain?.(e.part, e.fx, t);
       else if (e.kind === "release") bus.fxRelease?.(e.part, Math.max(now, t));
+      else if (e.kind === "haunt") bus.haunt?.(e.on, e.root, Math.max(now, t));
       else bus.fxSwell?.(e.part, e.rec, e.rate, t, e.swell, e.peak);
     }
     B.src = src; B.state = "queued";

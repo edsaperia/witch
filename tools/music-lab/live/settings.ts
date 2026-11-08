@@ -83,6 +83,9 @@ export interface LabState {
   /** The voice test (Ed, 2026-10-14): the singer sings the chord as constant arpeggios in every section, not the form's
    *  melodies in the breakdowns and builds. */
   arpeggio: boolean;
+  /** The haunted treatment in the quiet sections and the legends' clearings (Ed, 2026-11-08: "B, 1-6"): on, as the game
+   *  plays it, or off, the music as before, to A/B. */
+  haunted: boolean;
   /** The game's pause-page panel (Ed, 2026-10-15): a genre family forced on every wave of the night ("" the night's own), and
    *  whether the music follows the game's own wave and section (true) rather than the passage above (the lab page always
    *  plays its passage; the panel sets it false when pasted settings carry a `passage`). */
@@ -108,7 +111,7 @@ export function defaultState(d: Defaults): LabState {
     layers: Object.fromEntries(LAYERS.map(l => [l, l === "vocalise" ? 1 : 0])) as Record<Layer, number>, voice: "synth",
     parts: Object.fromEntries(d.parts.map(p => [p, 1])), mute: [], solo: [],
     victory: { transpose: d.victory.transpose, layers: { ...d.victory.layers } }, night: null, voiceFx: chainFx(d, "auto"), fofChoir: false,
-    breath: null, chain: "auto", arpeggio: false,
+    breath: null, chain: "auto", arpeggio: false, haunted: true,
   };
 }
 
@@ -144,6 +147,7 @@ export function settingsJson(s: LabState, d: Defaults): string {
   if (some(fx)) out.voiceFx = fx;
   if (s.breath !== null) out.breath = round(s.breath);
   if (s.arpeggio) out.arpeggio = true;
+  if (!s.haunted) out.haunted = false;
   if (s.fofChoir) out.fofChoir = true;
   // one key a line, what's under it on the same line: short enough to paste in a message, easy to read
   return `{\n${Object.entries(out).map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v).replace(/([,:])(?=["{\[\d-])/g, "$1 ")}`).join(",\n")}\n}`;
@@ -185,6 +189,7 @@ export function parseSettings(text: string, d: Defaults, sections: string[]): { 
       case "chain": if (!(CHAINS as readonly unknown[]).includes(v)) ignored.push(k); break;
       case "breath": if (typeof v === "number") s.breath = num(v, 0, 1, 0); else if (v !== null) ignored.push(k); break;
       case "arpeggio": s.arpeggio = v === true; break;
+      case "haunted": s.haunted = v !== false; break;
       case "night": {
         const n = v as { waves?: unknown; island?: unknown } | null;
         s.night = n && typeof n === "object" ? { waves: Math.round(num(n.waves, 1, 64, 10)), island: typeof n.island === "string" ? n.island.slice(0, 24) : "home" } : null;

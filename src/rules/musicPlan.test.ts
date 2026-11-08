@@ -4,7 +4,7 @@ import { Conductor, barSeconds, bootLayers, legendNear, musicCue, partyNear, pla
 import { newGame as fullGame } from "./game";
 import { smallWorld } from "../test/worlds";
 import { TUNING } from "./tuning";
-import { checkStyle, notesAt, resolveSection, type BlockPlan, type MusicStyle } from "./musicScore";
+import { checkStyle, isHaunted, notesAt, resolveSection, type BlockPlan, type MusicStyle } from "./musicScore";
 
 const newGame = smallWorld(fullGame, "Music cues use supplied clocks and nearby legend/soundsystem targets, independent of world extent.");
 const style = styleJson as unknown as MusicStyle;
@@ -138,7 +138,8 @@ describe("music score", () => {
               expect(e.midi).toBeGreaterThanOrEqual(21);
               expect(e.midi).toBeLessThanOrEqual(108);
               const pc = (((e.midi - style.root - (a.transpose ?? 0) - (resolveSection(style, section).transpose ?? 0)) % 12) + 12) % 12; // (the stage's key, and the section's own lift)
-              expect(scale).toContain(pc);
+              // (a haunted section's melody may take the flat 2nd or the raised 7th: Ed, 2026-11-08, musicHaunted.test.ts)
+              expect([...scale, ...(isHaunted(style, section) ? [1, 11] : [])]).toContain(pc);
             }
           }
         }

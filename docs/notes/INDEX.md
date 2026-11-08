@@ -223,6 +223,7 @@ says what each note covers.
 
 - Potion isolation
 - Music style
+- Haunted
 - Section
 - Boot-up
 - Form
