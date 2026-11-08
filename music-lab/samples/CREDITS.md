@@ -18,6 +18,59 @@ Written by tools/samples/credits.mjs from samples/manifest.json: never edit by h
 - `alto/alto-79.ogg`: The woman's sung note shifted to G5 (MIDI 79) with its formants kept, for the alto's sample set. Source: https://freesound.org/people/owstu/sounds/628817/
 - `voices/female-note.ogg`: A woman singing one steady note, G4 (from the uploader's own single-note improvisation). Source: https://freesound.org/people/owstu/sounds/628817/
 
+## Witch (our own renders) (own work, rendered with Chimera (MIT))
+
+- `chimera/chimera-ah-55.ogg`: Chimera's female voice singing "ah", for the singer, G3 (MIDI 55). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-56.ogg`: Chimera's female voice singing "ah", for the singer, G#3 (MIDI 56). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-57.ogg`: Chimera's female voice singing "ah", for the singer, A3 (MIDI 57). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-58.ogg`: Chimera's female voice singing "ah", for the singer, A#3 (MIDI 58). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-59.ogg`: Chimera's female voice singing "ah", for the singer, B3 (MIDI 59). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-60.ogg`: Chimera's female voice singing "ah", for the singer, C4 (MIDI 60). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-61.ogg`: Chimera's female voice singing "ah", for the singer, C#4 (MIDI 61). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-62.ogg`: Chimera's female voice singing "ah", for the singer, D4 (MIDI 62). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-63.ogg`: Chimera's female voice singing "ah", for the singer, D#4 (MIDI 63). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-64.ogg`: Chimera's female voice singing "ah", for the singer, E4 (MIDI 64). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-65.ogg`: Chimera's female voice singing "ah", for the singer, F4 (MIDI 65). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-66.ogg`: Chimera's female voice singing "ah", for the singer, F#4 (MIDI 66). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-67.ogg`: Chimera's female voice singing "ah", for the singer, G4 (MIDI 67). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-68.ogg`: Chimera's female voice singing "ah", for the singer, G#4 (MIDI 68). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-69.ogg`: Chimera's female voice singing "ah", for the singer, A4 (MIDI 69). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-70.ogg`: Chimera's female voice singing "ah", for the singer, A#4 (MIDI 70). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-71.ogg`: Chimera's female voice singing "ah", for the singer, B4 (MIDI 71). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-72.ogg`: Chimera's female voice singing "ah", for the singer, C5 (MIDI 72). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-73.ogg`: Chimera's female voice singing "ah", for the singer, C#5 (MIDI 73). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-74.ogg`: Chimera's female voice singing "ah", for the singer, D5 (MIDI 74). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-75.ogg`: Chimera's female voice singing "ah", for the singer, D#5 (MIDI 75). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-76.ogg`: Chimera's female voice singing "ah", for the singer, E5 (MIDI 76). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-77.ogg`: Chimera's female voice singing "ah", for the singer, F5 (MIDI 77). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-78.ogg`: Chimera's female voice singing "ah", for the singer, F#5 (MIDI 78). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ah-79.ogg`: Chimera's female voice singing "ah", for the singer, G5 (MIDI 79). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-55.ogg`: Chimera's female voice singing "ooh", for the singer, G3 (MIDI 55). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-56.ogg`: Chimera's female voice singing "ooh", for the singer, G#3 (MIDI 56). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-57.ogg`: Chimera's female voice singing "ooh", for the singer, A3 (MIDI 57). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-58.ogg`: Chimera's female voice singing "ooh", for the singer, A#3 (MIDI 58). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-59.ogg`: Chimera's female voice singing "ooh", for the singer, B3 (MIDI 59). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-60.ogg`: Chimera's female voice singing "ooh", for the singer, C4 (MIDI 60). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-61.ogg`: Chimera's female voice singing "ooh", for the singer, C#4 (MIDI 61). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-62.ogg`: Chimera's female voice singing "ooh", for the singer, D4 (MIDI 62). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-63.ogg`: Chimera's female voice singing "ooh", for the singer, D#4 (MIDI 63). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-64.ogg`: Chimera's female voice singing "ooh", for the singer, E4 (MIDI 64). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-65.ogg`: Chimera's female voice singing "ooh", for the singer, F4 (MIDI 65). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-66.ogg`: Chimera's female voice singing "ooh", for the singer, F#4 (MIDI 66). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-67.ogg`: Chimera's female voice singing "ooh", for the singer, G4 (MIDI 67). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-68.ogg`: Chimera's female voice singing "ooh", for the singer, G#4 (MIDI 68). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-69.ogg`: Chimera's female voice singing "ooh", for the singer, A4 (MIDI 69). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-70.ogg`: Chimera's female voice singing "ooh", for the singer, A#4 (MIDI 70). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-71.ogg`: Chimera's female voice singing "ooh", for the singer, B4 (MIDI 71). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-72.ogg`: Chimera's female voice singing "ooh", for the singer, C5 (MIDI 72). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-73.ogg`: Chimera's female voice singing "ooh", for the singer, C#5 (MIDI 73). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-74.ogg`: Chimera's female voice singing "ooh", for the singer, D5 (MIDI 74). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-75.ogg`: Chimera's female voice singing "ooh", for the singer, D#5 (MIDI 75). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-76.ogg`: Chimera's female voice singing "ooh", for the singer, E5 (MIDI 76). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-77.ogg`: Chimera's female voice singing "ooh", for the singer, F5 (MIDI 77). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-78.ogg`: Chimera's female voice singing "ooh", for the singer, F#5 (MIDI 78). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+- `chimera/chimera-ooh-79.ogg`: Chimera's female voice singing "ooh", for the singer, G5 (MIDI 79). Source: https://github.com/jamesondh/chimera-vocal-synth/tree/09fb7769ec13d3a5ff19345c145b4af23d762b82
+
 ## Versilian Studios LLC and contributors (CC0-1.0)
 
 - `vcsl/bass-drum.ogg`: Concert bass drum, medium hit. Source: https://github.com/sgossner/VCSL/blob/c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e/Membranophones/Struck%20Membranophones/Bass%20Drum%202/bassdrum_hit_mf1.wav
@@ -64,3 +117,4 @@ Written by tools/samples/credits.mjs from samples/manifest.json: never edit by h
 
 - The FOF singing voice (src/platform/audio/fof/fofModule.ts, compiled from tools/voice/fof/fof.dsp by tools/voice/fof/build.mjs): Mike Olsen's `pm.SFFormantModelFofSmooth` from Faust's physmodels.lib (faustlibraries, Copyright (C) GRAME), compiled with the Faust compiler (@grame/faustwasm 0.19.0, Faust 2.90.0). The Faust libraries are LGPL 2.1 with GRAME's exception for compiled code: "you may create a larger FAUST program which directly or indirectly imports this library file and still distribute the compiled code generated by the FAUST compiler ... under your own copyright and license". No Faust runtime is shipped (our own AudioWorklet runs it).
 - Pink Trombone (tools/voice/pink-trombone, the Music Lab's vocalise only): Neil Thapen's model, as a library by Gorka Egino, MIT.
+- Chimera (the singer's notes, samples/chimera, rendered offline by tools/voice/chimera-notes.mjs through tools/samples/build.mjs): jamesondh's physical-modelling voice synthesizer, MIT, https://github.com/jamesondh/chimera-vocal-synth at commit 09fb776. Nothing of it ships: the notes it sang are our own renders.
