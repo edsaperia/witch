@@ -496,7 +496,8 @@ export function degreeToMidi(style: MusicStyle, scale: number[], degree: number,
 }
 
 /** The run's melody for an arc step and part: one value per sixteenth over two bars, scale steps
- *  above the chord's root, a seeded walk that leans on chord tones on the strong steps. */
+ *  above the chord's root, a seeded walk that leans on chord tones on the strong steps (the old rules: composedMotif is the
+ *  composer's). */
 export function motif(seed: number, arc: number, part: string): number[] {
   let salt = 0;
   for (let i = 0; i < part.length; i++) salt = (salt * 31 + part.charCodeAt(i)) | 0;
@@ -572,7 +573,8 @@ export interface PhraseNote { deg: number; dur: number; off: number; /** a half-
 /** One phrase of the form for a seed: a note or null (a rest or a held note) on each of its sixteenths. A seeded walk
  *  over the form's chords, landing on chord tones on the beats, in bar-long rhythm cells (mostly slow: whole notes, halves and triplets; its part's `pace` of them busier)
  *  (the 2nd half-phrase's echoing the 1st's now and then), each half-phrase ending on rests; A ends open (a chord tone
- *  not the root), B on a question (the 2nd or 5th), C answering it on the root. */
+ *  not the root), B on a question (the 2nd or 5th), C answering it on the root. With the composer on (the style's `compose`,
+ *  the default since Ed's "smarter rules", 2026-11-08), composedPhrase's planned phrase in the walk's place; off, the walk. */
 export function formPhrase(style: MusicStyle, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
   const C = composeOn(style);
   return C ? composedPhrase(style, C, seed, letter, hookSeed) : walkedPhrase(style, seed, letter, hookSeed);
@@ -646,7 +648,8 @@ function walkedPhrase(style: MusicStyle, seed: number, letter: string, hookSeed?
 
 /** A phrase of the form in a haunted section (Ed, 2026-11-08, "room to breathe"): the sung line's narrow stepwise walk, as
  *  formPhrase's, on the haunted half-phrase rhythms (whole notes and ties, a rest at each half's end) and the slower chords
- *  (hauntedBar), its endings the form's (B on a question, C answering on the root), each half's last two notes its cadence. */
+ *  (hauntedBar), its endings the form's (B on a question, C answering on the root), each half's last two notes its cadence.
+ *  With the composer on, composedHaunted's planned line on the same rhythms in the walk's place. */
 export function hauntedPhrase(style: MusicStyle, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
   const C = composeOn(style);
   return C ? composedHaunted(style, C, seed, letter, hookSeed) : walkedHaunted(style, seed, letter, hookSeed);
