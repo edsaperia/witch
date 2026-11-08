@@ -5,7 +5,7 @@
 // arpeggios), the voice effects, a level with mute and solo for every part, and the settings copied out as the lab's JSON,
 // pasted back, or reset. The model is app/musicLab.ts; this is its DOM, in the pause page's own look.
 import { button, h } from "./dom";
-import { CHAINS, ETHEREAL, FX, FX_NAMES, MODES, ROLES, WORDS, type Chain, type Voice } from "../../tools/music-lab/live/settings";
+import { CHAINS, ETHEREAL, FX, FX_NAMES, MODES, ROLES, SUNG_PATCH, VOICE_WORDS as ALL_VOICE_WORDS, WORDS, type Chain, type Voice } from "../../tools/music-lab/live/settings";
 import type { MusicLab } from "../app/musicLab";
 import type { Sound } from "../app/sound";
 import type { Game } from "../rules/game";
@@ -55,7 +55,7 @@ const CSS = `
 `;
 
 const NOTE = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
-const VOICE_WORDS: Partial<Record<Voice, string>> = { synth: "The game's singer", sampled: "Alto, sampled", tract: "Alto, vocal tract", fof: "FOF voice" };
+const VOICE_WORDS: Partial<Record<Voice, string>> = Object.fromEntries((["synth", "chimera", "oldSinger", "sampled", "tract", "fof"] as const).map(v => [v, ALL_VOICE_WORDS[v]]));
 const CHAIN_WORDS: Record<Chain, string> = { auto: "As the game", pure: "Pure", dark: "Dark" };
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
@@ -107,6 +107,7 @@ export class MusicLabPanel {
     list.append(this.slider("Breath", () => lab.state.breath ?? this.ownBreath(), v => { lab.state.breath = v; this.changed(); }, 1, () => { lab.state.breath = null; this.changed(); }, "the voice's own until moved; double-click the value for its own again"));
     list.append(h("div", { class: "row" }, h("span", { class: "name", text: "Chain" }), this.choice(CHAINS, c => CHAIN_WORDS[c], () => lab.state.chain, c => { lab.state.chain = c; lab.state.voiceFx = lab.chainFx(); })));
     list.append(h("div", { class: "row" }, h("span", { class: "name", text: "Sings" }), this.choice(["form", "arpeggio"] as const, o => (o === "form" ? "The form's melodies" : "Constant arpeggios"), () => (lab.state.arpeggio ? "arpeggio" : "form"), o => { lab.state.arpeggio = o === "arpeggio"; })));
+    list.append(h("div", { class: "row" }, h("span", { class: "name", text: "Haunted" }), this.choice(["on", "off"] as const, o => (o === "on" ? "On" : "Off"), () => (lab.state.haunted ? "on" : "off"), o => { lab.state.haunted = o === "on"; })));
     list.append(h("div", { class: "row" }, h("span", { class: "name", text: "Choir chords" }), this.choice(["synth", "fof"] as const, o => (o === "fof" ? "FOF choir" : "Synth choir"), () => (lab.state.fofChoir ? "fof" : "synth"), o => { lab.state.fofChoir = o === "fof"; })));
     // ---- Voice effects ----
     list.append(h("h3", { text: "Voice effects " }, h("span", { class: "key", text: "(the chain's own values to start)" })));
@@ -150,7 +151,7 @@ export class MusicLabPanel {
   frozen(on: boolean): void { this.isFrozen = on; this.tick(); }
 
   private get engine() { return this.host.sound.music?.engine ?? null; }
-  private ownBreath(): number { const lab = this.host.lab, sp = lab.state.voice !== "synth" ? ({ fof: "fofSoprano", sampled: "altoSampled", tract: "altoTract" } as Record<string, string>)[lab.state.voice] : lab.base.form?.sung.patch; return (sp ? lab.base.patches[sp]?.breath : undefined) ?? 0; }
+  private ownBreath(): number { const lab = this.host.lab, sp = lab.state.voice !== "synth" ? SUNG_PATCH[lab.state.voice] : lab.base.form?.sung.patch; return (sp ? lab.base.patches[sp]?.breath : undefined) ?? 0; }
 
   private changed(): void { this.host.lab.changed(); this.status.textContent = ""; this.paintAll(); }
   private paintAll(): void { for (const p of this.paints) p(); this.tick(); }

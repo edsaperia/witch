@@ -12,10 +12,12 @@ export const LAYER_NAMES: Record<Layer, string> = {
 };
 /** Who sings the form's melody: the game's singer as it is, the FOF voice, Pink Trombone (5), the recorded woman's note (5b),
  *  and the singer's A/B (Ed, 2026-10-14, "build two and A/B them"): the alto's sample set (the woman's note shifted with its
- *  formants kept, every two semitones) or the vocal-tract voice (Pink Trombone in a worklet, an alto's tract). */
-export const VOICES = ["synth", "fof", "pinkTrombone", "recorded", "sampled", "tract"] as const;
+ *  formants kept, every two semitones) or the vocal-tract voice (Pink Trombone in a worklet, an alto's tract); and since the swap
+ *  (Ed, 2026-11-08: "Go ahead and swap them over"), Chimera's notes (the game's singer now) and the old singer beside it (the
+ *  woman's G4 retuned, as the game sang till then), whichever the game's singer is. */
+export const VOICES = ["synth", "fof", "pinkTrombone", "recorded", "sampled", "tract", "chimera", "oldSinger"] as const;
 /** The voices the engine sings itself (the player's own are Pink Trombone's worker and the one retuned note). */
-export const engineSings = (v: Voice): boolean => v === "synth" || v === "fof" || v === "sampled" || v === "tract";
+export const engineSings = (v: Voice): boolean => v === "synth" || v === "fof" || v === "sampled" || v === "tract" || v === "chimera" || v === "oldSinger";
 /** Which effects chain the singer goes through: as the game plays it (pure, dark in the dark families), or one of them forced. */
 export const CHAINS = ["auto", "pure", "dark"] as const;
 export type Chain = typeof CHAINS[number];
@@ -30,7 +32,9 @@ export const FX_NAMES: Record<Fx, string> = {
 export type Voice = typeof VOICES[number];
 export const MODES = ["dorian", "aeolian", "phrygian"] as const;
 /** The sung patch each voice picks (the rest sing the game's, or the lab player's own). */
-export const SUNG_PATCH: Partial<Record<Voice, string>> = { fof: "fofSoprano", sampled: "altoSampled", tract: "altoTract" };
+export const SUNG_PATCH: Partial<Record<Voice, string>> = { fof: "fofSoprano", sampled: "altoSampled", tract: "altoTract", chimera: "chimeraVoice", oldSinger: "recordedVoice" };
+/** The Vocalise picker's words for the voices it offers. */
+export const VOICE_WORDS: Record<Voice, string> = { synth: "The game's singer", chimera: "Chimera (the new singer)", oldSinger: "Recorded G4 (the old singer)", sampled: "Alto, sampled", tract: "Alto, vocal tract", fof: "FOF voice", pinkTrombone: "Pink Trombone (5)", recorded: "Recorded voice (5b)" };
 /** The voice effects' ethereal preset (the voices' A/B's: tools/music-lab/voices.mjs). */
 export const ETHEREAL: Record<Fx, number> = { chorus: 0.5, saturation: 0.15, air: 0.5, delay: 0.35, hall: 0.6, shimmer: 0.5, duck: 0.3, swells: 0.6, freeze: 0.5, whisper: 0.25, octave: 0.3 };
 /** The parts' roles in words, in the order the lab lists them. */
@@ -79,6 +83,9 @@ export interface LabState {
   /** The voice test (Ed, 2026-10-14): the singer sings the chord as constant arpeggios in every section, not the form's
    *  melodies in the breakdowns and builds. */
   arpeggio: boolean;
+  /** The haunted treatment in the quiet sections and the legends' clearings (Ed, 2026-11-08: "B, 1-6"): on, as the game
+   *  plays it, or off, the music as before, to A/B. */
+  haunted: boolean;
   /** The game's pause-page panel (Ed, 2026-10-15): a genre family forced on every wave of the night ("" the night's own), and
    *  whether the music follows the game's own wave and section (true) rather than the passage above (the lab page always
    *  plays its passage; the panel sets it false when pasted settings carry a `passage`). */
@@ -104,7 +111,7 @@ export function defaultState(d: Defaults): LabState {
     layers: Object.fromEntries(LAYERS.map(l => [l, l === "vocalise" ? 1 : 0])) as Record<Layer, number>, voice: "synth",
     parts: Object.fromEntries(d.parts.map(p => [p, 1])), mute: [], solo: [],
     victory: { transpose: d.victory.transpose, layers: { ...d.victory.layers } }, night: null, voiceFx: chainFx(d, "auto"), fofChoir: false,
-    breath: null, chain: "auto", arpeggio: false,
+    breath: null, chain: "auto", arpeggio: false, haunted: true,
   };
 }
 
@@ -140,6 +147,7 @@ export function settingsJson(s: LabState, d: Defaults): string {
   if (some(fx)) out.voiceFx = fx;
   if (s.breath !== null) out.breath = round(s.breath);
   if (s.arpeggio) out.arpeggio = true;
+  if (!s.haunted) out.haunted = false;
   if (s.fofChoir) out.fofChoir = true;
   // one key a line, what's under it on the same line: short enough to paste in a message, easy to read
   return `{\n${Object.entries(out).map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v).replace(/([,:])(?=["{\[\d-])/g, "$1 ")}`).join(",\n")}\n}`;
@@ -181,6 +189,7 @@ export function parseSettings(text: string, d: Defaults, sections: string[]): { 
       case "chain": if (!(CHAINS as readonly unknown[]).includes(v)) ignored.push(k); break;
       case "breath": if (typeof v === "number") s.breath = num(v, 0, 1, 0); else if (v !== null) ignored.push(k); break;
       case "arpeggio": s.arpeggio = v === true; break;
+      case "haunted": s.haunted = v !== false; break;
       case "night": {
         const n = v as { waves?: unknown; island?: unknown } | null;
         s.night = n && typeof n === "object" ? { waves: Math.round(num(n.waves, 1, 64, 10)), island: typeof n.island === "string" ? n.island.slice(0, 24) : "home" } : null;

@@ -1113,6 +1113,34 @@
    "decision": "Kept when the other compare switches were retired (2026-10-07)"
   },
   {
+   "name": "singer",
+   "values": [
+    "recorded",
+    "sampled"
+   ],
+   "does": "Who sings the vocalise for a load, to A/B against Chimera's notes (the singer since Ed, 2026-11-08): the old recorded singer (one woman's G4 retuned) or the alto set (that note shifted to every second semitone). Sets tuning music.singer; unknown values keep Chimera.",
+   "group": "compare",
+   "since": "2026-11-08",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Chimera's notes sing the vocalise (Ed, 2026-11-08: \"yes, go for it. Go ahead and swap them over\"); the old voice kept to A/B"
+  },
+  {
+   "name": "haunted",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "The haunted treatment in the quiet sections (breakdown, ether, whisper) and the legends' clearings off (0), the music as before, or on (1, the default), to A/B. Sets tuning music.haunted.",
+   "group": "compare",
+   "since": "2026-11-08",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "The haunted treatment is on (Ed, 2026-11-08: \"B, 1-6\"); off kept to A/B"
+  },
+  {
    "name": "music",
    "values": [
     "off",

@@ -17,7 +17,7 @@ import { mtof, noiseBuffer } from "./dsp";
 import { FOF_TYPES, FOF_VOWELS, FofVoices, fofLoaded, fofReady } from "./fof/fof";
 import { TractVoices, tractLoaded, tractReady } from "./tract/tract";
 import { fxOn, VoiceFx, prepareWhisperEnvelopes } from "./voiceFx";
-import { musicSeed, notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
+import { arcStep, hauntedDrop, hauntedOn, isHaunted, musicSeed, notesAt, resolveSection, sectionCutoff, type BlockPlan, type HauntedDef, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
 
 /** A part's way into the mix; `lfo`: its filter's slow wobble, one for all its notes (made when first wanted). */
 interface Channel {
@@ -64,6 +64,44 @@ export interface MusicSink {
   /** A recorded phrase's swell (the recording `rec` at `rate`, rising over `swell` seconds into the effects' reverbs before its
    *  first note at `t`, at `peak`): the effects', so played on the bus (it starts before the bar it leads into). */
   fxSwell?(part: string, rec: AudioBuffer, rate: number, t: number, swell: number, peak: number): void;
+  /** A renderer's ghost voice (the haunted treatment's, low-passed and panned: a stereo pair), into the live bus's ghost (its
+   *  reverb and the voice line's place after the limiter); none: into `dry`. */
+  ghost?: AudioNode;
+  /** The haunted treatment's state from `t` (Ed, 2026-11-08: "B, 1-6"): whether this bar's section is haunted, and the key's
+   *  root (MIDI, the drone's octave): the voice's long reverb and lift, the drone. */
+  haunt?(on: boolean, root: number, t: number): void;
+}
+
+/** The haunted reverb's impulse (Ed's demo, 2026-11-08: a 5 s "dark cathedral"): pink noise decaying as exp(-decay t), band-
+ *  passed low to high Hz (two poles each way), decorrelated in each ear; made once a context and setting (a step a sample, no
+ *  pow or exp per sample: about 10 ms for 5 s, once). */
+const HAUNT_IMPULSES = new WeakMap<BaseAudioContext, Map<string, AudioBuffer>>();
+export function hauntImpulse(ctx: BaseAudioContext, v: HauntedDef["verb"]): AudioBuffer {
+  let made = HAUNT_IMPULSES.get(ctx); if (!made) HAUNT_IMPULSES.set(ctx, made = new Map());
+  const key = `${v.time}|${v.decay}|${v.low}|${v.high}`, had = made.get(key); if (had) return had;
+  const sr = ctx.sampleRate, n = Math.max(1, Math.floor(v.time * sr)), b = ctx.createBuffer(2, n, sr);
+  const kHp = Math.exp((-2 * Math.PI * v.low) / sr), kLp = 1 - Math.exp((-2 * Math.PI * v.high) / sr), fall = Math.exp(-v.decay / sr), ramp = Math.floor(0.004 * sr);
+  let peak = 0;
+  for (let ch = 0; ch < 2; ch++) {
+    const d = b.getChannelData(ch);
+    let r = (4242 + ch * 7919) >>> 0, b0 = 0, b1 = 0, b2 = 0, env = 1, l1 = 0, l2 = 0, hx1 = 0, hy1 = 0, hx2 = 0, hy2 = 0;
+    for (let i = 0; i < n; i++) {
+      r = (Math.imul(r, 1664525) + 1013904223) >>> 0;
+      const w = (r / 4294967296) * 2 - 1;
+      b0 = 0.99765 * b0 + w * 0.099046; b1 = 0.963 * b1 + w * 0.2965164; b2 = 0.57 * b2 + w * 1.0526913; // (pink: Paul Kellet's)
+      const pink = b0 + b1 + b2 + w * 0.1848;
+      l1 += kLp * (pink - l1); l2 += kLp * (l1 - l2); // (the low-pass, twice)
+      const h1 = kHp * (hy1 + l2 - hx1); hx1 = l2; hy1 = h1; const h2 = kHp * (hy2 + h1 - hx2); hx2 = h1; hy2 = h2; // (the high-pass, twice)
+      d[i] = h2 * env * (i < ramp ? i / ramp : 1); env *= fall;
+      peak = Math.max(peak, Math.abs(d[i]));
+    }
+  }
+  // (its loudness as the shared hall's: an impulse's energy sets how much a send of 1 brings back)
+  let e = 0; for (let ch = 0; ch < 2; ch++) for (const x of b.getChannelData(ch)) e += x * x;
+  const scale = 1 / Math.sqrt(Math.max(1e-9, e / (2 * sr)) * 4);
+  for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < n; i++) d[i] *= scale; }
+  made.set(key, b);
+  return b;
 }
 
 /** The noise and the 808's metal, made once a sample rate (the same on every context: a renderer's a bar at a time too). */
@@ -113,6 +151,15 @@ export class MusicEngine {
   private circleVerbIn: GainNode;
   private circleVerb: ConvolverNode;
   private curves = new Map<number, Float32Array<ArrayBuffer>>();
+  /** The haunted treatment's live parts (Ed, 2026-11-08: "B, 1-6"), made when first wanted: the voice's own long dark reverb
+   *  (its send automated by place: the voice line, its ghost and the drone into it), the voice's lift (level and presence), the
+   *  ghost voice's way in (to the voice line's place after the limiter, and the reverb), and the drone (six sines and three slow
+   *  swells, into the mix and a clearing's layer). One ConvolverNode more than before; the clearing's reverb takes its impulse. */
+  private hauntBus: { in: GainNode; verb: ConvolverNode } | null = null;
+  private lift: { gain: GainNode; eq: BiquadFilterNode } | null = null;
+  private ghostBus: GainNode | null = null;
+  private drone: { out: GainNode; circle: GainNode; oscs: [OscillatorNode, OscillatorNode, number][]; root: number } | null = null;
+  private circleKey = "";
   private nextStep = -1;
   /** The last step scheduled: a re-anchoring never schedules it again (round 13: the game running
    *  slower than the audio, every frame re-anchored, had each note scheduled several times over). */
@@ -308,7 +355,11 @@ export class MusicEngine {
     this.reverbIn.gain.value = m.reverb;
     this.delayIn.gain.value = lite ? 0 : m.delay;
     this.feedback.gain.value = lite ? 0 : Math.min(0.85, m.feedback);
-    if (time !== this.reverbTime && !this.stems) { this.reverbTime = time; this.reverb.buffer = this.impulse(time); this.circleVerb.buffer = this.impulse(time * 1.6); } // (a renderer's reverbs are the bus's)
+    if (time !== this.reverbTime && !this.stems) { this.reverbTime = time; this.reverb.buffer = this.impulse(time); } // (a renderer's reverbs are the bus's)
+    // a legend's clearing's reverb: haunted, the voice's long dark one, sent to more (Ed, 2026-11-08); shed 3, short as ever
+    const H = lite ? null : hauntedOn(this.style), ck = H ? `h${H.verb.time}|${H.verb.decay}|${H.verb.low}|${H.verb.high}` : `n${time}`;
+    if (ck !== this.circleKey && !this.stems) { this.circleKey = ck; this.circleVerb.buffer = H ? hauntImpulse(this.ctx, H.verb) : this.impulse(time * 1.6); }
+    this.circleVerbIn.gain.value = H ? H.circle.wet : 1;
   }
 
   /** Its own buses as a sink (live: the notes and their automation straight onto them); what a renderer's stems play into. */
@@ -321,7 +372,70 @@ export class MusicEngine {
       fxChain: (part, kind) => { const ch = this.channels.get(part); if (ch?.fx && ch.fxKind !== kind) { ch.fxKind = kind; ch.fx.set(this.fxChain(kind)); } },
       fxRelease: (part, t) => this.channels.get(part)?.fx?.release(t),
       fxSwell: (part, rec, rate, t, swell, peak) => { const fx = this.channels.get(part)?.fx; if (fx) this.swellInto(fx, rec, rate, t, swell, peak); },
+      haunt: (on, root, t) => this.hauntAt(on, root, t),
     };
+  }
+
+  /** The haunted reverb's send (made when first wanted). */
+  private hauntIn(): GainNode {
+    if (!this.hauntBus) {
+      const c = this.ctx, inp = c.createGain(), verb = c.createConvolver();
+      inp.gain.value = 0;
+      const H = this.style.haunted;
+      verb.buffer = hauntImpulse(c, H?.verb ?? { time: 5, decay: 1.1, low: 180, high: 4500, wet: 0 });
+      inp.connect(verb); verb.connect(this.post); // (beside the voice line, after the limiter, before the knockdown's gate)
+      this.hauntBus = { in: inp, verb };
+    }
+    return this.hauntBus.in;
+  }
+  /** Where the ghost voice goes live (a renderer's ghost stem plays into it): the voice line's place and the haunted reverb. */
+  ghostIn(): AudioNode {
+    if (!this.ghostBus) { this.ghostBus = this.ctx.createGain(); this.ghostBus.connect(this.post); this.ghostBus.connect(this.hauntIn()); }
+    return this.ghostBus;
+  }
+  /** The drone's six sines (the root, fifth and octave, a sine a side `detune` cents apart) and three slow swells, made when first
+   *  wanted, silent till haunted. */
+  private droneNodes(H: HauntedDef): NonNullable<MusicEngine["drone"]> {
+    if (this.drone) return this.drone;
+    const c = this.ctx, D = H.drone, out = c.createGain(), circle = c.createGain(), sum = c.createGain(), verb = c.createGain();
+    out.gain.value = 0; circle.gain.value = 0; verb.gain.value = 0.5;
+    sum.connect(out); out.connect(this.tone); out.connect(verb); verb.connect(this.hauntIn());
+    sum.connect(circle); circle.connect(this.circleIn); circle.connect(this.circleVerbIn);
+    const oscs: [OscillatorNode, OscillatorNode, number][] = [];
+    ([[0, 1], [7, D.fifth], [12, D.octaveUp]] as const).forEach(([semis, level], k) => {
+      const merge = c.createChannelMerger(2), g = c.createGain(), lfo = c.createOscillator(), depth = c.createGain(), d = Math.max(0, Math.min(1, D.swellDepth));
+      g.gain.value = level * (1 - d / 2); depth.gain.value = level * d / 2; lfo.frequency.value = D.swell[k] ?? 0.05;
+      lfo.connect(depth).connect(g.gain); lfo.start();
+      const pair: OscillatorNode[] = [-1, 1].map((side, ch) => { const o = c.createOscillator(); o.detune.value = side * D.detune / 2; o.connect(merge, 0, ch); o.start(); return o; });
+      merge.connect(g).connect(sum);
+      oscs.push([pair[0], pair[1], semis]);
+    });
+    return this.drone = { out, circle, oscs, root: NaN };
+  }
+  /** The drone moved to the key's root (MIDI) at `t`, gliding. */
+  private droneRoot(root: number, t: number): void {
+    const d = this.drone;
+    if (!d || d.root === root) return;
+    const first = !Number.isFinite(d.root); d.root = root;
+    for (const [l, r, semis] of d.oscs) for (const o of [l, r]) { if (first) o.frequency.setValueAtTime(mtof(root + semis), t); else o.frequency.setTargetAtTime(mtof(root + semis), t, 0.4); }
+  }
+  /** The haunted treatment's state from `t` (the bus's: a bar line's, live or replayed from a bar drawn ahead). */
+  private hauntAt(on: boolean, root: number, t: number): void {
+    const H = this.style.haunted;
+    if (!H && !this.hauntBus && !this.drone) return;
+    const yes = on && !!H && H.on !== false;
+    if (yes || this.hauntBus) this.hauntIn().gain.setTargetAtTime(yes && this.shedLevel < 3 ? H!.verb.wet : 0, t, yes ? 0.6 : 1.2);
+    if (this.lift) { this.lift.gain.gain.setTargetAtTime(yes ? Math.pow(10, H!.voice.lift / 20) : 1, t, 0.5); this.lift.eq.gain.setTargetAtTime(yes ? H!.voice.presence : 0, t, 0.5); }
+    if (yes || this.drone) {
+      const d = this.droneNodes(H ?? ({ drone: { gain: 0, octave: 1, fifth: 0.7, octaveUp: 0.3, detune: 5, swell: [0.05, 0.06, 0.04], swellDepth: 0.6, attack: 5, circle: 0 } } as unknown as HauntedDef));
+      if (yes) this.droneRoot(root, t);
+      d.out.gain.setTargetAtTime(yes ? H!.drone.gain : 0, t, yes ? H!.drone.attack / 3 : 1.5);
+    }
+  }
+  /** The key's root in a block, in the drone's octave (MIDI). */
+  private keyRoot(plan: BlockPlan): number {
+    const S = this.style, a = arcStep(S, plan.arc), sec = resolveSection(S, plan.section);
+    return S.root + (a.transpose ?? 0) + (sec.transpose ?? 0) + 12 * (S.haunted?.drone.octave ?? 1);
   }
   private ownBus: MusicSink | null = null;
   /** The voice line's part's way in, its effects after (a renderer's voice stem plays into it). */
@@ -391,6 +505,13 @@ export class MusicEngine {
     }
     // A legend's circle's layer: its own time, at the music's tempo as if never slowed (the circle's
     // own time, over the slowed world), starting in step with the music, its chords the music's.
+    // (a haunted clearing: the drone under its layer too, in the music's key)
+    const HC = hauntedOn(this.style), dl = cue.circle && HC ? cue.circle.level * HC.drone.gain * HC.drone.circle : 0;
+    if (dl > 0 || this.drone) {
+      const d = this.droneNodes(HC ?? this.style.haunted!);
+      if (dl > 0) this.droneRoot(this.keyRoot(this.conductor.plan(cue, Math.floor(this.nextStep / 16))), now);
+      if (Math.abs(d.circle.gain.value - dl) > 1e-4) d.circle.gain.setTargetAtTime(dl, now, 1);
+    }
     if (!cue.circle) { this.cNext = -1; return; }
     const sps = 60 / bpmAt(clock, gameTime) / 4;
     if (this.cNext < 0 || this.cAt < now - 1 || this.cAt > now + 2) { this.cNext = this.nextStep; this.cAt = Math.max(now, audioAt(timeAt(clock, this.nextStep / 4))); }
@@ -419,7 +540,7 @@ export class MusicEngine {
 
   /** The bus's automation from `t` on let go (the bars drawn ahead from there dropped, to be drawn again). */
   cancelBusFrom(t: number): void {
-    for (const p of [this.tone.frequency, this.duckBus.gain, this.gate.gain]) p.cancelScheduledValues(t);
+    for (const p of [this.tone.frequency, this.duckBus.gain, this.gate.gain, this.hauntBus?.in.gain, this.lift?.gain.gain, this.lift?.eq.gain, this.drone?.out.gain]) p?.cancelScheduledValues(t);
   }
 
   /** Stop scheduling and forget the plans (a jump in the timeline). */
@@ -456,8 +577,13 @@ export class MusicEngine {
       // (while the speakers boot, the low-pass opens with them rather than over the block)
       const b0 = bootLayers(cue, bar), b1 = bootLayers(cue, bar + 1);
       const boot = cue.speakerBars !== undefined && plan.section === S.intro;
-      const f0 = sectionCutoff(sec, boot ? b0 : barIn / plan.bars), f1 = sectionCutoff(sec, boot ? b1 : (barIn + 1) / plan.bars);
+      let f0 = sectionCutoff(sec, boot ? b0 : barIn / plan.bars), f1 = sectionCutoff(sec, boot ? b1 : (barIn + 1) / plan.bars);
+      // (a haunted section's drum & bass drop opens the low-pass: Ed, 2026-11-08, "then drum and bass kicks in")
+      const HD = hauntedOn(S), drop = HD && isHaunted(S, plan.section) ? hauntedDrop(S, plan.bars) : Infinity;
+      if (barIn >= drop && HD!.drop.cutoff) f0 = f1 = Math.max(f1, HD!.drop.cutoff);
       this.sink.tone(f0, f1, t, 16 * sps);
+      // the haunted treatment by place (Ed, 2026-11-08): the voice's reverb and lift and the drone, on in the quiet sections
+      if (hauntedOn(S) || this.drone || this.hauntBus) this.sink.haunt?.(isHaunted(S, plan.section), this.keyRoot(plan), t);
     }
     const all = notesAt(S, plan, next, step, { ...this.formAt(cue, bar), siege: cue.siege, party: cue.party, legend: cue.legend, only: "main", build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
     const events = drawn ? all.filter(e => e.hook) : all; // (drawn ahead: the hooks' parts alone here, live)
@@ -489,6 +615,13 @@ export class MusicEngine {
         if (this.shedLevel) fx.shedTo(this.shedLevel);
         if (this.whisperRec) fx.whisper(this.whisperRec);
         g.connect(fx.input); out = fx.output;
+        // the haunted voice in front (its level and presence lifted in the quiet sections) and into its long dark reverb
+        if (hauntedOn(this.style) && part === this.style.form?.sung.part) {
+          const lg = c.createGain(), eq = c.createBiquadFilter();
+          eq.type = "peaking"; eq.frequency.value = 3000; eq.Q.value = 0.8; eq.gain.value = 0;
+          out.connect(lg); lg.connect(eq); out = eq; eq.connect(this.hauntIn());
+          this.lift = { gain: lg, eq };
+        }
       }
       if (p.hp) { const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = p.hp; f.Q.value = 0.7; out.connect(f); out = f; }
       if (p.pan) { const s = c.createStereoPanner(); s.pan.value = p.pan; out.connect(s); out = s; }
@@ -572,13 +705,34 @@ export class MusicEngine {
     };
   }
 
+  /** A haunted ghost voice's way in (Ed, 2026-11-08): low-passed and panned away, live into the ghost bus (the voice line's place
+   *  and the haunted reverb), a renderer's into its ghost stem, a clearing's into its layer and reverb. */
+  private ghostChannel(part: string, circle: boolean): Channel {
+    const key = `${circle ? "circle:" : ""}ghost:${part}`;
+    let ch = this.channels.get(key);
+    if (!ch) {
+      const c = this.ctx, H = this.style.haunted!, g = c.createGain(), lp = c.createBiquadFilter(), pan = c.createStereoPanner();
+      lp.type = "lowpass"; lp.frequency.value = H.ghost.lowpass; lp.Q.value = 0.6;
+      const sungPan = this.style.patches[this.style.form?.sung.patch ?? ""]?.pan ?? 0;
+      pan.pan.value = Math.sign(sungPan || 1) * -Math.abs(H.ghost.pan); // (the side opposite the voice's; a centred voice's ghost to the left)
+      g.connect(lp).connect(pan);
+      if (circle) { pan.connect(this.circleIn); const r = c.createGain(); r.gain.value = 0.8; pan.connect(r).connect(this.circleVerbIn); }
+      else pan.connect(this.stems ? this.sink.ghost ?? this.sink.dry : this.ghostIn());
+      this.channels.set(key, ch = { in: g, lastFreq: 0 });
+    }
+    return ch;
+  }
+
   private play(e: NoteEvent, t: number, dur: number, sps: number, chord: number[] = []): void {
-    const p = this.style.patches[e.patch];
+    let p = this.style.patches[e.patch];
     if (!p || (this.solo && !this.solo.has(e.part))) return;
-    const ch = this.channel(e.part, p, e.layer === "circle"), peak = p.gain * e.vel;
+    const H = e.ghost ? this.style.haunted : undefined;
+    if (e.ghost && !H) return;
+    if (H) { t += H.ghost.delay; if (p.kind === "sample") p = { ...p, vowels: [H.ghost.vowel ?? "oo"], breath: 0, swell: Math.max(p.swell ?? 0, 0.45) }; }
+    const ch = H ? this.ghostChannel(e.part, e.layer === "circle") : this.channel(e.part, p, e.layer === "circle"), peak = p.gain * e.vel;
     const pf = (this.notePitch = e.layer === "circle" ? 1 : this.pitch); // (the tape slowing: the circle's own layer never)
     if (e.fx && ch.fx && ch.fxKind !== e.fx) { ch.fxKind = e.fx; ch.fx.set(this.fxChain(e.fx)); } // (two chains by place: Ed, 2026-10-14)
-    else if (e.fx && this.stems && ch.fxKind !== e.fx) { ch.fxKind = e.fx; this.sink.fxChain?.(e.part, e.fx, t); } // (a renderer's: the bus's chain, as it's heard)
+    else if (e.fx && !e.ghost && this.stems && ch.fxKind !== e.fx) { ch.fxKind = e.fx; this.sink.fxChain?.(e.part, e.fx, t); } // (a renderer's: the bus's chain, as it's heard)
     switch (p.kind) {
       case "kick": this.kick(t, pf === 1 ? p : { ...p, pitch: (p.pitch ?? 150) * pf, pitchEnd: (p.pitchEnd ?? 45) * pf }, peak, ch.in); this.duck(t, e.vel, sps); break;
       case "noise": this.noiseHit(t, p, peak, ch); break;
@@ -897,20 +1051,25 @@ export class MusicEngine {
    *  (its own length at most), through a presence lift; a phrase (after a rest of a beat or more) swelling in, the last one's
    *  end frozen, as the voice effects ask. Until the recording's loaded, the formant voice sings it. */
   private sampled(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, ch: Channel, held?: Held): void {
-    // the recording: the sample set's nearest note (bent at most a semitone), else the one recording at its root
-    const want = 69 + 12 * Math.log2(freq / 440), near = p.notes?.length ? p.notes.reduce((a, b) => Math.abs(b.midi - want) < Math.abs(a.midi - want) ? b : a) : null;
+    // its vowel (Ed, 2026-10-11: "stick to aa and oo"), the patch's taken in turn through the phrase (a phrase starts after a rest
+    // of more than a beat)
+    const beat = 60 / Math.max(40, this.bpmNow), phrase = ch.lastEnd === undefined || t - ch.lastEnd > beat;
+    const vs = p.vowels?.length ? p.vowels : [], vowel = vs.length ? vs[(phrase ? 0 : (ch.sung ?? 0) + 1) % vs.length] : "";
+    // the recording: the sample set's nearest note (bent at most a semitone), of the vowel where the set sings its vowels itself
+    // (Chimera's: Ed, 2026-11-08), else the one recording at its root
+    const want = 69 + 12 * Math.log2(freq / 440), voiced = p.notes?.filter(n => n.vowel === vowel), pool = voiced?.length ? voiced : p.notes;
+    const near = pool?.length ? pool.reduce((a, b) => Math.abs(b.midi - want) < Math.abs(a.midi - want) ? b : a) : null;
     const rec = this.recordings.get(near?.sample ?? p.sample ?? "") ?? (near ? this.recordings.get(p.sample ?? "") : undefined), root = near && this.recordings.has(near.sample) ? near.midi : p.root ?? 69;
     if (!rec) { this.voice(t, { ...p, kind: "voice", vowels: ["ah", "oh", "ee", "eh", "oo"], formantShift: 1.18, q: 10, vibrato: 24, attack: 0.06, decay: 0.4, sustain: 0.85, release: 0.3 }, peak, freq, dur, step, ch); return; }
     const c = this.ctx, rate = freq / mtof(root), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = held ? 3600 : Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
     if (len < 0.05) return;
     if (!ch.presence) { ch.presence = c.createBiquadFilter(); ch.presence.type = "peaking"; ch.presence.frequency.value = 3000; ch.presence.Q.value = 0.8; ch.presence.gain.value = p.presence ?? 0; ch.presence.connect(ch.in); }
-    const fx = ch.fx, beat = 60 / Math.max(40, this.bpmNow), onBus = !fx && this.stems && ch.part ? this.sink : null; // (a renderer's: its effects the bus's)
-    if ((fx || onBus) && (ch.lastEnd === undefined || t - ch.lastEnd > beat)) {
+    const fx = ch.fx, onBus = !fx && this.stems && ch.part ? this.sink : null; // (a renderer's: its effects the bus's)
+    if ((fx || onBus) && phrase) {
       if (ch.lastEnd !== undefined) { if (fx) fx.release(ch.lastEnd); else onBus!.fxRelease?.(ch.part!, ch.lastEnd); }
       const swell = Math.min(4 * beat, Math.max(beat, t - (ch.lastEnd ?? t - 4 * beat) - 0.1));
       if (fx) this.swellInto(fx, rec, rate, t, swell, peak); else onBus!.fxSwell?.(ch.part!, rec, rate, t, swell, peak);
     }
-    const phrase = ch.lastEnd === undefined || t - ch.lastEnd > beat;
     ch.lastEnd = Math.max(ch.lastEnd ?? -Infinity, t + (held ? 0.5 : len));
     ch.sung = phrase ? 0 : (ch.sung ?? 0) + 1;
     const src = c.createBufferSource(), g = c.createGain();
@@ -923,20 +1082,20 @@ export class MusicEngine {
       if (!held) { gain.setValueAtTime(top, t + Math.max(rise, len - fall)); gain.linearRampToValueAtTime(0, t + len); }
     };
     envelope(g.gain, peak);
-    // its vowel (Ed, 2026-10-11: "stick to aa and oo"), the patch's taken in turn through the phrase: the recording sings a dark
-    // vowel (its partials strong to 800 Hz, weak past 1 kHz), opened to "aa" by lifts at aa's formants (800 and 1150 Hz) or closed
-    // to "oo" by a low-pass; and its onset ("l": the filter opening from a muffle over its first 80 ms, "laa")
-    const vs = p.vowels?.length ? p.vowels : [], vowel = vs.length ? vs[ch.sung % vs.length] : "";
+    // its vowel: a recording singing it itself (its note's `vowel`) as it is; else the woman's, a dark vowel (its partials strong
+    // to 800 Hz, weak past 1 kHz), opened to "aa" by lifts at aa's formants (800 and 1150 Hz) or closed to "oo" by a low-pass; and
+    // its onset ("l": the filter opening from a muffle over its first 80 ms, "laa")
+    const own = !!near?.vowel && near.vowel === vowel && this.recordings.has(near.sample), shaped = own ? "" : vowel;
     const nodes: AudioNode[] = [src, g];
     src.connect(g);
     let last: AudioNode = g;
-    const open = vowel === "oo" ? 750 : 16000;
-    if (p.onset === "l" || vowel === "oo") {
+    const open = shaped === "oo" ? 750 : 16000;
+    if (p.onset === "l" || shaped === "oo") {
       const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 0.7;
       if (p.onset === "l") { lp.frequency.setValueAtTime(420, t); lp.frequency.exponentialRampToValueAtTime(open, t + 0.08); } else lp.frequency.value = open;
       last.connect(lp); last = lp; nodes.push(lp);
     }
-    if (vowel === "aa" || vowel === "ah") for (const [f, db] of [[800, 4], [1150, 8]]) {
+    if (shaped === "aa" || shaped === "ah") for (const [f, db] of [[800, 4], [1150, 8]]) {
       const pk = c.createBiquadFilter(); pk.type = "peaking"; pk.frequency.value = f; pk.Q.value = 2.2; pk.gain.value = db;
       last.connect(pk); last = pk; nodes.push(pk);
     }

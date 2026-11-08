@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
 import { checkSet, energyAt, isCurated, MUSIC_STYLE, nightStyle, planNight, stepChanges, type NightSet } from "./musicSet";
-import { checkStyle, notesAt, type MusicStyle } from "./musicScore";
+import { checkStyle, notesAt, SINGERS, withSinger, type MusicStyle } from "./musicScore";
 import { planBlock, type MusicCue } from "./musicPlan";
 import { newGame } from "./game";
 import { TUNING } from "./tuning";
@@ -13,6 +13,28 @@ const style = styleJson as unknown as MusicStyle;
 // Keep the explicit 10–64-wave matrix and ten-area authored home integration: curated selection, palette progression and final climax depend on night size.
 const SIZES = [10, 20, 30, 40, 50, 64];
 const nights = (): NightSet[] => SIZES.flatMap(w => [1, 7, 42].flatMap(seed => ["", "fox", "home"].map(island => planNight(style, { seed, island, waves: w }))));
+
+describe("the singer (Ed, 2026-11-08: Chimera's notes, \"Go ahead and swap them over\"; the old kept to A/B, ?singer=)", () => {
+  it("is Chimera's by default, and a link's old singer sings everywhere it did: the form, the set, the hand-picked night and a night's arc", () => {
+    expect(style.form!.sung.patch).toBe("chimeraVoice");
+    expect(withSinger(style, undefined)).toBe(style);
+    expect(withSinger(style, "")).toBe(style);
+    expect(withSinger(style, "noSuchPatch")).toBe(style);
+    expect(withSinger(style, "chimeraVoice")).toBe(style);
+    for (const patch of Object.values(SINGERS)) {
+      const old = withSinger(style, patch);
+      expect(withSinger(style, patch)).toBe(old); // (the same object: the engine's style unchanged frame to frame)
+      expect(checkStyle(old)).toEqual([]);
+      expect(old.form!.sung.patch).toBe(patch);
+      expect(old.set!.vocals).toContain(patch);
+      for (const f of Object.values(old.families ?? {})) expect(f.vocals ?? []).not.toContain("chimeraVoice");
+      expect(old.curated!.steps.filter(c => c.vocal !== "none").every(c => c.vocal === patch)).toBe(true);
+      const night = withSinger(nightStyle(style, planNight(style, { seed: 7, island: "home", waves: 10 })), patch);
+      expect(night.arc.filter(a => a.vocal && a.vocal !== "none").every(a => a.vocal === patch)).toBe(true);
+      expect(style.patches.chimeraVoice.notes!.length).toBe(50); // (the style itself untouched)
+    }
+  });
+});
 
 describe("a night's set", () => {
   it("is sound: every family's sections, patches and leads exist, and the night's style checks out", () => {
@@ -109,7 +131,7 @@ describe("a night's set", () => {
       for (const p of plans) for (let s = 0; s < 8 * 16; s++) for (const e of notesAt(st, p, null, p.start * 16 + s, { seed: 7, siege: 0 })) {
         notes++;
         if (e.part === "sung") { sung++; expect(e.patch).toBe(st.arc[w].vocal); }
-        if (st.parts[e.part]?.role === "bass" && st.arc[w].bass) { bass++; expect(e.patch).toBe(st.arc[w].bass); }
+        if (st.parts[e.part]?.role === "bass" && st.arc[w].bass && !st.haunted?.drop.parts[e.part]) { bass++; /* (the haunted drop's sub its own) */ expect(e.patch).toBe(st.arc[w].bass); }
         expect(Number.isFinite(e.midi ?? 0)).toBe(true);
       }
       expect(notes, `wave ${w}`).toBeGreaterThan(50);
