@@ -10,6 +10,8 @@ A sleeping legend's clearing, heard on the ground (Ed, 2026-10-06): the music mu
 
 The melodies' form (Ed, 2026-10-09: "Melodies should be 8 bars long, with a 32 bar ABAC structure, and include rests. The B and C melodies should be (simulated) female voice, with the A a random instrument from (pluck, lead, chip, voice, bell or horn)."): a section's melodic parts say where the melody plays and how loud, and the form's line plays: A on one instrument the seed picks, B and C sung (the soprano), A coming back the same. Its chords (A's progression; B's ending on the question; C's opening as A's, then the question and the answer) are every part's. A knockdown re-seeds it all (Ed, the same day).
 
+The sung patch since 2026-11-08 (Ed: "yes, go for it. Go ahead and swap them over"): `chimeraVoice`, Chimera's notes on every semitone G3 to G5 on "ah" and "ooh" (samples/chimera), also the set's and the hand-picked night's voice; the old `recordedVoice` kept to A/B (tuning `music.singer`, `?singer=recorded`). docs/notes/music.md, **The Chimera singer**.
+
 ## voiceFx
 
 The voice line's ethereal effects (Ed, 2026-10-11: "e Recorded + ethereal will do for now ... a bit quieter than in the sample"; then, hearing it, "make it quieter and have even more reverb"; platform/audio/voiceFx.ts): the A/B's preset with more hall, shimmer and freeze, each a level 0 to 1, on the sung part. Since Ed's singer review (2026-10-14, docs/backlog/music.md "The singer, and the music round it"): this is the pure chain, for breakdowns and builds: no chorus, no octave double, no shimmer (they smeared each note's tuning by up to a third of a semitone), a bigger hall instead; `voiceFxDark` plays in the dark families.

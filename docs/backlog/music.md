@@ -15,6 +15,7 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Reference mood board and new-genre selection | **Partly built** | Research/proposals and current families exist; no completed Ed-approved first-record palette identified. The later musician session remains the decision point. |
 | Alto register, narrow melody, dynamics and voice placement | **Built** | #920 v3739; form.sung, recordedVoice swell, voiceFx* and section roles in musicScore. |
 | Sampled alto set | **Built** | samples/alto, manifest processing and altoSampled notes; singer A/B #921 (first version unverified). This is source implementation, not an audition result. |
+| Chimera singer (Ed, 2026-11-08: "yes, go for it. Go ahead and swap them over") | **Built** | samples/chimera (50 notes, G3 to G5 on "ah" and "ooh", our own renders with Chimera, MIT), chimeraVoice the form's sung patch; the old singer to A/B by `?singer=recorded` and in the Music Lab's Vocalise picker; tools/voice/chimera-notes.mjs. Awaiting Ed's ear in the game. |
 | Live vocal-tract voice and A/B picker | **Built** | altoTract patch, audio tract worklet and Music Lab Vocalise controls; #921, version unverified. |
 | Two voice chains, Lab sliders and copy settings | **Built** | #920/#921; pure/dark chains and Vocalise lab controls; v3739 cheap fixes, A/B first version unverified. |
 | Pitch/tuning check | **Built** | tools/music-lab/tune.cjs; #920/#921, version unverified. Audit did not execute audio rendering. |
@@ -161,6 +162,10 @@ Three slices, each a PR Ed can hear before the next.
 3. **Slice 3 starts with mode by family** (phrygian for witch house and legend circles, aeolian for dark folk and breakdowns, dorian kept for house and folk), not with a ritual record; the drone-and-ostinato record waits.
 4. **The A/B is heard live in the Music Lab**: a Vocalise picker with both voices and both chains, sliders, and "Copy my settings"; no mp3s needed.
 5. **Build order** (Ed, the same day): the cheap fixes go **straight into the game first** (the alto, the chorus and octave double off, the stepwise melody), then the A/B in the Music Lab. The alto's range is **G3 to G4**. The breakdown's multitracked wash is **three voices** (the alto, a fifth and an octave up at half the level, each a little late and a few cents apart). Breath: **a slider in the lab's Vocalise card**, Ed sets it.
+
+### The Chimera singer (Ed, 2026-11-08)
+
+Ed heard a vocalise rendered by Chimera (jamesondh's physical-modelling voice synthesizer, MIT: https://github.com/jamesondh/chimera-vocal-synth), its female body, vibrato 30: "This is surprisingly good!", then "yes, go for it. Go ahead and swap them over." **Built**: Chimera renders a note on every semitone of the alto's reach (G3 to G5) on "ah" and on "ooh", the vowels the old singer sang (`aa`, `aa`, `oo`), each long enough for the longest sung note, so nothing is retuned (each within 6 cents of its note as rendered); the samples build makes them as any sample (a `generated` source: our own work, credited to Chimera; `samples/chimera/`, about 1.4 MB, the whole set 2.2 MB of the 3 MB budget), and the vocalise sings from them (`chimeraVoice`). The old singer (the woman's G4 retuned) stays to A/B: `?singer=recorded` (or `?singer=sampled` for the alto set) and the Music Lab's Vocalise picker ("Recorded G4 (the old singer)" beside "Chimera (the new singer)"). Its old samples stay until Ed has heard both. Open: whether the "l" onset ("laa", "loo") comes back on Chimera's notes (the style's `onset`), its breath and presence by ear, and whether the treehouse Studio's mic ("Her voice", the alto set) moves to Chimera's notes too.
 
 ## The musician (Ed, 2026-10-22)
 

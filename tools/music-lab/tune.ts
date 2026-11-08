@@ -1,5 +1,5 @@
 // The singer's tuning check (Ed's singer review, 2026-10-14, docs/backlog/music.md "The singer, and the music round it"):
-// the game's own engine renders the sung line alone (the recorded voice, as the game plays it) over a breakdown, offline, and
+// the game's own engine renders the sung line alone (the game's singer, as the game plays it) over a breakdown, offline, and
 // reports every sung note it scheduled, so Node can pitch-track the render and compare (tools/music-lab/tune.cjs). Lab-only.
 import { MusicEngine } from "../../src/platform/audio/musicEngine";
 import { tractReady } from "../../src/platform/audio/tract/tract";
@@ -20,10 +20,13 @@ export interface TuneOptions {
   fx: boolean;
   /** The breakdown's wash (the doubling voices) kept; off for the tracker, which wants one voice. */
   wash: boolean;
-  /** Base64 Ogg recordings by id (samples/voices, samples/alto). */
+  /** Base64 Ogg recordings by id (samples/voices, samples/alto, samples/chimera). */
   samples: Record<string, string>;
-  /** The sung patch to render (the game's recordedVoice; altoSampled, the sample set; altoTract, the vocal-tract worklet). */
+  /** The sung patch to render (the game's chimeraVoice; recordedVoice, the old singer; altoSampled, the sample set; altoTract, the
+   *  vocal-tract worklet). */
   voice?: string;
+  /** The music kept under the sung line (the A/B's mix: Ed hears the singer as the game plays it), not the line alone. */
+  mix?: boolean;
 }
 
 const b64 = (s: string) => { const bin = atob(s), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; };
@@ -39,7 +42,7 @@ async function tuneRender(o: TuneOptions) {
   for (const [id, data] of Object.entries(o.samples)) samples[id] = await oc.decodeAudioData(b64(data));
   if (style.patches[style.form!.sung.patch]?.kind === "tract" && !(await tractReady(oc))) throw new Error("the vocal-tract worklet didn't load");
   const e = new MusicEngine(oc, oc.destination, style, o.seed), sung = style.form!.sung.part;
-  e.solo = new Set([sung]);
+  if (!o.mix) e.solo = new Set([sung]);
   e.setRecordings(samples); if (samples.whispers) e.setWhisper(samples.whispers);
   const notes: { at: number; dur: number; midi: number; double: boolean }[] = [];
   const play = (e as unknown as { play: (ev: NoteEvent, t: number, dur: number, sps: number, chord?: number[]) => void }).play.bind(e);

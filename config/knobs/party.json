@@ -715,6 +715,21 @@
     "music.src": {
       "what": "an audio file to loop (empty: the built-in loop at beat.bpm until there's a real track). ?music=off silences it."
     },
+    "music.singer": {
+      "what": "who sings the vocalise: empty for the music style's own singer (Chimera's notes since 2026-11-08), or a sung patch of the style in its place everywhere it sings (recordedVoice the old recorded singer, altoSampled the alto set); ?singer=recorded or ?singer=sampled for a load, to A/B.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-08",
+          "quote": "yes, go for it. Go ahead and swap them over",
+          "rest": "of the Chimera vocalise he'd heard (\"This is surprisingly good!\"); the old voice kept selectable to A/B"
+        }
+      ],
+      "links": [
+        "rules/musicScore.ts",
+        "app/sound.ts"
+      ]
+    },
     "alarms": {
       "what": "The soundsystem alarm [1]: a soundsystem (or the home ring's speakers) hit while off screen shows a 🔇 at the screen's edge toward it, its ring its health, shaking at each blow.",
       "decisions": [

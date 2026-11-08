@@ -8,7 +8,7 @@ import { newBeatClock } from "../../../src/rules/beat";
 import type { MusicStyle, NoteEvent, PartUse } from "../../../src/rules/musicScore";
 import { Player } from "./player";
 import { nightStyle, planNight, type NightSet } from "../../../src/rules/musicSet";
-import { chainFx, CHAINS, defaultState, ETHEREAL, FX, FX_NAMES, heard, labParts, LAYERS, LAYER_NAMES, MODES, parseSettings, ROLES, settingsJson, SUNG_PATCH, VOICES, WORDS, type Chain, type Defaults, type Fx, type LabState, type Layer, type Voice } from "./settings";
+import { chainFx, CHAINS, defaultState, ETHEREAL, FX, FX_NAMES, heard, labParts, LAYERS, LAYER_NAMES, MODES, parseSettings, ROLES, settingsJson, SUNG_PATCH, VOICE_WORDS, VOICES, WORDS, type Chain, type Defaults, type Fx, type LabState, type Layer, type Voice } from "./settings";
 import { fofReady } from "../../../src/platform/audio/fof/fof";
 import { tractReady } from "../../../src/platform/audio/tract/tract";
 
@@ -257,7 +257,7 @@ function build(): void {
   $("witch").append(choice(["off", "on"] as const, o => (o === "on" ? "On" : "Off"), () => (state.witchHouse ? "on" : "off"), o => { state.witchHouse = o === "on"; if (o === "on" && state.mode === BASE.scale) state.mode = "phrygian"; }));
   // the ingredients
   for (const l of LAYERS) {
-    const voice = l === "vocalise" ? choice(VOICES, (v: Voice) => ({ synth: "The game's singer", sampled: "Alto, sampled", tract: "Alto, vocal tract", fof: "FOF voice", pinkTrombone: "Pink Trombone (5)", recorded: "Recorded voice (5b)" })[v], () => state.voice, v => { state.voice = v; if (player?.playing) player.prewarm(sungNotes(styleFor(state))); }) : undefined;
+    const voice = l === "vocalise" ? choice(VOICES, (v: Voice) => VOICE_WORDS[v], () => state.voice, v => { state.voice = v; if (player?.playing) player.prewarm(sungNotes(styleFor(state))); }) : undefined;
     $("layers").append(row(LAYER_NAMES[l], l, () => state.layers[l as Layer], v => { state.layers[l as Layer] = v; }, 1.5, l === "vocalise" ? 1 : 0, voice));
   }
   // the voice test (Ed, 2026-10-14: "the voice and its effects singing constant arpeggios"), the singer's breath (its voice's

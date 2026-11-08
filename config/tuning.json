@@ -2233,6 +2233,7 @@
     "clear": 16000,
     "distort": 1,
     "src": "",
+    "singer": "",
     "over": {
       "stop": 0.6,
       "floor": 0.15

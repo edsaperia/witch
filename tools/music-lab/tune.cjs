@@ -1,19 +1,23 @@
 // The singer's tuning check (Ed's singer review, 2026-10-14): node tools/music-lab/tune.cjs [section] [seed] [bars] [wave]
-// (default breakdown, 7, 16, 2). The game's engine renders the sung line alone (the recorded voice, as the game plays it) over
+// (default breakdown, 7, 16, 2). The game's engine renders the sung line alone (the game's singer, as the game plays it) over
 // a breakdown in headless Chromium, dry; each sung note it scheduled is pitch-tracked over its middle and compared with the
-// note asked for. Fails if any note's centre is more than TOL cents off its note, or wobbles more than TOL cents within it, or
+// note asked for. Fails if any note's centre is more than TOL cents off its note, or wobbles more than TOL cents within it (both
+// with its vibrato averaged out over VIB seconds, since Chimera's singer: a vibrato isn't out of tune; the raw figures reported), or
 // if the line leaves the alto (MIDI 55 to 67 in the home key); then renders again through the voice effects and reports the
-// same. --voice=altoSampled renders the sample set, --voice=altoTract the vocal-tract worklet (the A/B's two voices).
-// same, for the record (a hall smears a tracker, so that run never fails). Nothing here touches the game.
+// same, for the record (a hall smears a tracker, so that run never fails). --voice=<patch> renders another sung patch (the game's
+// chimeraVoice by default; recordedVoice the old singer, altoSampled the alto set, altoTract the vocal-tract worklet). --save=<dir>
+// also writes the A/B's mp3s there (Ed's singer swap, 2026-11-08): <voice>-sung.mp3, the line alone through its effects, and
+// <voice>-mix.mp3, in the music as the game plays it. Nothing here touches the game.
 const { build } = require("esbuild");
-const { readFileSync, readdirSync } = require("node:fs");
+const { readFileSync, readdirSync, writeFileSync, mkdirSync, unlinkSync } = require("node:fs");
+const { execFileSync } = require("node:child_process");
 const { createServer } = require("node:http");
 const { join, resolve } = require("node:path");
 
 const root = resolve(__dirname, "../..");
-const args = process.argv.slice(2), voiceArg = args.find(a => a.startsWith("--voice="))?.slice(8), rest = args.filter(a => !a.startsWith("--"));
-const [section = "breakdown", seed = "7", bars = "16", wave = "2"] = rest, voice = voiceArg || "recordedVoice";
-const TOL = 20, LOW = 55, HIGH = 67;
+const args = process.argv.slice(2), voiceArg = args.find(a => a.startsWith("--voice="))?.slice(8), saveArg = args.find(a => a.startsWith("--save="))?.slice(7), rest = args.filter(a => !a.startsWith("--"));
+const [section = "breakdown", seed = "7", bars = "16", wave = "2"] = rest, voice = voiceArg || JSON.parse(readFileSync(join(root, "config/music-style.json"), "utf8")).form.sung.patch;
+const TOL = 20, LOW = 55, HIGH = 67, VIB = 0.2;
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 let failed = 0;
@@ -49,11 +53,23 @@ const median = a => { const s = [...a].sort((x, y) => x - y); return s.length ? 
   page.on("pageerror", e => errors.push(String(e)));
   await page.goto(`http://localhost:${server.address().port}/`);
   await page.addScriptTag({ content: code });
-  const samples = Object.fromEntries(["voices", "alto"].flatMap(d => readdirSync(join(root, "samples", d)).filter(f => f.endsWith(".ogg")).map(f => [f.replace(/\.ogg$/, ""), readFileSync(join(root, "samples", d, f)).toString("base64")])));
+  const samples = Object.fromEntries(["voices", "alto", "chimera"].flatMap(d => readdirSync(join(root, "samples", d)).filter(f => f.endsWith(".ogg")).map(f => [f.replace(/\.ogg$/, ""), readFileSync(join(root, "samples", d, f)).toString("base64")])));
   const base = { wave: +wave, seed: +seed, bars: +bars, section, samples, wash: false, voice };
   console.log(`the singer: ${voice}`);
+  /** A render to <dir>/<voice>-<what>.mp3 (16-bit WAV through ffmpeg, then gone). */
+  const save = (r, what) => {
+    mkdirSync(resolve(saveArg), { recursive: true });
+    const pcm = Buffer.from(r.pcm, "base64"), head = Buffer.alloc(44), w = resolve(saveArg, `${voice}-${what}.wav`);
+    head.write("RIFF", 0); head.writeUInt32LE(36 + pcm.length, 4); head.write("WAVEfmt ", 8); head.writeUInt32LE(16, 16); head.writeUInt16LE(1, 20); head.writeUInt16LE(1, 22);
+    head.writeUInt32LE(r.rate, 24); head.writeUInt32LE(r.rate * 2, 28); head.writeUInt16LE(2, 32); head.writeUInt16LE(16, 34); head.write("data", 36); head.writeUInt32LE(pcm.length, 40);
+    writeFileSync(w, Buffer.concat([head, pcm]));
+    const mp3 = w.replace(/\.wav$/, ".mp3");
+    execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", w, "-c:a", "libmp3lame", "-q:a", "2", mp3]); unlinkSync(w);
+    console.log(`     wrote ${mp3}`);
+  };
   for (const fx of [false, true]) {
     const r = await page.evaluate(o => window.tuneRender(o), { ...base, fx });
+    if (saveArg && fx) save(r, "sung");
     const label = fx ? "through the voice effects" : "dry";
     ok(r.kind === "tract" ? true : r.recorded, `${label}: ${r.kind === "tract" ? "the vocal-tract worklet sings" : "the recording loaded (the engine sings the recorded voice)"}`);
     ok(r.nan === 0 && r.peak > 0.005, `${label}: sounds, no NaN (peak ${r.peak.toFixed(3)})`);
@@ -66,18 +82,29 @@ const median = a => { const s = [...a].sort((x, y) => x - y); return s.length ? 
       const m = tr.filter(p => p.t >= from && p.t <= to && p.f > 0).map(p => midi(p.f));
       if (m.length < 3) { rows.push({ midi: n.midi, got: NaN, off: NaN, wobble: NaN }); continue; }
       const c = median(m), off = (c - n.midi) * 100, mean = m.reduce((a, b) => a + b, 0) / m.length, wobble = Math.sqrt(m.reduce((a, b) => a + (b - mean) ** 2, 0) / m.length) * 100;
-      rows.push({ midi: n.midi, got: c, off, wobble });
+      // (the drift: the track averaged over a vibrato's cycle, VIB s, so a voice's own vibrato, Chimera's 30 cents, isn't counted
+      // as out of tune; what's left is the note wandering off its pitch. Its centre the same way.)
+      const k = Math.max(1, Math.round(VIB * r.rate / 512)), sm = m.length > k ? m.slice(0, m.length - k + 1).map((_, i) => m.slice(i, i + k).reduce((a, b) => a + b, 0) / k) : [mean];
+      const sMean = sm.reduce((a, b) => a + b, 0) / sm.length, drift = Math.sqrt(sm.reduce((a, b) => a + (b - sMean) ** 2, 0) / sm.length) * 100;
+      rows.push({ midi: n.midi, got: c, off, wobble, centre: (sMean - n.midi) * 100, drift });
     }
     const tracked = rows.filter(r => !Number.isNaN(r.off)), worstOff = Math.max(...tracked.map(r => Math.abs(r.off))), worstWobble = Math.max(...tracked.map(r => r.wobble));
+    const worstCentre = Math.max(...tracked.map(r => Math.abs(r.centre))), worstDrift = Math.max(...tracked.map(r => r.drift));
     console.log(`     ${label}: ${tracked.length}/${rows.length} notes tracked; off its note median ${median(tracked.map(r => Math.abs(r.off))).toFixed(0)} cents, worst ${worstOff.toFixed(0)}; wobble median ${median(tracked.map(r => r.wobble)).toFixed(0)} cents, worst ${worstWobble.toFixed(0)}`);
+    console.log(`     ${label}, its vibrato averaged out (${VIB} s): centre off its note median ${median(tracked.map(r => Math.abs(r.centre))).toFixed(0)} cents, worst ${worstCentre.toFixed(0)}; drift median ${median(tracked.map(r => r.drift)).toFixed(0)} cents, worst ${worstDrift.toFixed(0)}`);
     console.log(`     notes (midi asked → tracked, cents off): ` + rows.slice(0, 16).map(r => `${r.midi}→${Number.isNaN(r.got) ? "?" : r.got.toFixed(2)} (${Number.isNaN(r.off) ? "?" : r.off.toFixed(0)})`).join("  "));
     const lowest = Math.min(...leads.map(n => n.midi)), highest = Math.max(...leads.map(n => n.midi));
     ok(lowest >= LOW && highest <= HIGH, `${label}: the alto's range, MIDI ${lowest} to ${highest} (G3 ${LOW} to G4 ${HIGH})`);
     if (!fx) {
       ok(tracked.length >= Math.ceil(rows.length * 0.8), `${label}: ${tracked.length} of ${rows.length} notes tracked`);
-      ok(worstOff <= TOL, `${label}: every note within ${TOL} cents of its note (worst ${worstOff.toFixed(0)})`);
-      ok(worstWobble <= TOL, `${label}: every note steady within ${TOL} cents (worst ${worstWobble.toFixed(0)})`);
+      ok(worstCentre <= TOL, `${label}: every note within ${TOL} cents of its note, its vibrato averaged out (worst ${worstCentre.toFixed(0)})`);
+      ok(worstDrift <= TOL, `${label}: every note steady within ${TOL} cents, its vibrato averaged out (worst ${worstDrift.toFixed(0)})`);
     }
+  }
+  if (saveArg) {
+    const r = await page.evaluate(o => window.tuneRender(o), { ...base, fx: true, wash: true, mix: true });
+    ok(r.nan === 0 && r.peak > 0.005, `in the music: sounds, no NaN (peak ${r.peak.toFixed(3)})`);
+    save(r, "mix");
   }
   await browser.close(); server.close();
   ok(errors.length === 0, `no script errors${errors.length ? ": " + errors.join(" | ") : ""}`);

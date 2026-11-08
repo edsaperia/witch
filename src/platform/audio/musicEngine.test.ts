@@ -208,6 +208,25 @@ describe("a new night on the same page (docs/plans/sail-without-reload.md, A4)",
     expect((e as unknown as { knocksHeard: number }).knocksHeard).toBe(0);
   });
 
+  it("sings each note from Chimera's own note on its vowel, untuned, the vowels in turn through a phrase (Ed, 2026-11-08: the swap)", () => {
+    const ctx = fakeContext(), e = new MusicEngine(ctx, (ctx as unknown as { destination: AudioNode }).destination, style, 7);
+    const sources: { buffer: unknown; playbackRate: { value: number } }[] = [];
+    (ctx as unknown as Record<string, unknown>).createBufferSource = () => { const n = { buffer: null as unknown, playbackRate: { value: 1 }, connect: () => n, disconnect() {}, start() {}, stop() {}, loop: false }; sources.push(n); return n; };
+    const recs = Object.fromEntries([...style.patches.chimeraVoice.notes!.map(n => n.sample), "female-note"].map(id => [id, { id, duration: 2.7 } as unknown as AudioBuffer]));
+    e.setRecordings(recs);
+    const play = (e as unknown as { play: (ev: object, t: number, dur: number, sps: number) => void }).play.bind(e), sung = (src: { buffer: unknown }) => Object.values(recs).includes(src.buffer as AudioBuffer);
+    for (const [i, midi] of [60, 62, 64].entries()) play({ part: "sung", patch: "chimeraVoice", step: i * 4, offset: 0, dur: 4, midi, vel: 0.8 }, 1 + i * 0.5, 0.5, 0.125);
+    const new3 = sources.filter(sung);
+    expect(new3.map(s => (s.buffer as { id: string }).id)).toEqual(["chimera-ah-60", "chimera-ah-62", "chimera-ooh-64"]);
+    for (const s of new3) expect(s.playbackRate.value).toBeCloseTo(1, 9);
+    // (the old singer, kept to A/B: the one recording retuned)
+    sources.length = 0;
+    play({ part: "sung", patch: "recordedVoice", step: 0, offset: 0, dur: 4, midi: 60, vel: 0.8 }, 10, 0.5, 0.125);
+    const old = sources.filter(sung);
+    expect(new Set(old.map(s => (s.buffer as { id: string }).id))).toEqual(new Set(["female-note"])); // (and its phrase's swell into the hall)
+    expect(old.at(-1)!.playbackRate.value).toBeCloseTo(2 ** ((60 - 67.2) / 12), 6);
+  });
+
   it("builds the sung part's channel again after a new style (its first note no stall)", () => {
     const ctx = fakeContext(), e = new MusicEngine(ctx, (ctx as unknown as { destination: AudioNode }).destination, style, 7);
     const channels = () => (e as unknown as { channels: Map<string, unknown> }).channels;

@@ -3356,6 +3356,9 @@ Code: `tools/music-lab/check.cjs`
 - **`music.house.muffle`**: on the house its low-pass closes to this many Hz as its world slows (eased with the slowing), its volume as it is; lighter than a legend circle's circle.muffle.
   1. Ed, 2026-10-26: "When in the treehouse, the house music slows and muffles. Other sounds stay the same"
 - **`music.src`**: an audio file to loop (empty: the built-in loop at beat.bpm until there's a real track). ?music=off silences it.
+- **`music.singer`**: who sings the vocalise: empty for the music style's own singer (Chimera's notes since 2026-11-08), or a sung patch of the style in its place everywhere it sings (recordedVoice the old recorded singer, altoSampled the alto set); ?singer=recorded or ?singer=sampled for a load, to A/B.
+  1. Ed, 2026-11-08: "yes, go for it. Go ahead and swap them over" (of the Chimera vocalise he'd heard ("This is surprisingly good!"); the old voice kept selectable to A/B)
+  Code: `rules/musicScore.ts`, `app/sound.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -3381,6 +3384,7 @@ Code: `tools/music-lab/check.cjs`
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
+| `music.singer` | string |  |
 | `music.over.stop` | number | 0 to … |
 | `music.over.floor` | number | 0 to … |
 | `music.beach.fade` | number | 0 to … |
