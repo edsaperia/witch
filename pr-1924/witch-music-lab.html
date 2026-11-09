@@ -228,8 +228,8 @@ label.check input { accent-color: var(--accent); }
       marimba: { kind: "synth", gain: 0.356, waves: ["triangle", "sine"], detune: 3, attack: 2e-3, decay: 0.32, sustain: 0, release: 0.1, filter: "lowpass", cutoff: 3200, q: 1, envAmt: 2e3, delay: 0.35, reverb: 0.35, hp: 200, pan: -0.25 },
       strings: { kind: "synth", gain: 0.442, waves: ["sawtooth", "sawtooth"], unison: 2, detune: 10, width: 0.8, attack: 0.35, decay: 0.5, sustain: 0.85, release: 0.9, filter: "lowpass", cutoff: 2600, q: 0.5, lfoRate: 0.2, lfoDepth: 300, reverb: 0.5, delay: 0.1, hp: 250 },
       trSaw: { kind: "synth", gain: 0.42, waves: ["sawtooth"], unison: 5, detune: 22, width: 1, attack: 4e-3, decay: 0.22, sustain: 0.45, release: 0.12, filter: "lowpass", cutoff: 2600, q: 1.2, envAmt: 4200, fDecay: 0.18, fSustain: 0.3, filter2: "lowpass", cutoff2: 9e3, delay: 0.3, reverb: 0.3, duck: true, hp: 220 },
-      trPluck: { kind: "synth", gain: 0.9, waves: ["sawtooth", "square"], levels: [1, 0.4], detune: 9, attack: 2e-3, decay: 0.2, sustain: 0, release: 0.12, filter: "lowpass", cutoff: 500, q: 3, envAmt: 5200, fDecay: 0.14, fSustain: 0, filter2: "lowpass", cutoff2: 8e3, delay: 0.5, reverb: 0.3, hp: 260, pan: 0.1 },
-      trStab: { kind: "synth", gain: 1.3, waves: ["sawtooth"], unison: 3, detune: 16, width: 0.8, attack: 2e-3, decay: 0.11, sustain: 0, release: 0.06, filter: "lowpass", cutoff: 1400, q: 2, envAmt: 3600, fDecay: 0.09, fSustain: 0.1, filter2: "lowpass", cutoff2: 7e3, delay: 0.25, reverb: 0.2, duck: true, hp: 240 },
+      trPluck: { kind: "synth", gain: 1.1, waves: ["sawtooth", "square"], levels: [1, 0.4], detune: 9, attack: 2e-3, decay: 0.2, sustain: 0, release: 0.12, filter: "lowpass", cutoff: 500, q: 3, envAmt: 5200, fDecay: 0.14, fSustain: 0, filter2: "lowpass", cutoff2: 8e3, delay: 0.5, reverb: 0.3, hp: 260, pan: 0.1 },
+      trStab: { kind: "synth", gain: 1.75, waves: ["sawtooth"], unison: 3, detune: 16, width: 0.8, attack: 2e-3, decay: 0.11, sustain: 0, release: 0.06, filter: "lowpass", cutoff: 1400, q: 2, envAmt: 3600, fDecay: 0.09, fSustain: 0.1, filter2: "lowpass", cutoff2: 7e3, delay: 0.25, reverb: 0.2, duck: true, hp: 240 },
       rhodes: { kind: "synth", gain: 0.27, waves: ["sine"], attack: 3e-3, decay: 1.1, sustain: 0.2, release: 0.35, fmRatio: 1, fmIndex: 1.6, fmDecay: 0.35, fmSustain: 0.15, tremRate: 4.6, tremDepth: 0.22, filter: "lowpass", cutoff: 3200, q: 0.7, reverb: 0.3, delay: 0.15, hp: 160, pan: -0.1 },
       lofiKeys: { kind: "synth", gain: 0.265, waves: ["custom"], harmonics: [1, 0.42, 0.18, 0.08, 0.04], attack: 4e-3, decay: 0.5, sustain: 0.12, release: 0.18, filter: "lowpass", cutoff: 1500, q: 0.9, vibRate: 0.8, vibDepth: 9, noise: 0.025, drive: 0.18, reverb: 0.25, hp: 200, pan: 0.12 },
       breathFlute: { kind: "synth", gain: 0.21, waves: ["sine", "triangle"], levels: [1, 0.3], attack: 0.05, decay: 0.4, sustain: 0.65, release: 0.25, filter: "lowpass", cutoff: 2400, q: 0.8, noise: 0.09, vibRate: 5, vibDepth: 12, vibDelay: 0.18, bend: -0.4, bendTime: 0.08, delay: 0.3, reverb: 0.45, hp: 280, pan: -0.15 },
@@ -239,6 +239,8 @@ label.check input { accent-color: var(--accent); }
       pwmArp: { kind: "synth", gain: 0.32, waves: ["square", "square"], detune: 14, width: 0.6, attack: 2e-3, decay: 0.16, sustain: 0.2, release: 0.07, filter: "lowpass", cutoff: 2400, q: 2, envAmt: 3e3, fDecay: 0.12, fSustain: 0.2, lfoRate: 0.25, lfoDepth: 600, delay: 0.35, reverb: 0.25, hp: 300, pan: 0.18 },
       fmBell: { kind: "synth", gain: 0.34, waves: ["sine"], attack: 2e-3, decay: 0.45, sustain: 0, release: 0.3, fmRatio: 2, fmIndex: 2.4, fmDecay: 0.16, fmSustain: 0.08, filter: "lowpass", cutoff: 7e3, delay: 0.35, reverb: 0.4, hp: 320, pan: -0.2 },
       airyVox: { kind: "voice", gain: 0.3, vowels: ["ee", "ah", "eh"], vowelStep: 2, formantShift: 1.25, attack: 0.01, decay: 0.25, sustain: 0.5, release: 0.15, q: 8, vibrato: 14, breath: 0.22, delay: 0.35, reverb: 0.5, hp: 400, pan: 0.1 },
+      houseBassDeep: { kind: "synth", gain: 0.6, waves: ["sawtooth", "square"], levels: [1, 0.6], detune: 6, attack: 5e-3, decay: 0.26, sustain: 0.35, release: 0.08, filter: "lowpass", cutoff: 240, q: 3.5, envAmt: 650, fDecay: 0.18, fSustain: 0.25, duck: true },
+      rubberDeep: { kind: "synth", gain: 0.52, waves: ["square", "sine"], detune: 4, attack: 3e-3, decay: 0.2, sustain: 0.2, release: 0.06, filter: "lowpass", cutoff: 300, q: 3, envAmt: 560, duck: true },
       supersaw: { kind: "synth", gain: 0.491, waves: ["sawtooth"], unison: 7, detune: 28, width: 0.9, attack: 0.01, decay: 0.3, sustain: 0.6, release: 0.25, filter: "lowpass", cutoff: 3200, q: 1, envAmt: 3500, delay: 0.25, reverb: 0.3, duck: true, hp: 180 },
       chip: { kind: "synth", gain: 0.251, waves: ["square"], attack: 2e-3, decay: 0.09, sustain: 0.25, release: 0.05, filter: "lowpass", cutoff: 9e3, delay: 0.25, hp: 250, pan: 0.15 },
       arp: { kind: "synth", gain: 0.176, waves: ["square", "square"], detune: 8, width: 0.5, attack: 2e-3, decay: 0.08, sustain: 0, release: 0.04, filter: "lowpass", cutoff: 4e3, q: 1, envAmt: 2e3, delay: 0.3, duck: true, hp: 300 },
@@ -293,7 +295,7 @@ label.check input { accent-color: var(--accent); }
       shaker: { patch: "shaker", role: "drum", patterns: { eighth: "x.o.x.o.x.o.x.o.", sixteen: "oxoxoxoxoxoxoxox" } },
       bell: { patch: "cowbell", role: "motif", octave: 3, patterns: { phonk: "X..x..x.x..x.x..X..x..x.x..x?x?x" } },
       sub: { patch: "sub808", role: "bass", patterns: { long: "1---------------", roots: "1-------5-------", phonk: "1-----1---8--5--1-----1---1-.8--" } },
-      bass: { patch: "houseBass", role: "bass", octave: 1, patterns: { roll: "..1-..1-..1-..1-", walk: "..1-..1-..5-..8-", offbeat: "..1...1...1...1.", skip: "1..1..5...1.8..." } },
+      bass: { patch: "houseBass", role: "bass", octave: 1, patterns: { roll: "..1-..1-..1-..1-", walk: "..1-..1-..5-..8-", offbeat: "..1...1...1...1.", skip: "1..1..5...1.8...", tres: "..1--1--..1-.5-.", hold: "..1-----..5-----", sparse: "..1-------------", gspot: "..1..1....5..1..", dotted: ".1--.1--.1--.5--", pickup: "..1-..1-..1-.18." } },
       darkbass: { patch: "darkBass", role: "bass", octave: 1, patterns: { octaves: "1818181818181818", drive: "1.1811.81.1811.8", rumble: "..11..11..11..1." } },
       chipbass: { patch: "chipBass", role: "bass", octave: 1, patterns: { bounce: "1.8.1.8.1.8.1.8.", gallop: "1.88.18.1.88.18." } },
       pad: { patch: "pad", role: "chord", octave: 2, patterns: { hold: "x---------------", pump: "x-------x-------" } },
@@ -472,13 +474,22 @@ label.check input { accent-color: var(--accent); }
       bass: {
         approach: 0.6,
         parts: {
-          bass: { insert: true, fill: "walk", fillChance: 0.7, ghost: 0.15, octave: 0.25 },
-          darkbass: { fill: "octave", fillChance: 0.6, ghost: 0.1, octave: 0.2 },
+          bass: { insert: true, fill: "walk", fillChance: 0.7, ghost: 0.15, octave: 0.25, register: [28, 45], kickSpace: true },
+          darkbass: { fill: "octave", fillChance: 0.6, ghost: 0.1, octave: 0.2, register: [28, 45] },
           acid: { fill: "octave", fillChance: 0.6, octave: 0.2 },
-          reese: { insert: true, fill: "walk", fillChance: 0.5, octave: 0.15, restrike: true },
-          chipbass: { fill: "arp", fillChance: 0.7 },
+          reese: { insert: true, fill: "walk", fillChance: 0.5, octave: 0.15, restrike: true, register: [28, 45] },
+          chipbass: { fill: "arp", fillChance: 0.7, register: [33, 52] },
           sub: { approach: 0.5, fill: "none" }
-        }
+        },
+        patterns: {
+          bass: {
+            low: ["sparse", "hold", "tres"],
+            mid: ["tres", "hold", "walk", "gspot", "dotted"],
+            high: ["roll", "walk", "dotted", "pickup", "tres", "offbeat"],
+            sections: { trance: ["offbeat", "roll", "dotted", "pickup"], tranceDrop: ["offbeat", "roll", "pickup", "dotted"], tranceBreaks: ["offbeat", "tres", "dotted"], garage: ["skip", "gspot", "tres", "hold"], garageDrop: ["skip", "gspot", "tres", "pickup"], garageBreaks: ["skip", "gspot", "hold"] }
+          }
+        },
+        patches: { houseBass: "houseBassDeep", rubber: "rubberDeep" }
       },
       melody: "dance",
       dance: {
@@ -3410,6 +3421,13 @@ label.check input { accent-color: var(--accent); }
         hits.forEach((s, i) => out[s] = { k: s === pick2 ? r(31) < 0.5 ? 7 : 4 : held[s], vel: s === pick2 ? 0.75 : 1, dur: Math.max(1, Math.min((hits[i + 1] ?? 16) - s, 6)) });
       }
     }
+    if (rule.kickSpace && kick && !rule.follow) {
+      for (let s = 0; s < 16; s += 4) if (out[s] && hit2(s)) {
+        const n = out[s];
+        out[s] = null;
+        if (s + 2 < 16 && !out[s + 2] && !out[s + 1]) out[s + 2] = { ...n, dur: Math.max(1, n.dur - 2) };
+      }
+    }
     const onsets = () => out.map((n, s) => n ? s : -1).filter((s) => s >= 0);
     const cutBefore = (s) => {
       for (let j = s - 1; j >= 0; j--) if (out[j]) {
@@ -3435,7 +3453,7 @@ label.check input { accent-color: var(--accent); }
       }
     }
     if ((q === 1 || q === 2) && (rule.octave ?? 0) > 0 && r(1) < rule.octave) {
-      const off = onsets().filter((s) => s % 4 !== 0 && s < 12);
+      const off = onsets().filter((s) => s % 4 !== 0 && s < 12 && out[s].dur <= 2);
       if (off.length) {
         const s = off[Math.floor(r(2) * off.length)], n = out[s];
         n.k = n.k >= 7 ? n.k - 7 : n.k + 7;
@@ -4078,6 +4096,36 @@ label.check input { accent-color: var(--accent); }
     return r;
   }
   var bassMemo = /* @__PURE__ */ new Map();
+  function bassPatternName(C2, part, own, section, energy, bar2, seed2) {
+    const P = C2.bass.patterns?.[part];
+    if (!P) return own;
+    const e = energy + (/Drop$/.test(section) ? 0.2 : 0), pool = P.sections?.[section] ?? (e < 0.4 ? P.low : e < 0.7 ? P.mid : P.high);
+    return pick(pool.includes(own) ? pool : [...pool, own], hash2(seed2 + Math.floor(bar2 / 4) * 7919, 511, part.length));
+  }
+  var rootCache = /* @__PURE__ */ new Map();
+  function bassRoot(style2, scale, transpose, R, seed2, formBar, haunt, root) {
+    const lo = R[0], hi = Math.min(R[1], R[0] + 15), mid = (lo + hi) / 2;
+    const place = (pc, near) => {
+      let best = lo, bd = Infinity;
+      for (let x = lo; x <= hi; x++) if (((x - pc) % 12 + 12) % 12 === 0 && Math.abs(x - near) < bd) {
+        bd = Math.abs(x - near);
+        best = x;
+      }
+      return best;
+    };
+    const pcOf = (r) => degreeToMidi(style2, scale, r, 0, transpose) % 12;
+    const F = style2.form;
+    if (formBar === null || !F) return place(pcOf(root), mid);
+    const n = formBars(F), key = `${seed2}|${transpose}|${scale.join()}|${lo},${hi}|${haunt ? 1 : 0}`;
+    let seq = rootCache.get(key);
+    if (!seq) {
+      if (rootCache.size > 64) rootCache.clear();
+      seq = [];
+      for (let b = 0; b < n; b++) seq.push(place(pcOf(formChord(style2, seed2, haunt ? hauntedBar(F, b) : b).root), b ? seq[b - 1] : mid));
+      rootCache.set(key, seq);
+    }
+    return seq[mod(formBar, n)];
+  }
   var VOICE_FAMILIES = { ...creature_voices_default.species, ...sectionOf("voice") };
   var nameHash = (name) => {
     let h = 0;
@@ -4171,21 +4219,32 @@ label.check input { accent-color: var(--accent); }
       const base0 = comp && def.role === "bass" && !own && !def.tonic && u.p !== "__fill" ? comp.bass.parts[name] : void 0;
       const brule = comp && def.role === "bass" && !own && !def.tonic && u.p !== "__fill" && (base0 || over) ? over ? danceRule(base0, over) : base0 : void 0;
       if (brule) {
-        const from = i - i % 16;
+        const bpat = def.patterns[bassPatternName(comp, name, u.p, plan.section, a.energy, form ? formBar : barIn, ctx2.seed)] ?? pat;
+        const bi = at2 % bpat.length, from = bi - bi % 16;
         let m = bassMemo.get(name);
-        if (!m || m.style !== style2 || m.seed !== ctx2.seed || m.bar !== bar2 || m.formBar !== formBar || m.section !== plan.section || m.start !== plan.start || m.bars !== plan.bars || m.arc !== plan.arc || m.pass !== pass || m.pat !== pat || m.from !== from || m.root !== chord.root) {
+        if (!m || m.style !== style2 || m.seed !== ctx2.seed || m.bar !== bar2 || m.formBar !== formBar || m.section !== plan.section || m.start !== plan.start || m.bars !== plan.bars || m.arc !== plan.arc || m.pass !== pass || m.pat !== bpat || m.from !== from || m.root !== chord.root) {
           const next2 = form ? formChord(style2, ctx2.seed, haunt ? hauntedBar(form, formBar + 1) : formBar + 1).root : chordAt(style2, sec, a, barIn + 1 + pass * Math.max(1, sec.chordBars)).root;
           const k = Object.entries(secParts).find(([n2]) => style2.patches[style2.parts[n2]?.patch ?? ""]?.kind === "kick"), kp = k && style2.parts[k[0]].patterns[use(k[1]).p];
           const kick = kp ? kp.slice(barIn * 16 % kp.length, barIn * 16 % kp.length + 16) : null, q = form ? mod(formBar, 4) : mod(barIn, 4), salt = name.length * 131 + name.charCodeAt(0) * 7 + q;
-          const line = bassBar(pat.slice(from, from + 16), brule, comp.bass.approach, chord.root, next2 === chord.root ? null : next2, kick, q, (x) => hash2(bar2 * 64 + x, salt, ctx2.seed + 977));
-          bassMemo.set(name, m = { style: style2, seed: ctx2.seed, bar: bar2, formBar, section: plan.section, start: plan.start, bars: plan.bars, arc: plan.arc, pass, pat, from, root: chord.root, line });
+          const line = bassBar(bpat.slice(from, from + 16), brule, comp.bass.approach, chord.root, next2 === chord.root ? null : next2, kick, q, (x) => hash2(bar2 * 64 + x, salt, ctx2.seed + 977));
+          const lift = sec.transpose ?? 0, R0 = brule.register, R = R0 && [R0[0] + lift, R0[1] + lift], rootM = R ? bassRoot(style2, scale, transpose, R, ctx2.seed, form ? formBar : null, haunt, chord.root) : 0;
+          const nextM = R ? bassRoot(style2, scale, transpose, R, ctx2.seed, form ? formBar + 1 : null, haunt, next2) : 0;
+          const midis = line.map((n2) => {
+            if (!n2) return 0;
+            if (!R) return degreeToMidi(style2, scale, (n2.abs ? 0 : chord.root) + n2.k, def.octave ?? 0, transpose);
+            let x = n2.abs ? nextM + degreeToMidi(style2, scale, n2.k, 0, 0) - degreeToMidi(style2, scale, next2, 0, 0) : rootM + degreeToMidi(style2, scale, chord.root + n2.k, 0, 0) - degreeToMidi(style2, scale, chord.root, 0, 0);
+            while (x > R[1]) x -= 12;
+            while (x < R[0]) x += 12;
+            return x;
+          });
+          bassMemo.set(name, m = { style: style2, seed: ctx2.seed, bar: bar2, formBar, section: plan.section, start: plan.start, bars: plan.bars, arc: plan.arc, pass, pat: bpat, from, root: chord.root, line, midis });
         }
-        const n = m.line[i % 16];
+        const n = m.line[bi % 16];
         if (!n) continue;
         const r2 = hash2(step2, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), ctx2.seed + phrase * 7919);
         const level2 = u.level * scaleLevel * (0.94 + 0.06 * r2) * (building ? 0.45 + 0.55 * build : 1);
-        const patch2 = a.bass && sec.parts[name] && style2.patches[a.bass] ? a.bass : def.patch;
-        out.push({ part: name, patch: patch2, step: step2, offset: 0, dur: n.dur, ...hook ? { hook } : {}, ...n.glide ? { glide: n.glide } : {}, midi: degreeToMidi(style2, scale, (n.abs ? 0 : chord.root) + n.k, def.octave ?? 0, transpose), vel: 0.85 * n.vel * level2 });
+        const patch0 = a.bass && sec.parts[name] && style2.patches[a.bass] ? a.bass : def.patch, swap = comp.bass.patches?.[patch0], patch2 = swap && style2.patches[swap] ? swap : patch0;
+        out.push({ part: name, patch: patch2, step: step2, offset: 0, dur: n.dur, ...hook ? { hook } : {}, ...n.glide ? { glide: n.glide } : {}, midi: m.midis[bi % 16], vel: 0.85 * n.vel * level2 });
         continue;
       }
       const { ch, dur } = hitAt(pat, i);
@@ -4326,6 +4385,20 @@ label.check input { accent-color: var(--accent); }
         else if (!tripletsWhole(c)) errs.push(`form: cell ${k} "${c}": a triplet without its _s`);
       }
       for (const c of Object.values(F.cadence).flat()) if (!c.endsWith(".")) errs.push(`form: cadence "${c}" doesn't end on a rest`);
+    }
+    const CB = style2.compose?.bass;
+    if (CB) {
+      for (const [part, P] of Object.entries(CB.patterns ?? {})) {
+        const def = style2.parts[part];
+        if (!def) {
+          errs.push(`compose.bass.patterns: no part "${part}"`);
+          continue;
+        }
+        for (const n of [...P.low, ...P.mid, ...P.high, ...Object.values(P.sections ?? {}).flat()]) if (!def.patterns[n]) errs.push(`compose.bass.patterns.${part}: no pattern "${n}"`);
+        for (const s of Object.keys(P.sections ?? {})) if (!style2.sections[s]) errs.push(`compose.bass.patterns.${part}: no section "${s}"`);
+      }
+      for (const [from, to] of Object.entries(CB.patches ?? {})) if (!style2.patches[from] || !style2.patches[to]) errs.push(`compose.bass.patches: "${from}" to "${to}", not both patches`);
+      for (const [part, r] of Object.entries(CB.parts)) if (r.register && !(r.register[0] < r.register[1] && r.register[1] - r.register[0] >= 12)) errs.push(`compose.bass.parts.${part}: a register an octave wide at least`);
     }
     const D2 = style2.compose?.dance;
     if (D2) {
