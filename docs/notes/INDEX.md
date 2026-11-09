@@ -95,6 +95,7 @@ says what each note covers.
 - Momentum class selection
 - Accepted attack outcomes
 - Talk / invite
+- Letters' reach
 - Bubble sight
 - Babies on her leash
 - Followers in the treehouse

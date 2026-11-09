@@ -498,8 +498,10 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // (and its ring's own gap: the room its members' bodies take round it, each its width and the clearance, shared out, not the
       // widest of all 128 for everyone, which made each ring as wide as one ring of all of them)
       const place = ring ? { index: ring.filter(id => id < c.id).length, count: ring.length, rank, gap: ringGap(ring) } : { index: Math.max(0, members.indexOf(c.id)), count: members.length, gap };
+      // (the waiting room's invite reach is its own setting, combatWaiting.inviteReach, held at the old 33 m when the letters got
+      // 42 m: Ed, 2026-11-09, "ranges feel small", so the longer letters reach the circling animals; nor do buffs or a bag push them out)
       return waitingSlot(c, origin, range + retreat, time, FIGHT.scale, SPACING, waitingHeading?.(), seed !== undefined ? { seed, ...place, until, minimum: drawnRadius(c, t) + p.r + SPACING.clearance } : undefined,
-        { dashReach: t.dash.distance * (t.dash.charges ?? 1), inviteReach: t.invites.range, areaRadius: w.areaAt?.(c.homeX, c.homeZ)?.r ?? 0, speed: speed * waitingProfile(c).speed, parameters: t.combatWaiting });
+        { dashReach: t.dash.distance * (t.dash.charges ?? 1), inviteReach: t.combatWaiting.inviteReach, areaRadius: w.areaAt?.(c.homeX, c.homeZ)?.r ?? 0, speed: speed * waitingProfile(c).speed, parameters: t.combatWaiting });
     } : undefined;
     const waitingHazards: WaitingHazard[] = spacing ? [{ x: p.x, z: p.z, radius: p.r }] : [];
     if (spacing) for (const other of legendsHere) {

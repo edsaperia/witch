@@ -175,7 +175,7 @@ export interface Tuning {
     leap: { reach: number; through: number; contact: boolean; /** Leading her (Ed, 2026-10-06): a leap comes down where she'll be when it lands, as she's going at take-off, this share of it (0: where she was). */ lead: number } };
   /** Creature momentum chasing the witch (Ed, 2026-10-27; rules/momentum.ts): global multipliers (turn, delay, strikeLead) and added chase lead over each class's and species' values; see config/tuning.json's _creatureMomentum. */
   creatureMomentum?: { on: boolean; turn: number; delay: number; chaseLead: number; strikeLead: number; classes: Record<"heavy" | "normal" | "light", import("./momentum").Momentum> };
-  combatWaiting: { reachScale: number; areaGrowth: number; passPower: number; passDepth: number };
+  combatWaiting: { reachScale: number; inviteReach: number; areaGrowth: number; passPower: number; passDepth: number };
   /** A team's attack round shortened as the team grows past `reference` animals (Ed, 2026-11-03: "how about we have the attack round
    *  length decrease gradually as the pack gets larger"; rules/combat/teams.ts roundScale): its round time and attack window times
    *  (reference / size) ^ strength, at least `floor`; at or under `reference`, as before. */
