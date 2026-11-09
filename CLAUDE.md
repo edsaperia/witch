@@ -6,15 +6,16 @@ Work on Witch follows the shared rules in [edsaperia/dev-ops](https://github.com
 
 ## Deploys
 
-The playable game is a static site on GitHub Pages, served from the `gh-pages` branch by `.github/workflows/pages.yml`:
+The playable game is a static site on GitHub Pages. CI (`.github/workflows/ci.yml`) writes each build into the `gh-pages` branch, and `.github/workflows/pages-publish.yml` publishes that branch's latest complete snapshot (Pages Source: GitHub Actions):
 
 - a push or merge to `main` builds the game and publishes it at the site's root, https://edsaperia.github.io/witch/ — **merging to `main` deploys**;
 - each pull request from this repository is built and published under `/pr-<number>/` (https://edsaperia.github.io/witch/pr-<number>/), and the workflow comments that link on the PR; closing the PR removes it;
-- documents-only changes still rebuild and republish the same game (no `docs` lane yet).
+- a documents-only pull request (every file under `docs/` or a `.md`) gets no preview, since it plays exactly prototype's game; main's deploy also drops previews of pull requests idle for a week (they come back on the next push). The snapshot must stay under Pages' 1 GB: it was ~1 GB on 2026-11-09.
 - every build writes `version.json` beside the game (its label, `vite.config.ts` `versionFile`; main's at the root, a PR's in its `pr-<number>/`); a page left open reads it on load, on pausing and every five minutes, never from a cache, and while a newer build is up says so in the bedroom and on the pause page: "A newer version (v3712) is out", with a reload button (Ed, 2026-10-14; `src/app/newBuild.ts`), and so does a menu whose code a deploy has replaced under it (Hotel's #906).
 - many deploys at once are fine: each writes only its own folder (main the root, a PR its `pr-<number>/`), and one whose push to `gh-pages` is beaten fetches the newer branch and tries again (up to ten times).
+- publishing is serialised (one publisher at a time; GitHub keeps only the newest waiting request, and every publication takes the newest `gh-pages`, so a preview that displaces a waiting live request still publishes the new live root). A failed or cancelled Pages deployment is retried once in the same job, a re-run of the workflow can deploy again, and the job fails unless the public `version.json` shows the root it published. If the site still shows an old version: Actions → Publish Pages snapshot → Run workflow.
 
-Pages must be switched on once in the repository's settings (Source: *Deploy from a branch*, `gh-pages`, `/ (root)`); until then the links return 404. A deploy is verified by opening the link and checking the seed and the game load.
+A release counts as live only when https://edsaperia.github.io/witch/version.json (fetched with a cache-busting query) shows its build, not when CI's deploy job finishes. A deploy is then verified by opening the link and checking the seed and the game load.
 
 ## What's new
 

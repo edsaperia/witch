@@ -50,7 +50,7 @@ jobs:
       id-token: write
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.retry.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Checkout the latest complete site including live root
@@ -70,13 +70,46 @@ jobs:
             const evidence={...publicationSnapshot(context.payload.client_payload??{}, {sha,rootVersion}),policy,startedAt:new Date().toISOString(),requestAt:context.payload.client_payload?.requested_at??null};
             fs.writeFileSync('pages-publication.json',JSON.stringify(evidence,null,2));
             core.info(`Publishing latest site ${sha}, LIVE root ${rootVersion}; ${policy.kind} request`);
+      # The coordinator, 2026-11-09 (release 17 sat unpublished ~50 min): one deployment timed out in Pages' "syncing
+      # files" (the snapshot is ~1 GB), the next was cancelled, and a re-run failed on two artifacts of one name. So:
+      # one artifact name per attempt (a re-run can deploy again), a longer timeout, one retry in the job, and a check
+      # that the public site serves the root this job published.
       - name: Package complete site snapshot
         uses: actions/upload-pages-artifact@v4
         with:
           path: site
+          name: github-pages-${{ github.run_attempt }}
       - name: Deploy complete snapshot
         id: deployment
+        continue-on-error: true
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
+          timeout: 1800000
+      - name: Deploy again after a failed or cancelled deployment
+        id: retry
+        if: steps.deployment.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
+          timeout: 1800000
+      - name: Check the public site serves the published live root
+        uses: actions/github-script@v7
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url || steps.retry.outputs.page_url }}
+        with:
+          script: |
+            const fs=require('fs'),e=JSON.parse(fs.readFileSync('pages-publication.json','utf8'));
+            const num=v=>Number(String(v).match(/v(\d+)/)?.[1]??NaN), want=num(e.rootVersion);
+            const base=(process.env.PAGE_URL||`https://${context.repo.owner}.github.io/${context.repo.repo}/`).replace(/\/?$/,'/');
+            let seen='';
+            for(let i=0;i<40;i++){ // up to ~10 minutes: Pages' CDN can lag the deployment
+              try{const r=await fetch(`${base}version.json?publication=${Date.now()}`,{cache:'no-store'});seen=(await r.json()).version;}catch(err){seen=`unreadable (${err.message})`;}
+              // (a newer root is fine: a later publication may already have overtaken this one)
+              if(num(seen)>=want){core.info(`Public root ${seen}; published ${e.rootVersion}`);return;}
+              await new Promise(r=>setTimeout(r,15000));
+            }
+            core.setFailed(`The public site still serves ${seen}, not ${e.rootVersion}. Re-run this workflow (Actions → Publish Pages snapshot → Run workflow).`);
       - name: Record publication completion
         if: success()
         uses: actions/github-script@v7
