@@ -46,6 +46,11 @@ void spellGlow(){
   float tinted=step(50.0,vData.y),row=vData.y-100.0*tinted,form=vData.x;
   vec3 bright=texelFetch(uFxRamp,ivec2(2,int(row+0.5)),0).rgb,hot=texelFetch(uFxRamp,ivec2(3,int(row+0.5)),0).rgb;
   if(tinted>0.5){bright=vCol.rgb;hot=mix(vCol.rgb,vec3(1.0),0.45);}
+  // (every element about as bright as fire's: a pale one, frost's or a yellow neon, added as strongly blows out into white; and its
+  // colour pushed further from grey, so a pale element's glow still reads as its colour, not white)
+  vec3 luma=vec3(0.2126,0.7152,0.0722);
+  float even=clamp(0.55/max(0.05,dot(bright,luma)),0.55,1.15);
+  bright=clamp(mix(vec3(dot(bright,luma)),bright,1.6),0.0,1.0);
   vec2 cell=floor((vP*0.5+0.5)*vGrid),p=(cell+0.5)/vGrid*2.0-1.0;
   bool line=(form>1.5&&form<2.5)||form>10.5;
   float a=0.0;vec3 rgb=bright;
@@ -66,7 +71,7 @@ void spellGlow(){
     a=uSpellGlow.z*(0.5-band*0.12);
     if(line)a*=abs(p.x)>0.9?0.5:1.0;
   }
-  a*=vCol.a;if(a<0.004)discard;
+  a*=vCol.a*even;if(a<0.004)discard;
   // (the pool screen blended: its colour premultiplied)
   gl_FragColor=uLayer>4.5?vec4(haze(rgb,vWorld)*a,a):vec4(haze(rgb,vWorld),a);
 }

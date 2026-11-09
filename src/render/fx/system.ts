@@ -105,7 +105,7 @@ export class MagicFx {
     if(look){
       this.glowLook(look);this.glowData(f.id,key,intensity,phase,tint);
       const hit=form==="burst"||form==="eruption";
-      if(!f.ground&&look.core+look.halo>0)this.batches.glowAt(x,y,z,diameter*(hit?0.26:0.62),this.data,alpha,tint);
+      if(!f.ground&&look.core+look.halo>0)this.batches.glowAt(x,y,z,diameter*(hit?0.26:0.62),this.data,alpha*(hit?0.8:1),tint);
       // its pool under it: smaller and fainter the higher it flies (so the lit spot says how high it is), a hit's wide
       if(look.pool>0)this.batches.poolAt(x,z,f.ground?diameter*1.15:Math.max(2.4,diameter*(hit?1:1.9)),this.data,alpha*(f.ground?0.6:Math.max(0.35,1-y/14)),tint);
     }
