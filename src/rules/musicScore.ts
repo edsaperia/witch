@@ -1008,13 +1008,14 @@ function danceRule(base: BassRule | undefined, over: BassRule): BassRule {
 const bassMemo = new Map<string, { style: MusicStyle; seed: number; bar: number; formBar: number; section: string; start: number; bars: number; arc: number; pass: number; pat: string; from: number; root: number; line: (BassNote | null)[]; midis: number[] }>();
 
 /** A composed bass part's pattern in a bar (Ed, 2026-11-09: "repetitive"): each four-bar phrase's dealt by the seed from the
- *  section's own pool, else the pool for the wave's energy (a drop a step busier), the section's own pattern among them;
+ *  section's own pool, else the pool for the wave's energy (a drop a step busier), the section's own pattern among them (not in
+ *  the quiet pool: the sparse patterns alone there);
  *  `own` (the section's) with no pools. */
 export function bassPatternName(C: ComposeDef, part: string, own: string, section: string, energy: number, bar: number, seed: number): string {
   const P = C.bass.patterns?.[part];
   if (!P) return own;
-  const e = energy + (/Drop$/.test(section) ? 0.2 : 0), pool = P.sections?.[section] ?? (e < 0.4 ? P.low : e < 0.7 ? P.mid : P.high);
-  return pick(pool.includes(own) ? pool : [...pool, own], hash2(seed + Math.floor(bar / 4) * 7919, 511, part.length));
+  const e = energy + (/Drop$/.test(section) ? 0.2 : 0), sec = P.sections?.[section], pool = sec ?? (e < 0.4 ? P.low : e < 0.7 ? P.mid : P.high);
+  return pick(pool.includes(own) || (!sec && e < 0.4) ? pool : [...pool, own], hash2(seed + Math.floor(bar / 4) * 7919, 511, part.length)); // (the section's own among them, but in the quiet waves)
 }
 
 const rootCache = new Map<string, number[]>();

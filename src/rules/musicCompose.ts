@@ -26,7 +26,7 @@ export interface ComposeDef {
     approach: number; parts: Record<string, BassRule>;
     /** A part's patterns by phrase (Ed, 2026-11-09: "repetitive"): each four-bar phrase deals one by the seed from the pool for
      *  the wave's energy (`low` under 0.4, `mid` under 0.7, `high`; a drop a step busier), or a section's own pool; with the
-     *  section's own pattern among them. */
+     *  section's own pattern among them, but in the quiet pool. */
     patterns?: Record<string, { low: string[]; mid: string[]; high: string[]; sections?: Record<string, string[]> }>;
     /** Rounder patches in the composer's ways, for the lower register (a bass patch to its stand-in). */
     patches?: Record<string, string>;

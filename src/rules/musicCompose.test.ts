@@ -465,6 +465,7 @@ describe("the composer's bass register and patterns (Ed, 2026-11-09: \"The bass 
     expect(changed).toBe(6);
     const density = (energy: number, section: string) => { let n = 0; for (let s = 0; s < 40; s++) n += [...style.parts.bass.patterns[bassPatternName(C, "bass", "roll", section, energy, s * 4, s)]].filter(c => c !== "." && c !== "-").length; return n / 40; };
     expect(density(0.2, "deep")).toBeLessThan(density(0.9, "deep"));
+    for (let s = 0; s < 40; s++) expect(P.low).toContain(bassPatternName(C, "bass", "roll", "deep", 0.2, s * 4, s)); // (the quiet waves: the sparse ones only)
     expect(density(0.6, "deepDrop")).toBeGreaterThanOrEqual(density(0.6, "deep"));
     expect(bassPatternName(C, "bass", "skip", "garage", 0.5, 0, 1)).toMatch(/skip|gspot|tres|hold/);
     // the kick's downbeats left to it in a four-on-the-floor section (but for an approach or a fill's note on the last beat)
