@@ -183,8 +183,9 @@ export class FxBatches {
       batch.mesh.renderOrder=fxLayerOrder(slot,opts.order);scene.add(batch.mesh);this.layers.push(batch);
     }
     // The creatures' spell glow (render/fx/spellGlow.ts): slot 9 standing (its glowing core and dithered halo, after the magic's own
-    // standing layers), slot 10 on the ground (its light's pool, under the magic's ground layers), both added light.
-    for(const flat of [0,1]){
+    // standing layers), slot 10 on the ground (its light's pool, under the magic's ground layers), both added light. (None for a
+    // light-alone set of batches: the party start's draws no creature spells.)
+    if(!opts.glow)for(const flat of [0,1]){
       const mat=new THREE.ShaderMaterial({vertexShader:VERT,fragmentShader:FRAG,uniforms:{...LIGHT_UNIFORMS,...HEIGHT_UNIFORMS,
         uRight:SPRITE_UNIFORMS.uRight,uUp:SPRITE_UNIFORMS.uUp,uRes:SPRITE_UNIFORMS.uRes,uMpp:this.mpp,uHalo:{value:new THREE.Vector2(...settings.halo as [number,number])},uFxRamp:{value:ramp},uFlat:{value:flat},uLayer:{value:4+flat},uFxTime:this.time,uCalm:this.calm,uSecondary:this.secondary,uDistort:this.distort,uGlow:{value:0},uSpellGlow:this.spellGlow},
         transparent:true,depthWrite:false,depthTest:true,...(flat?SCREEN:{blending:THREE.AdditiveBlending})});
@@ -218,18 +219,18 @@ export class FxBatches {
   /** The creatures' spell glow standing (render/fx/spellGlow.ts): its glowing core and dithered halo, `size` the core's (the quad
    *  GLOW_SPAN times it). data: form, element (past 100: tinted, its colour the tint's), intensity, phase. */
   glowAt(x:number,y:number,z:number,size:number,data:number[],alpha:number,tint:readonly number[]|null):void {
-    if(this.count>=settings.instances)return;this.count++;
+    if(this.count>=settings.instances||!this.layers[9])return;this.count++;
     this.layers[9].add(x,y,z,size*this.spellGlow.value.w,data,tint?.[0]??1,tint?.[1]??1,tint?.[2]??1,alpha,1,false,0);
   }
   /** Its light's pool on the ground, `size` across (metres). */
   poolAt(x:number,z:number,size:number,data:number[],alpha:number,tint:readonly number[]|null):void {
-    if(this.count>=settings.instances)return;this.count++;
+    if(this.count>=settings.instances||!this.layers[10])return;this.count++;
     this.layers[10].add(x,0,z,size,data,tint?.[0]??1,tint?.[1]??1,tint?.[2]??1,alpha,1,false,0);
   }
   /** Both along a beam or a trail (data's form a beam's or a trail's): standing at y (pool: on the ground), `width` its core's. */
   glowLine(x:number,y:number,z:number,length:number,heading:number,width:number,data:number[],alpha:number,tint:readonly number[]|null,pool:boolean):void {
-    if(this.count>=settings.instances)return;this.count++;
+    if(this.count>=settings.instances||!this.layers[10])return;this.count++;
     this.layers[pool?10:9].add(x,pool?0:y,z,width*(pool?1:this.spellGlow.value.w),data,tint?.[0]??1,tint?.[1]??1,tint?.[2]??1,alpha,-length,false,heading);
   }
-  end():void {for(const b of this.layers)b.end();for(const i of [9,10])this.layers[i].mesh.visible=(this.layers[i].mesh.geometry as THREE.InstancedBufferGeometry).instanceCount>0;}
+  end():void {for(const b of this.layers)b.end();for(const i of [9,10])if(this.layers[i])this.layers[i].mesh.visible=(this.layers[i].mesh.geometry as THREE.InstancedBufferGeometry).instanceCount>0;}
 }
