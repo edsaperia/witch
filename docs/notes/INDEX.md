@@ -226,6 +226,7 @@ says what each note covers.
 - Haunted
 - The composer
 - The dance way
+- Dance leads
 - Section
 - Boot-up
 - Form

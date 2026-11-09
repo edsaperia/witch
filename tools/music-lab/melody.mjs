@@ -6,6 +6,7 @@
 //             (b) a sung breakdown (the haunted treatment off: the melody alone); (c) a bass-heavy section (acid house, dark
 //             electro or breakbeat's reese: seeds 7, 23 and 101 one each, others in turn); (d) a haunted breakdown through its drum
 //             & bass drop (the dance way: the singer's slow hook, then the drop's riff on it); ONLY=ac renders only those passages
+//   clearing  seed<N>-clearing-<species>-dance.mp3: a legend's clearing playing the witch-house ostinato (SPECIES=owl,stag,wolf)
 //   night     seed<N>-night-<mode>.mp3: a night's start, the intro and two waves of 32 bars (about three minutes), old and
 //             dance (NIGHT_MODES=)
 // Fails on a script error, NaN, clipping or silence. Nothing here touches the game.
@@ -68,6 +69,11 @@ for (const [si, seed] of seeds.entries()) {
     const name = `seed${seed}-night-${melody}`;
     save(r, name, [`${name}: the owl island's night, seed ${seed}, its start and two waves of 32 bars at 120 bpm, the ${RULES[melody]}`, ...r.marks]);
   }
+}
+if (what === "clearing") for (const [i, species] of (process.env.SPECIES ?? "owl,stag,wolf").split(",").entries()) {
+  const seed = seeds[i % seeds.length], r = await page.evaluate(o => window.clearingRender(o), { species, seed, inside: 20, samples });
+  const name = `seed${seed}-clearing-${species}-dance`;
+  save(r, name, [`${name}: a sleeping ${species}'s clearing, seed ${seed}, the composer's dance way with its witch-house ostinato`, ...r.marks]);
 }
 await browser.close();
 ok(errors.length === 0, `no script errors${errors.length ? ": " + errors.join(" | ") : ""}`);

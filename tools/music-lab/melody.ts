@@ -5,7 +5,7 @@
 import { Music } from "../../src/platform/audio/music";
 import { MusicEngine } from "../../src/platform/audio/musicEngine";
 import { TUNING } from "../../src/rules/tuning";
-import { mixAt } from "../../src/rules/music";
+import { mixAt, nearness } from "../../src/rules/music";
 import { newBeatClock, timeAt } from "../../src/rules/beat";
 import { Conductor, type MusicCue } from "../../src/rules/musicPlan";
 import { nightStyle, planNight } from "../../src/rules/musicSet";
@@ -38,7 +38,7 @@ function frames(oc: OfflineAudioContext, seconds: number, each: (t: number) => v
   for (const [k, fs] of at) void oc.suspend(k / RATE).then(() => { for (const f of fs) f(); return oc.resume(); });
 }
 
-interface W { sectionRender: typeof sectionRender; nightRender: typeof nightRender }
+interface W { sectionRender: typeof sectionRender; nightRender: typeof nightRender; clearingRender: typeof clearingRender }
 const mmss = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toFixed(1).padStart(4, "0")}`;
 
 /** `bars` bars of `section` on wave `wave`'s step from the form's top (A, then B...), the melodies by `melody` ("old" or "new"),
@@ -86,4 +86,20 @@ async function nightRender(o: { island: string; waves: number; seed: number; bar
   return result(await oc.startRendering(), { marks: marks.map(x => `${mmss(x.at).padStart(7)}  ${x.what}`) });
 }
 
-Object.assign(window as unknown as W, { sectionRender, nightRender });
+/** A legend's clearing as she walks in (3 s of wave 1's music nearby, then `inside` s in the clearing, the world slowing to a
+ *  tenth, then out), as haunted.ts renders it, the dance way's witch-house ostinato forced on (its `ostinato` chance 1) on its
+ *  witch-house lead. */
+async function clearingRender(o: { species: string; seed: number; inside: number; samples: Record<string, string> }) {
+  const d = withMelody(base, "dance"), style: MusicStyle = { ...d, compose: { ...d.compose!, dance: { ...d.compose!.dance!, ostinato: 1 } } };
+  const BEFORE = 3, OUT = BEFORE + o.inside, SECONDS = OUT + 4, M = TUNING.music, clock = newBeatClock(style.bpm);
+  const oc = new OfflineAudioContext(2, Math.ceil(SECONDS * RATE), RATE), recs = await decode(oc, o.samples);
+  const m = new Music(oc, M.volume * 0.8, style, o.seed);
+  m.engine!.setRecordings(recs);
+  const cue: MusicCue = { waves: [0], nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, forceWave: 1 };
+  const mix = mixAt(M, nearness(M, 40), 0, 40), scale = (t: number) => t < BEFORE ? 1 : t < OUT ? Math.max(0.1, 1 - 0.9 * (t - BEFORE) / 0.5) : Math.min(1, 0.1 + 0.9 * (t - OUT) / 0.5);
+  let game = 0;
+  frames(oc, SECONDS, t => { const k = scale(t), g = game; game += k * FRAME; m.update(mix, { ...cue, circle: t >= BEFORE && t < OUT ? { species: o.species, level: M.circle.level } : undefined }, g, clock, true, M, k); });
+  return result(await oc.startRendering(), { marks: [`${mmss(0).padStart(7)}  wave 1's music nearby`, `${mmss(BEFORE).padStart(7)}  into the ${o.species}'s clearing: the world slows, the layer plays the witch-house ostinato (on ${style.compose!.dance!.leads.clearing.join(", ")}, one by the species)`, `${mmss(OUT).padStart(7)}  out of the clearing`] });
+}
+
+Object.assign(window as unknown as W, { sectionRender, nightRender, clearingRender });

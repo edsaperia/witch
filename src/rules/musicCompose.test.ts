@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
 import { nightStyle, planNight } from "./musicSet";
 import { bassBar, composeLine, LEAP, ostinatoMotif, type BassRule, type LineSlot, type RiffKind } from "./musicCompose";
-import { composedMotif, composeOn, melodyMode, degreeToMidi, formChord, formPhrase, hauntedBar, hauntedPhrase, hookPhrase, notesAt, resolveSection, riffFor, riffKind, riffPhrase, withMelody, type BlockPlan, type MusicStyle, type NoteEvent, type PhraseNote } from "./musicScore";
+import { checkStyle, composedMotif, composeOn, melodyMode, riffLead, degreeToMidi, formChord, formPhrase, hauntedBar, hauntedPhrase, hookPhrase, notesAt, resolveSection, riffFor, riffKind, riffPhrase, withMelody, type BlockPlan, type MusicStyle, type NoteEvent, type PhraseNote } from "./musicScore";
 
 const style = styleJson as unknown as MusicStyle, F = style.form!, C = style.compose!, old = withMelody(style, "old"), lyrical = withMelody(style, "lyrical");
 const P = F.phraseBars * 16, mod7 = (d: number) => ((d % 7) + 7) % 7;
@@ -373,5 +373,47 @@ describe("the dance way's basslines by family, in a night", () => {
       for (const st of [withMelody(night, "lyrical"), withMelody(night, "old")]) expect(play(st, section, w, seed, 0, 8).some(e => e.glide)).toBe(false);
     }
     expect(found).toBeGreaterThan(0);
+  });
+});
+
+describe("the dance way's leads (Ed, 2026-11-09: \"Lead sounds could be better; add in some more, inspired by the genres\")", () => {
+  const D = C.dance!;
+  it("names only melodic parts on patches the style has, for every riff kind, and the style checks them", () => {
+    for (const p of [...Object.values(D.leads.kinds), ...Object.values(D.leads.families)].flat()) {
+      expect(style.parts[p]?.role, p).toBe("motif");
+      expect(style.patches[style.parts[p].patch], p).toBeDefined();
+    }
+    for (const p of D.leads.clearing) expect(style.patches[p], p).toBeDefined();
+    expect(checkStyle(style)).toEqual([]);
+    const bad = { ...style, compose: { ...C, dance: { ...D, leads: { ...D.leads, kinds: { ...D.leads.kinds, trance: ["nope"] }, clearing: ["nada"] } } } } as MusicStyle;
+    expect(checkStyle(bad)).toEqual(expect.arrayContaining(['compose.dance.leads: no melodic part "nope"', 'compose.dance.leads.clearing: no patch "nada"']));
+    // (new patches only: twelve, none a sample)
+    const added = ["trSaw", "trPluck", "trStab", "rhodes", "lofiKeys", "breathFlute", "darkSaw", "musicBox", "lowChoir", "pwmArp", "fmBell", "airyVox"];
+    for (const p of added) { expect(style.patches[p], p).toBeDefined(); expect(style.patches[p].kind).not.toBe("sample"); expect(style.patches[p].unison ?? 1).toBeLessThanOrEqual(5); }
+  });
+
+  it("deals a wave's lead by its family, else its riff kind, by its seed", () => {
+    for (let seed = 0; seed < 50; seed++) {
+      expect(D.leads.kinds.trance).toContain(riffLead(C, "trance", undefined, seed));
+      expect(D.leads.families.coven).toContain(riffLead(C, "chop", "coven", seed));
+      expect(riffLead(C, "poly", "nightdrive", seed)).toBe(riffLead(C, "poly", undefined, seed)); // (a family without its own list: the kind's)
+    }
+    expect(new Set(Array.from({ length: 50 }, (_, s) => riffLead(C, "chop", undefined, s))).size).toBe(D.leads.kinds.chop.length);
+  });
+
+  it("plays the riff on that lead in the game; the lyrical and old ways keep their instruments", () => {
+    const melodic = (st: MusicStyle) => new Set(play(st, "deep", 1, 7, 0, 8).filter(e => st.parts[e.part]?.role === "motif").map(e => e.part));
+    const kind = riffKind(C, undefined, "deep", 7);
+    expect([...melodic(style)]).toEqual([riffLead(C, kind, undefined, 7)]);
+    for (const st of [lyrical, old]) for (const p of melodic(st)) expect(p.startsWith("ld"), p).toBe(false);
+  });
+
+  it("plays a clearing's ostinato on a witch-house lead", () => {
+    const always = { ...style, compose: { ...C, dance: { ...D, ostinato: 1 } } } as MusicStyle;
+    const ev = Array.from({ length: 256 }, (_, i) => notesAt(always, { section: "deep", start: 0, bars: 16, wave: 1, arc: 1 }, null, i, { seed: 7, siege: 0, circle: { species: "owl", level: 1 } })).flat().filter(e => e.layer === "circle" && style.parts[e.part]?.role === "motif");
+    expect(ev.length).toBeGreaterThan(0);
+    for (const e of ev) expect(D.leads.clearing).toContain(e.patch);
+    const none = Array.from({ length: 256 }, (_, i) => notesAt(lyrical, { section: "deep", start: 0, bars: 16, wave: 1, arc: 1 }, null, i, { seed: 7, siege: 0, circle: { species: "owl", level: 1 } })).flat().filter(e => e.layer === "circle");
+    for (const e of none) expect(D.leads.clearing).not.toContain(e.patch); // (the lyrical way: the clearing's own instruments)
   });
 });

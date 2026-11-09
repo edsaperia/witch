@@ -42,6 +42,10 @@ export type RiffKind = "trance" | "pedal" | "poly" | "chop" | "ostinato";
 export interface DanceDef {
   /** The riff kinds a night's family deals from (`families`), else its section's (`sections`, by name), else `default`. */
   riffs: { default: RiffKind[]; families: Record<string, RiffKind[]>; sections: Record<string, RiffKind[]> };
+  /** The instruments the riffs play on (Ed, 2026-11-09: "Lead sounds could be better; add in some more, inspired by the
+   *  genres"): lead parts by riff kind (`kinds`), a night's family's list over its kind's (`families`), dealt by the wave's
+   *  seed; and the patches a clearing's ostinato plays on (`clearing`). */
+  leads: { kinds: Record<RiffKind, string[]>; families: Record<string, string[]>; clearing: string[] };
   /** The chance a wave's singer sings a short repeated high hook (pentatonic, a bar long, with rests) instead of the long line. */
   hook: number;
   /** A chopped riff's lay-back: how late its notes fall, a share of a sixteenth. */

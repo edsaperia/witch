@@ -170,7 +170,9 @@ describe("music score", () => {
     const plan: BlockPlan = { section: "whisper", start: 0, bars: 8, wave: 1, arc: 1 };
     const notes = (party: number) => Array.from({ length: 16 }, (_, s) => notesAt(style, plan, null, s, { seed: 1, siege: 0, party })).flat();
     const own = new Set(notes(0).map(e => e.part)), added = new Set(notes(1).map(e => e.part));
-    for (const p of Object.keys(style.party ?? {})) if (!own.has(p)) expect(added.has(p)).toBe(true);
+    // (a melodic party part raises the form's melody rather than playing its own: its notes are the melody's instrument's, the
+    // dance way's riff lead since Ed's "add in some more" leads, 2026-11-09)
+    for (const p of Object.keys(style.party ?? {})) if (!own.has(p) && style.parts[p]?.role !== "motif") expect(added.has(p)).toBe(true);
     for (const p of own) expect(notes(1).filter(e => e.part === p).length).toBe(notes(0).filter(e => e.part === p).length);
     // quieter the further it is
     const vel = (party: number) => notes(party).filter(e => !own.has(e.part)).reduce((a, e) => a + e.vel, 0);

@@ -114,6 +114,14 @@ The audio output's buffer by latencyHint: For each hint, makes an AudioContext i
 node tools/music-lab/latency.cjs            (HINTS=interactive,balanced,playback,0.06,0.12  LOAD=60  SECS=8)
 ```
 
+## `leads.mjs`
+
+The dance way's leads auditioned: node tools/music-lab/leads.mjs <out dir> [kind: trance] [seed: 7].
+
+## `leads.ts`
+
+The dance way's leads auditioned: each lead part plays the same 8-bar riff over the same chords, drums and bass, rendered offline by the game's engine; and each alone, its loudness measured, to balance the leads against each other and the old ones.
+
 ## `melody.mjs`
 
 The composer's A/B: node tools/music-lab/melody.mjs <out dir> [sections|night|all] [seed...] Renders tools/music-lab/melody.ts offline in headless Chromium with the game's singer and writes mp3s and a.txt of where things start to <out dir>, each passage by…

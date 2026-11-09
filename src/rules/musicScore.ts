@@ -475,6 +475,13 @@ export function riffKind(C: ComposeDef, family: string | undefined, section: str
   const D = C.dance!, kinds = (family && D.riffs.families[family]) || D.riffs.sections[section] || D.riffs.default;
   return pick(kinds, hash2(seed, 491, 17));
 }
+/** The part a wave's riff plays on (the dance way's leads): its night's family's list, else its kind's, dealt by its seed. */
+export function riffLead(C: ComposeDef, kind: RiffKind, family: string | undefined, seed: number): string | undefined {
+  const L = C.dance!.leads, list = (family && L.families[family]) || L.kinds[kind];
+  return list?.length ? pick(list, hash2(seed, 503, 19)) : undefined;
+}
+/** Whether a clearing's layer plays the witch-house ostinato for this seed and arc step (the dance way's `ostinato`). */
+const clearingOstinato = (D: ComposeDef | null, seed: number, arc: number): boolean => !!D && hash2(seed, arc, 497) < D.dance!.ostinato;
 const riffCache = new Map<string, Riff>();
 /** A wave's riff of a kind: its rhythm and arrangement the wave's seed's, its pitch cell `cellSeed`'s (the night's, in a haunted
  *  section's sung letters: the breakdown's slow hook and the drop's riff one tune). */
@@ -555,7 +562,7 @@ export function composedMotif(C: ComposeDef, seed: number, arc: number, part: st
 
 const motifCache = new Map<string, number[]>();
 function motifFor(style: MusicStyle, seed: number, arc: number, part: string, own = false): number[] {
-  const C = composeOn(style), D = danceOn(style), ost = !!D && own && hash2(seed, arc, 497) < D.dance!.ostinato;
+  const C = composeOn(style), ost = own && clearingOstinato(danceOn(style), seed, arc);
   const k = `${seed}|${arc}|${part}|${C ? "c" : ""}${ost ? "o" : ""}`;
   let m = motifCache.get(k);
   if (!m) { if (motifCache.size > 256) motifCache.clear(); motifCache.set(k, m = ost ? ostinatoMotif(x => hash2(seed + x * 7919, arc, 499)) : C ? composedMotif(C, seed, arc, part) : motif(seed, arc, part)); }
@@ -940,12 +947,13 @@ let lastPhrase: { style: MusicStyle; seed: number; letter: string; hook: number 
 export const musicSeed = (base: number, n: number): number => n <= 0 ? base : Math.floor(hash2(base, 433 + n, n * 7919) * 0x7fffffff);
 
 /** The form's note (if one starts) on the form's sixteenth `formStep`: its part, patch and MIDI note, and its length. */
-export function formNoteAt(style: MusicStyle, seed: number, formStep: number, transpose = 0, step?: Pick<ArcStep, "lead" | "vocal" | "scale">, opts?: { voice?: boolean; hookSeed?: number; haunted?: boolean; riff?: RiffKind }): { part: string; patch: string; midi: number; deg: number; dur: number; off: number; letter: string; cad?: true } | null {
+export function formNoteAt(style: MusicStyle, seed: number, formStep: number, transpose = 0, step?: Pick<ArcStep, "lead" | "vocal" | "scale">, opts?: { voice?: boolean; hookSeed?: number; haunted?: boolean; riff?: RiffKind; lead?: string }): { part: string; patch: string; midi: number; deg: number; dur: number; off: number; letter: string; cad?: true } | null {
   const F = style.form!, fs = mod(formStep, formBars(F) * 16), letter = F.order[Math.floor(fs / (F.phraseBars * 16))];
   // (a night's set: the step's own instrument for A, its own singer, or none, the A instrument playing them too; since Ed's
   // singer review, 2026-10-14, the voice sings only where `opts.voice` says (the breakdowns and the build: sungHere), and in
   // the build it sings A too; the instrument plays the rest)
-  const lead = step?.lead && style.parts[step.lead] ? step.lead : formInstrument(F, seed), voice = step?.vocal ?? F.sung.patch;
+  // (the dance way's riff on its own lead, Ed 2026-11-09: "Lead sounds could be better; add in some more, inspired by the genres")
+  const lead = opts?.riff && opts.lead && style.parts[opts.lead] && danceOn(style) ? opts.lead : step?.lead && style.parts[step.lead] ? step.lead : formInstrument(F, seed), voice = step?.vocal ?? F.sung.patch;
   const sung = (opts?.voice ?? letter !== "A") && voice !== "none" && !!style.patches[voice], part = sung ? F.sung.part : lead, def = style.parts[part];
   // the phrase: the dance way (Ed, 2026-11-08: "not very dancey") the instrument's riff, the voice's short hook now and then, a
   // haunted breakdown's slow hook on the riff's cell; else the composer's planned phrase, or the old walk
@@ -1143,7 +1151,9 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     const r = hash2(own && ctx.circleStep !== undefined ? ctx.circleStep : step, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), seed + phrase * 7919);
     if (ch === "?" && r >= a.energy) continue;
     const level = u.level * scaleLevel * (0.94 + 0.06 * r) * (building && !own ? 0.45 + 0.55 * build : 1); // (the boot's few speakers quieter, filling out to the twelfth)
-    const patch = a.bass && def.role === "bass" && sec.parts[name] && !own && style.patches[a.bass] ? a.bass : def.patch; // (a night's set: the step's bass patch on the section's own bass parts)
+    // (a night's set: the step's bass patch on the section's own bass parts; the dance way's clearing ostinato on a witch-house lead)
+    const ostPatch = own && def.role === "motif" && dance && clearingOstinato(dance, seed + phrase * 104729, plan.arc) ? pick(dance.dance!.leads.clearing, hash2(sh, 509, 3)) : undefined;
+    const patch = ostPatch && style.patches[ostPatch] ? ostPatch : a.bass && def.role === "bass" && sec.parts[name] && !own && style.patches[a.bass] ? a.bass : def.patch;
     const base = { part: name, patch, step: own && ctx.circleStep !== undefined ? ctx.circleStep : step, offset: 0, dur, ...(own ? { layer: "circle" as const } : {}), ...(hook ? { hook } : {}) };
     if (def.role === "drum") {
       if (ch === "r") { out.push({ ...base, dur: 0.5, midi: null, vel: 0.6 * level }, { ...base, offset: 0.5, dur: 0.5, midi: null, vel: 0.75 * level }); continue; }
@@ -1209,8 +1219,8 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     } else {
       // (the dance way: the wave's riff kind; in a haunted section the voice's slow hook, then from the drop the instrument
       // playing it as the riff: the anthem's trick)
-      const riff = dance ? riffKind(dance, a.family, plan.section, ctx.seed) : undefined;
-      const fn = formNoteAt(style, ctx.seed, formBar * 16 + s, transpose, a, { voice: place !== null && !(dance && dropped), hookSeed: nightSeed, haunted: haunt, riff });
+      const riff = dance ? riffKind(dance, a.family, plan.section, ctx.seed) : undefined, lead = riff ? riffLead(dance!, riff, a.family, ctx.seed) : undefined;
+      const fn = formNoteAt(style, ctx.seed, formBar * 16 + s, transpose, a, { voice: place !== null && !(dance && dropped), hookSeed: nightSeed, haunted: haunt, riff, lead });
       const tint = fn && haunt ? hauntedColour(style, scale, fn.deg, !!fn.cad, hash2(ctx.seed, formBar * 16 + s, 467)) : 0; // (the scale's colour: Ed, 2026-11-08)
       if (fn && fn.part === form.sung.part) sing(fn.deg, fn.dur, fn.off, fn.off ? 0.78 * melody : vel, tint);
       else if (fn) out.push({ part: fn.part, patch: fn.patch, step, offset: fn.off, dur: fn.dur, midi: fn.midi + tint, vel: fn.off ? 0.78 * melody : vel, ...(fn.dur % 1 ? { straight: true } : {}) });
@@ -1274,6 +1284,18 @@ export function checkStyle(style: MusicStyle): string[] {
       else if (!tripletsWhole(c)) errs.push(`form: cell ${k} "${c}": a triplet without its _s`);
     }
     for (const c of Object.values(F.cadence).flat()) if (!c.endsWith(".")) errs.push(`form: cadence "${c}" doesn't end on a rest`);
+  }
+  const D = style.compose?.dance;
+  if (D) {
+    const KINDS = ["trance", "pedal", "poly", "chop", "ostinato"];
+    for (const ks of [D.riffs.default, ...Object.values(D.riffs.families), ...Object.values(D.riffs.sections)]) for (const k of ks) if (!KINDS.includes(k)) errs.push(`compose.dance: no riff kind "${k}"`);
+    for (const f of Object.keys(D.riffs.families)) if (style.families && !style.families[f]) errs.push(`compose.dance.riffs: no family "${f}"`);
+    for (const n of Object.keys(D.riffs.sections)) if (!style.sections[n]) errs.push(`compose.dance.riffs: no section "${n}"`);
+    for (const k of KINDS) if (!D.leads.kinds[k as RiffKind]?.length) errs.push(`compose.dance.leads: no leads for "${k}"`);
+    for (const p of [...Object.values(D.leads.kinds), ...Object.values(D.leads.families)].flat()) if (!style.parts[p] || style.parts[p].role !== "motif") errs.push(`compose.dance.leads: no melodic part "${p}"`);
+    for (const f of Object.keys(D.leads.families)) if (style.families && !style.families[f]) errs.push(`compose.dance.leads: no family "${f}"`);
+    for (const p of D.leads.clearing) if (!style.patches[p]) errs.push(`compose.dance.leads.clearing: no patch "${p}"`);
+    for (const [f, rules] of Object.entries(D.bass)) { if (style.families && !style.families[f]) errs.push(`compose.dance.bass: no family "${f}"`); for (const p of Object.keys(rules)) if (style.parts[p]?.role !== "bass") errs.push(`compose.dance.bass.${f}: no bass part "${p}"`); }
   }
   const H = style.haunted;
   if (H) {
