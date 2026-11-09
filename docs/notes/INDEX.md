@@ -413,6 +413,7 @@ says what each note covers.
 - Party objects
 - Attack effects
 - Attack look
+- Spell glow
 - Colour temperatures
 - Path kinds
 - Path looks

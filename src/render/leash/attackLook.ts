@@ -24,6 +24,7 @@ import { indexedTexture } from "../atlas";
 import { fxFor, type MagicFx } from "../fx/system";
 import { FORM_KEYS, elements as FX_ELEMENTS, fxElement } from "../fx/model";
 import { TUNING } from "../../rules/tuning";
+import { SPELL_GLOW, glowLook, type GlowLook, type GlowTuning } from "../fx/spellGlow";
 
 type RGB = [number, number, number];
 /** The danger frame's red (Ed, 2026-11-02: "the telegraph should be red"; art/attackLook.js RED). */
@@ -61,7 +62,7 @@ export interface TelegraphShape { type?: string; x: number; z: number; x2?: numb
 /** A live telegraph (the grammar's s.telegraphs): its kind, its shape, when it began and when it fires; n, a countdown's pips. */
 export interface LiveTelegraph { kind: string; shape: TelegraphShape; start: number; fire: number; n?: number }
 
-interface LookFx { kind: "impact" | "mark" | "area"; d: Dress; x: number; y: number; z: number; at: number; life: number; seed: number; size: number }
+interface LookFx { kind: "impact" | "mark" | "area" | "blow"; d: Dress; x: number; y: number; z: number; at: number; life: number; seed: number; size: number }
 
 /** The species the showcase flies (?lookdemo=species): one of each look, and the new elements. */
 const DEMO_SPECIES = ["squirrel", "marten", "beaver", "otter", "raccoon", "owl", "raven", "polarbear", "heron", "scorpion", "stegosaurus", "armadillo", "redpanda", "beetle", "fennec", "griffin"];
@@ -84,6 +85,9 @@ export class AttackLook {
   readonly cfg = ATTACK_LOOK;
   /** this frame's attackFx.visibility (begin) */
   vis: Visibility = TUNING.attackFx?.visibility ?? OLD_VISIBILITY;
+  /** this frame's spell glow (render/fx/spellGlow.ts; Ed, 2026-11-09: "The animal magic effects need to glow"): the tuning's
+   *  attackFx.glow after ?spellglow and Reduce flashing; null, none (the spells as before). */
+  spellGlow: GlowLook | null = null;
 
   constructor(scene: THREE.Scene, game: Game) {
     this.magic = fxFor(scene);
@@ -107,7 +111,10 @@ export class AttackLook {
 
   /** Another night: the effects in flight forgotten. */
   reset(): void { this.fx = []; this.shots.clear(); }
-  begin(vis: Visibility = this.vis): void { this.vis = vis; for (const L of this.layers()) L.begin(); }
+  begin(vis: Visibility = this.vis, glow: GlowTuning | undefined = TUNING.attackFx?.glow): void {
+    this.vis = vis; this.spellGlow = glowLook(glow, SPELL_GLOW.on && this.magic.enabled, comfort.reduceFlashing);
+    for (const L of this.layers()) L.begin();
+  }
   /** A part's own opacity a, raised toward solid by the visibility's opacity. */
   lift(a: number): number { const o = clamp01(this.vis.opacity); return a + (1 - a) * o; }
   /** The magic's element for a dress (its own colours if it has some: Dress.fx). */
@@ -131,7 +138,7 @@ export class AttackLook {
    *  the old look). flat: on the ground. */
   private bloomAt(d: Dress, tint: RGB | null, x: number, y: number, z: number, size: number, a: number, flat = false): void {
     const extra = (this.vis.bloom - 1) * a * (comfort.reduceFlashing ? 0.5 : 1);
-    if (!this.magic.enabled || extra <= 0.01) return;
+    if (!this.magic.enabled || extra <= 0.01 || this.spellGlow) return; // (the spell glow's dithered halo in its place)
     const c = this.glowOf(d, tint);
     (flat ? this.glowFlat : this.glow).add(x, y, z, size, this.uv("dot"), c[0], c[1], c[2], Math.min(1.5, extra), 1, true);
   }
@@ -176,7 +183,7 @@ export class AttackLook {
   /** What flies: its core (in its frame), a halo of its light, and its trail behind it along -v (seconds of flight back). */
   core(d: Dress, x: number, y: number, z: number, vx: number, vy: number, vz: number, time: number, seed: number): void {
     const V = this.vis, mt = this.fxTint(d, seed, time);
-    this.magic.draw(this.fxEl(d), vy > 1 ? "lob" : "projectile", x, y, z, d.level, V.size, this.lift(d.look ? 0.45 : 1), 0, seed, mt, undefined, V.bloom);
+    this.magic.draw(this.fxEl(d), vy > 1 ? "lob" : "projectile", x, y, z, d.level, V.size, this.lift(d.look ? 0.45 : 1), 0, seed, mt, undefined, V.bloom, this.spellGlow);
     const P = this.colours(d), legend = d.level >= 3, pw = spellPower(d.level), f = Math.floor(time * 12 + seed) % 4, t = this.tinted(d);
     this.bloomAt(d, mt, x, y, z, 1.6 * pw * V.size, 0.4);
     if (!this.magic.enabled) this.glow.add(x, y, z, 1.5 * pw, this.uv("dot"), P[1][0], P[1][1], P[1][2], 0.5);
@@ -197,7 +204,7 @@ export class AttackLook {
   /** Bits left along its way, each born at a moment of its flight (whole steps of time, so they stay put as it flies on) and
    *  drifting its element's way: embers rise, drips fall, sparkles wink, smoke grows. */
   trail(d: Dress, x: number, y: number, z: number, vx: number, vy: number, vz: number, time: number, seed: number): void {
-    if(this.magic.enabled){const V=this.vis;this.magic.ribbon(this.fxEl(d),x,y,z,vx,vy,vz,d.level,seed,this.fxTint(d,seed,time),undefined,{width:V.size,alpha:this.lift(0.6),life:V.duration,glow:V.bloom});return;}
+    if(this.magic.enabled){const V=this.vis;this.magic.ribbon(this.fxEl(d),x,y,z,vx,vy,vz,d.level,seed,this.fxTint(d,seed,time),undefined,{width:V.size,alpha:this.lift(0.6),life:V.duration,glow:V.bloom},this.spellGlow);return;}
     const e = this.el(d), P = this.colours(d), n = Math.round(this.cfg.particles.trail * spellPower(d.level) * 0.35), dt = 1 / this.cfg.particles.trail, life = n * dt;
     const now = Math.floor(time / dt), solid = this.solid(d), t = this.tinted(d);
     for (let i = 1; i <= n; i++) {
@@ -219,7 +226,7 @@ export class AttackLook {
   /** A hit, k 0 (the moment) to 1 (gone): a flash, a shock ring in its colours, its bits flying its element's way, a glow. */
   impact(d: Dress, x: number, y: number, z: number, k: number, seed: number, size = 1): void {
     const V = this.vis, mt = this.fxTint(d, seed);
-    this.magic.draw(this.fxEl(d), d.level >= 3 ? "eruption" : "burst", x, y, z, d.level, size * V.size, Math.min(1, k * 8, (1-k)*2), k, seed, mt, undefined, V.bloom);
+    this.magic.draw(this.fxEl(d), d.level >= 3 ? "eruption" : "burst", x, y, z, d.level, size * V.size, Math.min(1, k * 8, (1-k)*2), k, seed, mt, undefined, V.bloom, this.spellGlow);
     // (with the new layers on, the old flash, shock rings and bits stay off: Ed, 2026-11-03, "Don't bring back the flash and rings yet")
     if(this.magic.enabled){this.bloomAt(d, mt, x, y, z, 3.2 * spellPower(d.level) * size * V.size * (0.6 + k), 0.6 * (1 - k) * (1 - k));return;}
     const e = this.el(d), P = this.colours(d), pw = spellPower(d.level) * size, solid = this.solid(d), t = this.tinted(d);
@@ -294,8 +301,9 @@ export class AttackLook {
     if (el === "rainbow" && !d.tint) {
       const n = RAINBOW.length, band = W / n;
       // (yellow drawn last: the bands share their lights' slots, so the beam lights the ground in its middle colour)
-      for (const i of [0, 1, 3, 4, 5, 2]) { const o = (i - (n - 1) / 2) * band; this.magic.beam(el, x0 + nx * o, z0 + nz * o, x1 + nx * o, z1 + nz * o, y, band * 1.6, d.level, a, seed, RAINBOW[i], undefined, V.bloom); }
-    } else this.magic.beam(el, x0, z0, x1, z1, y, W, d.level, a, seed, d.tint ?? null, undefined, V.bloom);
+      // (its glow along its yellow middle alone: one pool and its lights, not six)
+      for (const i of [0, 1, 3, 4, 5, 2]) { const o = (i - (n - 1) / 2) * band; this.magic.beam(el, x0 + nx * o, z0 + nz * o, x1 + nx * o, z1 + nz * o, y, band * 1.6, d.level, a, seed, RAINBOW[i], undefined, V.bloom, i === 2 ? this.spellGlow : null); }
+    } else this.magic.beam(el, x0, z0, x1, z1, y, W, d.level, a, seed, d.tint ?? null, undefined, V.bloom, this.spellGlow);
     const step = Math.max(1.2, W * 1.5), mt = this.fxTint(d, seed, time);
     for (let s = step / 2, j = 0; s < L; s += step, j++) this.bloomAt(d, el === "rainbow" && !d.tint ? RAINBOW[j % RAINBOW.length] : mt, x0 + (dx * s) / L, y, z0 + (dz * s) / L, W * 2, 0.22 * fade);
   }
@@ -305,7 +313,7 @@ export class AttackLook {
   area(d: Dress, x: number, z: number, R: number, k: number, seed: number): void {
     const V = this.vis, mt = this.fxTint(d, seed), env = Math.min(1, k * 8, (1 - k) * 3);
     // (its ground spreads a little past its true reach as it's made bigger: 40% of the extra; the telegraph showed the reach)
-    this.magic.draw(this.fxEl(d), "zone", x, 0, z, d.level, R * (1 + (V.size - 1) * 0.4), env, k, seed, mt, undefined, V.bloom);
+    this.magic.draw(this.fxEl(d), "zone", x, 0, z, d.level, R * (1 + (V.size - 1) * 0.4), env, k, seed, mt, undefined, V.bloom, this.spellGlow);
     if(this.magic.enabled){this.bloomAt(d, mt, x, 0, z, R * 2.2 * Math.min(1, Math.sqrt(k * 2.2)), 0.35 * env, true);return;}
     const P = this.colours(d), t = this.tinted(d), front = R * Math.min(1, Math.sqrt(k * 2.2)), fade = k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4, m = this.el(d).area, lit = m === "halo" || m === "rime" || m === "flowers";
     const n = Math.min(70, Math.round(R * R * 0.9) + 6);
@@ -340,6 +348,11 @@ export class AttackLook {
     this.fx.push({ kind: "impact", d, x, y, z, at: time, life: 0.75 * D, seed, size });
     this.fx.push({ kind: "mark", d, x, y: 0, z, at: time, life: 2.6 * D, seed, size });
   }
+  /** A legend's blow landing (leash/combat.ts, a hit by a legend): its glow alone, in its element, for a moment (none without the
+   *  spell glow: the blow's white star and shockwave are its own). */
+  blow(d: Dress, x: number, y: number, z: number, time: number, seed: number): void {
+    if (this.spellGlow) this.fx.push({ kind: "blow", d, x, y, z, at: time, life: 0.55 * this.vis.duration, seed, size: 1 });
+  }
   /** A quake's or pulse's ground spreading out to R. */
   burst(d: Dress, x: number, z: number, R: number, time: number, seed: number): void {
     const D = this.vis.duration;
@@ -354,6 +367,7 @@ export class AttackLook {
       const k = clamp01((time - f.at) / f.life);
       if (f.kind === "impact") this.impact(f.d, f.x, f.y, f.z, k, f.seed, f.size);
       else if (f.kind === "mark") this.mark(f.d, f.x, f.z, k * k, f.size);
+      else if (f.kind === "blow") { if (this.spellGlow) this.magic.glowBurst(this.fxEl(f.d), f.x, f.y, f.z, 1.4 * this.vis.size * (1 + k * 0.6), f.d.level, Math.min(1, k * 10) * (1 - k) * (1 - k), f.seed, this.fxTint(f.d, f.seed), this.spellGlow); }
       else this.area(f.d, f.x, f.z, f.size, k, f.seed);
     }
   }
@@ -481,12 +495,14 @@ export class AttackLook {
     for (let i = 0; i < n; i++) {
       const q = Math.sqrt(hash2(seed, i, 31)) * r, a = hash2(seed, i, 37) * TAU, X = x + Math.cos(a) * q, Z = z + Math.sin(a) * q;
       if (!inside(X, Z)) continue;
-      if (i % every === 0) this.magic.draw(this.fxEl(d), "trap", X, 0, Z, d.level, 0.6 * V.size, ta, k, seed+i, mt, undefined, V.bloom);
+      // (glowing: its tiles lit by the zone's one pool and light, below, not one each)
+      if (i % every === 0) this.magic.draw(this.fxEl(d), "trap", X, 0, Z, d.level, 0.6 * V.size, ta, k, seed+i, mt, undefined, V.bloom, null, !this.spellGlow);
       if(this.magic.enabled)continue;
       this.put(lit ? this.glowFlat : this.paintFlat, this.name(d, `area.${i % 2}`), X, 0.02, Z, 1, fade * 0.85, t);
       if (i % 5 === 0) { const ph = (time * 0.7 + hash2(seed, i, 41)) % 1; this.put(this.solid(d) ? this.paint : this.glow, this.name(d, `bit.0.${Math.floor(time * 6 + i) % 2}`), X, 0.1 + ph * 0.8, Z, 1, fade * (1 - ph), t); }
     }
     if(!this.magic.enabled)this.glowFlat.add(x, 0, z, r * 2, this.uv("dot"), P[1][0], P[1][1], P[1][2], 0.18 * fade);
+    else if(this.spellGlow)this.magic.glowPool(this.fxEl(d), x, z, r * 2.3, d.level, ta * 0.75, seed, mt, this.spellGlow);
     else this.bloomAt(d, mt, x, 0, z, r * 2, 0.2 * fade, true);
   }
 

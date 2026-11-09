@@ -2170,6 +2170,10 @@ Code: `render/attackFeel.ts`
   1. Ed, 2026-11-03: "Let's dial up current creature spell effects a lot so they're easier to see. Larger, extra Bloom. Don't bring back the flash and rings yet." (size 1.75, opacity 0.9, bloom 2, duration 1.5, zoneDensity 0.5, groundMark 0.45; the pause page's Creature spells sliders (config/decisions))
   size: every creature spell's size times this (bolts and lobs, their trails, hits, ground marks, beams' width, status icons, pack specials; a quake's or pulse's ground spreads a little past its true reach, 40% of the extra). opacity: how far each spell's own opacity is raised toward solid (0: as it was; 1: all solid), so a themed shot's 0.45 goes to 0.95 and a beam's 0.65 to 0.97. bloom: its halo, the halo seen through the crowns, its glow on the ground and the extra glow round bolts, hits, beams and zones, times their own (lights by half as much, at most 1.5 times). duration: hits, marks, quakes and trails last this many times as long. zoneDensity: the share of a lingering zone's tiles drawn (0.25 was every fourth; 1 every one). groundMark: how opaque a hit's mark on the ground starts (it was 0.12).
   Code: `render/leash/attackLook.ts`, `render/fx/system.ts`
+- **`attackFx.glow`**: How the creatures' spells glow: a bright core the bloom picks up, a dithered pixel halo round it, a pool of its light on the ground under it, and a real light for the brightest few nearest her (core, halo, pool and light 0 draw them as before 9 November; ?spellglow=0 does too, to compare).
+  1. Ed, 2026-11-09: "The animal magic effects need to glow." (core 1, halo 1, pool 1, lights 5, light 1; the look is the magic brief's (docs/backlog/magic-effects.md §5, Ed 2026-10-28: "Pixel cores and dithered pixel halos, with a small smooth bloom over the top"; effect lights allowed, capped at about six))
+  core: how bright the glowing core added over each spell's own is, in its element's bright colour (a party animal's: its neon), enough to cross the bloom's threshold, so the bloom gives it a small smooth glow (0 none). halo: the dithered halo round bolts, hits and beams, in three art-pixel steps fading out (0 none). pool: its light's pool on the ground under every spell in flight (smaller and fainter the higher it flies, so the lit spot shows its height), at its hits and across lingering zones and quakes (0 none). lights: at most this many spells light the world around them at once (the strongest nearest her first, sharing the effects' six slots, config/fx/intensity.json lightCap, within the light budget; easing in and out, the world's farthest lights making room the same way, so none pops); 0 none. light: those lights' strength (1 as the magic layers' own). Reduce flashing (the Settings page) halves core, halo, pool and light; nothing in the glow flickers.
+  Code: `render/fx/spellGlow.ts`, `render/fx/batch.ts`, `render/fx/system.ts`, `render/leash/attackLook.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -2190,6 +2194,11 @@ Code: `render/attackFeel.ts`
 | `attackFx.visibility.duration` | number | 0.25 to 4 |
 | `attackFx.visibility.zoneDensity` | number | 0.05 to 1 |
 | `attackFx.visibility.groundMark` | number | 0 to 1 |
+| `attackFx.glow.core` | number | 0 to 4 |
+| `attackFx.glow.halo` | number | 0 to 4 |
+| `attackFx.glow.pool` | number | 0 to 4 |
+| `attackFx.glow.lights` | number | 0 to 6 |
+| `attackFx.glow.light` | number | 0 to 4 |
 
 ### `combat`
 
