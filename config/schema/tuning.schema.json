@@ -3108,6 +3108,8 @@
         "lightFloor",
         "lightTint",
         "lightRim",
+        "bedGlow",
+        "bedBloom",
         "heightSmooth",
         "heightLookAhead",
         "heightClearance"
@@ -5625,6 +5627,11 @@
           "minimum": 0,
           "maximum": 3
         },
+        "inviteReach": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 200
+        },
         "areaGrowth": {
           "type": "number",
           "minimum": 0,
@@ -5643,12 +5650,13 @@
       },
       "required": [
         "reachScale",
+        "inviteReach",
         "areaGrowth",
         "passPower",
         "passDepth"
       ],
       "additionalProperties": false,
-      "description": "Waiting movement favours room beyond default invitation reach while allowing deliberate close passes."
+      "description": "Waiting movement favours room beyond a set invitation reach (inviteReach: the default bag's old range, not the letters' live one) while allowing deliberate close passes."
     },
     "teamRounds": {
       "type": "object",

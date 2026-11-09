@@ -14,6 +14,7 @@ import { loadBroom } from "./broomSave";
 import { applyOwn } from "./finds";
 import { fittedParts } from "../rules/broomParts";
 import { bagOf } from "../rules/bags";
+import { withOldLetters } from "../rules/invites";
 import type { MusicCue } from "../rules/musicPlan";
 import { SINGERS, type MusicStyle } from "../rules/musicScore";
 import musicStyleJson from "../../config/music-style.json";
@@ -115,6 +116,10 @@ export function tuningFromLink(params: URLSearchParams) {
   const hauntedParam = params.get("haunted");
   if (hauntedParam === "0" || hauntedParam === "off") tuning.music = { ...tuning.music, haunted: false };
   else if (hauntedParam === "1" || hauntedParam === "on") tuning.music = { ...tuning.music, haunted: true };
+  // ?invites=old: the letters' old flight (31.2 m/s, 33 m, homing within 10 m) to A/B against the faster, longer ones (Ed,
+  // 2026-11-09: "it feels like animals move faster than invitations so it's hard to land a hit. And ranges feel small"); the
+  // animals' waiting distance is the same either way (combatWaiting.inviteReach). rules/invites.ts OLD_LETTERS
+  if (params.get("invites") === "old") tuning.invites = withOldLetters(tuning.invites);
   if (musicParam === "off") tuning.music = { ...tuning.music, on: false };
   let musicCueNow: MusicCue | undefined;
   {
