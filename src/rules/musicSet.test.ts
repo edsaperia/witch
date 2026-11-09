@@ -131,7 +131,7 @@ describe("a night's set", () => {
       for (const p of plans) for (let s = 0; s < 8 * 16; s++) for (const e of notesAt(st, p, null, p.start * 16 + s, { seed: 7, siege: 0 })) {
         notes++;
         if (e.part === "sung") { sung++; expect(e.patch).toBe(st.arc[w].vocal); }
-        if (st.parts[e.part]?.role === "bass" && st.arc[w].bass && !st.haunted?.drop.parts[e.part]) { bass++; /* (the haunted drop's sub its own) */ expect(e.patch).toBe(st.arc[w].bass); }
+        if (st.parts[e.part]?.role === "bass" && st.arc[w].bass && !st.haunted?.drop.parts[e.part]) { bass++; /* (the haunted drop's sub its own; the composer's rounder stand-in for the lower register, Ed 2026-11-09) */ const b = st.arc[w].bass!; expect(e.patch).toBe(st.compose?.on !== false && st.compose?.bass.patches?.[b] ? st.compose.bass.patches[b] : b); }
         expect(Number.isFinite(e.midi ?? 0)).toBe(true);
       }
       expect(notes, `wave ${w}`).toBeGreaterThan(50);

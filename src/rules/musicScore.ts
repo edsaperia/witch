@@ -1005,7 +1005,38 @@ function danceRule(base: BassRule | undefined, over: BassRule): BassRule {
 }
 
 /** The composed bass bar each part last played (asked for sixteen times a bar, worked out once): what it was worked out from. */
-const bassMemo = new Map<string, { style: MusicStyle; seed: number; bar: number; formBar: number; section: string; start: number; bars: number; arc: number; pass: number; pat: string; from: number; root: number; line: (BassNote | null)[] }>();
+const bassMemo = new Map<string, { style: MusicStyle; seed: number; bar: number; formBar: number; section: string; start: number; bars: number; arc: number; pass: number; pat: string; from: number; root: number; line: (BassNote | null)[]; midis: number[] }>();
+
+/** A composed bass part's pattern in a bar (Ed, 2026-11-09: "repetitive"): each four-bar phrase's dealt by the seed from the
+ *  section's own pool, else the pool for the wave's energy (a drop a step busier), the section's own pattern among them;
+ *  `own` (the section's) with no pools. */
+export function bassPatternName(C: ComposeDef, part: string, own: string, section: string, energy: number, bar: number, seed: number): string {
+  const P = C.bass.patterns?.[part];
+  if (!P) return own;
+  const e = energy + (/Drop$/.test(section) ? 0.2 : 0), pool = P.sections?.[section] ?? (e < 0.4 ? P.low : e < 0.7 ? P.mid : P.high);
+  return pick(pool.includes(own) ? pool : [...pool, own], hash2(seed + Math.floor(bar / 4) * 7919, 511, part.length));
+}
+
+const rootCache = new Map<string, number[]>();
+/** A composed bass part's chord root (MIDI) in form bar `formBar` within its register `R` (Ed, 2026-11-09: "too high"): each
+ *  root in the octave nearest the bar before's, within the register's lowest fifteen semitones, from the form's top (the first
+ *  nearest the middle of those); with no form (`formBar` null), `root` nearest that middle. */
+function bassRoot(style: MusicStyle, scale: number[], transpose: number, R: [number, number], seed: number, formBar: number | null, haunt: boolean, root: number): number {
+  const lo = R[0], hi = Math.min(R[1], R[0] + 15), mid = (lo + hi) / 2;
+  const place = (pc: number, near: number) => { let best = lo, bd = Infinity; for (let x = lo; x <= hi; x++) if (((x - pc) % 12 + 12) % 12 === 0 && Math.abs(x - near) < bd) { bd = Math.abs(x - near); best = x; } return best; };
+  const pcOf = (r: number) => degreeToMidi(style, scale, r, 0, transpose) % 12;
+  const F = style.form;
+  if (formBar === null || !F) return place(pcOf(root), mid);
+  const n = formBars(F), key = `${seed}|${transpose}|${scale.join()}|${lo},${hi}|${haunt ? 1 : 0}`;
+  let seq = rootCache.get(key);
+  if (!seq) {
+    if (rootCache.size > 64) rootCache.clear();
+    seq = [];
+    for (let b = 0; b < n; b++) seq.push(place(pcOf(formChord(style, seed, haunt ? hauntedBar(F, b) : b).root), b ? seq[b - 1] : mid));
+    rootCache.set(key, seq);
+  }
+  return seq[mod(formBar, n)];
+}
 
 export interface ScoreContext {
   seed: number;
@@ -1127,22 +1158,36 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     const base0 = comp && def.role === "bass" && !own && !def.tonic && u.p !== "__fill" ? comp.bass.parts[name] : undefined;
     const brule: BassRule | undefined = comp && def.role === "bass" && !own && !def.tonic && u.p !== "__fill" && (base0 || over) ? (over ? danceRule(base0, over) : base0) : undefined;
     if (brule) {
-      const from = i - (i % 16);
+      // (its pattern this four-bar phrase: Ed, 2026-11-09, "repetitive"; dealt by the seed from the pool for the wave's energy)
+      const bpat = def.patterns[bassPatternName(comp!, name, u.p, plan.section, a.energy, form ? formBar : barIn, ctx.seed)] ?? pat;
+      const bi = at % bpat.length, from = bi - (bi % 16);
       let m = bassMemo.get(name);
-      if (!m || m.style !== style || m.seed !== ctx.seed || m.bar !== bar || m.formBar !== formBar || m.section !== plan.section || m.start !== plan.start || m.bars !== plan.bars || m.arc !== plan.arc || m.pass !== pass || m.pat !== pat || m.from !== from || m.root !== chord.root) {
+      if (!m || m.style !== style || m.seed !== ctx.seed || m.bar !== bar || m.formBar !== formBar || m.section !== plan.section || m.start !== plan.start || m.bars !== plan.bars || m.arc !== plan.arc || m.pass !== pass || m.pat !== bpat || m.from !== from || m.root !== chord.root) {
         // (the next bar's chord, and the section's kick this bar)
         const next = form ? formChord(style, ctx.seed, haunt ? hauntedBar(form, formBar + 1) : formBar + 1).root : chordAt(style, sec, a, barIn + 1 + pass * Math.max(1, sec.chordBars)).root;
         const k = Object.entries(secParts).find(([n]) => style.patches[style.parts[n]?.patch ?? ""]?.kind === "kick"), kp = k && style.parts[k[0]].patterns[use(k[1]).p];
         const kick = kp ? kp.slice((barIn * 16) % kp.length, ((barIn * 16) % kp.length) + 16) : null, q = form ? mod(formBar, 4) : mod(barIn, 4), salt = name.length * 131 + name.charCodeAt(0) * 7 + q;
-        const line = bassBar(pat.slice(from, from + 16), brule, comp!.bass.approach, chord.root, next === chord.root ? null : next, kick, q, x => hash2(bar * 64 + x, salt, ctx.seed + 977));
-        bassMemo.set(name, (m = { style, seed: ctx.seed, bar, formBar, section: plan.section, start: plan.start, bars: plan.bars, arc: plan.arc, pass, pat, from, root: chord.root, line }));
+        const line = bassBar(bpat.slice(from, from + 16), brule, comp!.bass.approach, chord.root, next === chord.root ? null : next, kick, q, x => hash2(bar * 64 + x, salt, ctx.seed + 977));
+        // (its register: each chord's root in the octave nearest the last's, every note folded in; Ed, 2026-11-09, "too high"; a
+        // section's own lift, the victory's, lifting it too)
+        const lift = sec.transpose ?? 0, R0 = brule.register, R: [number, number] | undefined = R0 && [R0[0] + lift, R0[1] + lift], rootM = R ? bassRoot(style, scale, transpose, R, ctx.seed, form ? formBar : null, haunt, chord.root) : 0;
+        const nextM = R ? bassRoot(style, scale, transpose, R, ctx.seed, form ? formBar + 1 : null, haunt, next) : 0;
+        const midis = line.map(n => {
+          if (!n) return 0;
+          if (!R) return degreeToMidi(style, scale, (n.abs ? 0 : chord.root) + n.k, def.octave ?? 0, transpose);
+          let x = n.abs ? nextM + degreeToMidi(style, scale, n.k, 0, 0) - degreeToMidi(style, scale, next, 0, 0) : rootM + degreeToMidi(style, scale, chord.root + n.k, 0, 0) - degreeToMidi(style, scale, chord.root, 0, 0);
+          while (x > R[1]) x -= 12;
+          while (x < R[0]) x += 12;
+          return x;
+        });
+        bassMemo.set(name, (m = { style, seed: ctx.seed, bar, formBar, section: plan.section, start: plan.start, bars: plan.bars, arc: plan.arc, pass, pat: bpat, from, root: chord.root, line, midis }));
       }
-      const n = m.line[i % 16];
+      const n = m.line[bi % 16];
       if (!n) continue;
       const r = hash2(step, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), ctx.seed + phrase * 7919);
       const level = u.level * scaleLevel * (0.94 + 0.06 * r) * (building ? 0.45 + 0.55 * build : 1);
-      const patch = a.bass && sec.parts[name] && style.patches[a.bass] ? a.bass : def.patch;
-      out.push({ part: name, patch, step, offset: 0, dur: n.dur, ...(hook ? { hook } : {}), ...(n.glide ? { glide: n.glide } : {}), midi: degreeToMidi(style, scale, (n.abs ? 0 : chord.root) + n.k, def.octave ?? 0, transpose), vel: 0.85 * n.vel * level });
+      const patch0 = a.bass && sec.parts[name] && style.patches[a.bass] ? a.bass : def.patch, swap = comp!.bass.patches?.[patch0], patch = swap && style.patches[swap] ? swap : patch0; // (the rounder stand-in)
+      out.push({ part: name, patch, step, offset: 0, dur: n.dur, ...(hook ? { hook } : {}), ...(n.glide ? { glide: n.glide } : {}), midi: m.midis[bi % 16], vel: 0.85 * n.vel * level });
       continue;
     }
     const { ch, dur } = hitAt(pat, i);
@@ -1284,6 +1329,17 @@ export function checkStyle(style: MusicStyle): string[] {
       else if (!tripletsWhole(c)) errs.push(`form: cell ${k} "${c}": a triplet without its _s`);
     }
     for (const c of Object.values(F.cadence).flat()) if (!c.endsWith(".")) errs.push(`form: cadence "${c}" doesn't end on a rest`);
+  }
+  const CB = style.compose?.bass;
+  if (CB) {
+    for (const [part, P] of Object.entries(CB.patterns ?? {})) {
+      const def = style.parts[part];
+      if (!def) { errs.push(`compose.bass.patterns: no part "${part}"`); continue; }
+      for (const n of [...P.low, ...P.mid, ...P.high, ...Object.values(P.sections ?? {}).flat()]) if (!def.patterns[n]) errs.push(`compose.bass.patterns.${part}: no pattern "${n}"`);
+      for (const s of Object.keys(P.sections ?? {})) if (!style.sections[s]) errs.push(`compose.bass.patterns.${part}: no section "${s}"`);
+    }
+    for (const [from, to] of Object.entries(CB.patches ?? {})) if (!style.patches[from] || !style.patches[to]) errs.push(`compose.bass.patches: "${from}" to "${to}", not both patches`);
+    for (const [part, r] of Object.entries(CB.parts)) if (r.register && !(r.register[0] < r.register[1] && r.register[1] - r.register[0] >= 12)) errs.push(`compose.bass.parts.${part}: a register an octave wide at least`);
   }
   const D = style.compose?.dance;
   if (D) {

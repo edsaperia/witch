@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
 import { nightStyle, planNight } from "./musicSet";
 import { bassBar, composeLine, LEAP, ostinatoMotif, type BassRule, type LineSlot, type RiffKind } from "./musicCompose";
-import { checkStyle, composedMotif, composeOn, melodyMode, riffLead, degreeToMidi, formChord, formPhrase, hauntedBar, hauntedPhrase, hookPhrase, notesAt, resolveSection, riffFor, riffKind, riffPhrase, withMelody, type BlockPlan, type MusicStyle, type NoteEvent, type PhraseNote } from "./musicScore";
+import { bassPatternName, checkStyle, composedMotif, composeOn, melodyMode, riffLead, degreeToMidi, formChord, formPhrase, hauntedBar, hauntedPhrase, hookPhrase, notesAt, resolveSection, riffFor, riffKind, riffPhrase, withMelody, type BlockPlan, type MusicStyle, type NoteEvent, type PhraseNote } from "./musicScore";
 
 const style = styleJson as unknown as MusicStyle, F = style.form!, C = style.compose!, old = withMelody(style, "old"), lyrical = withMelody(style, "lyrical");
 const P = F.phraseBars * 16, mod7 = (d: number) => ((d % 7) + 7) % 7;
@@ -415,5 +415,59 @@ describe("the dance way's leads (Ed, 2026-11-09: \"Lead sounds could be better; 
     for (const e of ev) expect(D.leads.clearing).toContain(e.patch);
     const none = Array.from({ length: 256 }, (_, i) => notesAt(lyrical, { section: "deep", start: 0, bars: 16, wave: 1, arc: 1 }, null, i, { seed: 7, siege: 0, circle: { species: "owl", level: 1 } })).flat().filter(e => e.layer === "circle");
     for (const e of none) expect(D.leads.clearing).not.toContain(e.patch); // (the lyrical way: the clearing's own instruments)
+  });
+});
+
+describe("the composer's bass register and patterns (Ed, 2026-11-09: \"The bass is on all the offbeats? It's repetitive and too high\")", () => {
+  const R = C.bass.parts.bass.register!;
+  const bassOf = (st: MusicStyle, section: string, arc: number, seed: number, bars = 32) => play(st, section, arc, seed, 0, bars).filter(e => e.part === "bass");
+  it("keeps every house-bass note in its register (E1 to A2), the roots voice-led to the nearest octave", () => {
+    expect(R).toEqual([28, 45]);
+    for (const seed of [3, 7, 23, 101]) for (const [section, arc] of [["deep", 1], ["garage", 3], ["organic", 2], ["trance", 4], ["deepWalk", 2]] as const) {
+      const ev = bassOf(style, section, arc, seed);
+      expect(ev.length, `${seed} ${section}`).toBeGreaterThan(16);
+      for (const e of ev) { expect(e.midi!, `${seed} ${section} ${e.step}`).toBeGreaterThanOrEqual(R[0]); expect(e.midi!, `${seed} ${section} ${e.step}`).toBeLessThanOrEqual(R[1]); }
+      // (each bar's root, its lowest note on the chord's root: never more than a sixth from the bar before's)
+      const sc = style.scales[style.scale], tr = style.arc[arc].transpose ?? 0;
+      const roots = Array.from({ length: 32 }, (_, b) => { const pc = degreeToMidi(style, sc, formChord(style, seed, b).root, 0, tr) % 12, on = ev.filter(e => Math.floor(e.step / 16) === b && e.midi! % 12 === pc); return on.length ? Math.min(...on.map(e => e.midi!)) : undefined; }).filter((m): m is number => m !== undefined);
+      for (let k = 1; k < roots.length; k++) expect(Math.abs(roots[k] - roots[k - 1]), `${seed} ${section}`).toBeLessThanOrEqual(9);
+    }
+    // the old rules as they were: an octave up, its roots climbing with the chord's degree
+    expect(Math.max(...bassOf(old, "deep", 1, 7).map(e => e.midi!))).toBeGreaterThan(R[1]);
+    // the other basses down too; the acid line where it was
+    for (const [section, part] of [["dark", "darkbass"], ["breaks", "reese"]] as const) for (const e of play(style, section, 3, 7, 0, 16).filter(e => e.part === part)) expect(e.midi!).toBeLessThanOrEqual(45);
+    expect(play(style, "acidHouse", 1, 7, 0, 16).filter(e => e.part === "acid")).toEqual(play(lyrical, "acidHouse", 1, 7, 0, 16).filter(e => e.part === "acid"));
+  });
+
+  it("places each chord's root in the octave nearest the last one's", () => {
+    const sc = style.scales[style.scale], roots = Array.from({ length: 32 }, (_, b) => formChord(style, 7, b).root);
+    const ev = bassOf(style, "deep", 1, 7), lo = R[0], hi = R[0] + 15;
+    let prev: number | null = null;
+    const near = (opts: number[], t: number): number => opts.reduce((a, x) => (Math.abs(x - t) < Math.abs(a - t) ? x : a));
+    for (let b = 0; b < 32; b++) {
+      const pc = degreeToMidi(style, sc, roots[b], 0, 0) % 12, opts = Array.from({ length: hi - lo + 1 }, (_, i) => lo + i).filter(x => x % 12 === pc);
+      const want: number = near(opts, prev === null ? (lo + hi) / 2 : prev);
+      const rootNotes = ev.filter(e => Math.floor(e.step / 16) === b && e.midi! % 12 === pc);
+      if (rootNotes.length) expect(rootNotes.some(e => e.midi === want), `bar ${b}`).toBe(true);
+      prev = want;
+    }
+  });
+
+  it("changes pattern across four-bar phrases, sparser at low energy, busier in the drops, leaving the kick's downbeats", () => {
+    const P = C.bass.patterns!.bass;
+    for (const n of [...P.low, ...P.mid, ...P.high]) expect(style.parts.bass.patterns[n], n).toBeDefined();
+    let changed = 0;
+    for (const seed of [3, 7, 23, 101, 5, 9]) {
+      const names = Array.from({ length: 8 }, (_, ph) => bassPatternName(C, "bass", "roll", "deep", 0.5, ph * 4, seed));
+      if (new Set(names).size > 1) changed++;
+      for (let b = 0; b < 32; b++) expect(bassPatternName(C, "bass", "roll", "deep", 0.5, b, seed)).toBe(names[Math.floor(b / 4)]); // (one a phrase)
+    }
+    expect(changed).toBe(6);
+    const density = (energy: number, section: string) => { let n = 0; for (let s = 0; s < 40; s++) n += [...style.parts.bass.patterns[bassPatternName(C, "bass", "roll", section, energy, s * 4, s)]].filter(c => c !== "." && c !== "-").length; return n / 40; };
+    expect(density(0.2, "deep")).toBeLessThan(density(0.9, "deep"));
+    expect(density(0.6, "deepDrop")).toBeGreaterThanOrEqual(density(0.6, "deep"));
+    expect(bassPatternName(C, "bass", "skip", "garage", 0.5, 0, 1)).toMatch(/skip|gspot|tres|hold/);
+    // the kick's downbeats left to it in a four-on-the-floor section (but for an approach or a fill's note on the last beat)
+    for (const seed of [3, 7, 23]) for (const e of bassOf(style, "deep", 1, seed)) expect([0, 4, 8].includes(e.step % 16), `${seed} at ${e.step % 16}`).toBe(false);
   });
 });

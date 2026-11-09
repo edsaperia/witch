@@ -5,7 +5,7 @@
 import { MusicEngine } from "../../src/platform/audio/musicEngine";
 import { newBeatClock } from "../../src/rules/beat";
 import type { MusicCue } from "../../src/rules/musicPlan";
-import { withMelody, type MusicStyle } from "../../src/rules/musicScore";
+import { notesAt, withMelody, type MusicStyle } from "../../src/rules/musicScore";
 import type { RiffKind } from "../../src/rules/musicCompose";
 import styleJson from "../../config/music-style.json";
 
@@ -48,6 +48,9 @@ async function leadRender(o: { lead: string; kind: RiffKind; section: string; se
   const t0 = performance.now(), mix = await render(forced(o.lead, o.kind, o.section, false), o.section, o.seed, o.bars), ms = performance.now() - t0;
   const solo = await render(forced(o.lead, o.kind, o.section, true), o.section, o.seed, o.bars);
   const m = stats(mix), s = stats(solo);
-  return { rate: RATE, seconds: mix.duration, peak: m.peak, nan: m.nan + s.nan, mixDb: m.rmsDb, soloDb: s.rmsDb, soloPeak: s.peak, renderMs: ms, pcm: pcmOf(mix), patch: base.parts[o.lead]?.patch };
+  // (what each render plays: the mix the section as the game has it, its marimba and vox giving the melody its level, their
+  // notes the form's, on the lead; alone, the lead's notes and nothing else)
+  const partsOf = (st: MusicStyle) => [...new Set(Array.from({ length: o.bars * 16 }, (_, i) => notesAt(st, { section: o.section, start: 0, bars: 16, wave: 1, arc: 1 }, null, i, { seed: o.seed, siege: 0, formStart: 0 })).flat().map(e => e.part))].sort();
+  return { mixParts: partsOf(forced(o.lead, o.kind, o.section, false)), soloParts: partsOf(forced(o.lead, o.kind, o.section, true)), rate: RATE, seconds: mix.duration, peak: m.peak, nan: m.nan + s.nan, mixDb: m.rmsDb, soloDb: s.rmsDb, soloPeak: s.peak, renderMs: ms, pcm: pcmOf(mix), patch: base.parts[o.lead]?.patch };
 }
 Object.assign(window as unknown as { leadRender: typeof leadRender }, { leadRender });

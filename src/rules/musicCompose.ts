@@ -22,7 +22,15 @@ export interface ComposeDef {
   leap: number;
   /** The bass's rules: the chance it steps into a new chord (`approach`), and each bass part's own (parts not listed play their
    *  pattern as before: the drones, the haunted drop's sub). */
-  bass: { approach: number; parts: Record<string, BassRule> };
+  bass: {
+    approach: number; parts: Record<string, BassRule>;
+    /** A part's patterns by phrase (Ed, 2026-11-09: "repetitive"): each four-bar phrase deals one by the seed from the pool for
+     *  the wave's energy (`low` under 0.4, `mid` under 0.7, `high`; a drop a step busier), or a section's own pool; with the
+     *  section's own pattern among them. */
+    patterns?: Record<string, { low: string[]; mid: string[]; high: string[]; sections?: Record<string, string[]> }>;
+    /** Rounder patches in the composer's ways, for the lower register (a bass patch to its stand-in). */
+    patches?: Record<string, string>;
+  };
   /** Which of the composer's ways leads (Ed, 2026-11-08, on the first: "more lyrical but not very dancey"): "dance" (the
    *  default: the instrument plays a repeated riff, the voice now and then a short high hook) or "lyrical" (every melody
    *  planned on a contour, as first built). Tuning music.melody, ?melody=dance|lyrical|old. */
@@ -70,8 +78,15 @@ export interface BassRule {
   fillChance?: number;
   /** The chance a bar's quiet sixteenths take a ghost note (where the kick allows: on it or just after it, never just before). */
   ghost?: number;
-  /** The chance the second or third bar of its phrase moves one off-beat note an octave. */
+  /** The chance the second or third bar of its phrase moves one short off-beat note an octave. */
   octave?: number;
+  /** Its register (Ed, 2026-11-09, of the house bass: "too high"): the lowest and highest MIDI note it plays. Each chord's root
+   *  goes in the octave nearest the last chord's (voice-led, within the register's lowest fifteen semitones), every note folded
+   *  into the register, so an octave jump goes up only where there's room. None: the part's octave as before. */
+  register?: [number, number];
+  /** Leave the kick's downbeats to the kick (Ed: "The bass is on all the offbeats?"; the variety, not on them either): a note
+   *  falling on a four-on-the-floor hit moves an eighth later (or goes). */
+  kickSpace?: boolean;
   /** Strike the held note again where the kick hits off the beat (the bass following a breakbeat's kick). */
   restrike?: boolean;
   /** Play on the kick's hits instead of the pattern's (abstract hip-hop's bass, following the kick), with a syncopated note
@@ -315,6 +330,12 @@ export function bassBar(bar: string, rule: BassRule, approach: number, root: num
       hits.forEach((s, i) => (out[s] = { k: s === pick ? (r(31) < 0.5 ? 7 : 4) : held[s], vel: s === pick ? 0.75 : 1, dur: Math.max(1, Math.min((hits[i + 1] ?? 16) - s, 6)) }));
     }
   }
+  // (the kick's downbeats left to the kick: a note on one moves an eighth later where that's free, else goes)
+  if (rule.kickSpace && kick && !rule.follow) for (let s = 0; s < 16; s += 4) if (out[s] && hit(s)) {
+    const n = out[s]!;
+    out[s] = null;
+    if (s + 2 < 16 && !out[s + 2] && !out[s + 1]) out[s + 2] = { ...n, dur: Math.max(1, n.dur - 2) };
+  }
   const onsets = () => out.map((n, s) => (n ? s : -1)).filter(s => s >= 0);
   const cutBefore = (s: number) => { for (let j = s - 1; j >= 0; j--) if (out[j]) { out[j]!.dur = Math.min(out[j]!.dur, s - j); break; } };
   const place = (s: number, n: BassNote) => { cutBefore(s); out[s] = n; };
@@ -326,7 +347,7 @@ export function bassBar(bar: string, rule: BassRule, approach: number, root: num
   }
   // an octave moved, now and then, in the phrase's second or third bar
   if ((q === 1 || q === 2) && (rule.octave ?? 0) > 0 && r(1) < rule.octave!) {
-    const off = onsets().filter(s => s % 4 !== 0 && s < 12);
+    const off = onsets().filter(s => s % 4 !== 0 && s < 12 && out[s]!.dur <= 2); // (a short note: the jump brief)
     if (off.length) { const s = off[Math.floor(r(2) * off.length)], n = out[s]!; n.k = n.k >= 7 ? n.k - 7 : n.k + 7; }
   }
   // the fourth bar's fill

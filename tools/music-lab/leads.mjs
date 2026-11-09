@@ -28,11 +28,12 @@ const page = await browser.newPage(), errors = [];
 page.on("pageerror", e => errors.push(String(e)));
 await page.setContent("<!doctype html><meta charset=utf-8><body></body>");
 await page.addScriptTag({ content: "{ let r = 12345; Math.random = () => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 4294967296); }\n" + code });
-const lines = [`The dance way's leads: each plays the same 8-bar ${kind} riff (seed ${seed}) over deep house (wave 1's chords, drums and bass), 120 bpm; then the old leads to compare. Loudness: the lead alone and the whole mix, dB RMS.`], files = [];
+const lines = [`The dance way's leads: each plays the same 8-bar ${kind} riff (seed ${seed}) over deep house as the game has it (wave 1's chords, drums, bass and pad; its marimba and vox parts set the melody's level, the form playing their notes on the lead), 120 bpm; then the old leads to compare. Loudness: the lead truly alone (its notes and nothing else) and the whole mix, dB RMS.`], files = [];
 let at = 0;
 for (const [i, lead] of [...leads, ...old].entries()) {
   const r = await page.evaluate(o => window.leadRender(o), { lead, kind, section: "deep", seed, bars: 8 });
   const name = `${String(i + 1).padStart(2, "0")}-${lead}`;
+  ok(r.soloParts.length === 1 && r.soloParts[0] === lead, `${name}: alone, only ${lead} plays (${r.soloParts.join(", ")})`);
   ok(r.nan === 0 && r.peak > 0.01 && r.peak < 0.999, `${name} (${r.patch}): alone ${r.soloDb.toFixed(1)} dB, mix ${r.mixDb.toFixed(1)} dB, peak ${r.peak.toFixed(3)}, ${(r.renderMs / 8).toFixed(0)} ms a bar to render`);
   const pcm = Buffer.from(r.pcm, "base64"), h = Buffer.alloc(44);
   h.write("RIFF", 0); h.writeUInt32LE(36 + pcm.length, 4); h.write("WAVE", 8); h.write("fmt ", 12); h.writeUInt32LE(16, 16);
@@ -43,7 +44,7 @@ for (const [i, lead] of [...leads, ...old].entries()) {
   execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", wav, "-c:a", "libmp3lame", "-b:a", "192k", resolve(out, `${name}.mp3`)]);
   files.push(wav);
   const mm = `${Math.floor(at / 60)}:${String(Math.round(at % 60)).padStart(2, "0")}`;
-  lines.push(`${mm.padStart(5)}  ${name}.mp3  ${lead} (patch ${r.patch})${old.includes(lead) ? " [an old lead]" : ""}: alone ${r.soloDb.toFixed(1)} dB, mix ${r.mixDb.toFixed(1)} dB`);
+  lines.push(`${mm.padStart(5)}  ${name}.mp3  ${lead} (patch ${r.patch})${old.includes(lead) ? " [an old lead]" : ""}: alone ${r.soloDb.toFixed(1)} dB, mix ${r.mixDb.toFixed(1)} dB; the mix's parts ${r.mixParts.join(", ")}`);
   at += r.seconds;
 }
 writeFileSync(resolve(out, "list.txt"), files.map(f => `file '${f}'`).join("\n") + "\n");

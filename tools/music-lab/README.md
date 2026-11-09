@@ -22,6 +22,14 @@ node tools/music-lab/analyse.cjs [out dir] [section,section…]
 
 The Music Lab's measurements of a render: loudness, peak, energy in six bands, the spectral centroid, and a spectrogram picture.
 
+## `bass.mjs`
+
+The basslines before and after: node tools/music-lab/bass.mjs <out dir> <tag> [seed...].
+
+## `bass.ts`
+
+The basslines before and after: the game's engine renders a section offline, and says which bass pattern each four-bar phrase took and the bass's range.
+
 ## `boot.mjs`
 
 The home speakers' boot, sped up: node tools/music-lab/boot.mjs [bars between speakers, default 1] Renders tools/music-lab/boot.ts offline in headless Chromium: two bars of nothing, then the 12 speakers crackling into life one a bar, the music a layer a…
