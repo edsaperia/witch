@@ -4099,8 +4099,8 @@ label.check input { accent-color: var(--accent); }
   function bassPatternName(C2, part, own, section, energy, bar2, seed2) {
     const P = C2.bass.patterns?.[part];
     if (!P) return own;
-    const e = energy + (/Drop$/.test(section) ? 0.2 : 0), pool = P.sections?.[section] ?? (e < 0.4 ? P.low : e < 0.7 ? P.mid : P.high);
-    return pick(pool.includes(own) ? pool : [...pool, own], hash2(seed2 + Math.floor(bar2 / 4) * 7919, 511, part.length));
+    const e = energy + (/Drop$/.test(section) ? 0.2 : 0), sec = P.sections?.[section], pool = sec ?? (e < 0.4 ? P.low : e < 0.7 ? P.mid : P.high);
+    return pick(pool.includes(own) || !sec && e < 0.4 ? pool : [...pool, own], hash2(seed2 + Math.floor(bar2 / 4) * 7919, 511, part.length));
   }
   var rootCache = /* @__PURE__ */ new Map();
   function bassRoot(style2, scale, transpose, R, seed2, formBar, haunt, root) {
