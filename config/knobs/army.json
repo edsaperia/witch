@@ -165,9 +165,15 @@
           "by": null,
           "date": "2026-10-07",
           "rest": "balance, the overnight pass, with the wider level gap"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-09",
+          "quote": "it feels like animals move faster than invitations so it's hard to land a hit. And ranges feel small",
+          "rest": "speed 45 (was 31.2), range 42 (was 33), homingRange 14 (was 10); homing and homingCone unchanged; the animals' waiting distance held where it was (combatWaiting.inviteReach 33), and ?invites=old flies the old letters to A/B"
         }
       ],
-      "notes": "The 💌 invite [1], replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; Round 11 [2]: one 💌 a shot (burst 1, multiShot 1), cooldown 0.55 (just over the old 0.5 s per-creature gap), hits [4, 9, 18, 36] so a meter fills in about the time it did with bursts of three (they gave one hit each 0.84 s); then [3] [4, 7, 14, 36]: the young and adults quicker to win over, so good play counts for more (a skilled player lasts about 2.5 minutes longer, a crude one no longer), range 33 (was 22) and speed 31.2 (was 26)."
+      "notes": "The 💌 invite [1], replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; Round 11 [2]: one 💌 a shot (burst 1, multiShot 1), cooldown 0.55 (just over the old 0.5 s per-creature gap), hits [4, 9, 18, 36] so a meter fills in about the time it did with bursts of three (they gave one hit each 0.84 s); then [3] [4, 7, 14, 36]: the young and adults quicker to win over, so good play counts for more (a skilled player lasts about 2.5 minutes longer, a crude one no longer), range 33 (was 22) and speed 31.2 (was 26). Then [4]: speed 45 (was 31.2: faster than the witch on the ground, 19.25, and well clear of animals running in a fight, about 14), range 42 (was 33), homingRange 14 (was 10); a letter takes 0.93 s to its full range (was 1.06 s). The animals' waiting room no longer follows this range (combatWaiting.inviteReach), so the longer letters reach the circling animals; ?invites=old flies 31.2 / 33 / 10 to A/B."
     },
     "invites.arc": {
       "what": "the height (m) its lob rises over the straight line from her hand to the ground at its range, where it lands, with a puff (drawn only: the rules fly it flat)."

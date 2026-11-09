@@ -1682,7 +1682,8 @@ The 💌 invite: on the ground she fires spinning love letters at creatures to w
 1. Ed, 2026-10-05: issue #87
 2. Ed: "base invite should be one envelope at a time (rebalance hits accordingly), they should arc a little and disappear when they hit the ground, go 50% further, 20% faster, and they should rotate by pitching instead of yawing"
 3. 2026-10-07: balance, the overnight pass, with the wider level gap
-The 💌 invite [1], replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; Round 11 [2]: one 💌 a shot (burst 1, multiShot 1), cooldown 0.55 (just over the old 0.5 s per-creature gap), hits [4, 9, 18, 36] so a meter fills in about the time it did with bursts of three (they gave one hit each 0.84 s); then [3] [4, 7, 14, 36]: the young and adults quicker to win over, so good play counts for more (a skilled player lasts about 2.5 minutes longer, a crude one no longer), range 33 (was 22) and speed 31.2 (was 26).
+4. Ed, 2026-11-09: "it feels like animals move faster than invitations so it's hard to land a hit. And ranges feel small" (speed 45 (was 31.2), range 42 (was 33), homingRange 14 (was 10); homing and homingCone unchanged; the animals' waiting distance held where it was (combatWaiting.inviteReach 33), and ?invites=old flies the old letters to A/B)
+The 💌 invite [1], replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; Round 11 [2]: one 💌 a shot (burst 1, multiShot 1), cooldown 0.55 (just over the old 0.5 s per-creature gap), hits [4, 9, 18, 36] so a meter fills in about the time it did with bursts of three (they gave one hit each 0.84 s); then [3] [4, 7, 14, 36]: the young and adults quicker to win over, so good play counts for more (a skilled player lasts about 2.5 minutes longer, a crude one no longer), range 33 (was 22) and speed 31.2 (was 26). Then [4]: speed 45 (was 31.2: faster than the witch on the ground, 19.25, and well clear of animals running in a fight, about 14), range 42 (was 33), homingRange 14 (was 10); a letter takes 0.93 s to its full range (was 1.06 s). The animals' waiting room no longer follows this range (combatWaiting.inviteReach), so the longer letters reach the circling animals; ?invites=old flies 31.2 / 33 / 10 to A/B.
 
 - **`invites.arc`**: the height (m) its lob rises over the straight line from her hand to the ground at its range, where it lands, with a puff (drawn only: the rules fly it flat).
 - **`invites.hits`**: How many letters it takes to win a creature over by its level, and how fast its meter drains when not being hit.
@@ -2093,14 +2094,16 @@ The fight's scale and speed [1]: fights are drawn and played at the ground camer
 
 ### `combatWaiting`
 
-Waiting movement favours room beyond default invitation reach while allowing deliberate close passes.
+Waiting movement favours room beyond a set invitation reach (inviteReach: the default bag's old range, not the letters' live one) while allowing deliberate close passes.
 
 1. Ed, 2026-11-02: "creatures should be moving most of the time, and tend to be outside of her (default bag) range if they're not attacking"
-reachScale multiplies dash distance times charges plus default invitation range; areaGrowth adds a fraction of area radius beyond that reference, without clamping small areas. passPower concentrates the smooth close-pass pulse; passDepth sets how far that pulse relaxes the outward preference. Species routes, speed and turning remain in the pack profiles.
+2. Ed, 2026-11-09: "it feels like animals move faster than invitations so it's hard to land a hit. And ranges feel small" (the letters' speed and range raised while holding the animals' waiting distance where it was: inviteReach 33, the old invite range, so the reference stays (30 + 33) x 0.8 = 50.4 m)
+reachScale multiplies dash distance times charges plus inviteReach, the default invitation range that set the room (33 m, held there when the letters got 42 m, so they reach the circling animals; neither buffs nor a bag like the Clutch move it); areaGrowth adds a fraction of area radius beyond that reference, without clamping small areas. passPower concentrates the smooth close-pass pulse; passDepth sets how far that pulse relaxes the outward preference. Species routes, speed and turning remain in the pack profiles.
 
 | knob | type | range |
 |---|---|---|
 | `combatWaiting.reachScale` | number | 0 to 3 |
+| `combatWaiting.inviteReach` | number | 0 to 200 |
 | `combatWaiting.areaGrowth` | number | 0 to 1 |
 | `combatWaiting.passPower` | number | 1 to 64 |
 | `combatWaiting.passDepth` | number | 0 to 1 |
@@ -2931,7 +2934,7 @@ Code: `render/bubbles.ts`
   1. Ed, 2026-10-05: "the speech bubbles should scale with the level of the animal, with the legends as the largest"
 - **`bubbles.near`, `bubbles.fade`, `bubbles.ease`**: How close (metres) she must be on the ground to see a creature's speech or thought bubble; none from the treetops or the treehouse.
   1. Ed, 2026-10-28: "Animal speech bubbles / thought bubbles should fade into view when the witch gets close. I shouldn't see them on the ground when I'm at the treetops. I shouldn't see them on the ground when I'm in the treehouse."
-  Whole within near less fade, fading to nothing at near; eased in and out over ease seconds, so rising, landing and going indoors fade them. 38 and 8 to start: whole to 30 m, about the letters' reach (invites.range 33), so any creature she can throw at answers where she can read it, and gone by 38. The 💌 replies, the talk and the sleepers' 😴s go by it; a legend's dream (dreams.range) and the night won's island dreams (twice that) keep their own ranges, fading at their edge and hidden from the treetops and the treehouse the same.
+  Whole within near less fade, fading to nothing at near; eased in and out over ease seconds, so rising, landing and going indoors fade them. 38 and 8 to start: whole to 30 m, about the letters' reach (invites.range 33), so any creature she can throw at answers where she can read it, and gone by 38. Then 47 (2026-11-09, with the letters' longer reach, invites.range 42: Ed, "ranges feel small"): whole to 39 m, gone by 47, so a creature a letter lands on at full range still answers where she can read it. The 💌 replies, the talk and the sleepers' 😴s go by it; a legend's dream (dreams.range) and the night won's island dreams (twice that) keep their own ranges, fading at their edge and hidden from the treetops and the treehouse the same.
   Code: `render/bubbleSight.ts`
 
 | knob | type | range |

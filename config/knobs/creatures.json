@@ -3,13 +3,19 @@
   "about": "Creatures: how many and how they grow, move, notice, nap, guard and fight.",
   "knobs": {
     "combatWaiting": {
-      "what": "Waiting movement favours room beyond default invitation reach while allowing deliberate close passes.",
-      "notes": "reachScale multiplies dash distance times charges plus default invitation range; areaGrowth adds a fraction of area radius beyond that reference, without clamping small areas. passPower concentrates the smooth close-pass pulse; passDepth sets how far that pulse relaxes the outward preference. Species routes, speed and turning remain in the pack profiles.",
+      "what": "Waiting movement favours room beyond a set invitation reach (inviteReach: the default bag's old range, not the letters' live one) while allowing deliberate close passes.",
+      "notes": "reachScale multiplies dash distance times charges plus inviteReach, the default invitation range that set the room (33 m, held there when the letters got 42 m, so they reach the circling animals; neither buffs nor a bag like the Clutch move it); areaGrowth adds a fraction of area radius beyond that reference, without clamping small areas. passPower concentrates the smooth close-pass pulse; passDepth sets how far that pulse relaxes the outward preference. Species routes, speed and turning remain in the pack profiles.",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-11-02",
           "quote": "creatures should be moving most of the time, and tend to be outside of her (default bag) range if they're not attacking"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-09",
+          "quote": "it feels like animals move faster than invitations so it's hard to land a hit. And ranges feel small",
+          "rest": "the letters' speed and range raised while holding the animals' waiting distance where it was: inviteReach 33, the old invite range, so the reference stays (30 + 33) x 0.8 = 50.4 m"
         }
       ]
     },

@@ -1141,6 +1141,19 @@
    "decision": "The haunted treatment is on (Ed, 2026-11-08: \"B, 1-6\"); off kept to A/B"
   },
   {
+   "name": "invites",
+   "values": [
+    "old"
+   ],
+   "does": "The 💌 letters' old flight (31.2 m/s, 33 m, homing within 10 m) in place of the faster, longer ones (45 m/s, 42 m, 14 m), to A/B. The animals' waiting distance is the same either way.",
+   "group": "compare",
+   "since": "2026-11-09",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Faster, longer letters (Ed, 2026-11-09: \"it feels like animals move faster than invitations so it's hard to land a hit. And ranges feel small\"); the old flight kept to A/B"
+  },
+  {
    "name": "music",
    "values": [
     "off",
