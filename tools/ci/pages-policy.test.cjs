@@ -60,3 +60,8 @@ test('previews: documents-only pull requests get none, and main drops those idle
   const deploy=y.jobs.deploy.steps.find(s=>s.name==='Publish to gh-pages').run;
   assert.match(deploy,/select\(.updated_at > \(now - 7\*86400 \| todate\)\)/);
 });
+test('each deployment gets its own build version, not the shared main SHA (2026-11-10)',()=>{
+  const steps=parsed.jobs.publish.steps, first=steps.find(s=>s.id==='deployment'), retry=steps.find(s=>s.id==='retry');
+  assert.match(first.env.GITHUB_SHA,/github.run_id.*github.run_attempt/); assert.match(retry.env.GITHUB_SHA,/-retry$/);
+  assert.notEqual(first.env.GITHUB_SHA,retry.env.GITHUB_SHA);
+});
