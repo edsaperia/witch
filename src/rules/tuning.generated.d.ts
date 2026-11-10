@@ -1148,6 +1148,13 @@ export type SchemaTuning = {
       "zoneDensity": number;
       "groundMark": number;
     };
+    "glow": {
+      "core": number;
+      "halo": number;
+      "pool": number;
+      "lights": number;
+      "light": number;
+    };
   };
   "combat": {
     "packs": {

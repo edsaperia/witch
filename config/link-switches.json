@@ -1026,6 +1026,20 @@
    ]
   },
   {
+   "name": "spellglow",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "The creatures' spells glow (a bright core, a dithered halo, a pool of light on the ground, a few real lights); 0 draws them without it, as before, to compare.",
+   "group": "compare",
+   "since": "2026-11-09",
+   "readIn": [
+    "src/render/fx/spellGlow.ts"
+   ],
+   "decision": "Glowing by default (Ed, 2026-11-09: \"The animal magic effects need to glow.\")"
+  },
+  {
    "name": "fxmock",
    "values": [
     "1",
