@@ -122,12 +122,13 @@ async function windowRender(o: WindowJob) {
         for (let q = k; q < Math.min(o.to, p.start + p.bars, k + 8 - ((k - p.start) % 8)); q++) {
           if (o.knock && q >= Math.floor(o.knock.at) && q < Math.ceil(o.knock.back)) continue;
           const f = formClock(style, c, q);
-          for (let s = 0; s < 16; s++) for (const e of notesAt(style, p, null, q * 16 + s, { seed: musicSeed(o.seed, f.n), formStart: f.start, siege: 0, only: "main", stumps: stumpsBy(c, p.start, style.blockBars) })) { if (e.patch === xyp) { got.add(s >= 12 && (q - p.start) % 8 === 7 || q === p.start + p.bars - 1 && s >= 12 ? "run" : "xylo"); if (s === 12) runs.push(q); } if (e.patch === SPb.snap) got.add("snap"); if (e.patch === bangerOn(style)!.vocals?.double && e.dur === 2 && fig && (pair.set(q * 16 + s, (pair.get(q * 16 + s) ?? 0) + 1), pair.get(q * 16 + s)! > 1)) got.add("stab"); }
+          for (let s = 0; s < 16; s++) for (const e of notesAt(style, p, null, q * 16 + s, { seed: musicSeed(o.seed, f.n), formStart: f.start, siege: 0, only: "main", stumps: stumpsBy(c, p.start, style.blockBars) })) { if (e.patch === xyp) { got.add(s >= 12 && (q - p.start) % 8 === 7 || q === p.start + p.bars - 1 && s >= 12 ? "run" : "xylo"); if (s === 12) runs.push(q); } if (e.midi === null && s < 8 && e.vel > 0.2) { if (e.patch === SPb.snap || e.patch === "snap") got.add("snap"); else if (e.patch === "bgClap" || e.patch === "clap") got.add("clap"); else if (e.patch === "snare" || e.patch === "dnbSnare") got.add("snare"); } if (e.patch === bangerOn(style)!.vocals?.double && e.dur === 2 && fig && (pair.set(q * 16 + s, (pair.get(q * 16 + s) ?? 0) + 1), pair.get(q * 16 + s)! > 1)) got.add("stab"); }
         }
         if (got.has("stab")) marks.push(`${mmss(at(timeAt(clock, k * 4))).padStart(7)}    + SUNG CHORD STABS with the xylophone's hits in this phrase`);
         if (got.has("xylo") && !fig) marks.push(`${mmss(at(timeAt(clock, k * 4))).padStart(7)}    + XYLOPHONE answering in the gaps for this phrase`);
         if (got.has("run")) marks.push(`${mmss(at(timeAt(clock, (runs[runs.length - 1] ?? k) * 4 + 3))).padStart(7)}    + XYLOPHONE run into the next phrase`);
-        if (got.has("snap")) marks.push(`${mmss(at(timeAt(clock, k * 4))).padStart(7)}    + FINGER SNAPS in this phrase (on the backbeat; in a breakdown, on the third beat)`);
+        const bb = got.has("snap") ? (got.has("clap") || got.has("snare") ? "FINGER SNAPS, then the " + (got.has("snare") ? "snare" : "clap") : "FINGER SNAPS (a lighter phrase)") : got.has("clap") ? "clap" : got.has("snare") ? "snare" : "";
+        if (bb) marks.push(`${mmss(at(timeAt(clock, k * 4))).padStart(7)}    . backbeat: ${bb}`);
       }
       // (where the night's hook is heard in this block)
       let was: string | null = null;
@@ -166,7 +167,7 @@ function describe(style: MusicStyle, cue: MusicCue, start: number, bar: number, 
   const NAME: Record<string, string> = { bgClap: "clap", clap: "clap", bgSnap: "finger snap", snap: "finger snap", snare: "snare", dnbSnare: "snare" };
   const back = [...new Set((role === "breaks" ? K.breaks : K.drums).filter(v => NAME[v.patch] && /[Xx]/.test(v.p)).map(v => NAME[v.patch]))];
   const HV = B.vocals?.harmony, harmony = !HV || role === "build" || role === "breakdown" ? "" : gentle ? `; VOCAL HARMONY: ${HV.gentleVoices} soft voices` : `; VOCAL HARMONY: ${HV.voices} sung voices under the chords`;
-  return `${head} -> ${gentle ? "GENTLE (before the second stump): " : ""}${what}; kit "${kn}" (swing ${K.swing}); BACKBEAT: ${back.join(" + ") || "none"}${harmony}; playing ${[...parts].join(", ")}`;
+  return `${head} -> ${gentle ? "GENTLE (before the second stump): " : ""}${what}; kit "${kn}" (swing ${K.swing})${harmony}; playing ${[...parts].join(", ")}`;
 }
 function hookText(style: MusicStyle, seed: number): string {
   const B = bangerOn(style);

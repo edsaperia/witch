@@ -187,7 +187,10 @@ describe("banger mode's blocks", () => {
       const rolls = bars.map(es => es.filter(e => e.patch === "snare").length);
       expect(kicks[0]).toBeGreaterThan(0); expect(kicks[4]).toBeLessThanOrEqual(2); expect(kicks[6]).toBe(0); expect(kicks[7]).toBe(0);
       expect(bass[0]).toBeGreaterThan(0); expect(bass.slice(4)).toEqual([0, 0, 0, 0]);
-      expect(rolls[0]).toBe(4); expect(rolls[2]).toBe(8); expect(rolls[4]).toBe(16); expect(rolls[7]).toBeGreaterThan(16);
+      // (its first half light: finger snaps on two and four, no snare; the roll from the half, doubling into the last bar)
+      expect(rolls.slice(0, 4)).toEqual([0, 0, 0, 0]); expect(rolls[4]).toBe(16); expect(rolls[7]).toBeGreaterThan(16);
+      for (const es of bars.slice(0, 4)) expect(es.filter(e => e.patch === B.spice!.snap).map(e => e.step % 16)).toEqual([4, 12]);
+      for (const es of bars.slice(4)) expect(es.filter(e => e.patch === B.spice!.snap)).toEqual([]);
       expect(bars[7].filter(e => e.step % 16 >= 12)).toEqual([]);
       for (const es of bars) expect(es.some(e => e.patch === "bgRiser")).toBe(true);
       // (and the wave lands: more low end in its first bar than the build's last)
@@ -398,14 +401,14 @@ describe("the sprinkles (Ed, 2026-11-10: \"Some Xylophone and Finger snap snares
         const es = [0, 1, 2, 3, 4, 5, 6, 7].flatMap(k => barNotes(style, seed, before, p0 + k, { nextAt: Infinity }));
         phrases++;
         if (es.some(e => e.patch === xy)) withXylo++;
-        if (es.some(e => e.patch === SP.snap)) { withSnap++; if (!es.some(e => e.step % 16 < 8 && (e.patch === "bgClap" || e.patch === "snare" || e.patch === "dnbSnare") && (e.step % 16 === 4 || e.step % 16 === 12) && e.vel > 0.3)) alone++; }
+        if (es.some(e => e.patch === SP.snap)) { withSnap++; if (!es.some(e => ["bgClap", "clap", "snare", "dnbSnare"].includes(e.patch) && e.step % 16 < 8)) alone++; }
         // (the xylophone under the lead's ceiling: mid-high, never shrill; the snaps where a backbeat is)
         for (const e of es.filter(e => e.patch === xy)) { expect(e.midi!).toBeLessThanOrEqual(B.register!.lead); expect(e.midi!).toBeGreaterThanOrEqual(50); }
       }
     }
     expect(withXylo / phrases).toBeGreaterThan(0.2); expect(withXylo / phrases).toBeLessThan(0.65);
-    expect(withSnap / phrases).toBeGreaterThan(0.15); expect(withSnap / phrases).toBeLessThan(0.5);
-    expect(alone).toBeGreaterThan(0); expect(alone).toBeLessThan(withSnap); // (in the snare's place, or over it)
+    expect(withSnap / phrases).toBeGreaterThan(0.15); expect(withSnap / phrases).toBeLessThan(0.6);
+    expect(alone).toBe(withSnap); // (always in the clap's or snare's place: a phrase is one or the other)
   });
   it("makes them of synthesis, the snap a drum of the drum bus", () => {
     const SP = B.spice!;
@@ -545,5 +548,49 @@ describe("heard, and low (Ed, 2026-11-11, of the space clip: \"I don't hear any 
     expect(all).toBeGreaterThan(500);
     expect(low / all).toBeGreaterThan(0.8); // (mostly E1 to E2)
     expect(top).toBeLessThanOrEqual(47);
+  });
+});
+
+describe("snaps and claps at different times (Ed, 2026-11-11: \"Don't need claps and snaps at the same time - try them at different times, snaps during lighter periods\")", () => {
+  const SNAPS = new Set([B.spice!.snap, "snap"]), HEAVY = new Set(["bgClap", "clap", "snare", "dnbSnare"]);
+  const backbeat = (es: NoteEvent[]) => { const b = es.filter(e => e.step % 16 < 8 && e.vel > 0.3 * B.space!.balance.drums * 0.72); return { snap: b.some(e => SNAPS.has(e.patch)), heavy: b.some(e => HEAVY.has(e.patch)) }; };
+  it("never sounds a finger snap on the same sixteenth as a clap or a snare, in any family, wave, section or pass", () => {
+    let snaps = 0;
+    for (const seed of [1, 7, 23, 101, 4242, 90001]) {
+      const style = night(seed);
+      for (const before of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) for (const extra of [{ nextAt: Infinity }, {}, { victory: 4 }]) for (let bar = 0; bar < 40; bar++) {
+        const es = barNotes(style, seed, before, bar, extra), heavy = new Set(es.filter(e => HEAVY.has(e.patch)).map(e => e.step));
+        for (const e of es.filter(e => SNAPS.has(e.patch))) { snaps++; expect(heavy.has(e.step), `seed ${seed} wave ${before} bar ${bar} step ${e.step % 16} (${JSON.stringify(extra)}: ${e.patch} with ${es.filter(f => HEAVY.has(f.patch) && f.step === e.step).map(f => f.patch).join()})`).toBe(false); }
+      }
+    }
+    expect(snaps).toBeGreaterThan(1000);
+    // (no kit layers one on the other)
+    for (const n of Object.keys(B.kits)) { const K = kitOf(B, n); for (const v of K.drums.filter(v => SNAPS.has(v.patch))) for (const w of K.drums.filter(w => HEAVY.has(w.patch))) for (let i = 0; i < 32; i++) expect(/[Xx]/.test(v.p[i % v.p.length]) && /[Xx]/.test(w.p[i % w.p.length]), n).toBe(false); }
+  });
+  it("gives the lighter periods the snaps and the heavier ones the clap or snare, a phrase one or the other whole", () => {
+    for (const seed of [7, 23, 101]) {
+      const style = night(seed), cue = { nextAt: Infinity };
+      // (gentle, before the second stump: snaps, never a clap)
+      for (const bar of [1, 9, 17, 33, 41]) { const b = backbeat(barNotes(style, seed, 0, bar)); expect(b.heavy, `gentle ${seed} ${bar}`).toBe(false); expect(b.snap).toBe(true); }
+      for (const before of [3, 5, 8]) {
+        const K = kitOf(B, kitName(style, arcStep(style, before), ""));
+        if (!K.drums.some(v => HEAVY.has(v.patch) && /[Xx]/.test(v.p))) continue; // (a kit whose own backbeat is the finger snap)
+        // (the landing's hook: the clap or snare; the breakbeat phrase: the snare; the breakdown's quiet half: soft snaps on two and four)
+        for (const bar of [0, 1, 2, 5]) { const b = backbeat(barNotes(style, seed, before, bar, cue)); expect(b.snap, `landing ${seed} ${before} ${bar}`).toBe(false); if (/[Xx]/.test(K.drums.find(v => HEAVY.has(v.patch))!.p.slice(0, 8))) expect(b.heavy).toBe(true); }
+        if (!K.breaks.some(v => SNAPS.has(v.patch))) for (const bar of [17, 18]) expect(backbeat(barNotes(style, seed, before, bar, cue)).snap).toBe(false); // (but a kit whose own breakbeat is snapped)
+        for (const bar of [24, 25, 26, 27]) { const es = barNotes(style, seed, before, bar, cue); expect(es.filter(e => SNAPS.has(e.patch)).map(e => e.step % 16)).toEqual([4, 12]); expect(es.some(e => HEAVY.has(e.patch))).toBe(false); }
+        for (const bar of [28, 29]) expect(barNotes(style, seed, before, bar, cue).some(e => SNAPS.has(e.patch))).toBe(false); // (the drum & bass: its snare)
+        // (the groove where the hook rests, bars 9 to 15: one or the other for the whole phrase)
+        const kinds = [9, 10, 11, 12, 13, 14].map(bar => backbeat(barNotes(style, seed, before, bar, cue)));
+        expect(new Set(kinds.filter(k => k.snap || k.heavy).map(k => (k.snap ? "snap" : "heavy"))).size).toBeLessThanOrEqual(1);
+        for (const k of kinds) expect(k.snap && k.heavy).toBe(false);
+      }
+      // (the victory: claps)
+      expect(backbeat(barNotes(style, seed, 6, 12, { victory: 8, nextAt: Infinity })).snap).toBe(false);
+    }
+    // (both kinds of groove phrase are dealt)
+    let light = 0, heavy = 0;
+    for (const seed of SEEDS) for (const before of [2, 3, 4, 5, 6, 7, 8, 9]) { const b = backbeat(barNotes(night(seed), seed, before, 9, { nextAt: Infinity })); if (b.snap) light++; else if (b.heavy) heavy++; }
+    expect(light).toBeGreaterThan(5); expect(heavy).toBeGreaterThan(5);
   });
 });

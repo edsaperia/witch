@@ -106,11 +106,13 @@ export interface BangerDef {
   /** Sprinkled in sometimes (Ed, 2026-11-10: "Some Xylophone and Finger snap snares help with the spooky vibe; sprinkle some of
    *  these in sometimes"), each dealt by the wave's seed an eight-bar phrase at a time: the xylophone (`xylo`, a voice of
    *  `leads`) answering in the tune's gaps (`answer`: the share of phrases), a four-note run into the next phrase over a fill's
-   *  last beat (`flourish`), a figure in a breakdown's quiet half (`breakdown`); finger snaps (`snap`, a patch, at `snapLevel`)
-   *  on the kit's backbeat (`snaps`: the share of phrases; `gentleSnaps` before the second stump), in place of its snare and
-   *  clap (`replace`: the share of those) or over them at under half their level, and on the third beat of a breakdown's quiet
-   *  half (`breakdownSnaps`). */
-  spice?: { xylo: string; answer: number; flourish: number; breakdown: number; snap: string; snaps: number; gentleSnaps: number; replace: number; breakdownSnaps: number; snapLevel: number };
+   *  last beat (`flourish`), a figure in a breakdown's quiet half (`breakdown`). And the finger snaps (`snap`, a patch, at
+   *  `snapLevel`; Ed, 2026-11-11: "Don't need claps and snaps at the same time - try them at different times, snaps during
+   *  lighter periods"): the backbeat's in the lighter periods, in the clap's or snare's place, never with it: every gentle
+   *  wave, a breakdown's quiet half, a build's first half, and `snaps` of the grooves' phrases between the hook's returns;
+   *  the clap (the snare in breaks, jungle and hard) has the landings, the rest of the grooves, the breakbeat phrases, the
+   *  drum & bass, a build's second half and the victory. A phrase is one or the other whole. */
+  spice?: { xylo: string; answer: number; flourish: number; breakdown: number; snap: string; snaps: number; snapLevel: number };
   /** The tunes' register and level (Ed, 2026-11-10: "Lead melody gets very high, and it's loud vs the drums"): the highest
    *  note (MIDI) a lead's line and the reply voice's may reach (a line that would pass it is played an octave down, whole, its
    *  shape kept), the lowest a lead's line may fall to, and every tune's level against the drums (`level`). */
@@ -268,6 +270,15 @@ export function hookHeard(style: MusicStyle, plan: BlockPlan, sec: Resolved, bar
   return hookUse(role, bar - plan.start, plan.bars, plan.pass ?? 0, role === "breakdown" ? (haunt ? hauntedDrop(style, plan.bars) : Infinity) : 0, stumps !== undefined && stumps < B.gentle.stumps);
 }
 
+/** Whether a phrase is a lighter one (its backbeat finger snaps, never with a clap or snare): a gentle wave's, or, of the
+ *  grooves between the hook's returns, the share dealt by the wave's seed (`spice.snaps`), a phrase whole. */
+export function lightPhrase(B: BangerDef, style: MusicStyle, role: BangerRole, use: ReturnType<typeof hookUse>, gentle: boolean, seed: number, formBar: number, pass: number): boolean {
+  const SP = B.spice;
+  if (!SP || !style.patches[SP.snap]) return false;
+  if (role === "victory") return false; // (the victory's claps, always)
+  return gentle || (role === "drop" && use !== "whole" && hash2(seed, 851, Math.floor(formBar / 8) + pass * 131) < SP.snaps);
+}
+
 /** What a block is in banger mode, or null where the music is as before (the boot's intro, layer by layer; the knockout): by
  *  its place in the form as the conductor deals it (two phrases of the groove, one of breakbeat, one of breakdown), else (a
  *  section forced) by its name. */
@@ -338,20 +349,21 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
   const ev = (patch: string, midi: number | null, vel: number, dur: number, extra: Partial<NoteEvent> = {}) => {
     if (style.patches[patch]) out.push({ part: "b:" + patch, patch, step, offset: sw, dur, midi, vel: vel * quiet, straight: true, ...extra });
   };
-  const kindOf = (patch: string) => { const p = style.patches[patch]; return !p ? "" : p.kind === "kick" && !p.noDuck ? "kick" : p.kind === "snare" || p.bursts ? "snare" : "top"; };
+  const kindOf = (patch: string) => { const p = style.patches[patch]; return !p ? "" : p.kind === "kick" && !p.noDuck ? "kick" : p.kind === "snare" || p.bursts || patch === "snap" ? "snare" : "top"; }; // (a finger snap a backbeat's drum, as a clap is)
   // the sprinkles, dealt a phrase at a time (Ed, 2026-11-10: "sprinkle some of these in sometimes")
   const SP = B.spice, phraseNo = Math.floor(formBar / 8), deal = (salt: number) => hash2(seed, salt, phraseNo + pass * 131);
-  const snapsOn = !!SP && !!style.patches[SP.snap] && deal(851) < (gentle ? SP.gentleSnaps : SP.snaps), snapsAlone = snapsOn && deal(853) < SP!.replace;
+  // (a lighter phrase: its backbeat the finger snaps', the clap or snare resting; a heavier one: the kit's own, no snaps)
+  const light = lightPhrase(B, style, role, use, gentle, seed, formBar, pass);
   const xylo = SP ? B.leads[SP.xylo] : undefined, xyAnswer = !!xylo && deal(857) < SP!.answer, xyRun = !!xylo && hash2(seed, 859, bar) < SP!.flourish;
   const drums = (voices: BangerVoice[], level = 1, keep?: (kind: string) => boolean, backbeat = false) => {
     let snapped = false;
     for (const v of voices) {
       if (!within(v, E, barIn, pass) || (keep && !keep(kindOf(v.patch)))) continue;
-      const snare = backbeat && snapsOn && kindOf(v.patch) === "snare";
-      const ch = v.p[(barIn * 16 + s) % v.p.length], lv = BAL.drums * (v.level ?? 1) * level * (snare ? (snapsAlone ? 0 : 0.45) : 1) * (0.94 + 0.06 * r(v.patch.length * 31 + v.p.length));
-      // (finger snaps on the kit's backbeat: where its snare or clap hits squarely)
-      if (snare && !snapped && (ch === "X" || ch === "x")) { snapped = true; ev(SP!.snap, null, SP!.snapLevel * level, 1); }
-      if (lv <= 0) continue;
+      if (role === "victory" && (v.patch === SP?.snap || v.patch === "snap")) continue; // (the victory's backbeat its claps: a kit's own snaps rest)
+      const snare = backbeat && light && kindOf(v.patch) === "snare";
+      const ch = v.p[(barIn * 16 + s) % v.p.length], lv = BAL.drums * (v.level ?? 1) * level * (0.94 + 0.06 * r(v.patch.length * 31 + v.p.length));
+      // (a lighter phrase: a finger snap where the kit's snare or clap would hit squarely, in its place)
+      if (snare) { if (!snapped && (ch === "X" || ch === "x")) { snapped = true; ev(SP!.snap, null, SP!.snapLevel * BAL.drums * level, 1); } continue; }
       if (ch === "." || ch === "-" || VEL[ch] === undefined) continue;
       if (ch === "r") { ev(v.patch, null, 0.6 * lv, 0.5); out.push({ part: "b:" + v.patch, patch: v.patch, step, offset: sw + 0.5, dur: 0.5, midi: null, vel: 0.75 * lv, straight: true }); continue; }
       ev(v.patch, null, VEL[ch] * lv, 1);
@@ -531,7 +543,7 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
       if (n && !sing(n, n.dur, 1)) tune(reply, n, 0.9);
       // (now and then: the xylophone's figure in the hook's gaps, a finger snap on the third beat)
       if (SP && xylo && hash2(seed, 861, phraseNo) < SP.breakdown) tune(xylo, hook.reply[((barIn % 8) * 16 + s) % 128], 0.7, {}, 16, hook, "reply");
-      if (SP && s === 8 && style.patches[SP.snap] && hash2(seed, 863, phraseNo) < SP.breakdownSnaps) ev(SP.snap, null, 0.7 * SP.snapLevel, 1);
+      if (SP && (s === 4 || s === 12) && style.patches[SP.snap]) ev(SP.snap, null, 0.6 * SP.snapLevel * BAL.drums, 1); // (the quiet half's backbeat: finger snaps, soft)
       if (Number.isFinite(dropAt)) {
         const rb = Math.max(0, Math.min(H!.drop.riserBars, dropAt)), k = barIn - (dropAt - rb);
         if (k >= 0 && k < rb) riser(k / rb, (k + 1) / rb);
@@ -556,15 +568,16 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
     pad(q < 2 ? 0.8 : 0.5);
     if (gentle) {
       // (a gentle build: the groove on, its kick out for the last bar, a shaker in sixteenths rising, the hook slow, then the riff)
-      if (!last) { drums(kit.drums); bass(kit.bass, kit.bass.p, 0.9); } else if (!gap) drums(kit.drums, 0.9, k => k === "top");
+      if (!last) { drums(kit.drums, 1, undefined, true); bass(kit.bass, kit.bass.p, 0.9); } else if (!gap) drums(kit.drums, 0.9, k => k === "top");
       if (!gap) ev("shaker", null, (0.25 + 0.5 * p) * (s % 2 ? 0.7 : 1), 1);
       const sl = use === "slow" ? slow() : null;
       if (use === "slow") { if (sl && !(a.vocal !== "none" && sing(sl, sl.dur, 0.9))) tune(lead, sl, 0.8); } else if (!gap) tune(lead, riff.period[(pb * 16 + s) % 128], 0.8, {}, 16, riff);
     } else if (!gap) {
       const kickV = kit.drums.find(v => kindOf(v.patch) === "kick");
-      if (q < 2) { drums(kit.drums, 1, k => k !== "snare"); bass(kit.bass, kit.bass.p, 0.9); }
+      // (its first half light: finger snaps on two and four; the snare roll from the half)
+      if (q < 2) { drums(kit.drums, 1, k => k !== "snare"); bass(kit.bass, kit.bass.p, 0.9); if (SP && (s === 4 || s === 12) && style.patches[SP.snap]) ev(SP.snap, null, SP.snapLevel * BAL.drums, 1); }
       else if (q === 2) { drums(kit.drums, 0.9, k => k === "top"); if (kickV && s % 8 === 0) ev(kickV.patch, null, 0.9, 1); }
-      const roll = q === 0 ? s % 4 === 0 : q === 1 ? s % 2 === 0 : true, lv = 0.15 + 0.3 * p;
+      const roll = q >= 2, lv = 0.15 + 0.3 * p;
       if (roll) { ev("snare", null, lv * (s % 4 === 0 ? 1 : 0.8), 1); if (q === 3 && barIn >= n - 1) out.push({ part: "b:snare", patch: "snare", step, offset: sw + 0.5, dur: 0.5, midi: null, vel: lv * 0.8, straight: true }); }
       // the hook: its first bar at half speed sung (a wave with a singer) or its first half-bar played, then its opening
       // beat, then its first note, on every beat, eighth and sixteenth
