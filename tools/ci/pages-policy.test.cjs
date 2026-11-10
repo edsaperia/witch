@@ -42,3 +42,21 @@ test('Ed owns source activation, cleanup remains independent, and dispatch reach
   assert.equal((ci.match(/name: Request managed Pages publication/g)||[]).length,2);
   assert.match(ci,/context.ref==='refs\/heads\/main'\?'pages-live':'pages-preview'/);
 });
+test('a failed or cancelled deployment is retried, a re-run can deploy, and the public root is checked (2026-11-09)',()=>{
+  const steps=parsed.jobs.publish.steps, by=name=>steps.find(s=>s.name===name);
+  const pack=by('Package complete site snapshot'), first=by('Deploy complete snapshot'), retry=by('Deploy again after a failed or cancelled deployment');
+  // one artifact per attempt: a re-run uploads again, and two of one name stop deploy-pages
+  assert.equal(pack.with.name,'github-pages-${{ github.run_attempt }}');
+  for(const d of [first,retry]){ assert.equal(d.with.artifact_name,pack.with.name); assert.ok(d.with.timeout>=1800000); }
+  assert.equal(first['continue-on-error'],true); assert.equal(retry.if,"steps.deployment.outcome == 'failure'");
+  assert.match(parsed.jobs.publish.environment.url,/steps.retry.outputs.page_url/);
+  const check=by('Check the public site serves the published live root');
+  assert.ok(steps.indexOf(check)>steps.indexOf(retry)); assert.match(check.with.script,/version.json/); assert.match(check.with.script,/setFailed/);
+});
+test('previews: documents-only pull requests get none, and main drops those idle a week',()=>{
+  const ci=fs.readFileSync('.github/workflows/ci.yml','utf8'), y=require('yaml').parse(ci);
+  const steps=y.jobs.preview.steps; assert.equal(steps[0].id,'scope');
+  for(const s of steps.slice(1)) assert.match(s.if,/steps.scope.outputs.docs != 'true'/);
+  const deploy=y.jobs.deploy.steps.find(s=>s.name==='Publish to gh-pages').run;
+  assert.match(deploy,/select\(.updated_at > \(now - 7\*86400 \| todate\)\)/);
+});
