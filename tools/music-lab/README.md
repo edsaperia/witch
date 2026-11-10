@@ -116,7 +116,7 @@ The haunted treatment's A/B: the game's engine renders, offline and with the gam
 
 ## `heard.mjs`
 
-Banger mode's sprinkles are heard: node tools/music-lab/heard.mjs In headless Chromium, the game's engine renders bars of a night where the xylophone has the chords and the finger snaps the backbeat, each part alone, as it's mixed, and checks: the…
+Banger mode's sprinkles are heard: node tools/music-lab/heard.mjs In headless Chromium, the game's engine renders bars of a night where the xylophone has the rolling bed under the lead or the ostinato with it, and the finger snaps the backbeat, each part…
 
 ## `ingredients.ts`
 

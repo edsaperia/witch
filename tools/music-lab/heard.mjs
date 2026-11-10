@@ -1,8 +1,10 @@
 // Banger mode's sprinkles are heard (Ed, 2026-11-11, of a clip whose notes marked them: "I don't hear any xylophones or clicks
 // at all": they reached the output, 10 to 13 dB under the lead): node tools/music-lab/heard.mjs
 // In headless Chromium, the game's engine (tools/music-lab/banger.ts) renders bars of a night (seed 7) where the xylophone has
-// the chords and the finger snaps the backbeat, each part alone, as it's mixed (the compressors off, far under the limiter),
-// and checks: the xylophone no quieter than the lead less 3 dB, its peaks over the lead's; the snaps, where they have the
+// the rolling bed under the lead (a landing's hook) or the ostinato with it, and the finger snaps the backbeat, each part
+// alone, as it's mixed (the compressors off, far under the limiter), and checks: the xylophone's bed no quieter than the lead
+// less 6 dB, its hits within 6 dB of the lead's (a bed, under the tune, but heard); on the ostinato likewise (the chain: short
+// notes on both; the tresillo chant, the lead's notes held and the xylophone's struck: its hits over the lead's, its level within 10 dB); the snaps, where they have the
 // backbeat, over the clap in its phrases; no sixteenth with a snap and a clap or snare together (Ed: "Don't need claps and
 // snaps at the same time");
 // and, drawn as the music ahead draws a bar (platform/audio/musicAhead.ts: a renderer into the stems), the xylophone in the
@@ -30,26 +32,32 @@ await page.addScriptTag({ content: "{ let r = 12345; Math.random = () => ((r = (
 const base = { seed: 7, island: "owl", banger: true, landings: [16, 48, 112, 168] };
 /** The patches sounding in the eight bars from `from`, each with how many notes it starts. */
 const rows = async (from) => { const m = new Map(); for (const l of (await page.evaluate(o => window.scoreText(o), { ...base, from, to: from + 8 })).split("\n").filter(l => l.startsWith("  "))) { const c = l.trim().split(/\s+/); m.set(c[0], (m.get(c[0]) ?? 0) + c.slice(1).filter(x => x !== ".").length); } return m; };
-let xyAt = -1, snapAt = -1, clapAt = -1;
+let xyAt = -1, ostAt = -1, tresAt = -1, snapAt = -1, clapAt = -1;
 for (let b = 48; b < 168; b += 8) {
   const r = await rows(b);
-  if (xyAt < 0 && (r.get("bgXylo") ?? 0) >= 24 && (r.has("bgSquare") || r.has("bgSquareSoft"))) xyAt = b; // (its chords, not an answer or a run)
+  const xn = r.get("bgXylo") ?? 0, lead = r.has("bgSquare") || r.has("bgSquareSoft");
+  if (r.has("bgRiser") || !r.has("bgKick")) continue; // (a groove: not a build or a breakdown, where everything is brought down)
+  if (xyAt < 0 && xn >= 100 && lead) xyAt = b; // (the bed: sixteenths all phrase)
+  if (ostAt < 0 && xn >= 32 && xn < 80 && lead) ostAt = b; // (the ostinato's chain: the xylophone note for note with the lead)
+  if (tresAt < 0 && xn >= 14 && xn < 32 && lead) tresAt = b; // (the ostinato's tresillo chant: five or six notes in two bars)
   if (snapAt < 0 && r.has("bgSnap") && !r.has("bgClap")) snapAt = b;
   if (clapAt < 0 && r.has("bgClap") && !r.has("bgSnap")) clapAt = b;
 }
-ok(xyAt >= 0 && snapAt >= 0 && clapAt >= 0, `the night has a phrase of xylophone chords (bar ${xyAt}), a lighter one of finger snaps (bar ${snapAt}) and one of claps (bar ${clapAt})`);
-const SETS = { xylophone: [["bgXylo", "bgXyloL", "bgXyloR"], xyAt], lead: [["bgSquare", "bgSquareSoft"], xyAt], snaps: [["bgSnap"], snapAt], clap: [["bgClap"], clapAt] }, L = {};
+ok(xyAt >= 0 && ostAt >= 0 && tresAt >= 0 && snapAt >= 0 && clapAt >= 0, `the night has a phrase of the xylophone's rolling bed under the lead (bar ${xyAt}), one of the ostinato's chain (bar ${ostAt}) and one of its tresillo chant (bar ${tresAt}), a lighter one of finger snaps (bar ${snapAt}) and one of claps (bar ${clapAt})`);
+const SETS = { xylophone: [["bgXylo", "bgXyloL", "bgXyloR"], xyAt], lead: [["bgSquare", "bgSquareSoft"], xyAt], "xylophone (ostinato)": [["bgXylo"], ostAt], "lead (ostinato)": [["bgSquare", "bgSquareSoft"], ostAt], "xylophone (tresillo)": [["bgXylo"], tresAt], "lead (tresillo)": [["bgSquare", "bgSquareSoft"], tresAt], snaps: [["bgSnap"], snapAt], clap: [["bgClap"], clapAt] }, L = {};
 for (const [name, [only, from]] of Object.entries(SETS)) {
   const r = await page.evaluate(o => window.windowRender(o), { ...base, from, to: from + 8, only, linear: true, samples });
   const pcm = Buffer.from(r.pcm, "base64"), s = new Int16Array(pcm.buffer, pcm.byteOffset, pcm.length / 2), n = Math.min(s.length, 16 * 44100 * 2);
   let q = 0, pk = 0;
   for (let i = 0; i < n; i++) { const v = s[i] / 32768; q += v * v; pk = Math.max(pk, Math.abs(v)); }
   L[name] = { rms: 10 * Math.log10(q / n + 1e-15), peak: 20 * Math.log10(pk + 1e-9) };
-  console.log(`     ${name.padEnd(10)} rms ${L[name].rms.toFixed(1)} dB, peak ${L[name].peak.toFixed(1)} dB (alone, as mixed, bars ${from} to ${from + 8})`);
+  console.log(`     ${name.padEnd(22)} rms ${L[name].rms.toFixed(1)} dB, peak ${L[name].peak.toFixed(1)} dB (alone, as mixed, bars ${from} to ${from + 8})`);
 }
 ok(L.xylophone.rms > -70 && L.snaps.peak > -60, "the xylophone and the finger snaps reach the output");
-ok(L.xylophone.rms >= L.lead.rms - 3, `the xylophone is no quieter than the lead less 3 dB (${(L.xylophone.rms - L.lead.rms).toFixed(1)} dB against it)`);
-ok(L.xylophone.peak >= L.lead.peak, `the xylophone's hits stand over the lead's (${(L.xylophone.peak - L.lead.peak).toFixed(1)} dB)`);
+ok(L.xylophone.rms >= L.lead.rms - 6, `the xylophone's bed is no quieter than the lead less 6 dB (${(L.xylophone.rms - L.lead.rms).toFixed(1)} dB against it)`);
+ok(L.xylophone.peak >= L.lead.peak - 6, `its hits within 6 dB of the lead's (${(L.xylophone.peak - L.lead.peak).toFixed(1)} dB)`);
+{ const x = L["xylophone (ostinato)"], l = L["lead (ostinato)"]; ok(x.rms >= l.rms - 6, `on the ostinato the xylophone is no quieter than the lead less 6 dB (${(x.rms - l.rms).toFixed(1)} dB against it)`); }
+{ const x = L["xylophone (tresillo)"], l = L["lead (tresillo)"]; ok(x.peak >= l.peak && x.rms >= l.rms - 10, `on the tresillo chant (the lead's notes held, the xylophone's struck) its hits stand over the lead's (${(x.peak - l.peak).toFixed(1)} dB) and its level is within 10 dB (${(x.rms - l.rms).toFixed(1)} dB)`); }
 ok(L.snaps.peak >= L.clap.peak + 3, `where they have the backbeat the finger snaps click as clearly as the clap does in its phrases, and more (${(L.snaps.peak - L.clap.peak).toFixed(1)} dB at their peaks)`);
 // (never together: no sixteenth of the night's score with a snap and a clap or snare on it)
 {
