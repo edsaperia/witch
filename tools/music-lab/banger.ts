@@ -3,6 +3,7 @@
 // knockdown, a victory, a legend's clearing) with banger mode on and off, the same seed, so they can be heard side by side.
 // Lab-only: nothing here changes the game.
 import { Music } from "../../src/platform/audio/music";
+import { MusicEngine, type MusicSink } from "../../src/platform/audio/musicEngine";
 import { TUNING } from "../../src/rules/tuning";
 import { mixAt, nearness } from "../../src/rules/music";
 import { newBeatClock, timeAt } from "../../src/rules/beat";
@@ -54,6 +55,8 @@ export interface WindowJob {
   /** A balance check: only the rhythm section (the drums, the bass and its sub) or only the melodic parts; `linear`: the
    *  compressors off and the level into the limiter far under its threshold, so the two can be compared as they're mixed. */
   group?: "rhythm" | "melodic"; linear?: boolean;
+  /** Only these patches' parts (a proof that a part reaches the output: the xylophone alone, the snaps alone). */
+  only?: string[];
   /** A long clip: at the dancefloor throughout (a clearing's stretch too), every block's notes kept beside the clearing's. */
   long?: boolean;
   samples: Record<string, string>;
@@ -79,6 +82,7 @@ async function windowRender(o: WindowJob) {
     const rhythm = (p: string) => drumPatch(style, p) || low.has(p) || p === "impact";
     m.engine!.solo = new Set(o.group === "rhythm" ? [...Object.keys(style.patches).filter(rhythm).map(p => "b:" + p), "impact"] : [...Object.keys(style.patches).filter(p => !rhythm(p)).map(p => "b:" + p), style.form?.sung.part ?? ""]);
   }
+  if (o.only) m.engine!.solo = new Set(o.only.flatMap(p => ["b:" + p, p]));
   if (o.drums) m.engine!.solo = new Set(Object.keys(style.patches).filter(p => drumPatch(style, p)).map(p => "b:" + p));
   // (the compressors' gain reduction, read each frame: dB, 0 none)
   const gr = { drums: [] as number[], glue: [] as number[] }, E = m.engine as unknown as { drumComp?: { comp: DynamicsCompressorNode; on: boolean } | null; master?: { glue?: { comp: DynamicsCompressorNode; on: boolean } } | null };
@@ -189,4 +193,24 @@ function scoreText(o: Omit<WindowJob, "samples">): string {
   return lines.join("\n");
 }
 
-Object.assign(window as unknown as { windowRender: typeof windowRender; scoreText: typeof scoreText }, { windowRender, scoreText });
+/** The render-ahead path's routing, for a part alone (tools/music-lab/heard.mjs): bars `from` to `to` drawn as
+ *  platform/audio/musicAhead.ts draws a bar (a renderer engine into the stems: the ducked parts, the rest, the reverb's send,
+ *  the delay's, the ghost voice, banger mode's drums; the voice line), only the patches `only` sounding; each stem's level (dB). */
+async function stemsProof(o: Pick<WindowJob, "seed" | "island" | "landings" | "from" | "to" | "only" | "samples">) {
+  const { style } = styled({ ...o, banger: true }), clock = newBeatClock(style.bpm), g = timeAt(clock, o.from * 4), dur = timeAt(clock, o.to * 4) - g, STEMS = 13;
+  const oc = new OfflineAudioContext(STEMS, Math.ceil(RATE * (dur + 2.5)), RATE), merge = oc.createChannelMerger(STEMS), recs = await decode(oc, o.samples);
+  merge.connect(oc.destination);
+  const pair = (i: number) => { const n = oc.createGain(), sp = oc.createChannelSplitter(2); n.channelCount = 2; n.channelCountMode = "explicit"; n.connect(sp); sp.connect(merge, 0, 2 * i); sp.connect(merge, 1, 2 * i + 1); return n; };
+  const voice = oc.createGain(); voice.channelCount = 1; voice.channelCountMode = "explicit"; voice.connect(merge, 0, 12);
+  const sink: MusicSink = { duck: pair(0), dry: pair(1), reverb: pair(2), delay: pair(3), ghost: pair(4), drums: pair(5), voice: () => voice, tone: () => {}, duckAt: () => {}, gate: () => {} };
+  const r = new MusicEngine(oc, oc.destination, style, o.seed, oc.destination, sink);
+  r.setRecordings(recs);
+  if (o.only) r.solo = new Set(o.only.flatMap(p => ["b:" + p, p]));
+  const landed = o.landings.filter(b => b <= o.from);
+  r.renderAhead({ waves: landed, nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, stumps: landed }, g, dur, clock);
+  const buf = await oc.startRendering(), out: Record<string, number> = {};
+  ["duck", "dry", "reverb", "delay", "ghost", "drums"].forEach((name, i) => { let q = 0; for (const c of [2 * i, 2 * i + 1]) { const d = buf.getChannelData(c); for (let k = 0; k < d.length; k++) q += d[k] * d[k]; } out[name] = 10 * Math.log10(q / (2 * buf.length) + 1e-15); });
+  return out;
+}
+
+Object.assign(window as unknown as { windowRender: typeof windowRender; scoreText: typeof scoreText; stemsProof: typeof stemsProof }, { windowRender, scoreText, stemsProof });

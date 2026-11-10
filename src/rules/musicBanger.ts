@@ -371,7 +371,8 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
     if (m > lo + 19) m -= 12;
     const patch = pick(D.patch, hash2(seed, 831, 3)), vel = 0.7 * BAL.bass * (D.level ?? 1) * level * (0.95 + 0.05 * r(977));
     ev(patch, m, vel, dur, D.glide ? { glide: D.glide } : {});
-    if (D.sub !== false && D.octave > 0 && style.patches.bgSub) { let sm = m - 12; while (sm >= 40) sm -= 12; ev("bgSub", sm, 0.9 * BAL.bass * level, dur); }
+    // (the sub: an octave under a mid bass; under a low one (Ed, 2026-11-11: "The Bassline is best when it's lower") at its own pitch, lighter)
+    if (D.sub !== false && style.patches.bgSub) { let sm = D.octave > 0 ? m - 12 : m; while (sm >= 40) sm -= 12; ev("bgSub", sm, (D.octave > 0 ? 0.9 : 0.35) * BAL.bass * level, dur); }
   };
   /** The chords' hit (if one starts) on the section's sixteenth `at` (this one, or an earlier one's for its echo): the kit's
    *  stabs voiced into one octave (each tone where it's nearest; a groove's without their root: `thin`), or a tone a hit in

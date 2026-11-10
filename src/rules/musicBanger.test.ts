@@ -505,3 +505,45 @@ describe("space, the xylophone's chords, her harmony and the rhythm section (Ed,
     for (const p of ["bgHat", "bgHatB", "bgTom", "bgTomLo", "bgRim", "bgRide", "bgShaker"]) expect(Math.abs(base.patches[p].pan!), p).toBeGreaterThanOrEqual(0.45);
   });
 });
+
+describe("heard, and low (Ed, 2026-11-11, of the space clip: \"I don't hear any xylophones or clicks at all. Drums are good. The Bassline is best when it's lower.\")", () => {
+  const S = B.space!, SP = B.spice!, X = S.xylo;
+  it("plays the xylophone's hits well over the lead's and the snaps' over the clap's (measured: at a third of this they were lost in the mix)", () => {
+    // (a hit's strength: its patch's gain by its note's level; tools/music-lab/heard.mjs measures the sound itself, in CI's smoke job)
+    const strength = (e: NoteEvent) => base.patches[e.patch].gain * e.vel;
+    let phrases = 0;
+    for (const seed of [7, 23, 101]) {
+      const style = night(seed);
+      for (const before of [2, 3, 4, 5, 6, 7, 8]) for (const bar of [8, 16, 20]) {
+        const a = arcStep(style, before), K = kitOf(B, kitName(style, a, "")), fig = xyloFigure(B, K.xylo, tuneSeed(seed, a.tune ?? 0), bar, 0);
+        if (!fig || fig === X.roll) continue;
+        const es = [0, 1].flatMap(k => barNotes(style, seed, before, bar + k, { nextAt: Infinity })), E = Math.max(B.energyFloor, a.energy), leads = new Set((E < B.softBelow ? K.leads.soft : K.leads.hard).map(l => B.leads[l].patch));
+        const xs = es.filter(e => e.patch === B.leads[X.voice].patch), ls = es.filter(e => pitched(e) && leads.has(e.patch) && e.patch !== B.leads[X.voice].patch);
+        if (!xs.length || !ls.length) continue;
+        phrases++;
+        expect(Math.max(...xs.map(strength)), `${seed} ${before} ${bar}`).toBeGreaterThan(2.5 * Math.max(...ls.map(strength)));
+      }
+    }
+    expect(phrases).toBeGreaterThan(5);
+    expect(base.patches[SP.snap].gain * SP.snapLevel * S.balance.drums).toBeGreaterThan(2.5 * base.patches.bgClap.gain * S.balance.drums);
+    // (and with presence: the snap's band and the xylophone's in the upper mids)
+    expect(base.patches[SP.snap].cutoff!).toBeGreaterThanOrEqual(3000); expect(base.patches[SP.snap].cutoff!).toBeLessThanOrEqual(5000);
+    expect(base.patches[B.leads[X.voice].patch].cutoff!).toBeGreaterThanOrEqual(2500);
+  });
+  it("keeps the main basslines low: E1 to E2 but brief moves up, in every family but acid and chiptune (their lines are their genre)", () => {
+    for (const n of Object.keys(B.kits)) expect(kitOf(B, n).bass.octave, n).toBe(n === "acid" || n === "chip" ? 1 : 0);
+    for (const n of Object.keys(B.kits)) for (const p of kitOf(B, n).bass.patch) expect(p.startsWith("bgBass"), p).toBe(false); // (the brighter stand-ins gone)
+    let low = 0, all = 0, top = 0;
+    for (const seed of [1, 7, 23, 101, 4242, 90001]) {
+      const style = night(seed);
+      for (const before of [0, 2, 3, 4, 5, 6, 7, 8, 9]) {
+        const K = kitOf(B, kitName(style, arcStep(style, before), ""));
+        if (K.bass.octave !== 0) continue;
+        for (const bar of [0, 1, 5, 9, 12, 17, 21]) for (const e of barNotes(style, seed, before, bar, { nextAt: Infinity }).filter(e => K.bass.patch.includes(e.patch) || e.patch === "bgSub")) { all++; if (e.midi! <= 40) low++; top = Math.max(top, e.midi!); expect(e.midi!).toBeGreaterThanOrEqual(28); }
+      }
+    }
+    expect(all).toBeGreaterThan(500);
+    expect(low / all).toBeGreaterThan(0.8); // (mostly E1 to E2)
+    expect(top).toBeLessThanOrEqual(47);
+  });
+});
