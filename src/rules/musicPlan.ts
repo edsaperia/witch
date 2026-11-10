@@ -49,6 +49,10 @@ export interface MusicCue {
    *  on a new record"): the bar she went down in (`at`: the record scratched, silence from there) and the bar line her new
    *  record starts on (`back`: the music from the top, re-seeded; formClock, silentAt). */
   knockdowns?: { at: number; back: number }[];
+  /** The bar each great stump's soundsystem rose on (rules/stumps.ts: every area but home has one; her spell at it or its wave
+   *  converts it), in order: banger mode is gentle till the second (Ed, 2026-11-10: "keep things gentle before the second
+   *  stump"; stumpsBy). Absent (previews, the labs): the music whole. */
+  stumps?: number[];
   /** ?music= previews: always this section; or this wave's arc step whatever the wave. */
   forceSection?: string;
   forceWave?: number;
@@ -65,6 +69,15 @@ export function bootLayers(cue: Pick<MusicCue, "speakerBars" | "speakers" | "dro
   // speaker adding its own on top)
   if (cue.dropBar !== undefined && Math.ceil(cue.dropBar - 1e-6) <= bar) on += cue.dropLayers ?? 1;
   return Math.min(1, on / cue.speakers);
+}
+
+/** How many of the night's stumps had their soundsystem by the block starting on bar `start` (one rising within the block
+ *  line's snap counts, as a wave landing does), or undefined with no word of them. */
+export function stumpsBy(cue: Pick<MusicCue, "stumps">, start: number, B: number): number | undefined {
+  if (!cue.stumps) return undefined;
+  let n = 0;
+  for (const b of cue.stumps) if (blockAfter(b, B) <= start) n++;
+  return n;
 }
 
 /** Bars gone by at game time `time` on the beat clock. */
@@ -87,7 +100,17 @@ export function musicCue(g: Game, prev?: MusicCue): MusicCue {
     circle: circleCue(g, g.witch), knockdowns: prev?.knockdowns?.length === g.knockdowns.length ? prev.knockdowns : g.knockdowns.map(k => ({ at: bar(k.at), back: Math.round(bar(k.back) * 1e4) / 1e4 })),
     speakerBars: g.speakerBoot.filter((t): t is number => t !== null).map(bar).sort((a, b) => a - b), speakers: g.speakerBoot.length,
     dropBar: ((end: number | null) => end === null ? undefined : bar(end))(djIntroEnd(g)), dropLayers: g.tuning.music.dropLayers ?? 1,
+    stumps: stumpBars(p, bar, prev?.stumps),
   };
+}
+
+/** The bar each great stump's soundsystem rose on, in order (every area with the party but home's: its wave's, or her spell's
+ *  before it); `prev` again while none is new. */
+function stumpBars(p: Game["party"], bar: (time: number) => number, prev?: number[]): number[] {
+  let n = 0;
+  for (const a of p.areas.values()) if (a.wave > 0) n++;
+  if (prev?.length === n) return prev;
+  return [...p.areas.values()].filter(a => a.wave > 0).map(a => bar(a.at)).sort((x, y) => x - y);
 }
 
 /** The sleeping legend whose clearing `at` stands in, on the ground (Ed, 2026-10-06: "when you

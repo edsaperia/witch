@@ -1155,6 +1155,35 @@
    "decision": "The haunted treatment is on (Ed, 2026-11-08: \"B, 1-6\"); off kept to A/B"
   },
   {
+   "name": "banger",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Banger mode off (0): the music as before (the composer's dance way, ?melody= and ?haunted= as ever), or on (1, the default): one hook a night back at the key moments, kits and grooves by family, builds and drops, gentle till the second stump, to A/B. Sets tuning music.banger.",
+   "group": "compare",
+   "since": "2026-11-10",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Banger mode (Ed, 2026-11-10: \"I'm open to substantial redesigns, as long as we get music that fits with the game; catchy spooky cute dancey witchy ravey bangers\"); the music before it kept one switch away to A/B"
+  },
+  {
+   "name": "melody",
+   "values": [
+    "old",
+    "lyrical",
+    "dance"
+   ],
+   "does": "The music's melodies and basslines by the old rules (old: the seeded walk and the one-bar basslines), the composer's planned phrases (lyrical; new the same) or its riffs and hooks (dance, the default), to A/B. Sets tuning music.melody.",
+   "group": "compare",
+   "since": "2026-11-08",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "The composer writes the melodies and basslines (Ed, 2026-11-08: \"smarter rules\"), dancing (Ed, the same day: \"more lyrical but not very dancey\"); the lyrical way and the old rules kept to A/B"
+  },
+  {
    "name": "invites",
    "values": [
     "old"

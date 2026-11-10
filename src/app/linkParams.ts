@@ -116,6 +116,18 @@ export function tuningFromLink(params: URLSearchParams) {
   const hauntedParam = params.get("haunted");
   if (hauntedParam === "0" || hauntedParam === "off") tuning.music = { ...tuning.music, haunted: false };
   else if (hauntedParam === "1" || hauntedParam === "on") tuning.music = { ...tuning.music, haunted: true };
+  // ?melody=old: the melodies and basslines by the old rules, before the composer (Ed, 2026-11-08: "smarter rules"); ?melody=
+  // lyrical the composer's planned phrases (new, its first name), ?melody=dance its riffs and hooks (the default; Ed: "not
+  // very dancey"), to A/B (tuning music.melody, app/sound.ts)
+  // ?banger=0: the music as before banger mode (Ed, 2026-11-10: "catchy spooky cute dancey witchy ravey bangers": one hook a
+  // night, kits and grooves, builds and drops, gentle till the second stump), ?banger=1 with it (the default), to A/B (tuning
+  // music.banger, app/sound.ts)
+  const bangerParam = params.get("banger");
+  if (bangerParam === "0" || bangerParam === "off") tuning.music = { ...tuning.music, banger: false };
+  else if (bangerParam === "1" || bangerParam === "on") tuning.music = { ...tuning.music, banger: true };
+  const melodyParam = params.get("melody");
+  if (melodyParam === "old" || melodyParam === "lyrical" || melodyParam === "dance") tuning.music = { ...tuning.music, melody: melodyParam };
+  else if (melodyParam === "new") tuning.music = { ...tuning.music, melody: "lyrical" };
   // ?invites=old: the letters' old flight (31.2 m/s, 33 m, homing within 10 m) to A/B against the faster, longer ones (Ed,
   // 2026-11-09: "it feels like animals move faster than invitations so it's hard to land a hit. And ranges feel small"); the
   // animals' waiting distance is the same either way (combatWaiting.inviteReach). rules/invites.ts OLD_LETTERS

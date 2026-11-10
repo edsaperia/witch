@@ -7,6 +7,7 @@ import { mixAt } from "../../rules/music";
 import { newBeatClock } from "../../rules/beat";
 import type { MusicCue } from "../../rules/musicPlan";
 import { withHaunted, type MusicStyle } from "../../rules/musicScore";
+import { withBanger, withoutComp } from "../../rules/musicBanger";
 
 const style = styleJson as unknown as MusicStyle;
 
@@ -280,5 +281,25 @@ describe("the haunted treatment in the engine (Ed, 2026-11-08: \"B, 1-6\")", () 
     play({ part: "sung", patch: "chimeraVoice", step: 0, offset: 0, dur: 16, midi: 55, vel: 0.3, ghost: true }, 1, 2, 0.125);
     expect(starts[0]).toBeCloseTo(1 + style.haunted!.ghost.delay, 9);
     expect((e as unknown as { channels: Map<string, unknown> }).channels.has("ghost:sung")).toBe(true);
+  });
+});
+
+describe("banger mode's compressors in the graph (Ed, 2026-11-10: \"Is it possible to add a compressor?\")", () => {
+  /** The compressors and master filters an engine makes for a style. */
+  function made(s: MusicStyle, stems = false) {
+    const ctx = fakeContext(), n = { comp: 0, filter: 0 }, c = ctx as unknown as Record<string, () => unknown>;
+    const comp = c.createDynamicsCompressor, filt = c.createBiquadFilter;
+    const counted = new Proxy(ctx, { get: (o, k) => k === "createDynamicsCompressor" ? () => { n.comp++; return comp(); } : k === "createBiquadFilter" ? () => { n.filter++; return filt(); } : (o as unknown as Record<string | symbol, unknown>)[k] });
+    const sink = stems ? new Proxy({}, { get: () => () => ({}) }) : undefined;
+    new MusicEngine(counted, (ctx as unknown as { destination: AudioNode }).destination, s, 7, undefined, sink as never);
+    return n;
+  }
+  it("adds none with banger mode off (its graph as it was: the limiter and the clearing's), two with it on, none with its compressors off", () => {
+    const off = made(withBanger(style, false)), bare = made({ ...style, banger: undefined } as MusicStyle);
+    expect(off).toEqual(bare);
+    expect(off.comp).toBe(2);
+    expect(made(style).comp).toBe(4); // (the drum bus's and the master's glue)
+    expect(made(withoutComp(style)).comp).toBe(2);
+    expect(made(style).filter).toBe(off.filter + 2); // (its master's low cut and shelf)
   });
 });

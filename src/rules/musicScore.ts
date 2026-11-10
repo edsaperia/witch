@@ -6,6 +6,8 @@ import { hash2 } from "./random";
 import voices from "../../config/creature-voices.json";
 import { sectionOf } from "./creatureConfig";
 import type { CuratedStep, FamilyDef, SetDef } from "./musicSet";
+import { bangerChord, bangerNotes, bangerOn, bangerRole, checkBanger, hookNoteAt, nightHook, type BangerDef } from "./musicBanger";
+import { bassBar, beatMotif, cellNotes, composeLine, contourAt, hookLine, makeRiff, motifShape, ostinatoMotif, pickContour, pitchCell, riffLine, varyCell, type BassNote, type BassRule, type ComposeDef, type LineRules, type LineSlot, type Riff, type RiffKind } from "./musicCompose";
 
 /** A synth patch: how one part sounds. Every field but kind and gain is optional. */
 export interface Patch {
@@ -111,12 +113,19 @@ export interface Patch {
   pan?: number;
   /** sends 0-1, and whether the kick ducks it (the house pump). */
   reverb?: number; delay?: number; duck?: boolean;
+  /** kick: its drive only over the hit's first driveTime seconds, fading to the clean sine (none: the whole hit driven). */
+  driveTime?: number;
+  /** kick: its hits don't duck the mix (a tom: banger mode's). */
+  noDuck?: boolean;
+  /** Another patch this one starts from (its fields over that one's: the singer's notes as a chop). */
+  from?: string;
 }
 
 /** A part: a voice and its patterns. Patterns are 16 characters a bar (any whole number of bars):
  *  "." rest, "x" a hit, "X" an accent, "o" a ghost, "?" a hit as likely as the wave's energy, "r" a
  *  roll (two thirty-seconds), "-" holds the note before. Bass patterns name chord tones instead of
- *  x: "1" root, "2" the step above (a clash), "3", "5", "7", "8" the octave. */
+ *  x: "1" root, "2" the step above (a clash), "3", "5", "7", "8" the octave; "a" (the composer's, on a bar's last beat) steps
+ *  into the next bar's chord from a step above or below or its fifth, the root when the chord stays (the old rules: the root). */
 export interface PartDef {
   patch: string;
   /** drum: unpitched; bass: the pattern's chord tones; chord: the whole chord; arp: chord tones in
@@ -249,6 +258,12 @@ export interface MusicStyle {
   /** The haunted treatment (Ed, 2026-11-08: "B, 1-6"): the quiet sections and the legends' clearings made more like the
    *  vocalise demo he liked. */
   haunted?: HauntedDef;
+  /** The composer's rules for the melodies and basslines (Ed, 2026-11-08: "smarter rules"; rules/musicCompose.ts). None, or
+   *  off: the melodies' seeded walk and the basslines' one bar as before. */
+  compose?: ComposeDef;
+  /** Banger mode (Ed, 2026-11-10: "catchy spooky cute dancey witchy ravey bangers"; rules/musicBanger.ts): one hook a night,
+   *  kits and grooves by family, builds and drops, over the same conductor. None, or off: the music as before. */
+  banger?: BangerDef;
 }
 
 /** The haunted treatment (Ed, 2026-11-08, choosing "B, 1-6": all six of the ways to bring the music closer to the haunting
@@ -370,6 +385,8 @@ export interface NoteEvent {
   ghost?: true;
   /** Played straight, without the swing (a triplet's notes). */
   straight?: boolean;
+  /** A slide into this note from the part's last, seconds (the composer's dance basslines), over its patch's own `glide`. */
+  glide?: number;
   /** Risers: the build's progress from and to over this note (0-1). */
   from?: number;
   to?: number;
@@ -442,6 +459,52 @@ export function withHaunted(style: MusicStyle, on: boolean | undefined): MusicSt
   return out;
 }
 
+/** The composer, when it's on (Ed, 2026-11-08: "smarter rules"). */
+export const composeOn = (style: MusicStyle): ComposeDef | null => (style.compose && style.compose.on !== false ? style.compose : null);
+/** The composer's dance way, when it leads (Ed, 2026-11-08: the riffs, hooks and ostinatos), else null (lyrical, or off). */
+export const danceOn = (style: MusicStyle): ComposeDef | null => { const C = composeOn(style); return C && C.melody !== "lyrical" && C.dance ? C : null; };
+/** The style's melody rules as a name: "dance", "lyrical" or "old". */
+export const melodyMode = (style: MusicStyle): "dance" | "lyrical" | "old" => (!composeOn(style) ? "old" : danceOn(style) ? "dance" : "lyrical");
+const MEL_AS = new WeakMap<MusicStyle, Map<string, MusicStyle>>();
+/** The style with the composer's dance way ("dance"), its planned lyrical way ("lyrical"; "new" the same, the first name) or the
+ *  old rules ("old": tuning music.melody, ?melody=), to A/B; the style itself when it already is, or has no composer. The same
+ *  object for the same pair. */
+export function withMelody(style: MusicStyle, mode: string | undefined): MusicStyle {
+  const want = mode === "new" ? "lyrical" : mode;
+  if ((want !== "old" && want !== "lyrical" && want !== "dance") || !style.compose || melodyMode(style) === want) return style;
+  let m = MEL_AS.get(style);
+  if (!m) MEL_AS.set(style, (m = new Map()));
+  let out = m.get(want);
+  if (!out) m.set(want, (out = { ...style, compose: want === "old" ? { ...style.compose, on: false } : { ...style.compose, on: true, melody: want } }));
+  return out;
+}
+
+/** The riff kind a wave plays (the dance way): dealt by its seed from its night's family's kinds, else its section's, else the
+ *  default's. */
+export function riffKind(C: ComposeDef, family: string | undefined, section: string, seed: number): RiffKind {
+  const D = C.dance!, kinds = (family && D.riffs.families[family]) || D.riffs.sections[section] || D.riffs.default;
+  return pick(kinds, hash2(seed, 491, 17));
+}
+/** The part a wave's riff plays on (the dance way's leads): its night's family's list, else its kind's, dealt by its seed. */
+export function riffLead(C: ComposeDef, kind: RiffKind, family: string | undefined, seed: number): string | undefined {
+  const L = C.dance!.leads, list = (family && L.families[family]) || L.kinds[kind];
+  return list?.length ? pick(list, hash2(seed, 503, 19)) : undefined;
+}
+/** Whether a clearing's layer plays the witch-house ostinato for this seed and arc step (the dance way's `ostinato`). */
+const clearingOstinato = (D: ComposeDef | null, seed: number, arc: number): boolean => !!D && hash2(seed, arc, 497) < D.dance!.ostinato;
+const riffCache = new Map<string, Riff>();
+/** A wave's riff of a kind: its rhythm and arrangement the wave's seed's, its pitch cell `cellSeed`'s (the night's, in a haunted
+ *  section's sung letters: the breakdown's slow hook and the drop's riff one tune). */
+export function riffFor(C: ComposeDef, kind: RiffKind, seed: number, cellSeed = seed): Riff {
+  const k = `${kind}|${seed}|${cellSeed}|${C.sevenths ? 1 : 0}`;
+  let R = riffCache.get(k);
+  if (!R) {
+    if (riffCache.size > 128) riffCache.clear();
+    riffCache.set(k, (R = makeRiff(C, kind, pitchCell(C, i => hash2(cellSeed + i * 7919, 493, 11)), i => hash2(seed + i * 7919, 495, kind.length))));
+  }
+  return R;
+}
+
 const use = (u: PartUse) => (typeof u === "string" ? { p: u, level: 1, from: 0, energy: 0 } : { p: u.p, level: u.level ?? 1, from: u.from ?? 0, energy: u.energy ?? 0 });
 
 /** The singers a link can pick instead of the style's (`?singer=`, tuning music.singer; Ed, 2026-11-08: Chimera sings, the old
@@ -479,7 +542,8 @@ export function degreeToMidi(style: MusicStyle, scale: number[], degree: number,
 }
 
 /** The run's melody for an arc step and part: one value per sixteenth over two bars, scale steps
- *  above the chord's root, a seeded walk that leans on chord tones on the strong steps. */
+ *  above the chord's root, a seeded walk that leans on chord tones on the strong steps (the old rules: composedMotif is the
+ *  composer's). */
 export function motif(seed: number, arc: number, part: string): number[] {
   let salt = 0;
   for (let i = 0; i < part.length; i++) salt = (salt * 31 + part.charCodeAt(i)) | 0;
@@ -497,11 +561,21 @@ export function motif(seed: number, arc: number, part: string): number[] {
   return out;
 }
 
+/** The composer's motif for an arc step and part (Ed, 2026-11-08: "smarter rules"): as `motif`, one value a sixteenth over two
+ *  bars above the chord's root, but planned: the beats chord tones on a contour with one peak, the second bar the first moved or
+ *  turned over, passing and neighbour notes between (musicCompose.ts beatMotif). */
+export function composedMotif(C: ComposeDef, seed: number, arc: number, part: string): number[] {
+  let salt = 0;
+  for (let i = 0; i < part.length; i++) salt = (salt * 31 + part.charCodeAt(i)) | 0;
+  return beatMotif(C, k => hash2(seed + k * 7919, arc, salt + 3));
+}
+
 const motifCache = new Map<string, number[]>();
-function motifFor(seed: number, arc: number, part: string): number[] {
-  const k = `${seed}|${arc}|${part}`;
+function motifFor(style: MusicStyle, seed: number, arc: number, part: string, own = false): number[] {
+  const C = composeOn(style), ost = own && clearingOstinato(danceOn(style), seed, arc);
+  const k = `${seed}|${arc}|${part}|${C ? "c" : ""}${ost ? "o" : ""}`;
   let m = motifCache.get(k);
-  if (!m) { if (motifCache.size > 256) motifCache.clear(); motifCache.set(k, m = motif(seed, arc, part)); }
+  if (!m) { if (motifCache.size > 256) motifCache.clear(); motifCache.set(k, m = ost ? ostinatoMotif(x => hash2(seed + x * 7919, arc, 499)) : C ? composedMotif(C, seed, arc, part) : motif(seed, arc, part)); }
   return m;
 }
 
@@ -546,8 +620,15 @@ export interface PhraseNote { deg: number; dur: number; off: number; /** a half-
 /** One phrase of the form for a seed: a note or null (a rest or a held note) on each of its sixteenths. A seeded walk
  *  over the form's chords, landing on chord tones on the beats, in bar-long rhythm cells (mostly slow: whole notes, halves and triplets; its part's `pace` of them busier)
  *  (the 2nd half-phrase's echoing the 1st's now and then), each half-phrase ending on rests; A ends open (a chord tone
- *  not the root), B on a question (the 2nd or 5th), C answering it on the root. */
+ *  not the root), B on a question (the 2nd or 5th), C answering it on the root. With the composer on (the style's `compose`,
+ *  the default since Ed's "smarter rules", 2026-11-08), composedPhrase's planned phrase in the walk's place; off, the walk. */
 export function formPhrase(style: MusicStyle, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
+  const C = composeOn(style);
+  return C ? composedPhrase(style, C, seed, letter, hookSeed) : walkedPhrase(style, seed, letter, hookSeed);
+}
+
+/** The old phrase (the composer off: ?melody=old): a seeded walk over the chords, as formPhrase describes. */
+function walkedPhrase(style: MusicStyle, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
   const F = style.form!, P = F.phraseBars, salt = letter.charCodeAt(0) * 13;
   const sungLetter = letter !== "A", part = sungLetter ? F.sung.part : formInstrument(F, seed), pace = F.pace[part] ?? F.pace.default ?? 0.25;
   const at = F.order.indexOf(letter) * P; // (its chords: its first place in the form)
@@ -614,8 +695,16 @@ export function formPhrase(style: MusicStyle, seed: number, letter: string, hook
 
 /** A phrase of the form in a haunted section (Ed, 2026-11-08, "room to breathe"): the sung line's narrow stepwise walk, as
  *  formPhrase's, on the haunted half-phrase rhythms (whole notes and ties, a rest at each half's end) and the slower chords
- *  (hauntedBar), its endings the form's (B on a question, C answering on the root), each half's last two notes its cadence. */
-export function hauntedPhrase(style: MusicStyle, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
+ *  (hauntedBar), its endings the form's (B on a question, C answering on the root), each half's last two notes its cadence.
+ *  With the composer on, composedHaunted's planned line on the same rhythms in the walk's place; `cell` (the dance way) a riff's
+ *  pitch cell it sings slowly, the drop's riff playing it fast after. */
+export function hauntedPhrase(style: MusicStyle, seed: number, letter: string, hookSeed?: number, cell?: number[]): (PhraseNote | null)[] {
+  const C = composeOn(style);
+  return C ? composedHaunted(style, C, seed, letter, hookSeed, cell) : walkedHaunted(style, seed, letter, hookSeed);
+}
+
+/** The old haunted phrase (the composer off): the narrow walk on the held rhythms, as hauntedPhrase describes. */
+function walkedHaunted(style: MusicStyle, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
   const F = style.form!, H = style.haunted!, P = F.phraseBars, half = Math.floor(P / 2), salt = letter.charCodeAt(0) * 13 + 5;
   const at = F.order.indexOf(letter) * P, hookBars = letter !== "A" && hookSeed !== undefined && hookSeed !== seed ? F.sung.hookBars ?? 0 : 0;
   const sd = (b: number) => b < hookBars ? hookSeed! : seed;
@@ -657,27 +746,239 @@ export function hauntedPhrase(style: MusicStyle, seed: number, letter: string, h
   return out;
 }
 
+/** The sung line's window (Ed, 2026-10-14: "narrow and stepwise"): SPAN+1 scale steps inside the range holding a root (so C can
+ *  answer on it), set by `r` (a seeded 0-1); the instrument's whole range otherwise. */
+function sungWindow(F: FormDef, sung: boolean, r: number): [number, number] {
+  const [lo, hi] = F.range, SPAN = 4, windows: number[] = [];
+  for (let w = lo; w + SPAN <= hi; w++) if (Array.from({ length: SPAN + 1 }, (_, k) => w + k).some(d => mod(d, 7) === 0)) windows.push(w);
+  if (!sung || !windows.length) return [lo, hi];
+  const w = windows[Math.floor(r * windows.length)];
+  return [w, w + SPAN];
+}
+
+/** The highest the returning hook's bars may go (they're composed before the peak is placed, so they must stay under any peak
+ *  the rest can reach): the window's top when the question chord (in B's last bars and C's second half) can take the step above
+ *  it, else a step under. */
+function hookCeiling(F: FormDef, C: ComposeDef, wlo: number, whi: number, top: number): number {
+  const q = [F.question, F.question + 2, F.question + 4, ...(C.sevenths ? [F.question + 6] : [])].map(t => mod(t, 7));
+  return top > whi && q.includes(mod(whi + 1, 7)) ? whi : Math.max(wlo + 2, whi - 1);
+}
+
+/** A phrase's notes with its peak (its one highest note, ComposeDef.peak through it): the slots nearest `tp` (a share of the
+ *  phrase) and the chord tones they can take up to `top` tried in turn, preferring the higher, one reaching `want`, a strong beat
+ *  and a long note, at or after slot `from` and a note at least before the end, every other note under it, until the line
+ *  keeps all the rules (musicCompose.ts composeLine). The hook's slots (`b` under `seg`) stay under `ceil` and as `fixed`. */
+function peakedLine(slots: (LineSlot & { b: number })[], len: number, tp: number, top: number, from: number, want: number, seg: number, ceil: number, rules: Omit<LineRules, "peak" | "fixed" | "ends">, ends: number[], fixed: (number | undefined)[]): { degs: number[]; peak: number } {
+  const cands: { i: number; pk: number; sc: number }[] = [];
+  for (const [a, z, pen] of [[0.55, 0.82, 0], [0.4, 0.92, 50], [0, 1, 100]]) for (let i = pen > 50 ? fixed.length : from; i < slots.length - 1; i++) {
+    const S = slots[i], t = S.pos / len;
+    if (t < a || t > z || cands.some(c => c.i === i)) continue;
+    for (let h = top; h >= top - 3; h--) {
+      if (!S.tones.includes(mod(h, 7)) || fixed.some(f => f !== undefined && f >= h)) continue; // (a chord tone, over the hook: else it isn't the one peak)
+      cands.push({ i, pk: h, sc: (h >= want ? 4 : 0) + 2 * h - Math.abs(t - tp) * 10 + (S.strong ? 1 : 0) + (S.dur >= 4 ? 0.5 : 0) - pen });
+    }
+  }
+  cands.sort((x, y) => y.sc - x.sc || x.i - y.i);
+  const tgt = slots.map(S => S.target), los = slots.map(S => S.lo);
+  const bound = (pi: number, pk: number) => slots.forEach((S, i) => {
+    if (i === pi) { S.lo = S.hi = S.target = pk; return; }
+    S.lo = los[i];
+    S.hi = Math.min(pi >= 0 ? pk - 1 : top, S.b < seg ? ceil : Infinity);
+    S.target = Math.max(S.lo, Math.min(S.hi, tgt[i]));
+  });
+  for (const most of [2, 3, Infinity]) for (const c of cands.slice(0, 16)) { // (a peak that leaves the line moving, before one that doesn't)
+    bound(c.i, c.pk);
+    const degs = composeLine(slots, { ...rules, peak: c.i, ends, fixed, most }, true);
+    if (degs) return { degs, peak: c.i };
+  }
+  const c = cands[0] ?? { i: -1, pk: top };
+  bound(c.i, c.pk);
+  return { degs: composeLine(slots, { ...rules, peak: c.i, ends, fixed }), peak: c.i };
+}
+
+/** The composer's phrase (Ed, 2026-11-08: "smarter rules"; docs/notes/music.md **The composer**): planned, then filled. A motif
+ *  (a bar's rhythm, two for a slow part, and a shape of steps, thirds and, on an instrument, a leap filled in after) is stated,
+ *  repeated, moved to fit the next chord (a sequence), turned over (inverted) and its rhythm a little changed, each half-phrase
+ *  opening on it; a contour (arch, rise, fall or wave) sets where each statement sits and puts the phrase's one highest note
+ *  60-75% through; the strong beats chord tones, passing and neighbour notes between them; the cadence bars ending each half on
+ *  rests, A open, B on a question, C answering on the root. The sung letters (B and C) keep to the singer's narrow window (one
+ *  step more for the peak only, a fourth into it at most), their first `hookBars` bars composed on their own from the night's
+ *  seed (the returning hook). */
+function composedPhrase(style: MusicStyle, C: ComposeDef, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
+  const F = style.form!, P = F.phraseBars, half = Math.max(1, Math.floor(P / 2)), salt = letter.charCodeAt(0) * 13, len = P * 16;
+  const sung = letter !== "A", part = sung ? F.sung.part : formInstrument(F, seed), pace = F.pace[part] ?? F.pace.default ?? 0.25;
+  const at = F.order.indexOf(letter) * P;
+  const seg = sung ? Math.min(P - 1, F.sung.hookBars ?? 0) : 0, hooked = seg > 0 && hookSeed !== undefined && hookSeed !== seed;
+  const sd = (b: number) => (hooked && b < seg ? hookSeed! : seed), ms = sd(0); // (the motif's, contour's and window's: the hook's)
+  const kindOf = (s: number, b: number) => (hash2(s + b * 17, 423, salt) < pace ? "mid" : "slow");
+  // the motif: its rhythm (a bar, or two when the first says little) and its shape
+  const mCells = [pick(F.cells[kindOf(ms, 0)], hash2(ms, 419, salt))];
+  if (cellNotes(mCells[0]).length < 3 && P >= 4) mCells.push(pick(F.cells[kindOf(ms, 1)], hash2(ms + 31, 419, salt)));
+  const mNotes = mCells.map(cellNotes), mFirst = mNotes.map((_, j) => mNotes.slice(0, j).reduce((n, x) => n + x.length, 0));
+  const shape = motifShape(mNotes.flat().length, k => hash2(ms + k * 7919, 441, salt), sung ? 0 : C.leap, sung ? 3 : 5);
+  // the plan, bar by bar: the cadences, the climax bar (free, on the contour), and the motif's statements and their changes
+  type Bar = { cell: string; mbar: number; tf: "M" | "R" | "S" | "I" | "free" | "cad"; start: boolean };
+  const plan: Bar[] = [];
+  for (let b = 0; b < P; b++) {
+    const r = hash2(sd(b) + b * 31, 419, salt), r2 = hash2(sd(b) + b * 7, 421, salt), r3 = hash2(sd(b) + b * 13, 425, salt), kind = kindOf(sd(b), b);
+    const prev = plan[b - 1];
+    if (b % half === half - 1) plan.push({ cell: pick(F.cadence[kind], r), mbar: 0, tf: "cad", start: false });
+    else if (P >= 6 && b === P - 2) plan.push({ cell: pick(F.cells[kind], r), mbar: 0, tf: "free", start: false });
+    else if (mCells.length > 1 && prev && prev.start && prev.mbar === 0 && prev.tf !== "free" && prev.tf !== "cad") plan.push({ cell: r3 < 0.35 && b >= half ? varyCell(mCells[1], r) : mCells[1], mbar: 1, tf: prev.tf, start: false });
+    else {
+      const tf = b === 0 ? "M" : b % half === 0 ? pick(["M", "S", "I"] as const, r2) : b % half === 1 ? pick(["R", "S"] as const, r2) : pick(["S", "I", "R"] as const, r2);
+      plan.push({ cell: b > 0 && r3 < 0.4 ? varyCell(mCells[0], r) : mCells[0], mbar: 0, tf, start: true });
+    }
+  }
+  // the range: the singer's window (the peak may be a step over it), the instrument's whole range
+  const [wlo, whi] = sungWindow(F, sung, hash2(ms, 437, salt)), top = sung ? Math.min(whi + 1, F.range[1]) : F.range[1];
+  const kind = pickContour(C.contours, hash2(ms, 445, salt)), tp = C.peak[0] + (C.peak[1] - C.peak[0]) * hash2(seed, 443, salt);
+  const span = (sung ? whi : top - 1) - wlo, map = (h: number) => Math.round(wlo + Math.max(0, Math.min(1, h)) * span);
+  const tpAt = (b: number) => (b < seg ? (C.peak[0] + C.peak[1]) / 2 : tp); // (the hook's bars not on this wave's peak)
+  // the slots and their targets: each statement anchored on the contour (repeated, moved by a step or two toward it, or turned over)
+  const slots: (LineSlot & { b: number })[] = [];
+  let anchor = map(contourAt(kind, 0, tp));
+  for (let b = 0; b < P; b++) {
+    const B = plan[b], tones = formChord(style, seed, at + b, !!C.sevenths).tones.map(t => mod(t, 7)), notes = cellNotes(B.cell);
+    if (!notes.length) continue;
+    const t0 = (b * 16 + notes[0].pos) / len, hc = map(contourAt(kind, t0, tpAt(b)));
+    if (B.start) {
+      const r = hash2(sd(b) + b * 59, 447, salt), dir = Math.sign(hc - anchor) || (r < 0.5 ? 1 : -1);
+      if (B.tf === "M" || B.tf === "I") anchor = hc;
+      else if (B.tf === "S") anchor += dir * (r < 0.6 ? 1 : 2);
+      // (a statement starting on the beat starts on a chord tone: the sequence moved to fit its chord)
+      if (notes[0].strong && !tones.includes(mod(anchor, 7))) anchor += tones.includes(mod(anchor + dir, 7)) ? dir : -dir;
+    }
+    const mn = mNotes[B.mbar] ?? [], sg = B.tf === "I" ? -1 : 1;
+    for (const n of notes) {
+      let target = map(contourAt(kind, (b * 16 + n.pos) / len, tpAt(b)));
+      if (B.tf !== "free" && B.tf !== "cad" && mn.length) {
+        let k = 0;
+        while (k + 1 < mn.length && mn[k + 1].pos <= n.pos) k++;
+        const g = mFirst[B.mbar] + k, off = mn[k].pos === n.pos || k + 1 >= mn.length ? shape[g] : (shape[g] + shape[g + 1]) / 2;
+        target = Math.round(anchor + sg * off);
+      }
+      slots.push({ pos: b * 16 + n.pos, dur: n.dur, strong: n.strong, tones, lo: wlo, hi: top, target, b });
+    }
+  }
+  // the peak, and every other note under it; the hook's bars under its ceiling (so the hook can't reach the peak)
+  const ceil = hookCeiling(F, C, wlo, whi, top), nSeg = slots.filter(S => S.b < seg).length;
+  const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : formChord(style, seed, at + P - 1).tones.map(t => mod(t, 7)).filter(t => t !== 0);
+  const rules = { maxStep: sung ? 2 : 5, peakStep: sung ? 3 : 5, maxLeaps: sung ? 1 : 2 };
+  slots.forEach((S, i) => { if (i < nSeg) S.hi = Math.min(S.hi, ceil); });
+  const fixed: (number | undefined)[] = nSeg ? composeLine(slots.slice(0, nSeg), { ...rules, peak: -1 })! : [];
+  const { degs } = peakedLine(slots, len, tp, top, nSeg, sung ? ceil + 1 : top - 1, seg, ceil, rules, ends, fixed);
+  const out: (PhraseNote | null)[] = new Array(len).fill(null);
+  slots.forEach((S, i) => { out[Math.floor(S.pos)] = { deg: degs[i], dur: S.dur, off: S.pos - Math.floor(S.pos) }; });
+  return out;
+}
+
+/** The composer's haunted phrase: hauntedPhrase's held rhythms, slower chords, window and endings, planned as composedPhrase's
+ *  are (a contour with one peak in the second half, chord tones on the half-bars, a passing or neighbour note between, the
+ *  second half the first's shape moved toward the peak). */
+function composedHaunted(style: MusicStyle, C: ComposeDef, seed: number, letter: string, hookSeed?: number, cell?: number[]): (PhraseNote | null)[] {
+  const F = style.form!, H = style.haunted!, P = F.phraseBars, half = Math.max(1, Math.floor(P / 2)), salt = letter.charCodeAt(0) * 13 + 5, len = P * 16;
+  const at = F.order.indexOf(letter) * P, seg = letter !== "A" ? Math.min(half, F.sung.hookBars ?? 0) : 0;
+  const hooked = seg > 0 && hookSeed !== undefined && hookSeed !== seed, sd = (b: number) => (hooked && b < seg ? hookSeed! : seed), ms = sd(0);
+  const [wlo, whi] = sungWindow(F, true, hash2(ms, 437, salt)), top = Math.min(whi + 1, F.range[1]);
+  const kind = pickContour(C.contours, hash2(ms, 445, salt)), tp = C.peak[0] + (C.peak[1] - C.peak[0]) * hash2(seed, 443, salt);
+  const map = (h: number) => Math.round(wlo + Math.max(0, Math.min(1, h)) * (whi - wlo));
+  const slots: (LineSlot & { b: number; h: number; k: number; root: number })[] = [], cads = new Set<number>();
+  for (let h = 0; h * half < P; h++) {
+    const b0 = h * half, rhythm = pick(H.rhythms, hash2(sd(b0) + h * 53, 471, salt)), mine: number[] = [];
+    for (let i = 0; i < rhythm.length && b0 * 16 + i < len; i++) {
+      if (rhythm[i] !== "x") continue;
+      let dur = 1;
+      while (i + dur < rhythm.length && rhythm[i + dur] === "-") dur++;
+      const pos = b0 * 16 + i, b = Math.floor(pos / 16), ch = formChord(style, seed, hauntedBar(F, at + b), !!C.sevenths), tones = ch.tones.map(t => mod(t, 7));
+      mine.push(slots.length);
+      slots.push({ pos, dur, strong: i % 8 === 0, tones, lo: wlo, hi: top, target: 0, b, h, k: mine.length - 1, root: ch.root });
+    }
+    for (const i of mine.slice(-2)) cads.add(i);
+  }
+  // the targets: the first half a shape from the contour's start, the second the same shape moved toward the peak
+  const n0 = slots.filter(S => S.h === 0).length, shape = motifShape(Math.max(1, n0), k => hash2(ms + k * 7919, 441, salt), 0, 3);
+  const a0 = map(contourAt(kind, 0, tp)), a1 = a0 + (hash2(seed, 449, salt) < 0.5 ? 1 : 2);
+  for (const S of slots) {
+    const c = map(contourAt(kind, S.pos / len, S.b < seg ? (C.peak[0] + C.peak[1]) / 2 : tp));
+    S.target = S.h === 0 ? Math.round((a0 + shape[S.k] + c) / 2) : S.k < n0 ? Math.round((a1 + shape[S.k] + c) / 2) : c;
+    if (cell) { // (the dance way's anthem trick: the riff's pitch cell sung slowly, its notes on each held chord, in the window)
+      let d = cell[S.k % cell.length] + (S.root <= 3 ? S.root : S.root - 7);
+      while (d > whi + 1) d -= 7;
+      while (d < wlo) d += 7;
+      S.target = d;
+    }
+  }
+  const ceil = hookCeiling(F, C, wlo, whi, top), nSeg = slots.filter(S => S.b < seg).length;
+  const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : formChord(style, seed, hauntedBar(F, at + P - 1)).tones.map(t => mod(t, 7)).filter(t => t !== 0);
+  const rules = { maxStep: 2, peakStep: 3, maxLeaps: 1 };
+  slots.forEach((S, i) => { if (i < nSeg) S.hi = Math.min(S.hi, ceil); });
+  const fixed: (number | undefined)[] = nSeg ? composeLine(slots.slice(0, nSeg), { ...rules, peak: -1 })! : [];
+  const { degs } = peakedLine(slots, len, tp, top, Math.max(nSeg, n0), ceil + 1, seg, ceil, rules, ends, fixed);
+  const out: (PhraseNote | null)[] = new Array(len).fill(null);
+  slots.forEach((S, i) => { out[S.pos] = { deg: degs[i], dur: S.dur, off: 0, ...(cads.has(i) ? { cad: true as const } : {}) }; });
+  return out;
+}
+
 const phraseCache = new Map<string, (PhraseNote | null)[]>();
-function phraseFor(style: MusicStyle, seed: number, letter: string, hookSeed?: number, haunted = false): (PhraseNote | null)[] {
-  const k = `${seed}|${letter}|${hookSeed ?? ""}|${haunted ? "h" : ""}`;
+function phraseFor(style: MusicStyle, seed: number, letter: string, hookSeed?: number, haunted = false, cell?: number[]): (PhraseNote | null)[] {
+  const k = `${seed}|${letter}|${hookSeed ?? ""}|${haunted ? "h" : ""}|${composeOn(style) ? "c" : ""}|${cell?.join() ?? ""}`;
   let p = phraseCache.get(k);
-  if (!p) { if (phraseCache.size > 64) phraseCache.clear(); phraseCache.set(k, p = haunted ? hauntedPhrase(style, seed, letter, hookSeed) : formPhrase(style, seed, letter, hookSeed)); }
+  if (!p) { if (phraseCache.size > 64) phraseCache.clear(); phraseCache.set(k, p = haunted ? hauntedPhrase(style, seed, letter, hookSeed, cell) : formPhrase(style, seed, letter, hookSeed)); }
   return p;
 }
+
+/** The dance way's riff for a phrase letter (riffLine): `kind`'s riff of the wave's seed on `cellSeed`'s pitch cell, over the
+ *  form's chords (a haunted section's slower ones after its drop). */
+export function riffPhrase(style: MusicStyle, seed: number, letter: string, kind: RiffKind, cellSeed = seed, haunted = false): (PhraseNote | null)[] {
+  const F = style.form!, C = composeOn(style) ?? style.compose!, at = F.order.indexOf(letter) * F.phraseBars, R = riffFor(C, kind, seed, cellSeed);
+  const bar = (b: number) => (haunted ? hauntedBar(F, at + b) : at + b);
+  return riffLine(R, letter, F.phraseBars, b => formChord(style, seed, bar(b)).root, b => formChord(style, seed, bar(b), !!C.sevenths).tones.map(t => mod(t, 7)));
+}
+
+/** The dance way's sung hook for a phrase letter (hookLine, Grimes' traits): short, high and pentatonic, a bar repeated, in the
+ *  singer's window (a step more at its top), ending as the form's phrases do; the night's own (`hookSeed`) for B and C. */
+export function hookPhrase(style: MusicStyle, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
+  const F = style.form!, C = composeOn(style) ?? style.compose!, salt = letter.charCodeAt(0) * 13, at = F.order.indexOf(letter) * F.phraseBars;
+  const ms = letter !== "A" && hookSeed !== undefined ? hookSeed : seed, [wlo, whi] = sungWindow(F, true, hash2(ms, 437, salt)), hi = Math.min(whi + 1, F.range[1]);
+  const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : formChord(style, seed, at + F.phraseBars - 1).tones.map(t => mod(t, 7)).filter(t => t !== 0);
+  return hookLine(wlo, hi, F.phraseBars, b => formChord(style, seed, at + b, !!C.sevenths).tones.map(t => mod(t, 7)), ends, i => hash2(ms + i * 7919, 489, salt));
+}
+const danceCache = new Map<string, (PhraseNote | null)[]>();
+function dancePhraseFor(key: string, make: () => (PhraseNote | null)[]): (PhraseNote | null)[] {
+  let p = danceCache.get(key);
+  if (!p) { if (danceCache.size > 64) danceCache.clear(); danceCache.set(key, (p = make())); }
+  return p;
+}
+
+let lastPhrase: { style: MusicStyle; seed: number; letter: string; hook: number | undefined; haunted: boolean; riff: RiffKind | undefined; sung: boolean; notes: (PhraseNote | null)[] } | null = null;
 
 /** The music's seed for knockdown `n` of a run (0: the run's own seed). */
 export const musicSeed = (base: number, n: number): number => n <= 0 ? base : Math.floor(hash2(base, 433 + n, n * 7919) * 0x7fffffff);
 
 /** The form's note (if one starts) on the form's sixteenth `formStep`: its part, patch and MIDI note, and its length. */
-export function formNoteAt(style: MusicStyle, seed: number, formStep: number, transpose = 0, step?: Pick<ArcStep, "lead" | "vocal" | "scale">, opts?: { voice?: boolean; hookSeed?: number; haunted?: boolean }): { part: string; patch: string; midi: number; deg: number; dur: number; off: number; letter: string; cad?: true } | null {
+export function formNoteAt(style: MusicStyle, seed: number, formStep: number, transpose = 0, step?: Pick<ArcStep, "lead" | "vocal" | "scale">, opts?: { voice?: boolean; hookSeed?: number; haunted?: boolean; riff?: RiffKind; lead?: string }): { part: string; patch: string; midi: number; deg: number; dur: number; off: number; letter: string; cad?: true } | null {
   const F = style.form!, fs = mod(formStep, formBars(F) * 16), letter = F.order[Math.floor(fs / (F.phraseBars * 16))];
-  const n = phraseFor(style, seed, letter, letter !== "A" ? opts?.hookSeed : undefined, !!opts?.haunted && !!style.haunted)[fs % (F.phraseBars * 16)];
-  if (!n) return null;
   // (a night's set: the step's own instrument for A, its own singer, or none, the A instrument playing them too; since Ed's
   // singer review, 2026-10-14, the voice sings only where `opts.voice` says (the breakdowns and the build: sungHere), and in
   // the build it sings A too; the instrument plays the rest)
-  const lead = step?.lead && style.parts[step.lead] ? step.lead : formInstrument(F, seed), voice = step?.vocal ?? F.sung.patch;
+  // (the dance way's riff on its own lead, Ed 2026-11-09: "Lead sounds could be better; add in some more, inspired by the genres")
+  const lead = opts?.riff && opts.lead && style.parts[opts.lead] && danceOn(style) ? opts.lead : step?.lead && style.parts[step.lead] ? step.lead : formInstrument(F, seed), voice = step?.vocal ?? F.sung.patch;
   const sung = (opts?.voice ?? letter !== "A") && voice !== "none" && !!style.patches[voice], part = sung ? F.sung.part : lead, def = style.parts[part];
+  // the phrase: the dance way (Ed, 2026-11-08: "not very dancey") the instrument's riff, the voice's short hook now and then, a
+  // haunted breakdown's slow hook on the riff's cell; else the composer's planned phrase, or the old walk
+  const haunted = !!opts?.haunted && !!style.haunted, hook = letter !== "A" ? opts?.hookSeed : undefined, riff = opts?.riff, i = fs % (F.phraseBars * 16);
+  // (asked sixteen times a bar for the same phrase: the last one kept, its key never built)
+  let L = lastPhrase;
+  if (!L || L.style !== style || L.seed !== seed || L.letter !== letter || L.hook !== hook || L.haunted !== haunted || L.riff !== riff || L.sung !== sung) {
+    const D = danceOn(style), cellSeed = haunted && hook !== undefined ? hook : seed;
+    const notes = D && riff && !sung ? dancePhraseFor(`r|${seed}|${letter}|${riff}|${cellSeed}|${haunted}|${D.sevenths ? 1 : 0}`, () => riffPhrase(style, seed, letter, riff, cellSeed, haunted))
+      : D && sung && !haunted && hash2(seed, 487, 3) < D.dance!.hook ? dancePhraseFor(`h|${seed}|${letter}|${hook ?? ""}|${D.sevenths ? 1 : 0}`, () => hookPhrase(style, seed, letter, hook))
+      : phraseFor(style, seed, letter, hook, haunted, D && haunted && riff ? riffFor(D, riff, seed, cellSeed).cell : undefined);
+    lastPhrase = L = { style, seed, letter, hook, haunted, riff, sung, notes };
+  }
+  const n = L.notes[i];
+  if (!n) return null;
   const oct = sung ? F.sung.octave : Math.max(2, def?.octave ?? 3);
   const scale = style.scales[step?.scale ?? style.scale] ?? style.scales[style.scale];
   return { part, patch: sung ? voice : def?.patch ?? "", midi: degreeToMidi(style, scale, n.deg, oct, transpose), deg: n.deg, dur: n.dur, off: n.off, letter, ...(n.cad ? { cad: true as const } : {}) };
@@ -703,6 +1004,51 @@ function hitAt(pat: string, i: number): { ch: string; dur: number } {
 const VEL: Record<string, number> = { X: 1, x: 0.8, o: 0.45, r: 0.7, "?": 0.75 };
 const BASS: Record<string, number> = { "1": 0, "2": 1, "3": 2, "5": 4, "7": 6, "8": 7 };
 
+const DANCE_RULES = new WeakMap<BassRule, Map<BassRule | undefined, BassRule>>();
+/** A bass part's rules with the dance way's for its family over them (the same object for the same pair). */
+function danceRule(base: BassRule | undefined, over: BassRule): BassRule {
+  let m = DANCE_RULES.get(over);
+  if (!m) DANCE_RULES.set(over, (m = new Map()));
+  let r = m.get(base);
+  if (!r) m.set(base, (r = { ...base, ...over }));
+  return r;
+}
+
+/** The composed bass bar each part last played (asked for sixteen times a bar, worked out once): what it was worked out from. */
+const bassMemo = new Map<string, { style: MusicStyle; seed: number; bar: number; formBar: number; section: string; start: number; bars: number; arc: number; pass: number; pat: string; from: number; root: number; line: (BassNote | null)[]; midis: number[] }>();
+
+/** A composed bass part's pattern in a bar (Ed, 2026-11-09: "repetitive"): each four-bar phrase's dealt by the seed from the
+ *  section's own pool, else the pool for the wave's energy (a drop a step busier), the section's own pattern among them (not in
+ *  the quiet pool: the sparse patterns alone there);
+ *  `own` (the section's) with no pools. */
+export function bassPatternName(C: ComposeDef, part: string, own: string, section: string, energy: number, bar: number, seed: number): string {
+  const P = C.bass.patterns?.[part];
+  if (!P) return own;
+  const e = energy + (/Drop$/.test(section) ? 0.2 : 0), sec = P.sections?.[section], pool = sec ?? (e < 0.4 ? P.low : e < 0.7 ? P.mid : P.high);
+  return pick(pool.includes(own) || (!sec && e < 0.4) ? pool : [...pool, own], hash2(seed + Math.floor(bar / 4) * 7919, 511, part.length)); // (the section's own among them, but in the quiet waves)
+}
+
+const rootCache = new Map<string, number[]>();
+/** A composed bass part's chord root (MIDI) in form bar `formBar` within its register `R` (Ed, 2026-11-09: "too high"): each
+ *  root in the octave nearest the bar before's, within the register's lowest fifteen semitones, from the form's top (the first
+ *  nearest the middle of those); with no form (`formBar` null), `root` nearest that middle. */
+function bassRoot(style: MusicStyle, scale: number[], transpose: number, R: [number, number], seed: number, formBar: number | null, haunt: boolean, root: number): number {
+  const lo = R[0], hi = Math.min(R[1], R[0] + 15), mid = (lo + hi) / 2;
+  const place = (pc: number, near: number) => { let best = lo, bd = Infinity; for (let x = lo; x <= hi; x++) if (((x - pc) % 12 + 12) % 12 === 0 && Math.abs(x - near) < bd) { bd = Math.abs(x - near); best = x; } return best; };
+  const pcOf = (r: number) => degreeToMidi(style, scale, r, 0, transpose) % 12;
+  const F = style.form;
+  if (formBar === null || !F) return place(pcOf(root), mid);
+  const n = formBars(F), key = `${seed}|${transpose}|${scale.join()}|${lo},${hi}|${haunt ? 1 : 0}`;
+  let seq = rootCache.get(key);
+  if (!seq) {
+    if (rootCache.size > 64) rootCache.clear();
+    seq = [];
+    for (let b = 0; b < n; b++) seq.push(place(pcOf(formChord(style, seed, haunt ? hauntedBar(F, b) : b).root), b ? seq[b - 1] : mid));
+    rootCache.set(key, seq);
+  }
+  return seq[mod(formBar, n)];
+}
+
 export interface ScoreContext {
   seed: number;
   /** 0-1: how much a soundsystem nearby is under siege (adds the style's siege parts). */
@@ -721,6 +1067,9 @@ export interface ScoreContext {
    *  sixteenths, the music's `step` giving only the chords. Left out: both, on the music's steps. */
   only?: "main" | "circle";
   circleStep?: number;
+  /** Banger mode (rules/musicBanger.ts): how many of the night's great stumps had their soundsystem by the block's start (the
+   *  cue's `stumps`): gentle till the second. Left out (the labs, a preview): never gentle. */
+  stumps?: number;
   /** The bar the seed's form began on (0; a knockdown's new seed starts its form on a phrase line: Ed, 2026-10-09). */
   formStart?: number;
 }
@@ -759,8 +1108,25 @@ export function sungHere(style: MusicStyle, plan: BlockPlan, a: ArcStep, sec: Re
 }
 
 export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | null, step: number, ctx: ScoreContext): NoteEvent[] {
+  // banger mode (Ed, 2026-11-10; rules/musicBanger.ts): its own notes everywhere but the boot's intro and the knockout; the
+  // game's hooks' parts (a siege, a party area, an angry legend) and a clearing's layer as before, over them
+  const BG = bangerOn(style);
+  if (BG && ctx.only !== "circle") {
+    const sec = resolveSection(style, plan.section), role = bangerRole(style, plan, arcStep(style, plan.arc), sec, ctx.formStart ?? 0);
+    if (role) {
+      const out = bangerNotes(style, plan, sec, step, ctx, role);
+      const hooks = ctx.siege > 0.01 || (ctx.legend ?? 0) > 0.01 || (ctx.party ?? 0) > 0.01, circle = !!ctx.circle && ctx.circle.level > 0.01 && ctx.only !== "main";
+      if (hooks || circle) for (const e of scoreNotes(style, plan, next, step, ctx)) if (e.layer === "circle" || (e.hook && style.parts[e.part]?.role !== "motif")) out.push(e);
+      return out;
+    }
+  }
+  return scoreNotes(style, plan, next, step, ctx);
+}
+
+/** The score as before banger mode (and under it: the boot's intro, the knockout, the hooks' parts, a clearing's layer). */
+function scoreNotes(style: MusicStyle, plan: BlockPlan, next: BlockPlan | null, step: number, ctx: ScoreContext): NoteEvent[] {
   const bar = Math.floor(step / 16), s = step - bar * 16, barIn = bar - plan.start;
-  const sec = resolveSection(style, plan.section), a = arcStep(style, plan.arc);
+  const sec = resolveSection(style, plan.section), a = arcStep(style, plan.arc), BG = bangerOn(style);
   const scale = style.scales[a.scale ?? style.scale] ?? style.scales[style.scale], transpose = (a.transpose ?? 0) + (sec.transpose ?? 0); // (one scale, dorian, in each stage's key: Ed, 2026-10-09; a section's own lift on top, the victory's; a night's set may darken a step's: rules/musicSet.ts)
   const nightSeed = ctx.seed; // (the returning hook's: the night's, before each wave's own tune)
   ctx = a.tune ? { ...ctx, seed: tuneSeed(ctx.seed, a.tune) } : ctx; // (a night's set: each wave its own tune)
@@ -770,8 +1136,9 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   // the haunted treatment (Ed, 2026-11-08: "B, 1-6"): in its quiet sections the chords slower (a phrase's opening chord, then its
   // cadence's), the drums out till the drum & bass drops, the melody held and coloured, the voice ghosted; a legend's clearing
   // layer on the slower chords too, its lead ghosted, its melody coloured (rules here; its reverb, drone and voice lift the engine's)
-  const H = hauntedOn(style), haunt = !!H && H.sections.includes(plan.section) && ctx.only !== "circle";
-  const chordOf = (slow: boolean) => form ? formChord(style, ctx.seed, slow ? hauntedBar(form, formBar) : formBar, !!sec.sevenths) : chordAt(style, sec, a, barIn + pass * Math.max(1, sec.chordBars));
+  const H = hauntedOn(style), haunt = !!H && H.sections.includes(plan.section) && ctx.only !== "circle", comp = composeOn(style), dance = danceOn(style);
+  const danceBass = dance ? dance.dance!.bass[a.family ?? ""] : undefined;
+  const chordOf = (slow: boolean) => BG ? bangerChord(style, a, ctx.seed, formBar, !!sec.sevenths, slow) : form ? formChord(style, ctx.seed, slow ? hauntedBar(form, formBar) : formBar, !!sec.sevenths) : chordAt(style, sec, a, barIn + pass * Math.max(1, sec.chordBars));
   const chordMain = chordOf(haunt), circleChord = H && form ? chordOf(true) : chordMain;
   const dropAt = haunt ? hauntedDrop(style, plan.bars) : Infinity, dropped = barIn >= dropAt;
   let secParts = sec.parts;
@@ -816,13 +1183,53 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     const sh = own ? nameHash(circle!.species) : 0, phase = own ? (sh % 8) * 2 : 0;
     const at = own && ctx.circleStep !== undefined ? ctx.circleStep : barIn * 16 + s; // (the layer on its own clock, or the music's)
     const i = (at + phase) % pat.length;
+    // the composer's bassline (Ed, 2026-11-08: "smarter rules"): the part's pattern bar varied over a four-bar phrase, stepping
+    // into the next chord, sitting with the kick (musicCompose.ts bassBar); its notes may fall on the pattern's rests
+    const over = danceBass?.[name]; // (the dance way's by family)
+    const base0 = comp && def.role === "bass" && !own && !def.tonic && u.p !== "__fill" ? comp.bass.parts[name] : undefined;
+    const brule: BassRule | undefined = comp && def.role === "bass" && !own && !def.tonic && u.p !== "__fill" && (base0 || over) ? (over ? danceRule(base0, over) : base0) : undefined;
+    if (brule) {
+      // (its pattern this four-bar phrase: Ed, 2026-11-09, "repetitive"; dealt by the seed from the pool for the wave's energy)
+      const bpat = def.patterns[bassPatternName(comp!, name, u.p, plan.section, a.energy, form ? formBar : barIn, ctx.seed)] ?? pat;
+      const bi = at % bpat.length, from = bi - (bi % 16);
+      let m = bassMemo.get(name);
+      if (!m || m.style !== style || m.seed !== ctx.seed || m.bar !== bar || m.formBar !== formBar || m.section !== plan.section || m.start !== plan.start || m.bars !== plan.bars || m.arc !== plan.arc || m.pass !== pass || m.pat !== bpat || m.from !== from || m.root !== chord.root) {
+        // (the next bar's chord, and the section's kick this bar)
+        const next = form ? formChord(style, ctx.seed, haunt ? hauntedBar(form, formBar + 1) : formBar + 1).root : chordAt(style, sec, a, barIn + 1 + pass * Math.max(1, sec.chordBars)).root;
+        const k = Object.entries(secParts).find(([n]) => style.patches[style.parts[n]?.patch ?? ""]?.kind === "kick"), kp = k && style.parts[k[0]].patterns[use(k[1]).p];
+        const kick = kp ? kp.slice((barIn * 16) % kp.length, ((barIn * 16) % kp.length) + 16) : null, q = form ? mod(formBar, 4) : mod(barIn, 4), salt = name.length * 131 + name.charCodeAt(0) * 7 + q;
+        const line = bassBar(bpat.slice(from, from + 16), brule, comp!.bass.approach, chord.root, next === chord.root ? null : next, kick, q, x => hash2(bar * 64 + x, salt, ctx.seed + 977));
+        // (its register: each chord's root in the octave nearest the last's, every note folded in; Ed, 2026-11-09, "too high"; a
+        // section's own lift, the victory's, lifting it too)
+        const lift = sec.transpose ?? 0, R0 = brule.register, R: [number, number] | undefined = R0 && [R0[0] + lift, R0[1] + lift], rootM = R ? bassRoot(style, scale, transpose, R, ctx.seed, form ? formBar : null, haunt, chord.root) : 0;
+        const nextM = R ? bassRoot(style, scale, transpose, R, ctx.seed, form ? formBar + 1 : null, haunt, next) : 0;
+        const midis = line.map(n => {
+          if (!n) return 0;
+          if (!R) return degreeToMidi(style, scale, (n.abs ? 0 : chord.root) + n.k, def.octave ?? 0, transpose);
+          let x = n.abs ? nextM + degreeToMidi(style, scale, n.k, 0, 0) - degreeToMidi(style, scale, next, 0, 0) : rootM + degreeToMidi(style, scale, chord.root + n.k, 0, 0) - degreeToMidi(style, scale, chord.root, 0, 0);
+          while (x > R[1]) x -= 12;
+          while (x < R[0]) x += 12;
+          return x;
+        });
+        bassMemo.set(name, (m = { style, seed: ctx.seed, bar, formBar, section: plan.section, start: plan.start, bars: plan.bars, arc: plan.arc, pass, pat: bpat, from, root: chord.root, line, midis }));
+      }
+      const n = m.line[bi % 16];
+      if (!n) continue;
+      const r = hash2(step, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), ctx.seed + phrase * 7919);
+      const level = u.level * scaleLevel * (0.94 + 0.06 * r) * (building ? 0.45 + 0.55 * build : 1);
+      const patch0 = a.bass && sec.parts[name] && style.patches[a.bass] ? a.bass : def.patch, swap = comp!.bass.patches?.[patch0], patch = swap && style.patches[swap] ? swap : patch0; // (the rounder stand-in)
+      out.push({ part: name, patch, step, offset: 0, dur: n.dur, ...(hook ? { hook } : {}), ...(n.glide ? { glide: n.glide } : {}), midi: m.midis[bi % 16], vel: 0.85 * n.vel * level });
+      continue;
+    }
     const { ch, dur } = hitAt(pat, i);
     if (ch === "." || ch === "-") continue;
     const seed = own ? ctx.seed + nameHash(circle!.species) : ctx.seed; // (a legend's layer its species' own melody)
     const r = hash2(own && ctx.circleStep !== undefined ? ctx.circleStep : step, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), seed + phrase * 7919);
     if (ch === "?" && r >= a.energy) continue;
     const level = u.level * scaleLevel * (0.94 + 0.06 * r) * (building && !own ? 0.45 + 0.55 * build : 1); // (the boot's few speakers quieter, filling out to the twelfth)
-    const patch = a.bass && def.role === "bass" && sec.parts[name] && !own && style.patches[a.bass] ? a.bass : def.patch; // (a night's set: the step's bass patch on the section's own bass parts)
+    // (a night's set: the step's bass patch on the section's own bass parts; the dance way's clearing ostinato on a witch-house lead)
+    const ostPatch = own && def.role === "motif" && dance && clearingOstinato(dance, seed + phrase * 104729, plan.arc) ? pick(dance.dance!.leads.clearing, hash2(sh, 509, 3)) : undefined;
+    const patch = ostPatch && style.patches[ostPatch] ? ostPatch : a.bass && def.role === "bass" && sec.parts[name] && !own && style.patches[a.bass] ? a.bass : def.patch;
     const base = { part: name, patch, step: own && ctx.circleStep !== undefined ? ctx.circleStep : step, offset: 0, dur, ...(own ? { layer: "circle" as const } : {}), ...(hook ? { hook } : {}) };
     if (def.role === "drum") {
       if (ch === "r") { out.push({ ...base, dur: 0.5, midi: null, vel: 0.6 * level }, { ...base, offset: 0.5, dur: 0.5, midi: null, vel: 0.75 * level }); continue; }
@@ -842,10 +1249,16 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
       const n = chord.tones.length, t = chord.tones[k % n] + 7 * (Math.floor(k / n) % 2);
       out.push({ ...base, midi: degreeToMidi(style, scale, t, oct, transpose), vel: (VEL[ch] ?? accent) * level });
     } else {
-      const m = motifFor(seed + phrase * 104729, plan.arc, name), pos = ((at % 64) + (own ? sh % 29 : 0)) % 32; // (a new melody each pass or phrase)
-      const vary = barIn % 4 === 3 && s >= 8 ? (hash2(bar, plan.arc, ctx.seed + 5) < 0.5 ? 2 : -1) : 0; // every fourth bar ends differently
+      const m = motifFor(style, seed + phrase * 104729, plan.arc, name, own), pos = ((at % 64) + (own ? sh % 29 : 0)) % 32; // (a new melody each pass or phrase)
+      const vary = !comp && barIn % 4 === 3 && s >= 8 ? (hash2(bar, plan.arc, ctx.seed + 5) < 0.5 ? 2 : -1) : 0; // every fourth bar ends differently (the composer's motif changes in itself)
       const lift = own ? [0, 2, 4][(sh >>> 3) % 3] : 0, octOwn = own ? oct + ((sh >>> 5) % 2) - (oct > 2 ? 1 : 0) : oct;
-      const deg = chord.root + m[pos] + vary + lift, vel = (VEL[ch] ?? accent) * level;
+      // (banger mode: a clearing hums the night's hook, its pitches in turn, a note a hit)
+      let hk = 0;
+      if (BG && own) { for (let j = 0; j < i; j++) if (pat[j] !== "." && pat[j] !== "-") hk++; hk += Math.floor(at / pat.length) * Math.max(1, [...pat].filter(c => c !== "." && c !== "-").length); }
+      const hseq = BG && own ? nightHook(BG, nightSeed).seq : null;
+      // (each species from its own place in the hook, half of them backwards: kin hum it differently)
+      if (hseq) hk = (sh >>> 7) % 2 ? hseq.length * 64 - 1 - hk - (sh % hseq.length) : hk + (sh % hseq.length);
+      const deg = hseq ? hseq[((hk % hseq.length) + hseq.length) % hseq.length] : chord.root + m[pos] + vary + lift, vel = (VEL[ch] ?? accent) * level;
       // (a haunted clearing: its melody now and then coloured, its lead ghosted below, late and quieter)
       const tint = own && H ? hauntedColour(style, scale, deg, false, hash2(at, 467, seed)) : 0;
       out.push({ ...base, midi: degreeToMidi(style, scale, deg, octOwn, transpose) + tint, vel });
@@ -886,7 +1299,13 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     if (hold && voiceOk) {
       if (s === 0 && mod(formBar, form.chordBars) === 0) sing(chord.root, form.chordBars * 16 - 1, 0, 0.8 * melody);
     } else {
-      const fn = formNoteAt(style, ctx.seed, formBar * 16 + s, transpose, a, { voice: place !== null, hookSeed: nightSeed, haunted: haunt });
+      // (the dance way: the wave's riff kind; in a haunted section the voice's slow hook, then from the drop the instrument
+      // playing it as the riff: the anthem's trick)
+      const riff = dance ? riffKind(dance, a.family, plan.section, ctx.seed) : undefined, lead = riff ? riffLead(dance!, riff, a.family, ctx.seed) : undefined;
+      const fn0 = formNoteAt(style, ctx.seed, formBar * 16 + s, transpose, a, { voice: place !== null && !(dance && dropped), hookSeed: nightSeed, haunted: haunt, riff, lead });
+      // (banger mode, where the music is as before: the boot's intro plays the night's hook on the form's instrument)
+      const hn = BG ? hookNoteAt(style, nightSeed, formBar * 16 + s) : null, hp = BG ? style.parts[a.lead && style.parts[a.lead] ? a.lead : formInstrument(form, ctx.seed)] : undefined;
+      const fn = !BG ? fn0 : hn && hp ? { part: a.lead && style.parts[a.lead] ? a.lead : formInstrument(form, ctx.seed), patch: hp.patch, midi: degreeToMidi(style, scale, hn.deg, Math.max(2, hp.octave ?? 3), transpose), deg: hn.deg, dur: hn.dur, off: 0, letter: "A" } as NonNullable<typeof fn0> : null;
       const tint = fn && haunt ? hauntedColour(style, scale, fn.deg, !!fn.cad, hash2(ctx.seed, formBar * 16 + s, 467)) : 0; // (the scale's colour: Ed, 2026-11-08)
       if (fn && fn.part === form.sung.part) sing(fn.deg, fn.dur, fn.off, fn.off ? 0.78 * melody : vel, tint);
       else if (fn) out.push({ part: fn.part, patch: fn.patch, step, offset: fn.off, dur: fn.dur, midi: fn.midi + tint, vel: fn.off ? 0.78 * melody : vel, ...(fn.dur % 1 ? { straight: true } : {}) });
@@ -907,7 +1326,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
 /** The style's problems (empty when it's sound): every section, part, pattern and patch named exists,
  *  patterns run whole bars, and every section's length in the arc is a whole number of blocks. */
 export function checkStyle(style: MusicStyle): string[] {
-  const errs: string[] = [], B = style.blockBars;
+  const errs: string[] = checkBanger(style), B = style.blockBars;
   for (const f of style.voiceFxDark?.families ?? []) if (!style.families?.[f]) errs.push(`voiceFxDark: no family "${f}"`);
   const checkUse = (where: string, name: string, u: PartUse) => {
     const def = style.parts[name];
@@ -950,6 +1369,29 @@ export function checkStyle(style: MusicStyle): string[] {
       else if (!tripletsWhole(c)) errs.push(`form: cell ${k} "${c}": a triplet without its _s`);
     }
     for (const c of Object.values(F.cadence).flat()) if (!c.endsWith(".")) errs.push(`form: cadence "${c}" doesn't end on a rest`);
+  }
+  const CB = style.compose?.bass;
+  if (CB) {
+    for (const [part, P] of Object.entries(CB.patterns ?? {})) {
+      const def = style.parts[part];
+      if (!def) { errs.push(`compose.bass.patterns: no part "${part}"`); continue; }
+      for (const n of [...P.low, ...P.mid, ...P.high, ...Object.values(P.sections ?? {}).flat()]) if (!def.patterns[n]) errs.push(`compose.bass.patterns.${part}: no pattern "${n}"`);
+      for (const s of Object.keys(P.sections ?? {})) if (!style.sections[s]) errs.push(`compose.bass.patterns.${part}: no section "${s}"`);
+    }
+    for (const [from, to] of Object.entries(CB.patches ?? {})) if (!style.patches[from] || !style.patches[to]) errs.push(`compose.bass.patches: "${from}" to "${to}", not both patches`);
+    for (const [part, r] of Object.entries(CB.parts)) if (r.register && !(r.register[0] < r.register[1] && r.register[1] - r.register[0] >= 12)) errs.push(`compose.bass.parts.${part}: a register an octave wide at least`);
+  }
+  const D = style.compose?.dance;
+  if (D) {
+    const KINDS = ["trance", "pedal", "poly", "chop", "ostinato"];
+    for (const ks of [D.riffs.default, ...Object.values(D.riffs.families), ...Object.values(D.riffs.sections)]) for (const k of ks) if (!KINDS.includes(k)) errs.push(`compose.dance: no riff kind "${k}"`);
+    for (const f of Object.keys(D.riffs.families)) if (style.families && !style.families[f]) errs.push(`compose.dance.riffs: no family "${f}"`);
+    for (const n of Object.keys(D.riffs.sections)) if (!style.sections[n]) errs.push(`compose.dance.riffs: no section "${n}"`);
+    for (const k of KINDS) if (!D.leads.kinds[k as RiffKind]?.length) errs.push(`compose.dance.leads: no leads for "${k}"`);
+    for (const p of [...Object.values(D.leads.kinds), ...Object.values(D.leads.families)].flat()) if (!style.parts[p] || style.parts[p].role !== "motif") errs.push(`compose.dance.leads: no melodic part "${p}"`);
+    for (const f of Object.keys(D.leads.families)) if (style.families && !style.families[f]) errs.push(`compose.dance.leads: no family "${f}"`);
+    for (const p of D.leads.clearing) if (!style.patches[p]) errs.push(`compose.dance.leads.clearing: no patch "${p}"`);
+    for (const [f, rules] of Object.entries(D.bass)) { if (style.families && !style.families[f]) errs.push(`compose.dance.bass: no family "${f}"`); for (const p of Object.keys(rules)) if (style.parts[p]?.role !== "bass") errs.push(`compose.dance.bass.${f}: no bass part "${p}"`); }
   }
   const H = style.haunted;
   if (H) {

@@ -224,7 +224,12 @@ says what each note covers.
 
 - Potion isolation
 - Music style
+- Banger mode
 - Haunted
+- The composer
+- The dance way
+- Bass register and patterns
+- Dance leads
 - Section
 - Boot-up
 - Form

@@ -19,8 +19,9 @@ const AHEAD = 6, START = 2.5, TAIL = 2.5;
 /** Bars rendering at once, at most. */
 const RENDERING = 2;
 /** The stems' channels: four stereo pairs (the ducked parts, the rest, the reverb's send, the delay's), the haunted ghost voice's
- *  pair, and the voice line (mono) last. */
-const STEMS = 11, VOICE = 10;
+ *  pair, banger mode's drums' pair (silent without its compressors: the live drum bus squashes them, as it does live), and the
+ *  voice line (mono) last. */
+const STEMS = 13, VOICE = 12;
 
 type Ev = { kind: "tone"; f0: number; f1: number; t: number; dur: number } | { kind: "duck"; t: number; depth: number; sps: number } | { kind: "gate"; open: boolean; t: number }
   | { kind: "fx"; part: string; fx: "pure" | "dark"; t: number } | { kind: "release"; part: string; t: number }
@@ -139,7 +140,7 @@ export class MusicAhead {
     const voice = oc.createGain(); voice.channelCount = 1; voice.channelCountMode = "explicit"; voice.connect(merge, 0, VOICE);
     const events: Ev[] = [];
     const sink: MusicSink = {
-      duck: pair(0), dry: pair(1), reverb: pair(2), delay: pair(3), ghost: pair(4), voice: () => voice,
+      duck: pair(0), dry: pair(1), reverb: pair(2), delay: pair(3), ghost: pair(4), drums: pair(5), voice: () => voice,
       tone: (f0, f1, t, d) => events.push({ kind: "tone", f0, f1, t, dur: d }),
       duckAt: (t, depth, sps) => events.push({ kind: "duck", t, depth, sps }),
       gate: (open, t) => events.push({ kind: "gate", open, t }),
@@ -171,7 +172,7 @@ export class MusicAhead {
     const src = c.createBufferSource(), sp = c.createChannelSplitter(STEMS), nodes: AudioNode[] = [sp];
     src.buffer = buf; src.connect(sp);
     const ghost = E.style.haunted ? E.ghostIn() : null; // (the haunted ghost voice's stem: only a style with the treatment has one)
-    [bus.duck, bus.dry, bus.reverb, bus.delay, ghost].forEach((d, i) => { if (!d) return; const m = c.createChannelMerger(2); sp.connect(m, 2 * i, 0); sp.connect(m, 2 * i + 1, 1); m.connect(d); nodes.push(m); });
+    [bus.duck, bus.dry, bus.reverb, bus.delay, ghost, bus.drums].forEach((d, i) => { if (!d) return; const m = c.createChannelMerger(2); sp.connect(m, 2 * i, 0); sp.connect(m, 2 * i + 1, 1); m.connect(d); nodes.push(m); });
     if (voiceIn) sp.connect(voiceIn, VOICE);
     src.onended = () => { for (const n of nodes) try { n.disconnect(); } catch { /* gone */ } };
     if (at >= now) src.start(at); else src.start(now, now - at);

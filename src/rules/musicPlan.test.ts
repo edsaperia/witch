@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { withBanger } from "./musicBanger"; // (the score as it was before banger mode, ?banger=0: banger mode's own tests are musicBanger.test.ts)
 import styleJson from "../../config/music-style.json";
 import { Conductor, barSeconds, bootLayers, legendNear, musicCue, partyNear, planBlock, type MusicCue } from "./musicPlan";
 import { newGame as fullGame } from "./game";
@@ -7,7 +8,7 @@ import { TUNING } from "./tuning";
 import { checkStyle, isHaunted, notesAt, resolveSection, type BlockPlan, type MusicStyle } from "./musicScore";
 
 const newGame = smallWorld(fullGame, "Music cues use supplied clocks and nearby legend/soundsystem targets, independent of world extent.");
-const style = styleJson as unknown as MusicStyle;
+const style = withBanger(styleJson as unknown as MusicStyle, false);
 /** The section a wave lands on (the form's first block, Ed 2026-10-09). */
 const landOf = (a: MusicStyle["arc"][number]) => a.sections!.land ?? a.sections!.four[0];
 const bpm = style.bpm, spBar = barSeconds(bpm);
@@ -170,7 +171,9 @@ describe("music score", () => {
     const plan: BlockPlan = { section: "whisper", start: 0, bars: 8, wave: 1, arc: 1 };
     const notes = (party: number) => Array.from({ length: 16 }, (_, s) => notesAt(style, plan, null, s, { seed: 1, siege: 0, party })).flat();
     const own = new Set(notes(0).map(e => e.part)), added = new Set(notes(1).map(e => e.part));
-    for (const p of Object.keys(style.party ?? {})) if (!own.has(p)) expect(added.has(p)).toBe(true);
+    // (a melodic party part raises the form's melody rather than playing its own: its notes are the melody's instrument's, the
+    // dance way's riff lead since Ed's "add in some more" leads, 2026-11-09)
+    for (const p of Object.keys(style.party ?? {})) if (!own.has(p) && style.parts[p]?.role !== "motif") expect(added.has(p)).toBe(true);
     for (const p of own) expect(notes(1).filter(e => e.part === p).length).toBe(notes(0).filter(e => e.part === p).length);
     // quieter the further it is
     const vel = (party: number) => notes(party).filter(e => !own.has(e.part)).reduce((a, e) => a + e.vel, 0);

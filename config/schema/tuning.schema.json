@@ -9925,6 +9925,19 @@
           "type": "boolean",
           "description": "The haunted treatment in the quiet sections and a sleeping legend's clearing layer (the music style's haunted block, docs/notes/music.md Haunted); false plays the music as before, as does ?haunted=0 or the Music Lab's Haunted switch."
         },
+        "melody": {
+          "type": "string",
+          "enum": [
+            "dance",
+            "lyrical",
+            "old"
+          ],
+          "description": "Whose melodies and basslines the music plays: \"dance\" the composer's riffs and hooks (the default), \"lyrical\" its planned phrases (the music style's compose block, docs/notes/music.md The composer), \"old\" the seeded walk and the one-bar basslines as before; ?melody= likewise."
+        },
+        "banger": {
+          "type": "boolean",
+          "description": "Banger mode, the music with one hook a night back at its key moments, kits and grooves by family, builds and drops, gentle till the second stump (docs/notes/music.md Banger mode); false or ?banger=0 plays the music as before."
+        },
         "over": {
           "type": "object",
           "properties": {
@@ -9981,6 +9994,8 @@
         "src",
         "singer",
         "haunted",
+        "melody",
+        "banger",
         "over",
         "beach"
       ],
