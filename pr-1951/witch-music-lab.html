@@ -282,7 +282,7 @@ label.check input { accent-color: var(--accent); }
       dnbKick: { kind: "kick", gain: 0.95, pitch: 170, pitchEnd: 52, pitchTime: 0.035, decay: 0.3, drive: 0.35, click: 0.45 },
       dnbSnare: { kind: "snare", gain: 1.15, pitch: 205, cutoff: 1900, q: 0.9, decay: 0.19, reverb: 0.35, hp: 160 },
       dnbSub: { kind: "synth", gain: 0.36, waves: ["sine"], attack: 8e-3, decay: 1.4, sustain: 0.8, release: 0.18, filter: "lowpass", cutoff: 260, glide: 0.07 },
-      bgKick: { kind: "kick", gain: 1, pitch: 115, pitchEnd: 41, pitchTime: 0.07, decay: 0.24, drive: 0.6, driveTime: 0.06, click: 0.36 },
+      bgKick: { kind: "kick", gain: 1, pitch: 115, pitchEnd: 41, pitchTime: 0.07, blip: 320, blipTime: 0.01, attack: 1e-3, hold: 0.05, decay: 0.24, drive: 0.85, driveTime: 0.06, click: 0.8, clickFreq: 3e3, clickTime: 6e-3 },
       bgSoftKick: { kind: "kick", gain: 0.85, pitch: 130, pitchEnd: 52, pitchTime: 0.05, decay: 0.26, drive: 0.15, click: 0.25 },
       bgTom: { kind: "kick", gain: 0.6, pitch: 230, pitchEnd: 130, pitchTime: 0.07, decay: 0.22, click: 0.15, reverb: 0.25, hp: 70, pan: 0.45, noDuck: true },
       bgTomLo: { kind: "kick", gain: 0.65, pitch: 170, pitchEnd: 92, pitchTime: 0.08, decay: 0.26, click: 0.12, reverb: 0.25, hp: 60, pan: -0.45, noDuck: true },
@@ -319,15 +319,19 @@ label.check input { accent-color: var(--accent); }
       bgPulse: { kind: "synth", gain: 0.6, waves: ["custom"], harmonics: [1, 0.924, 0.805, 0.653, 0.483, 0.308, 0.143, 0, -0.111, -0.185, -0.219, -0.218, -0.186, -0.132, -0.067, 0, 0.059, 0.103, 0.127, 0.131, 0.115, 0.084, 0.043, 0], attack: 2e-3, decay: 0.12, sustain: 0.3, release: 0.08, filter: "lowpass", cutoff: 3e3, q: 1, envAmt: 3500, fDecay: 0.08, fSustain: 0.3, filter2: "lowpass", cutoff2: 8500, delay: 0.38, reverb: 0.35, hp: 500, pan: -0.28 },
       bgPulse25: { kind: "synth", gain: 0.55, waves: ["custom"], harmonics: [1, 0.707, 0.333, 0, -0.2, -0.236, -0.143, 0, 0.111, 0.141, 0.091, 0, -0.077, -0.101, -0.067, 0, 0.059, 0.079, 0.053, 0, -0.048, -0.064, -0.043, 0], attack: 2e-3, decay: 0.14, sustain: 0.4, release: 0.08, filter: "lowpass", cutoff: 2600, q: 1.2, envAmt: 3e3, fDecay: 0.08, fSustain: 0.3, filter2: "lowpass", cutoff2: 8e3, vibRate: 6, vibDepth: 10, vibDelay: 0.2, delay: 0.3, reverb: 0.25, hp: 350, pan: 0.2 },
       bgOoh: { kind: "sample", from: "chimeraVoice", gain: 0.3, vowels: ["oo"], swell: 0.4, breath: 0, reverb: 0.6, delay: 0.15, hp: 380, presence: 5, duck: true },
-      bgOohL: { kind: "sample", from: "bgOoh", gain: 0.3, pan: -0.6 },
-      bgOohR: { kind: "sample", from: "bgOoh", gain: 0.3, pan: 0.6 },
+      bgOohL: { kind: "sample", from: "bgOoh", gain: 0.42, pan: -0.6 },
+      bgOohR: { kind: "sample", from: "bgOoh", gain: 0.42, pan: 0.6 },
       bgFlute: { kind: "synth", from: "breathFlute", gain: 0.21, attack: 0.012, bend: 0, hp: 280 },
       bgDark: { kind: "synth", from: "darkSaw", gain: 0.26, attack: 8e-3, hp: 140 },
       bgGrit: { kind: "synth", gain: 0.3, waves: ["sawtooth", "sawtooth", "square"], levels: [1, 1, 0.5], detune: 28, attack: 5e-3, decay: 0.3, sustain: 0.8, release: 0.07, filter: "lowpass", cutoff: 850, q: 1.6, envAmt: 1500, fDecay: 0.12, fSustain: 0.3, lfoRate: 0.4, lfoDepth: 250, drive: 0.9, hp: 110, duck: true },
       bgAir: { kind: "sample", from: "chimeraVoice", gain: 0.3, vowels: ["oo"], breath: 0.1, reverb: 0.9, delay: 0.3, hp: 500, presence: 5 },
       bgAirL: { kind: "sample", from: "bgAir", gain: 0.3, pan: -0.7 },
       bgAirR: { kind: "sample", from: "bgAir", gain: 0.3, vowels: ["aa"], pan: 0.7 },
-      bgChop: { kind: "sample", from: "chimeraVoice", gain: 0.5, vowels: ["aa"], swell: 0.08, attack: 3e-3, skip: 0.07, breath: 0, reverb: 0.5, delay: 0.4, hp: 400, presence: 5, pan: 0.15 }
+      bgLead: { kind: "sample", from: "chimeraVoice", gain: 0.6, vowels: ["aa"], swell: 0.08, attack: 3e-3, skip: 0.07, breath: 0.04, reverb: 0.7, delay: 0.3, hp: 330, presence: 5, air: 5 },
+      bgLeadL: { kind: "sample", from: "bgLead", gain: 0.6, attack: 0.03, cents: -11, pan: -0.8, reverb: 0.9, delay: 0.2 },
+      bgLeadR: { kind: "sample", from: "bgLead", gain: 0.6, attack: 0.03, cents: 11, vowels: ["oo"], pan: 0.8, reverb: 0.9, delay: 0.2 },
+      bgShimmer: { kind: "sample", from: "chimeraVoice", gain: 0.5, vowels: ["oo"], swell: 0.45, breath: 0, reverb: 1, delay: 0.4, hp: 1800, air: 6 },
+      bgChop: { kind: "sample", from: "chimeraVoice", gain: 0.5, vowels: ["aa"], swell: 0.08, attack: 3e-3, skip: 0.1, breath: 0, reverb: 0.5, delay: 0.4, hp: 400, presence: 5, pan: 0.15 }
     },
     parts: {
       kick: { patch: "kick", role: "drum", patterns: { four: "x...x...x...x...", drive: "X...x...X...x...", break: "x.........x.....x.x.......x..x..", twostep: "x......x..x.....", electro: "x..x..x...x.....", half: "x.........x....." } },
@@ -516,15 +520,15 @@ label.check input { accent-color: var(--accent); }
       energyFloor: 0.4,
       softBelow: 0.52,
       gentle: { stumps: 2, energy: 0.4, kit: "soft", keep: ["soft", "ritual", "dub"] },
-      mix: { duck: 0.8, duckHold: 0.07, air: 5, lowCut: 28, drive: 1.2, reverbTime: 2.8, reverbPre: 0.04 },
-      comp: { on: true, drums: { threshold: -7, knee: 6, ratio: 4, attack: 0.02, releaseBeats: 0.25, mix: 0.65, makeup: 1.5, room: { time: 0.35, send: 0.2, hp: 450 } }, glue: { threshold: -6, knee: 8, ratio: 2, attack: 0.03, release: 0.25, makeup: 1.3 } },
-      vocals: { thirds: 0.6, double: "bgChop", doubleLevel: 1, pad: "bgOoh", padLevel: 0.9, stabLevel: 0.8, range: [62, 79], line: [60, 77], harmony: { voices: 3, window: 60, gentleVoices: 2, gentleLevel: 0.5, stabs: 0.5, chordStabLevel: 0.7 } },
+      mix: { duck: 0.88, duckHold: 0.07, air: 5, lowCut: 28, drive: 0.85, reverbTime: 3.2, reverbPre: 0.045 },
+      comp: { on: true, drums: { threshold: -7, knee: 6, ratio: 4, attack: 0.03, releaseBeats: 0.25, mix: 0.65, makeup: 1.5, room: { time: 0.35, send: 0.2, hp: 450 } }, glue: { threshold: -6, knee: 8, ratio: 2, attack: 0.03, release: 0.25, makeup: 1.15 } },
+      vocals: { lead: { patch: "bgLead", level: 1.3, runs: true, runLevel: 0.8, range: [60, 79], support: 0.45, ostinato: 1, ostSupport: 0.7, stack: ["bgLeadL", "bgLeadR"], stackLevel: 0.45, shimmer: "bgShimmer", shimmerLevel: 0.8, more: 1.4 }, thirds: 0.6, double: "bgChop", doubleLevel: 1, pad: "bgOoh", padLevel: 0.9, stabLevel: 0.8, range: [62, 79], line: [60, 77], harmony: { voices: 3, window: 60, gentleVoices: 2, gentleLevel: 0.5, stabs: 0.5, chordStabLevel: 0.7 } },
       space: { balance: { drums: 1.3, bass: 1.17, pad: 0.7, chords: 0.75, vocals: 0.8 }, echo: { steps: 3, levels: [0.42, 0.2] }, chordWindow: 48, riffRest: true, thin: true, bed: { voice: "xylo", low: "xyloLow", window: 55, lowWindow: 53, level: 1.25, dream: 0.6, figures: ["abcbabcbabcbabcb", "acbcacbcacbcacbc", "abcdcbabcdcbabcb", "abcbdbcbabcbdbcb"] }, xylo: { voice: "xylo", low: "xyloLow", window: 55, lowWindow: 53, level: 1.7, roll: "roll", figures: { off: "..x...x...x...x.", push: "..x..x....x..x..", arp: "a.b.c.b.a.b.c.b.", wide: "a..b..c.a..b..c.", skeleton: "1..ab...1..ab.c.", bones: "1.a.b...1.a.b.ab", roll: "tttttt....x....." } } },
       spice: { xylo: "xylo", answer: 0.3, flourish: 0.33, breakdown: 0.4, snap: "bgSnap", snaps: 0.5, snapLevel: 0.9 },
       register: { lead: 84, reply: 88, floor: 57, level: 0.66 },
       ostinato: { tresillo: { share: 0.4, groups: [[6, 6, 4, 6, 6, 4], [6, 6, 10, 6, 4], [6, 6, 4, 6, 10], [6, 10, 6, 6, 4]], shapes: [[0, 0, 0, 1, 1, 0], [0, 0, 0, -1, -1, 0], [0, 0, 1, 0, 0, -1], [0, 0, 0, 1, 0, -1], [0, 0, -1, 0, 0, 1]] }, stabs: "..x...x...x...x.", stabLevel: 2, heads: [[4, 4], [4, 2], [2, 4], [2, 2]], threes: [6, 8], arts: ["stA", "tss", "Asts", "sAt", "ssts", "tsAs"], shapes: [[0, 2, 1, 2, 3, 2], [0, 1, 2, 1, 0, -1], [0, 3, 2, 3, 1, 2], [2, 0, 1, 0, 2, 3], [0, 2, 3, 2, 0, 1], [1, 0, 1, 2, 1, 3]], xylo: 2.4, vocal: 0.8, thirds: 0.55 },
       drive: { groove: [{ patch: "bgHatB", p: "xggxggxggxggxgxg", level: 0.45, e: [0.5, 1] }, { patch: "bgRim", p: "...x..x...x..x.....x..x...x..x.x", level: 0.3, e: [0.6, 1] }], breaks: [{ patch: "snare", p: "..g...g...g...o...g...g..g.g...r", level: 0.75 }, { patch: "bgHatB", p: ".x.x.x.x.x.x.x.x", level: 0.4 }, { patch: "bgRide", p: "x...x...x...x...", level: 0.3 }], bass: { patch: "bgGrit", breaks: 2, dnb: 1.5, landing: 0.8 }, gallop: "..11..11..11..11" },
-      dream: { stack: ["bgAirL", "bgAirR"], octave: "bgAir", octaveLevel: 0.6, level: 0.3, drums: 0.6, sung: 0.2, pad: 0.6, sub: 0.6, down: 0.4, riser: "bgRiser" },
+      dream: { stack: ["bgAirL", "bgAirR"], octave: "bgAir", octaveLevel: 0.6, level: 0.5, drums: 0.6, sung: 0.32, pad: 0.6, sub: 0.6, down: 0.52, riser: "bgRiser" },
       minor: { scale: "aeolian", dorian: 0.2, cadence: true },
       progressions: { dorian: { a: [[0, 0, 3, 3], [0, 6, 3, 3], [0, 2, 6, 3], [0, 4, 6, 3], [0, 6, 0, 3], [0, 3, 6, 0]], b: [[2, 6, 3, 0], [3, 3, 0, 0], [6, 3, 0, 0], [2, 3, 0, 0]] }, aeolian: { a: [[0, 5, 2, 6], [0, 3, 5, 4], [0, 5, 3, 4], [0, 3, 4, 0], [0, 5, 6, 4], [0, 0, 5, 4], [0, 6, 5, 4]], b: [[5, 6, 0, 0], [5, 2, 6, 4], [3, 5, 6, 4], [3, 3, 0, 4]] }, phrygian: { a: [[0, 1, 0, 6], [0, 0, 1, 1], [0, 5, 1, 0]], b: [[5, 1, 0, 0], [3, 1, 0, 0]] }, harmonicMinor: { a: [[0, 5, 3, 4], [0, 3, 4, 4], [0, 5, 4, 4]], b: [[5, 4, 0, 0], [3, 4, 0, 0]] } },
       hook: { motifs: ["L-----rrL---....", "L---.rrrL-----..", "..rrL-----t~L---", "L------gL----rrr", "L---rrrrL-----..", "L-------t~L---..", "....rrrrL-------", "L-----L----.L--.", ".rrrL-----.gL--.", "L-----t~L---.rrr", "L---..rrL-----..", "..t~L----rrrL---"], answers: ["L---rrrrL-------", "..rrL---t~L-----", "L-----rrL-------", "rrrrL------gL---", "L-------.rrrL---"], shapes: [[0, 1, 0], [0, -1, 0], [1, 0, 1], [0, 2, 1], [2, 1, 0], [0, 1, 2], [1, 2, 0], [0, 0, 1], [1, 0, -1], [0, 2, 0]], chants: [[0, 0, 0], [0, 0, 1], [1, 1, 0], [0, 0, -1]], chant: 0.15, tresillos: ["L-----L----.L--.", "L----.L----.L---", "L-----L---..L---"], anchors: [0, 1, 1, 2], replies: [[5, 7, 8], [8, 7, 5], [5, 6, 8], [7, 5, 7]] },
@@ -5218,17 +5222,18 @@ label.check input { accent-color: var(--accent); }
       while (low + sh < R.floor && top + sh + 12 <= ceil) sh += 12;
       return sh;
     };
-    const tune = (L2, n, level, extra = {}, until = 16, T = hook, part = "period") => {
+    const tune = (L2, n, level, extra = {}, until = 16, T = hook, part = "period", under = false) => {
       if (!L2 || !n || s >= until) return null;
-      const ceil = L2 === reply ? R?.reply : R?.lead, sh = shiftOf(L2, T, part, ceil), m0 = (R ? raw(n.deg, L2.octave) : degreeToMidi(style2, scale, n.deg, L2.octave, transpose)) + sh + semi(n);
+      const ceil = L2 === reply ? R?.reply : R?.lead, sh0 = shiftOf(L2, T, part, ceil);
+      const sh = sh0 - (under && R && raw(T.low, L2.octave) + sh0 - 12 >= R.floor ? 12 : 0), m0 = (R ? raw(n.deg, L2.octave) : degreeToMidi(style2, scale, n.deg, L2.octave, transpose)) + sh + semi(n);
       const m1 = ceil !== void 0 && m0 > ceil ? m0 - 12 : m0;
       ev(L2.patch, m1, (n.vel ?? (n.long ? 0.92 : part === "reply" ? 0.8 : 0.72)) * L2.level * level * (R?.level ?? 1), Math.min(n.dur, until - s), { offset: offOf(n), ...extra });
       return m1;
     };
-    const play = (L2, T, slot, level, until = 16, noInto = false) => {
+    const play = (L2, T, slot, level, until = 16, noInto = false, under = false) => {
       const n = T.period[slot];
-      if (n && !(noInto && n.into)) tune(L2, n, level, {}, until, T);
-      for (const o of T.orn[slot]) if (!(noInto && o.into)) tune(L2, o, level, {}, until, T);
+      if (n && !(noInto && n.into)) tune(L2, n, level, {}, until, T, "period", under);
+      for (const o of T.orn[slot]) if (!(noInto && o.into)) tune(L2, o, level, {}, until, T, "period", under);
     };
     const F = style2.form, vocal = a.vocal && a.vocal !== "none" && style2.patches[a.vocal] ? a.vocal : F?.sung.patch;
     let sungAt = null;
@@ -5286,6 +5291,40 @@ label.check input { accent-color: var(--accent); }
       const note = (m, lv) => out.push({ part: "b:" + V.double, patch: V.double, step: step2, offset: sw, dur: Math.min(Math.max(2, n.dur), Math.max(1, until - s)), midi: m, vel: 0.85 * BAL.vocals * level * lv, straight: true });
       note(voxAt(n), 1);
       if (third > 0) note(voxAt({ deg: n.deg - 2, dur: n.dur }), third);
+    };
+    const LV = V?.lead && style2.patches[V.lead.patch] ? V.lead : void 0, she = !!LV && !kit.bed;
+    const herAt = (T, n) => {
+      const [lo, hi] = LV.range, top = raw(T.top, 2) + 1, low = raw(T.low, 2);
+      let sh = 0;
+      while (top + sh > hi) sh -= 12;
+      while (low + sh < lo && top + sh + 12 <= hi) sh += 12;
+      let m = raw(n.deg, 2) + semi(n) + sh;
+      while (m < V.range[0] - 7) m += 12;
+      while (m > V.range[1]) m -= 12;
+      return m;
+    };
+    const her = (T, n, level, until = 16, third = 0) => {
+      if (!LV || !n || n.off || s >= until) return;
+      const big = !!n.long || !!n.acc || T.period.length === 32 && n.dur >= 2, run2 = !big && LV.runs && n.dur === 1 && T.period.length !== 32;
+      if (!big && !run2) return;
+      const m = herAt(T, n), dur = Math.min(big ? Math.max(2, n.dur) : n.dur, Math.max(1, until - s)), lv = 0.85 * BAL.vocals * LV.level * level;
+      const note = (patch, midi, vel) => {
+        if (style2.patches[patch]) out.push({ part: "b:" + patch, patch, step: step2, offset: sw, dur, midi, vel, straight: true });
+      };
+      note(LV.patch, m, lv * (big ? 1 : LV.runLevel));
+      if (!big || n.dur < 3) return;
+      for (const patch of LV.stack) note(patch, m, lv * LV.stackLevel);
+      note(LV.shimmer, m + 12, lv * LV.shimmerLevel);
+      if (third > 0) {
+        let t = herAt(T, { deg: n.deg - 2, dur: n.dur });
+        if (t > m) t -= 12;
+        if (t < V.range[0] - 7) t += 12;
+        note(V.double, t, lv * third);
+      }
+    };
+    const herLine = (T, slot, level, until = 16, noInto = false, third = 0) => {
+      const n = T.period[slot];
+      if (n && !(noInto && n.into)) her(T, n, level, until, third);
     };
     const ooh = (level) => {
       const VV = B.vocals;
@@ -5353,27 +5392,37 @@ label.check input { accent-color: var(--accent); }
       const slot = (pb * 16 + s) % 128;
       ooh(1);
       if (use2 === "whole") {
-        play(lead, hook, slot, 1);
-        vox(hook.period[slot], V?.doubleLevel ?? 0, 16, V?.thirds ?? 0);
+        if (she) {
+          play(lead, hook, slot, LV.support, 16, false, true);
+          herLine(hook, slot, 1, 16, false, V?.thirds ?? 0);
+        } else {
+          play(lead, hook, slot, 1);
+          vox(hook.period[slot], (V?.doubleLevel ?? 0) * (LV?.more ?? 1), 16, V?.thirds ?? 0);
+        }
         if (role === "victory") tune(reply, hook.reply[slot], 0.7, {}, 16, hook, "reply");
         else if (xyAnswer && !xyChords) tune(xylo, hook.reply[slot], 0.8, {}, 16, hook, "reply");
       } else if (use2 === "slow") tune(lead, slow(), 0.9);
       else if (ost) {
         const O = ostinato(B, seed2, Math.floor(barIn / 2) + pass * 64, ostLevel >= 2), oslot = pb % 2 * 16 + s, n = O.period[oslot];
         if (n && s < until) {
-          const m = tune(lead, n, 1.15, {}, until, O);
+          const m = tune(lead, n, 1.15 * (she ? LV.ostSupport : 1), {}, until, O);
           if (m !== null && xylo) ev(xylo.patch, m - 12 >= 55 ? m - 12 : m, 0.8 * OS.xylo * xylo.level * (R?.level ?? 1) * (n.vel ?? 0.8), 1);
-          if (n.acc && !light) vox(n, OS.vocal, until);
-          if (ostLevel >= 1) tune(lead, { deg: n.deg - 2, dur: n.dur, vel: (n.vel ?? 0.8) * OS.thirds }, 1.15, {}, until, O);
+          if (she) her(O, n, LV.ostinato, until);
+          else if (n.acc && !light) vox(n, OS.vocal * (LV?.more ?? 1), until);
+          if (ostLevel >= 1) tune(lead, { deg: n.deg - 2, dur: n.dur, vel: (n.vel ?? 0.8) * OS.thirds }, 1.15 * (she ? LV.ostSupport : 1), {}, until, O);
         }
         tune(reply, O.reply[oslot], 0.7, {}, until, O, "reply");
       } else {
         const rests = role === "breaks" ? barIn < 4 : pass % 2 === 1 && barIn < 8;
         const gapBar = !!SPC?.riffRest && pb % 4 === 2, answer = xyAnswer && !xyChords;
-        if (!gapBar) play(rests ? reply : lead, riff, slot, rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1), 16, !!SPC?.riffRest && pb % 4 === 1);
+        const noInto = !!SPC?.riffRest && pb % 4 === 1, hers = she && !rests;
+        if (!gapBar) {
+          play(rests ? reply : lead, riff, slot, rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1) * (hers ? LV.support : 1), 16, noInto, hers);
+          if (hers) herLine(riff, slot, 0.9, 16, noInto);
+        }
         if (!gapBar && answer) tune(xylo, riff.reply[slot], 0.8, {}, 16, riff, "reply");
         else if (!gapBar && !rests && (half || role === "breaks")) tune(reply, riff.reply[slot], 0.7, {}, 16, riff, "reply");
-        if (!rests && !gapBar && V) {
+        if (!rests && !gapBar && V && !she) {
           const first = riff.period.slice(pb * 16, pb * 16 + 16).findIndex((x) => x?.long);
           if (first === s) vox(riff.period[slot], V.stabLevel, until);
         }
@@ -5408,8 +5457,13 @@ label.check input { accent-color: var(--accent); }
         pad(0.7);
         bed(1, gentle, until);
         const slot = (k % 8 * 16 + s) % 128, T = use2 === "whole" ? hook : riff;
-        play(lead, T, slot, 1, until);
-        if (use2 === "whole") vox(T.period[slot], V?.doubleLevel ?? 0, until, V?.thirds ?? 0);
+        if (she) {
+          play(lead, T, slot, LV.support, until, false, true);
+          herLine(T, slot, 1, until, false, use2 === "whole" ? V?.thirds ?? 0 : 0);
+        } else {
+          play(lead, T, slot, 1, until);
+          if (use2 === "whole") vox(T.period[slot], (V?.doubleLevel ?? 0) * (LV?.more ?? 1), until, V?.thirds ?? 0);
+        }
         tune(reply, T.reply[slot], 0.7, {}, until, T, "reply");
       }
     } else {
@@ -5548,6 +5602,11 @@ label.check input { accent-color: var(--accent); }
     if (B.vocals) {
       patch("vocals", B.vocals.double);
       patch("vocals", B.vocals.pad);
+    }
+    if (B.vocals?.lead) {
+      const L2 = B.vocals.lead;
+      for (const p of [L2.patch, ...L2.stack, L2.shimmer]) patch("vocals lead", p);
+      if (L2.range[1] - L2.range[0] < 12) errs.push("banger vocals lead: its range is under an octave");
     }
     if (B.space) {
       const X = B.space.xylo;
@@ -7207,6 +7266,14 @@ registerProcessor("witch-fof", WitchFof);
           out.connect(f);
           out = f;
         }
+        if (p.air) {
+          const f = c.createBiquadFilter();
+          f.type = "highshelf";
+          f.frequency.value = 7e3;
+          f.gain.value = p.air;
+          out.connect(f);
+          out = f;
+        }
         if (p.pan) {
           const s = c.createStereoPanner();
           s.pan.value = p.pan;
@@ -7394,13 +7461,13 @@ registerProcessor("witch-fof", WitchFof);
     }
     /** A patch, one that starts `from` another with that one's fields under its own (kept: the same object each time). */
     derived = /* @__PURE__ */ new WeakMap();
-    patchOf(name) {
+    patchOf(name, depth = 0) {
       const p = this.style.patches[name];
       if (!p?.from) return p;
       let d = this.derived.get(p);
       if (!d) {
         const { from, ...own } = p;
-        this.derived.set(p, d = { ...this.style.patches[from], ...own });
+        this.derived.set(p, d = { ...depth < 4 ? this.patchOf(from, depth + 1) : this.style.patches[from], ...own });
       }
       return d;
     }
@@ -7437,12 +7504,15 @@ registerProcessor("witch-fof", WitchFof);
     }
     kick(t, p, peak, dest) {
       const c = this.ctx, o = c.createOscillator(), decay = p.decay ?? 0.35;
-      o.frequency.setValueAtTime(p.pitch ?? 150, t);
-      o.frequency.exponentialRampToValueAtTime(p.pitchEnd ?? 45, t + (p.pitchTime ?? 0.08));
+      if (p.blip && p.blipTime) {
+        o.frequency.setValueAtTime(p.blip, t);
+        o.frequency.exponentialRampToValueAtTime(p.pitch ?? 150, t + p.blipTime);
+      } else o.frequency.setValueAtTime(p.pitch ?? 150, t);
+      o.frequency.exponentialRampToValueAtTime(p.pitchEnd ?? 45, t + (p.blipTime && p.blip ? p.blipTime : 0) + (p.pitchTime ?? 0.08));
       const g = c.createGain();
       g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(peak, t + 2e-3);
-      g.gain.setTargetAtTime(peak * 0.6, t + 0.01, decay * 0.25);
+      g.gain.linearRampToValueAtTime(peak, t + (p.attack ?? 2e-3));
+      g.gain.setTargetAtTime(peak * 0.6, t + (p.hold ?? 0.01), decay * 0.25);
       g.gain.setTargetAtTime(0, t + decay * 0.5, decay * 0.18);
       if (p.drive && p.driveTime) {
         const hot = c.createGain(), clean = c.createGain(), sh = this.shaper(p.drive);
@@ -7462,9 +7532,9 @@ registerProcessor("witch-fof", WitchFof);
       if (p.click) {
         const f = c.createBiquadFilter();
         f.type = "bandpass";
-        f.frequency.value = 3500;
+        f.frequency.value = p.clickFreq ?? 3500;
         f.Q.value = 0.8;
-        this.chain([this.noiseSource(t, 0.03), f, this.env(t, peak * p.click, 5e-4, 0.012)], dest);
+        this.chain([this.noiseSource(t, 0.03), f, this.env(t, peak * p.click, 5e-4, p.clickTime ?? 0.012)], dest);
       }
     }
     noiseSource(t, length, metal = false) {
@@ -7823,7 +7893,7 @@ registerProcessor("witch-fof", WitchFof);
         this.voice(t, { ...p, kind: "voice", vowels: ["ah", "oh", "ee", "eh", "oo"], formantShift: 1.18, q: 10, vibrato: 24, attack: 0.06, decay: 0.4, sustain: 0.85, release: 0.3 }, peak, freq, dur, step2, ch);
         return;
       }
-      const c = this.ctx, rate = freq / mtof(root), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = held ? 3600 : Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
+      const c = this.ctx, rate = freq / mtof(root) * (p.cents ? Math.pow(2, p.cents / 1200) : 1), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = held ? 3600 : Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
       if (len < 0.05) return;
       if (!ch.presence) {
         ch.presence = c.createBiquadFilter();
