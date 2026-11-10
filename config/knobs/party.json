@@ -753,6 +753,36 @@
         "app/sound.ts"
       ]
     },
+    "music.banger": {
+      "what": "Banger mode: one hook a night that returns at the key moments, drum kits and grooves by genre family, builds that empty out and drops that land, gentle till the night's second stump has its soundsystem (the music style's banger block, docs/notes/music.md Banger mode); false plays the music as before, as does ?banger=0.",
+      "notes": "Written over the same conductor and engine: the boot's intro, the knockdown's silence and new record, the victory, the siege, party and legend parts and a clearing's layer all as before. Its mix is its own (a deeper kick duck, a high shelf, a low cut, a little drive).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-10",
+          "quote": "I'm open to substantial redesigns, as long as we get music that fits with the game; catchy spooky cute dancey witchy ravey bangers",
+          "rest": "the brief for the music review and redesign"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-10",
+          "quote": "Repetition: one hook is good, but bring it back at key moments.",
+          "rest": "the hook whole only at a wave landing, a breakdown's drum & bass drop and the victory, slow in the breakdowns and builds and a clearing; each wave's own riff between"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-10",
+          "quote": "Early waves; keep things gentle before the second stump.",
+          "rest": "soft kits, the hook only slow, no impacts or rolls, till the second great stump's soundsystem rises (the music cue's stumps)"
+        }
+      ],
+      "links": [
+        "rules/musicBanger.ts",
+        "rules/musicPlan.ts",
+        "platform/audio/musicEngine.ts",
+        "app/sound.ts"
+      ]
+    },
     "music.melody": {
       "what": "Whose melodies and basslines the music plays: \"dance\" the composer's riffs and hooks (the default), \"lyrical\" its planned phrases (the music style's compose block, docs/notes/music.md The composer), \"old\" the seeded walk and the one-bar basslines as before; ?melody= likewise.",
       "notes": "The dance way: the instrument plays a riff (trance, pedal, three-against-four, chopped or ostinato, by the night's family) repeated every bar on its chord with a fourth-bar answer, the singer now and then a short high hook, a haunted breakdown's slow hook then played as the drop's riff, hip-hop and witch-house basslines by family. The lyrical way plans each phrase on a contour with one peak 60-75% through, builds it from a motif that comes back changed (repeated, moved to the next chord, turned over), puts chord tones on the strong beats and passing notes between, fills in a leap with a step back; the basslines step into each new chord, vary over four bars and sit with the kick.",

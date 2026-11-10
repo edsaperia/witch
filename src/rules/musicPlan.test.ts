@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { withBanger } from "./musicBanger"; // (the score as it was before banger mode, ?banger=0: banger mode's own tests are musicBanger.test.ts)
 import styleJson from "../../config/music-style.json";
 import { Conductor, barSeconds, bootLayers, legendNear, musicCue, partyNear, planBlock, type MusicCue } from "./musicPlan";
 import { newGame as fullGame } from "./game";
@@ -7,7 +8,7 @@ import { TUNING } from "./tuning";
 import { checkStyle, isHaunted, notesAt, resolveSection, type BlockPlan, type MusicStyle } from "./musicScore";
 
 const newGame = smallWorld(fullGame, "Music cues use supplied clocks and nearby legend/soundsystem targets, independent of world extent.");
-const style = styleJson as unknown as MusicStyle;
+const style = withBanger(styleJson as unknown as MusicStyle, false);
 /** The section a wave lands on (the form's first block, Ed 2026-10-09). */
 const landOf = (a: MusicStyle["arc"][number]) => a.sections!.land ?? a.sections!.four[0];
 const bpm = style.bpm, spBar = barSeconds(bpm);

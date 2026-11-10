@@ -22,6 +22,14 @@ node tools/music-lab/analyse.cjs [out dir] [section,section…]
 
 The Music Lab's measurements of a render: loudness, peak, energy in six bands, the spectral centroid, and a spectrogram picture.
 
+## `banger.mjs`
+
+Banger mode's A/B: node tools/music-lab/banger.mjs <out dir> [seed...] Renders tools/music-lab/banger.ts offline in headless Chromium with the game's singer and writes mp3s, each with a.txt of where things start and what to listen for, to <out dir>: every…
+
+## `banger.ts`
+
+Banger mode's A/B: the game's engine renders, offline and with the game's singer, a window of a night with banger mode on and off, the same seed, so they can be heard side by side.
+
 ## `bass.mjs`
 
 The basslines before and after: node tools/music-lab/bass.mjs <out dir> <tag> [seed...].

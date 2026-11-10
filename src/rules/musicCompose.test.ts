@@ -4,12 +4,13 @@
 // basslines: stepping into a new chord, a four-bar phrase, sitting with the kick, each style's character kept. The same seed
 // always the same music, and ?melody=old exactly the music before.
 import { describe, expect, it } from "vitest";
+import { withBanger } from "./musicBanger"; // (the score as it was before banger mode, ?banger=0: banger mode's own tests are musicBanger.test.ts)
 import styleJson from "../../config/music-style.json";
 import { nightStyle, planNight } from "./musicSet";
 import { bassBar, composeLine, LEAP, ostinatoMotif, type BassRule, type LineSlot, type RiffKind } from "./musicCompose";
 import { bassPatternName, checkStyle, composedMotif, composeOn, melodyMode, riffLead, degreeToMidi, formChord, formPhrase, hauntedBar, hauntedPhrase, hookPhrase, notesAt, resolveSection, riffFor, riffKind, riffPhrase, withMelody, type BlockPlan, type MusicStyle, type NoteEvent, type PhraseNote } from "./musicScore";
 
-const style = styleJson as unknown as MusicStyle, F = style.form!, C = style.compose!, old = withMelody(style, "old"), lyrical = withMelody(style, "lyrical");
+const style = withBanger(styleJson as unknown as MusicStyle, false), F = style.form!, C = style.compose!, old = withMelody(style, "old"), lyrical = withMelody(style, "lyrical");
 const P = F.phraseBars * 16, mod7 = (d: number) => ((d % 7) + 7) % 7;
 const SEEDS = Array.from({ length: 160 }, (_, i) => i * 37 + 3);
 

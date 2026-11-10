@@ -2,6 +2,7 @@
 // twice running, the energy rising to the final wave with a breakdown each cycle, the first home night the hand-picked one,
 // the palette by the absolute wave, and the same seed giving the same set.
 import { describe, expect, it } from "vitest";
+import { withBanger } from "./musicBanger"; // (the score as it was before banger mode, ?banger=0: banger mode's own tests are musicBanger.test.ts)
 import styleJson from "../../config/music-style.json";
 import { checkSet, energyAt, isCurated, MUSIC_STYLE, nightStyle, planNight, stepChanges, type NightSet } from "./musicSet";
 import { checkStyle, notesAt, SINGERS, withSinger, type MusicStyle } from "./musicScore";
@@ -9,7 +10,7 @@ import { planBlock, type MusicCue } from "./musicPlan";
 import { newGame } from "./game";
 import { TUNING } from "./tuning";
 
-const style = styleJson as unknown as MusicStyle;
+const style = withBanger(styleJson as unknown as MusicStyle, false);
 // Keep the explicit 10–64-wave matrix and ten-area authored home integration: curated selection, palette progression and final climax depend on night size.
 const SIZES = [10, 20, 30, 40, 50, 64];
 const nights = (): NightSet[] => SIZES.flatMap(w => [1, 7, 42].flatMap(seed => ["", "fox", "home"].map(island => planNight(style, { seed, island, waves: w }))));

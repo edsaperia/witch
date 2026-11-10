@@ -3376,6 +3376,12 @@ Code: `tools/music-lab/check.cjs`
   2. Ed, 2026-11-08: "Instead of 50% of the time, make it a drop - no drums, and then drum and bass kicks in. (Agree, not in legend areas)" (the quiet sections' drums: silent, then a drum & bass drop; the clearings without drums)
   In its sections (breakdown, ether, whisper): the voice's own long dark reverb, no drums and then a drum and bass drop on a 4-bar line, held notes and slower chords, a ghost voice a sixth below, a root-and-fifth drone, the flattened 2nd or raised 7th as colour (notes outside dorian there only), and the voice lifted.
   Code: `rules/musicScore.ts`, `platform/audio/musicEngine.ts`, `app/sound.ts`
+- **`music.banger`**: Banger mode: one hook a night that returns at the key moments, drum kits and grooves by genre family, builds that empty out and drops that land, gentle till the night's second stump has its soundsystem (the music style's banger block, docs/notes/music.md Banger mode); false plays the music as before, as does ?banger=0.
+  1. Ed, 2026-11-10: "I'm open to substantial redesigns, as long as we get music that fits with the game; catchy spooky cute dancey witchy ravey bangers" (the brief for the music review and redesign)
+  2. Ed, 2026-11-10: "Repetition: one hook is good, but bring it back at key moments." (the hook whole only at a wave landing, a breakdown's drum & bass drop and the victory, slow in the breakdowns and builds and a clearing; each wave's own riff between)
+  3. Ed, 2026-11-10: "Early waves; keep things gentle before the second stump." (soft kits, the hook only slow, no impacts or rolls, till the second great stump's soundsystem rises (the music cue's stumps))
+  Written over the same conductor and engine: the boot's intro, the knockdown's silence and new record, the victory, the siege, party and legend parts and a clearing's layer all as before. Its mix is its own (a deeper kick duck, a high shelf, a low cut, a little drive).
+  Code: `rules/musicBanger.ts`, `rules/musicPlan.ts`, `platform/audio/musicEngine.ts`, `app/sound.ts`
 - **`music.melody`**: Whose melodies and basslines the music plays: "dance" the composer's riffs and hooks (the default), "lyrical" its planned phrases (the music style's compose block, docs/notes/music.md The composer), "old" the seeded walk and the one-bar basslines as before; ?melody= likewise.
   1. Ed, 2026-11-08: "smarter rules" (of the ways to get better melodies and basslines: keep making the music live from the seed, but compose more like a person; the old rules kept to A/B)
   2. Ed, 2026-11-08: "more lyrical but not very dancey" (of the composer's first melodies, wanting the traits of trance anthems, abstract hip-hop, witch house and Grimes: riffs repeated with a fourth-bar answer, chopped loops, sparse ostinatos, short high hooks (the dance way, the default; the lyrical way kept))
@@ -3409,6 +3415,7 @@ Code: `tools/music-lab/check.cjs`
 | `music.singer` | string |  |
 | `music.haunted` | boolean |  |
 | `music.melody` | string | "dance" / "lyrical" / "old" |
+| `music.banger` | boolean |  |
 | `music.over.stop` | number | 0 to … |
 | `music.over.floor` | number | 0 to … |
 | `music.beach.fade` | number | 0 to … |

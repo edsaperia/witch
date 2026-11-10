@@ -3,6 +3,7 @@
 // chip, voice, bell or horn). The tempo should stay the same as knockdown tempo, i.e. it stays at 120 unless you are knocked
 // down, in which case it gains 5bpm. Being knocked down changes the music to a random new seed."
 import { describe, expect, it } from "vitest";
+import { withBanger } from "./musicBanger"; // (the score as it was before banger mode, ?banger=0: banger mode's own tests are musicBanger.test.ts)
 import styleJson from "../../config/music-style.json";
 import { bpmAt, targetTempo, timeAt } from "./beat";
 import { hitWitch, newGame as fullGame } from "./game";
@@ -12,7 +13,7 @@ import { Conductor, formClock, musicCue, silentAt, type MusicCue } from "./music
 import { arcStep, degreeToMidi, formBars, formChord, formInstrument, formNoteAt, formPhrase, isHaunted, musicSeed, notesAt, resolveSection, sungHere, withHaunted, withMelody, type BlockPlan, type MusicStyle } from "./musicScore";
 import { TUNING, type Tuning } from "./tuning";
 
-const style = styleJson as unknown as MusicStyle, F = style.form!, old = withMelody(style, "old");
+const style = withBanger(styleJson as unknown as MusicStyle, false), F = style.form!, old = withMelody(style, "old");
 const P = F.phraseBars * 16, seeds = [1, 7, 42, 123, 9001, 31337];
 const melodyOf = (seed: number, from: number, bars: number) =>
   Array.from({ length: bars * 16 }, (_, i) => { const n = formNoteAt(style, seed, from * 16 + i); return n ? `${n.part}:${n.midi}:${n.dur}` : "."; });

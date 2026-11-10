@@ -90,7 +90,25 @@
     "altoTract": {"kind": "tract", "gain": 0.75, "tractLength": 40, "vowels": ["ah", "ah", "oo", "oh"], "tense": [0.45, 0.72], "breath": 0.3, "vibrato": 0.012, "vibratoRate": 5.2, "vibratoAfter": 0.3, "glide": 0.1, "wander": 0.15, "hp": 120, "pan": -0.05},
     "dnbKick": {"kind": "kick", "gain": 0.95, "pitch": 170, "pitchEnd": 52, "pitchTime": 0.035, "decay": 0.3, "drive": 0.35, "click": 0.45},
     "dnbSnare": {"kind": "snare", "gain": 1.15, "pitch": 205, "cutoff": 1900, "q": 0.9, "decay": 0.19, "reverb": 0.35, "hp": 160},
-    "dnbSub": {"kind": "synth", "gain": 0.36, "waves": ["sine"], "attack": 0.008, "decay": 1.4, "sustain": 0.8, "release": 0.18, "filter": "lowpass", "cutoff": 260, "glide": 0.07}
+    "dnbSub": {"kind": "synth", "gain": 0.36, "waves": ["sine"], "attack": 0.008, "decay": 1.4, "sustain": 0.8, "release": 0.18, "filter": "lowpass", "cutoff": 260, "glide": 0.07},
+    "bgKick": {"kind": "kick", "gain": 1, "pitch": 175, "pitchEnd": 50, "pitchTime": 0.045, "decay": 0.27, "drive": 0.4, "click": 0.55},
+    "bgSoftKick": {"kind": "kick", "gain": 0.85, "pitch": 130, "pitchEnd": 52, "pitchTime": 0.05, "decay": 0.26, "drive": 0.15, "click": 0.25},
+    "bgTom": {"kind": "kick", "gain": 0.6, "pitch": 230, "pitchEnd": 130, "pitchTime": 0.07, "decay": 0.22, "click": 0.15, "reverb": 0.25, "hp": 70, "pan": 0.25, "noDuck": true},
+    "bgTomLo": {"kind": "kick", "gain": 0.65, "pitch": 170, "pitchEnd": 92, "pitchTime": 0.08, "decay": 0.26, "click": 0.12, "reverb": 0.25, "hp": 60, "pan": -0.25, "noDuck": true},
+    "bgClap": {"kind": "noise", "gain": 2.6, "filter": "bandpass", "cutoff": 1700, "q": 0.9, "decay": 0.24, "bursts": 4, "reverb": 0.4, "hp": 500},
+    "bgRim": {"kind": "noise", "gain": 4.5, "filter": "bandpass", "cutoff": 2600, "q": 3, "decay": 0.035, "reverb": 0.3, "hp": 900, "pan": -0.3},
+    "bgHat": {"kind": "noise", "source": "metal", "gain": 14, "filter": "highpass", "cutoff": 8200, "q": 0.7, "decay": 0.04, "hp": 500, "pan": 0.3},
+    "bgHatB": {"kind": "noise", "source": "metal", "gain": 12, "filter": "highpass", "cutoff": 9500, "q": 0.7, "decay": 0.03, "hp": 500, "pan": -0.3},
+    "bgOpenHat": {"kind": "noise", "source": "metal", "gain": 7, "filter": "highpass", "cutoff": 7000, "q": 0.7, "decay": 0.24, "hp": 500, "pan": -0.15, "reverb": 0.15},
+    "bgRide": {"kind": "noise", "source": "metal", "gain": 5, "filter": "bandpass", "cutoff": 9000, "q": 1.2, "decay": 0.2, "hp": 3000, "pan": 0.35, "reverb": 0.2},
+    "bgCrash": {"kind": "noise", "source": "metal", "gain": 5.5, "filter": "highpass", "cutoff": 4500, "q": 0.6, "decay": 1.3, "hp": 700, "reverb": 0.5},
+    "bgSweep": {"kind": "riser", "gain": 0.11, "cutoff": 900, "q": 2.5, "reverb": 0.4},
+    "bgSub": {"kind": "synth", "gain": 0.2, "waves": ["sine"], "attack": 0.004, "decay": 0.3, "sustain": 0.85, "release": 0.07, "filter": "lowpass", "cutoff": 260, "duck": true},
+    "bgStab": {"kind": "synth", "gain": 0.5, "waves": ["sawtooth"], "unison": 5, "detune": 26, "width": 0.95, "attack": 0.002, "decay": 0.16, "sustain": 0.12, "release": 0.08, "filter": "lowpass", "cutoff": 1800, "q": 1.4, "envAmt": 5200, "fDecay": 0.13, "fSustain": 0.2, "reverb": 0.3, "delay": 0.18, "duck": true, "hp": 260},
+    "bgOrgan": {"kind": "synth", "gain": 0.45, "waves": ["sawtooth", "sine", "triangle"], "levels": [0.55, 0.8, 0.35], "semis": [0, 12, 19], "attack": 0.003, "decay": 0.2, "sustain": 0.5, "release": 0.07, "filter": "lowpass", "cutoff": 5200, "q": 0.8, "reverb": 0.25, "duck": true, "hp": 220, "pan": -0.1},
+    "bgWhistle": {"kind": "synth", "gain": 0.3, "waves": ["sine", "triangle"], "levels": [1, 0.18], "attack": 0.03, "decay": 0.25, "sustain": 0.85, "release": 0.16, "glide": 0.055, "vibRate": 5.6, "vibDepth": 24, "vibDelay": 0.1, "filter": "lowpass", "cutoff": 5200, "reverb": 0.55, "delay": 0.3, "hp": 350, "pan": 0.1},
+    "bgTwinkle": {"kind": "synth", "gain": 0.3, "waves": ["sine"], "attack": 0.002, "decay": 0.35, "sustain": 0, "release": 0.25, "fmRatio": 4, "fmIndex": 1.1, "fmDecay": 0.1, "fmSustain": 0, "bend": 1, "bendTime": 0.03, "filter": "lowpass", "cutoff": 8000, "reverb": 0.55, "delay": 0.4, "hp": 600, "pan": -0.3},
+    "bgChop": {"kind": "sample", "from": "chimeraVoice", "gain": 0.5, "vowels": ["aa"], "swell": 0.08, "breath": 0, "reverb": 0.5, "delay": 0.4, "hp": 300, "pan": 0.15}
   },
   "parts": {
     "kick": {"patch": "kick", "role": "drum", "patterns": {"four": "x...x...x...x...", "drive": "X...x...X...x...", "break": "x.........x.....x.x.......x..x..", "twostep": "x......x..x.....", "electro": "x..x..x...x.....", "half": "x.........x....."}},
@@ -268,6 +286,209 @@
     "colourElse": 0.12,
     "voice": {"lift": 2, "presence": 3},
     "circle": {"wet": 1.4, "ghost": 0.45}
+  },
+  "banger": {
+    "_": "Banger mode (Ed, 2026-11-10: \"catchy spooky cute dancey witchy ravey bangers\"): one hook a night, drum kits and grooves by family, builds and drops. Detailed notes and decisions: docs/notes/config-history/music-style.md#banger.",
+    "on": true,
+    "energyFloor": 0.4,
+    "softBelow": 0.52,
+    "gentle": {"stumps": 2, "energy": 0.4, "kit": "soft", "keep": ["soft", "ritual", "dub"]},
+    "mix": {"duck": 0.62, "air": 5, "lowCut": 34, "drive": 1.3},
+    "progressions": {"dorian": {"a": [[0, 0, 3, 3], [0, 6, 3, 3], [0, 2, 6, 3], [0, 4, 6, 3], [0, 6, 0, 3], [0, 3, 6, 0]], "b": [[2, 6, 3, 0], [3, 3, 0, 0], [6, 3, 0, 0], [2, 3, 0, 0]]}, "aeolian": {"a": [[0, 5, 2, 6], [0, 6, 5, 6], [0, 0, 5, 6], [0, 5, 3, 4], [0, 3, 5, 6]], "b": [[5, 6, 0, 0], [5, 2, 6, 0], [3, 5, 6, 0]]}, "phrygian": {"a": [[0, 1, 0, 6], [0, 0, 1, 1], [0, 5, 1, 0]], "b": [[5, 1, 0, 0], [3, 1, 0, 0]]}, "harmonicMinor": {"a": [[0, 5, 3, 4], [0, 3, 4, 4], [0, 5, 4, 4]], "b": [[5, 4, 0, 0], [3, 4, 0, 0]]}},
+    "hook": {"motifs": ["x-.x-.x-x-.x-...", "x-x-..x-x--.....", "..x-x-x-..x-x-..", "x--x--x-..x-....", "x-..x-x-.x-.x-..", "x-x-x-..x--x--..", ".x-x-.x-x---....", "x---..x-x-x-....", "x-.x-.x-..x-.x-.", "x-x-.x-.x---....", "x--x-.x-x-..x-..", "..x-.x-.x-x-x---"], "answers": ["x-----x---x-----", "x---x---x-------", "..x---x-x-------", "x--x--x---------", "x-x-x---x-------"], "shapes": [[0, 0, 2, 1, 0], [0, 2, 1, 2, 0], [0, 1, 2, 1, 3], [2, 0, 2, 0, 1], [0, 3, 2, 1, 2], [0, 0, 3, 2, 0], [2, 2, 1, 0, 1], [0, 1, 0, 2, 0], [3, 2, 0, 2, 0], [0, 2, 2, 1, 3]], "anchors": [0, 1, 3, 3], "replies": [[5, 7, 8], [8, 7, 5], [5, 6, 8], [7, 5, 7]]},
+    "leads": {
+      "saw": {"patch": "trSaw", "octave": 3, "level": 2.8},
+      "super": {"patch": "supersaw", "octave": 3, "level": 1.8},
+      "stab": {"patch": "trStab", "octave": 3, "level": 1.1},
+      "pluck": {"patch": "trPluck", "octave": 3, "level": 1},
+      "pwm": {"patch": "pwmArp", "octave": 3, "level": 1.5},
+      "bell": {"patch": "fmBell", "octave": 4, "level": 1.6},
+      "box": {"patch": "musicBox", "octave": 4, "level": 1.7},
+      "chip": {"patch": "chip", "octave": 4, "level": 2.6},
+      "whistle": {"patch": "bgWhistle", "octave": 4, "level": 1.5},
+      "twinkle": {"patch": "bgTwinkle", "octave": 4, "level": 1.9},
+      "dark": {"patch": "darkSaw", "octave": 3, "level": 3.4},
+      "marimba": {"patch": "marimba", "octave": 3, "level": 2.2},
+      "rhodes": {"patch": "rhodes", "octave": 3, "level": 2.6},
+      "flute": {"patch": "breathFlute", "octave": 3, "level": 2.5},
+      "cowbell": {"patch": "cowbell", "octave": 3, "level": 2.2},
+      "airy": {"patch": "airyVox", "octave": 3, "level": 2.6},
+      "chop": {"patch": "bgChop", "octave": 2, "level": 2.2}
+    },
+    "fills": {
+      "classic": [{"patch": "snare", "p": "........x.x.xxXX"}],
+      "toms": [{"patch": "bgTom", "p": "........x..x...."}, {"patch": "bgTomLo", "p": "..........x..xx."}, {"patch": "snare", "p": "...............X", "level": 0.9}],
+      "roll": [{"patch": "snare", "p": "........o.o.rrrr"}],
+      "claps": [{"patch": "bgClap", "p": "........x..x..xX"}],
+      "kicks": [{"patch": "bgKick", "p": "........x.x.x...", "level": 0.9}, {"patch": "snare", "p": "..............XX"}],
+      "ghost": [{"patch": "snare", "p": "........g.o.x.xX"}, {"patch": "bgTomLo", "p": "...........x.x..", "level": 0.8}],
+      "gap": [{"patch": "bgOpenHat", "p": "..........X.....", "level": 0.8}, {"patch": "bgRim", "p": "........x.x....."}, {"patch": "snare", "p": "..............rr", "level": 0.8}],
+      "trip": [{"patch": "snare", "p": "........x..x..x."}, {"patch": "bgTom", "p": ".........x..x..x", "level": 0.8}]
+    },
+    "dnb": {"drums": [{"patch": "dnbKick", "p": "X.........x.....X.........x..x..", "level": 0.9}, {"patch": "dnbSnare", "p": "....X..g.o..X..g..o.X..g....X.o.", "level": 0.85}, {"patch": "bgHat", "p": "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", "level": 0.4}, {"patch": "bgRide", "p": "x.x.x.x.x.x.x.x.", "level": 0.3, "e": [0.6, 1]}], "bass": {"patch": ["dnbSub"], "octave": 0, "sub": false, "p": ["1---------1-----1---------1--8--"]}},
+    "victory": [{"patch": "clap", "p": "x...x...x.....X.x...x...x.....X.", "level": 0.6}, {"patch": "shaker", "p": "oxoxoxoxoxoxoxox", "level": 0.5}],
+    "kits": {
+      "house": {
+        "swing": 0.13,
+        "drums": [{"patch": "bgKick", "p": "X...x...X...x..."}, {"patch": "bgClap", "p": "....X.......X...", "level": 0.85}, {"patch": "bgHat", "p": "g.xgo.xgg.xgo.xg", "level": 0.55, "e": [0.3, 1]}, {"patch": "bgOpenHat", "p": "..X...x...X...x.", "level": 0.5, "e": [0.45, 1]}, {"patch": "shaker", "p": "oxgxoxgxoxgxoxgx", "level": 0.45, "e": [0.5, 1]}, {"patch": "bgRide", "p": "x.o.x.o.x.o.x.o.", "level": 0.35, "e": [0.8, 1], "from": 8}],
+        "turn": [{"patch": "bgKick", "p": "..............o.", "level": 0.8}, {"patch": "snare", "p": "...........g.g.o", "level": 0.6}],
+        "breaks": [{"patch": "bgKick", "p": "X.........x.....X.x.......x..x.."}, {"patch": "snare", "p": "....X..g.o..X..g.o..X..g....X.o.", "level": 0.9}, {"patch": "bgHat", "p": "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", "level": 0.45}, {"patch": "bgOpenHat", "p": "..............x.................", "level": 0.45, "e": [0.5, 1]}],
+        "fills": ["classic", "toms", "claps", "ghost", "gap"],
+        "bass": {"patch": ["houseBassDeep", "rubberDeep"], "octave": 1, "p": ["..1-..1-..1-..1-..1-..1-..1-.5-8", "..1--1-...1--1-...1--1-...5--8-.", "..1-.1.1..1-..5-..1-.1.1..1-.8.5"], "breaks": ["1--..1-...5-..1.1--..1-...8-.5.."]},
+        "chords": {"patch": "bgOrgan", "p": ["..x...x...x...x.", "x..x..x...x..x..", "..x..x....x..x.."], "level": 0.8, "sevenths": true},
+        "pad": {"patch": "pad", "level": 0.55},
+        "leads": {"soft": ["marimba", "rhodes", "pluck"], "hard": ["pluck", "saw", "pwm"]},
+        "reply": ["twinkle", "box"]
+      },
+      "organic": {
+        "base": "house",
+        "swing": 0.15,
+        "drums": [{"patch": "bgKick", "p": "X...x...X...x..."}, {"patch": "bgClap", "p": "....X.......X...", "level": 0.85}, {"patch": "bgHat", "p": "g.xgo.xgg.xgo.xg", "level": 0.55, "e": [0.3, 1]}, {"patch": "bgOpenHat", "p": "..X...x...X...x.", "level": 0.5, "e": [0.45, 1]}, {"patch": "shaker", "p": "oxgxoxgxoxgxoxgx", "level": 0.45, "e": [0.5, 1]}, {"patch": "bgTom", "p": "......x..x......", "level": 0.55}, {"patch": "bgTomLo", "p": "..........x...x.", "level": 0.55}, {"patch": "bgRim", "p": "...x......x..x..", "level": 0.4, "e": [0.4, 1]}],
+        "fills": ["toms", "trip", "ghost", "gap"],
+        "leads": {"soft": ["marimba", "flute", "rhodes"], "hard": ["pluck", "whistle", "pwm"]},
+        "reply": ["twinkle", "bell"]
+      },
+      "soft": {
+        "swing": 0.14,
+        "drums": [{"patch": "bgSoftKick", "p": "X...x...X...x..."}, {"patch": "snap", "p": "....x.......x.o.", "level": 0.9}, {"patch": "shaker", "p": "x.o.x.o.x.o.x.o.", "level": 0.6}, {"patch": "bgHat", "p": "..x...x...x...x.", "level": 0.35, "e": [0.3, 1]}, {"patch": "bgRim", "p": "..........x.....", "level": 0.4, "e": [0, 1], "from": 8}],
+        "turn": [{"patch": "bgSoftKick", "p": "..............o.", "level": 0.8}],
+        "breaks": [{"patch": "bgSoftKick", "p": "X.........x.....X.x.......x..x..", "level": 0.9}, {"patch": "snap", "p": "....x.......x.......x.......x.o.", "level": 0.9}, {"patch": "bgRim", "p": "......x..x........x......x.x....", "level": 0.5}, {"patch": "shaker", "p": "x.o.x.o.x.o.x.o.", "level": 0.6}],
+        "fills": ["toms", "trip", "gap"],
+        "bass": {"patch": ["rubberDeep", "houseBassDeep"], "octave": 1, "p": ["1-----..5-..1---1-----..5-..8-5-", "..1-..1-..5-..1-..1-..1-..8-..5-"]},
+        "chords": {"patch": "marimba", "p": ["x.....x...x.....", "..x...x.....x..."], "level": 0.5, "arp": true, "window": 60},
+        "pad": {"patch": "pad", "level": 0.6},
+        "leads": {"soft": ["whistle", "box", "flute", "marimba"], "hard": ["whistle", "pluck", "box"]},
+        "reply": ["twinkle", "box"]
+      },
+      "ritual": {
+        "base": "soft",
+        "drums": [{"patch": "bgSoftKick", "p": "X...x...X...x..."}, {"patch": "bgTom", "p": "x..x..x....x.x..", "level": 0.6}, {"patch": "bgTomLo", "p": "........x.......", "level": 0.6}, {"patch": "snap", "p": "....x.......x...", "level": 0.8}, {"patch": "shaker", "p": "x.o.x.o.x.o.x.o.", "level": 0.6}, {"patch": "bgRim", "p": "..x.......x..x..", "level": 0.4, "e": [0.35, 1]}],
+        "fills": ["toms", "trip"],
+        "leads": {"soft": ["flute", "whistle", "marimba"], "hard": ["whistle", "pluck"]},
+        "reply": ["bell", "twinkle"]
+      },
+      "dub": {
+        "base": "soft",
+        "swing": 0.1,
+        "drums": [{"patch": "bgSoftKick", "p": "X.........x.....X......x..x....."}, {"patch": "snare", "p": "........X.......", "level": 0.6}, {"patch": "snap", "p": "....x.......x.o.", "level": 0.6}, {"patch": "bgHat", "p": "..x.g.x...x.g.x.", "level": 0.4}, {"patch": "bgRim", "p": "...........x....", "level": 0.4}],
+        "bass": {"patch": ["sub808"], "octave": 0, "sub": false, "glide": 0.07, "p": ["1---------------1---------..7-1-", "1-----..1-------1-----..5---8---"]},
+        "chords": {"patch": "bgOrgan", "p": ["..x.......x.....", "......x.......x."], "level": 0.55, "sevenths": true},
+        "leads": {"soft": ["whistle", "rhodes", "box"], "hard": ["whistle", "dark"]},
+        "reply": ["bell", "twinkle"]
+      },
+      "garage": {
+        "swing": 0.2,
+        "drums": [{"patch": "bgKick", "p": "X......x..x.....X.....x...x..x.."}, {"patch": "snare", "p": "....X.......X...", "level": 0.85}, {"patch": "bgClap", "p": "....x.......x...", "level": 0.5}, {"patch": "bgHat", "p": "..x.x.xg..x.x.xg", "level": 0.5}, {"patch": "bgOpenHat", "p": "......x.......x.", "level": 0.45, "e": [0.4, 1]}, {"patch": "bgRim", "p": "...g.....o.....g", "level": 0.5}, {"patch": "shaker", "p": "oxgxoxgxoxgxoxgx", "level": 0.35, "e": [0.6, 1]}],
+        "turn": [{"patch": "snare", "p": "..........g..g.o", "level": 0.6}],
+        "breaks": [{"patch": "bgKick", "p": "X.........x.....X.x.......x..x.."}, {"patch": "snare", "p": "....X..g.o..X..g.o..X..g....X.o.", "level": 0.9}, {"patch": "bgHat", "p": "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", "level": 0.45}, {"patch": "bgOpenHat", "p": "..............x.................", "level": 0.45, "e": [0.5, 1]}],
+        "fills": ["ghost", "claps", "gap", "trip"],
+        "bass": {"patch": ["rubberDeep", "houseBassDeep"], "octave": 1, "p": ["1--..1-..5-...1.1--..1-..8-.5-..", "1-.1-...5-.1-...1-.1-..8..5-.7-."]},
+        "chords": {"patch": "bgOrgan", "p": ["..x...x...x...xx", "x..x....x.x....."], "level": 0.8, "sevenths": true},
+        "pad": {"patch": "pad", "level": 0.45},
+        "leads": {"soft": ["rhodes", "box", "whistle"], "hard": ["pluck", "pwm", "chop"]},
+        "reply": ["twinkle", "chop"]
+      },
+      "trance": {
+        "swing": 0,
+        "drums": [{"patch": "bgKick", "p": "X...X...X...X..."}, {"patch": "bgClap", "p": "....X.......X...", "level": 0.8}, {"patch": "snare", "p": "....x.......x...", "level": 0.45, "e": [0.6, 1]}, {"patch": "bgOpenHat", "p": "..X...X...X...X.", "level": 0.6}, {"patch": "bgHat", "p": "x.ogx.ogx.ogx.og", "level": 0.45}, {"patch": "bgHatB", "p": ".g...g...g...g..", "level": 0.5, "e": [0.55, 1]}, {"patch": "bgRide", "p": "x...x...x...x...", "level": 0.4, "e": [0.75, 1], "from": 8}],
+        "turn": [{"patch": "snare", "p": "............o.oo", "level": 0.6}],
+        "breaks": [{"patch": "bgKick", "p": "X.........x.....X.x.......x..x.."}, {"patch": "snare", "p": "....X..g.o..X..g.o..X..g....X.o.", "level": 0.9}, {"patch": "bgHat", "p": "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", "level": 0.45}, {"patch": "bgOpenHat", "p": "..............x.................", "level": 0.45, "e": [0.5, 1]}],
+        "fills": ["classic", "roll", "claps", "kicks"],
+        "bass": {"patch": ["houseBassDeep", "darkBass"], "octave": 1, "p": [".111.111.111.111.111.111.111.151", "..1-..1-..1-..1-..1-..1-..1-..8-", ".1.1.111.1.1.111.1.1.111.1.1.158"]},
+        "chords": {"patch": "gatePad", "p": ["x-.x-.x-.x-.x-x-", "x-x-.x-.x-x-.x-."], "level": 0.9},
+        "pad": {"patch": "strings", "level": 0.4, "e": [0.5, 1]},
+        "leads": {"soft": ["pluck", "pwm"], "hard": ["saw", "super", "pluck"]},
+        "reply": ["bell", "twinkle"]
+      },
+      "techno": {
+        "swing": 0.03,
+        "drums": [{"patch": "bgKick", "p": "X...X...X...X..."}, {"patch": "clank", "p": "..x...x...x.x...", "level": 0.5}, {"patch": "bgHat", "p": "goxgooxggoxgooxg", "level": 0.5}, {"patch": "bgOpenHat", "p": "..X...X...X...X.", "level": 0.5}, {"patch": "bgClap", "p": "....x.......x...", "level": 0.6, "e": [0.5, 1]}, {"patch": "bgRide", "p": "x.x.x.x.x.x.x.x.", "level": 0.35, "e": [0.7, 1], "from": 8}, {"patch": "bgTomLo", "p": "...x......x....x", "level": 0.4}],
+        "turn": [{"patch": "bgKick", "p": "..........o...o.", "level": 0.8}],
+        "breaks": [{"patch": "bgKick", "p": "X.........x.....X.x.......x..x.."}, {"patch": "snare", "p": "....X..g.o..X..g.o..X..g....X.o.", "level": 0.9}, {"patch": "bgHat", "p": "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", "level": 0.45}, {"patch": "bgOpenHat", "p": "..............x.................", "level": 0.45, "e": [0.5, 1]}],
+        "fills": ["kicks", "roll", "gap", "classic"],
+        "bass": {"patch": ["darkBass"], "octave": 1, "p": ["..11..11..11..11", ".1.1.11..1.1.11.", "..1...1...11..1."]},
+        "chords": {"patch": "bgStab", "p": ["......x.......x.......x.....x.x.", "..x.......x.......x...x........."], "level": 0.7},
+        "leads": {"soft": ["pluck", "dark"], "hard": ["stab", "saw", "dark"]},
+        "reply": ["bell", "chip"]
+      },
+      "electro": {
+        "base": "techno",
+        "swing": 0.05,
+        "drums": [{"patch": "bgKick", "p": "X..x..x...x.....X..x..x...x..x.."}, {"patch": "snare", "p": "....X.......X...", "level": 0.9}, {"patch": "bgClap", "p": "....x.......x...", "level": 0.5}, {"patch": "bgHat", "p": "x.xgx.xgx.xgx.xg", "level": 0.5}, {"patch": "clank", "p": "..x...x...x...xx", "level": 0.4}, {"patch": "bgOpenHat", "p": "......x.......x.", "level": 0.45, "e": [0.5, 1]}],
+        "bass": {"patch": ["darkBass", "rubberDeep"], "octave": 1, "p": ["1.18.1.81.18.1.8", "1..1..8.1.1...8."]},
+        "chords": {"patch": "bgStab", "p": ["x..x....x.x.....", "..x...x...x...xx"], "level": 0.65},
+        "leads": {"soft": ["pwm", "pluck"], "hard": ["saw", "pwm", "stab"]},
+        "reply": ["chip", "bell"]
+      },
+      "hard": {
+        "base": "techno",
+        "swing": 0,
+        "drums": [{"patch": "kickHard", "p": "X...X...X...X..."}, {"patch": "clank", "p": "..x...x...x.x...", "level": 0.7}, {"patch": "snare", "p": "....x.......x...", "level": 0.7}, {"patch": "bgHat", "p": "xoxoxoxoxoxoxoxo", "level": 0.45}, {"patch": "bgOpenHat", "p": "..X...X...X...X.", "level": 0.55}, {"patch": "bgRide", "p": "x.x.x.x.x.x.x.x.", "level": 0.4, "e": [0.7, 1]}],
+        "breaks": [{"patch": "kickHard", "p": "X.........x.....X.x.......x..x.."}, {"patch": "snare", "p": "....X..g.o..X..g.o..X..g....X.o.", "level": 0.9}, {"patch": "bgHat", "p": "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", "level": 0.45}, {"patch": "bgOpenHat", "p": "..............x.................", "level": 0.45, "e": [0.5, 1]}],
+        "bass": {"patch": ["reese"], "octave": 1, "p": ["1---1-8-1---5-8-", "..1-..1-..1-.1.1", "1-.1-.1-1-.1-.8-"]},
+        "chords": {"patch": "bgStab", "p": ["..x...x...x...x.", "x..x..x...x..x.."], "level": 0.7},
+        "leads": {"soft": ["dark", "stab"], "hard": ["super", "stab", "saw"]},
+        "reply": ["chip", "bell"]
+      },
+      "acid": {
+        "base": "house",
+        "swing": 0.08,
+        "bass": {"patch": ["acid"], "octave": 1, "sub": true, "level": 1.6, "glide": 0.05, "p": ["1.18.51.8.1.5.18", "11.1.8.1.15.1.8.", "1.1.8.11.5.1.8.7"]},
+        "chords": {"patch": "bgStab", "p": ["......x.......x.", "..x.......x....."], "level": 0.55},
+        "leads": {"soft": ["pluck", "pwm"], "hard": ["stab", "pwm", "saw"]},
+        "reply": ["bell", "twinkle"]
+      },
+      "breaks": {
+        "swing": 0.07,
+        "drums": [{"patch": "kickHard", "p": "X.........x.....X.x.......x..x..", "level": 0.95}, {"patch": "snare", "p": "....X..g.o..X..g.o..X..g....X.o."}, {"patch": "bgClap", "p": "....x.......x.......x.......x...", "level": 0.45}, {"patch": "bgHat", "p": "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", "level": 0.5}, {"patch": "bgOpenHat", "p": "..............x...............x.", "level": 0.5}, {"patch": "bgRide", "p": "x.x.x.x.x.x.x.x.", "level": 0.35, "e": [0.8, 1], "from": 8}],
+        "turn": [{"patch": "snare", "p": ".............ggo", "level": 0.7}],
+        "breaks": [{"patch": "kickHard", "p": "X.........x.x...X.....x...x.....", "level": 0.95}, {"patch": "snare", "p": "....X.g..o..X.g.o...X..g.o..X..o"}, {"patch": "bgHat", "p": "x.xox.xox.xox.xrx.xox.xox.xox.xo", "level": 0.5}],
+        "fills": ["roll", "ghost", "toms", "classic"],
+        "bass": {"patch": ["reese"], "octave": 1, "p": ["1-------..1-5---1-----1-..8-5-7-", "1---------1-----1---------1--8--"]},
+        "chords": {"patch": "bgStab", "p": ["x..x....x.x.....", "..x...x.....x.x."], "level": 0.7, "sevenths": true},
+        "pad": {"patch": "choir", "level": 0.5},
+        "leads": {"soft": ["pwm", "airy"], "hard": ["super", "saw", "chop"]},
+        "reply": ["chop", "bell"]
+      },
+      "jungle": {
+        "base": "breaks",
+        "drums": [{"patch": "kickHard", "p": "X.........x.x...X.....x...x.....", "level": 0.95}, {"patch": "snare", "p": "....X.g..o..X.g.o...X..g.o..X..o"}, {"patch": "bgHat", "p": "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", "level": 0.5}, {"patch": "bgRide", "p": "x.x.x.x.x.x.x.x.", "level": 0.4, "e": [0.6, 1]}, {"patch": "bgOpenHat", "p": "..............x.", "level": 0.5}],
+        "breaks": [{"patch": "kickHard", "p": "X.........x.....X.x.......x..x.."}, {"patch": "snare", "p": "....X..g.o..X..g.o..X..g....X.o.", "level": 0.9}, {"patch": "bgHat", "p": "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", "level": 0.45}, {"patch": "bgOpenHat", "p": "..............x.................", "level": 0.45, "e": [0.5, 1]}],
+        "bass": {"patch": ["reese"], "octave": 1, "p": ["1-------5---8---1-----1-..8-5-7-", "1---------1-----1---------1--8--"]}
+      },
+      "trap": {
+        "swing": 0,
+        "drums": [{"patch": "kick808", "p": "X.........x.....X......x..x.....", "level": 0.9}, {"patch": "snare", "p": "........X.......", "level": 0.85}, {"patch": "bgClap", "p": "........x.......", "level": 0.6}, {"patch": "bgHat", "p": "x.x.x.x.xrx.x.rrx.x.x.x.rrrrx.x.", "level": 0.5}, {"patch": "bgOpenHat", "p": "......................x.........", "level": 0.45}, {"patch": "bgRim", "p": "...x.........x..", "level": 0.4, "e": [0.3, 1]}],
+        "turn": [{"patch": "snare", "p": ".............o.o", "level": 0.6}],
+        "breaks": [{"patch": "kick808", "p": "X.....x...x..x..X.....x...x.....", "level": 0.9}, {"patch": "snare", "p": "........X.......", "level": 0.85}, {"patch": "bgHat", "p": "xrx.x.xrx.x.rrrrx.x.xrx.x.xrrrrr", "level": 0.5}, {"patch": "bgClap", "p": "........x......o", "level": 0.6}],
+        "fills": ["roll", "gap", "trip"],
+        "bass": {"patch": ["sub808"], "octave": 0, "sub": false, "glide": 0.08, "p": ["1---------1-----1------1--1-.8--", "1-----1---8--5--1-----1---1-.8--"]},
+        "chords": {"patch": "lowChoir", "p": ["x---------------"], "level": 0.6, "window": 50},
+        "pad": {"patch": "choir", "level": 0.55},
+        "leads": {"soft": ["box", "whistle", "dark"], "hard": ["dark", "box", "whistle"]},
+        "reply": ["bell", "chop"]
+      },
+      "phonk": {
+        "base": "trap",
+        "drums": [{"patch": "kick808", "p": "X.....x...x..x..X.....x...x.....", "level": 0.9}, {"patch": "bgClap", "p": "....X.......X...", "level": 0.8}, {"patch": "snare", "p": "....x.......x...", "level": 0.5}, {"patch": "bgHat", "p": "x.x.x.x.xrx.x.rrx.x.x.x.rrrrx.x.", "level": 0.5}, {"patch": "bgOpenHat", "p": "..x...........x.", "level": 0.4}],
+        "bass": {"patch": ["sub808"], "octave": 0, "sub": false, "glide": 0.08, "p": ["1-----1---8--5--1-----1---1-.8--"]},
+        "leads": {"soft": ["cowbell", "box"], "hard": ["cowbell", "dark"]},
+        "reply": ["bell", "chop"]
+      },
+      "chip": {
+        "swing": 0,
+        "drums": [{"patch": "bgKick", "p": "X...X...X...X..."}, {"patch": "bgClap", "p": "....X.......X...", "level": 0.8}, {"patch": "bgHat", "p": "x.xxx.xxx.xxx.xx", "level": 0.45}, {"patch": "bgOpenHat", "p": "..x...x...x...x.", "level": 0.45, "e": [0.5, 1]}, {"patch": "snare", "p": "..............o.", "level": 0.5}],
+        "turn": [{"patch": "snare", "p": "..........o.o.oo", "level": 0.6}],
+        "breaks": [{"patch": "bgKick", "p": "X.........x.....X.x.......x..x.."}, {"patch": "snare", "p": "....X..g.o..X..g.o..X..g....X.o.", "level": 0.9}, {"patch": "bgHat", "p": "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", "level": 0.45}, {"patch": "bgOpenHat", "p": "..............x.................", "level": 0.45, "e": [0.5, 1]}],
+        "fills": ["classic", "claps", "roll", "kicks"],
+        "bass": {"patch": ["chipBass"], "octave": 1, "sub": true, "level": 2.5, "p": ["1.8.1.8.1.8.1.8.", "1.88.18.1.88.18."]},
+        "chords": {"patch": "arp", "p": ["xxxxxxxxxxxxxxxx", "x.x.x.x.x.x.x.x."], "level": 1.2, "arp": true, "window": 69},
+        "pad": {"patch": "gatePad", "level": 0},
+        "leads": {"soft": ["chip", "box"], "hard": ["chip", "pwm", "super"]},
+        "reply": ["twinkle", "bell"]
+      }
+    },
+    "families": {"grove": "soft", "ritual": "ritual", "clearing": "house", "organic": "organic", "lanterns": "house", "glow": "garage", "mist": "dub", "ether": "soft", "moonrise": "trance", "nightdrive": "electro", "stones": "techno", "bog": "acid", "breakbeat": "breaks", "wires": "electro", "chip": "chip", "industrial": "hard", "phonk": "phonk", "glitter": "chip", "thunder": "hard", "stampede": "jungle", "coven": "trap"}
   },
   "compose": {
     "_": "The composer's rules for the melodies and basslines (Ed, 2026-11-08: better melodies and basslines, \"smarter rules\"). Detailed notes and decisions: docs/notes/config-history/music-style.md#compose.",

@@ -224,6 +224,7 @@ says what each note covers.
 
 - Potion isolation
 - Music style
+- Banger mode
 - Haunted
 - The composer
 - The dance way

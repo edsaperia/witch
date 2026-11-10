@@ -3,10 +3,11 @@
 // kicks in. (Agree, not in legend areas)"). The rules' half: the scale's colour only there, the ghost voice diatonic, the drop,
 // the slower chords and held notes, and everything else exactly as it was.
 import { describe, expect, it } from "vitest";
+import { withBanger } from "./musicBanger"; // (the score as it was before banger mode, ?banger=0: banger mode's own tests are musicBanger.test.ts)
 import styleJson from "../../config/music-style.json";
 import { checkStyle, degreeToMidi, hauntedDrop, isHaunted, notesAt, resolveSection, withHaunted, type BlockPlan, type MusicStyle, type NoteEvent } from "./musicScore";
 
-const style = styleJson as unknown as MusicStyle, H = style.haunted!, F = style.form!, plain = withHaunted(style, false);
+const style = withBanger(styleJson as unknown as MusicStyle, false), H = style.haunted!, F = style.form!, plain = withHaunted(style, false);
 const HAUNTED = ["breakdown", "ether", "whisper"];
 /** Every note of `bars` bars of a section from form bar `start` (a breakdown's: the form's C, bars 24-31). */
 const play = (st: MusicStyle, section: string, arc: number, seed: number, start = 24, bars = 8, circle?: string): NoteEvent[] => {

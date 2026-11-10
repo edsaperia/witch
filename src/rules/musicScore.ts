@@ -6,6 +6,7 @@ import { hash2 } from "./random";
 import voices from "../../config/creature-voices.json";
 import { sectionOf } from "./creatureConfig";
 import type { CuratedStep, FamilyDef, SetDef } from "./musicSet";
+import { bangerChord, bangerNotes, bangerOn, bangerRole, checkBanger, hookNoteAt, nightHook, type BangerDef } from "./musicBanger";
 import { bassBar, beatMotif, cellNotes, composeLine, contourAt, hookLine, makeRiff, motifShape, ostinatoMotif, pickContour, pitchCell, riffLine, varyCell, type BassNote, type BassRule, type ComposeDef, type LineRules, type LineSlot, type Riff, type RiffKind } from "./musicCompose";
 
 /** A synth patch: how one part sounds. Every field but kind and gain is optional. */
@@ -112,6 +113,10 @@ export interface Patch {
   pan?: number;
   /** sends 0-1, and whether the kick ducks it (the house pump). */
   reverb?: number; delay?: number; duck?: boolean;
+  /** kick: its hits don't duck the mix (a tom: banger mode's). */
+  noDuck?: boolean;
+  /** Another patch this one starts from (its fields over that one's: the singer's notes as a chop). */
+  from?: string;
 }
 
 /** A part: a voice and its patterns. Patterns are 16 characters a bar (any whole number of bars):
@@ -254,6 +259,9 @@ export interface MusicStyle {
   /** The composer's rules for the melodies and basslines (Ed, 2026-11-08: "smarter rules"; rules/musicCompose.ts). None, or
    *  off: the melodies' seeded walk and the basslines' one bar as before. */
   compose?: ComposeDef;
+  /** Banger mode (Ed, 2026-11-10: "catchy spooky cute dancey witchy ravey bangers"; rules/musicBanger.ts): one hook a night,
+   *  kits and grooves by family, builds and drops, over the same conductor. None, or off: the music as before. */
+  banger?: BangerDef;
 }
 
 /** The haunted treatment (Ed, 2026-11-08, choosing "B, 1-6": all six of the ways to bring the music closer to the haunting
@@ -1057,6 +1065,9 @@ export interface ScoreContext {
    *  sixteenths, the music's `step` giving only the chords. Left out: both, on the music's steps. */
   only?: "main" | "circle";
   circleStep?: number;
+  /** Banger mode (rules/musicBanger.ts): how many of the night's great stumps had their soundsystem by the block's start (the
+   *  cue's `stumps`): gentle till the second. Left out (the labs, a preview): never gentle. */
+  stumps?: number;
   /** The bar the seed's form began on (0; a knockdown's new seed starts its form on a phrase line: Ed, 2026-10-09). */
   formStart?: number;
 }
@@ -1095,8 +1106,25 @@ export function sungHere(style: MusicStyle, plan: BlockPlan, a: ArcStep, sec: Re
 }
 
 export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | null, step: number, ctx: ScoreContext): NoteEvent[] {
+  // banger mode (Ed, 2026-11-10; rules/musicBanger.ts): its own notes everywhere but the boot's intro and the knockout; the
+  // game's hooks' parts (a siege, a party area, an angry legend) and a clearing's layer as before, over them
+  const BG = bangerOn(style);
+  if (BG && ctx.only !== "circle") {
+    const sec = resolveSection(style, plan.section), role = bangerRole(style, plan, arcStep(style, plan.arc), sec, ctx.formStart ?? 0);
+    if (role) {
+      const out = bangerNotes(style, plan, sec, step, ctx, role);
+      const hooks = ctx.siege > 0.01 || (ctx.legend ?? 0) > 0.01 || (ctx.party ?? 0) > 0.01, circle = !!ctx.circle && ctx.circle.level > 0.01 && ctx.only !== "main";
+      if (hooks || circle) for (const e of scoreNotes(style, plan, next, step, ctx)) if (e.layer === "circle" || (e.hook && style.parts[e.part]?.role !== "motif")) out.push(e);
+      return out;
+    }
+  }
+  return scoreNotes(style, plan, next, step, ctx);
+}
+
+/** The score as before banger mode (and under it: the boot's intro, the knockout, the hooks' parts, a clearing's layer). */
+function scoreNotes(style: MusicStyle, plan: BlockPlan, next: BlockPlan | null, step: number, ctx: ScoreContext): NoteEvent[] {
   const bar = Math.floor(step / 16), s = step - bar * 16, barIn = bar - plan.start;
-  const sec = resolveSection(style, plan.section), a = arcStep(style, plan.arc);
+  const sec = resolveSection(style, plan.section), a = arcStep(style, plan.arc), BG = bangerOn(style);
   const scale = style.scales[a.scale ?? style.scale] ?? style.scales[style.scale], transpose = (a.transpose ?? 0) + (sec.transpose ?? 0); // (one scale, dorian, in each stage's key: Ed, 2026-10-09; a section's own lift on top, the victory's; a night's set may darken a step's: rules/musicSet.ts)
   const nightSeed = ctx.seed; // (the returning hook's: the night's, before each wave's own tune)
   ctx = a.tune ? { ...ctx, seed: tuneSeed(ctx.seed, a.tune) } : ctx; // (a night's set: each wave its own tune)
@@ -1108,7 +1136,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   // layer on the slower chords too, its lead ghosted, its melody coloured (rules here; its reverb, drone and voice lift the engine's)
   const H = hauntedOn(style), haunt = !!H && H.sections.includes(plan.section) && ctx.only !== "circle", comp = composeOn(style), dance = danceOn(style);
   const danceBass = dance ? dance.dance!.bass[a.family ?? ""] : undefined;
-  const chordOf = (slow: boolean) => form ? formChord(style, ctx.seed, slow ? hauntedBar(form, formBar) : formBar, !!sec.sevenths) : chordAt(style, sec, a, barIn + pass * Math.max(1, sec.chordBars));
+  const chordOf = (slow: boolean) => BG ? bangerChord(style, a, ctx.seed, formBar, !!sec.sevenths, slow) : form ? formChord(style, ctx.seed, slow ? hauntedBar(form, formBar) : formBar, !!sec.sevenths) : chordAt(style, sec, a, barIn + pass * Math.max(1, sec.chordBars));
   const chordMain = chordOf(haunt), circleChord = H && form ? chordOf(true) : chordMain;
   const dropAt = haunt ? hauntedDrop(style, plan.bars) : Infinity, dropped = barIn >= dropAt;
   let secParts = sec.parts;
@@ -1222,7 +1250,11 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
       const m = motifFor(style, seed + phrase * 104729, plan.arc, name, own), pos = ((at % 64) + (own ? sh % 29 : 0)) % 32; // (a new melody each pass or phrase)
       const vary = !comp && barIn % 4 === 3 && s >= 8 ? (hash2(bar, plan.arc, ctx.seed + 5) < 0.5 ? 2 : -1) : 0; // every fourth bar ends differently (the composer's motif changes in itself)
       const lift = own ? [0, 2, 4][(sh >>> 3) % 3] : 0, octOwn = own ? oct + ((sh >>> 5) % 2) - (oct > 2 ? 1 : 0) : oct;
-      const deg = chord.root + m[pos] + vary + lift, vel = (VEL[ch] ?? accent) * level;
+      // (banger mode: a clearing hums the night's hook, its pitches in turn, a note a hit)
+      let hk = 0;
+      if (BG && own) { for (let j = 0; j < i; j++) if (pat[j] !== "." && pat[j] !== "-") hk++; hk += Math.floor(at / pat.length) * Math.max(1, [...pat].filter(c => c !== "." && c !== "-").length); }
+      const hseq = BG && own ? nightHook(BG, nightSeed).seq : null;
+      const deg = hseq ? hseq[hk % hseq.length] : chord.root + m[pos] + vary + lift, vel = (VEL[ch] ?? accent) * level;
       // (a haunted clearing: its melody now and then coloured, its lead ghosted below, late and quieter)
       const tint = own && H ? hauntedColour(style, scale, deg, false, hash2(at, 467, seed)) : 0;
       out.push({ ...base, midi: degreeToMidi(style, scale, deg, octOwn, transpose) + tint, vel });
@@ -1266,7 +1298,10 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
       // (the dance way: the wave's riff kind; in a haunted section the voice's slow hook, then from the drop the instrument
       // playing it as the riff: the anthem's trick)
       const riff = dance ? riffKind(dance, a.family, plan.section, ctx.seed) : undefined, lead = riff ? riffLead(dance!, riff, a.family, ctx.seed) : undefined;
-      const fn = formNoteAt(style, ctx.seed, formBar * 16 + s, transpose, a, { voice: place !== null && !(dance && dropped), hookSeed: nightSeed, haunted: haunt, riff, lead });
+      const fn0 = formNoteAt(style, ctx.seed, formBar * 16 + s, transpose, a, { voice: place !== null && !(dance && dropped), hookSeed: nightSeed, haunted: haunt, riff, lead });
+      // (banger mode, where the music is as before: the boot's intro plays the night's hook on the form's instrument)
+      const hn = BG ? hookNoteAt(style, nightSeed, formBar * 16 + s) : null, hp = BG ? style.parts[a.lead && style.parts[a.lead] ? a.lead : formInstrument(form, ctx.seed)] : undefined;
+      const fn = !BG ? fn0 : hn && hp ? { part: a.lead && style.parts[a.lead] ? a.lead : formInstrument(form, ctx.seed), patch: hp.patch, midi: degreeToMidi(style, scale, hn.deg, Math.max(2, hp.octave ?? 3), transpose), deg: hn.deg, dur: hn.dur, off: 0, letter: "A" } as NonNullable<typeof fn0> : null;
       const tint = fn && haunt ? hauntedColour(style, scale, fn.deg, !!fn.cad, hash2(ctx.seed, formBar * 16 + s, 467)) : 0; // (the scale's colour: Ed, 2026-11-08)
       if (fn && fn.part === form.sung.part) sing(fn.deg, fn.dur, fn.off, fn.off ? 0.78 * melody : vel, tint);
       else if (fn) out.push({ part: fn.part, patch: fn.patch, step, offset: fn.off, dur: fn.dur, midi: fn.midi + tint, vel: fn.off ? 0.78 * melody : vel, ...(fn.dur % 1 ? { straight: true } : {}) });
@@ -1287,7 +1322,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
 /** The style's problems (empty when it's sound): every section, part, pattern and patch named exists,
  *  patterns run whole bars, and every section's length in the arc is a whole number of blocks. */
 export function checkStyle(style: MusicStyle): string[] {
-  const errs: string[] = [], B = style.blockBars;
+  const errs: string[] = checkBanger(style), B = style.blockBars;
   for (const f of style.voiceFxDark?.families ?? []) if (!style.families?.[f]) errs.push(`voiceFxDark: no family "${f}"`);
   const checkUse = (where: string, name: string, u: PartUse) => {
     const def = style.parts[name];

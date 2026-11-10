@@ -1943,6 +1943,7 @@ export type SchemaTuning = {
     "singer": string;
     "haunted": boolean;
     "melody": "dance" | "lyrical" | "old";
+    "banger": boolean;
     "over": {
       "stop": number;
       "floor": number;

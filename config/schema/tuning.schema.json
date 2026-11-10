@@ -9934,6 +9934,10 @@
           ],
           "description": "Whose melodies and basslines the music plays: \"dance\" the composer's riffs and hooks (the default), \"lyrical\" its planned phrases (the music style's compose block, docs/notes/music.md The composer), \"old\" the seeded walk and the one-bar basslines as before; ?melody= likewise."
         },
+        "banger": {
+          "type": "boolean",
+          "description": "Banger mode: one hook a night that returns at the key moments, drum kits and grooves by genre family, builds that empty out and drops that land, gentle till the night's second stump has its soundsystem (the music style's banger block, docs/notes/music.md Banger mode); false plays the music as before, as does ?banger=0."
+        },
         "over": {
           "type": "object",
           "properties": {
@@ -9991,6 +9995,7 @@
         "singer",
         "haunted",
         "melody",
+        "banger",
         "over",
         "beach"
       ],

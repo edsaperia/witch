@@ -12,7 +12,8 @@
 // kick a pitched sine with a click; hats the 808's six square tones through band- and high-pass;
 // supersaws as unison voices detuned and spread wide; pads breathing with a slow filter LFO.
 import { beatAt, bpmAt, timeAt, type BeatClock } from "../../rules/beat";
-import { Conductor, bootLayers, formClock, silentAt, type MusicCue } from "../../rules/musicPlan";
+import { mixOf } from "../../rules/musicBanger";
+import { Conductor, bootLayers, formClock, silentAt, stumpsBy, type MusicCue } from "../../rules/musicPlan";
 import { mtof, noiseBuffer } from "./dsp";
 import { FOF_TYPES, FOF_VOWELS, FofVoices, fofLoaded, fofReady } from "./fof/fof";
 import { TractVoices, tractLoaded, tractReady } from "./tract/tract";
@@ -136,6 +137,9 @@ export class MusicEngine {
   private knocksHeard = 0;
   gated = false;
   private tone: BiquadFilterNode;
+  private limit!: DynamicsCompressorNode;
+  /** Banger mode's master (rules/musicBanger.ts mixOf), made when a style first asks for it, in the path only while one does. */
+  private master: { low: BiquadFilterNode; air: BiquadFilterNode; drive: GainNode; on: boolean } | null = null;
   private duckBus: GainNode;
   private dryBus: GainNode;
   private reverb: ConvolverNode;
@@ -272,6 +276,9 @@ export class MusicEngine {
     const curve = new Float32Array(4097);
     for (let i = 0; i < curve.length; i++) { const x = (i / 2048) - 1, a = Math.abs(x); curve[i] = a <= 0.9 ? x : Math.sign(x) * (0.9 + 0.1 * Math.tanh((a - 0.9) / 0.1)); }
     this.post.curve = curve;
+    // (banger mode's master, between the low-pass and the limiter while its mix asks for any of it: a low cut, a high shelf of
+    // air, the drive into the limiter; without them the low-pass straight into the limiter, as ever: setMix)
+    this.limit = limit;
     this.tone.connect(limit); limit.connect(this.post); this.post.connect(this.gate); this.gate.connect(this.out); this.out.connect(dest);
     // the legend's clearing layer: not through the section's low-pass, its own reverb and a limiter
     this.circleIn = c.createGain(); this.circleVerbIn = c.createGain(); this.circleVerb = c.createConvolver();
@@ -350,8 +357,20 @@ export class MusicEngine {
 
   /** The style's mix on the buses (shed 3: the reverbs cut short, the delay off). */
   private setMix(): void {
-    const m = this.style.mix, lite = this.shedLevel >= 3, time = lite ? Math.min(0.7, m.reverbTime) : m.reverbTime;
+    const m = mixOf(this.style), lite = this.shedLevel >= 3, time = lite ? Math.min(0.7, m.reverbTime) : m.reverbTime;
     this.out.gain.value = m.master;
+    const want = !!(m.air || m.lowCut || (m.drive && m.drive !== 1));
+    if (want && !this.master) {
+      const c = this.ctx, low = c.createBiquadFilter(), air = c.createBiquadFilter(), drive = c.createGain();
+      low.type = "highpass"; low.Q.value = 0.7; air.type = "highshelf"; air.frequency.value = 6500;
+      low.connect(air); air.connect(drive); drive.connect(this.limit);
+      this.master = { low, air, drive, on: false };
+    }
+    if (this.master) {
+      const M = this.master;
+      M.low.frequency.value = m.lowCut || 10; M.air.gain.value = m.air ?? 0; M.drive.gain.value = m.drive ?? 1;
+      if (want !== M.on) { M.on = want; if (want) { this.tone.disconnect(this.limit); this.tone.connect(M.low); } else { this.tone.disconnect(M.low); this.tone.connect(this.limit); } }
+    }
     this.reverbIn.gain.value = m.reverb;
     this.delayIn.gain.value = lite ? 0 : m.delay;
     this.feedback.gain.value = lite ? 0 : Math.min(0.85, m.feedback);
@@ -585,7 +604,7 @@ export class MusicEngine {
       // the haunted treatment by place (Ed, 2026-11-08): the voice's reverb and lift and the drone, on in the quiet sections
       if (hauntedOn(S) || this.drone || this.hauntBus) this.sink.haunt?.(isHaunted(S, plan.section), this.keyRoot(plan), t);
     }
-    const all = notesAt(S, plan, next, step, { ...this.formAt(cue, bar), siege: cue.siege, party: cue.party, legend: cue.legend, only: "main", build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
+    const all = notesAt(S, plan, next, step, { ...this.formAt(cue, bar), siege: cue.siege, party: cue.party, legend: cue.legend, only: "main", build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined, stumps: stumpsBy(cue, plan.start, B) });
     const events = drawn ? all.filter(e => e.hook) : all; // (drawn ahead: the hooks' parts alone here, live)
     const swing = step % 2 === 1 ? S.swing * sps : 0;
     this.playAll(events, e => t + (e.straight ? 0 : swing) + e.offset * sps, sps);
@@ -724,7 +743,7 @@ export class MusicEngine {
   }
 
   private play(e: NoteEvent, t: number, dur: number, sps: number, chord: number[] = []): void {
-    let p = this.style.patches[e.patch];
+    let p = this.patchOf(e.patch);
     if (!p || (this.solo && !this.solo.has(e.part))) return;
     const H = e.ghost ? this.style.haunted : undefined;
     if (e.ghost && !H) return;
@@ -734,7 +753,7 @@ export class MusicEngine {
     if (e.fx && ch.fx && ch.fxKind !== e.fx) { ch.fxKind = e.fx; ch.fx.set(this.fxChain(e.fx)); } // (two chains by place: Ed, 2026-10-14)
     else if (e.fx && !e.ghost && this.stems && ch.fxKind !== e.fx) { ch.fxKind = e.fx; this.sink.fxChain?.(e.part, e.fx, t); } // (a renderer's: the bus's chain, as it's heard)
     switch (p.kind) {
-      case "kick": this.kick(t, pf === 1 ? p : { ...p, pitch: (p.pitch ?? 150) * pf, pitchEnd: (p.pitchEnd ?? 45) * pf }, peak, ch.in); this.duck(t, e.vel, sps); break;
+      case "kick": this.kick(t, pf === 1 ? p : { ...p, pitch: (p.pitch ?? 150) * pf, pitchEnd: (p.pitchEnd ?? 45) * pf }, peak, ch.in); if (!p.noDuck) this.duck(t, e.vel, sps); break;
       case "noise": this.noiseHit(t, p, peak, ch); break;
       case "snare": this.snare(t, p, peak, ch); break;
       case "bell": this.bell(t, p, peak, mtof(e.midi ?? 69) * pf, ch.in); break;
@@ -748,8 +767,18 @@ export class MusicEngine {
     }
   }
 
+  /** A patch, one that starts `from` another with that one's fields under its own (kept: the same object each time). */
+  private derived = new WeakMap<Patch, Patch>();
+  private patchOf(name: string): Patch | undefined {
+    const p = this.style.patches[name];
+    if (!p?.from) return p;
+    let d = this.derived.get(p);
+    if (!d) { const { from, ...own } = p; this.derived.set(p, (d = { ...this.style.patches[from], ...own })); }
+    return d;
+  }
+
   private duck(t: number, vel: number, sps: number): void {
-    const depth = this.style.mix.duck * Math.min(1, vel);
+    const depth = mixOf(this.style).duck * Math.min(1, vel);
     if (depth <= 0) return;
     this.sink.duckAt(t, depth, sps);
   }
