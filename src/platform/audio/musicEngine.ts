@@ -147,6 +147,10 @@ export class MusicEngine {
    *  (parallel). Nothing feeds it with banger mode or its compressors off. */
   private drumBus!: GainNode;
   private drumComp: { comp: DynamicsCompressorNode; wet: GainNode; dry: GainNode; on: boolean } | null = null;
+  /** Banger mode's room (Ed, 2026-11-11: "more space"): the reverb's pre-delay (its hits crisp, the tail blooming behind), in
+   *  the path only while the mix asks; and a short room on the drum bus's top (its snare, clap and hats). */
+  private pre: { delay: DelayNode; on: boolean } | null = null;
+  private room: { hp: BiquadFilterNode; verb: ConvolverNode; send: GainNode; on: boolean; time: number } | null = null;
   private duckBus: GainNode;
   private dryBus: GainNode;
   private reverb: ConvolverNode;
@@ -275,7 +279,7 @@ export class MusicEngine {
     this.drumBus = c.createGain(); this.drumBus.connect(this.tone);
     // the reverb's return, its lows cut so the tails don't muddy the kick and bass
     const reverbLow = c.createBiquadFilter(); reverbLow.type = "highpass"; reverbLow.frequency.value = 220;
-    this.reverbIn.connect(this.reverb); this.reverb.connect(reverbLow); reverbLow.connect(this.tone);
+    this.reverbIn.connect(this.reverb); this.reverb.connect(reverbLow); reverbLow.connect(this.tone); // (banger mode: a pre-delay between them, setMix)
     this.delayIn.connect(this.delay); this.delay.connect(delayTone); delayTone.connect(this.feedback); this.feedback.connect(this.delay); delayTone.connect(this.tone);
     this.gate = c.createGain();
     // (the voice line joins after the limiter, so the sum has a safety clipper of its own: exactly linear to 0.9, where the music
@@ -386,6 +390,19 @@ export class MusicEngine {
         if (G) { g.comp.threshold.value = G.threshold; g.comp.knee.value = G.knee; g.comp.ratio.value = G.ratio; g.comp.attack.value = G.attack; g.comp.release.value = G.release; g.makeup.gain.value = G.makeup; }
         if (!!G !== g.on) { g.on = !!G; if (G) { M.drive.disconnect(this.limit); M.drive.connect(g.comp); } else { M.drive.disconnect(g.comp); M.drive.connect(this.limit); } }
       }
+    }
+    const preT = this.stems ? 0 : m.reverbPre ?? 0;
+    if (preT > 0 && !this.pre) { const d = this.ctx.createDelay(0.25); d.connect(this.reverb); this.pre = { delay: d, on: false }; }
+    if (this.pre) {
+      if (preT > 0) this.pre.delay.delayTime.value = Math.min(0.25, preT);
+      if (preT > 0 !== this.pre.on) { this.pre.on = preT > 0; if (this.pre.on) { this.reverbIn.disconnect(this.reverb); this.reverbIn.connect(this.pre.delay); } else { this.reverbIn.disconnect(this.pre.delay); this.reverbIn.connect(this.reverb); } }
+    }
+    const RM = this.stems || lite ? undefined : compOf(this.style)?.drums?.room;
+    if (RM && !this.room) { const c = this.ctx, hp = c.createBiquadFilter(), verb = c.createConvolver(), send = c.createGain(); hp.type = "highpass"; hp.Q.value = 0.7; hp.connect(verb); verb.connect(send); send.connect(this.tone); this.room = { hp, verb, send, on: false, time: 0 }; }
+    if (this.room) {
+      const Q = this.room;
+      if (RM) { Q.hp.frequency.value = RM.hp; Q.send.gain.value = RM.send; if (Q.time !== RM.time) { Q.time = RM.time; Q.verb.buffer = this.impulse(RM.time); } }
+      if (!!RM !== Q.on) { Q.on = !!RM; if (RM) this.drumBus.connect(Q.hp); else this.drumBus.disconnect(Q.hp); }
     }
     // the drum bus's compressor, parallel: the dry drums beside the squashed ones
     const D = this.stems ? undefined : compOf(this.style)?.drums;

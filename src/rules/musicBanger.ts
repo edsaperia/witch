@@ -43,6 +43,8 @@ export interface BangerKit {
   bass?: BangerBass;
   chords?: BangerChords;
   pad?: { patch: string; level: number; e?: [number, number] };
+  /** The share of its phrases the xylophone takes the chords in (the style's `banger.space.xylo`); none: never. */
+  xylo?: number;
   /** The lead voices its hook plays on (the style's `banger.leads`): the calmer waves' and the rest's; and the reply's. */
   leads?: { soft: string[]; hard: string[] };
   reply?: string[];
@@ -58,19 +60,43 @@ export interface BangerDef {
    *  impacts, rolls or stutters, and the hook only slow. */
   gentle: { stumps: number; energy: number; kit: string; keep: string[] };
   /** The mix's own: the kick's duck (the pump) and how long it holds before easing back (s: the kick's body), a high shelf (dB at 6.5 kHz), a low cut (Hz), the drive into the limiter. */
-  mix: { duck?: number; duckHold?: number; air?: number; lowCut?: number; drive?: number };
+  mix: { duck?: number; duckHold?: number; air?: number; lowCut?: number; drive?: number; reverbTime?: number; reverbPre?: number };
+  /** Space (Ed, 2026-11-11: "more space in general, more xylophone chords and arpeggios, and the rhythm section bigger in the
+   *  mix"). `balance`: each group's level against the rest (the one limiter makes it relative: the drums and bass up, the pads,
+   *  chords and the singer's parts down). `echo`: a ping-pong written into the notes, a chord hit or xylophone note again
+   *  `steps` sixteenths later on the right and again on the left, at `levels` of it (on the patches named <patch>R and
+   *  <patch>L, where the style has them). `riffRest`: the wave's riff rests in every fourth bar's place third (bars 3 and 7
+   *  of eight), a gap the drums fill. `thin`: a groove's chord hits without their root (the bass has it). `xylo`: the
+   *  xylophone as a chord instrument, in the share of phrases its kit says: its `voice` (of `leads`; `low` the darker one
+   *  for the gentle waves), the lowest note of the octave its chords are voiced in (`window`; `lowWindow` the gentle one's), `level`, and its `figures`,
+   *  a phrase taking one (16 characters a bar: "x" a block chord, "a" "b" "c" the chord's tones from the bottom, "1" its
+   *  root an octave under, "t" a tremolo's stroke on two of them, "." a rest); `roll`: the figure a phrase's fourth bar
+   *  takes half the time. */
+  space?: {
+    balance: { drums: number; bass: number; pad: number; chords: number; vocals: number };
+    echo: { steps: number; levels: number[] };
+    riffRest: boolean; thin: boolean;
+    xylo: { voice: string; low: string; window: number; lowWindow: number; level: number; figures: Record<string, string>; roll: string };
+  };
   /** The singer as the other main sound (Ed, 2026-11-10: "squares and vocals as the main sound"), after the second stump: she
    *  doubles the hook wherever it's whole (`double`, a chop of her notes, at `doubleLevel`), holds the chord's root and fifth on
    *  "ooh" under the grooves (`pad`, `padLevel`), and stabs the first note of the wave's riff each bar (`stabLevel`); every note
    *  folded into `range` (MIDI: her recorded notes). */
-  vocals?: { double: string; doubleLevel: number; pad: string; padLevel: number; stabLevel: number; range: [number, number] };
+  vocals?: { double: string; doubleLevel: number; pad: string; padLevel: number; stabLevel: number; range: [number, number];
+    /** Her harmony (Ed, 2026-11-11: "increase vocals in the harmony, which can stack with the xylophone"): the sung chord's
+     *  voices (3: root, fifth and the third, or the seventh where the kit plays sevenths; before the second stump `gentleVoices`
+     *  of them at `gentleLevel`), voiced in the octave from `window` (MIDI: under the xylophone's, so the two stack as one
+     *  harmony layer, bars short on top, voices held beneath), and the share of the xylophone's block-chord phrases she sings
+     *  its off-beat hits with it (`stabs`, at `chordStabLevel`). */
+    harmony?: { voices: number; window: number; gentleVoices: number; gentleLevel: number; stabs: number; chordStabLevel: number } };
   /** The compressors (Ed, 2026-11-10: "Is it possible to add a compressor?"; platform/audio/musicEngine.ts), `on` false none:
    *  `drums`, the drum bus's (kick, snare, clap, hats, percussion, fills and crash: for punch): its threshold (dB), knee (dB),
    *  ratio, attack (s: slow enough that the hit's front comes through), release in beats (timed to the tempo), `mix` the share
-   *  of the squashed drums blended under the dry ones (parallel, "New York": 1 all squashed, 0 none) and `makeup` its gain;
+   *  of the squashed drums blended under the dry ones (parallel, "New York": 1 all squashed, 0 none) and `makeup` its gain,
+   *  `room` a short room on the drum bus's top (the snare, clap and hats: its length s, its send, the high-pass before it Hz);
    *  `glue`, the master's before the limiter (the mix breathing together): threshold, knee, a low ratio, a slow attack, release
    *  (s) and `makeup` (a gain after it: the node's own make-up taken back, and a little more into the limiter). */
-  comp?: { on?: boolean; drums?: { threshold: number; knee: number; ratio: number; attack: number; releaseBeats: number; mix: number; makeup: number }; glue?: { threshold: number; knee: number; ratio: number; attack: number; release: number; makeup: number } };
+  comp?: { on?: boolean; drums?: { threshold: number; knee: number; ratio: number; attack: number; releaseBeats: number; mix: number; makeup: number; room?: { time: number; send: number; hp: number } }; glue?: { threshold: number; knee: number; ratio: number; attack: number; release: number; makeup: number } };
   /** The chord loops by mode, a bar a chord (scale steps, 0 the key's root): `a` the drop's, `b` the breakbeat phrase's. */
   progressions: Record<string, { a: number[][]; b: number[][] }>;
   /** The hook's banks: one-bar motif rhythms and answer rhythms ("x" a note, "-" held, "." a rest), pitch shapes (steps of
@@ -178,6 +204,22 @@ export function nightHook(B: BangerDef, seed: number): Hook {
 
 /** A kit with its base's fields under its own. */
 const KITS = new WeakMap<BangerDef, Map<string, Required<Omit<BangerKit, "base" | "pad" | "turn">> & Pick<BangerKit, "pad" | "turn">>>();
+/** The xylophone's figure in a phrase (its name in the style's `space.xylo.figures`), or null where the kit's own chords play:
+ *  dealt by the wave's seed a phrase at a time, in the kit's share of them; a phrase's fourth bar the roll half the time. */
+export function xyloFigure(B: BangerDef, xyloShare: number, seed: number, formBar: number, pass: number): string | null {
+  const X = B.space?.xylo, ph = Math.floor(formBar / 8) + pass * 131;
+  if (!X || !B.leads[X.voice] || hash2(seed, 865, ph) >= xyloShare) return null;
+  const names = Object.keys(X.figures).filter(n => n !== X.roll);
+  if (formBar % 4 === 3 && X.figures[X.roll] && hash2(seed, 869, formBar) < 0.5) return X.roll;
+  return names.length ? pick(names, hash2(seed, 867, ph)) : null;
+}
+/** xyloFigure for bar `bar` of a block as the game plays it (the renders' notes), or null. */
+export function xyloHeard(style: MusicStyle, plan: BlockPlan, sec: Resolved, bar: number, seed0: number, formStart: number, stumps?: number): string | null {
+  const B = bangerOn(style), a = style.arc[Math.max(0, Math.min(style.arc.length - 1, plan.arc))], role = B && bangerRole(style, plan, a, sec, formStart);
+  if (!B || (role !== "drop" && role !== "breaks" && role !== "victory")) return null;
+  const gentle = stumps !== undefined && stumps < B.gentle.stumps, kn0 = kitName(style, a, plan.section), kit = kitOf(B, gentle && !B.gentle.keep.includes(kn0) ? B.gentle.kit : kn0);
+  return xyloFigure(B, kit.xylo, a.tune ? tuneSeed(seed0, a.tune) : seed0, bar - formStart, plan.pass ?? 0);
+}
 export function kitOf(B: BangerDef, name: string) {
   let m = KITS.get(B);
   if (!m) KITS.set(B, (m = new Map()));
@@ -186,7 +228,7 @@ export function kitOf(B: BangerDef, name: string) {
     const chain: BangerKit[] = [];
     for (let n: string | undefined = name, i = 0; n && i < 6; i++) { const K: BangerKit | undefined = B.kits[n]; if (!K) break; chain.unshift(K); n = K.base; }
     const all = Object.assign({}, ...chain) as BangerKit;
-    k = { swing: all.swing ?? 0, drums: all.drums ?? [], breaks: all.breaks ?? all.drums ?? [], fills: all.fills ?? [], bass: all.bass ?? { patch: [], octave: 1, p: [] }, chords: all.chords ?? { patch: "", p: [] }, leads: all.leads ?? { soft: [], hard: [] }, reply: all.reply ?? [], pad: all.pad, turn: all.turn };
+    k = { swing: all.swing ?? 0, drums: all.drums ?? [], breaks: all.breaks ?? all.drums ?? [], fills: all.fills ?? [], bass: all.bass ?? { patch: [], octave: 1, p: [] }, chords: all.chords ?? { patch: "", p: [] }, leads: all.leads ?? { soft: [], hard: [] }, reply: all.reply ?? [], pad: all.pad, turn: all.turn, xylo: all.xylo ?? 0 };
     m.set(name, k);
   }
   return k;
@@ -291,6 +333,7 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
   const chord = bangerChord(style, a, seed, formBar, !!kit.chords.sevenths);
   const pb = barIn % 8, last = barIn === plan.bars - 1, sw = s % 2 === 1 ? kit.swing : 0;
   const out: NoteEvent[] = [], quiet = gentle ? 0.72 : 1; // (a gentle wave: everything softer)
+  const SPC = B.space, BAL = SPC?.balance ?? { drums: 1, bass: 1, pad: 1, chords: 1, vocals: 1 };
   const r = (salt: number) => hash2(step, salt, seed + pass * 7919);
   const ev = (patch: string, midi: number | null, vel: number, dur: number, extra: Partial<NoteEvent> = {}) => {
     if (style.patches[patch]) out.push({ part: "b:" + patch, patch, step, offset: sw, dur, midi, vel: vel * quiet, straight: true, ...extra });
@@ -305,7 +348,7 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
     for (const v of voices) {
       if (!within(v, E, barIn, pass) || (keep && !keep(kindOf(v.patch)))) continue;
       const snare = backbeat && snapsOn && kindOf(v.patch) === "snare";
-      const ch = v.p[(barIn * 16 + s) % v.p.length], lv = (v.level ?? 1) * level * (snare ? (snapsAlone ? 0 : 0.45) : 1) * (0.94 + 0.06 * r(v.patch.length * 31 + v.p.length));
+      const ch = v.p[(barIn * 16 + s) % v.p.length], lv = BAL.drums * (v.level ?? 1) * level * (snare ? (snapsAlone ? 0 : 0.45) : 1) * (0.94 + 0.06 * r(v.patch.length * 31 + v.p.length));
       // (finger snaps on the kit's backbeat: where its snare or clap hits squarely)
       if (snare && !snapped && (ch === "X" || ch === "x")) { snapped = true; ev(SP!.snap, null, SP!.snapLevel * level, 1); }
       if (lv <= 0) continue;
@@ -326,30 +369,58 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
     while (rootM < lo) rootM += 12;
     let m = rootM + degreeToMidi(style, scale, chord.root + k, 0, 0) - degreeToMidi(style, scale, chord.root, 0, 0);
     if (m > lo + 19) m -= 12;
-    const patch = pick(D.patch, hash2(seed, 831, 3)), vel = 0.7 * (D.level ?? 1) * level * (0.95 + 0.05 * r(977));
+    const patch = pick(D.patch, hash2(seed, 831, 3)), vel = 0.7 * BAL.bass * (D.level ?? 1) * level * (0.95 + 0.05 * r(977));
     ev(patch, m, vel, dur, D.glide ? { glide: D.glide } : {});
-    if (D.sub !== false && D.octave > 0 && style.patches.bgSub) { let sm = m - 12; while (sm >= 40) sm -= 12; ev("bgSub", sm, 0.9 * level, dur); }
+    if (D.sub !== false && D.octave > 0 && style.patches.bgSub) { let sm = m - 12; while (sm >= 40) sm -= 12; ev("bgSub", sm, 0.9 * BAL.bass * level, dur); }
   };
-  /** The chords: stabs voiced into one octave (each tone where it's nearest), or a tone a hit in turn. */
-  const chords = (level: number, until = 16) => {
+  /** The chords' hit (if one starts) on the section's sixteenth `at` (this one, or an earlier one's for its echo): the kit's
+   *  stabs voiced into one octave (each tone where it's nearest; a groove's without their root: `thin`), or a tone a hit in
+   *  turn; or, in the phrases dealt to it, the xylophone's figure (block chords, broken chords, the skeleton dance's low note
+   *  and two above, a tremolo). */
+  const chordHit = (at: number, thin: boolean): { patch: string; midis: number[]; vel: number; dur: number } | null => {
+    if (at < 0) return null;
+    const b = Math.floor(at / 16), fb = formBar - barIn + b, cs = at - b * 16, ch0 = b === barIn ? chord : bangerChord(style, a, seed, fb, !!kit.chords.sevenths);
+    const X = SPC?.xylo, fig = X ? xyloFigure(B, kit.xylo, seed, fb, pass) : null;
+    const foldTo = (lo0: number, fixed = false) => { const lo = fixed ? lo0 : lo0 + mod(transpose + 6, 12) - 6; return (t: number) => { let m = degreeToMidi(style, scale, t, 0, transpose); while (m < lo) m += 12; while (m >= lo + 12) m -= 12; return m; }; };
+    if (fig && X) {
+      const V0 = B.leads[gentle ? X.low : X.voice] ?? B.leads[X.voice], p = X.figures[fig], c = p[at % p.length], fold = foldTo(gentle ? X.lowWindow : X.window, true) /* (a fixed octave, over the singer's harmony: no clash) */, tones = ch0.tones.slice(0, 3).map(fold).sort((x, y) => x - y);
+      const vel = 0.8 * X.level * V0.level * (R?.level ?? 1) * BAL.chords * (cs % 4 === 0 ? 1 : 0.88);
+      if (c === "x") return { patch: V0.patch, midis: tones, vel, dur: 1 };
+      if (c === "a" || c === "b" || c === "c") return { patch: V0.patch, midis: [tones["abc".indexOf(c) % tones.length]], vel, dur: 1 };
+      if (c === "1") return { patch: V0.patch, midis: [fold(ch0.root) - 12 < 52 ? fold(ch0.root) : fold(ch0.root) - 12], vel, dur: 1 };
+      if (c === "t") return { patch: V0.patch, midis: [tones[0], tones[tones.length - 1]], vel: vel * (0.45 + 0.04 * (cs % 8)), dur: 1 };
+      return null;
+    }
     const C = kit.chords;
-    if (!C.patch || !C.p.length || s >= until) return;
-    const p = pick(C.p, hash2(seed, 833, Math.floor(formBar / 8))), i = (barIn * 16 + s) % p.length, { ch, dur } = charAt(p, i);
-    if (VEL[ch] === undefined) return;
-    const lo = (C.window ?? 57) + mod(transpose + 6, 12) - 6, fold = (t: number) => { let m = degreeToMidi(style, scale, t, 0, transpose); while (m < lo) m += 12; while (m >= lo + 12) m -= 12; return m; };
-    const vel = VEL[ch] * (C.level ?? 1) * level;
+    if (!C.patch || !C.p.length) return null;
+    const p = pick(C.p, hash2(seed, 833, Math.floor(fb / 8))), i = at % p.length, { ch, dur } = charAt(p, i);
+    if (VEL[ch] === undefined) return null;
+    const fold = foldTo(C.window ?? 57), vel = VEL[ch] * (C.level ?? 1) * BAL.chords;
     if (C.arp) {
       let n = 0;
-      for (let j = i - (i % 16); j < i; j++) if (VEL[p[j]] !== undefined) n++;
-      const T = chord.tones.length;
-      ev(C.patch, fold(chord.tones[n % T]) + 12 * (Math.floor(n / T) % 2), vel, Math.min(dur, until - s));
-    } else for (const t of chord.tones) ev(C.patch, fold(t), vel, Math.min(dur, until - s));
+      for (let k = i - (i % 16); k < i; k++) if (VEL[p[k]] !== undefined) n++;
+      const T = ch0.tones.length;
+      return { patch: C.patch, midis: [fold(ch0.tones[n % T]) + 12 * (Math.floor(n / T) % 2)], vel, dur };
+    }
+    const tones = ch0.tones.slice(0, 4), thinned = thin && SPC?.thin && tones.length > 2 ? tones.slice(1, 3) : tones.slice(0, 3);
+    return { patch: C.patch, midis: thinned.map(fold), vel, dur };
+  };
+  /** The chords here, and their ping-pong: each hit again `echo.steps` sixteenths on, to the right, and again, to the left
+   *  (the notes' own: no delay line), where the style has the patch's R and L. */
+  const chords = (level: number, until = 16, thin = false) => {
+    const at = barIn * 16 + s, h = s < until ? chordHit(at, thin) : null;
+    if (h) for (const m of h.midis) ev(h.patch, m, h.vel * level, Math.min(h.dur, until - s));
+    const EC = SPC?.echo;
+    if (EC) EC.levels.forEach((lv, k) => {
+      const e = chordHit(at - EC.steps * (k + 1), thin), side = e && e.patch + (k % 2 ? "L" : "R");
+      if (e && side && style.patches[side] && (at - EC.steps * (k + 1)) % 16 < (pb === 7 || last ? 12 : 16)) for (const m of e.midis) ev(side, m, e.vel * level * lv, 1);
+    });
   };
   const pad = (level: number) => {
     const P = kit.pad;
     if (!P || s !== 0 || P.level <= 0 || (P.e && (E < P.e[0] || E > P.e[1]))) return;
     const lo = 57 + mod(transpose + 6, 12) - 6;
-    for (const t of chord.tones.slice(0, 3)) { let m = degreeToMidi(style, scale, t, 0, transpose); while (m < lo) m += 12; while (m >= lo + 12) m -= 12; out.push({ part: "b:" + P.patch, patch: P.patch, step, offset: 0, dur: 16, midi: m, vel: 0.85 * P.level * level, straight: true }); }
+    for (const t of chord.tones.slice(0, 3)) { let m = degreeToMidi(style, scale, t, 0, transpose); while (m < lo) m += 12; while (m >= lo + 12) m -= 12; out.push({ part: "b:" + P.patch, patch: P.patch, step, offset: 0, dur: 16, midi: m, vel: 0.85 * P.level * BAL.pad * level, straight: true }); }
   };
   const tier = E < B.softBelow ? kit.leads.soft : kit.leads.hard;
   const lead = B.leads[pick(tier.length ? tier : Object.keys(B.leads), hash2(seed, 839, 5))], reply = B.leads[pick(kit.reply.length ? kit.reply : Object.keys(B.leads), hash2(seed, 841, 7))];
@@ -388,10 +459,23 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
   const slow = (): HookNote | null => { const t = barIn * 16 + s; if (t % 2) return null; const n = hook.period[(t / 2) % 128]; return n && { deg: n.deg, dur: n.dur * 2 }; };
   const soft = gentle ? 0.6 : 1;
   // the singer's notes as a second main voice: a tune's note folded into her range; the chord's root and fifth on "ooh"
-  const V = gentle ? undefined : B.vocals;
+  const V = gentle ? undefined : B.vocals, HV = B.vocals?.harmony;
+  /** The sung chord's notes: the root, the fifth, then the third (the seventh where the kit plays sevenths), each where it's
+   *  nearest in her harmony's octave, inside her recorded notes. */
+  const sungChord = (n: number): number[] => {
+    const VV = B.vocals!, lo = HV?.window ?? VV.range[0], ts = [chord.root, chord.root + 4, chord.tones.length > 3 ? chord.root + 6 : chord.root + 2].slice(0, n);
+    return ts.map(t => { let m = degreeToMidi(style, scale, t, 0, transpose); while (m < lo) m += 12; while (m >= lo + 12) m -= 12; while (m > VV.range[1]) m -= 12; while (m < VV.range[0]) m += 12; return m; });
+  };
   const voxAt = (deg: number) => { let m = degreeToMidi(style, scale, deg, 2, transpose); while (m > V!.range[1]) m -= 12; while (m < V!.range[0]) m += 12; return m; };
-  const vox = (n: HookNote | null, level: number, until = 16) => { if (V && n && s < until && style.patches[V.double]) out.push({ part: "b:" + V.double, patch: V.double, step, offset: sw, dur: Math.min(Math.max(2, n.dur), Math.max(1, until - s)), midi: voxAt(n.deg), vel: 0.85 * level, straight: true }); };
-  const ooh = (level: number) => { if (V && s === 0 && style.patches[V.pad]) for (const t of [chord.root, chord.root + 4]) out.push({ part: "b:" + V.pad, patch: V.pad, step, offset: 0, dur: 16, midi: voxAt(t), vel: 0.8 * V.padLevel * level, straight: true }); };
+  const vox = (n: HookNote | null, level: number, until = 16) => { if (V && n && s < until && style.patches[V.double]) out.push({ part: "b:" + V.double, patch: V.double, step, offset: sw, dur: Math.min(Math.max(2, n.dur), Math.max(1, until - s)), midi: voxAt(n.deg), vel: 0.85 * BAL.vocals * level, straight: true }); };
+  // (her harmony under the grooves: three voices after the second stump, fewer and softer before it)
+  const ooh = (level: number) => {
+    const VV = B.vocals;
+    if (!VV || s !== 0 || !style.patches[VV.pad] || (gentle && !HV)) return;
+    const n = gentle ? HV!.gentleVoices : HV?.voices ?? 2, lv = gentle ? HV!.gentleLevel : 1;
+    // (its root in the middle, the others left and right where the style has the pad's L and R: a wide harmony)
+    sungChord(n).forEach((m, k) => { const side = VV.pad + ["", "L", "R"][k % 3], patch = style.patches[side] ? side : VV.pad; out.push({ part: "b:" + patch, patch, step, offset: 0, dur: 16, midi: m, vel: 0.8 * VV.padLevel * level * lv * quiet, straight: true }); });
+  };
   const crash = (vel: number) => { if (s === 0) ev("bgCrash", null, vel, 16, { offset: 0 }); };
   const impact = () => { if (s === 0 && style.patches.impact) out.push({ part: "impact", patch: "impact", step, offset: 0, dur: 16, midi: null, vel: 1 }); };
   const riser = (from: number, to: number, dur = 16, patch = "riser") => { if (s === 0 && style.patches[patch]) out.push({ part: patch, patch, step, offset: 0, dur, midi: null, vel: 1, from, to }); };
@@ -412,20 +496,30 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
     if (pb === 7 && !last && !gentle) riser(0.35, 0.85, 12, "bgSweep");
     const until = fill ? 12 : 16;
     bass(kit.bass, role === "breaks" && kit.bass.breaks ? kit.bass.breaks : kit.bass.p, 1, until);
-    chords(1, until); pad(1);
+    // space (Ed, 2026-11-11): in a groove between the hook's returns no more than three melodic parts at once: the tune (the
+    // lead, the reply and the xylophone's answer taking turns), the chords (thinner, or the xylophone's figure) and the
+    // singer's ooh in the pad's place; the landing's hook, the victory and a gentle wave keep the pad
+    const groove = !gentle && use !== "whole" && role !== "victory", xyChords = !!xyloFigure(B, kit.xylo, seed, formBar, pass);
+    chords(1, until, groove);
+    if (!groove || !SPC) pad(1);
+    // (the one stack allowed, as one harmony layer: where the xylophone has block chords she sometimes sings its hits with it)
+    if (V && HV && xyChords && s < until && deal(871) < HV.stabs) { const h = chordHit(barIn * 16 + s, false); if (h && h.midis.length > 2) for (const m of sungChord(2)) out.push({ part: "b:" + V.double, patch: V.double, step, offset: sw, dur: 2, midi: m, vel: HV.chordStabLevel * BAL.vocals, straight: true }); }
     // the tune: the night's hook at its key moments (hookUse: a wave landing's first eight bars, the victory), whole on the lead
     // (a gentle wave: at half speed); between them the wave's own riff, on the reply voice where the lead rests (the breakbeat
     // phrase's first half, a later pass's first phrase), the reply answering in the gaps
     const slot = (pb * 16 + s) % 128;
     ooh(1);
-    if (use === "whole") { tune(lead, hook.period[slot], 1); vox(hook.period[slot], V?.doubleLevel ?? 0); if (role === "victory") tune(reply, hook.reply[slot], 0.7, {}, 16, hook, "reply"); if (xyAnswer) tune(xylo, hook.reply[slot], 0.8, {}, 16, hook, "reply"); }
+    if (use === "whole") { tune(lead, hook.period[slot], 1); vox(hook.period[slot], V?.doubleLevel ?? 0); if (role === "victory") tune(reply, hook.reply[slot], 0.7, {}, 16, hook, "reply"); else if (xyAnswer && !xyChords) tune(xylo, hook.reply[slot], 0.8, {}, 16, hook, "reply"); }
     else if (use === "slow") tune(lead, slow(), 0.9);
     else {
       const rests = role === "breaks" ? barIn < 4 : pass % 2 === 1 && barIn < 8;
-      tune(rests ? reply : lead, riff.period[slot], rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1), {}, 16, riff);
-      if (!rests && (half || role === "breaks")) tune(reply, riff.reply[slot], 0.7, {}, 16, riff, "reply");
-      if (xyAnswer) tune(xylo, riff.reply[slot], 0.8, {}, 16, riff, "reply"); // (now and then the xylophone answers in the gaps)
-      if (!rests && V) { const first = riff.period.slice(pb * 16, pb * 16 + 16).findIndex(x => x); if (first === s) vox(riff.period[slot], V.stabLevel, until); } // (a sung stab on the riff's first note)
+      // (the riff rests in its third bar of four: a gap the drums and the chords fill)
+      const gapBar = !!SPC?.riffRest && pb % 4 === 2, answer = xyAnswer && !xyChords;
+      if (!gapBar) tune(rests ? reply : lead, riff.period[slot], rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1), {}, 16, riff);
+      // (the gaps answered by the xylophone in the phrases dealt to it, else by the reply voice: one or the other)
+      if (!gapBar && answer) tune(xylo, riff.reply[slot], 0.8, {}, 16, riff, "reply");
+      else if (!gapBar && !rests && (half || role === "breaks")) tune(reply, riff.reply[slot], 0.7, {}, 16, riff, "reply");
+      if (!rests && !gapBar && V) { const first = riff.period.slice(pb * 16, pb * 16 + 16).findIndex(x => x); if (first === s) vox(riff.period[slot], V.stabLevel, until); } // (a sung stab on the riff's first note)
     }
   } else if (role === "breakdown") {
     if (!dropped) {
@@ -517,6 +611,12 @@ export function checkBanger(style: MusicStyle): string[] {
   for (const [m, P] of Object.entries(B.progressions)) { if (!style.scales[m]) errs.push(`banger progressions: no scale "${m}"`); if (!P.a.length || !P.b.length) errs.push(`banger progressions ${m}: empty`); }
   for (const p of ["bgCrash", "bgSweep", "bgRiser", "bgSub", "snare"]) patch("fixed", p);
   if (B.vocals) { patch("vocals", B.vocals.double); patch("vocals", B.vocals.pad); }
+  if (B.space) {
+    const X = B.space.xylo;
+    for (const l of [X.voice, X.low]) if (!B.leads[l]) errs.push(`banger space: no lead "${l}"`);
+    for (const [n, p] of Object.entries(X.figures)) if (p.length % 16 || /[^xabc1t.]/.test(p)) errs.push(`banger space: figure ${n} "${p}"`);
+    if (!X.figures[X.roll]) errs.push(`banger space: no roll figure "${X.roll}"`);
+  }
   if (B.spice) { patch("spice", B.spice.snap); if (!B.leads[B.spice.xylo]) errs.push(`banger spice: no lead "${B.spice.xylo}"`); }
   return errs;
 }

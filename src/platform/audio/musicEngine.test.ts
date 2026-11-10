@@ -287,9 +287,9 @@ describe("the haunted treatment in the engine (Ed, 2026-11-08: \"B, 1-6\")", () 
 describe("banger mode's compressors in the graph (Ed, 2026-11-10: \"Is it possible to add a compressor?\")", () => {
   /** The compressors and master filters an engine makes for a style. */
   function made(s: MusicStyle, stems = false) {
-    const ctx = fakeContext(), n = { comp: 0, filter: 0 }, c = ctx as unknown as Record<string, () => unknown>;
-    const comp = c.createDynamicsCompressor, filt = c.createBiquadFilter;
-    const counted = new Proxy(ctx, { get: (o, k) => k === "createDynamicsCompressor" ? () => { n.comp++; return comp(); } : k === "createBiquadFilter" ? () => { n.filter++; return filt(); } : (o as unknown as Record<string | symbol, unknown>)[k] });
+    const ctx = fakeContext(), n = { comp: 0, filter: 0, verb: 0, delay: 0 }, c = ctx as unknown as Record<string, () => unknown>;
+    const comp = c.createDynamicsCompressor, filt = c.createBiquadFilter, verb = c.createConvolver, del = c.createDelay;
+    const counted = new Proxy(ctx, { get: (o, k) => k === "createDynamicsCompressor" ? () => { n.comp++; return comp(); } : k === "createBiquadFilter" ? () => { n.filter++; return filt(); } : k === "createConvolver" ? () => { n.verb++; return verb(); } : k === "createDelay" ? () => { n.delay++; return del(); } : (o as unknown as Record<string | symbol, unknown>)[k] });
     const sink = stems ? new Proxy({}, { get: () => () => ({}) }) : undefined;
     new MusicEngine(counted, (ctx as unknown as { destination: AudioNode }).destination, s, 7, undefined, sink as never);
     return n;
@@ -300,6 +300,8 @@ describe("banger mode's compressors in the graph (Ed, 2026-11-10: \"Is it possib
     expect(off.comp).toBe(2);
     expect(made(style).comp).toBe(4); // (the drum bus's and the master's glue)
     expect(made(withoutComp(style)).comp).toBe(2);
-    expect(made(style).filter).toBe(off.filter + 2); // (its master's low cut and shelf)
+    // (banger mode's room: the reverb's pre-delay and the drum bus's short room, neither made without it)
+    expect(made(style).verb).toBe(off.verb + 1); expect(made(style).delay).toBe(off.delay + 1);
+    expect(made(style).filter).toBe(off.filter + 3); // (its master's low cut and shelf, the drum room's high-pass)
   });
 });

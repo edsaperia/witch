@@ -9,7 +9,7 @@ import { newBeatClock, timeAt } from "../../src/rules/beat";
 import { Conductor, formClock, stumpsBy, type MusicCue } from "../../src/rules/musicPlan";
 import { nightStyle, planNight } from "../../src/rules/musicSet";
 import { arcStep, hauntedDrop, isHaunted, musicSeed, notesAt, resolveSection, withMelody, type MusicStyle } from "../../src/rules/musicScore";
-import { bangerOn, bangerRole, compOf, drumPatch, hookHeard, kitName, kitOf, nightHook, withBanger, withoutComp } from "../../src/rules/musicBanger";
+import { bangerOn, bangerRole, compOf, drumPatch, hookHeard, kitName, kitOf, nightHook, withBanger, withoutComp, xyloHeard } from "../../src/rules/musicBanger";
 import styleJson from "../../config/music-style.json";
 
 const base = styleJson as unknown as MusicStyle;
@@ -51,14 +51,18 @@ export interface WindowJob {
   solo?: string[];
   /** Banger mode's compressors off (their A/B); only the drums (what the drum bus does). */
   comp?: boolean; drums?: boolean;
+  /** A balance check: only the rhythm section (the drums, the bass and its sub) or only the melodic parts; `linear`: the
+   *  compressors off and the level into the limiter far under its threshold, so the two can be compared as they're mixed. */
+  group?: "rhythm" | "melodic"; linear?: boolean;
   /** A long clip: at the dancefloor throughout (a clearing's stretch too), every block's notes kept beside the clearing's. */
   long?: boolean;
   samples: Record<string, string>;
 }
 
 /** The night's style as the game plays it (its set dealt for the island), banger mode on or off. */
-function styled(o: Pick<WindowJob, "seed" | "island" | "banger" | "comp">): { style: MusicStyle; families: string[] } {
-  const n = planNight(base, { seed: o.seed, island: o.island, waves: 10 }), s = withBanger(withMelody(nightStyle(base, n), "dance"), o.banger);
+function styled(o: Pick<WindowJob, "seed" | "island" | "banger" | "comp" | "linear">): { style: MusicStyle; families: string[] } {
+  const n = planNight(base, { seed: o.seed, island: o.island, waves: 10 }), s0 = withBanger(withMelody(nightStyle(base, n), "dance"), o.banger);
+  const s = o.linear && s0.banger ? { ...s0, banger: { ...s0.banger, comp: { ...s0.banger.comp, on: false }, mix: { ...s0.banger.mix, drive: 0.1 } } } : s0;
   return { style: o.comp === false ? withoutComp(s) : s, families: n.steps.map(s => s.family) };
 }
 
@@ -70,6 +74,11 @@ async function windowRender(o: WindowJob) {
   const M = TUNING.music, m = new Music(oc, Z0 ? M.volume : 1, style, o.seed), near = mixAt(M, 1, 0, 10), far = o.long ? near : mixAt(M, nearness(M, 40), 0, 40);
   m.engine!.setRecordings(recs); if (recs.whispers) m.engine!.setWhisper(recs.whispers);
   if (o.solo) m.engine!.solo = new Set(o.solo);
+  if (o.group && style.banger) {
+    const Bg = style.banger, low = new Set<string>(["bgSub", ...Bg.dnb.bass.patch, ...Object.keys(Bg.kits).flatMap(k => kitOf(Bg, k).bass.patch)]);
+    const rhythm = (p: string) => drumPatch(style, p) || low.has(p) || p === "impact";
+    m.engine!.solo = new Set(o.group === "rhythm" ? [...Object.keys(style.patches).filter(rhythm).map(p => "b:" + p), "impact"] : [...Object.keys(style.patches).filter(p => !rhythm(p)).map(p => "b:" + p), style.form?.sung.part ?? ""]);
+  }
   if (o.drums) m.engine!.solo = new Set(Object.keys(style.patches).filter(p => drumPatch(style, p)).map(p => "b:" + p));
   // (the compressors' gain reduction, read each frame: dB, 0 none)
   const gr = { drums: [] as number[], glue: [] as number[] }, E = m.engine as unknown as { drumComp?: { comp: DynamicsCompressorNode; on: boolean } | null; master?: { glue?: { comp: DynamicsCompressorNode; on: boolean } } | null };
@@ -102,13 +111,17 @@ async function windowRender(o: WindowJob) {
       // (the sprinkles in this block, a phrase at a time: the xylophone, the finger snaps)
       const SPb = bangerOn(style)?.spice, xyp = SPb ? bangerOn(style)!.leads[SPb.xylo].patch : "";
       if (SPb) for (let k = b; k < Math.min(o.to, p.start + p.bars); k += 8 - ((k - p.start) % 8)) {
-        const got = new Set<string>(), runs: number[] = [];
+        const fc = formClock(style, c, k), fig = xyloHeard(style, p, resolveSection(style, p.section), k, musicSeed(o.seed, fc.n), fc.start, stumpsBy(c, p.start, style.blockBars));
+        const FIG: Record<string, string> = { off: "block chords on the off-beats", push: "pushed block chords", arp: "a broken-chord arpeggio", wide: "a wide arpeggio (3+3+2)", skeleton: "the skeleton dance (a low note, then two chord notes)", bones: "the skeleton dance, busier", roll: "a tremolo roll" };
+        if (fig) marks.push(`${mmss(at(timeAt(clock, k * 4))).padStart(7)}    + XYLOPHONE CHORDS for this phrase: ${FIG[fig] ?? fig}, echoing right then left`);
+        const got = new Set<string>(), runs: number[] = [], pair = new Map<number, number>();
         for (let q = k; q < Math.min(o.to, p.start + p.bars, k + 8 - ((k - p.start) % 8)); q++) {
           if (o.knock && q >= Math.floor(o.knock.at) && q < Math.ceil(o.knock.back)) continue;
           const f = formClock(style, c, q);
-          for (let s = 0; s < 16; s++) for (const e of notesAt(style, p, null, q * 16 + s, { seed: musicSeed(o.seed, f.n), formStart: f.start, siege: 0, only: "main", stumps: stumpsBy(c, p.start, style.blockBars) })) { if (e.patch === xyp) { got.add(s >= 12 && (q - p.start) % 8 === 7 || q === p.start + p.bars - 1 && s >= 12 ? "run" : "xylo"); if (s === 12) runs.push(q); } if (e.patch === SPb.snap) got.add("snap"); }
+          for (let s = 0; s < 16; s++) for (const e of notesAt(style, p, null, q * 16 + s, { seed: musicSeed(o.seed, f.n), formStart: f.start, siege: 0, only: "main", stumps: stumpsBy(c, p.start, style.blockBars) })) { if (e.patch === xyp) { got.add(s >= 12 && (q - p.start) % 8 === 7 || q === p.start + p.bars - 1 && s >= 12 ? "run" : "xylo"); if (s === 12) runs.push(q); } if (e.patch === SPb.snap) got.add("snap"); if (e.patch === bangerOn(style)!.vocals?.double && e.dur === 2 && fig && (pair.set(q * 16 + s, (pair.get(q * 16 + s) ?? 0) + 1), pair.get(q * 16 + s)! > 1)) got.add("stab"); }
         }
-        if (got.has("xylo")) marks.push(`${mmss(at(timeAt(clock, k * 4))).padStart(7)}    + XYLOPHONE answering in the gaps for this phrase`);
+        if (got.has("stab")) marks.push(`${mmss(at(timeAt(clock, k * 4))).padStart(7)}    + SUNG CHORD STABS with the xylophone's hits in this phrase`);
+        if (got.has("xylo") && !fig) marks.push(`${mmss(at(timeAt(clock, k * 4))).padStart(7)}    + XYLOPHONE answering in the gaps for this phrase`);
         if (got.has("run")) marks.push(`${mmss(at(timeAt(clock, (runs[runs.length - 1] ?? k) * 4 + 3))).padStart(7)}    + XYLOPHONE run into the next phrase`);
         if (got.has("snap")) marks.push(`${mmss(at(timeAt(clock, k * 4))).padStart(7)}    + FINGER SNAPS in this phrase (on the backbeat; in a breakdown, on the third beat)`);
       }
@@ -145,7 +158,11 @@ function describe(style: MusicStyle, cue: MusicCue, start: number, bar: number, 
   const kn0 = kitName(style, a, p.section), kn = gentle && !B.gentle.keep.includes(kn0) ? B.gentle.kit : kn0, K = kitOf(B, kn), parts = new Set<string>();
   for (let s = 0; s < 32; s++) for (const e of notesAt(style, p, null, (start + (role === "build" ? 0 : Math.min(p.bars - 1, 2))) * 16 + s, { seed: musicSeed(seed, f.n), formStart: f.start, siege: 0, only: "main", stumps: st })) if (e.midi !== null && !/Sub|pad|choir|strings/i.test(e.patch)) parts.add(e.patch);
   const what = role === "drop" ? "the groove" : role === "breaks" ? "the breakbeat phrase: the reply voice has the wave's riff, then the lead joins" : role === "breakdown" ? "the breakdown: no drums, then drum & bass" : role === "build" ? (gentle ? "a gentle build: a shaker rising, the kick out for the last bar" : "the build: bass out at the half, kick out for the last quarter, the snare roll doubling, a beat of silence") : "the victory: a whole step up, conga claps";
-  return `${head} -> ${gentle ? "GENTLE (before the second stump): " : ""}${what}; kit "${kn}" (swing ${K.swing}); playing ${[...parts].join(", ")}`;
+  // (the backbeat's drums, and the singer's harmony)
+  const NAME: Record<string, string> = { bgClap: "clap", clap: "clap", bgSnap: "finger snap", snap: "finger snap", snare: "snare", dnbSnare: "snare" };
+  const back = [...new Set((role === "breaks" ? K.breaks : K.drums).filter(v => NAME[v.patch] && /[Xx]/.test(v.p)).map(v => NAME[v.patch]))];
+  const HV = B.vocals?.harmony, harmony = !HV || role === "build" || role === "breakdown" ? "" : gentle ? `; VOCAL HARMONY: ${HV.gentleVoices} soft voices` : `; VOCAL HARMONY: ${HV.voices} sung voices under the chords`;
+  return `${head} -> ${gentle ? "GENTLE (before the second stump): " : ""}${what}; kit "${kn}" (swing ${K.swing}); BACKBEAT: ${back.join(" + ") || "none"}${harmony}; playing ${[...parts].join(", ")}`;
 }
 function hookText(style: MusicStyle, seed: number): string {
   const B = bangerOn(style);
