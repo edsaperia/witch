@@ -77,6 +77,10 @@ export interface BangerDef {
    *  the minor pentatonic over the anchor, a note each), the anchors (0 the root, 1 the third, 3 the fifth), the reply's shapes. */
   hook: { motifs: string[]; answers: string[]; shapes: number[][]; anchors: number[]; replies: number[][] };
   leads: Record<string, { patch: string; octave: number; level: number }>;
+  /** The tunes' register and level (Ed, 2026-11-10: "Lead melody gets very high, and it's loud vs the drums"): the highest
+   *  note (MIDI) a lead's line and the reply voice's may reach (a line that would pass it is played an octave down, whole, its
+   *  shape kept), the lowest a lead's line may fall to, and every tune's level against the drums (`level`). */
+  register?: { lead: number; reply: number; floor: number; level: number };
   fills: Record<string, BangerVoice[]>;
   /** The breakdown's drum & bass. */
   dnb: { drums: BangerVoice[]; bass: BangerBass };
@@ -124,7 +128,7 @@ export interface HookNote { deg: number; dur: number }
 /** A night's hook: eight bars a period (the motif, its varied ending, the motif, the question; the motif, its varied ending,
  *  the motif, the answer home), a note a sixteenth where one starts (scale steps over the key's root, in its lead's octave);
  *  the reply in its gaps the same way; and its pitches in turn (a clearing's). */
-export interface Hook { period: (HookNote | null)[]; reply: (HookNote | null)[]; seq: number[]; motif: string; anchor: number }
+export interface Hook { period: (HookNote | null)[]; reply: (HookNote | null)[]; seq: number[]; motif: string; anchor: number; /** its highest and lowest steps, its line's and its reply's */ top: number; low: number; replyTop: number }
 
 const onsets = (p: string): { pos: number; dur: number }[] => {
   const out: { pos: number; dur: number }[] = [];
@@ -158,7 +162,8 @@ export function nightHook(B: BangerDef, seed: number): Hook {
     for (let i = 0; i < 16; i++) { if (busy[i]) continue; let n = 0; while (i + n < 16 && !busy[i + n]) n++; if (n > best) { best = n; at = i; } i += n; }
     if (best >= 4) { const s0 = at + (at % 2), n = Math.min(3, Math.floor((at + best - s0) / 2)); for (let j = 0; j < n; j++) reply[b * 16 + s0 + 2 * j] = { deg: pentDeg(anchor + rs[j % rs.length] - 5), dur: 2 }; }
   });
-  const hook: Hook = { period, reply, seq, motif, anchor };
+  const degs = period.filter(x => x).map(x => x!.deg), rdegs = reply.filter(x => x).map(x => x!.deg);
+  const hook: Hook = { period, reply, seq, motif, anchor, top: Math.max(...degs), low: Math.min(...degs), replyTop: rdegs.length ? Math.max(...rdegs) : 0 };
   m.set(seed, hook);
   return hook;
 }
@@ -331,9 +336,23 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
   };
   const tier = E < B.softBelow ? kit.leads.soft : kit.leads.hard;
   const lead = B.leads[pick(tier.length ? tier : Object.keys(B.leads), hash2(seed, 839, 5))], reply = B.leads[pick(kit.reply.length ? kit.reply : Object.keys(B.leads), hash2(seed, 841, 7))];
-  const tune = (L: { patch: string; octave: number; level: number } | undefined, n: HookNote | null, level: number, extra: Partial<NoteEvent> = {}, until = 16) => {
+  /** A note of a tune (`T`: the hook or the wave's riff; `part`: its line or its reply) on a voice, the whole line an octave or
+   *  two down where its top would pass the register's ceiling (its shape kept), back up where that leaves it under the floor. */
+  const R = B.register;
+  /** A step as a MIDI note, never folded (degreeToMidi folds its top an octave down, which would break a line's shape). */
+  const raw = (deg: number, octave: number) => { const n = scale.length, o = Math.floor(deg / n); return style.root + transpose + 12 * (octave + o) + scale[deg - o * n]; };
+  const shiftOf = (L: { octave: number }, T: Hook, part: "period" | "reply", ceil: number | undefined) => {
+    if (!R || ceil === undefined) return 0;
+    const top = raw(part === "reply" ? T.replyTop : T.top, L.octave), low = raw(part === "reply" ? T.replyTop : T.low, L.octave);
+    let sh = 0;
+    while (top + sh > ceil) sh -= 12;
+    while (low + sh < R.floor && top + sh + 12 <= ceil) sh += 12;
+    return sh;
+  };
+  const tune = (L: { patch: string; octave: number; level: number } | undefined, n: HookNote | null, level: number, extra: Partial<NoteEvent> = {}, until = 16, T: Hook = hook, part: "period" | "reply" = "period") => {
     if (!L || !n || s >= until) return;
-    ev(L.patch, degreeToMidi(style, scale, n.deg, L.octave, transpose), (s % 4 === 0 ? 0.9 : 0.8) * L.level * level, Math.min(n.dur, until - s), extra);
+    const sh = shiftOf(L, T, part, L === reply ? R?.reply : R?.lead);
+    ev(L.patch, (R ? raw(n.deg, L.octave) : degreeToMidi(style, scale, n.deg, L.octave, transpose)) + sh, (s % 4 === 0 ? 0.9 : 0.8) * L.level * level * (R?.level ?? 1), Math.min(n.dur, until - s), extra);
   };
   // the singer (the form's sung part, its effects by the night's family; haunted: her ghost below, else her wash above)
   const F = style.form, vocal = a.vocal && a.vocal !== "none" && style.patches[a.vocal] ? a.vocal : F?.sung.patch;
@@ -380,12 +399,12 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
     // phrase's first half, a later pass's first phrase), the reply answering in the gaps
     const slot = (pb * 16 + s) % 128;
     ooh(1);
-    if (use === "whole") { tune(lead, hook.period[slot], 1); vox(hook.period[slot], V?.doubleLevel ?? 0); if (role === "victory") tune(reply, hook.reply[slot], 0.7); }
+    if (use === "whole") { tune(lead, hook.period[slot], 1); vox(hook.period[slot], V?.doubleLevel ?? 0); if (role === "victory") tune(reply, hook.reply[slot], 0.7, {}, 16, hook, "reply"); }
     else if (use === "slow") tune(lead, slow(), 0.9);
     else {
       const rests = role === "breaks" ? barIn < 4 : pass % 2 === 1 && barIn < 8;
-      tune(rests ? reply : lead, riff.period[slot], rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1));
-      if (!rests && (half || role === "breaks")) tune(reply, riff.reply[slot], 0.7);
+      tune(rests ? reply : lead, riff.period[slot], rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1), {}, 16, riff);
+      if (!rests && (half || role === "breaks")) tune(reply, riff.reply[slot], 0.7, {}, 16, riff, "reply");
       if (!rests && V) { const first = riff.period.slice(pb * 16, pb * 16 + 16).findIndex(x => x); if (first === s) vox(riff.period[slot], V.stabLevel, until); } // (a sung stab on the riff's first note)
     }
   } else if (role === "breakdown") {
@@ -407,9 +426,9 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
       bass(B.dnb.bass, B.dnb.bass.p, 0.95 * soft, last ? 12 : 16);
       pad(0.7);
       const slot = ((k % 8) * 16 + s) % 128, T = use === "whole" ? hook : riff;
-      tune(lead, T.period[slot], 1, {}, last ? 12 : 16);
+      tune(lead, T.period[slot], 1, {}, last ? 12 : 16, T);
       if (use === "whole") vox(T.period[slot], V?.doubleLevel ?? 0, last ? 12 : 16);
-      tune(reply, T.reply[slot], 0.7, {}, last ? 12 : 16);
+      tune(reply, T.reply[slot], 0.7, {}, last ? 12 : 16, T, "reply");
     }
   } else {
     // the build: things taken away. The bass leaves at the half, the kick thins and leaves for the last quarter, the snare roll
@@ -422,7 +441,7 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
       if (!last) { drums(kit.drums); bass(kit.bass, kit.bass.p, 0.9); } else if (!gap) drums(kit.drums, 0.9, k => k === "top");
       if (!gap) ev("shaker", null, (0.25 + 0.5 * p) * (s % 2 ? 0.7 : 1), 1);
       const sl = use === "slow" ? slow() : null;
-      if (use === "slow") { if (sl && !(a.vocal !== "none" && sing(sl, sl.dur, 0.9))) tune(lead, sl, 0.8); } else if (!gap) tune(lead, riff.period[(pb * 16 + s) % 128], 0.8);
+      if (use === "slow") { if (sl && !(a.vocal !== "none" && sing(sl, sl.dur, 0.9))) tune(lead, sl, 0.8); } else if (!gap) tune(lead, riff.period[(pb * 16 + s) % 128], 0.8, {}, 16, riff);
     } else if (!gap) {
       const kickV = kit.drums.find(v => kindOf(v.patch) === "kick");
       if (q < 2) { drums(kit.drums, 1, k => k !== "snare"); bass(kit.bass, kit.bass.p, 0.9); }
@@ -438,7 +457,7 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
     }
   }
   // the party's sparkle (a woken area near: the game's hook, live): the reply voice has the hook, by how near
-  if ((ctx.party ?? 0) > 0.01 && role !== "build" && !(role === "breakdown" && !dropped)) tune(reply, riff.reply[(pb * 16 + s) % 128] ?? (pb % 4 === 3 ? riff.period[(pb * 16 + s) % 128] : null), 0.7 * ctx.party!, { hook: "party" });
+  if ((ctx.party ?? 0) > 0.01 && role !== "build" && !(role === "breakdown" && !dropped)) tune(reply, riff.reply[(pb * 16 + s) % 128], 0.7 * ctx.party!, { hook: "party" }, 16, riff, "reply");
   return out;
 }
 

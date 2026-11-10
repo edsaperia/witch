@@ -844,7 +844,14 @@ export class MusicEngine {
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + 0.002);
     g.gain.setTargetAtTime(peak * 0.6, t + 0.01, decay * 0.25);
     g.gain.setTargetAtTime(0, t + decay * 0.5, decay * 0.18);
-    this.chain(p.drive ? [o, this.shaper(p.drive), g] : [o, g], dest);
+    if (p.drive && p.driveTime) {
+      // (the drive on the hit's front only: the saturated sine fading into the clean one over driveTime, so its tail is a thump
+      // felt, not a buzzing note heard; banger mode's kick)
+      const hot = c.createGain(), clean = c.createGain(), sh = this.shaper(p.drive);
+      hot.gain.setValueAtTime(1, t); hot.gain.linearRampToValueAtTime(0, t + p.driveTime);
+      clean.gain.setValueAtTime(0, t); clean.gain.linearRampToValueAtTime(1, t + p.driveTime);
+      o.connect(sh); sh.connect(hot); hot.connect(g); o.connect(clean); clean.connect(g); g.connect(dest);
+    } else this.chain(p.drive ? [o, this.shaper(p.drive), g] : [o, g], dest);
     o.start(t); o.stop(t + decay * 1.3 + 0.05);
     // the click: a few milliseconds of bright noise for the beater, so it cuts through on small speakers
     if (p.click) {

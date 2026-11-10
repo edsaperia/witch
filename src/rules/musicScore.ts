@@ -113,6 +113,8 @@ export interface Patch {
   pan?: number;
   /** sends 0-1, and whether the kick ducks it (the house pump). */
   reverb?: number; delay?: number; duck?: boolean;
+  /** kick: its drive only over the hit's first driveTime seconds, fading to the clean sine (none: the whole hit driven). */
+  driveTime?: number;
   /** kick: its hits don't duck the mix (a tom: banger mode's). */
   noDuck?: boolean;
   /** Another patch this one starts from (its fields over that one's: the singer's notes as a chop). */

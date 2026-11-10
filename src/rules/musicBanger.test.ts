@@ -304,10 +304,12 @@ describe("thump, squares and vocals (Ed, 2026-11-10: \"lacks 'thump'\", \"square
     expect(bangerOn(withoutComp(base))).toBeTruthy();
     expect(drumPatch(base, "bgKick")).toBe(true); expect(drumPatch(base, "bgHat")).toBe(true); expect(drumPatch(base, "bgSub")).toBe(false); expect(drumPatch(base, "riser")).toBe(false);
   });
-  it("gives the kick a body: a slower fall to about 52 Hz, a longer tail, more drive, the click under it; the soft kick stays soft; the duck deeper, holding through the body", () => {
+  it("gives the kick a body but not a note (Ed: \"Tone of the kick sounds like a note rather than a kick\"): a slower fall to about 45 Hz, a short tail, the drive on its front only, the click defining it; the soft kick stays soft; the duck deeper, holding through the body", () => {
     const k = base.patches.bgKick, s = base.patches.bgSoftKick;
     expect(k.pitchTime!).toBeGreaterThanOrEqual(0.06); expect(k.pitchTime!).toBeLessThanOrEqual(0.08);
-    expect(k.pitchEnd!).toBeGreaterThanOrEqual(50); expect(k.pitchEnd!).toBeLessThanOrEqual(55);
+    expect(k.pitchEnd!).toBeGreaterThanOrEqual(42); expect(k.pitchEnd!).toBeLessThanOrEqual(48);
+    expect(k.decay!).toBeLessThanOrEqual(0.28); expect(k.decay!).toBeGreaterThanOrEqual(0.2);
+    expect(k.driveTime!).toBeLessThan(0.1); // (saturated for the hit's front only: the tail a clean sine)
     expect(k.click!).toBeLessThan(0.5); expect(k.drive!).toBeGreaterThan(s.drive!); expect(s.click!).toBeLessThan(k.click!);
     expect(mixOf(base).duck).toBeGreaterThan(base.mix.duck); expect(mixOf(base).duckHold!).toBeGreaterThan(0.03);
     // (only the kick and the bass live low: every lead, chord and pad banger mode plays is high-passed at 120 Hz or over)
@@ -342,5 +344,44 @@ describe("thump, squares and vocals (Ed, 2026-11-10: \"lacks 'thump'\", \"square
       const gentle = [0, 5, 9, 33, 40].flatMap(b => barNotes(style, seed, 0, b));
       expect(gentle.filter(e => e.patch === V.double || e.patch === V.pad)).toEqual([]);
     }
+  });
+});
+
+describe("the tunes' register and level (Ed, 2026-11-10: \"Lead melody gets very high, and it's loud vs the drums\")", () => {
+  it("keeps every lead's line at or under C6 and the reply's under E6, in every family, key, gentle or not, and the victory's lift; never below A3", () => {
+    const R = B.register!, replyPatches = new Set(Object.keys(B.kits).flatMap(n => kitOf(B, n).reply.map(l => B.leads[l].patch)));
+    const tunePatches = new Set(Object.values(B.leads).map(L => L.patch));
+    let seen = 0, top = 0;
+    for (const seed of [1, 7, 23, 101, 4242, 90001]) {
+      const style = night(seed);
+      for (const before of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) for (const bar of [0, 3, 7, 9, 12, 17, 22, 27, 30]) for (const extra of [{}, { victory: 0 }, { nextAt: Infinity }]) {
+        const kit = kitOf(B, kitName(style, arcStep(style, before), "")), replies = new Set(kit.reply.map(l => B.leads[l].patch));
+        for (const e of barNotes(style, seed, before, bar, extra)) {
+          if (e.midi === null || !e.part.startsWith("b:") || !tunePatches.has(e.patch) || e.patch === B.vocals!.double) continue;
+          seen++; top = Math.max(top, e.midi);
+          expect(e.midi, `${e.patch} seed ${seed} wave ${before} bar ${bar}`).toBeLessThanOrEqual(replies.has(e.patch) || replyPatches.has(e.patch) ? R.reply : R.lead);
+          expect(e.midi).toBeGreaterThanOrEqual(R.floor - 12);
+        }
+      }
+    }
+    expect(seen).toBeGreaterThan(2000);
+    expect(R.lead).toBeLessThanOrEqual(84); expect(R.reply).toBeLessThanOrEqual(88);
+    expect(top).toBeLessThanOrEqual(88);
+  });
+  it("plays the main lead's own line under C6 exactly (the hook on each kit's lead voices), a whole line moved by octaves, its shape kept", () => {
+    for (const seed of [7, 23, 101]) {
+      const style = night(seed), h = nightHook(B, seed);
+      for (const before of [3, 5, 8]) {
+        const a = arcStep(style, before), K = kitOf(B, kitName(style, a, "")), E = Math.max(B.energyFloor, a.energy), leads = new Set((E < B.softBelow ? K.leads.soft : K.leads.hard).map(l => B.leads[l].patch));
+        const line = [0, 1, 2, 3].flatMap(b => barNotes(style, seed, before, b)).filter(e => e.midi !== null && leads.has(e.patch) && e.patch !== B.vocals!.double && h.period[e.step % 128]);
+        expect(line.length).toBeGreaterThan(8);
+        for (const e of line) expect(e.midi!).toBeLessThanOrEqual(84);
+        // (the intervals between its notes are the hook's own: nothing folded note by note)
+        const scale = style.scales[a.scale ?? style.scale], semis = (d: number) => 12 * Math.floor(d / 7) + scale[((d % 7) + 7) % 7];
+        const byStep = new Map(line.map(e => [e.step, e.midi!])), steps = [...byStep.keys()].sort((x, y) => x - y);
+        for (let i = 1; i < steps.length; i++) expect(byStep.get(steps[i])! - byStep.get(steps[i - 1])!).toBe(semis(h.period[steps[i] % 128]!.deg) - semis(h.period[steps[i - 1] % 128]!.deg));
+      }
+    }
+    expect(B.register!.level).toBeLessThan(0.75); // (the tunes sit in the groove: about 3.5 dB down)
   });
 });
