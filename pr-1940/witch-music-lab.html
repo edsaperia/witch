@@ -282,7 +282,7 @@ label.check input { accent-color: var(--accent); }
       dnbKick: { kind: "kick", gain: 0.95, pitch: 170, pitchEnd: 52, pitchTime: 0.035, decay: 0.3, drive: 0.35, click: 0.45 },
       dnbSnare: { kind: "snare", gain: 1.15, pitch: 205, cutoff: 1900, q: 0.9, decay: 0.19, reverb: 0.35, hp: 160 },
       dnbSub: { kind: "synth", gain: 0.36, waves: ["sine"], attack: 8e-3, decay: 1.4, sustain: 0.8, release: 0.18, filter: "lowpass", cutoff: 260, glide: 0.07 },
-      bgKick: { kind: "kick", gain: 1, pitch: 150, pitchEnd: 52, pitchTime: 0.07, decay: 0.36, drive: 0.6, click: 0.3 },
+      bgKick: { kind: "kick", gain: 1, pitch: 150, pitchEnd: 45, pitchTime: 0.07, decay: 0.24, drive: 0.6, driveTime: 0.06, click: 0.42 },
       bgSoftKick: { kind: "kick", gain: 0.85, pitch: 130, pitchEnd: 52, pitchTime: 0.05, decay: 0.26, drive: 0.15, click: 0.25 },
       bgTom: { kind: "kick", gain: 0.6, pitch: 230, pitchEnd: 130, pitchTime: 0.07, decay: 0.22, click: 0.15, reverb: 0.25, hp: 70, pan: 0.25, noDuck: true },
       bgTomLo: { kind: "kick", gain: 0.65, pitch: 170, pitchEnd: 92, pitchTime: 0.08, decay: 0.26, click: 0.12, reverb: 0.25, hp: 60, pan: -0.25, noDuck: true },
@@ -496,7 +496,8 @@ label.check input { accent-color: var(--accent); }
       gentle: { stumps: 2, energy: 0.4, kit: "soft", keep: ["soft", "ritual", "dub"] },
       mix: { duck: 0.8, duckHold: 0.07, air: 5, lowCut: 28, drive: 1.2 },
       comp: { on: true, drums: { threshold: -7, knee: 6, ratio: 4, attack: 0.02, releaseBeats: 0.25, mix: 0.5, makeup: 1.5 }, glue: { threshold: -6, knee: 8, ratio: 2, attack: 0.03, release: 0.25, makeup: 1.3 } },
-      vocals: { double: "bgChop", doubleLevel: 1.5, pad: "bgOoh", padLevel: 0.9, stabLevel: 1.2, range: [55, 76] },
+      vocals: { double: "bgChop", doubleLevel: 1, pad: "bgOoh", padLevel: 0.9, stabLevel: 0.8, range: [55, 76] },
+      register: { lead: 84, reply: 88, floor: 57, level: 0.66 },
       progressions: { dorian: { a: [[0, 0, 3, 3], [0, 6, 3, 3], [0, 2, 6, 3], [0, 4, 6, 3], [0, 6, 0, 3], [0, 3, 6, 0]], b: [[2, 6, 3, 0], [3, 3, 0, 0], [6, 3, 0, 0], [2, 3, 0, 0]] }, aeolian: { a: [[0, 5, 2, 6], [0, 6, 5, 6], [0, 0, 5, 6], [0, 5, 3, 4], [0, 3, 5, 6]], b: [[5, 6, 0, 0], [5, 2, 6, 0], [3, 5, 6, 0]] }, phrygian: { a: [[0, 1, 0, 6], [0, 0, 1, 1], [0, 5, 1, 0]], b: [[5, 1, 0, 0], [3, 1, 0, 0]] }, harmonicMinor: { a: [[0, 5, 3, 4], [0, 3, 4, 4], [0, 5, 4, 4]], b: [[5, 4, 0, 0], [3, 4, 0, 0]] } },
       hook: { motifs: ["x-.x-.x-x-.x-...", "x-x-..x-x--.....", "..x-x-x-..x-x-..", "x--x--x-..x-....", "x-..x-x-.x-.x-..", "x-x-x-..x--x--..", ".x-x-.x-x---....", "x---..x-x-x-....", "x-.x-.x-..x-.x-.", "x-x-.x-.x---....", "x--x-.x-x-..x-..", "..x-.x-.x-x-x---"], answers: ["x-----x---x-----", "x---x---x-------", "..x---x-x-------", "x--x--x---------", "x-x-x---x-------"], shapes: [[0, 0, 2, 1, 0], [0, 2, 1, 2, 0], [0, 1, 2, 1, 3], [2, 0, 2, 0, 1], [0, 3, 2, 1, 2], [0, 0, 3, 2, 0], [2, 2, 1, 0, 1], [0, 1, 0, 2, 0], [3, 2, 0, 2, 0], [0, 2, 2, 1, 3]], anchors: [0, 1, 3, 3], replies: [[5, 7, 8], [8, 7, 5], [5, 6, 8], [7, 5, 7]] },
       leads: {
@@ -4765,7 +4766,8 @@ label.check input { accent-color: var(--accent); }
         for (let j = 0; j < n; j++) reply[b * 16 + s0 + 2 * j] = { deg: pentDeg(anchor + rs[j % rs.length] - 5), dur: 2 };
       }
     });
-    const hook = { period, reply, seq, motif: motif2, anchor };
+    const degs = period.filter((x) => x).map((x) => x.deg), rdegs = reply.filter((x) => x).map((x) => x.deg);
+    const hook = { period, reply, seq, motif: motif2, anchor, top: Math.max(...degs), low: Math.min(...degs), replyTop: rdegs.length ? Math.max(...rdegs) : 0 };
     m.set(seed2, hook);
     return hook;
   }
@@ -4928,9 +4930,23 @@ label.check input { accent-color: var(--accent); }
     };
     const tier = E2 < B.softBelow ? kit.leads.soft : kit.leads.hard;
     const lead = B.leads[pick2(tier.length ? tier : Object.keys(B.leads), hash2(seed2, 839, 5))], reply = B.leads[pick2(kit.reply.length ? kit.reply : Object.keys(B.leads), hash2(seed2, 841, 7))];
-    const tune = (L2, n, level, extra = {}, until = 16) => {
+    const R = B.register;
+    const raw = (deg, octave) => {
+      const n = scale.length, o = Math.floor(deg / n);
+      return style2.root + transpose + 12 * (octave + o) + scale[deg - o * n];
+    };
+    const shiftOf = (L2, T, part, ceil) => {
+      if (!R || ceil === void 0) return 0;
+      const top = raw(part === "reply" ? T.replyTop : T.top, L2.octave), low = raw(part === "reply" ? T.replyTop : T.low, L2.octave);
+      let sh = 0;
+      while (top + sh > ceil) sh -= 12;
+      while (low + sh < R.floor && top + sh + 12 <= ceil) sh += 12;
+      return sh;
+    };
+    const tune = (L2, n, level, extra = {}, until = 16, T = hook, part = "period") => {
       if (!L2 || !n || s >= until) return;
-      ev(L2.patch, degreeToMidi(style2, scale, n.deg, L2.octave, transpose), (s % 4 === 0 ? 0.9 : 0.8) * L2.level * level, Math.min(n.dur, until - s), extra);
+      const sh = shiftOf(L2, T, part, L2 === reply ? R?.reply : R?.lead);
+      ev(L2.patch, (R ? raw(n.deg, L2.octave) : degreeToMidi(style2, scale, n.deg, L2.octave, transpose)) + sh, (s % 4 === 0 ? 0.9 : 0.8) * L2.level * level * (R?.level ?? 1), Math.min(n.dur, until - s), extra);
     };
     const F = style2.form, vocal = a.vocal && a.vocal !== "none" && style2.patches[a.vocal] ? a.vocal : F?.sung.patch;
     const sing = (n, dur, level) => {
@@ -5000,12 +5016,12 @@ label.check input { accent-color: var(--accent); }
       if (use2 === "whole") {
         tune(lead, hook.period[slot], 1);
         vox(hook.period[slot], V?.doubleLevel ?? 0);
-        if (role === "victory") tune(reply, hook.reply[slot], 0.7);
+        if (role === "victory") tune(reply, hook.reply[slot], 0.7, {}, 16, hook, "reply");
       } else if (use2 === "slow") tune(lead, slow(), 0.9);
       else {
         const rests = role === "breaks" ? barIn < 4 : pass % 2 === 1 && barIn < 8;
-        tune(rests ? reply : lead, riff.period[slot], rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1));
-        if (!rests && (half || role === "breaks")) tune(reply, riff.reply[slot], 0.7);
+        tune(rests ? reply : lead, riff.period[slot], rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1), {}, 16, riff);
+        if (!rests && (half || role === "breaks")) tune(reply, riff.reply[slot], 0.7, {}, 16, riff, "reply");
         if (!rests && V) {
           const first = riff.period.slice(pb * 16, pb * 16 + 16).findIndex((x) => x);
           if (first === s) vox(riff.period[slot], V.stabLevel, until);
@@ -5032,9 +5048,9 @@ label.check input { accent-color: var(--accent); }
         bass(B.dnb.bass, B.dnb.bass.p, 0.95 * soft, last ? 12 : 16);
         pad(0.7);
         const slot = (k % 8 * 16 + s) % 128, T = use2 === "whole" ? hook : riff;
-        tune(lead, T.period[slot], 1, {}, last ? 12 : 16);
+        tune(lead, T.period[slot], 1, {}, last ? 12 : 16, T);
         if (use2 === "whole") vox(T.period[slot], V?.doubleLevel ?? 0, last ? 12 : 16);
-        tune(reply, T.reply[slot], 0.7, {}, last ? 12 : 16);
+        tune(reply, T.reply[slot], 0.7, {}, last ? 12 : 16, T, "reply");
       }
     } else {
       const n = plan.bars, q = Math.floor(barIn * 4 / n), p = (barIn + s / 16) / n, gap = last && s >= 12;
@@ -5049,7 +5065,7 @@ label.check input { accent-color: var(--accent); }
         const sl = use2 === "slow" ? slow() : null;
         if (use2 === "slow") {
           if (sl && !(a.vocal !== "none" && sing(sl, sl.dur, 0.9))) tune(lead, sl, 0.8);
-        } else if (!gap) tune(lead, riff.period[(pb * 16 + s) % 128], 0.8);
+        } else if (!gap) tune(lead, riff.period[(pb * 16 + s) % 128], 0.8, {}, 16, riff);
       } else if (!gap) {
         const kickV = kit.drums.find((v) => kindOf(v.patch) === "kick");
         if (q < 2) {
@@ -5072,7 +5088,7 @@ label.check input { accent-color: var(--accent); }
         else if (first && (barIn >= n - 1 || s % 2 === 0)) tune(lead, { deg: first.deg, dur: 1 }, 0.2 + 0.2 * p);
       }
     }
-    if ((ctx2.party ?? 0) > 0.01 && role !== "build" && !(role === "breakdown" && !dropped)) tune(reply, riff.reply[(pb * 16 + s) % 128] ?? (pb % 4 === 3 ? riff.period[(pb * 16 + s) % 128] : null), 0.7 * ctx2.party, { hook: "party" });
+    if ((ctx2.party ?? 0) > 0.01 && role !== "build" && !(role === "breakdown" && !dropped)) tune(reply, riff.reply[(pb * 16 + s) % 128], 0.7 * ctx2.party, { hook: "party" }, 16, riff, "reply");
     return out;
   }
   function checkBanger(style2) {
@@ -6970,7 +6986,19 @@ registerProcessor("witch-fof", WitchFof);
       g.gain.linearRampToValueAtTime(peak, t + 2e-3);
       g.gain.setTargetAtTime(peak * 0.6, t + 0.01, decay * 0.25);
       g.gain.setTargetAtTime(0, t + decay * 0.5, decay * 0.18);
-      this.chain(p.drive ? [o, this.shaper(p.drive), g] : [o, g], dest);
+      if (p.drive && p.driveTime) {
+        const hot = c.createGain(), clean = c.createGain(), sh = this.shaper(p.drive);
+        hot.gain.setValueAtTime(1, t);
+        hot.gain.linearRampToValueAtTime(0, t + p.driveTime);
+        clean.gain.setValueAtTime(0, t);
+        clean.gain.linearRampToValueAtTime(1, t + p.driveTime);
+        o.connect(sh);
+        sh.connect(hot);
+        hot.connect(g);
+        o.connect(clean);
+        clean.connect(g);
+        g.connect(dest);
+      } else this.chain(p.drive ? [o, this.shaper(p.drive), g] : [o, g], dest);
       o.start(t);
       o.stop(t + decay * 1.3 + 0.05);
       if (p.click) {
