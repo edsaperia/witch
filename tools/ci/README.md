@@ -18,6 +18,14 @@ Only the separate, frozen prototype checkout is built.
 
 Test files that mock a module with vi.mock, run apart in Vitest's isolated project.
 
+## `pages-gc.cjs`
+
+Delete main's stale build output from the gh-pages checkout before a deploy copies the new dist over it.
+
+```
+node tools/ci/pages-gc.cjs <new dist> <gh-pages checkout> [--dry-run] [--list]
+```
+
 ## `pages-policy.cjs`
 
 Pages publication policy: debounce previews outside the lock; finish every started publication.
@@ -94,6 +102,7 @@ Inventory real world-constructor calls and explicit small-fixture reasons; comme
 - `behaviour-report.test.ts`
 - `effects-scene.test.ts`
 - `mockingTests.test.ts`
+- `pages-gc.test.cjs`
 - `pages-policy.test.cjs`
 - `proofs.json`
 - `proofs.test.cjs`
