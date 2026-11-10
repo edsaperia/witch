@@ -282,7 +282,7 @@ label.check input { accent-color: var(--accent); }
       dnbKick: { kind: "kick", gain: 0.95, pitch: 170, pitchEnd: 52, pitchTime: 0.035, decay: 0.3, drive: 0.35, click: 0.45 },
       dnbSnare: { kind: "snare", gain: 1.15, pitch: 205, cutoff: 1900, q: 0.9, decay: 0.19, reverb: 0.35, hp: 160 },
       dnbSub: { kind: "synth", gain: 0.36, waves: ["sine"], attack: 8e-3, decay: 1.4, sustain: 0.8, release: 0.18, filter: "lowpass", cutoff: 260, glide: 0.07 },
-      bgKick: { kind: "kick", gain: 1, pitch: 175, pitchEnd: 50, pitchTime: 0.045, decay: 0.27, drive: 0.4, click: 0.55 },
+      bgKick: { kind: "kick", gain: 1, pitch: 150, pitchEnd: 52, pitchTime: 0.07, decay: 0.36, drive: 0.6, click: 0.3 },
       bgSoftKick: { kind: "kick", gain: 0.85, pitch: 130, pitchEnd: 52, pitchTime: 0.05, decay: 0.26, drive: 0.15, click: 0.25 },
       bgTom: { kind: "kick", gain: 0.6, pitch: 230, pitchEnd: 130, pitchTime: 0.07, decay: 0.22, click: 0.15, reverb: 0.25, hp: 70, pan: 0.25, noDuck: true },
       bgTomLo: { kind: "kick", gain: 0.65, pitch: 170, pitchEnd: 92, pitchTime: 0.08, decay: 0.26, click: 0.12, reverb: 0.25, hp: 60, pan: -0.25, noDuck: true },
@@ -293,12 +293,18 @@ label.check input { accent-color: var(--accent); }
       bgOpenHat: { kind: "noise", source: "metal", gain: 7, filter: "highpass", cutoff: 7e3, q: 0.7, decay: 0.24, hp: 500, pan: -0.15, reverb: 0.15 },
       bgRide: { kind: "noise", source: "metal", gain: 5, filter: "bandpass", cutoff: 9e3, q: 1.2, decay: 0.2, hp: 3e3, pan: 0.35, reverb: 0.2 },
       bgCrash: { kind: "noise", source: "metal", gain: 5.5, filter: "highpass", cutoff: 4500, q: 0.6, decay: 1.3, hp: 700, reverb: 0.5 },
+      bgRiser: { kind: "riser", gain: 0.14, cutoff: 400, q: 4, reverb: 0.4 },
       bgSweep: { kind: "riser", gain: 0.11, cutoff: 900, q: 2.5, reverb: 0.4 },
       bgSub: { kind: "synth", gain: 0.2, waves: ["sine"], attack: 4e-3, decay: 0.3, sustain: 0.85, release: 0.07, filter: "lowpass", cutoff: 260, duck: true },
       bgStab: { kind: "synth", gain: 0.5, waves: ["sawtooth"], unison: 5, detune: 26, width: 0.95, attack: 2e-3, decay: 0.16, sustain: 0.12, release: 0.08, filter: "lowpass", cutoff: 1800, q: 1.4, envAmt: 5200, fDecay: 0.13, fSustain: 0.2, reverb: 0.3, delay: 0.18, duck: true, hp: 260 },
       bgOrgan: { kind: "synth", gain: 0.45, waves: ["sawtooth", "sine", "triangle"], levels: [0.55, 0.8, 0.35], semis: [0, 12, 19], attack: 3e-3, decay: 0.2, sustain: 0.5, release: 0.07, filter: "lowpass", cutoff: 5200, q: 0.8, reverb: 0.25, duck: true, hp: 220, pan: -0.1 },
       bgWhistle: { kind: "synth", gain: 0.3, waves: ["sine", "triangle"], levels: [1, 0.18], attack: 0.03, decay: 0.25, sustain: 0.85, release: 0.16, glide: 0.055, vibRate: 5.6, vibDepth: 24, vibDelay: 0.1, filter: "lowpass", cutoff: 5200, reverb: 0.55, delay: 0.3, hp: 350, pan: 0.1 },
       bgTwinkle: { kind: "synth", gain: 0.3, waves: ["sine"], attack: 2e-3, decay: 0.35, sustain: 0, release: 0.25, fmRatio: 4, fmIndex: 1.1, fmDecay: 0.1, fmSustain: 0, bend: 1, bendTime: 0.03, filter: "lowpass", cutoff: 8e3, reverb: 0.55, delay: 0.4, hp: 600, pan: -0.3 },
+      bgSquare: { kind: "synth", gain: 0.2, waves: ["square", "square"], detune: 9, width: 0.5, attack: 4e-3, decay: 0.2, sustain: 0.7, release: 0.09, glide: 0.022, filter: "lowpass", cutoff: 2300, q: 1.6, envAmt: 3200, fDecay: 0.07, fSustain: 0.25, filter2: "lowpass", cutoff2: 7500, vibRate: 5.6, vibDepth: 13, vibDelay: 0.24, lfoRate: 0.3, lfoDepth: 350, delay: 0.25, reverb: 0.22, hp: 220 },
+      bgSquareSoft: { kind: "synth", gain: 0.2, waves: ["square", "triangle"], levels: [0.5, 1], detune: 6, attack: 8e-3, decay: 0.25, sustain: 0.6, release: 0.14, glide: 0.03, filter: "lowpass", cutoff: 1500, q: 1, envAmt: 1400, fDecay: 0.1, fSustain: 0.3, filter2: "lowpass", cutoff2: 5e3, vibRate: 5.2, vibDepth: 11, vibDelay: 0.25, delay: 0.3, reverb: 0.4, hp: 220, pan: 0.08 },
+      bgPulse: { kind: "synth", gain: 0.6, waves: ["custom"], harmonics: [1, 0.924, 0.805, 0.653, 0.483, 0.308, 0.143, 0, -0.111, -0.185, -0.219, -0.218, -0.186, -0.132, -0.067, 0, 0.059, 0.103, 0.127, 0.131, 0.115, 0.084, 0.043, 0], attack: 2e-3, decay: 0.12, sustain: 0.3, release: 0.08, filter: "lowpass", cutoff: 3e3, q: 1, envAmt: 3500, fDecay: 0.08, fSustain: 0.3, filter2: "lowpass", cutoff2: 8500, bend: 1, bendTime: 0.025, delay: 0.38, reverb: 0.35, hp: 500, pan: -0.28 },
+      bgPulse25: { kind: "synth", gain: 0.55, waves: ["custom"], harmonics: [1, 0.707, 0.333, 0, -0.2, -0.236, -0.143, 0, 0.111, 0.141, 0.091, 0, -0.077, -0.101, -0.067, 0, 0.059, 0.079, 0.053, 0, -0.048, -0.064, -0.043, 0], attack: 2e-3, decay: 0.14, sustain: 0.4, release: 0.08, filter: "lowpass", cutoff: 2600, q: 1.2, envAmt: 3e3, fDecay: 0.08, fSustain: 0.3, filter2: "lowpass", cutoff2: 8e3, vibRate: 6, vibDepth: 10, vibDelay: 0.2, delay: 0.3, reverb: 0.25, hp: 350, pan: 0.2 },
+      bgOoh: { kind: "sample", from: "chimeraVoice", gain: 0.3, vowels: ["oo"], swell: 0.4, breath: 0, reverb: 0.6, delay: 0.15, hp: 250, duck: true },
       bgChop: { kind: "sample", from: "chimeraVoice", gain: 0.5, vowels: ["aa"], swell: 0.08, breath: 0, reverb: 0.5, delay: 0.4, hp: 300, pan: 0.15 }
     },
     parts: {
@@ -488,7 +494,9 @@ label.check input { accent-color: var(--accent); }
       energyFloor: 0.4,
       softBelow: 0.52,
       gentle: { stumps: 2, energy: 0.4, kit: "soft", keep: ["soft", "ritual", "dub"] },
-      mix: { duck: 0.62, air: 5, lowCut: 34, drive: 1.3 },
+      mix: { duck: 0.8, duckHold: 0.07, air: 5, lowCut: 28, drive: 1.2 },
+      comp: { on: true, drums: { threshold: -7, knee: 6, ratio: 4, attack: 0.02, releaseBeats: 0.25, mix: 0.5, makeup: 1.5 }, glue: { threshold: -6, knee: 8, ratio: 2, attack: 0.03, release: 0.25, makeup: 1.3 } },
+      vocals: { double: "bgChop", doubleLevel: 1.5, pad: "bgOoh", padLevel: 0.9, stabLevel: 1.2, range: [55, 76] },
       progressions: { dorian: { a: [[0, 0, 3, 3], [0, 6, 3, 3], [0, 2, 6, 3], [0, 4, 6, 3], [0, 6, 0, 3], [0, 3, 6, 0]], b: [[2, 6, 3, 0], [3, 3, 0, 0], [6, 3, 0, 0], [2, 3, 0, 0]] }, aeolian: { a: [[0, 5, 2, 6], [0, 6, 5, 6], [0, 0, 5, 6], [0, 5, 3, 4], [0, 3, 5, 6]], b: [[5, 6, 0, 0], [5, 2, 6, 0], [3, 5, 6, 0]] }, phrygian: { a: [[0, 1, 0, 6], [0, 0, 1, 1], [0, 5, 1, 0]], b: [[5, 1, 0, 0], [3, 1, 0, 0]] }, harmonicMinor: { a: [[0, 5, 3, 4], [0, 3, 4, 4], [0, 5, 4, 4]], b: [[5, 4, 0, 0], [3, 4, 0, 0]] } },
       hook: { motifs: ["x-.x-.x-x-.x-...", "x-x-..x-x--.....", "..x-x-x-..x-x-..", "x--x--x-..x-....", "x-..x-x-.x-.x-..", "x-x-x-..x--x--..", ".x-x-.x-x---....", "x---..x-x-x-....", "x-.x-.x-..x-.x-.", "x-x-.x-.x---....", "x--x-.x-x-..x-..", "..x-.x-.x-x-x---"], answers: ["x-----x---x-----", "x---x---x-------", "..x---x-x-------", "x--x--x---------", "x-x-x---x-------"], shapes: [[0, 0, 2, 1, 0], [0, 2, 1, 2, 0], [0, 1, 2, 1, 3], [2, 0, 2, 0, 1], [0, 3, 2, 1, 2], [0, 0, 3, 2, 0], [2, 2, 1, 0, 1], [0, 1, 0, 2, 0], [3, 2, 0, 2, 0], [0, 2, 2, 1, 3]], anchors: [0, 1, 3, 3], replies: [[5, 7, 8], [8, 7, 5], [5, 6, 8], [7, 5, 7]] },
       leads: {
@@ -508,7 +516,11 @@ label.check input { accent-color: var(--accent); }
         flute: { patch: "breathFlute", octave: 3, level: 2.5 },
         cowbell: { patch: "cowbell", octave: 3, level: 2.2 },
         airy: { patch: "airyVox", octave: 3, level: 2.6 },
-        chop: { patch: "bgChop", octave: 2, level: 2.2 }
+        chop: { patch: "bgChop", octave: 2, level: 2.2 },
+        square: { patch: "bgSquare", octave: 3, level: 2.4 },
+        squareSoft: { patch: "bgSquareSoft", octave: 3, level: 3.4 },
+        pulse: { patch: "bgPulse", octave: 4, level: 2 },
+        pulse25: { patch: "bgPulse25", octave: 4, level: 2 }
       },
       fills: {
         classic: [{ patch: "snare", p: "........x.x.xxXX" }],
@@ -532,8 +544,8 @@ label.check input { accent-color: var(--accent); }
           bass: { patch: ["houseBassDeep", "rubberDeep"], octave: 1, p: ["..1-..1-..1-..1-..1-..1-..1-.5-8", "..1--1-...1--1-...1--1-...5--8-.", "..1-.1.1..1-..5-..1-.1.1..1-.8.5"], breaks: ["1--..1-...5-..1.1--..1-...8-.5.."] },
           chords: { patch: "bgOrgan", p: ["..x...x...x...x.", "x..x..x...x..x..", "..x..x....x..x.."], level: 0.8, sevenths: true },
           pad: { patch: "pad", level: 0.55 },
-          leads: { soft: ["marimba", "rhodes", "pluck"], hard: ["pluck", "saw", "pwm"] },
-          reply: ["twinkle", "box"]
+          leads: { soft: ["squareSoft", "pulse25"], hard: ["square", "square", "pwm"] },
+          reply: ["pulse", "pulse25"]
         },
         organic: {
           base: "house",
@@ -552,8 +564,8 @@ label.check input { accent-color: var(--accent); }
           bass: { patch: ["rubberDeep", "houseBassDeep"], octave: 1, p: ["1-----..5-..1---1-----..5-..8-5-", "..1-..1-..5-..1-..1-..1-..8-..5-"] },
           chords: { patch: "marimba", p: ["x.....x...x.....", "..x...x.....x..."], level: 0.5, arp: true, window: 60 },
           pad: { patch: "pad", level: 0.6 },
-          leads: { soft: ["whistle", "box", "flute", "marimba"], hard: ["whistle", "pluck", "box"] },
-          reply: ["twinkle", "box"]
+          leads: { soft: ["squareSoft", "squareSoft", "whistle"], hard: ["squareSoft", "pulse25"] },
+          reply: ["pulse", "twinkle"]
         },
         ritual: {
           base: "soft",
@@ -580,8 +592,8 @@ label.check input { accent-color: var(--accent); }
           bass: { patch: ["rubberDeep", "houseBassDeep"], octave: 1, p: ["1--..1-..5-...1.1--..1-..8-.5-..", "1-.1-...5-.1-...1-.1-..8..5-.7-."] },
           chords: { patch: "bgOrgan", p: ["..x...x...x...xx", "x..x....x.x....."], level: 0.8, sevenths: true },
           pad: { patch: "pad", level: 0.45 },
-          leads: { soft: ["rhodes", "box", "whistle"], hard: ["pluck", "pwm", "chop"] },
-          reply: ["twinkle", "chop"]
+          leads: { soft: ["squareSoft", "pulse25"], hard: ["square", "pulse25", "chop"] },
+          reply: ["pulse", "chop"]
         },
         trance: {
           swing: 0,
@@ -592,8 +604,8 @@ label.check input { accent-color: var(--accent); }
           bass: { patch: ["houseBassDeep", "darkBass"], octave: 1, p: [".111.111.111.111.111.111.111.151", "..1-..1-..1-..1-..1-..1-..1-..8-", ".1.1.111.1.1.111.1.1.111.1.1.158"] },
           chords: { patch: "gatePad", p: ["x-.x-.x-.x-.x-x-", "x-x-.x-.x-x-.x-."], level: 0.9 },
           pad: { patch: "strings", level: 0.4, e: [0.5, 1] },
-          leads: { soft: ["pluck", "pwm"], hard: ["saw", "super", "pluck"] },
-          reply: ["bell", "twinkle"]
+          leads: { soft: ["square", "pwm"], hard: ["square", "square", "super"] },
+          reply: ["pulse", "pulse25"]
         },
         techno: {
           swing: 0.03,
@@ -603,8 +615,8 @@ label.check input { accent-color: var(--accent); }
           fills: ["kicks", "roll", "gap", "classic"],
           bass: { patch: ["darkBass"], octave: 1, p: ["..11..11..11..11", ".1.1.11..1.1.11.", "..1...1...11..1."] },
           chords: { patch: "bgStab", p: ["......x.......x.......x.....x.x.", "..x.......x.......x...x........."], level: 0.7 },
-          leads: { soft: ["pluck", "dark"], hard: ["stab", "saw", "dark"] },
-          reply: ["bell", "chip"]
+          leads: { soft: ["square", "pulse25"], hard: ["square", "square", "stab"] },
+          reply: ["pulse", "pulse25"]
         },
         electro: {
           base: "techno",
@@ -612,8 +624,8 @@ label.check input { accent-color: var(--accent); }
           drums: [{ patch: "bgKick", p: "X..x..x...x.....X..x..x...x..x.." }, { patch: "snare", p: "....X.......X...", level: 0.9 }, { patch: "bgClap", p: "....x.......x...", level: 0.5 }, { patch: "bgHat", p: "x.xgx.xgx.xgx.xg", level: 0.5 }, { patch: "clank", p: "..x...x...x...xx", level: 0.4 }, { patch: "bgOpenHat", p: "......x.......x.", level: 0.45, e: [0.5, 1] }],
           bass: { patch: ["darkBass", "rubberDeep"], octave: 1, p: ["1.18.1.81.18.1.8", "1..1..8.1.1...8."] },
           chords: { patch: "bgStab", p: ["x..x....x.x.....", "..x...x...x...xx"], level: 0.65 },
-          leads: { soft: ["pwm", "pluck"], hard: ["saw", "pwm", "stab"] },
-          reply: ["chip", "bell"]
+          leads: { soft: ["square", "pwm"], hard: ["square", "pulse25", "pwm"] },
+          reply: ["pulse", "pulse25"]
         },
         hard: {
           base: "techno",
@@ -622,16 +634,16 @@ label.check input { accent-color: var(--accent); }
           breaks: [{ patch: "kickHard", p: "X.........x.....X.x.......x..x.." }, { patch: "snare", p: "....X..g.o..X..g.o..X..g....X.o.", level: 0.9 }, { patch: "bgHat", p: "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", level: 0.45 }, { patch: "bgOpenHat", p: "..............x.................", level: 0.45, e: [0.5, 1] }],
           bass: { patch: ["reese"], octave: 1, p: ["1---1-8-1---5-8-", "..1-..1-..1-.1.1", "1-.1-.1-1-.1-.8-"] },
           chords: { patch: "bgStab", p: ["..x...x...x...x.", "x..x..x...x..x.."], level: 0.7 },
-          leads: { soft: ["dark", "stab"], hard: ["super", "stab", "saw"] },
-          reply: ["chip", "bell"]
+          leads: { soft: ["square", "dark"], hard: ["square", "square", "super"] },
+          reply: ["pulse25", "pulse"]
         },
         acid: {
           base: "house",
           swing: 0.08,
           bass: { patch: ["acid"], octave: 1, sub: true, level: 1.6, glide: 0.05, p: ["1.18.51.8.1.5.18", "11.1.8.1.15.1.8.", "1.1.8.11.5.1.8.7"] },
           chords: { patch: "bgStab", p: ["......x.......x.", "..x.......x....."], level: 0.55 },
-          leads: { soft: ["pluck", "pwm"], hard: ["stab", "pwm", "saw"] },
-          reply: ["bell", "twinkle"]
+          leads: { soft: ["square", "pwm"], hard: ["square", "pwm", "pulse25"] },
+          reply: ["pulse", "pulse25"]
         },
         breaks: {
           swing: 0.07,
@@ -642,8 +654,8 @@ label.check input { accent-color: var(--accent); }
           bass: { patch: ["reese"], octave: 1, p: ["1-------..1-5---1-----1-..8-5-7-", "1---------1-----1---------1--8--"] },
           chords: { patch: "bgStab", p: ["x..x....x.x.....", "..x...x.....x.x."], level: 0.7, sevenths: true },
           pad: { patch: "choir", level: 0.5 },
-          leads: { soft: ["pwm", "airy"], hard: ["super", "saw", "chop"] },
-          reply: ["chop", "bell"]
+          leads: { soft: ["square", "pwm"], hard: ["square", "square", "chop"] },
+          reply: ["chop", "pulse"]
         },
         jungle: {
           base: "breaks",
@@ -679,8 +691,8 @@ label.check input { accent-color: var(--accent); }
           bass: { patch: ["chipBass"], octave: 1, sub: true, level: 2.5, p: ["1.8.1.8.1.8.1.8.", "1.88.18.1.88.18."] },
           chords: { patch: "arp", p: ["xxxxxxxxxxxxxxxx", "x.x.x.x.x.x.x.x."], level: 1.2, arp: true, window: 69 },
           pad: { patch: "gatePad", level: 0 },
-          leads: { soft: ["chip", "box"], hard: ["chip", "pwm", "super"] },
-          reply: ["twinkle", "bell"]
+          leads: { soft: ["pulse25", "square"], hard: ["pulse25", "square", "pulse"] },
+          reply: ["pulse", "twinkle"]
         }
       },
       families: { grove: "soft", ritual: "ritual", clearing: "house", organic: "organic", lanterns: "house", glow: "garage", mist: "dub", ether: "soft", moonrise: "trance", nightdrive: "electro", stones: "techno", bog: "acid", breakbeat: "breaks", wires: "electro", chip: "chip", industrial: "hard", phonk: "phonk", glitter: "chip", thunder: "hard", stampede: "jungle", coven: "trap" }
@@ -4689,6 +4701,10 @@ label.check input { accent-color: var(--accent); }
 
   // src/rules/musicBanger.ts
   var bangerOn = (style2) => style2.banger && style2.banger.on !== false ? style2.banger : null;
+  var compOf = (style2) => {
+    const B = bangerOn(style2);
+    return B?.comp && B.comp.on !== false ? B.comp : null;
+  };
   var mixOf = (style2) => {
     const B = bangerOn(style2);
     return B ? { ...style2.mix, ...B.mix } : style2.mix;
@@ -4935,6 +4951,19 @@ label.check input { accent-color: var(--accent); }
       return n && { deg: n.deg, dur: n.dur * 2 };
     };
     const soft = gentle ? 0.6 : 1;
+    const V = gentle ? void 0 : B.vocals;
+    const voxAt = (deg) => {
+      let m = degreeToMidi(style2, scale, deg, 2, transpose);
+      while (m > V.range[1]) m -= 12;
+      while (m < V.range[0]) m += 12;
+      return m;
+    };
+    const vox = (n, level, until = 16) => {
+      if (V && n && s < until && style2.patches[V.double]) out.push({ part: "b:" + V.double, patch: V.double, step: step2, offset: sw, dur: Math.min(Math.max(2, n.dur), Math.max(1, until - s)), midi: voxAt(n.deg), vel: 0.85 * level, straight: true });
+    };
+    const ooh = (level) => {
+      if (V && s === 0 && style2.patches[V.pad]) for (const t of [chord.root, chord.root + 4]) out.push({ part: "b:" + V.pad, patch: V.pad, step: step2, offset: 0, dur: 16, midi: voxAt(t), vel: 0.8 * V.padLevel * level, straight: true });
+    };
     const crash = (vel) => {
       if (s === 0) ev("bgCrash", null, vel, 16, { offset: 0 });
     };
@@ -4967,14 +4996,20 @@ label.check input { accent-color: var(--accent); }
       chords(1, until);
       pad(1);
       const slot = (pb * 16 + s) % 128;
+      ooh(1);
       if (use2 === "whole") {
         tune(lead, hook.period[slot], 1);
+        vox(hook.period[slot], V?.doubleLevel ?? 0);
         if (role === "victory") tune(reply, hook.reply[slot], 0.7);
       } else if (use2 === "slow") tune(lead, slow(), 0.9);
       else {
         const rests = role === "breaks" ? barIn < 4 : pass % 2 === 1 && barIn < 8;
         tune(rests ? reply : lead, riff.period[slot], rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1));
         if (!rests && (half || role === "breaks")) tune(reply, riff.reply[slot], 0.7);
+        if (!rests && V) {
+          const first = riff.period.slice(pb * 16, pb * 16 + 16).findIndex((x) => x);
+          if (first === s) vox(riff.period[slot], V.stabLevel, until);
+        }
       }
     } else if (role === "breakdown") {
       if (!dropped) {
@@ -4998,12 +5033,13 @@ label.check input { accent-color: var(--accent); }
         pad(0.7);
         const slot = (k % 8 * 16 + s) % 128, T = use2 === "whole" ? hook : riff;
         tune(lead, T.period[slot], 1, {}, last ? 12 : 16);
+        if (use2 === "whole") vox(T.period[slot], V?.doubleLevel ?? 0, last ? 12 : 16);
         tune(reply, T.reply[slot], 0.7, {}, last ? 12 : 16);
       }
     } else {
       const n = plan.bars, q = Math.floor(barIn * 4 / n), p = (barIn + s / 16) / n, gap = last && s >= 12;
-      riser(barIn / n, (barIn + 1) / n, last ? 12 : 16);
-      pad(0.8);
+      riser(barIn / n, (barIn + 1) / n, last ? 12 : 16, "bgRiser");
+      pad(q < 2 ? 0.8 : 0.5);
       if (gentle) {
         if (!last) {
           drums(kit.drums);
@@ -5023,7 +5059,7 @@ label.check input { accent-color: var(--accent); }
           drums(kit.drums, 0.9, (k) => k === "top");
           if (kickV && s % 8 === 0) ev(kickV.patch, null, 0.9, 1);
         }
-        const roll = q === 0 ? s % 4 === 0 : q === 1 ? s % 2 === 0 : true, lv = 0.2 + 0.45 * p;
+        const roll = q === 0 ? s % 4 === 0 : q === 1 ? s % 2 === 0 : true, lv = 0.15 + 0.3 * p;
         if (roll) {
           ev("snare", null, lv * (s % 4 === 0 ? 1 : 0.8), 1);
           if (q === 3 && barIn >= n - 1) out.push({ part: "b:snare", patch: "snare", step: step2, offset: sw + 0.5, dur: 0.5, midi: null, vel: lv * 0.8, straight: true });
@@ -5032,8 +5068,8 @@ label.check input { accent-color: var(--accent); }
         if (q < 2) {
           const sl = slow();
           if (sl && !(a.vocal !== "none" && sing(sl, sl.dur, 0.9))) tune(lead, sl, 0.7);
-        } else if (q === 2) tune(lead, hook.period[s % 4], 0.3 + 0.25 * p);
-        else if (first && (barIn >= n - 1 || s % 2 === 0)) tune(lead, { deg: first.deg, dur: 1 }, 0.3 + 0.3 * p);
+        } else if (q === 2) tune(lead, hook.period[s % 4], 0.2 + 0.2 * p);
+        else if (first && (barIn >= n - 1 || s % 2 === 0)) tune(lead, { deg: first.deg, dur: 1 }, 0.2 + 0.2 * p);
       }
     }
     if ((ctx2.party ?? 0) > 0.01 && role !== "build" && !(role === "breakdown" && !dropped)) tune(reply, riff.reply[(pb * 16 + s) % 128] ?? (pb % 4 === 3 ? riff.period[(pb * 16 + s) % 128] : null), 0.7 * ctx2.party, { hook: "party" });
@@ -5093,7 +5129,11 @@ label.check input { accent-color: var(--accent); }
       if (!style2.scales[m]) errs.push(`banger progressions: no scale "${m}"`);
       if (!P.a.length || !P.b.length) errs.push(`banger progressions ${m}: empty`);
     }
-    for (const p of ["bgCrash", "bgSweep", "bgSub", "snare"]) patch("fixed", p);
+    for (const p of ["bgCrash", "bgSweep", "bgRiser", "bgSub", "snare"]) patch("fixed", p);
+    if (B.vocals) {
+      patch("vocals", B.vocals.double);
+      patch("vocals", B.vocals.pad);
+    }
     return errs;
   }
 
@@ -5938,6 +5978,8 @@ registerProcessor("witch-fof", WitchFof);
       delayTone.frequency.value = 3200;
       this.duckBus.connect(this.tone);
       this.dryBus.connect(this.tone);
+      this.drumBus = c.createGain();
+      this.drumBus.connect(this.tone);
       const reverbLow = c.createBiquadFilter();
       reverbLow.type = "highpass";
       reverbLow.frequency.value = 220;
@@ -6025,6 +6067,11 @@ registerProcessor("witch-fof", WitchFof);
     limit;
     /** Banger mode's master (rules/musicBanger.ts mixOf), made when a style first asks for it, in the path only while one does. */
     master = null;
+    /** Banger mode's drum bus (Ed, 2026-11-10: "Is it possible to add a compressor?"): its drums' channels and the drawn-ahead
+     *  bars' drum stem feed it; straight into the low-pass till a style's compressor asks, then dry beside a squashed copy
+     *  (parallel). Nothing feeds it with banger mode or its compressors off. */
+    drumBus;
+    drumComp = null;
     duckBus;
     dryBus;
     reverb;
@@ -6214,7 +6261,7 @@ registerProcessor("witch-fof", WitchFof);
     setMix() {
       const m = mixOf(this.style), lite = this.shedLevel >= 3, time = lite ? Math.min(0.7, m.reverbTime) : m.reverbTime;
       this.out.gain.value = m.master;
-      const want = !!(m.air || m.lowCut || m.drive && m.drive !== 1);
+      const want = !this.stems && !!(m.air || m.lowCut || m.drive && m.drive !== 1);
       if (want && !this.master) {
         const c = this.ctx, low = c.createBiquadFilter(), air = c.createBiquadFilter(), drive = c.createGain();
         low.type = "highpass";
@@ -6241,6 +6288,66 @@ registerProcessor("witch-fof", WitchFof);
             this.tone.connect(this.limit);
           }
         }
+        const G = want ? compOf(this.style)?.glue : void 0;
+        if (G && !M2.glue) {
+          const comp = this.ctx.createDynamicsCompressor(), makeup = this.ctx.createGain();
+          comp.connect(makeup);
+          makeup.connect(this.limit);
+          M2.glue = { comp, makeup, on: false };
+        }
+        if (M2.glue) {
+          const g = M2.glue;
+          if (G) {
+            g.comp.threshold.value = G.threshold;
+            g.comp.knee.value = G.knee;
+            g.comp.ratio.value = G.ratio;
+            g.comp.attack.value = G.attack;
+            g.comp.release.value = G.release;
+            g.makeup.gain.value = G.makeup;
+          }
+          if (!!G !== g.on) {
+            g.on = !!G;
+            if (G) {
+              M2.drive.disconnect(this.limit);
+              M2.drive.connect(g.comp);
+            } else {
+              M2.drive.disconnect(g.comp);
+              M2.drive.connect(this.limit);
+            }
+          }
+        }
+      }
+      const D2 = this.stems ? void 0 : compOf(this.style)?.drums;
+      if (D2 && !this.drumComp) {
+        const c = this.ctx, comp = c.createDynamicsCompressor(), wet = c.createGain(), dry = c.createGain();
+        dry.connect(this.tone);
+        comp.connect(wet);
+        wet.connect(this.tone);
+        this.drumComp = { comp, wet, dry, on: false };
+      }
+      if (this.drumComp) {
+        const K = this.drumComp;
+        if (D2) {
+          K.comp.threshold.value = D2.threshold;
+          K.comp.knee.value = D2.knee;
+          K.comp.ratio.value = D2.ratio;
+          K.comp.attack.value = D2.attack;
+          K.comp.release.value = D2.releaseBeats * 60 / Math.max(40, this.bpmNow);
+          K.wet.gain.value = D2.mix * D2.makeup;
+          K.dry.gain.value = 1 - D2.mix;
+        }
+        if (!!D2 !== K.on) {
+          K.on = !!D2;
+          if (D2) {
+            this.drumBus.disconnect(this.tone);
+            this.drumBus.connect(K.dry);
+            this.drumBus.connect(K.comp);
+          } else {
+            this.drumBus.disconnect(K.dry);
+            this.drumBus.disconnect(K.comp);
+            this.drumBus.connect(this.tone);
+          }
+        }
       }
       this.reverbIn.gain.value = m.reverb;
       this.delayIn.gain.value = lite ? 0 : m.delay;
@@ -6263,6 +6370,7 @@ registerProcessor("witch-fof", WitchFof);
         dry: this.dryBus,
         reverb: this.reverbIn,
         delay: this.delayIn,
+        drums: this.drumBus,
         voice: null,
         tone: (f0, f1, t, dur) => {
           this.tone.frequency.setValueAtTime(f0, t);
@@ -6271,7 +6379,7 @@ registerProcessor("witch-fof", WitchFof);
         duckAt: (t, depth, sps) => {
           const g = this.duckBus.gain;
           g.setTargetAtTime(1 - depth, t, 4e-3);
-          g.setTargetAtTime(1, t + 0.03, sps * 0.7);
+          g.setTargetAtTime(1, t + (mixOf(this.style).duckHold ?? 0.03), sps * 0.7);
         },
         gate: (open, t) => {
           if (open) {
@@ -6454,6 +6562,10 @@ registerProcessor("witch-fof", WitchFof);
         if (this.lastStep < stepMusic + 64 && this.lastStep >= stepMusic - 64) this.nextStep = Math.max(this.nextStep, this.lastStep + 1);
       }
       this.bpmNow = bpmAt(clock2, gameTime) * rate;
+      if (this.drumComp?.on) {
+        const D2 = compOf(this.style)?.drums;
+        if (D2) this.drumComp.comp.release.setTargetAtTime(Math.min(1, D2.releaseBeats * 60 / Math.max(40, this.bpmNow)), now, 0.05);
+      }
       this.delay.delayTime.setTargetAtTime(Math.min(4, this.style.mix.delayBeats * 60 / bpmAt(clock2, gameTime) / rate), now, 0.05);
       if (this.heardTo >= 0 && this.nextStep >= 0) {
         const t = audioAt(timeAt(clock2, this.nextStep / 4));
@@ -6627,7 +6739,8 @@ registerProcessor("witch-fof", WitchFof);
           out.connect(s);
           out = s;
         }
-        out.connect(circle ? this.circleIn : fx ? this.post : p.duck ? this.sink.duck : this.sink.dry);
+        const drum = !circle && !fx && part.startsWith("b:") && !!compOf(this.style)?.drums && (p.kind === "kick" || p.kind === "snare" || p.kind === "noise") ? this.sink.drums : void 0;
+        out.connect(circle ? this.circleIn : fx ? this.post : drum ?? (p.duck ? this.sink.duck : this.sink.dry));
         if (p.reverb) {
           const r = c.createGain();
           r.gain.value = p.reverb;
@@ -7461,8 +7574,8 @@ registerProcessor("witch-fof", WitchFof);
   var START = 2.5;
   var TAIL = 2.5;
   var RENDERING = 2;
-  var STEMS = 11;
-  var VOICE = 10;
+  var STEMS = 13;
+  var VOICE = 12;
   var cueKey = (c) => JSON.stringify({ ...c, siege: 0, party: 0, legend: 0, circle: void 0 });
   var styleIds = /* @__PURE__ */ new WeakMap();
   var styleNext = 0;
@@ -7589,6 +7702,7 @@ registerProcessor("witch-fof", WitchFof);
         reverb: pair2(2),
         delay: pair2(3),
         ghost: pair2(4),
+        drums: pair2(5),
         voice: () => voice,
         tone: (f0, f1, t, d) => events.push({ kind: "tone", f0, f1, t, dur: d }),
         duckAt: (t, depth, sps) => events.push({ kind: "duck", t, depth, sps }),
@@ -7630,7 +7744,7 @@ registerProcessor("witch-fof", WitchFof);
       src.buffer = buf;
       src.connect(sp);
       const ghost = E2.style.haunted ? E2.ghostIn() : null;
-      [bus.duck, bus.dry, bus.reverb, bus.delay, ghost].forEach((d, i) => {
+      [bus.duck, bus.dry, bus.reverb, bus.delay, ghost, bus.drums].forEach((d, i) => {
         if (!d) return;
         const m = c.createChannelMerger(2);
         sp.connect(m, 2 * i, 0);
