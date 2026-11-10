@@ -42,16 +42,21 @@ test('Ed owns source activation, cleanup remains independent, and dispatch reach
   assert.equal((ci.match(/name: Request managed Pages publication/g)||[]).length,2);
   assert.match(ci,/context.ref==='refs\/heads\/main'\?'pages-live':'pages-preview'/);
 });
-test('a failed or cancelled deployment is retried, a re-run can deploy, and the public root is checked (2026-11-09)',()=>{
+test('our own deployment step: named per attempt, cancels a stuck deployment, waits 30 min, tries twice, then the public check (2026-11-10)',()=>{
   const steps=parsed.jobs.publish.steps, by=name=>steps.find(s=>s.name===name);
-  const pack=by('Package complete site snapshot'), first=by('Deploy complete snapshot'), retry=by('Deploy again after a failed or cancelled deployment');
-  // one artifact per attempt: a re-run uploads again, and two of one name stop deploy-pages
-  assert.equal(pack.with.name,'github-pages-${{ github.run_attempt }}');
-  for(const d of [first,retry]){ assert.equal(d.with.artifact_name,pack.with.name); assert.ok(d.with.timeout>=1800000); }
-  assert.equal(first['continue-on-error'],true); assert.equal(retry.if,"steps.deployment.outcome == 'failure'");
-  assert.match(parsed.jobs.publish.environment.url,/steps.retry.outputs.page_url/);
+  const pack=by('Package complete site snapshot'), deploy=by('Deploy complete snapshot');
+  // one artifact per attempt: a re-run uploads again, and two of one name break the deployment
+  assert.equal(pack.id,'pack'); assert.equal(pack.with.name,'github-pages-${{ github.run_attempt }}');
+  assert.equal(deploy.id,'deployment'); assert.match(deploy.uses,/^actions\/github-script@/);
+  assert.equal(deploy.env.ARTIFACT_ID,'${{ steps.pack.outputs.artifact_id }}');
+  assert.doesNotMatch(workflow,/actions\/deploy-pages@/); // (it names deployments by GITHUB_SHA and caps its wait at 10 min)
+  const js=deploy.with.script;
+  assert.match(js,/pages_build_version:version/); assert.match(js,/context.runId/); assert.match(js,/GITHUB_RUN_ATTEMPT/);
+  assert.match(js,/pages\/deployments\/\{id\}\/cancel/); assert.match(js,/in progress deployment/);
+  assert.match(js,/30\*60e3/); assert.match(js,/attempt<=2/); assert.match(js,/getIDToken/);
+  assert.equal(parsed.jobs.publish.environment.url,'${{ steps.deployment.outputs.page_url }}');
   const check=by('Check the public site serves the published live root');
-  assert.ok(steps.indexOf(check)>steps.indexOf(retry)); assert.match(check.with.script,/version.json/); assert.match(check.with.script,/setFailed/);
+  assert.ok(steps.indexOf(check)>steps.indexOf(deploy)); assert.match(check.with.script,/version.json/); assert.match(check.with.script,/setFailed/);
 });
 test('previews: documents-only pull requests get none, and main drops those idle a week',()=>{
   const ci=fs.readFileSync('.github/workflows/ci.yml','utf8'), y=require('yaml').parse(ci);
@@ -59,9 +64,4 @@ test('previews: documents-only pull requests get none, and main drops those idle
   for(const s of steps.slice(1)) assert.match(s.if,/steps.scope.outputs.docs != 'true'/);
   const deploy=y.jobs.deploy.steps.find(s=>s.name==='Publish to gh-pages').run;
   assert.match(deploy,/select\(.updated_at > \(now - 7\*86400 \| todate\)\)/);
-});
-test('each deployment gets its own build version, not the shared main SHA (2026-11-10)',()=>{
-  const steps=parsed.jobs.publish.steps, first=steps.find(s=>s.id==='deployment'), retry=steps.find(s=>s.id==='retry');
-  assert.match(first.env.GITHUB_SHA,/github.run_id.*github.run_attempt/); assert.match(retry.env.GITHUB_SHA,/-retry$/);
-  assert.notEqual(first.env.GITHUB_SHA,retry.env.GITHUB_SHA);
 });
