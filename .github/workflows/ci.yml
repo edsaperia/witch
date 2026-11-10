@@ -145,6 +145,9 @@ jobs:
                   if [ -d "$d" ] && [[ "$OPEN" != *" ${d#pr-} "* ]]; then rm -rf "$d"; fi
                 done
               fi
+              # (and the root's stale build files: the copy below only ever added, and 292 releases' hashed files had filled
+              # the snapshot to 989 MB on 2026-11-10; it keeps the previous build, which pages left open still load from)
+              node ../tools/ci/pages-gc.cjs ../dist . || echo "::warning::Stale build files not cleaned up; deploying anyway."
             fi
             mkdir -p "$DEST" && cp -a ../dist/. "$DEST/" && touch "$DEST/.nojekyll"
             git add -A
@@ -236,6 +239,9 @@ jobs:
                   if [ -d "$d" ] && [[ "$OPEN" != *" ${d#pr-} "* ]]; then rm -rf "$d"; fi
                 done
               fi
+              # (and the root's stale build files: the copy below only ever added, and 292 releases' hashed files had filled
+              # the snapshot to 989 MB on 2026-11-10; it keeps the previous build, which pages left open still load from)
+              node ../tools/ci/pages-gc.cjs ../dist . || echo "::warning::Stale build files not cleaned up; deploying anyway."
             fi
             mkdir -p "$DEST" && cp -a ../dist/. "$DEST/" && touch "$DEST/.nojekyll"
             git add -A
@@ -362,7 +368,7 @@ jobs:
         if: needs.build.outputs.reuse != 'true'
       - name: Reporting and checked-tree safety fixtures
         if: needs.build.outputs.reuse != 'true'
-        run: node --test tools/ci/reporting.test.cjs tools/ci/pages-policy.test.cjs
+        run: node --test tools/ci/reporting.test.cjs tools/ci/pages-policy.test.cjs tools/ci/pages-gc.test.cjs
       - name: Relay protocol and admission tests
         if: needs.build.outputs.reuse != 'true'
         run: npm --prefix server ci && npm --prefix server test
