@@ -16,6 +16,7 @@ A voice singing a list of notes, offline, with Pink Trombone: sing gives a Float
 
 ## Also here
 
+- `chimera-bodymix.patch`
 - `fof`
 - `pink-trombone`
 - `tract`

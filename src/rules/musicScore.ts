@@ -6,7 +6,7 @@ import { hash2 } from "./random";
 import voices from "../../config/creature-voices.json";
 import { sectionOf } from "./creatureConfig";
 import type { CuratedStep, FamilyDef, SetDef } from "./musicSet";
-import { bangerChord, bangerNotes, bangerOn, bangerRole, checkBanger, hookNoteAt, nightHook, type BangerDef } from "./musicBanger";
+import { bangerChord, bangerNotes, bangerOn, bangerRole, bangerScaleName, checkBanger, hookNoteAt, nightHook, type BangerDef } from "./musicBanger";
 import { bassBar, beatMotif, cellNotes, composeLine, contourAt, hookLine, makeRiff, motifShape, ostinatoMotif, pickContour, pitchCell, riffLine, varyCell, type BassNote, type BassRule, type ComposeDef, type LineRules, type LineSlot, type Riff, type RiffKind } from "./musicCompose";
 
 /** A synth patch: how one part sounds. Every field but kind and gain is optional. */
@@ -115,6 +115,12 @@ export interface Patch {
   reverb?: number; delay?: number; duck?: boolean;
   /** kick: its drive only over the hit's first driveTime seconds, fading to the clean sine (none: the whole hit driven). */
   driveTime?: number;
+  /** kick (banger mode's; Ed, 2026-11-11: "The kick lacks punch"): `blip` a higher start (Hz) falling to `pitch` in `blipTime`
+   *  s before the body's own fall (the beater's knock, no higher tone); `hold` s the body stays at its full level (0.01);
+   *  the click's band (Hz; 3500) and its length (s; 0.012). */
+  blip?: number; blipTime?: number; hold?: number; clickFreq?: number; clickTime?: number;
+  /** A high shelf on the part (dB at 7 kHz: an airy top), and a sampled note's pitch off by a few `cents` (a detuned doubling). */
+  air?: number; cents?: number;
   /** kick: its hits don't duck the mix (a tom: banger mode's). */
   noDuck?: boolean;
   /** Another patch this one starts from (its fields over that one's: the singer's notes as a chop). */
@@ -1127,7 +1133,8 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
 function scoreNotes(style: MusicStyle, plan: BlockPlan, next: BlockPlan | null, step: number, ctx: ScoreContext): NoteEvent[] {
   const bar = Math.floor(step / 16), s = step - bar * 16, barIn = bar - plan.start;
   const sec = resolveSection(style, plan.section), a = arcStep(style, plan.arc), BG = bangerOn(style);
-  const scale = style.scales[a.scale ?? style.scale] ?? style.scales[style.scale], transpose = (a.transpose ?? 0) + (sec.transpose ?? 0); // (one scale, dorian, in each stage's key: Ed, 2026-10-09; a section's own lift on top, the victory's; a night's set may darken a step's: rules/musicSet.ts)
+  const scaleName = BG ? bangerScaleName(style, a, ctx.seed) : a.scale ?? style.scale; // (banger mode: natural minor but a wave of dorian now and then)
+  const scale = style.scales[scaleName] ?? style.scales[style.scale], transpose = (a.transpose ?? 0) + (sec.transpose ?? 0); // (one scale, dorian, in each stage's key: Ed, 2026-10-09; a section's own lift on top, the victory's; a night's set may darken a step's: rules/musicSet.ts)
   const nightSeed = ctx.seed; // (the returning hook's: the night's, before each wave's own tune)
   ctx = a.tune ? { ...ctx, seed: tuneSeed(ctx.seed, a.tune) } : ctx; // (a night's set: each wave its own tune)
   const progress = (barIn + s / 16) / Math.max(1, plan.bars), pass = plan.pass ?? 0;
@@ -1138,7 +1145,7 @@ function scoreNotes(style: MusicStyle, plan: BlockPlan, next: BlockPlan | null, 
   // layer on the slower chords too, its lead ghosted, its melody coloured (rules here; its reverb, drone and voice lift the engine's)
   const H = hauntedOn(style), haunt = !!H && H.sections.includes(plan.section) && ctx.only !== "circle", comp = composeOn(style), dance = danceOn(style);
   const danceBass = dance ? dance.dance!.bass[a.family ?? ""] : undefined;
-  const chordOf = (slow: boolean) => BG ? bangerChord(style, a, ctx.seed, formBar, !!sec.sevenths, slow) : form ? formChord(style, ctx.seed, slow ? hauntedBar(form, formBar) : formBar, !!sec.sevenths) : chordAt(style, sec, a, barIn + pass * Math.max(1, sec.chordBars));
+  const chordOf = (slow: boolean) => BG ? bangerChord(style, a, ctx.seed, formBar, !!sec.sevenths, slow, scaleName) : form ? formChord(style, ctx.seed, slow ? hauntedBar(form, formBar) : formBar, !!sec.sevenths) : chordAt(style, sec, a, barIn + pass * Math.max(1, sec.chordBars));
   const chordMain = chordOf(haunt), circleChord = H && form ? chordOf(true) : chordMain;
   const dropAt = haunt ? hauntedDrop(style, plan.bars) : Infinity, dropped = barIn >= dropAt;
   let secParts = sec.parts;

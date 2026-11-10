@@ -10,6 +10,7 @@
 //    (the cue covers it), A gone before B's first note, B not silent, the cue gone again in B, and B's beat within 50 ms of its
 //    game time after 10 s (and, without newTimeline, far out: the measure works);
 // 5. plays it live for a few seconds: the engine schedules and the sections show.
+// 6. banger mode's xylophone and finger snaps are heard and reach the render-ahead stems (tools/music-lab/heard.mjs).
 const { execFileSync } = require("child_process");
 const path = require("path");
 let playwright;
@@ -65,6 +66,8 @@ const ok = (cond, what) => { console.log(`${cond ? "ok  " : "FAIL"} ${what}`); i
   ok(/^7 /.test(w || ""), `jumping to wave 7 plays its music within a block (now: ${w})`);
   ok(errors.length === 0, `no errors while playing${errors.length ? ": " + errors.join(" | ") : ""}`);
   await browser.close();
+  // 6. banger mode's sprinkles are heard, and reach the stems the music ahead draws (tools/music-lab/heard.mjs)
+  try { execFileSync("node", [path.join(__dirname, "heard.mjs")], { stdio: "inherit" }); } catch { failed++; console.log("FAIL tools/music-lab/heard.mjs"); }
   if (failed) { console.log(`${failed} failed`); process.exit(1); }
   console.log(`all ok in ${secs()} s`);
 })().catch(e => { console.error(e); process.exit(1); });

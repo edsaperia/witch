@@ -147,7 +147,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -156,9 +156,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "77feffb5f19f4aa4fe45ac952941cc7974bc183b30762d36edd8c67fa94c662e",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+4.6 dB), Opus 64 kbps",
-      "bytes": 33159
+      "sourceSha256": "d1c834cc517274d4657a5e0f27f3b8f47705c5e7e603df816e548c4be936549c",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+7.0 dB), Opus 64 kbps",
+      "bytes": 32600
     },
     {
       "file": "chimera/chimera-ah-56.ogg",
@@ -174,7 +174,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -183,9 +183,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "206e72cdbd30530ed913e8a66a6e4e7bae0f1dca0814060973212b5b52bf28b8",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+1.4 dB), Opus 64 kbps",
-      "bytes": 31919
+      "sourceSha256": "81dc94f5bd12e88e1bc715782ec05b345c7ce715f09235c19e0431a16a395d2b",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+6.9 dB), Opus 64 kbps",
+      "bytes": 32428
     },
     {
       "file": "chimera/chimera-ah-57.ogg",
@@ -201,7 +201,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -210,9 +210,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "12fd8a4b6a89e0c973afc1107d4c46e4af8da3bfcf097d8eaae0717821f0299c",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+1.3 dB), Opus 64 kbps",
-      "bytes": 32672
+      "sourceSha256": "a59ce3fc7f3aeef09f2e0d7ba4a54cde25421438cfb44c96db2ac7b050834657",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+4.7 dB), Opus 64 kbps",
+      "bytes": 33275
     },
     {
       "file": "chimera/chimera-ah-58.ogg",
@@ -228,7 +228,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -237,9 +237,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "a4cfb12f7948a7c4af476fc3f0df34a3ec181e8ab40e50b9e73a26e4b22ae023",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+2.8 dB), Opus 64 kbps",
-      "bytes": 30858
+      "sourceSha256": "b3a33bb43f65bd934e20e50839629c0c7344c558e36ec648c5d4d5429889ac65",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+2.1 dB), Opus 64 kbps",
+      "bytes": 31928
     },
     {
       "file": "chimera/chimera-ah-59.ogg",
@@ -255,7 +255,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -264,9 +264,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "34a5bc75629a943d6e6a6ebb19c1f00b4a51ccdeeac7f18a290380d1ab0d03b4",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+3.1 dB), Opus 64 kbps",
-      "bytes": 30298
+      "sourceSha256": "a1ae1b47dee9785861976fbaaad794180ab4170f9e515dd371b0ea7fe11c5c77",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+2.3 dB), Opus 64 kbps",
+      "bytes": 31726
     },
     {
       "file": "chimera/chimera-ah-60.ogg",
@@ -282,7 +282,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -291,9 +291,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "cae8591e803c0cbba4c5f3774c8abcef19abe9c19b2046a40f4ce9067ee95007",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+1.1 dB), Opus 64 kbps",
-      "bytes": 30389
+      "sourceSha256": "7b59a4de3dab0a3dc3329c9b9643135706c6f60b1968e4e771bb2a339ec6fbf3",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+3.7 dB), Opus 64 kbps",
+      "bytes": 30669
     },
     {
       "file": "chimera/chimera-ah-61.ogg",
@@ -309,7 +309,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -318,9 +318,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "34314ee2466ff1034c6bf9f8df36ddca0abc5d2ea24d8c9817c68f929079ec00",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+0.1 dB), Opus 64 kbps",
-      "bytes": 30768
+      "sourceSha256": "eea581314bdc208dd089a7164c06924b2a2295e54ac4a714a950070cfc571694",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+3.3 dB), Opus 64 kbps",
+      "bytes": 30090
     },
     {
       "file": "chimera/chimera-ah-62.ogg",
@@ -336,7 +336,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -345,9 +345,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "b154ebe7b32e6bbc04b444f18777a567b8b5f11892fd1a034fc19e568ba55d25",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.1 dB), Opus 64 kbps",
-      "bytes": 32332
+      "sourceSha256": "7f3c729c779df9c78340c529773380054fb9e23335b406dd3f5e54479265f9f2",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+1.1 dB), Opus 64 kbps",
+      "bytes": 30044
     },
     {
       "file": "chimera/chimera-ah-63.ogg",
@@ -363,7 +363,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -372,9 +372,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "51ecd7d7b1270c12f2048140c761bd1d60dc200b54dafc65d84821e78ffaec63",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.1 dB), Opus 64 kbps",
-      "bytes": 30427
+      "sourceSha256": "15a35bbd4e79dc44f6aafea4dfdad90ff8b23ded5c5036c4b313c08d0f148cda",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.5 dB), Opus 64 kbps",
+      "bytes": 29561
     },
     {
       "file": "chimera/chimera-ah-64.ogg",
@@ -390,7 +390,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -399,9 +399,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "ba1f048373c6bc42778359d774dec46049234017448de637edb30560c04e3a77",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.2 dB), Opus 64 kbps",
-      "bytes": 30309
+      "sourceSha256": "889ce9fb2bfc0aed83bc8b1d1cbcf5f2236ff16a91ceb340a64e76462f5e7f45",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.6 dB), Opus 64 kbps",
+      "bytes": 29817
     },
     {
       "file": "chimera/chimera-ah-65.ogg",
@@ -417,7 +417,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -426,9 +426,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "552d8009bd62a71436232501e15727d3c7ac2f29d4c2c650eead1d1edde7ef0f",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.3 dB), Opus 64 kbps",
-      "bytes": 30386
+      "sourceSha256": "1cf97d324718b0583aa21528970c954913a068879840a42440ce27b4e515195a",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+0.5 dB), Opus 64 kbps",
+      "bytes": 30783
     },
     {
       "file": "chimera/chimera-ah-66.ogg",
@@ -444,7 +444,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -453,9 +453,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "53ec7748e9987a333f07d236b7a40f7e9c18078d944375c92a686ac5b5bda3dc",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.7 dB), Opus 64 kbps",
-      "bytes": 32496
+      "sourceSha256": "83457a18a4f15c911d2d347c2d82d294d9ac763fe22c852174ba7b0e6a6bb405",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+0.8 dB), Opus 64 kbps",
+      "bytes": 29905
     },
     {
       "file": "chimera/chimera-ah-67.ogg",
@@ -471,7 +471,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -480,9 +480,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "4d9683bbaf1163e699f6cf0d6732e95ea214584b5031908338ea2e642939a5c7",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.2 dB), Opus 64 kbps",
-      "bytes": 32648
+      "sourceSha256": "09e422a323bde62f33d72e5221c121e9a0de997355f88dd86e6faa3bf253daf4",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.5 dB), Opus 64 kbps",
+      "bytes": 31786
     },
     {
       "file": "chimera/chimera-ah-68.ogg",
@@ -498,7 +498,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -507,9 +507,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "8dfa7ab34767de972d68bd485510813e797a27a69563f81f67e9495f64bbd565",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.8 dB), Opus 64 kbps",
-      "bytes": 31214
+      "sourceSha256": "5065c5128d97216b035390f2db5a79ee57c79f27f2fa5d03cf7d6a4baebdee1f",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.3 dB), Opus 64 kbps",
+      "bytes": 30094
     },
     {
       "file": "chimera/chimera-ah-69.ogg",
@@ -525,7 +525,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -534,9 +534,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "b66892c9f2603400b3194c5c8c1b9c84e0935294303de1f846aa84256ea5c2e7",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.9 dB), Opus 64 kbps",
-      "bytes": 32120
+      "sourceSha256": "c2cac3ff72b1fe4b1de192c64b24c25409b24fe38b18305b4636933fd134ab2c",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.9 dB), Opus 64 kbps",
+      "bytes": 31368
     },
     {
       "file": "chimera/chimera-ah-70.ogg",
@@ -552,7 +552,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -561,9 +561,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "339a278266d1bb8089952b246ce8197ad57e147b73ce4b918cb470aa5cc3a557",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.5 dB), Opus 64 kbps",
-      "bytes": 32018
+      "sourceSha256": "6cb9974b8869824cc59e5d33763ce1f133765252fcf4e09852ed7749cd19cbf8",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.9 dB), Opus 64 kbps",
+      "bytes": 30603
     },
     {
       "file": "chimera/chimera-ah-71.ogg",
@@ -579,7 +579,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -588,9 +588,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "d9ced1c2bf1ea65823fc02a8dee980bce0e8bdbf88aa1b2b73125f5a244528bc",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.7 dB), Opus 64 kbps",
-      "bytes": 31907
+      "sourceSha256": "0aa5fd3589660b27cc80b2ec6fccba83f53a2ce1dde4a6a9feaadc990d5245d5",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-2.2 dB), Opus 64 kbps",
+      "bytes": 30953
     },
     {
       "file": "chimera/chimera-ah-72.ogg",
@@ -606,7 +606,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -615,9 +615,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "8ebdda0276ed02cc786e4fd6328cdd606ac55742904b8ab70e730e541c6a5f30",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.5 dB), Opus 64 kbps",
-      "bytes": 29836
+      "sourceSha256": "8ee43520529199c2b5abe631ad1211e766d234d65d71d62c743de31b166051fd",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.8 dB), Opus 64 kbps",
+      "bytes": 31235
     },
     {
       "file": "chimera/chimera-ah-73.ogg",
@@ -633,7 +633,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -642,9 +642,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "b9e233d1a8471392dfbfc34c96632780b4decf525491ca4d2add9c1796bb37c2",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.5 dB), Opus 64 kbps",
-      "bytes": 29795
+      "sourceSha256": "a750b3cc1c655a4ac9be223dd1a254f77a9073b4bfa185f6586781e507da6cb8",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.8 dB), Opus 64 kbps",
+      "bytes": 28723
     },
     {
       "file": "chimera/chimera-ah-74.ogg",
@@ -660,7 +660,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -669,9 +669,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "58c555653a109bb1cb8c94f70f12c79fb5e2b053991dae9c73261318007ac5c5",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.3 dB), Opus 64 kbps",
-      "bytes": 30842
+      "sourceSha256": "7e01e80d18153c5027854c297b5f6e5e67f3acdebeba5d1968ce31fe22c8b3cf",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.0 dB), Opus 64 kbps",
+      "bytes": 30163
     },
     {
       "file": "chimera/chimera-ah-75.ogg",
@@ -687,7 +687,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -696,9 +696,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "9a0db189c3cffa5463b89b3afe9bdef00469cd8bc0d385fa09b55d69a4101a1d",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.0 dB), Opus 64 kbps",
-      "bytes": 30615
+      "sourceSha256": "382c9a76721f7874fbdc310604c3aefb572b077cf6f4eebaa6385da2b3f6f9eb",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.5 dB), Opus 64 kbps",
+      "bytes": 29667
     },
     {
       "file": "chimera/chimera-ah-76.ogg",
@@ -714,7 +714,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -723,9 +723,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "c05282539153cef8e09e74b8e4b6b46d6124473dab3be680bcbf0d12a83c39a6",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.7 dB), Opus 64 kbps",
-      "bytes": 30056
+      "sourceSha256": "bfd98e54405d51a468355f931522e4b3174b232e0fe4accc5dc4f09647f2f538",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.1 dB), Opus 64 kbps",
+      "bytes": 28287
     },
     {
       "file": "chimera/chimera-ah-77.ogg",
@@ -741,7 +741,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -750,9 +750,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "bd92c8c1c5e6b60d61585283de983b69f1e305ecda12aa35877304bfb0b08fe8",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.0 dB), Opus 64 kbps",
-      "bytes": 29870
+      "sourceSha256": "ef83ed204e6153c847d97a54591f7249e896d6102882685a4293dab55b1bcb9c",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.0 dB), Opus 64 kbps",
+      "bytes": 29273
     },
     {
       "file": "chimera/chimera-ah-78.ogg",
@@ -768,7 +768,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -777,9 +777,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "22071df785a687cfc1ac5ea7433ba6fadfd6abba34a39042982be19b26bf62e0",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.7 dB), Opus 64 kbps",
-      "bytes": 31356
+      "sourceSha256": "e9bb8989808b624ace08e98bb1fde18c0f303d70336986b96f33f087dc8e1246",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-1.4 dB), Opus 64 kbps",
+      "bytes": 29774
     },
     {
       "file": "chimera/chimera-ah-79.ogg",
@@ -795,7 +795,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -804,9 +804,9 @@
           "lyric": "ah"
         }
       },
-      "sourceSha256": "2072ae40169f62ae7fe1c8acbaa6e428ab64026a0c1a63bdf6e6ce54826c0a1f",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-2.4 dB), Opus 64 kbps",
-      "bytes": 30845
+      "sourceSha256": "3ee560e314f86f5fb9d5b7b3d6181ddd8597d0863b0ce93faa41e0d6a621ff47",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ah\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.9 dB), Opus 64 kbps",
+      "bytes": 31403
     },
     {
       "file": "chimera/chimera-ooh-55.ogg",
@@ -822,7 +822,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -831,9 +831,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "0e7206bb045161953f101e29c6c51fa66f5ba98c9f6f32c6b36c980f1ed5134e",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+11.3 dB), Opus 64 kbps",
-      "bytes": 29137
+      "sourceSha256": "b2610e764b2cb336cb5061906832ab6af21207f3568b1be39ea2d4a494e89423",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+14.4 dB), Opus 64 kbps",
+      "bytes": 30263
     },
     {
       "file": "chimera/chimera-ooh-56.ogg",
@@ -849,7 +849,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -858,9 +858,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "15c0f667cc5e827c7cf8245510a6182025fcc2c328f6b83e05249bde732e2c6b",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+11.2 dB), Opus 64 kbps",
-      "bytes": 28999
+      "sourceSha256": "6bea551a29177ca6fb10278cdee9614a4b1ad47ec4d644313a9f17d5cb037af0",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+14.0 dB), Opus 64 kbps",
+      "bytes": 30878
     },
     {
       "file": "chimera/chimera-ooh-57.ogg",
@@ -876,7 +876,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -885,9 +885,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "8fd21a82bb9d0767e95f3ed5142e31219e7b3f1797bab25ed1d7373eeb20a6b1",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+10.2 dB), Opus 64 kbps",
-      "bytes": 29542
+      "sourceSha256": "a1f67af9f5347be709c07d988e96630bb8b4c4b5fb650223d23779851dc6b22c",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+13.2 dB), Opus 64 kbps",
+      "bytes": 31902
     },
     {
       "file": "chimera/chimera-ooh-58.ogg",
@@ -903,7 +903,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -912,9 +912,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "1b63a83b2190cd696aae1ee2450dbdc486e8757ef829b265fcdc1eda7c34d005",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+9.0 dB), Opus 64 kbps",
-      "bytes": 28952
+      "sourceSha256": "1c78b7d54473430d23926fc18175808a79a709d75735f7c45f97f2ed14405c71",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+12.8 dB), Opus 64 kbps",
+      "bytes": 30174
     },
     {
       "file": "chimera/chimera-ooh-59.ogg",
@@ -930,7 +930,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -939,9 +939,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "9f02df6e6cc2d972a7e2b98a5838c34941da7a28239ac9c8a8301b80191425fd",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+8.5 dB), Opus 64 kbps",
-      "bytes": 30436
+      "sourceSha256": "d0b33572e3fe6a3c44e1e937a64f13aff028ae89db3a1a43ad857df29f5447c6",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+12.0 dB), Opus 64 kbps",
+      "bytes": 32341
     },
     {
       "file": "chimera/chimera-ooh-60.ogg",
@@ -957,7 +957,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -966,9 +966,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "a32e60da6d1f3f16d9afef8b3c90210acebeb12283f88207578ed7450193b938",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+8.5 dB), Opus 64 kbps",
-      "bytes": 31619
+      "sourceSha256": "1bb36bdaef6a26c512197792c85ed06ef6254aa01d5c91cafbe872f19811494a",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+11.2 dB), Opus 64 kbps",
+      "bytes": 30610
     },
     {
       "file": "chimera/chimera-ooh-61.ogg",
@@ -984,7 +984,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -993,9 +993,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "6815beb8f89a43d0eab387bfa95647805a644ceebfff6d7b014d98c152572e9a",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+8.4 dB), Opus 64 kbps",
-      "bytes": 29896
+      "sourceSha256": "58767f1e677639bdd649705f5a3e51d32e1d8eda850f207d3ab6c9dd29675446",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+11.1 dB), Opus 64 kbps",
+      "bytes": 32112
     },
     {
       "file": "chimera/chimera-ooh-62.ogg",
@@ -1011,7 +1011,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1020,9 +1020,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "cb31e231975e0f3bd40022c8e092506c6c02fbc04cc2636f5ef9d9c1d600a14a",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+8.1 dB), Opus 64 kbps",
-      "bytes": 30553
+      "sourceSha256": "5ade6a2076bff98d264e4f2b4c2be37a759a14cf10a0df5d48fb2cf1f3565676",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+11.4 dB), Opus 64 kbps",
+      "bytes": 32464
     },
     {
       "file": "chimera/chimera-ooh-63.ogg",
@@ -1038,7 +1038,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1047,9 +1047,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "0af75efa2b4277ea5bff543609036212e97bd58fcf9335d21a64dd8e170842cb",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+10.0 dB), Opus 64 kbps",
-      "bytes": 30034
+      "sourceSha256": "47216ebf276b565c25e24254dacba14160d4973fcf6a079fa75d980f8c67183a",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+11.7 dB), Opus 64 kbps",
+      "bytes": 31410
     },
     {
       "file": "chimera/chimera-ooh-64.ogg",
@@ -1065,7 +1065,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1074,9 +1074,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "4f6c6d9d3f1392a034b5c875d8c7e65f41430acffc6a3e3cf714d7b4d7dba9a3",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+10.3 dB), Opus 64 kbps",
-      "bytes": 29219
+      "sourceSha256": "bee649e7ef269d1660f1351af07fc1d3880f58d2651195adae48f5586b86bee3",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+11.1 dB), Opus 64 kbps",
+      "bytes": 30558
     },
     {
       "file": "chimera/chimera-ooh-65.ogg",
@@ -1092,7 +1092,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1101,9 +1101,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "354bd864e8e0b646a2b0fd6fcd1b5fa4dc7f38fd382b70bc830d6bcb87fa094a",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+9.8 dB), Opus 64 kbps",
-      "bytes": 30292
+      "sourceSha256": "c97b0479cc17c97e784499f0cb7571eb287481feed9646751e874f5a0e963633",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+12.0 dB), Opus 64 kbps",
+      "bytes": 30642
     },
     {
       "file": "chimera/chimera-ooh-66.ogg",
@@ -1119,7 +1119,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1128,9 +1128,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "3a9e2974b28118b10c8e16bbbb06a7d5cc94df292f45802a0d454cf8990fa3c9",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+7.8 dB), Opus 64 kbps",
-      "bytes": 31099
+      "sourceSha256": "402db1a4c68334240af771ae6860f7a001104f2442aad372171d98f3293ebde5",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+12.3 dB), Opus 64 kbps",
+      "bytes": 29795
     },
     {
       "file": "chimera/chimera-ooh-67.ogg",
@@ -1146,7 +1146,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1155,9 +1155,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "ceb62273d116aa02beaa09c412c431bcdddf9a6115fd1a1170cef4869d90fd9f",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+6.7 dB), Opus 64 kbps",
-      "bytes": 30359
+      "sourceSha256": "13d6b907b0dc5a404bcf6e57861c78cdc90ac94693820c2cb470f5e2d75a20d3",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+11.8 dB), Opus 64 kbps",
+      "bytes": 30551
     },
     {
       "file": "chimera/chimera-ooh-68.ogg",
@@ -1173,7 +1173,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1182,9 +1182,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "59a64d0953460ce970105baa00fa3df09b9f53efa603e25f365b8bb60c849a48",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+7.8 dB), Opus 64 kbps",
-      "bytes": 29931
+      "sourceSha256": "4d1d951ccfb082c60664dc3263d58536420bed82a13d73068582267c913889e8",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+10.7 dB), Opus 64 kbps",
+      "bytes": 30315
     },
     {
       "file": "chimera/chimera-ooh-69.ogg",
@@ -1200,7 +1200,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1209,9 +1209,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "c021fc458ddc62b06d25be2d2ab2a674b0da7c93da30bdf14791c5d841b6cde9",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+7.0 dB), Opus 64 kbps",
-      "bytes": 29741
+      "sourceSha256": "1bfd98a7e6456a1f3dc735353f4733df6034ff42ab78849c53122edbf12ab00d",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+8.8 dB), Opus 64 kbps",
+      "bytes": 30264
     },
     {
       "file": "chimera/chimera-ooh-70.ogg",
@@ -1227,7 +1227,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1236,9 +1236,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "211fc7e5d1b15963cce4094109b168307e9b368cf55e940fa2f1775200705a0c",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+6.2 dB), Opus 64 kbps",
-      "bytes": 28448
+      "sourceSha256": "9c04626f20f89871b528b53473098affd7cf7b1e81739ade624712989b5979fc",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+9.4 dB), Opus 64 kbps",
+      "bytes": 29350
     },
     {
       "file": "chimera/chimera-ooh-71.ogg",
@@ -1254,7 +1254,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1263,9 +1263,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "8c8411e666efaf39984ce15556d803d0dcf73621d09fa88aa3ac0111b9c10a07",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+5.0 dB), Opus 64 kbps",
-      "bytes": 29151
+      "sourceSha256": "5297aafa2c1261bc032209015839349bed48e0d124e6fad08033affef38cebc7",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+8.8 dB), Opus 64 kbps",
+      "bytes": 29972
     },
     {
       "file": "chimera/chimera-ooh-72.ogg",
@@ -1281,7 +1281,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1290,9 +1290,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "974c355d13bde19b391393208fb5e5c2b0d85170a37fc033bc080250fe96c58e",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+3.9 dB), Opus 64 kbps",
-      "bytes": 28518
+      "sourceSha256": "33f7b97e64e5455d7b01e0a86f6e23226e79f63ad49d3286bc0c354de63b0e2e",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+7.9 dB), Opus 64 kbps",
+      "bytes": 30782
     },
     {
       "file": "chimera/chimera-ooh-73.ogg",
@@ -1308,7 +1308,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1317,9 +1317,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "6ad631f4b1ea7977cbdcf5c02fb853610918fc5c5fc67e6a8046131862d0b669",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+1.5 dB), Opus 64 kbps",
-      "bytes": 30203
+      "sourceSha256": "a0f7fe3696a15e3e504d5c4b23d86c50f3000bc8b55e50c8270cae64f5f22ffe",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+7.0 dB), Opus 64 kbps",
+      "bytes": 28470
     },
     {
       "file": "chimera/chimera-ooh-74.ogg",
@@ -1335,7 +1335,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1344,9 +1344,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "fbaccbff6b1c461c14ed496c83d166c16117d70d61981600696e4cbd875d4944",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (-0.3 dB), Opus 64 kbps",
-      "bytes": 30702
+      "sourceSha256": "7b9191591fce4561d49196e502d385a226061ee54dbc6d2653048efae825cc16",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+6.2 dB), Opus 64 kbps",
+      "bytes": 29198
     },
     {
       "file": "chimera/chimera-ooh-75.ogg",
@@ -1362,7 +1362,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1371,9 +1371,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "e6c1c9715a9d246cf645f17080d94b09eeb69ba9aa7b621e4135abc4bc24f484",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+3.6 dB), Opus 64 kbps",
-      "bytes": 30022
+      "sourceSha256": "ea4ca47e4b7dab270ff890537319787c754ed3dea693ec26bda70a4ba42a81fb",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+4.8 dB), Opus 64 kbps",
+      "bytes": 29983
     },
     {
       "file": "chimera/chimera-ooh-76.ogg",
@@ -1389,7 +1389,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1398,9 +1398,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "7dbe7b2fffcc2ab064d28fee17febd77d74b540a69bb56b1a9ce3a0880f4ec05",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+6.0 dB), Opus 64 kbps",
-      "bytes": 28948
+      "sourceSha256": "e9aca2979997c31c093888829575d3c3b90bdfc2f4d79f400db251b906176348",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+1.1 dB), Opus 64 kbps",
+      "bytes": 29751
     },
     {
       "file": "chimera/chimera-ooh-77.ogg",
@@ -1416,7 +1416,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1425,9 +1425,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "02ae035dcafa111fece0d52496ce68c2df66bf104d74f9a6d4153718e8489ab8",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+8.5 dB), Opus 64 kbps",
-      "bytes": 28945
+      "sourceSha256": "7d4f844a724f8edfc33cfdafd1e0c3eb219ff53b3de07b630693f75c2b09a44b",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+5.2 dB), Opus 64 kbps",
+      "bytes": 29812
     },
     {
       "file": "chimera/chimera-ooh-78.ogg",
@@ -1443,7 +1443,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1452,9 +1452,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "afd3fb38df40a3585068689d5ecc006f3fd6e55bf15df52f54eeff03c6a1505b",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+9.3 dB), Opus 64 kbps",
-      "bytes": 28733
+      "sourceSha256": "b578e2aabf0b670fde885c73fe08cf174466548ddea64000e18efa0b0bcf7879",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+6.3 dB), Opus 64 kbps",
+      "bytes": 28736
     },
     {
       "file": "chimera/chimera-ooh-79.ogg",
@@ -1470,7 +1470,7 @@
         "url": "https://github.com/jamesondh/chimera-vocal-synth",
         "commit": "09fb7769ec13d3a5ff19345c145b4af23d762b82",
         "render": {
-          "body": "female",
+          "body": "mix:1,0.7",
           "vibrato": 30,
           "bpm": 60,
           "beats": 2.6,
@@ -1479,9 +1479,9 @@
           "lyric": "ooh"
         }
       },
-      "sourceSha256": "c701bdb23ee2b1fb36f3d5e8a8d0cc70d2150efa6bb2d53b3dadfbf693c05192",
-      "processing": "rendered by Chimera at 09fb776 (its female body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+9.6 dB), Opus 64 kbps",
-      "bytes": 29301
+      "sourceSha256": "4a359ae9e1af05221c4ec09c040d82118b7149db95373ff69c448c35e4d8abb0",
+      "processing": "rendered by Chimera at 09fb776 (its mix:1,0.7 body, vibrato 30, \"ooh\" held 2.6 s, tools/voice/chimera-notes.mjs), mono, leading silence trimmed, cut to 2.7 s with a 0.15 s fade, levelled to -10 LUFS (the alto set's) at most -1 dBFS peak (+9.7 dB), Opus 64 kbps",
+      "bytes": 31044
     },
     {
       "file": "vcsl/bass-drum.ogg",

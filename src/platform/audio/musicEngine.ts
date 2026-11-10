@@ -147,6 +147,10 @@ export class MusicEngine {
    *  (parallel). Nothing feeds it with banger mode or its compressors off. */
   private drumBus!: GainNode;
   private drumComp: { comp: DynamicsCompressorNode; wet: GainNode; dry: GainNode; on: boolean } | null = null;
+  /** Banger mode's room (Ed, 2026-11-11: "more space"): the reverb's pre-delay (its hits crisp, the tail blooming behind), in
+   *  the path only while the mix asks; and a short room on the drum bus's top (its snare, clap and hats). */
+  private pre: { delay: DelayNode; on: boolean } | null = null;
+  private room: { hp: BiquadFilterNode; verb: ConvolverNode; send: GainNode; on: boolean; time: number } | null = null;
   private duckBus: GainNode;
   private dryBus: GainNode;
   private reverb: ConvolverNode;
@@ -275,7 +279,7 @@ export class MusicEngine {
     this.drumBus = c.createGain(); this.drumBus.connect(this.tone);
     // the reverb's return, its lows cut so the tails don't muddy the kick and bass
     const reverbLow = c.createBiquadFilter(); reverbLow.type = "highpass"; reverbLow.frequency.value = 220;
-    this.reverbIn.connect(this.reverb); this.reverb.connect(reverbLow); reverbLow.connect(this.tone);
+    this.reverbIn.connect(this.reverb); this.reverb.connect(reverbLow); reverbLow.connect(this.tone); // (banger mode: a pre-delay between them, setMix)
     this.delayIn.connect(this.delay); this.delay.connect(delayTone); delayTone.connect(this.feedback); this.feedback.connect(this.delay); delayTone.connect(this.tone);
     this.gate = c.createGain();
     // (the voice line joins after the limiter, so the sum has a safety clipper of its own: exactly linear to 0.9, where the music
@@ -386,6 +390,19 @@ export class MusicEngine {
         if (G) { g.comp.threshold.value = G.threshold; g.comp.knee.value = G.knee; g.comp.ratio.value = G.ratio; g.comp.attack.value = G.attack; g.comp.release.value = G.release; g.makeup.gain.value = G.makeup; }
         if (!!G !== g.on) { g.on = !!G; if (G) { M.drive.disconnect(this.limit); M.drive.connect(g.comp); } else { M.drive.disconnect(g.comp); M.drive.connect(this.limit); } }
       }
+    }
+    const preT = this.stems ? 0 : m.reverbPre ?? 0;
+    if (preT > 0 && !this.pre) { const d = this.ctx.createDelay(0.25); d.connect(this.reverb); this.pre = { delay: d, on: false }; }
+    if (this.pre) {
+      if (preT > 0) this.pre.delay.delayTime.value = Math.min(0.25, preT);
+      if (preT > 0 !== this.pre.on) { this.pre.on = preT > 0; if (this.pre.on) { this.reverbIn.disconnect(this.reverb); this.reverbIn.connect(this.pre.delay); } else { this.reverbIn.disconnect(this.pre.delay); this.reverbIn.connect(this.reverb); } }
+    }
+    const RM = this.stems || lite ? undefined : compOf(this.style)?.drums?.room;
+    if (RM && !this.room) { const c = this.ctx, hp = c.createBiquadFilter(), verb = c.createConvolver(), send = c.createGain(); hp.type = "highpass"; hp.Q.value = 0.7; hp.connect(verb); verb.connect(send); send.connect(this.tone); this.room = { hp, verb, send, on: false, time: 0 }; }
+    if (this.room) {
+      const Q = this.room;
+      if (RM) { Q.hp.frequency.value = RM.hp; Q.send.gain.value = RM.send; if (Q.time !== RM.time) { Q.time = RM.time; Q.verb.buffer = this.impulse(RM.time); } }
+      if (!!RM !== Q.on) { Q.on = !!RM; if (RM) this.drumBus.connect(Q.hp); else this.drumBus.disconnect(Q.hp); }
     }
     // the drum bus's compressor, parallel: the dry drums beside the squashed ones
     const D = this.stems ? undefined : compOf(this.style)?.drums;
@@ -668,6 +685,7 @@ export class MusicEngine {
         }
       }
       if (p.hp) { const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = p.hp; f.Q.value = 0.7; out.connect(f); out = f; }
+      if (p.air) { const f = c.createBiquadFilter(); f.type = "highshelf"; f.frequency.value = 7000; f.gain.value = p.air; out.connect(f); out = f; } // (an airy top: banger mode's lead voice)
       if (p.pan) { const s = c.createStereoPanner(); s.pan.value = p.pan; out.connect(s); out = s; }
       // (a legend's clearing layer into its own bus and reverb, over the muffle; the voice line with its effects in after the
       // section's low-pass and the limiter, before the knockdown's gate, as the A/B Ed picked had it: Ed, 2026-10-11, "e Recorded
@@ -796,11 +814,13 @@ export class MusicEngine {
 
   /** A patch, one that starts `from` another with that one's fields under its own (kept: the same object each time). */
   private derived = new WeakMap<Patch, Patch>();
-  private patchOf(name: string): Patch | undefined {
+  private patchOf(name: string, depth = 0): Patch | undefined {
     const p = this.style.patches[name];
     if (!p?.from) return p;
     let d = this.derived.get(p);
-    if (!d) { const { from, ...own } = p; this.derived.set(p, (d = { ...this.style.patches[from], ...own })); }
+    // (its base's own base under that: a copy of a copy, the singer's left and right voices, has her notes too; with one level
+    // they had none and sang as the synthesised fallback)
+    if (!d) { const { from, ...own } = p; this.derived.set(p, (d = { ...(depth < 4 ? this.patchOf(from, depth + 1) : this.style.patches[from]), ...own } as Patch)); }
     return d;
   }
 
@@ -838,11 +858,12 @@ export class MusicEngine {
   private kick(t: number, p: Patch, peak: number, dest: AudioNode): void {
     // the body: a sine falling fast from a punch to its fundamental, holding a little then dying
     const c = this.ctx, o = c.createOscillator(), decay = p.decay ?? 0.35;
-    o.frequency.setValueAtTime(p.pitch ?? 150, t);
-    o.frequency.exponentialRampToValueAtTime(p.pitchEnd ?? 45, t + (p.pitchTime ?? 0.08));
+    // (a blip: a few milliseconds from a higher start into the body's own fall, the beater's knock without a higher tone; banger mode's kick)
+    if (p.blip && p.blipTime) { o.frequency.setValueAtTime(p.blip, t); o.frequency.exponentialRampToValueAtTime(p.pitch ?? 150, t + p.blipTime); } else o.frequency.setValueAtTime(p.pitch ?? 150, t);
+    o.frequency.exponentialRampToValueAtTime(p.pitchEnd ?? 45, t + (p.blipTime && p.blip ? p.blipTime : 0) + (p.pitchTime ?? 0.08));
     const g = c.createGain();
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + 0.002);
-    g.gain.setTargetAtTime(peak * 0.6, t + 0.01, decay * 0.25);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + (p.attack ?? 0.002));
+    g.gain.setTargetAtTime(peak * 0.6, t + (p.hold ?? 0.01), decay * 0.25); // (`hold`: the body at its full level this long: a firmer first 50 ms)
     g.gain.setTargetAtTime(0, t + decay * 0.5, decay * 0.18);
     if (p.drive && p.driveTime) {
       // (the drive on the hit's front only: the saturated sine fading into the clean one over driveTime, so its tail is a thump
@@ -855,8 +876,8 @@ export class MusicEngine {
     o.start(t); o.stop(t + decay * 1.3 + 0.05);
     // the click: a few milliseconds of bright noise for the beater, so it cuts through on small speakers
     if (p.click) {
-      const f = c.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 3500; f.Q.value = 0.8;
-      this.chain([this.noiseSource(t, 0.03), f, this.env(t, peak * p.click, 0.0005, 0.012)], dest);
+      const f = c.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = p.clickFreq ?? 3500; f.Q.value = 0.8;
+      this.chain([this.noiseSource(t, 0.03), f, this.env(t, peak * p.click, 0.0005, p.clickTime ?? 0.012)], dest);
     }
   }
 
@@ -1124,7 +1145,7 @@ export class MusicEngine {
     const near = pool?.length ? pool.reduce((a, b) => Math.abs(b.midi - want) < Math.abs(a.midi - want) ? b : a) : null;
     const rec = this.recordings.get(near?.sample ?? p.sample ?? "") ?? (near ? this.recordings.get(p.sample ?? "") : undefined), root = near && this.recordings.has(near.sample) ? near.midi : p.root ?? 69;
     if (!rec) { this.voice(t, { ...p, kind: "voice", vowels: ["ah", "oh", "ee", "eh", "oo"], formantShift: 1.18, q: 10, vibrato: 24, attack: 0.06, decay: 0.4, sustain: 0.85, release: 0.3 }, peak, freq, dur, step, ch); return; }
-    const c = this.ctx, rate = freq / mtof(root), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = held ? 3600 : Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
+    const c = this.ctx, rate = (freq / mtof(root)) * (p.cents ? Math.pow(2, p.cents / 1200) : 1) /* (a doubling a few cents off: banger mode's wide stack) */, skip = Math.min(p.skip ?? 0, rec.duration / 2), len = held ? 3600 : Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
     if (len < 0.05) return;
     if (!ch.presence) { ch.presence = c.createBiquadFilter(); ch.presence.type = "peaking"; ch.presence.frequency.value = 3000; ch.presence.Q.value = 0.8; ch.presence.gain.value = p.presence ?? 0; ch.presence.connect(ch.in); }
     const fx = ch.fx, onBus = !fx && this.stems && ch.part ? this.sink : null; // (a renderer's: its effects the bus's)
@@ -1139,7 +1160,7 @@ export class MusicEngine {
     src.buffer = rec; src.playbackRate.value = rate;
     // the swell (Ed, 2026-10-14: "more dynamic range"): each note rising from nothing over its first `swell` share and fading
     // over its last (a 30 ms ramp with none), so a held note breathes rather than switches on
-    const sw = Math.min(0.5, Math.max(0, p.swell ?? 0)), rise = Math.max(0.03, Math.min(len * sw, 1.5)), fall = Math.max(0.08, Math.min(len * sw, 1.5));
+    const sw = Math.min(0.5, Math.max(0, p.swell ?? 0)), rise = p.attack ?? Math.max(0.03, Math.min(len * sw, 1.5)) /* (a patch's own attack: banger mode's chop, on the grid) */, fall = Math.max(0.08, Math.min(len * sw, 1.5));
     const envelope = (gain: AudioParam, top: number) => {
       gain.setValueAtTime(0, t); gain.linearRampToValueAtTime(top, t + (held ? 0.12 : rise));
       if (!held) { gain.setValueAtTime(top, t + Math.max(rise, len - fall)); gain.linearRampToValueAtTime(0, t + len); }
