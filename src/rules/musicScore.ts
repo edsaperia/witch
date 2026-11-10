@@ -115,6 +115,12 @@ export interface Patch {
   reverb?: number; delay?: number; duck?: boolean;
   /** kick: its drive only over the hit's first driveTime seconds, fading to the clean sine (none: the whole hit driven). */
   driveTime?: number;
+  /** kick (banger mode's; Ed, 2026-11-11: "The kick lacks punch"): `blip` a higher start (Hz) falling to `pitch` in `blipTime`
+   *  s before the body's own fall (the beater's knock, no higher tone); `hold` s the body stays at its full level (0.01);
+   *  the click's band (Hz; 3500) and its length (s; 0.012). */
+  blip?: number; blipTime?: number; hold?: number; clickFreq?: number; clickTime?: number;
+  /** A high shelf on the part (dB at 7 kHz: an airy top), and a sampled note's pitch off by a few `cents` (a detuned doubling). */
+  air?: number; cents?: number;
   /** kick: its hits don't duck the mix (a tom: banger mode's). */
   noDuck?: boolean;
   /** Another patch this one starts from (its fields over that one's: the singer's notes as a chop). */

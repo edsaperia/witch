@@ -685,6 +685,7 @@ export class MusicEngine {
         }
       }
       if (p.hp) { const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = p.hp; f.Q.value = 0.7; out.connect(f); out = f; }
+      if (p.air) { const f = c.createBiquadFilter(); f.type = "highshelf"; f.frequency.value = 7000; f.gain.value = p.air; out.connect(f); out = f; } // (an airy top: banger mode's lead voice)
       if (p.pan) { const s = c.createStereoPanner(); s.pan.value = p.pan; out.connect(s); out = s; }
       // (a legend's clearing layer into its own bus and reverb, over the muffle; the voice line with its effects in after the
       // section's low-pass and the limiter, before the knockdown's gate, as the A/B Ed picked had it: Ed, 2026-10-11, "e Recorded
@@ -813,11 +814,13 @@ export class MusicEngine {
 
   /** A patch, one that starts `from` another with that one's fields under its own (kept: the same object each time). */
   private derived = new WeakMap<Patch, Patch>();
-  private patchOf(name: string): Patch | undefined {
+  private patchOf(name: string, depth = 0): Patch | undefined {
     const p = this.style.patches[name];
     if (!p?.from) return p;
     let d = this.derived.get(p);
-    if (!d) { const { from, ...own } = p; this.derived.set(p, (d = { ...this.style.patches[from], ...own })); }
+    // (its base's own base under that: a copy of a copy, the singer's left and right voices, has her notes too; with one level
+    // they had none and sang as the synthesised fallback)
+    if (!d) { const { from, ...own } = p; this.derived.set(p, (d = { ...(depth < 4 ? this.patchOf(from, depth + 1) : this.style.patches[from]), ...own } as Patch)); }
     return d;
   }
 
@@ -855,11 +858,12 @@ export class MusicEngine {
   private kick(t: number, p: Patch, peak: number, dest: AudioNode): void {
     // the body: a sine falling fast from a punch to its fundamental, holding a little then dying
     const c = this.ctx, o = c.createOscillator(), decay = p.decay ?? 0.35;
-    o.frequency.setValueAtTime(p.pitch ?? 150, t);
-    o.frequency.exponentialRampToValueAtTime(p.pitchEnd ?? 45, t + (p.pitchTime ?? 0.08));
+    // (a blip: a few milliseconds from a higher start into the body's own fall, the beater's knock without a higher tone; banger mode's kick)
+    if (p.blip && p.blipTime) { o.frequency.setValueAtTime(p.blip, t); o.frequency.exponentialRampToValueAtTime(p.pitch ?? 150, t + p.blipTime); } else o.frequency.setValueAtTime(p.pitch ?? 150, t);
+    o.frequency.exponentialRampToValueAtTime(p.pitchEnd ?? 45, t + (p.blipTime && p.blip ? p.blipTime : 0) + (p.pitchTime ?? 0.08));
     const g = c.createGain();
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + 0.002);
-    g.gain.setTargetAtTime(peak * 0.6, t + 0.01, decay * 0.25);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + (p.attack ?? 0.002));
+    g.gain.setTargetAtTime(peak * 0.6, t + (p.hold ?? 0.01), decay * 0.25); // (`hold`: the body at its full level this long: a firmer first 50 ms)
     g.gain.setTargetAtTime(0, t + decay * 0.5, decay * 0.18);
     if (p.drive && p.driveTime) {
       // (the drive on the hit's front only: the saturated sine fading into the clean one over driveTime, so its tail is a thump
@@ -872,8 +876,8 @@ export class MusicEngine {
     o.start(t); o.stop(t + decay * 1.3 + 0.05);
     // the click: a few milliseconds of bright noise for the beater, so it cuts through on small speakers
     if (p.click) {
-      const f = c.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 3500; f.Q.value = 0.8;
-      this.chain([this.noiseSource(t, 0.03), f, this.env(t, peak * p.click, 0.0005, 0.012)], dest);
+      const f = c.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = p.clickFreq ?? 3500; f.Q.value = 0.8;
+      this.chain([this.noiseSource(t, 0.03), f, this.env(t, peak * p.click, 0.0005, p.clickTime ?? 0.012)], dest);
     }
   }
 
@@ -1141,7 +1145,7 @@ export class MusicEngine {
     const near = pool?.length ? pool.reduce((a, b) => Math.abs(b.midi - want) < Math.abs(a.midi - want) ? b : a) : null;
     const rec = this.recordings.get(near?.sample ?? p.sample ?? "") ?? (near ? this.recordings.get(p.sample ?? "") : undefined), root = near && this.recordings.has(near.sample) ? near.midi : p.root ?? 69;
     if (!rec) { this.voice(t, { ...p, kind: "voice", vowels: ["ah", "oh", "ee", "eh", "oo"], formantShift: 1.18, q: 10, vibrato: 24, attack: 0.06, decay: 0.4, sustain: 0.85, release: 0.3 }, peak, freq, dur, step, ch); return; }
-    const c = this.ctx, rate = freq / mtof(root), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = held ? 3600 : Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
+    const c = this.ctx, rate = (freq / mtof(root)) * (p.cents ? Math.pow(2, p.cents / 1200) : 1) /* (a doubling a few cents off: banger mode's wide stack) */, skip = Math.min(p.skip ?? 0, rec.duration / 2), len = held ? 3600 : Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
     if (len < 0.05) return;
     if (!ch.presence) { ch.presence = c.createBiquadFilter(); ch.presence.type = "peaking"; ch.presence.frequency.value = 3000; ch.presence.Q.value = 0.8; ch.presence.gain.value = p.presence ?? 0; ch.presence.connect(ch.in); }
     const fx = ch.fx, onBus = !fx && this.stems && ch.part ? this.sink : null; // (a renderer's: its effects the bus's)

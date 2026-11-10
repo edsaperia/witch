@@ -359,7 +359,12 @@ describe("thump, squares and vocals (Ed, 2026-11-10: \"lacks 'thump'\", \"square
     expect(k.pitch!).toBeLessThanOrEqual(125);
     expect(k.decay!).toBeLessThanOrEqual(0.28); expect(k.decay!).toBeGreaterThanOrEqual(0.2);
     expect(k.driveTime!).toBeLessThan(0.1); // (saturated for the hit's front only: the tail a clean sine)
-    expect(k.click!).toBeLessThan(0.5); expect(k.drive!).toBeGreaterThan(s.drive!); expect(s.click!).toBeLessThan(k.click!);
+    expect(k.drive!).toBeGreaterThan(s.drive!); expect(s.click!).toBeLessThan(k.click!);
+    // (Ed, 2026-11-11: "The kick lacks punch": a beater's click of a few milliseconds at 2 to 4 kHz, a blip of 10 ms from a higher start into the same low body, the body full for its first 50 ms; the tone no higher)
+    expect(k.click!).toBeGreaterThanOrEqual(0.6); expect(k.clickTime!).toBeLessThanOrEqual(0.008); expect(k.clickFreq!).toBeGreaterThanOrEqual(2000); expect(k.clickFreq!).toBeLessThanOrEqual(4000);
+    expect(k.blip!).toBeGreaterThan(2 * k.pitch!); expect(k.blipTime!).toBeLessThanOrEqual(0.012); expect(k.hold!).toBeGreaterThanOrEqual(0.04); expect(k.hold!).toBeLessThanOrEqual(0.06); expect(k.attack!).toBeLessThanOrEqual(0.002);
+    expect(s.blip).toBeUndefined(); expect(base.patches.kick.blip).toBeUndefined(); // (the soft kick and the music before banger mode as they were)
+    expect(compOf(base)!.drums!.attack).toBeGreaterThanOrEqual(0.025); // (slow enough that the hit's front comes through)
     expect(mixOf(base).duck).toBeGreaterThan(base.mix.duck); expect(mixOf(base).duckHold!).toBeGreaterThan(0.03);
     // (only the kick and the bass live low: every lead, chord and pad banger mode plays is high-passed at 120 Hz or over)
     const used = new Set<string>();
@@ -381,24 +386,60 @@ describe("thump, squares and vocals (Ed, 2026-11-10: \"lacks 'thump'\", \"square
     const h = base.patches.bgPulse.harmonics!;
     expect(h[0]).toBe(1); expect(Math.abs(h[7])).toBeLessThan(0.001); expect(Math.abs(base.patches.bgPulse25.harmonics![3])).toBeLessThan(0.001);
   });
-  it("has the singer double the hook's long notes wherever it's whole, exactly with the lead (its runs and turns the lead's alone), a second voice a third under her; hold an ooh under the grooves; in her range; never before the second stump", () => {
-    const V = B.vocals!;
-    for (const seed of [7, 23, 101]) {
-      const style = night(seed), h = nightHook(B, seed), land = [0, 1, 2, 3].flatMap(b => barNotes(style, seed, 5, b)), later = [9, 10, 11].flatMap(b => barNotes(style, seed, 5, b));
-      const a = arcStep(style, 5), K = kitOf(B, kitName(style, a, "")), E = Math.max(B.energyFloor, a.energy), leads = new Set((E < B.softBelow ? K.leads.soft : K.leads.hard).map(l => B.leads[l].patch));
-      const dbl = land.filter(e => e.patch === V.double), longs = h.period.slice(0, 64).filter(x => x?.long).length;
-      expect(dbl.length).toBe(longs * 2); // (her note and the third under it)
-      expect(new Set(dbl.map(e => e.step)).size).toBe(longs);
-      // (each on the lead's own sixteenth, the same place in it: one attack)
-      for (const e of dbl) expect(land.some(l => leads.has(l.patch) && l.step === e.step && Math.abs(l.offset - e.offset) < 1e-9 && l.dur >= 3), `${seed} step ${e.step}`).toBe(true);
-      for (const st of new Set(dbl.map(e => e.step))) { const two = dbl.filter(e => e.step === st).map(e => e.midi!).sort((x, y) => x - y), d = two[1] - two[0]; expect([3, 4, 8, 9]).toContain(d); } // (a third, or its sixth: inside the scale)
+  it("has the singer lead (Ed, 2026-11-11: \"More female vocal as the lead instrument\"): she carries the hook's long notes and its sixteenth runs herself, the kit's lead under her on the same sixteenths, a second voice a third under her; a family with its own lead keeps it and she doubles its long notes; an ooh under the grooves; in her range; never before the second stump", () => {
+    const V = B.vocals!, LV = V.lead!;
+    let led = 0, kept = 0, runs = 0;
+    for (const seed of [7, 23, 101, 4242, 90001]) for (const w of [3, 5, 7]) {
+      const style = night(seed), h = nightHook(B, seed), land = [0, 1, 2, 3].flatMap(b => barNotes(style, seed, w, b)), later = [9, 10, 11].flatMap(b => barNotes(style, seed, w, b));
+      const a = arcStep(style, w), K = kitOf(B, kitName(style, a, "")), E = Math.max(B.energyFloor, a.energy), leads = new Set((E < B.softBelow ? K.leads.soft : K.leads.hard).map(l => B.leads[l].patch));
+      const longs = h.period.slice(0, 64).filter(x => x?.long).length, dbl = land.filter(e => e.patch === V.double), hers = land.filter(e => e.patch === LV.patch);
+      const withLead = (e: NoteEvent, es: NoteEvent[]) => es.some(l => leads.has(l.patch) && l.step === e.step && Math.abs(l.offset - e.offset) < 1e-9);
+      if (!K.bed) {
+        led++;
+        // (her long notes, each stacked left and right with a sheen an octave over and a third under; her runs alone)
+        const big = hers.filter(e => e.dur >= 3), small = hers.filter(e => e.dur < 3);
+        expect(big.length, `${seed} ${w}`).toBe(longs); runs += small.length;
+        for (const e of small) expect(e.dur).toBe(1);
+        expect(small.length).toBe(h.period.slice(0, 64).filter(x => x && !x.long && x.dur === 1 && !x.into).length + h.period.slice(0, 64).filter(x => x && !x.long && x.dur === 1 && x.into).length);
+        for (const e of big) {
+          for (const side of LV.stack) expect(land.some(q => q.patch === side && q.step === e.step && q.midi === e.midi && q.offset === e.offset), side).toBe(true);
+          expect(land.some(q => q.patch === LV.shimmer && q.step === e.step && q.midi === e.midi! + 12)).toBe(true);
+          const third = dbl.filter(q => q.step === e.step);
+          expect(third.length).toBe(1); expect([3, 4, -8, -9]).toContain(e.midi! - third[0].midi!); // (a third under her, or the sixth over where that would be under her notes: inside the scale)
+        }
+        expect(dbl.length).toBe(longs);
+        // (on the lead's own sixteenth, the same place in it: one attack; the lead the same line, octaves under her or with her)
+        for (const e of hers) { expect(withLead(e, land), `${seed} step ${e.step}`).toBe(true); const l = land.find(q => leads.has(q.patch) && q.step === e.step && Math.abs(q.offset - e.offset) < 1e-9)!; expect((e.midi! - l.midi! + 120) % 12).toBe(0); }
+        // (the lead plays every note, hers and the quick ornaments between: more notes than she sings, or as many)
+        expect(land.filter(e => leads.has(e.patch) && pitched(e)).length).toBeGreaterThanOrEqual(hers.length);
+        for (const e of hers) { expect(e.midi!).toBeGreaterThanOrEqual(55); expect(e.midi!).toBeLessThanOrEqual(79); }
+        // (her line keeps its shape: moved whole by octaves, so against the hook's own steps no long note is folded apart from its neighbours by more than the range allows)
+        expect(Math.max(...hers.map(e => e.midi!)) - Math.min(...hers.map(e => e.midi!))).toBeLessThanOrEqual(24);
+        for (const e of later.filter(e => e.patch === LV.patch)) expect(withLead(e, later)).toBe(true);
+      } else {
+        kept++;
+        expect(hers).toEqual([]);
+        expect(dbl.length).toBe(longs * 2); // (her note and the third under it)
+        for (const e of dbl) expect(land.some(l => leads.has(l.patch) && l.step === e.step && Math.abs(l.offset - e.offset) < 1e-9 && l.dur >= 3), `${seed} step ${e.step}`).toBe(true);
+        for (const st of new Set(dbl.map(e => e.step))) { const two = dbl.filter(e => e.step === st).map(e => e.midi!).sort((x, y) => x - y), d = two[1] - two[0]; expect([3, 4, 8, 9]).toContain(d); }
+        for (const e of later.filter(e => e.patch === V.double)) expect(withLead(e, later)).toBe(true);
+      }
       expect(land.filter(e => isPad(e)).length).toBe(12); // (three voices, a bar each)
-      for (const e of later.filter(e => e.patch === V.double)) expect(later.some(l => leads.has(l.patch) && l.step === e.step && Math.abs(l.offset - e.offset) < 1e-9)).toBe(true);
-      for (const e of [...land, ...later].filter(e => e.patch === V.double)) { expect(e.midi!).toBeGreaterThanOrEqual(V.range[0]); expect(e.midi!).toBeLessThanOrEqual(V.range[1]); }
+      for (const e of [...land, ...later].filter(e => e.patch === V.double)) { expect(e.midi!).toBeGreaterThanOrEqual(55); expect(e.midi!).toBeLessThanOrEqual(V.range[1]); }
       for (const e of [...land, ...later].filter(isPad)) { expect(e.midi!).toBeGreaterThanOrEqual(60); expect(e.midi!).toBeLessThanOrEqual(79); } // (a woman's register, inside her recorded G3 to G5)
       const gentle = [0, 5, 9, 33, 40].flatMap(b => barNotes(style, seed, 0, b));
-      expect(gentle.filter(e => e.patch === V.double)).toEqual([]); // (before the second stump: no doubling or stabs, her harmony soft)
+      expect(gentle.filter(e => e.patch === V.double || e.patch === LV.patch || LV.stack.includes(e.patch))).toEqual([]); // (before the second stump: she doesn't lead, double or stab; her harmony soft)
     }
+    expect(led).toBeGreaterThan(kept); expect(kept).toBeGreaterThan(0); expect(runs).toBeGreaterThan(10);
+    // (ethereal, and tight: her lead's own attack a few milliseconds past the recording's soft start; its doublings left and right a few cents off and softer in their attack; a sheen an octave over that swells in; more reverb than the lead synths, a delay, an airy top)
+    const P = (n: string) => { const p = base.patches[n], q = p.from ? base.patches[p.from] : undefined, r = q?.from ? base.patches[q.from] : undefined; return { ...r, ...q, ...p }; };
+    const L = P(LV.patch), sides = LV.stack.map(P), sh = P(LV.shimmer);
+    expect(L.kind).toBe("sample"); expect(L.attack!).toBeLessThanOrEqual(0.005); expect(L.skip!).toBeGreaterThanOrEqual(0.04);
+    expect(L.reverb!).toBeGreaterThanOrEqual(0.6); expect(L.delay!).toBeGreaterThan(0); expect(L.air!).toBeGreaterThan(0); expect(L.reverb!).toBeGreaterThan(base.patches.bgSquare.reverb!);
+    expect(sides.length).toBe(2); expect(sides[0].pan! * sides[1].pan!).toBeLessThan(0); expect(Math.abs(sides[0].pan!)).toBeGreaterThanOrEqual(0.6);
+    for (const q of sides) { expect(Math.abs(q.cents!)).toBeGreaterThan(4); expect(Math.abs(q.cents!)).toBeLessThan(20); expect(q.attack!).toBeGreaterThan(L.attack!); }
+    expect(sh.swell!).toBeGreaterThan(0.3); expect(sh.reverb!).toBeGreaterThanOrEqual(0.9); expect(sh.hp!).toBeGreaterThan(1000);
+    expect(LV.support).toBeLessThan(0.7); expect(LV.level).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -820,7 +861,7 @@ describe("the leads' new style, the house ostinato, dreamy against aggressive (E
         expect(ld.length).toBeGreaterThanOrEqual(2); // (a tresillo's bar with its note tied over has two)
         expect(xs.length).toBe(ld.length);
         for (const e of ld) { const x = xs.find(q => q.step === e.step)!; expect(x, `${seed} ${w} ${b}`).toBeTruthy(); expect(x.offset).toBe(e.offset); expect([0, 12]).toContain(e.midi! - x.midi!); expect(e.offset).toBeCloseTo(e.step % 2 ? K.swing : 0); }
-        for (const e of es.filter(e => e.patch === V.double)) { sung++; expect(ld.some(l => l.step === e.step && l.offset === e.offset)).toBe(true); }
+        for (const e of es.filter(e => e.patch === V.double || e.patch === V.lead!.patch)) { sung++; expect(ld.some(l => l.step === e.step && l.offset === e.offset)).toBe(true); }
         // (oom-chk: the kit's chords on the off-beats alone, two notes a hit; the bass on every beat, E1 to E2)
         if (K.chords.patch && !leads.has(K.chords.patch)) expect([...new Set(es.filter(e => e.patch === K.chords.patch && e.step % 16 < 12).map(e => e.step % 16))]).toEqual([2, 6, 10]);
         if (K.bass.bounce) { const bs = es.filter(e => K.bass.patch.includes(e.patch)); for (const st of [0, 4, 8]) expect(bs.some(e => e.step % 16 === st)).toBe(true); for (const e of bs) { expect(e.midi!).toBeGreaterThanOrEqual(28); expect(e.midi!).toBeLessThanOrEqual(40); } }

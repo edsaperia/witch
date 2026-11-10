@@ -100,6 +100,16 @@ export interface BangerDef {
   vocals?: { /** a second voice a third under her doubling at the hook's key moments (parallel thirds and sixths), at this share of it */ thirds?: number; double: string; doubleLevel: number; pad: string; padLevel: number; stabLevel: number; range: [number, number];
     /** Her own line's notes (the breakdowns', the builds'): folded into these (MIDI), a woman's register. */
     line?: [number, number];
+    /** The singer as the lead instrument (Ed, 2026-11-11: "More female vocal as the lead instrument, and the lead vocal to sound
+     *  more 'ethereal'"): after the second stump, in every family but those that keep their own lead (a kit with a `bed` of its
+     *  own), she carries the hook and the wave's riff herself on `patch` at `level`: their long notes, and their plain sixteenth
+     *  runs at `runLevel` of that (`runs`; the thirty-seconds and triplets are the synth's alone), the whole line moved by
+     *  octaves into `range` (MIDI), its shape kept. The kit's lead supports her: the same line at `support` of its level, an
+     *  octave under where that stays over the register's floor; on the house ostinato she has its accents and held notes
+     *  (`ostinato`: her level there) and the lead its `ostSupport`. Ethereal: each long note also on `stack` (her own voice left
+     *  and right, a few cents off, softer in their attack: `stackLevel`) and an octave over on `shimmer` (a slow sheen into the
+     *  reverb: `shimmerLevel`). `more`: her doubling's level in the families that keep their lead. */
+    lead?: { patch: string; level: number; runs: boolean; runLevel: number; range: [number, number]; support: number; ostinato: number; ostSupport: number; stack: string[]; stackLevel: number; shimmer: string; shimmerLevel: number; more: number };
     /** Her harmony (Ed, 2026-11-11: "increase vocals in the harmony, which can stack with the xylophone"): the sung chord's
      *  voices (3: root, fifth and the third, or the seventh where the kit plays sevenths; before the second stump `gentleVoices`
      *  of them at `gentleLevel`), voiced in the octave from `window` (MIDI: under the xylophone's, so the two stack as one
@@ -459,6 +469,13 @@ export function riffHeard(style: MusicStyle, plan: BlockPlan, seed0: number): { 
   return { riff, chant: !/[rgt]/.test(riff.motif), ostinato: B.ostinato ? (ostinato(B, seed, 0).motif.startsWith("tresillo") ? "tresillo" : "chain") : null };
 }
 
+/** Whether the singer leads in a block as the game plays it (the renders' notes): after the second stump, in a family without a lead of its own. */
+export function singerLeads(style: MusicStyle, plan: BlockPlan, stumps?: number): boolean {
+  const B = bangerOn(style), a = style.arc[Math.max(0, Math.min(style.arc.length - 1, plan.arc))], L = B?.vocals?.lead;
+  if (!B || !L || !style.patches[L.patch] || (stumps !== undefined && stumps < B.gentle.stumps)) return false;
+  return !kitOf(B, kitName(style, a, plan.section)).bed;
+}
+
 /** Whether a phrase is a lighter one (its backbeat finger snaps, never with a clap or snare): a gentle wave's, or, of the
  *  grooves between the hook's returns, the share dealt by the wave's seed (`spice.snaps`), a phrase whole. */
 export function lightPhrase(B: BangerDef, style: MusicStyle, role: BangerRole, use: ReturnType<typeof hookUse>, gentle: boolean, seed: number, formBar: number, pass: number): boolean {
@@ -677,19 +694,21 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
     while (low + sh < R.floor && top + sh + 12 <= ceil) sh += 12;
     return sh;
   };
-  const tune = (L: { patch: string; octave: number; level: number } | undefined, n: HookNote | null, level: number, extra: Partial<NoteEvent> = {}, until = 16, T: Hook = hook, part: "period" | "reply" = "period") => {
+  const tune = (L: { patch: string; octave: number; level: number } | undefined, n: HookNote | null, level: number, extra: Partial<NoteEvent> = {}, until = 16, T: Hook = hook, part: "period" | "reply" = "period", under = false) => {
     if (!L || !n || s >= until) return null;
-    const ceil = L === reply ? R?.reply : R?.lead, sh = shiftOf(L, T, part, ceil), m0 = (R ? raw(n.deg, L.octave) : degreeToMidi(style, scale, n.deg, L.octave, transpose)) + sh + semi(n);
+    const ceil = L === reply ? R?.reply : R?.lead, sh0 = shiftOf(L, T, part, ceil);
+    // (under the singer where she leads: the whole line an octave down where that stays over the floor)
+    const sh = sh0 - (under && R && raw(T.low, L.octave) + sh0 - 12 >= R.floor ? 12 : 0), m0 = (R ? raw(n.deg, L.octave) : degreeToMidi(style, scale, n.deg, L.octave, transpose)) + sh + semi(n);
     // (the long notes full, the runs and turns between them lighter: "long, then run"; no slide into any of them)
     const m1 = ceil !== undefined && m0 > ceil ? m0 - 12 : m0;
     ev(L.patch, m1, (n.vel ?? (n.long ? 0.92 : part === "reply" ? 0.8 : 0.72)) * L.level * level * (R?.level ?? 1), Math.min(n.dur, until - s), { offset: offOf(n), ...extra });
     return m1;
   };
   /** A tune's notes starting in this sixteenth: the one on it and the ornaments inside it (but a run into the next bar where the tune rests there). */
-  const play = (L: { patch: string; octave: number; level: number } | undefined, T: Hook, slot: number, level: number, until = 16, noInto = false) => {
+  const play = (L: { patch: string; octave: number; level: number } | undefined, T: Hook, slot: number, level: number, until = 16, noInto = false, under = false) => {
     const n = T.period[slot];
-    if (n && !(noInto && n.into)) tune(L, n, level, {}, until, T);
-    for (const o of T.orn[slot]) if (!(noInto && o.into)) tune(L, o, level, {}, until, T);
+    if (n && !(noInto && n.into)) tune(L, n, level, {}, until, T, "period", under);
+    for (const o of T.orn[slot]) if (!(noInto && o.into)) tune(L, o, level, {}, until, T, "period", under);
   };
   // the singer (the form's sung part, its effects by the night's family; haunted: her ghost below, else her wash above)
   const F = style.form, vocal = a.vocal && a.vocal !== "none" && style.patches[a.vocal] ? a.vocal : F?.sung.patch;
@@ -731,6 +750,35 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
     // (at the key moments a second voice a third under her, in the scale: a sixth over where that's under her notes)
     if (third > 0) note(voxAt({ deg: n.deg - 2, dur: n.dur }), third);
   };
+  // the singer as the lead instrument (Ed, 2026-11-11): she carries the tune herself in the families without a lead of their own
+  const LV = V?.lead && style.patches[V.lead.patch] ? V.lead : undefined, she = !!LV && !kit.bed;
+  /** Her note of a line: the whole line moved by octaves into her range (its shape kept; a note still outside it folded). */
+  const herAt = (T: Hook, n: HookNote) => {
+    const [lo, hi] = LV!.range, top = raw(T.top, 2) + 1, low = raw(T.low, 2);
+    let sh = 0;
+    while (top + sh > hi) sh -= 12;
+    while (low + sh < lo && top + sh + 12 <= hi) sh += 12;
+    let m = raw(n.deg, 2) + semi(n) + sh;
+    while (m < V!.range[0] - 7) m += 12; while (m > V!.range[1]) m -= 12;
+    return m;
+  };
+  /** Her line's note here: a long note (an ostinato's accent or held note) full, stacked wide with a sheen an octave over; a
+   *  plain sixteenth of a run lighter, alone; the quicker ornaments left to the synth under her. All on the lead's sixteenth. */
+  const her = (T: Hook, n: HookNote | null, level: number, until = 16, third = 0) => {
+    if (!LV || !n || n.off || s >= until) return;
+    const big = !!n.long || !!n.acc || (T.period.length === 32 && n.dur >= 2), run = !big && LV.runs && n.dur === 1 && T.period.length !== 32;
+    if (!big && !run) return;
+    const m = herAt(T, n), dur = Math.min(big ? Math.max(2, n.dur) : n.dur, Math.max(1, until - s)), lv = 0.85 * BAL.vocals * LV.level * level;
+    const note = (patch: string, midi: number, vel: number) => { if (style.patches[patch]) out.push({ part: "b:" + patch, patch, step, offset: sw, dur, midi, vel, straight: true }); };
+    note(LV.patch, m, lv * (big ? 1 : LV.runLevel));
+    if (!big || n.dur < 3) return;
+    for (const patch of LV.stack) note(patch, m, lv * LV.stackLevel);
+    note(LV.shimmer, m + 12, lv * LV.shimmerLevel);
+    // (at the key moments a second voice a third under her, in the scale)
+    if (third > 0) { let t = herAt(T, { deg: n.deg - 2, dur: n.dur }); if (t > m) t -= 12; if (t < V!.range[0] - 7) t += 12; note(V!.double, t, lv * third); }
+  };
+  /** Her line in this sixteenth (but a run into the next bar where the tune rests there). */
+  const herLine = (T: Hook, slot: number, level: number, until = 16, noInto = false, third = 0) => { const n = T.period[slot]; if (n && !(noInto && n.into)) her(T, n, level, until, third); };
   // (her harmony under the grooves: three voices after the second stump, fewer and softer before it)
   const ooh = (level: number) => {
     const VV = B.vocals;
@@ -789,28 +837,33 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
     // the lead rests (the breakbeat phrase's first half, a later pass's first phrase), the reply answering in the gaps
     const slot = (pb * 16 + s) % 128;
     ooh(1);
-    if (use === "whole") { play(lead, hook, slot, 1); vox(hook.period[slot], V?.doubleLevel ?? 0, 16, V?.thirds ?? 0); if (role === "victory") tune(reply, hook.reply[slot], 0.7, {}, 16, hook, "reply"); else if (xyAnswer && !xyChords) tune(xylo, hook.reply[slot], 0.8, {}, 16, hook, "reply"); }
+    if (use === "whole") {
+      // (she leads, the kit's lead under her; a family with its own lead keeps it, her doubling up)
+      if (she) { play(lead, hook, slot, LV!.support, 16, false, true); herLine(hook, slot, 1, 16, false, V?.thirds ?? 0); }
+      else { play(lead, hook, slot, 1); vox(hook.period[slot], (V?.doubleLevel ?? 0) * (LV?.more ?? 1), 16, V?.thirds ?? 0); } if (role === "victory") tune(reply, hook.reply[slot], 0.7, {}, 16, hook, "reply"); else if (xyAnswer && !xyChords) tune(xylo, hook.reply[slot], 0.8, {}, 16, hook, "reply");
+    }
     else if (use === "slow") tune(lead, slow(), 0.9);
     else if (ost) {
       // the ostinato, stacked: the lead, the xylophone an octave under it and (a heavier phrase) the singer on its accents,
       // all on the same sixteenth; the reply voice answering over its second bar; from the second repeat a line a third under
       const O = ostinato(B, seed, Math.floor(barIn / 2) + pass * 64, ostLevel >= 2), oslot = (pb % 2) * 16 + s, n = O.period[oslot];
       if (n && s < until) {
-        const m = tune(lead, n, 1.15, {}, until, O);
+        const m = tune(lead, n, 1.15 * (she ? LV!.ostSupport : 1), {}, until, O);
         if (m !== null && xylo) ev(xylo.patch, m - 12 >= 55 ? m - 12 : m, 0.8 * OS!.xylo * xylo.level * (R?.level ?? 1) * (n.vel ?? 0.8), 1);
-        if (n.acc && !light) vox(n, OS!.vocal, until);
-        if (ostLevel >= 1) tune(lead, { deg: n.deg - 2, dur: n.dur, vel: (n.vel ?? 0.8) * OS!.thirds }, 1.15, {}, until, O);
+        if (she) her(O, n, LV!.ostinato, until); else if (n.acc && !light) vox(n, OS!.vocal * (LV?.more ?? 1), until);
+        if (ostLevel >= 1) tune(lead, { deg: n.deg - 2, dur: n.dur, vel: (n.vel ?? 0.8) * OS!.thirds }, 1.15 * (she ? LV!.ostSupport : 1), {}, until, O);
       }
       tune(reply, O.reply[oslot], 0.7, {}, until, O, "reply");
     } else {
       const rests = role === "breaks" ? barIn < 4 : pass % 2 === 1 && barIn < 8;
       // (the riff rests in its third bar of four: a gap the drums and the chords fill; no run into it)
       const gapBar = !!SPC?.riffRest && pb % 4 === 2, answer = xyAnswer && !xyChords;
-      if (!gapBar) play(rests ? reply : lead, riff, slot, rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1), 16, !!SPC?.riffRest && pb % 4 === 1);
+      const noInto = !!SPC?.riffRest && pb % 4 === 1, hers = she && !rests;
+      if (!gapBar) { play(rests ? reply : lead, riff, slot, rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1) * (hers ? LV!.support : 1), 16, noInto, hers); if (hers) herLine(riff, slot, 0.9, 16, noInto); }
       // (the gaps answered by the xylophone in the phrases dealt to it, else by the reply voice: one or the other)
       if (!gapBar && answer) tune(xylo, riff.reply[slot], 0.8, {}, 16, riff, "reply");
       else if (!gapBar && !rests && (half || role === "breaks")) tune(reply, riff.reply[slot], 0.7, {}, 16, riff, "reply");
-      if (!rests && !gapBar && V) { const first = riff.period.slice(pb * 16, pb * 16 + 16).findIndex(x => x?.long); if (first === s) vox(riff.period[slot], V.stabLevel, until); } // (a sung stab on the riff's first long note)
+      if (!rests && !gapBar && V && !she) { const first = riff.period.slice(pb * 16, pb * 16 + 16).findIndex(x => x?.long); if (first === s) vox(riff.period[slot], V.stabLevel, until); } // (a sung stab on the riff's first long note)
     }
   } else if (role === "breakdown") {
     if (!dropped) {
@@ -840,8 +893,8 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
       pad(0.7);
       bed(1, gentle, until);
       const slot = ((k % 8) * 16 + s) % 128, T = use === "whole" ? hook : riff;
-      play(lead, T, slot, 1, until);
-      if (use === "whole") vox(T.period[slot], V?.doubleLevel ?? 0, until, V?.thirds ?? 0);
+      if (she) { play(lead, T, slot, LV!.support, until, false, true); herLine(T, slot, 1, until, false, use === "whole" ? V?.thirds ?? 0 : 0); }
+      else { play(lead, T, slot, 1, until); if (use === "whole") vox(T.period[slot], (V?.doubleLevel ?? 0) * (LV?.more ?? 1), until, V?.thirds ?? 0); }
       tune(reply, T.reply[slot], 0.7, {}, until, T, "reply");
     }
   } else {
@@ -925,6 +978,7 @@ export function checkBanger(style: MusicStyle): string[] {
   for (const [m, P] of Object.entries(B.progressions)) { if (!style.scales[m]) errs.push(`banger progressions: no scale "${m}"`); if (!P.a.length || !P.b.length) errs.push(`banger progressions ${m}: empty`); }
   for (const p of ["bgCrash", "bgSweep", "bgRiser", "bgSub", "snare"]) patch("fixed", p);
   if (B.vocals) { patch("vocals", B.vocals.double); patch("vocals", B.vocals.pad); }
+  if (B.vocals?.lead) { const L = B.vocals.lead; for (const p of [L.patch, ...L.stack, L.shimmer]) patch("vocals lead", p); if (L.range[1] - L.range[0] < 12) errs.push("banger vocals lead: its range is under an octave"); }
   if (B.space) {
     const X = B.space.xylo;
     for (const l of [X.voice, X.low]) if (!B.leads[l]) errs.push(`banger space: no lead "${l}"`);
