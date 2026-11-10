@@ -3108,6 +3108,8 @@
         "lightFloor",
         "lightTint",
         "lightRim",
+        "bedGlow",
+        "bedBloom",
         "heightSmooth",
         "heightLookAhead",
         "heightClearance"
@@ -5625,6 +5627,11 @@
           "minimum": 0,
           "maximum": 3
         },
+        "inviteReach": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 200
+        },
         "areaGrowth": {
           "type": "number",
           "minimum": 0,
@@ -5643,12 +5650,13 @@
       },
       "required": [
         "reachScale",
+        "inviteReach",
         "areaGrowth",
         "passPower",
         "passDepth"
       ],
       "additionalProperties": false,
-      "description": "Waiting movement favours room beyond default invitation reach while allowing deliberate close passes."
+      "description": "Waiting movement favours room beyond a set invitation reach (inviteReach: the default bag's old range, not the letters' live one) while allowing deliberate close passes."
     },
     "teamRounds": {
       "type": "object",
@@ -5907,6 +5915,45 @@
           ],
           "additionalProperties": false,
           "description": "How easy the creatures' spells are to see: their size, opacity, glow, how long they last, how thick their lingering zones are and how strong the marks they leave on the ground (1, 0, 1, 1, 0.25 and 0.12 draw them as before 3 November)."
+        },
+        "glow": {
+          "type": "object",
+          "properties": {
+            "core": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "halo": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "pool": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "lights": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 6
+            },
+            "light": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            }
+          },
+          "required": [
+            "core",
+            "halo",
+            "pool",
+            "lights",
+            "light"
+          ],
+          "additionalProperties": false,
+          "description": "How the creatures' spells glow: a bright core the bloom picks up, a dithered pixel halo round it, a pool of its light on the ground under it, and a real light for the brightest few nearest her (core, halo, pool and light 0 draw them as before 9 November; ?spellglow=0 does too, to compare)."
         }
       },
       "required": [
@@ -5921,7 +5968,8 @@
         "turnFrom",
         "turnTo",
         "legendFlash",
-        "visibility"
+        "visibility",
+        "glow"
       ],
       "additionalProperties": false,
       "description": "How attacks feel on screen: attackers crouch and lunge, hits squash their target, and hard knock-backs send it tumbling."

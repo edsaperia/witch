@@ -30,6 +30,12 @@ export const lookOn = typeof location === "undefined" || new URLSearchParams(loc
 const lookDemo = typeof location === "undefined" ? null : new URLSearchParams(location.search).get("lookdemo");
 const dresses = new Map<string, Dress>();
 /** How a creature's attacks are dressed: its element, its level, and on the party's side its neon. */
+/** The legend nearest (x, z), within 12 m: whose blow a big hit was. */
+export function nearestLegend<C extends { level: number; x: number; z: number; gone?: boolean }>(creatures: readonly C[], x: number, z: number): C | null {
+  let best: C | null = null, d = 12;
+  for (const c of creatures) if (c && c.level >= 3 && !c.gone) { const e = Math.hypot(c.x - x, c.z - z); if (e < d) { d = e; best = c; } }
+  return best;
+}
 function dressOf(species: string, level: number, tint: { r: number; g: number; b: number } | null): Dress {
   const key = tint ? `${species}|${level}|${tint.r},${tint.g},${tint.b}` : `${species}|${level}`;
   let d = dresses.get(key);
@@ -113,6 +119,8 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
       const top = (c && lv.tops.get(c.id)) ?? 1.6, big = e.big ? 2 : 1, bits = c ? hitBits(c.species, c.leashed || c.legendState === "happy") : HIT_BITS.fur, col = bits === HIT_BITS.confetti && c ? neon(c.species) : c ? coatOf(c.species, 0.75) : bits;
       const lf = e.big ? 1 + 2 * t.attackFx.legendFlash : 1; // (a legend's flash: attackFx.legendFlash, 0.5 twice anyone's)
       if (!comfort.reduceFlashing) lv.fx.push({ kind: "flash", x: e.x, y: Math.min(3.5, top * 0.55), z: e.z, at: time, life: 0.16 * lf, r: 1, g: 1, b: 0.95, seed: e.at * 53 + (e.id ?? 0), size: 0.9 * lf });
+      // a legend's blow glowing in its element (render/fx/spellGlow.ts; the nearest legend: the hit doesn't say whose blow it was)
+      if (e.big && lookOn) { const L = nearestLegend(g.creatures, e.x, e.z); if (L) lv.look.blow(dressOf(L.species, 3, L.leashed || L.legendState === "happy" ? neon(L.species) : null), e.x, Math.min(3.5, top * 0.55), e.z, time, Math.round(e.at * 47) + L.id); }
       if (e.big) lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45 * vdur, r: 1, g: 0.85, b: 0.6, seed: 0, size: 3.2 * vsz, n: Math.round(28 * vsz), dot: 0.8 * vsz }); // a legend's blow: a shockwave along the ground
       lv.fx.push({ kind: "dust", x: e.x, y: 0.2, z: e.z, at: time, life: 0.5, r: 0.5, g: 0.45, b: 0.38, seed: e.at * 59 + (e.id ?? 0), size: 0.7 * big });
       lv.fx.push({ kind: "bits", x: e.x, y: Math.min(3, top * 0.6), z: e.z, at: time, life: 0.8, r: col.r, g: col.g, b: col.b, seed: e.at * 61 + (e.id ?? 0), size: big, n: bits === HIT_BITS.confetti ? 12 : 8 });

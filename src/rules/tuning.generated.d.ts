@@ -599,8 +599,8 @@ export type SchemaTuning = {
     "lightFloor": number;
     "lightTint": number;
     "lightRim": number;
-    "bedGlow"?: number;
-    "bedBloom"?: number;
+    "bedGlow": number;
+    "bedBloom": number;
     "heightSmooth": number;
     "heightLookAhead": number;
     "heightClearance": number;
@@ -1091,6 +1091,7 @@ export type SchemaTuning = {
   };
   "combatWaiting": {
     "reachScale": number;
+    "inviteReach": number;
     "areaGrowth": number;
     "passPower": number;
     "passDepth": number;
@@ -1146,6 +1147,13 @@ export type SchemaTuning = {
       "duration": number;
       "zoneDensity": number;
       "groundMark": number;
+    };
+    "glow": {
+      "core": number;
+      "halo": number;
+      "pool": number;
+      "lights": number;
+      "light": number;
     };
   };
   "combat": {
