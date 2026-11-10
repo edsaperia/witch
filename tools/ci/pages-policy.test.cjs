@@ -51,7 +51,7 @@ test('our own deployment step: named per attempt, cancels a stuck deployment, wa
   assert.equal(deploy.env.ARTIFACT_ID,'${{ steps.pack.outputs.artifact_id }}');
   assert.doesNotMatch(workflow,/actions\/deploy-pages@/); // (it names deployments by GITHUB_SHA and caps its wait at 10 min)
   const js=deploy.with.script;
-  assert.match(js,/pages_build_version:version/); assert.match(js,/context.runId/); assert.match(js,/GITHUB_RUN_ATTEMPT/);
+  assert.match(js,/pages_build_version:version/); assert.match(js,/attempt===1\?site:context\.sha/); assert.doesNotMatch(js,/context\.runId/); // (a build version must be a real commit)
   assert.match(js,/pages\/deployments\/\{id\}\/cancel/); assert.match(js,/in progress deployment/);
   assert.match(js,/30\*60e3/); assert.match(js,/attempt<=2/); assert.match(js,/getIDToken/);
   assert.equal(parsed.jobs.publish.environment.url,'${{ steps.deployment.outputs.page_url }}');
