@@ -12,7 +12,7 @@
 // kick a pitched sine with a click; hats the 808's six square tones through band- and high-pass;
 // supersaws as unison voices detuned and spread wide; pads breathing with a slow filter LFO.
 import { beatAt, bpmAt, timeAt, type BeatClock } from "../../rules/beat";
-import { mixOf } from "../../rules/musicBanger";
+import { compOf, mixOf } from "../../rules/musicBanger";
 import { Conductor, bootLayers, formClock, silentAt, stumpsBy, type MusicCue } from "../../rules/musicPlan";
 import { mtof, noiseBuffer } from "./dsp";
 import { FOF_TYPES, FOF_VOWELS, FofVoices, fofLoaded, fofReady } from "./fof/fof";
@@ -50,6 +50,8 @@ type Held = { gain: GainNode; filter: BiquadFilterNode | null; fBase: number; fR
 export interface MusicSink {
   /** The parts the kick ducks, the rest, the reverb's send and the delay's (each a node on the notes' context). */
   duck: AudioNode; dry: AudioNode; reverb: AudioNode; delay: AudioNode;
+  /** Banger mode's drum bus (its compressor the live bus's: rules/musicBanger.ts compOf); none: the drums into `dry`. */
+  drums?: AudioNode;
   /** The voice line's part before its effects (its effects, high-pass, pan and sends are the bus's); null: the engine's own. */
   voice: ((part: string) => AudioNode) | null;
   /** The section's low-pass from `f0` to `f1` Hz over `dur` seconds from `t`. */
@@ -139,7 +141,12 @@ export class MusicEngine {
   private tone: BiquadFilterNode;
   private limit!: DynamicsCompressorNode;
   /** Banger mode's master (rules/musicBanger.ts mixOf), made when a style first asks for it, in the path only while one does. */
-  private master: { low: BiquadFilterNode; air: BiquadFilterNode; drive: GainNode; on: boolean } | null = null;
+  private master: { low: BiquadFilterNode; air: BiquadFilterNode; drive: GainNode; on: boolean; glue?: { comp: DynamicsCompressorNode; makeup: GainNode; on: boolean } } | null = null;
+  /** Banger mode's drum bus (Ed, 2026-11-10: "Is it possible to add a compressor?"): its drums' channels and the drawn-ahead
+   *  bars' drum stem feed it; straight into the low-pass till a style's compressor asks, then dry beside a squashed copy
+   *  (parallel). Nothing feeds it with banger mode or its compressors off. */
+  private drumBus!: GainNode;
+  private drumComp: { comp: DynamicsCompressorNode; wet: GainNode; dry: GainNode; on: boolean } | null = null;
   private duckBus: GainNode;
   private dryBus: GainNode;
   private reverb: ConvolverNode;
@@ -265,6 +272,7 @@ export class MusicEngine {
     const delayTone = c.createBiquadFilter(); delayTone.type = "lowpass"; delayTone.frequency.value = 3200;
     // parts -> (duck | dry) + reverb + delay -> section low-pass -> limiter -> out
     this.duckBus.connect(this.tone); this.dryBus.connect(this.tone);
+    this.drumBus = c.createGain(); this.drumBus.connect(this.tone);
     // the reverb's return, its lows cut so the tails don't muddy the kick and bass
     const reverbLow = c.createBiquadFilter(); reverbLow.type = "highpass"; reverbLow.frequency.value = 220;
     this.reverbIn.connect(this.reverb); this.reverb.connect(reverbLow); reverbLow.connect(this.tone);
@@ -359,7 +367,7 @@ export class MusicEngine {
   private setMix(): void {
     const m = mixOf(this.style), lite = this.shedLevel >= 3, time = lite ? Math.min(0.7, m.reverbTime) : m.reverbTime;
     this.out.gain.value = m.master;
-    const want = !!(m.air || m.lowCut || (m.drive && m.drive !== 1));
+    const want = !this.stems && !!(m.air || m.lowCut || (m.drive && m.drive !== 1)); // (a renderer's master is the bus's)
     if (want && !this.master) {
       const c = this.ctx, low = c.createBiquadFilter(), air = c.createBiquadFilter(), drive = c.createGain();
       low.type = "highpass"; low.Q.value = 0.7; air.type = "highshelf"; air.frequency.value = 6500;
@@ -370,6 +378,22 @@ export class MusicEngine {
       const M = this.master;
       M.low.frequency.value = m.lowCut || 10; M.air.gain.value = m.air ?? 0; M.drive.gain.value = m.drive ?? 1;
       if (want !== M.on) { M.on = want; if (want) { this.tone.disconnect(this.limit); this.tone.connect(M.low); } else { this.tone.disconnect(M.low); this.tone.connect(this.limit); } }
+      // (the glue: a slow, low-ratio compressor between the drive and the limiter, while the style's compressors ask)
+      const G = want ? compOf(this.style)?.glue : undefined;
+      if (G && !M.glue) { const comp = this.ctx.createDynamicsCompressor(), makeup = this.ctx.createGain(); comp.connect(makeup); makeup.connect(this.limit); M.glue = { comp, makeup, on: false }; }
+      if (M.glue) {
+        const g = M.glue;
+        if (G) { g.comp.threshold.value = G.threshold; g.comp.knee.value = G.knee; g.comp.ratio.value = G.ratio; g.comp.attack.value = G.attack; g.comp.release.value = G.release; g.makeup.gain.value = G.makeup; }
+        if (!!G !== g.on) { g.on = !!G; if (G) { M.drive.disconnect(this.limit); M.drive.connect(g.comp); } else { M.drive.disconnect(g.comp); M.drive.connect(this.limit); } }
+      }
+    }
+    // the drum bus's compressor, parallel: the dry drums beside the squashed ones
+    const D = this.stems ? undefined : compOf(this.style)?.drums;
+    if (D && !this.drumComp) { const c = this.ctx, comp = c.createDynamicsCompressor(), wet = c.createGain(), dry = c.createGain(); dry.connect(this.tone); comp.connect(wet); wet.connect(this.tone); this.drumComp = { comp, wet, dry, on: false }; }
+    if (this.drumComp) {
+      const K = this.drumComp;
+      if (D) { K.comp.threshold.value = D.threshold; K.comp.knee.value = D.knee; K.comp.ratio.value = D.ratio; K.comp.attack.value = D.attack; K.comp.release.value = (D.releaseBeats * 60) / Math.max(40, this.bpmNow); K.wet.gain.value = D.mix * D.makeup; K.dry.gain.value = 1 - D.mix; }
+      if (!!D !== K.on) { K.on = !!D; if (D) { this.drumBus.disconnect(this.tone); this.drumBus.connect(K.dry); this.drumBus.connect(K.comp); } else { this.drumBus.disconnect(K.dry); this.drumBus.disconnect(K.comp); this.drumBus.connect(this.tone); } }
     }
     this.reverbIn.gain.value = m.reverb;
     this.delayIn.gain.value = lite ? 0 : m.delay;
@@ -384,9 +408,9 @@ export class MusicEngine {
   /** Its own buses as a sink (live: the notes and their automation straight onto them); what a renderer's stems play into. */
   get bus(): MusicSink {
     return this.ownBus ??= {
-      duck: this.duckBus, dry: this.dryBus, reverb: this.reverbIn, delay: this.delayIn, voice: null,
+      duck: this.duckBus, dry: this.dryBus, reverb: this.reverbIn, delay: this.delayIn, drums: this.drumBus, voice: null,
       tone: (f0, f1, t, dur) => { this.tone.frequency.setValueAtTime(f0, t); if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + dur); },
-      duckAt: (t, depth, sps) => { const g = this.duckBus.gain; g.setTargetAtTime(1 - depth, t, 0.004); g.setTargetAtTime(1, t + 0.03, sps * 0.7); },
+      duckAt: (t, depth, sps) => { const g = this.duckBus.gain; g.setTargetAtTime(1 - depth, t, 0.004); g.setTargetAtTime(1, t + (mixOf(this.style).duckHold ?? 0.03), sps * 0.7); },
       gate: (open, t) => { if (open) { this.gate.gain.cancelScheduledValues(t); this.gate.gain.setValueAtTime(1, t); } else this.gate.gain.setTargetAtTime(0, t, 0.03); },
       fxChain: (part, kind) => { const ch = this.channels.get(part); if (ch?.fx && ch.fxKind !== kind) { ch.fxKind = kind; ch.fx.set(this.fxChain(kind)); } },
       fxRelease: (part, t) => this.channels.get(part)?.fx?.release(t),
@@ -507,6 +531,7 @@ export class MusicEngine {
       if (this.lastStep < stepMusic + 64 && this.lastStep >= stepMusic - 64) this.nextStep = Math.max(this.nextStep, this.lastStep + 1);
     }
     this.bpmNow = bpmAt(clock, gameTime) * rate;
+    if (this.drumComp?.on) { const D = compOf(this.style)?.drums; if (D) this.drumComp.comp.release.setTargetAtTime(Math.min(1, (D.releaseBeats * 60) / Math.max(40, this.bpmNow)), now, 0.05); } // (its release timed to the tempo)
     this.delay.delayTime.setTargetAtTime(Math.min(4, (this.style.mix.delayBeats * 60) / bpmAt(clock, gameTime) / rate), now, 0.05);
     // A frame longer than what was scheduled ahead: the next sixteenth is already late. Played now rather than
     // dropped: the music held for the hitch, then on from where it was (the slew takes it back into step).
@@ -647,7 +672,9 @@ export class MusicEngine {
       // (a legend's clearing layer into its own bus and reverb, over the muffle; the voice line with its effects in after the
       // section's low-pass and the limiter, before the knockdown's gate, as the A/B Ed picked had it: Ed, 2026-10-11, "e Recorded
       // + ethereal"; the rest into the mix)
-      out.connect(circle ? this.circleIn : fx ? this.post : p.duck ? this.sink.duck : this.sink.dry);
+      // (banger mode's drums into the drum bus, while its compressors are on)
+      const drum = !circle && !fx && part.startsWith("b:") && !!compOf(this.style)?.drums && (p.kind === "kick" || p.kind === "snare" || p.kind === "noise") ? this.sink.drums : undefined;
+      out.connect(circle ? this.circleIn : fx ? this.post : drum ?? (p.duck ? this.sink.duck : this.sink.dry));
       if (p.reverb) { const r = c.createGain(); r.gain.value = p.reverb; out.connect(r); r.connect(circle ? this.circleVerbIn : this.sink.reverb); }
       if (p.delay && !circle) { const d = c.createGain(); d.gain.value = p.delay; out.connect(d); d.connect(this.sink.delay); }
       this.channels.set(key, ch = { in: g, lastFreq: 0, part, ...this.carried.get(key), ...(fx ? { fx } : {}) });

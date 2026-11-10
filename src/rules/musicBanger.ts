@@ -57,8 +57,20 @@ export interface BangerDef {
    *  great stump has its soundsystem (the cue's `stumps`), no wave over `energy`, its kit one of `keep` (else `kit`), no
    *  impacts, rolls or stutters, and the hook only slow. */
   gentle: { stumps: number; energy: number; kit: string; keep: string[] };
-  /** The mix's own: the kick's duck (the pump), a high shelf (dB at 6.5 kHz), a low cut (Hz), the drive into the limiter. */
-  mix: { duck?: number; air?: number; lowCut?: number; drive?: number };
+  /** The mix's own: the kick's duck (the pump) and how long it holds before easing back (s: the kick's body), a high shelf (dB at 6.5 kHz), a low cut (Hz), the drive into the limiter. */
+  mix: { duck?: number; duckHold?: number; air?: number; lowCut?: number; drive?: number };
+  /** The singer as the other main sound (Ed, 2026-11-10: "squares and vocals as the main sound"), after the second stump: she
+   *  doubles the hook wherever it's whole (`double`, a chop of her notes, at `doubleLevel`), holds the chord's root and fifth on
+   *  "ooh" under the grooves (`pad`, `padLevel`), and stabs the first note of the wave's riff each bar (`stabLevel`); every note
+   *  folded into `range` (MIDI: her recorded notes). */
+  vocals?: { double: string; doubleLevel: number; pad: string; padLevel: number; stabLevel: number; range: [number, number] };
+  /** The compressors (Ed, 2026-11-10: "Is it possible to add a compressor?"; platform/audio/musicEngine.ts), `on` false none:
+   *  `drums`, the drum bus's (kick, snare, clap, hats, percussion, fills and crash: for punch): its threshold (dB), knee (dB),
+   *  ratio, attack (s: slow enough that the hit's front comes through), release in beats (timed to the tempo), `mix` the share
+   *  of the squashed drums blended under the dry ones (parallel, "New York": 1 all squashed, 0 none) and `makeup` its gain;
+   *  `glue`, the master's before the limiter (the mix breathing together): threshold, knee, a low ratio, a slow attack, release
+   *  (s) and `makeup` (a gain after it: the node's own make-up taken back, and a little more into the limiter). */
+  comp?: { on?: boolean; drums?: { threshold: number; knee: number; ratio: number; attack: number; releaseBeats: number; mix: number; makeup: number }; glue?: { threshold: number; knee: number; ratio: number; attack: number; release: number; makeup: number } };
   /** The chord loops by mode, a bar a chord (scale steps, 0 the key's root): `a` the drop's, `b` the breakbeat phrase's. */
   progressions: Record<string, { a: number[][]; b: number[][] }>;
   /** The hook's banks: one-bar motif rhythms and answer rhythms ("x" a note, "-" held, "." a rest), pitch shapes (steps of
@@ -85,6 +97,19 @@ export function withBanger(style: MusicStyle, on: boolean | undefined): MusicSty
   if (!out) AS.set(style, (out = { ...style, banger: { ...style.banger, on } }));
   return out;
 }
+/** Banger mode's compressors, when they're on. */
+export const compOf = (style: MusicStyle): NonNullable<BangerDef["comp"]> | null => { const B = bangerOn(style); return B?.comp && B.comp.on !== false ? B.comp : null; };
+const COMP_AS = new WeakMap<MusicStyle, MusicStyle>();
+/** The style with banger mode's compressors off (the renders' A/B); the style itself when they already are. */
+export function withoutComp(style: MusicStyle): MusicStyle {
+  if (!compOf(style)) return style;
+  let out = COMP_AS.get(style);
+  if (!out) COMP_AS.set(style, (out = { ...style, banger: { ...style.banger!, comp: { ...style.banger!.comp, on: false } } }));
+  return out;
+}
+/** Whether a patch is a drum of the drum bus (a kick, a snare, a noise hit: not the riser or the impact). */
+export const drumPatch = (style: MusicStyle, patch: string): boolean => { const k = style.patches[patch]?.kind; return k === "kick" || k === "snare" || k === "noise"; };
+
 /** The mix as it's heard: the style's, banger mode's own over it. */
 export const mixOf = (style: MusicStyle): MusicStyle["mix"] & BangerDef["mix"] => { const B = bangerOn(style); return B ? { ...style.mix, ...B.mix } : style.mix; };
 
@@ -326,6 +351,11 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
   /** The hook at half speed from the section's top: a note of its first bars, twice as long. */
   const slow = (): HookNote | null => { const t = barIn * 16 + s; if (t % 2) return null; const n = hook.period[(t / 2) % 128]; return n && { deg: n.deg, dur: n.dur * 2 }; };
   const soft = gentle ? 0.6 : 1;
+  // the singer's notes as a second main voice: a tune's note folded into her range; the chord's root and fifth on "ooh"
+  const V = gentle ? undefined : B.vocals;
+  const voxAt = (deg: number) => { let m = degreeToMidi(style, scale, deg, 2, transpose); while (m > V!.range[1]) m -= 12; while (m < V!.range[0]) m += 12; return m; };
+  const vox = (n: HookNote | null, level: number, until = 16) => { if (V && n && s < until && style.patches[V.double]) out.push({ part: "b:" + V.double, patch: V.double, step, offset: sw, dur: Math.min(Math.max(2, n.dur), Math.max(1, until - s)), midi: voxAt(n.deg), vel: 0.85 * level, straight: true }); };
+  const ooh = (level: number) => { if (V && s === 0 && style.patches[V.pad]) for (const t of [chord.root, chord.root + 4]) out.push({ part: "b:" + V.pad, patch: V.pad, step, offset: 0, dur: 16, midi: voxAt(t), vel: 0.8 * V.padLevel * level, straight: true }); };
   const crash = (vel: number) => { if (s === 0) ev("bgCrash", null, vel, 16, { offset: 0 }); };
   const impact = () => { if (s === 0 && style.patches.impact) out.push({ part: "impact", patch: "impact", step, offset: 0, dur: 16, midi: null, vel: 1 }); };
   const riser = (from: number, to: number, dur = 16, patch = "riser") => { if (s === 0 && style.patches[patch]) out.push({ part: patch, patch, step, offset: 0, dur, midi: null, vel: 1, from, to }); };
@@ -349,12 +379,14 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
     // (a gentle wave: at half speed); between them the wave's own riff, on the reply voice where the lead rests (the breakbeat
     // phrase's first half, a later pass's first phrase), the reply answering in the gaps
     const slot = (pb * 16 + s) % 128;
-    if (use === "whole") { tune(lead, hook.period[slot], 1); if (role === "victory") tune(reply, hook.reply[slot], 0.7); }
+    ooh(1);
+    if (use === "whole") { tune(lead, hook.period[slot], 1); vox(hook.period[slot], V?.doubleLevel ?? 0); if (role === "victory") tune(reply, hook.reply[slot], 0.7); }
     else if (use === "slow") tune(lead, slow(), 0.9);
     else {
       const rests = role === "breaks" ? barIn < 4 : pass % 2 === 1 && barIn < 8;
       tune(rests ? reply : lead, riff.period[slot], rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1));
       if (!rests && (half || role === "breaks")) tune(reply, riff.reply[slot], 0.7);
+      if (!rests && V) { const first = riff.period.slice(pb * 16, pb * 16 + 16).findIndex(x => x); if (first === s) vox(riff.period[slot], V.stabLevel, until); } // (a sung stab on the riff's first note)
     }
   } else if (role === "breakdown") {
     if (!dropped) {
@@ -376,14 +408,15 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
       pad(0.7);
       const slot = ((k % 8) * 16 + s) % 128, T = use === "whole" ? hook : riff;
       tune(lead, T.period[slot], 1, {}, last ? 12 : 16);
+      if (use === "whole") vox(T.period[slot], V?.doubleLevel ?? 0, last ? 12 : 16);
       tune(reply, T.reply[slot], 0.7, {}, last ? 12 : 16);
     }
   } else {
     // the build: things taken away. The bass leaves at the half, the kick thins and leaves for the last quarter, the snare roll
     // doubles, the hook's first notes come faster and faster, the last beat all but silent
     const n = plan.bars, q = Math.floor((barIn * 4) / n), p = (barIn + s / 16) / n, gap = last && s >= 12;
-    riser(barIn / n, (barIn + 1) / n, last ? 12 : 16);
-    pad(0.8);
+    riser(barIn / n, (barIn + 1) / n, last ? 12 : 16, "bgRiser"); // (its own, quieter: the build's end stays under the drop)
+    pad(q < 2 ? 0.8 : 0.5);
     if (gentle) {
       // (a gentle build: the groove on, its kick out for the last bar, a shaker in sixteenths rising, the hook slow, then the riff)
       if (!last) { drums(kit.drums); bass(kit.bass, kit.bass.p, 0.9); } else if (!gap) drums(kit.drums, 0.9, k => k === "top");
@@ -394,14 +427,14 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
       const kickV = kit.drums.find(v => kindOf(v.patch) === "kick");
       if (q < 2) { drums(kit.drums, 1, k => k !== "snare"); bass(kit.bass, kit.bass.p, 0.9); }
       else if (q === 2) { drums(kit.drums, 0.9, k => k === "top"); if (kickV && s % 8 === 0) ev(kickV.patch, null, 0.9, 1); }
-      const roll = q === 0 ? s % 4 === 0 : q === 1 ? s % 2 === 0 : true, lv = 0.2 + 0.45 * p;
+      const roll = q === 0 ? s % 4 === 0 : q === 1 ? s % 2 === 0 : true, lv = 0.15 + 0.3 * p;
       if (roll) { ev("snare", null, lv * (s % 4 === 0 ? 1 : 0.8), 1); if (q === 3 && barIn >= n - 1) out.push({ part: "b:snare", patch: "snare", step, offset: sw + 0.5, dur: 0.5, midi: null, vel: lv * 0.8, straight: true }); }
       // the hook: its first bar at half speed sung (a wave with a singer) or its first half-bar played, then its opening
       // beat, then its first note, on every beat, eighth and sixteenth
       const first = hook.period.find(x => x) ?? null;
       if (q < 2) { const sl = slow(); if (sl && !(a.vocal !== "none" && sing(sl, sl.dur, 0.9))) tune(lead, sl, 0.7); }
-      else if (q === 2) tune(lead, hook.period[s % 4], 0.3 + 0.25 * p);
-      else if (first && (barIn >= n - 1 || s % 2 === 0)) tune(lead, { deg: first.deg, dur: 1 }, 0.3 + 0.3 * p);
+      else if (q === 2) tune(lead, hook.period[s % 4], 0.2 + 0.2 * p);
+      else if (first && (barIn >= n - 1 || s % 2 === 0)) tune(lead, { deg: first.deg, dur: 1 }, 0.2 + 0.2 * p);
     }
   }
   // the party's sparkle (a woken area near: the game's hook, live): the reply voice has the hook, by how near
@@ -440,6 +473,7 @@ export function checkBanger(style: MusicStyle): string[] {
   for (const [f, k] of Object.entries(B.families)) { if (!B.kits[k]) errs.push(`banger family ${f}: no kit "${k}"`); if (style.families && !style.families[f]) errs.push(`banger families: no family "${f}"`); }
   for (const f of Object.keys(style.families ?? {})) if (!B.families[f]) errs.push(`banger: family "${f}" has no kit`);
   for (const [m, P] of Object.entries(B.progressions)) { if (!style.scales[m]) errs.push(`banger progressions: no scale "${m}"`); if (!P.a.length || !P.b.length) errs.push(`banger progressions ${m}: empty`); }
-  for (const p of ["bgCrash", "bgSweep", "bgSub", "snare"]) patch("fixed", p);
+  for (const p of ["bgCrash", "bgSweep", "bgRiser", "bgSub", "snare"]) patch("fixed", p);
+  if (B.vocals) { patch("vocals", B.vocals.double); patch("vocals", B.vocals.pad); }
   return errs;
 }

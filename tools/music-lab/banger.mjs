@@ -10,9 +10,12 @@
 //   6-victory    the victory lap
 //   7-night      a night's first three waves (about three minutes)
 //   8-late       the same night's sixth to eighth waves (about three minutes)
+// LONG=1 renders one clip instead, seed<N>-long-night.mp3: about seven minutes of a night with everything on (the gentle start,
+// the second stump, builds and drops, breakdowns, a legend's clearing, the victory), its .txt with the compressors' gain reduction.
 // ONLY=1,3 renders only those passages; MODES=new only that mode. Fails on a script error, NaN, clipping or silence. Nothing
 // here touches the game.
 import { build } from "esbuild";
+import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readdirSync, readFileSync, writeFileSync, unlinkSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -40,6 +43,7 @@ await page.addScriptTag({ content: "{ let r = 12345; Math.random = () => ((r = (
 const save = (r, name, lines) => {
   ok(r.nan === 0 && r.peak > 0.01 && r.peak < 0.999, `${name}: sounds, no NaN or clipping (peak ${r.peak.toFixed(3)}, ${r.seconds.toFixed(1)} s)`);
   const pcm = Buffer.from(r.pcm, "base64"), h = Buffer.alloc(44);
+  console.log(`     sha256 of its samples ${createHash("sha256").update(pcm).digest("hex").slice(0, 16)}`);
   h.write("RIFF", 0); h.writeUInt32LE(36 + pcm.length, 4); h.write("WAVE", 8); h.write("fmt ", 12); h.writeUInt32LE(16, 16);
   h.writeUInt16LE(1, 20); h.writeUInt16LE(2, 22); h.writeUInt32LE(r.rate, 24); h.writeUInt32LE(r.rate * 4, 28); h.writeUInt16LE(4, 32); h.writeUInt16LE(16, 34);
   h.write("data", 36); h.writeUInt32LE(pcm.length, 40);
@@ -51,7 +55,7 @@ const save = (r, name, lines) => {
 };
 const z = n => Array(n).fill(0), SPECIES = ["owl", "stag", "wolf"];
 /** [tag, what it is, the job, what to listen for in the new one] */
-const passages = si => [
+const passages = si => process.env.LONG ? [] : [
   ["1-section", "a typical section: the sixth wave's first sixteen bars", { landings: z(5), from: 0, to: 16 }, ["The hook lands with the wave: one bar, three times with a changed ending, then an answer (bars 1-4), then again ending home (bars 5-8).", "From bar 9 the hook rests: the wave's own riff takes over, a small high reply answering in its gaps.", "The drums: a turn in bar 4, a fill in bar 8 with the kick and bass out for the last beat, a crash on bar 9.", "The mix: brighter, the kick pumping the chords and bass."]],
   ["2-breakdown", "the breakbeat phrase's last two bars, the breakdown with its drum & bass drop, then the groove back", { landings: z(5), from: 22, to: 40 }, ["The breakdown: no drums; the singer sings the same hook at half speed.", "The drum & bass drop: the hook returns whole on the lead.", "Then the groove back in with a crash; the hook rests and the reply voice has the wave's own riff."]],
   ["3-build", "the fifth wave's breakbeat phrase, the build, and the sixth wave landing", { landings: [...z(4), 32], from: 20, to: 44 }, ["The build takes things away: the bass leaves halfway, the kick thins then stops, the snare roll doubles, the hook's first notes come faster and faster.", "One beat of near silence, then the drop: crash, sub impact, the hook in the new wave's key and on its lead."]],
@@ -65,6 +69,15 @@ for (const [si, seed] of seeds.entries()) for (const [tag, about, job, listen] o
   const r = await page.evaluate(o => window.windowRender(o), { seed, island: "owl", banger: mode === "new", ...job, samples });
   const name = `seed${seed}-${tag}-${mode}`;
   save(r, name, [`${name}: ${about}; seed ${seed}, the owl island's night, 120 bpm; ${mode === "new" ? "NEW: banger mode (?banger=1, this branch's default)" : "OLD: today's music (?banger=0: #1924's dance way)"}`, "", ...r.marks, ...(mode === "new" ? ["", "Listen for:", ...listen.map(l => `  - ${l}`), "", r.hook] : [])]);
+}
+// LONG=1: one long clip of a night with everything on (Ed, 2026-11-10: "a long one with all the new effects over several cycles"):
+// the gentle start, the second stump, builds and drops, a breakdown with the singer, a legend's clearing and the victory
+if (process.env.LONG) for (const seed of seeds.slice(0, 1)) {
+  const r = await page.evaluate(o => window.windowRender(o), { seed, island: "owl", banger: true, long: true, landings: [16, 48, 112, 168], from: 0, to: 208, victory: 184, circle: { species: "owl", in: 298, out: 312 }, samples });
+  // (at the game's own level, so the clearing's layer sits as it does in the game; brought up to full scale after)
+  const pcm = Buffer.from(r.pcm, "base64"), s = new Int16Array(pcm.buffer, pcm.byteOffset, pcm.length / 2), k = 0.97 / r.peak;
+  for (let i = 0; i < s.length; i++) s[i] = Math.max(-32767, Math.min(32767, Math.round(s[i] * k)));
+  save({ ...r, pcm: Buffer.from(s.buffer, s.byteOffset, s.byteLength).toString("base64"), peak: 0.97 }, `seed${seed}-long-night`, [`seed${seed}-long-night: a night in banger mode with everything on, seed ${seed}, the owl island's night, 120 bpm (rendered at the game's level, then brought up ${(20 * Math.log10(k)).toFixed(1)} dB to full scale)`, "", ...r.marks, "", r.gr, "", r.hook]);
 }
 await browser.close();
 ok(errors.length === 0, `no script errors${errors.length ? ": " + errors.join(" | ") : ""}`);

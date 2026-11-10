@@ -9,7 +9,7 @@ import { newBeatClock, timeAt } from "../../src/rules/beat";
 import { Conductor, formClock, stumpsBy, type MusicCue } from "../../src/rules/musicPlan";
 import { nightStyle, planNight } from "../../src/rules/musicSet";
 import { arcStep, hauntedDrop, isHaunted, musicSeed, notesAt, resolveSection, withMelody, type MusicStyle } from "../../src/rules/musicScore";
-import { bangerOn, bangerRole, hookHeard, kitName, kitOf, nightHook, withBanger } from "../../src/rules/musicBanger";
+import { bangerOn, bangerRole, compOf, drumPatch, hookHeard, kitName, kitOf, nightHook, withBanger, withoutComp } from "../../src/rules/musicBanger";
 import styleJson from "../../config/music-style.json";
 
 const base = styleJson as unknown as MusicStyle;
@@ -49,57 +49,74 @@ export interface WindowJob {
   circle?: { species: string; in: number; out: number };
   /** Only these parts (a balance check). */
   solo?: string[];
+  /** Banger mode's compressors off (their A/B); only the drums (what the drum bus does). */
+  comp?: boolean; drums?: boolean;
+  /** A long clip: at the dancefloor throughout (a clearing's stretch too), every block's notes kept beside the clearing's. */
+  long?: boolean;
   samples: Record<string, string>;
 }
 
 /** The night's style as the game plays it (its set dealt for the island), banger mode on or off. */
-function styled(o: Pick<WindowJob, "seed" | "island" | "banger">): { style: MusicStyle; families: string[] } {
-  const n = planNight(base, { seed: o.seed, island: o.island, waves: 10 });
-  return { style: withBanger(withMelody(nightStyle(base, n), "dance"), o.banger), families: n.steps.map(s => s.family) };
+function styled(o: Pick<WindowJob, "seed" | "island" | "banger" | "comp">): { style: MusicStyle; families: string[] } {
+  const n = planNight(base, { seed: o.seed, island: o.island, waves: 10 }), s = withBanger(withMelody(nightStyle(base, n), "dance"), o.banger);
+  return { style: o.comp === false ? withoutComp(s) : s, families: n.steps.map(s => s.family) };
 }
 
 /** Bars `from` to `to` of a night, through Music at the dancefloor (its level full, a clearing's at the game's own: the same for old and new), and where each
  *  section starts and what plays there. */
 async function windowRender(o: WindowJob) {
-  const Z0 = o.circle, { style } = styled(o), clock = newBeatClock(style.bpm), t0 = timeAt(clock, o.from * 4), seconds = timeAt(clock, o.to * 4) - t0 + 2.5;
+  const Z0 = o.circle, { style } = styled(o), clock = newBeatClock(style.bpm), t0 = timeAt(clock, o.from * 4), seconds = timeAt(clock, o.to * 4) - t0 + 2.5 + (o.circle ? (o.circle.out - o.circle.in) * 0.9 : 0);
   const oc = new OfflineAudioContext(2, Math.ceil(seconds * RATE), RATE), recs = await decode(oc, o.samples);
-  const M = TUNING.music, m = new Music(oc, Z0 ? M.volume : 1, style, o.seed), near = mixAt(M, 1, 0, 10), far = mixAt(M, nearness(M, 40), 0, 40);
+  const M = TUNING.music, m = new Music(oc, Z0 ? M.volume : 1, style, o.seed), near = mixAt(M, 1, 0, 10), far = o.long ? near : mixAt(M, nearness(M, 40), 0, 40);
   m.engine!.setRecordings(recs); if (recs.whispers) m.engine!.setWhisper(recs.whispers);
   if (o.solo) m.engine!.solo = new Set(o.solo);
+  if (o.drums) m.engine!.solo = new Set(Object.keys(style.patches).filter(p => drumPatch(style, p)).map(p => "b:" + p));
+  // (the compressors' gain reduction, read each frame: dB, 0 none)
+  const gr = { drums: [] as number[], glue: [] as number[] }, E = m.engine as unknown as { drumComp?: { comp: DynamicsCompressorNode; on: boolean } | null; master?: { glue?: { comp: DynamicsCompressorNode; on: boolean } } | null };
   const cue: MusicCue = { waves: o.landings, nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, ...(o.victory !== undefined ? { victory: o.victory } : {}), ...(o.knock ? { knockdowns: [o.knock] } : {}) };
   // (a wave not yet landed is "due": the conductor builds into it)
   const cueAt = (bar: number): MusicCue => { const landed = o.landings.filter(b => b <= bar), due = o.landings.find(b => b > bar); return { ...cue, waves: landed, nextAt: due ?? Infinity, stumps: landed }; };
   const Z = o.circle, scale = (t: number) => !Z ? 1 : t < Z.in ? 1 : t < Z.out ? Math.max(0.1, 1 - 0.9 * (t - Z.in) / 0.5) : Math.min(1, 0.1 + 0.9 * (t - Z.out) / 0.5);
   let game = t0;
+  const track: [number, number][] = [];
+  for (let f = 0, g = t0; f * FRAME < seconds; f++) { track.push([f * FRAME, g]); g += scale(f * FRAME) * FRAME; }
+  /** The clip's time a game time is heard at. */
+  const at = (g: number) => { let lo = 0, hi = track.length - 1; while (lo < hi) { const mid = (lo + hi) >> 1; if (track[mid][1] < g) lo = mid + 1; else hi = mid; } return track[lo][0]; };
   frames(oc, seconds, t => {
     const k = scale(t), g = game; game += k * FRAME;
+    if (E.drumComp?.on) gr.drums.push(-E.drumComp.comp.reduction);
+    if (E.master?.glue?.on) gr.glue.push(-E.master.glue.comp.reduction);
     const c = cueAt(g / (240 / style.bpm) + 1e-6);
     m.update(Z ? far : near, { ...c, circle: Z && t >= Z.in && t < Z.out ? { species: Z.species, level: M.circle.level } : undefined }, g, clock, true, M, k);
   });
   const marks: string[] = [];
-  if (!Z) {
+  if (!Z || o.long) {
     const C = new Conductor(style);
     let last = "";
     for (let b = o.from; b < o.to; b++) {
-      if (o.knock && b >= Math.floor(o.knock.at) && b < Math.ceil(o.knock.back)) { if (last !== "ko") marks.push(`${mmss(timeAt(clock, o.knock.at * 4) - t0).padStart(7)}  she's knocked down: the record scratches, silence`); last = "ko"; continue; }
+      if (o.knock && b >= Math.floor(o.knock.at) && b < Math.ceil(o.knock.back)) { if (last !== "ko") marks.push(`${mmss(at(timeAt(clock, o.knock.at * 4))).padStart(7)}  she's knocked down: the record scratches, silence`); last = "ko"; continue; }
       const c = cueAt(b), p = C.plan(c, b), key = `${p.section}@${p.start}`;
       if (key === last) continue;
       last = key;
-      marks.push(`${mmss(timeAt(clock, b * 4) - t0).padStart(7)}  ${describe(style, c, p.start, b, o.seed)}`);
+      marks.push(`${mmss(at(timeAt(clock, b * 4))).padStart(7)}  ${describe(style, c, p.start, b, o.seed)}`);
       // (where the night's hook is heard in this block)
       let was: string | null = null;
       for (let k = b; k < Math.min(o.to, p.start + p.bars); k++) {
         if (o.knock && k >= Math.floor(o.knock.at) && k < Math.ceil(o.knock.back)) break;
         const u = hookHeard(style, p, resolveSection(style, p.section), k, formClock(style, c, k).start, stumpsBy(c, p.start, style.blockBars));
-        if (u !== was && u) marks.push(`${mmss(timeAt(clock, k * 4) - t0).padStart(7)}    HOOK ${u === "whole" ? "returns, whole, on the lead" : u === "slow" ? "at half speed (sung where there's a singer)" : "teased: its first notes, faster and faster"}`);
-        else if (u !== was && was) marks.push(`${mmss(timeAt(clock, k * 4) - t0).padStart(7)}    (the hook rests: the wave's own riff)`);
+        if (u !== was && u) marks.push(`${mmss(at(timeAt(clock, k * 4))).padStart(7)}    HOOK ${u === "whole" ? "returns, whole, on the lead" : u === "slow" ? "at half speed (sung where there's a singer)" : "teased: its first notes, faster and faster"}`);
+        else if (u !== was && was) marks.push(`${mmss(at(timeAt(clock, k * 4))).padStart(7)}    (the hook rests: the wave's own riff)`);
         was = u;
       }
       const d = isHaunted(style, p.section) ? hauntedDrop(style, p.bars) : Infinity;
-      if (Number.isFinite(d) && p.start + d < o.to && p.start + d > b && bangerRoleOf(style, c, p.start + d) !== "build") marks.push(`${mmss(timeAt(clock, (p.start + d) * 4) - t0).padStart(7)}  the drum & bass drop${bangerOn(style) ? ": the hook whole on the lead" : ""}`);
+      if (Number.isFinite(d) && p.start + d < o.to && p.start + d > b && bangerRoleOf(style, c, p.start + d) !== "build") marks.push(`${mmss(at(timeAt(clock, (p.start + d) * 4))).padStart(7)}  the drum & bass drop${bangerOn(style) ? ": the hook whole on the lead" : ""}`);
     }
+    if (cue.victory !== undefined) marks.push(`${mmss(at(timeAt(clock, cue.victory * 4))).padStart(7)}  THE NIGHT IS WON: the victory from the next block line`);
+    if (Z) marks.push(`${mmss(Z.in).padStart(7)}  >> into a sleeping ${Z.species}'s clearing: the world slows, the music muffles, the ${Z.species}'s own layer hums tonight's hook`, `${mmss(Z.out).padStart(7)}  << out of the clearing: the music back at speed`);
+    marks.sort((a, b) => { const s = (x: string) => { const m = x.trim().match(/^(\d+):([\d.]+)/)!; return +m[1] * 60 + +m[2]; }; return s(a) - s(b); });
   } else marks.push(`${mmss(0).padStart(7)}  the music nearby`, `${mmss(Z.in).padStart(7)}  into the ${Z.species}'s clearing: the world slows, the music muffles, its own layer plays${bangerOn(style) ? " (humming tonight's hook)" : ""}`, `${mmss(Z.out).padStart(7)}  out of the clearing`);
-  return result(await oc.startRendering(), { marks, hook: hookText(style, o.seed) });
+  const stat = (xs: number[]) => { const s = xs.filter(x => x > 0.05).sort((a, b) => a - b); return s.length ? `median ${s[Math.floor(s.length / 2)].toFixed(1)} dB, 90th percentile ${s[Math.floor(s.length * 0.9)].toFixed(1)} dB, most ${s[s.length - 1].toFixed(1)} dB (${Math.round((100 * s.length) / xs.length)}% of the time working)` : "none"; };
+  return result(await oc.startRendering(), { marks, hook: hookText(style, o.seed), gr: compOf(style) ? `gain reduction: drum bus ${stat(gr.drums)}; master glue ${stat(gr.glue)}` : "" });
 }
 const bangerRoleOf = (style: MusicStyle, cue: MusicCue, bar: number) => { const p = new Conductor(style).plan(cue, bar); return bangerOn(style) ? bangerRole(style, p, arcStep(style, p.arc), resolveSection(style, p.section), formClock(style, cue, bar).start) : null; };
 

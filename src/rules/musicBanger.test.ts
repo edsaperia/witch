@@ -3,7 +3,7 @@
 // musicVictory), run with banger mode off.
 import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
-import { bangerChord, bangerOn, bangerRole, checkBanger, hookUse, kitName, kitOf, mixOf, nightHook, pentDeg, withBanger } from "./musicBanger";
+import { bangerChord, bangerOn, bangerRole, checkBanger, compOf, drumPatch, hookUse, kitName, kitOf, mixOf, nightHook, pentDeg, withBanger, withoutComp } from "./musicBanger";
 import { Conductor, formClock, musicCue, stumpsBy, type MusicCue } from "./musicPlan";
 import { arcStep, checkStyle, musicSeed, notesAt, resolveSection, tuneSeed, type MusicStyle, type NoteEvent } from "./musicScore";
 import { nightStyle, planNight } from "./musicSet";
@@ -187,7 +187,7 @@ describe("banger mode's blocks", () => {
       expect(bass[0]).toBeGreaterThan(0); expect(bass.slice(4)).toEqual([0, 0, 0, 0]);
       expect(rolls[0]).toBe(4); expect(rolls[2]).toBe(8); expect(rolls[4]).toBe(16); expect(rolls[7]).toBeGreaterThan(16);
       expect(bars[7].filter(e => e.step % 16 >= 12)).toEqual([]);
-      for (const es of bars) expect(es.some(e => e.patch === "riser")).toBe(true);
+      for (const es of bars) expect(es.some(e => e.patch === "bgRiser")).toBe(true);
       // (and the wave lands: more low end in its first bar than the build's last)
       const land = barNotes(style, seed, 4, 32);
       expect(land.filter(e => kickLike(style, e)).length).toBeGreaterThan(0);
@@ -289,5 +289,58 @@ describe("the game's hooks under banger mode", () => {
     const tune = layer.filter(e => style.parts[e.part]?.role === "motif" && !e.ghost);
     expect(tune.length).toBeGreaterThan(0);
         expect(tune.filter(e => hookPcs.has(((e.midi! % 12) + 12) % 12)).length).toBeGreaterThanOrEqual(Math.ceil(tune.length * 0.7)); // (a haunted clearing colours a note now and then)
+  });
+});
+
+describe("thump, squares and vocals (Ed, 2026-11-10: \"lacks 'thump'\", \"squares and vocals as the main sound with some families keeping their own character\")", () => {
+  it("has compressors of its own, in its block, off with banger mode or by themselves", () => {
+    const C = compOf(base)!;
+    expect(C.drums!.attack).toBeGreaterThanOrEqual(0.01); // (the hit's front through)
+    expect(C.drums!.mix).toBeGreaterThan(0); expect(C.drums!.mix).toBeLessThanOrEqual(1);
+    expect(C.glue!.ratio).toBeLessThanOrEqual(3); expect(C.glue!.attack).toBeGreaterThanOrEqual(0.02);
+    expect(compOf(withBanger(base, false))).toBeNull();
+    expect(compOf(withoutComp(base))).toBeNull();
+    expect(withoutComp(base)).toBe(withoutComp(base));
+    expect(bangerOn(withoutComp(base))).toBeTruthy();
+    expect(drumPatch(base, "bgKick")).toBe(true); expect(drumPatch(base, "bgHat")).toBe(true); expect(drumPatch(base, "bgSub")).toBe(false); expect(drumPatch(base, "riser")).toBe(false);
+  });
+  it("gives the kick a body: a slower fall to about 52 Hz, a longer tail, more drive, the click under it; the soft kick stays soft; the duck deeper, holding through the body", () => {
+    const k = base.patches.bgKick, s = base.patches.bgSoftKick;
+    expect(k.pitchTime!).toBeGreaterThanOrEqual(0.06); expect(k.pitchTime!).toBeLessThanOrEqual(0.08);
+    expect(k.pitchEnd!).toBeGreaterThanOrEqual(50); expect(k.pitchEnd!).toBeLessThanOrEqual(55);
+    expect(k.click!).toBeLessThan(0.5); expect(k.drive!).toBeGreaterThan(s.drive!); expect(s.click!).toBeLessThan(k.click!);
+    expect(mixOf(base).duck).toBeGreaterThan(base.mix.duck); expect(mixOf(base).duckHold!).toBeGreaterThan(0.03);
+    // (only the kick and the bass live low: every lead, chord and pad banger mode plays is high-passed at 120 Hz or over)
+    const used = new Set<string>();
+    for (const n of Object.keys(B.kits)) { const K = kitOf(B, n); if (K.chords.patch) used.add(K.chords.patch); if (K.pad) used.add(K.pad.patch); }
+    for (const L of Object.values(B.leads)) used.add(L.patch);
+    for (const p of [...used, B.vocals!.double, B.vocals!.pad]) expect(base.patches[p].hp ?? 0, p).toBeGreaterThanOrEqual(120);
+  });
+  it("leads on squares in most families, a narrow pulse replying; hand drums, ritual, dub, witch house and phonk keep their own", () => {
+    const OWN = ["organic", "ritual", "dub", "trap", "phonk"], sq = (l: string) => /^bg(Square|Pulse)/.test(B.leads[l].patch) || B.leads[l].patch === "pwmArp";
+    for (const n of Object.keys(B.kits)) {
+      const K = kitOf(B, n);
+      if (OWN.includes(n)) { expect(K.leads.hard.some(l => /^bgSquare/.test(B.leads[l].patch)), n).toBe(false); continue; }
+      expect(sq(K.leads.hard[0]), n).toBe(true); expect(sq(K.leads.soft[0]), n).toBe(true);
+      expect(K.reply.some(l => /^bgPulse/.test(B.leads[l].patch)), n).toBe(true);
+    }
+    expect(base.patches.bgSquare.waves).toEqual(["square", "square"]);
+    expect(base.patches.bgSquare.cutoff2!).toBeLessThanOrEqual(9000); // (filtered up high: not harsh)
+    // (a narrow pulse: an eighth of the cycle, its eighth harmonic gone)
+    const h = base.patches.bgPulse.harmonics!;
+    expect(h[0]).toBe(1); expect(Math.abs(h[7])).toBeLessThan(0.001); expect(Math.abs(base.patches.bgPulse25.harmonics![3])).toBeLessThan(0.001);
+  });
+  it("has the singer double the hook wherever it's whole, hold an ooh under the grooves and stab the riff, in her range; never before the second stump", () => {
+    const V = B.vocals!;
+    for (const seed of [7, 23, 101]) {
+      const style = night(seed), h = nightHook(B, seed), land = [0, 1, 2, 3].flatMap(b => barNotes(style, seed, 5, b)), later = [9, 10, 11].flatMap(b => barNotes(style, seed, 5, b));
+      const dbl = land.filter(e => e.patch === V.double);
+      expect(dbl.length).toBe(h.period.slice(0, 64).filter(x => x).length);
+      expect(land.filter(e => e.patch === V.pad).length).toBe(8); // (root and fifth, a bar each)
+      expect(later.filter(e => e.patch === V.double).length).toBe(3); // (a stab a bar)
+      for (const e of [...land, ...later].filter(e => e.patch === V.double || e.patch === V.pad)) { expect(e.midi!).toBeGreaterThanOrEqual(V.range[0]); expect(e.midi!).toBeLessThanOrEqual(V.range[1]); }
+      const gentle = [0, 5, 9, 33, 40].flatMap(b => barNotes(style, seed, 0, b));
+      expect(gentle.filter(e => e.patch === V.double || e.patch === V.pad)).toEqual([]);
+    }
   });
 });
