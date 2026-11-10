@@ -293,6 +293,8 @@ label.check input { accent-color: var(--accent); }
       bgOpenHat: { kind: "noise", source: "metal", gain: 7, filter: "highpass", cutoff: 7e3, q: 0.7, decay: 0.24, hp: 500, pan: -0.15, reverb: 0.15 },
       bgRide: { kind: "noise", source: "metal", gain: 5, filter: "bandpass", cutoff: 9e3, q: 1.2, decay: 0.2, hp: 3e3, pan: 0.35, reverb: 0.2 },
       bgCrash: { kind: "noise", source: "metal", gain: 5.5, filter: "highpass", cutoff: 4500, q: 0.6, decay: 1.3, hp: 700, reverb: 0.5 },
+      bgXylo: { kind: "synth", gain: 0.4, waves: ["sine", "triangle"], levels: [1, 0.25], attack: 1e-3, decay: 0.17, sustain: 0, release: 0.09, fmRatio: 3, fmIndex: 1.7, fmDecay: 0.05, fmSustain: 0.05, filter: "bandpass", cutoff: 2200, q: 0.7, reverb: 0.35, delay: 0.15, hp: 350, pan: -0.18 },
+      bgSnap: { kind: "noise", gain: 5, filter: "bandpass", cutoff: 2300, q: 2.4, decay: 0.045, bursts: 2, reverb: 0.3, hp: 1100, pan: 0.12 },
       bgRiser: { kind: "riser", gain: 0.14, cutoff: 400, q: 4, reverb: 0.4 },
       bgSweep: { kind: "riser", gain: 0.11, cutoff: 900, q: 2.5, reverb: 0.4 },
       bgSub: { kind: "synth", gain: 0.2, waves: ["sine"], attack: 4e-3, decay: 0.3, sustain: 0.85, release: 0.07, filter: "lowpass", cutoff: 260, duck: true },
@@ -497,6 +499,7 @@ label.check input { accent-color: var(--accent); }
       mix: { duck: 0.8, duckHold: 0.07, air: 5, lowCut: 28, drive: 1.2 },
       comp: { on: true, drums: { threshold: -7, knee: 6, ratio: 4, attack: 0.02, releaseBeats: 0.25, mix: 0.5, makeup: 1.5 }, glue: { threshold: -6, knee: 8, ratio: 2, attack: 0.03, release: 0.25, makeup: 1.3 } },
       vocals: { double: "bgChop", doubleLevel: 1, pad: "bgOoh", padLevel: 0.9, stabLevel: 0.8, range: [55, 76] },
+      spice: { xylo: "xylo", answer: 0.3, flourish: 0.33, breakdown: 0.4, snap: "bgSnap", snaps: 0.3, gentleSnaps: 0.5, replace: 0.5, breakdownSnaps: 0.35, snapLevel: 0.9 },
       register: { lead: 84, reply: 88, floor: 57, level: 0.66 },
       progressions: { dorian: { a: [[0, 0, 3, 3], [0, 6, 3, 3], [0, 2, 6, 3], [0, 4, 6, 3], [0, 6, 0, 3], [0, 3, 6, 0]], b: [[2, 6, 3, 0], [3, 3, 0, 0], [6, 3, 0, 0], [2, 3, 0, 0]] }, aeolian: { a: [[0, 5, 2, 6], [0, 6, 5, 6], [0, 0, 5, 6], [0, 5, 3, 4], [0, 3, 5, 6]], b: [[5, 6, 0, 0], [5, 2, 6, 0], [3, 5, 6, 0]] }, phrygian: { a: [[0, 1, 0, 6], [0, 0, 1, 1], [0, 5, 1, 0]], b: [[5, 1, 0, 0], [3, 1, 0, 0]] }, harmonicMinor: { a: [[0, 5, 3, 4], [0, 3, 4, 4], [0, 5, 4, 4]], b: [[5, 4, 0, 0], [3, 4, 0, 0]] } },
       hook: { motifs: ["x-.x-.x-x-.x-...", "x-x-..x-x--.....", "..x-x-x-..x-x-..", "x--x--x-..x-....", "x-..x-x-.x-.x-..", "x-x-x-..x--x--..", ".x-x-.x-x---....", "x---..x-x-x-....", "x-.x-.x-..x-.x-.", "x-x-.x-.x---....", "x--x-.x-x-..x-..", "..x-.x-.x-x-x---"], answers: ["x-----x---x-----", "x---x---x-------", "..x---x-x-------", "x--x--x---------", "x-x-x---x-------"], shapes: [[0, 0, 2, 1, 0], [0, 2, 1, 2, 0], [0, 1, 2, 1, 3], [2, 0, 2, 0, 1], [0, 3, 2, 1, 2], [0, 0, 3, 2, 0], [2, 2, 1, 0, 1], [0, 1, 0, 2, 0], [3, 2, 0, 2, 0], [0, 2, 2, 1, 3]], anchors: [0, 1, 3, 3], replies: [[5, 7, 8], [8, 7, 5], [5, 6, 8], [7, 5, 7]] },
@@ -521,7 +524,8 @@ label.check input { accent-color: var(--accent); }
         square: { patch: "bgSquare", octave: 3, level: 2.4 },
         squareSoft: { patch: "bgSquareSoft", octave: 3, level: 3.4 },
         pulse: { patch: "bgPulse", octave: 4, level: 2 },
-        pulse25: { patch: "bgPulse25", octave: 4, level: 2 }
+        pulse25: { patch: "bgPulse25", octave: 4, level: 2 },
+        xylo: { patch: "bgXylo", octave: 4, level: 3 }
       },
       fills: {
         classic: [{ patch: "snare", p: "........x.x.xxXX" }],
@@ -4866,10 +4870,20 @@ label.check input { accent-color: var(--accent); }
       const p = style2.patches[patch];
       return !p ? "" : p.kind === "kick" && !p.noDuck ? "kick" : p.kind === "snare" || p.bursts ? "snare" : "top";
     };
-    const drums = (voices, level = 1, keep2) => {
+    const SP = B.spice, phraseNo = Math.floor(formBar / 8), deal = (salt) => hash2(seed2, salt, phraseNo + pass * 131);
+    const snapsOn = !!SP && !!style2.patches[SP.snap] && deal(851) < (gentle ? SP.gentleSnaps : SP.snaps), snapsAlone = snapsOn && deal(853) < SP.replace;
+    const xylo = SP ? B.leads[SP.xylo] : void 0, xyAnswer = !!xylo && deal(857) < SP.answer, xyRun = !!xylo && hash2(seed2, 859, bar2) < SP.flourish;
+    const drums = (voices, level = 1, keep2, backbeat = false) => {
+      let snapped = false;
       for (const v of voices) {
         if (!within(v, E2, barIn, pass) || keep2 && !keep2(kindOf(v.patch))) continue;
-        const ch = v.p[(barIn * 16 + s) % v.p.length], lv = (v.level ?? 1) * level * (0.94 + 0.06 * r(v.patch.length * 31 + v.p.length));
+        const snare = backbeat && snapsOn && kindOf(v.patch) === "snare";
+        const ch = v.p[(barIn * 16 + s) % v.p.length], lv = (v.level ?? 1) * level * (snare ? snapsAlone ? 0 : 0.45 : 1) * (0.94 + 0.06 * r(v.patch.length * 31 + v.p.length));
+        if (snare && !snapped && (ch === "X" || ch === "x")) {
+          snapped = true;
+          ev(SP.snap, null, SP.snapLevel * level, 1);
+        }
+        if (lv <= 0) continue;
         if (ch === "." || ch === "-" || VEL2[ch] === void 0) continue;
         if (ch === "r") {
           ev(v.patch, null, 0.6 * lv, 0.5);
@@ -4990,7 +5004,8 @@ label.check input { accent-color: var(--accent); }
       if (s === 0 && style2.patches[patch]) out.push({ part: patch, patch, step: step2, offset: 0, dur, midi: null, vel: 1, from, to });
     };
     const fillBar = (voices, level = 1) => {
-      drums(voices, level, (k) => s < 8 ? true : s < 12 ? k === "top" : false);
+      drums(voices, level, (k) => s < 8 ? true : s < 12 ? k === "top" : false, true);
+      if (xyRun && s >= 12) tune(xylo, { deg: pentDeg(hook.anchor + s - 15), dur: 1 }, 0.8);
       const f = B.fills[pick2(kit.fills.length ? kit.fills : Object.keys(B.fills), hash2(seed2, 843, bar2))];
       if (f) drums(f, level);
     };
@@ -4998,7 +5013,7 @@ label.check input { accent-color: var(--accent); }
       const voices = role === "breaks" ? kit.breaks : kit.drums, fill2 = pb === 7 || last, half = barIn >= 8 || pass > 0;
       if (fill2) fillBar(voices);
       else {
-        drums(voices);
+        drums(voices, 1, void 0, true);
         if (pb === 3 && kit.turn) drums(kit.turn);
       }
       if (role === "victory") drums(B.victory);
@@ -5017,11 +5032,13 @@ label.check input { accent-color: var(--accent); }
         tune(lead, hook.period[slot], 1);
         vox(hook.period[slot], V?.doubleLevel ?? 0);
         if (role === "victory") tune(reply, hook.reply[slot], 0.7, {}, 16, hook, "reply");
+        if (xyAnswer) tune(xylo, hook.reply[slot], 0.8, {}, 16, hook, "reply");
       } else if (use2 === "slow") tune(lead, slow(), 0.9);
       else {
         const rests = role === "breaks" ? barIn < 4 : pass % 2 === 1 && barIn < 8;
         tune(rests ? reply : lead, riff.period[slot], rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1), {}, 16, riff);
         if (!rests && (half || role === "breaks")) tune(reply, riff.reply[slot], 0.7, {}, 16, riff, "reply");
+        if (xyAnswer) tune(xylo, riff.reply[slot], 0.8, {}, 16, riff, "reply");
         if (!rests && V) {
           const first = riff.period.slice(pb * 16, pb * 16 + 16).findIndex((x) => x);
           if (first === s) vox(riff.period[slot], V.stabLevel, until);
@@ -5033,6 +5050,8 @@ label.check input { accent-color: var(--accent); }
         if (s === 0 && barIn % 2 === 0) bass({ patch: ["bgSub"], octave: 0, sub: false, p: ["1-------------------------------"] }, ["1-------------------------------"], 0.7);
         const n = slow();
         if (n && !sing(n, n.dur, 1)) tune(reply, n, 0.9);
+        if (SP && xylo && hash2(seed2, 861, phraseNo) < SP.breakdown) tune(xylo, hook.reply[(barIn % 8 * 16 + s) % 128], 0.7, {}, 16, hook, "reply");
+        if (SP && s === 8 && style2.patches[SP.snap] && hash2(seed2, 863, phraseNo) < SP.breakdownSnaps) ev(SP.snap, null, 0.7 * SP.snapLevel, 1);
         if (Number.isFinite(dropAt)) {
           const rb = Math.max(0, Math.min(H.drop.riserBars, dropAt)), k = barIn - (dropAt - rb);
           if (k >= 0 && k < rb) riser(k / rb, (k + 1) / rb);
@@ -5149,6 +5168,10 @@ label.check input { accent-color: var(--accent); }
     if (B.vocals) {
       patch("vocals", B.vocals.double);
       patch("vocals", B.vocals.pad);
+    }
+    if (B.spice) {
+      patch("spice", B.spice.snap);
+      if (!B.leads[B.spice.xylo]) errs.push(`banger spice: no lead "${B.spice.xylo}"`);
     }
     return errs;
   }
