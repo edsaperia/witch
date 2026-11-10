@@ -99,6 +99,19 @@ async function windowRender(o: WindowJob) {
       if (key === last) continue;
       last = key;
       marks.push(`${mmss(at(timeAt(clock, b * 4))).padStart(7)}  ${describe(style, c, p.start, b, o.seed)}`);
+      // (the sprinkles in this block, a phrase at a time: the xylophone, the finger snaps)
+      const SPb = bangerOn(style)?.spice, xyp = SPb ? bangerOn(style)!.leads[SPb.xylo].patch : "";
+      if (SPb) for (let k = b; k < Math.min(o.to, p.start + p.bars); k += 8 - ((k - p.start) % 8)) {
+        const got = new Set<string>(), runs: number[] = [];
+        for (let q = k; q < Math.min(o.to, p.start + p.bars, k + 8 - ((k - p.start) % 8)); q++) {
+          if (o.knock && q >= Math.floor(o.knock.at) && q < Math.ceil(o.knock.back)) continue;
+          const f = formClock(style, c, q);
+          for (let s = 0; s < 16; s++) for (const e of notesAt(style, p, null, q * 16 + s, { seed: musicSeed(o.seed, f.n), formStart: f.start, siege: 0, only: "main", stumps: stumpsBy(c, p.start, style.blockBars) })) { if (e.patch === xyp) { got.add(s >= 12 && (q - p.start) % 8 === 7 || q === p.start + p.bars - 1 && s >= 12 ? "run" : "xylo"); if (s === 12) runs.push(q); } if (e.patch === SPb.snap) got.add("snap"); }
+        }
+        if (got.has("xylo")) marks.push(`${mmss(at(timeAt(clock, k * 4))).padStart(7)}    + XYLOPHONE answering in the gaps for this phrase`);
+        if (got.has("run")) marks.push(`${mmss(at(timeAt(clock, (runs[runs.length - 1] ?? k) * 4 + 3))).padStart(7)}    + XYLOPHONE run into the next phrase`);
+        if (got.has("snap")) marks.push(`${mmss(at(timeAt(clock, k * 4))).padStart(7)}    + FINGER SNAPS in this phrase (on the backbeat; in a breakdown, on the third beat)`);
+      }
       // (where the night's hook is heard in this block)
       let was: string | null = null;
       for (let k = b; k < Math.min(o.to, p.start + p.bars); k++) {

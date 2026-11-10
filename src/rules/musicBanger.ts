@@ -77,6 +77,14 @@ export interface BangerDef {
    *  the minor pentatonic over the anchor, a note each), the anchors (0 the root, 1 the third, 3 the fifth), the reply's shapes. */
   hook: { motifs: string[]; answers: string[]; shapes: number[][]; anchors: number[]; replies: number[][] };
   leads: Record<string, { patch: string; octave: number; level: number }>;
+  /** Sprinkled in sometimes (Ed, 2026-11-10: "Some Xylophone and Finger snap snares help with the spooky vibe; sprinkle some of
+   *  these in sometimes"), each dealt by the wave's seed an eight-bar phrase at a time: the xylophone (`xylo`, a voice of
+   *  `leads`) answering in the tune's gaps (`answer`: the share of phrases), a four-note run into the next phrase over a fill's
+   *  last beat (`flourish`), a figure in a breakdown's quiet half (`breakdown`); finger snaps (`snap`, a patch, at `snapLevel`)
+   *  on the kit's backbeat (`snaps`: the share of phrases; `gentleSnaps` before the second stump), in place of its snare and
+   *  clap (`replace`: the share of those) or over them at under half their level, and on the third beat of a breakdown's quiet
+   *  half (`breakdownSnaps`). */
+  spice?: { xylo: string; answer: number; flourish: number; breakdown: number; snap: string; snaps: number; gentleSnaps: number; replace: number; breakdownSnaps: number; snapLevel: number };
   /** The tunes' register and level (Ed, 2026-11-10: "Lead melody gets very high, and it's loud vs the drums"): the highest
    *  note (MIDI) a lead's line and the reply voice's may reach (a line that would pass it is played an octave down, whole, its
    *  shape kept), the lowest a lead's line may fall to, and every tune's level against the drums (`level`). */
@@ -288,10 +296,19 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
     if (style.patches[patch]) out.push({ part: "b:" + patch, patch, step, offset: sw, dur, midi, vel: vel * quiet, straight: true, ...extra });
   };
   const kindOf = (patch: string) => { const p = style.patches[patch]; return !p ? "" : p.kind === "kick" && !p.noDuck ? "kick" : p.kind === "snare" || p.bursts ? "snare" : "top"; };
-  const drums = (voices: BangerVoice[], level = 1, keep?: (kind: string) => boolean) => {
+  // the sprinkles, dealt a phrase at a time (Ed, 2026-11-10: "sprinkle some of these in sometimes")
+  const SP = B.spice, phraseNo = Math.floor(formBar / 8), deal = (salt: number) => hash2(seed, salt, phraseNo + pass * 131);
+  const snapsOn = !!SP && !!style.patches[SP.snap] && deal(851) < (gentle ? SP.gentleSnaps : SP.snaps), snapsAlone = snapsOn && deal(853) < SP!.replace;
+  const xylo = SP ? B.leads[SP.xylo] : undefined, xyAnswer = !!xylo && deal(857) < SP!.answer, xyRun = !!xylo && hash2(seed, 859, bar) < SP!.flourish;
+  const drums = (voices: BangerVoice[], level = 1, keep?: (kind: string) => boolean, backbeat = false) => {
+    let snapped = false;
     for (const v of voices) {
       if (!within(v, E, barIn, pass) || (keep && !keep(kindOf(v.patch)))) continue;
-      const ch = v.p[(barIn * 16 + s) % v.p.length], lv = (v.level ?? 1) * level * (0.94 + 0.06 * r(v.patch.length * 31 + v.p.length));
+      const snare = backbeat && snapsOn && kindOf(v.patch) === "snare";
+      const ch = v.p[(barIn * 16 + s) % v.p.length], lv = (v.level ?? 1) * level * (snare ? (snapsAlone ? 0 : 0.45) : 1) * (0.94 + 0.06 * r(v.patch.length * 31 + v.p.length));
+      // (finger snaps on the kit's backbeat: where its snare or clap hits squarely)
+      if (snare && !snapped && (ch === "X" || ch === "x")) { snapped = true; ev(SP!.snap, null, SP!.snapLevel * level, 1); }
+      if (lv <= 0) continue;
       if (ch === "." || ch === "-" || VEL[ch] === undefined) continue;
       if (ch === "r") { ev(v.patch, null, 0.6 * lv, 0.5); out.push({ part: "b:" + v.patch, patch: v.patch, step, offset: sw + 0.5, dur: 0.5, midi: null, vel: 0.75 * lv, straight: true }); continue; }
       ev(v.patch, null, VEL[ch] * lv, 1);
@@ -380,14 +397,16 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
   const riser = (from: number, to: number, dur = 16, patch = "riser") => { if (s === 0 && style.patches[patch]) out.push({ part: patch, patch, step, offset: 0, dur, midi: null, vel: 1, from, to }); };
   /** A phrase's last bar: the fill dealt, the kick, snare and bass out from its middle, the tops from its last beat. */
   const fillBar = (voices: BangerVoice[], level = 1) => {
-    drums(voices, level, k => (s < 8 ? true : s < 12 ? k === "top" : false));
+    drums(voices, level, k => (s < 8 ? true : s < 12 ? k === "top" : false), true);
+    // (now and then the xylophone runs up into the next phrase over the last beat)
+    if (xyRun && s >= 12) tune(xylo, { deg: pentDeg(hook.anchor + s - 15), dur: 1 }, 0.8);
     const f = B.fills[pick(kit.fills.length ? kit.fills : Object.keys(B.fills), hash2(seed, 843, bar))];
     if (f) drums(f, level);
   };
 
   if (role === "drop" || role === "victory" || role === "breaks") {
     const voices = role === "breaks" ? kit.breaks : kit.drums, fill = pb === 7 || last, half = barIn >= 8 || pass > 0;
-    if (fill) fillBar(voices); else { drums(voices); if (pb === 3 && kit.turn) drums(kit.turn); }
+    if (fill) fillBar(voices); else { drums(voices, 1, undefined, true); if (pb === 3 && kit.turn) drums(kit.turn); }
     if (role === "victory") drums(B.victory);
     if (barIn === 0) { crash(0.9 * soft * soft); if (role !== "breaks" && pass === 0 && !gentle) impact(); } else if (pb === 0 && !gentle) crash(0.6);
     if (pb === 7 && !last && !gentle) riser(0.35, 0.85, 12, "bgSweep");
@@ -399,12 +418,13 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
     // phrase's first half, a later pass's first phrase), the reply answering in the gaps
     const slot = (pb * 16 + s) % 128;
     ooh(1);
-    if (use === "whole") { tune(lead, hook.period[slot], 1); vox(hook.period[slot], V?.doubleLevel ?? 0); if (role === "victory") tune(reply, hook.reply[slot], 0.7, {}, 16, hook, "reply"); }
+    if (use === "whole") { tune(lead, hook.period[slot], 1); vox(hook.period[slot], V?.doubleLevel ?? 0); if (role === "victory") tune(reply, hook.reply[slot], 0.7, {}, 16, hook, "reply"); if (xyAnswer) tune(xylo, hook.reply[slot], 0.8, {}, 16, hook, "reply"); }
     else if (use === "slow") tune(lead, slow(), 0.9);
     else {
       const rests = role === "breaks" ? barIn < 4 : pass % 2 === 1 && barIn < 8;
       tune(rests ? reply : lead, riff.period[slot], rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1), {}, 16, riff);
       if (!rests && (half || role === "breaks")) tune(reply, riff.reply[slot], 0.7, {}, 16, riff, "reply");
+      if (xyAnswer) tune(xylo, riff.reply[slot], 0.8, {}, 16, riff, "reply"); // (now and then the xylophone answers in the gaps)
       if (!rests && V) { const first = riff.period.slice(pb * 16, pb * 16 + 16).findIndex(x => x); if (first === s) vox(riff.period[slot], V.stabLevel, until); } // (a sung stab on the riff's first note)
     }
   } else if (role === "breakdown") {
@@ -414,6 +434,9 @@ export function bangerNotes(style: MusicStyle, plan: BlockPlan, sec: Resolved, s
       if (s === 0 && barIn % 2 === 0) bass({ patch: ["bgSub"], octave: 0, sub: false, p: ["1-------------------------------"] }, ["1-------------------------------"], 0.7);
       const n = slow();
       if (n && !sing(n, n.dur, 1)) tune(reply, n, 0.9);
+      // (now and then: the xylophone's figure in the hook's gaps, a finger snap on the third beat)
+      if (SP && xylo && hash2(seed, 861, phraseNo) < SP.breakdown) tune(xylo, hook.reply[((barIn % 8) * 16 + s) % 128], 0.7, {}, 16, hook, "reply");
+      if (SP && s === 8 && style.patches[SP.snap] && hash2(seed, 863, phraseNo) < SP.breakdownSnaps) ev(SP.snap, null, 0.7 * SP.snapLevel, 1);
       if (Number.isFinite(dropAt)) {
         const rb = Math.max(0, Math.min(H!.drop.riserBars, dropAt)), k = barIn - (dropAt - rb);
         if (k >= 0 && k < rb) riser(k / rb, (k + 1) / rb);
@@ -494,5 +517,6 @@ export function checkBanger(style: MusicStyle): string[] {
   for (const [m, P] of Object.entries(B.progressions)) { if (!style.scales[m]) errs.push(`banger progressions: no scale "${m}"`); if (!P.a.length || !P.b.length) errs.push(`banger progressions ${m}: empty`); }
   for (const p of ["bgCrash", "bgSweep", "bgRiser", "bgSub", "snare"]) patch("fixed", p);
   if (B.vocals) { patch("vocals", B.vocals.double); patch("vocals", B.vocals.pad); }
+  if (B.spice) { patch("spice", B.spice.snap); if (!B.leads[B.spice.xylo]) errs.push(`banger spice: no lead "${B.spice.xylo}"`); }
   return errs;
 }

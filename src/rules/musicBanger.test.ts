@@ -196,7 +196,7 @@ describe("banger mode's blocks", () => {
   });
   it("keeps the breakdown's shape (Ed, 2026-11-08: no drums, then drum & bass): the singer on the hook at half speed, then the hook whole", () => {
     const style = night(7), cue = { nextAt: Infinity }, quiet = [24, 25, 26, 27].flatMap(b => barNotes(style, 7, 5, b, cue)), loud = [28, 29, 30].flatMap(b => barNotes(style, 7, 5, b, cue));
-    expect(quiet.filter(e => !pitched(e) && e.patch !== "riser")).toEqual([]);
+    expect(quiet.filter(e => !pitched(e) && e.patch !== "riser" && e.patch !== B.spice!.snap)).toEqual([]); // (no drums but, now and then, a finger snap)
     const sung = quiet.filter(e => e.part === style.form!.sung.part && !e.ghost && !e.double), h = nightHook(B, 7);
     expect(sung.length).toBe(h.period.slice(0, 32).filter(x => x).length);
     expect(sung.every(e => e.dur >= 2 && e.step % 2 === 0)).toBe(true);
@@ -383,5 +383,33 @@ describe("the tunes' register and level (Ed, 2026-11-10: \"Lead melody gets very
       }
     }
     expect(B.register!.level).toBeLessThan(0.75); // (the tunes sit in the groove: about 3.5 dB down)
+  });
+});
+
+describe("the sprinkles (Ed, 2026-11-10: \"Some Xylophone and Finger snap snares help with the spooky vibe; sprinkle some of these in sometimes\")", () => {
+  it("come and go by the phrase: the xylophone and the finger snaps each in some phrases, a quarter to a half of them, never all", () => {
+    const SP = B.spice!, xy = B.leads[SP.xylo].patch;
+    let phrases = 0, withXylo = 0, withSnap = 0, alone = 0;
+    for (const seed of [1, 7, 23, 101, 4242, 90001]) {
+      const style = night(seed);
+      for (const before of [2, 3, 4, 5, 6, 7, 8]) for (const p0 of [0, 8, 16]) {
+        const es = [0, 1, 2, 3, 4, 5, 6, 7].flatMap(k => barNotes(style, seed, before, p0 + k, { nextAt: Infinity }));
+        phrases++;
+        if (es.some(e => e.patch === xy)) withXylo++;
+        if (es.some(e => e.patch === SP.snap)) { withSnap++; if (!es.some(e => e.step % 16 < 8 && (e.patch === "bgClap" || e.patch === "snare" || e.patch === "dnbSnare") && (e.step % 16 === 4 || e.step % 16 === 12) && e.vel > 0.3)) alone++; }
+        // (the xylophone under the lead's ceiling: mid-high, never shrill; the snaps where a backbeat is)
+        for (const e of es.filter(e => e.patch === xy)) { expect(e.midi!).toBeLessThanOrEqual(B.register!.lead); expect(e.midi!).toBeGreaterThanOrEqual(50); }
+      }
+    }
+    expect(withXylo / phrases).toBeGreaterThan(0.2); expect(withXylo / phrases).toBeLessThan(0.65);
+    expect(withSnap / phrases).toBeGreaterThan(0.15); expect(withSnap / phrases).toBeLessThan(0.5);
+    expect(alone).toBeGreaterThan(0); expect(alone).toBeLessThan(withSnap); // (in the snare's place, or over it)
+  });
+  it("makes them of synthesis, the snap a drum of the drum bus", () => {
+    const SP = B.spice!;
+    expect(base.patches[SP.snap].kind).toBe("noise"); expect(drumPatch(base, SP.snap)).toBe(true);
+    expect(base.patches[B.leads[SP.xylo].patch].kind).toBe("synth");
+    expect(base.patches[B.leads[SP.xylo].patch].decay!).toBeLessThan(0.25); // (a short wooden bar)
+    for (const n of Object.keys(B.kits)) expect([...kitOf(B, n).leads.soft, ...kitOf(B, n).leads.hard], n).not.toContain(SP.xylo); // (a sprinkle, not a kit's lead)
   });
 });
