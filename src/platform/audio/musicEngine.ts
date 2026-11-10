@@ -1156,7 +1156,7 @@ export class MusicEngine {
     src.buffer = rec; src.playbackRate.value = rate;
     // the swell (Ed, 2026-10-14: "more dynamic range"): each note rising from nothing over its first `swell` share and fading
     // over its last (a 30 ms ramp with none), so a held note breathes rather than switches on
-    const sw = Math.min(0.5, Math.max(0, p.swell ?? 0)), rise = Math.max(0.03, Math.min(len * sw, 1.5)), fall = Math.max(0.08, Math.min(len * sw, 1.5));
+    const sw = Math.min(0.5, Math.max(0, p.swell ?? 0)), rise = p.attack ?? Math.max(0.03, Math.min(len * sw, 1.5)) /* (a patch's own attack: banger mode's chop, on the grid) */, fall = Math.max(0.08, Math.min(len * sw, 1.5));
     const envelope = (gain: AudioParam, top: number) => {
       gain.setValueAtTime(0, t); gain.linearRampToValueAtTime(top, t + (held ? 0.12 : rise));
       if (!held) { gain.setValueAtTime(top, t + Math.max(rise, len - fall)); gain.linearRampToValueAtTime(0, t + len); }
