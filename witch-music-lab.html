@@ -282,32 +282,56 @@ label.check input { accent-color: var(--accent); }
       dnbKick: { kind: "kick", gain: 0.95, pitch: 170, pitchEnd: 52, pitchTime: 0.035, decay: 0.3, drive: 0.35, click: 0.45 },
       dnbSnare: { kind: "snare", gain: 1.15, pitch: 205, cutoff: 1900, q: 0.9, decay: 0.19, reverb: 0.35, hp: 160 },
       dnbSub: { kind: "synth", gain: 0.36, waves: ["sine"], attack: 8e-3, decay: 1.4, sustain: 0.8, release: 0.18, filter: "lowpass", cutoff: 260, glide: 0.07 },
-      bgKick: { kind: "kick", gain: 1, pitch: 150, pitchEnd: 45, pitchTime: 0.07, decay: 0.24, drive: 0.6, driveTime: 0.06, click: 0.42 },
+      bgKick: { kind: "kick", gain: 1, pitch: 115, pitchEnd: 41, pitchTime: 0.07, blip: 320, blipTime: 0.01, attack: 1e-3, hold: 0.05, decay: 0.24, drive: 0.85, driveTime: 0.06, click: 0.8, clickFreq: 3e3, clickTime: 6e-3 },
       bgSoftKick: { kind: "kick", gain: 0.85, pitch: 130, pitchEnd: 52, pitchTime: 0.05, decay: 0.26, drive: 0.15, click: 0.25 },
-      bgTom: { kind: "kick", gain: 0.6, pitch: 230, pitchEnd: 130, pitchTime: 0.07, decay: 0.22, click: 0.15, reverb: 0.25, hp: 70, pan: 0.25, noDuck: true },
-      bgTomLo: { kind: "kick", gain: 0.65, pitch: 170, pitchEnd: 92, pitchTime: 0.08, decay: 0.26, click: 0.12, reverb: 0.25, hp: 60, pan: -0.25, noDuck: true },
-      bgClap: { kind: "noise", gain: 2.6, filter: "bandpass", cutoff: 1700, q: 0.9, decay: 0.24, bursts: 4, reverb: 0.4, hp: 500 },
-      bgRim: { kind: "noise", gain: 4.5, filter: "bandpass", cutoff: 2600, q: 3, decay: 0.035, reverb: 0.3, hp: 900, pan: -0.3 },
-      bgHat: { kind: "noise", source: "metal", gain: 14, filter: "highpass", cutoff: 8200, q: 0.7, decay: 0.04, hp: 500, pan: 0.3 },
-      bgHatB: { kind: "noise", source: "metal", gain: 12, filter: "highpass", cutoff: 9500, q: 0.7, decay: 0.03, hp: 500, pan: -0.3 },
-      bgOpenHat: { kind: "noise", source: "metal", gain: 7, filter: "highpass", cutoff: 7e3, q: 0.7, decay: 0.24, hp: 500, pan: -0.15, reverb: 0.15 },
-      bgRide: { kind: "noise", source: "metal", gain: 5, filter: "bandpass", cutoff: 9e3, q: 1.2, decay: 0.2, hp: 3e3, pan: 0.35, reverb: 0.2 },
+      bgTom: { kind: "kick", gain: 0.6, pitch: 230, pitchEnd: 130, pitchTime: 0.07, decay: 0.22, click: 0.15, reverb: 0.25, hp: 70, pan: 0.45, noDuck: true },
+      bgTomLo: { kind: "kick", gain: 0.65, pitch: 170, pitchEnd: 92, pitchTime: 0.08, decay: 0.26, click: 0.12, reverb: 0.25, hp: 60, pan: -0.45, noDuck: true },
+      bgClap: { kind: "noise", gain: 2.6, filter: "bandpass", cutoff: 1700, q: 0.9, decay: 0.24, bursts: 4, reverb: 0.15, hp: 500 },
+      bgTomHi: { kind: "kick", gain: 0.55, pitch: 310, pitchEnd: 185, pitchTime: 0.06, decay: 0.18, click: 0.15, reverb: 0.25, hp: 90, pan: 0.6, noDuck: true },
+      bgTomMid: { kind: "kick", gain: 0.6, pitch: 200, pitchEnd: 110, pitchTime: 0.07, decay: 0.24, click: 0.13, reverb: 0.25, hp: 65, pan: -0.15, noDuck: true },
+      bgRim: { kind: "noise", gain: 4.5, filter: "bandpass", cutoff: 2600, q: 3, decay: 0.035, reverb: 0.3, hp: 900, pan: -0.5 },
+      bgHat: { kind: "noise", source: "metal", gain: 14, filter: "highpass", cutoff: 8200, q: 0.7, decay: 0.04, hp: 500, pan: 0.45 },
+      bgHatB: { kind: "noise", source: "metal", gain: 12, filter: "highpass", cutoff: 9500, q: 0.7, decay: 0.03, hp: 500, pan: -0.45 },
+      bgOpenHat: { kind: "noise", source: "metal", gain: 7, filter: "highpass", cutoff: 7e3, q: 0.7, decay: 0.24, hp: 500, pan: -0.3, reverb: 0.15 },
+      bgRide: { kind: "noise", source: "metal", gain: 5, filter: "bandpass", cutoff: 9e3, q: 1.2, decay: 0.2, hp: 3e3, pan: 0.5, reverb: 0.2 },
       bgCrash: { kind: "noise", source: "metal", gain: 5.5, filter: "highpass", cutoff: 4500, q: 0.6, decay: 1.3, hp: 700, reverb: 0.5 },
-      bgXylo: { kind: "synth", gain: 0.4, waves: ["sine", "triangle"], levels: [1, 0.25], attack: 1e-3, decay: 0.17, sustain: 0, release: 0.09, fmRatio: 3, fmIndex: 1.7, fmDecay: 0.05, fmSustain: 0.05, filter: "bandpass", cutoff: 2200, q: 0.7, reverb: 0.35, delay: 0.15, hp: 350, pan: -0.18 },
-      bgSnap: { kind: "noise", gain: 5, filter: "bandpass", cutoff: 2300, q: 2.4, decay: 0.045, bursts: 2, reverb: 0.3, hp: 1100, pan: 0.12 },
+      bgXylo: { kind: "synth", gain: 0.4, waves: ["sine", "triangle"], levels: [1, 0.45], attack: 1e-3, decay: 0.15, sustain: 0, release: 0.09, fmRatio: 3, fmIndex: 2.4, fmDecay: 0.05, fmSustain: 0.05, filter: "bandpass", cutoff: 3e3, q: 0.5, reverb: 0.5, hp: 170, pan: -0.12 },
+      bgXyloL: { kind: "synth", from: "bgXylo", gain: 0.4, pan: -0.8, reverb: 0.6 },
+      bgXyloR: { kind: "synth", from: "bgXylo", gain: 0.4, pan: 0.8, reverb: 0.6 },
+      bgXyloLow: { kind: "synth", gain: 0.45, waves: ["sine", "triangle"], levels: [1, 0.4], attack: 2e-3, decay: 0.26, sustain: 0, release: 0.12, fmRatio: 2, fmIndex: 1.1, fmDecay: 0.06, fmSustain: 0.05, filter: "lowpass", cutoff: 1900, q: 0.8, reverb: 0.5, hp: 180, pan: -0.1 },
+      bgXyloLowL: { kind: "synth", from: "bgXyloLow", gain: 0.45, pan: -0.8, reverb: 0.6 },
+      bgXyloLowR: { kind: "synth", from: "bgXyloLow", gain: 0.45, pan: 0.8, reverb: 0.6 },
+      bgOrganL: { kind: "synth", from: "bgOrgan", gain: 0.45, pan: -0.75, reverb: 0.55 },
+      bgOrganR: { kind: "synth", from: "bgOrgan", gain: 0.45, pan: 0.75, reverb: 0.55 },
+      bgStabL: { kind: "synth", from: "bgStab", gain: 0.5, pan: -0.75, reverb: 0.55, width: 0.3 },
+      bgStabR: { kind: "synth", from: "bgStab", gain: 0.5, pan: 0.75, reverb: 0.55, width: 0.3 },
+      bgShaker: { kind: "noise", from: "shaker", gain: 2.124, pan: -0.55 },
+      bgSnap: { kind: "noise", gain: 9, filter: "bandpass", cutoff: 3600, q: 2.2, decay: 0.035, bursts: 2, reverb: 0.3, hp: 1500, pan: 0.3 },
       bgRiser: { kind: "riser", gain: 0.14, cutoff: 400, q: 4, reverb: 0.4 },
       bgSweep: { kind: "riser", gain: 0.11, cutoff: 900, q: 2.5, reverb: 0.4 },
       bgSub: { kind: "synth", gain: 0.2, waves: ["sine"], attack: 4e-3, decay: 0.3, sustain: 0.85, release: 0.07, filter: "lowpass", cutoff: 260, duck: true },
-      bgStab: { kind: "synth", gain: 0.5, waves: ["sawtooth"], unison: 5, detune: 26, width: 0.95, attack: 2e-3, decay: 0.16, sustain: 0.12, release: 0.08, filter: "lowpass", cutoff: 1800, q: 1.4, envAmt: 5200, fDecay: 0.13, fSustain: 0.2, reverb: 0.3, delay: 0.18, duck: true, hp: 260 },
-      bgOrgan: { kind: "synth", gain: 0.45, waves: ["sawtooth", "sine", "triangle"], levels: [0.55, 0.8, 0.35], semis: [0, 12, 19], attack: 3e-3, decay: 0.2, sustain: 0.5, release: 0.07, filter: "lowpass", cutoff: 5200, q: 0.8, reverb: 0.25, duck: true, hp: 220, pan: -0.1 },
-      bgWhistle: { kind: "synth", gain: 0.3, waves: ["sine", "triangle"], levels: [1, 0.18], attack: 0.03, decay: 0.25, sustain: 0.85, release: 0.16, glide: 0.055, vibRate: 5.6, vibDepth: 24, vibDelay: 0.1, filter: "lowpass", cutoff: 5200, reverb: 0.55, delay: 0.3, hp: 350, pan: 0.1 },
-      bgTwinkle: { kind: "synth", gain: 0.3, waves: ["sine"], attack: 2e-3, decay: 0.35, sustain: 0, release: 0.25, fmRatio: 4, fmIndex: 1.1, fmDecay: 0.1, fmSustain: 0, bend: 1, bendTime: 0.03, filter: "lowpass", cutoff: 8e3, reverb: 0.55, delay: 0.4, hp: 600, pan: -0.3 },
-      bgSquare: { kind: "synth", gain: 0.2, waves: ["square", "square"], detune: 9, width: 0.5, attack: 4e-3, decay: 0.2, sustain: 0.7, release: 0.09, glide: 0.022, filter: "lowpass", cutoff: 2300, q: 1.6, envAmt: 3200, fDecay: 0.07, fSustain: 0.25, filter2: "lowpass", cutoff2: 7500, vibRate: 5.6, vibDepth: 13, vibDelay: 0.24, lfoRate: 0.3, lfoDepth: 350, delay: 0.25, reverb: 0.22, hp: 220 },
-      bgSquareSoft: { kind: "synth", gain: 0.2, waves: ["square", "triangle"], levels: [0.5, 1], detune: 6, attack: 8e-3, decay: 0.25, sustain: 0.6, release: 0.14, glide: 0.03, filter: "lowpass", cutoff: 1500, q: 1, envAmt: 1400, fDecay: 0.1, fSustain: 0.3, filter2: "lowpass", cutoff2: 5e3, vibRate: 5.2, vibDepth: 11, vibDelay: 0.25, delay: 0.3, reverb: 0.4, hp: 220, pan: 0.08 },
-      bgPulse: { kind: "synth", gain: 0.6, waves: ["custom"], harmonics: [1, 0.924, 0.805, 0.653, 0.483, 0.308, 0.143, 0, -0.111, -0.185, -0.219, -0.218, -0.186, -0.132, -0.067, 0, 0.059, 0.103, 0.127, 0.131, 0.115, 0.084, 0.043, 0], attack: 2e-3, decay: 0.12, sustain: 0.3, release: 0.08, filter: "lowpass", cutoff: 3e3, q: 1, envAmt: 3500, fDecay: 0.08, fSustain: 0.3, filter2: "lowpass", cutoff2: 8500, bend: 1, bendTime: 0.025, delay: 0.38, reverb: 0.35, hp: 500, pan: -0.28 },
+      bgStab: { kind: "synth", gain: 0.5, waves: ["sawtooth"], unison: 5, detune: 26, width: 0.95, attack: 2e-3, decay: 0.16, sustain: 0.12, release: 0.08, filter: "lowpass", cutoff: 1800, q: 1.4, envAmt: 5200, fDecay: 0.13, fSustain: 0.2, reverb: 0.45, duck: true, hp: 140 },
+      bgOrgan: { kind: "synth", gain: 0.45, waves: ["sawtooth", "sine", "triangle"], levels: [0.55, 0.8, 0.35], semis: [0, 12, 19], attack: 3e-3, decay: 0.14, sustain: 0.2, release: 0.07, filter: "lowpass", cutoff: 5200, q: 0.8, reverb: 0.42, duck: true, hp: 130, pan: -0.1 },
+      bgWhistle: { kind: "synth", gain: 0.3, waves: ["sine", "triangle"], levels: [1, 0.18], attack: 0.01, decay: 0.25, sustain: 0.85, release: 0.16, vibRate: 5.6, vibDepth: 24, vibDelay: 0.1, filter: "lowpass", cutoff: 5200, reverb: 0.55, delay: 0.3, hp: 350, pan: 0.1 },
+      bgTwinkle: { kind: "synth", gain: 0.3, waves: ["sine"], attack: 2e-3, decay: 0.35, sustain: 0, release: 0.25, fmRatio: 4, fmIndex: 1.1, fmDecay: 0.1, fmSustain: 0, filter: "lowpass", cutoff: 8e3, reverb: 0.55, delay: 0.4, hp: 600, pan: -0.3 },
+      bgSquare: { kind: "synth", gain: 0.2, waves: ["square", "square"], detune: 9, width: 0.5, attack: 4e-3, decay: 0.2, sustain: 0.7, release: 0.09, filter: "lowpass", cutoff: 2300, q: 1.6, envAmt: 3200, fDecay: 0.07, fSustain: 0.25, filter2: "lowpass", cutoff2: 7500, vibRate: 5.6, vibDepth: 13, vibDelay: 0.24, lfoRate: 0.3, lfoDepth: 350, delay: 0.25, reverb: 0.22, hp: 220 },
+      bgSquareSoft: { kind: "synth", gain: 0.2, waves: ["square", "triangle"], levels: [0.5, 1], detune: 6, attack: 4e-3, decay: 0.25, sustain: 0.6, release: 0.14, filter: "lowpass", cutoff: 1500, q: 1, envAmt: 1400, fDecay: 0.1, fSustain: 0.3, filter2: "lowpass", cutoff2: 5e3, vibRate: 5.2, vibDepth: 11, vibDelay: 0.25, delay: 0.3, reverb: 0.4, hp: 220, pan: 0.08 },
+      bgPulse: { kind: "synth", gain: 0.6, waves: ["custom"], harmonics: [1, 0.924, 0.805, 0.653, 0.483, 0.308, 0.143, 0, -0.111, -0.185, -0.219, -0.218, -0.186, -0.132, -0.067, 0, 0.059, 0.103, 0.127, 0.131, 0.115, 0.084, 0.043, 0], attack: 2e-3, decay: 0.12, sustain: 0.3, release: 0.08, filter: "lowpass", cutoff: 3e3, q: 1, envAmt: 3500, fDecay: 0.08, fSustain: 0.3, filter2: "lowpass", cutoff2: 8500, delay: 0.38, reverb: 0.35, hp: 500, pan: -0.28 },
       bgPulse25: { kind: "synth", gain: 0.55, waves: ["custom"], harmonics: [1, 0.707, 0.333, 0, -0.2, -0.236, -0.143, 0, 0.111, 0.141, 0.091, 0, -0.077, -0.101, -0.067, 0, 0.059, 0.079, 0.053, 0, -0.048, -0.064, -0.043, 0], attack: 2e-3, decay: 0.14, sustain: 0.4, release: 0.08, filter: "lowpass", cutoff: 2600, q: 1.2, envAmt: 3e3, fDecay: 0.08, fSustain: 0.3, filter2: "lowpass", cutoff2: 8e3, vibRate: 6, vibDepth: 10, vibDelay: 0.2, delay: 0.3, reverb: 0.25, hp: 350, pan: 0.2 },
-      bgOoh: { kind: "sample", from: "chimeraVoice", gain: 0.3, vowels: ["oo"], swell: 0.4, breath: 0, reverb: 0.6, delay: 0.15, hp: 250, duck: true },
-      bgChop: { kind: "sample", from: "chimeraVoice", gain: 0.5, vowels: ["aa"], swell: 0.08, breath: 0, reverb: 0.5, delay: 0.4, hp: 300, pan: 0.15 }
+      bgOoh: { kind: "sample", from: "chimeraVoice", gain: 0.3, vowels: ["oo"], swell: 0.4, breath: 0, reverb: 0.6, delay: 0.15, hp: 380, presence: 5, duck: true },
+      bgOohL: { kind: "sample", from: "bgOoh", gain: 0.42, pan: -0.6 },
+      bgOohR: { kind: "sample", from: "bgOoh", gain: 0.42, pan: 0.6 },
+      bgFlute: { kind: "synth", from: "breathFlute", gain: 0.21, attack: 0.012, bend: 0, hp: 280 },
+      bgDark: { kind: "synth", from: "darkSaw", gain: 0.26, attack: 8e-3, hp: 140 },
+      bgGrit: { kind: "synth", gain: 0.3, waves: ["sawtooth", "sawtooth", "square"], levels: [1, 1, 0.5], detune: 28, attack: 5e-3, decay: 0.3, sustain: 0.8, release: 0.07, filter: "lowpass", cutoff: 850, q: 1.6, envAmt: 1500, fDecay: 0.12, fSustain: 0.3, lfoRate: 0.4, lfoDepth: 250, drive: 0.9, hp: 110, duck: true },
+      bgAir: { kind: "sample", from: "chimeraVoice", gain: 0.3, vowels: ["oo"], breath: 0.1, reverb: 0.9, delay: 0.3, hp: 500, presence: 5 },
+      bgAirL: { kind: "sample", from: "bgAir", gain: 0.3, pan: -0.7 },
+      bgAirR: { kind: "sample", from: "bgAir", gain: 0.3, vowels: ["aa"], pan: 0.7 },
+      bgLead: { kind: "sample", from: "chimeraVoice", gain: 0.6, vowels: ["aa"], swell: 0.08, attack: 3e-3, skip: 0.07, breath: 0.04, reverb: 0.7, delay: 0.3, hp: 330, presence: 5, air: 5 },
+      bgLeadL: { kind: "sample", from: "bgLead", gain: 0.6, attack: 0.03, cents: -11, pan: -0.8, reverb: 0.9, delay: 0.2 },
+      bgLeadR: { kind: "sample", from: "bgLead", gain: 0.6, attack: 0.03, cents: 11, vowels: ["oo"], pan: 0.8, reverb: 0.9, delay: 0.2 },
+      bgShimmer: { kind: "sample", from: "chimeraVoice", gain: 0.5, vowels: ["oo"], swell: 0.45, breath: 0, reverb: 1, delay: 0.4, hp: 1800, air: 6 },
+      bgChop: { kind: "sample", from: "chimeraVoice", gain: 0.5, vowels: ["aa"], swell: 0.08, attack: 3e-3, skip: 0.1, breath: 0, reverb: 0.5, delay: 0.4, hp: 400, presence: 5, pan: 0.15 }
     },
     parts: {
       kick: { patch: "kick", role: "drum", patterns: { four: "x...x...x...x...", drive: "X...x...X...x...", break: "x.........x.....x.x.......x..x..", twostep: "x......x..x.....", electro: "x..x..x...x.....", half: "x.........x....." } },
@@ -496,13 +520,18 @@ label.check input { accent-color: var(--accent); }
       energyFloor: 0.4,
       softBelow: 0.52,
       gentle: { stumps: 2, energy: 0.4, kit: "soft", keep: ["soft", "ritual", "dub"] },
-      mix: { duck: 0.8, duckHold: 0.07, air: 5, lowCut: 28, drive: 1.2 },
-      comp: { on: true, drums: { threshold: -7, knee: 6, ratio: 4, attack: 0.02, releaseBeats: 0.25, mix: 0.5, makeup: 1.5 }, glue: { threshold: -6, knee: 8, ratio: 2, attack: 0.03, release: 0.25, makeup: 1.3 } },
-      vocals: { double: "bgChop", doubleLevel: 1, pad: "bgOoh", padLevel: 0.9, stabLevel: 0.8, range: [55, 76] },
-      spice: { xylo: "xylo", answer: 0.3, flourish: 0.33, breakdown: 0.4, snap: "bgSnap", snaps: 0.3, gentleSnaps: 0.5, replace: 0.5, breakdownSnaps: 0.35, snapLevel: 0.9 },
+      mix: { duck: 0.88, duckHold: 0.07, air: 5, lowCut: 28, drive: 0.85, reverbTime: 3.2, reverbPre: 0.045 },
+      comp: { on: true, drums: { threshold: -7, knee: 6, ratio: 4, attack: 0.03, releaseBeats: 0.25, mix: 0.65, makeup: 1.5, room: { time: 0.35, send: 0.2, hp: 450 } }, glue: { threshold: -6, knee: 8, ratio: 2, attack: 0.03, release: 0.25, makeup: 1.15 } },
+      vocals: { lead: { patch: "bgLead", level: 1.3, runs: true, runLevel: 0.8, range: [60, 79], support: 0.45, ostinato: 1, ostSupport: 0.7, stack: ["bgLeadL", "bgLeadR"], stackLevel: 0.45, shimmer: "bgShimmer", shimmerLevel: 0.8, more: 1.4 }, thirds: 0.6, double: "bgChop", doubleLevel: 1, pad: "bgOoh", padLevel: 0.9, stabLevel: 0.8, range: [62, 79], line: [60, 77], harmony: { voices: 3, window: 60, gentleVoices: 2, gentleLevel: 0.5, stabs: 0.5, chordStabLevel: 0.7 } },
+      space: { balance: { drums: 1.3, bass: 1.17, pad: 0.7, chords: 0.75, vocals: 0.8 }, echo: { steps: 3, levels: [0.42, 0.2] }, chordWindow: 48, riffRest: true, thin: true, bed: { voice: "xylo", low: "xyloLow", window: 55, lowWindow: 53, level: 1.25, dream: 0.6, figures: ["abcbabcbabcbabcb", "acbcacbcacbcacbc", "abcdcbabcdcbabcb", "abcbdbcbabcbdbcb"] }, xylo: { voice: "xylo", low: "xyloLow", window: 55, lowWindow: 53, level: 1.7, roll: "roll", figures: { off: "..x...x...x...x.", push: "..x..x....x..x..", arp: "a.b.c.b.a.b.c.b.", wide: "a..b..c.a..b..c.", skeleton: "1..ab...1..ab.c.", bones: "1.a.b...1.a.b.ab", roll: "tttttt....x....." } } },
+      spice: { xylo: "xylo", answer: 0.3, flourish: 0.33, breakdown: 0.4, snap: "bgSnap", snaps: 0.5, snapLevel: 0.9 },
       register: { lead: 84, reply: 88, floor: 57, level: 0.66 },
-      progressions: { dorian: { a: [[0, 0, 3, 3], [0, 6, 3, 3], [0, 2, 6, 3], [0, 4, 6, 3], [0, 6, 0, 3], [0, 3, 6, 0]], b: [[2, 6, 3, 0], [3, 3, 0, 0], [6, 3, 0, 0], [2, 3, 0, 0]] }, aeolian: { a: [[0, 5, 2, 6], [0, 6, 5, 6], [0, 0, 5, 6], [0, 5, 3, 4], [0, 3, 5, 6]], b: [[5, 6, 0, 0], [5, 2, 6, 0], [3, 5, 6, 0]] }, phrygian: { a: [[0, 1, 0, 6], [0, 0, 1, 1], [0, 5, 1, 0]], b: [[5, 1, 0, 0], [3, 1, 0, 0]] }, harmonicMinor: { a: [[0, 5, 3, 4], [0, 3, 4, 4], [0, 5, 4, 4]], b: [[5, 4, 0, 0], [3, 4, 0, 0]] } },
-      hook: { motifs: ["x-.x-.x-x-.x-...", "x-x-..x-x--.....", "..x-x-x-..x-x-..", "x--x--x-..x-....", "x-..x-x-.x-.x-..", "x-x-x-..x--x--..", ".x-x-.x-x---....", "x---..x-x-x-....", "x-.x-.x-..x-.x-.", "x-x-.x-.x---....", "x--x-.x-x-..x-..", "..x-.x-.x-x-x---"], answers: ["x-----x---x-----", "x---x---x-------", "..x---x-x-------", "x--x--x---------", "x-x-x---x-------"], shapes: [[0, 0, 2, 1, 0], [0, 2, 1, 2, 0], [0, 1, 2, 1, 3], [2, 0, 2, 0, 1], [0, 3, 2, 1, 2], [0, 0, 3, 2, 0], [2, 2, 1, 0, 1], [0, 1, 0, 2, 0], [3, 2, 0, 2, 0], [0, 2, 2, 1, 3]], anchors: [0, 1, 3, 3], replies: [[5, 7, 8], [8, 7, 5], [5, 6, 8], [7, 5, 7]] },
+      ostinato: { tresillo: { share: 0.4, groups: [[6, 6, 4, 6, 6, 4], [6, 6, 10, 6, 4], [6, 6, 4, 6, 10], [6, 10, 6, 6, 4]], shapes: [[0, 0, 0, 1, 1, 0], [0, 0, 0, -1, -1, 0], [0, 0, 1, 0, 0, -1], [0, 0, 0, 1, 0, -1], [0, 0, -1, 0, 0, 1]] }, stabs: "..x...x...x...x.", stabLevel: 2, heads: [[4, 4], [4, 2], [2, 4], [2, 2]], threes: [6, 8], arts: ["stA", "tss", "Asts", "sAt", "ssts", "tsAs"], shapes: [[0, 2, 1, 2, 3, 2], [0, 1, 2, 1, 0, -1], [0, 3, 2, 3, 1, 2], [2, 0, 1, 0, 2, 3], [0, 2, 3, 2, 0, 1], [1, 0, 1, 2, 1, 3]], xylo: 2.4, vocal: 0.8, thirds: 0.55 },
+      drive: { groove: [{ patch: "bgHatB", p: "xggxggxggxggxgxg", level: 0.45, e: [0.5, 1] }, { patch: "bgRim", p: "...x..x...x..x.....x..x...x..x.x", level: 0.3, e: [0.6, 1] }], breaks: [{ patch: "snare", p: "..g...g...g...o...g...g..g.g...r", level: 0.75 }, { patch: "bgHatB", p: ".x.x.x.x.x.x.x.x", level: 0.4 }, { patch: "bgRide", p: "x...x...x...x...", level: 0.3 }], bass: { patch: "bgGrit", breaks: 2, dnb: 1.5, landing: 0.8 }, gallop: "..11..11..11..11" },
+      dream: { stack: ["bgAirL", "bgAirR"], octave: "bgAir", octaveLevel: 0.6, level: 0.5, drums: 0.6, sung: 0.32, pad: 0.6, sub: 0.6, down: 0.52, riser: "bgRiser" },
+      minor: { scale: "aeolian", dorian: 0.2, cadence: true },
+      progressions: { dorian: { a: [[0, 0, 3, 3], [0, 6, 3, 3], [0, 2, 6, 3], [0, 4, 6, 3], [0, 6, 0, 3], [0, 3, 6, 0]], b: [[2, 6, 3, 0], [3, 3, 0, 0], [6, 3, 0, 0], [2, 3, 0, 0]] }, aeolian: { a: [[0, 5, 2, 6], [0, 3, 5, 4], [0, 5, 3, 4], [0, 3, 4, 0], [0, 5, 6, 4], [0, 0, 5, 4], [0, 6, 5, 4]], b: [[5, 6, 0, 0], [5, 2, 6, 4], [3, 5, 6, 4], [3, 3, 0, 4]] }, phrygian: { a: [[0, 1, 0, 6], [0, 0, 1, 1], [0, 5, 1, 0]], b: [[5, 1, 0, 0], [3, 1, 0, 0]] }, harmonicMinor: { a: [[0, 5, 3, 4], [0, 3, 4, 4], [0, 5, 4, 4]], b: [[5, 4, 0, 0], [3, 4, 0, 0]] } },
+      hook: { motifs: ["L-----rrL---....", "L---.rrrL-----..", "..rrL-----t~L---", "L------gL----rrr", "L---rrrrL-----..", "L-------t~L---..", "....rrrrL-------", "L-----L----.L--.", ".rrrL-----.gL--.", "L-----t~L---.rrr", "L---..rrL-----..", "..t~L----rrrL---"], answers: ["L---rrrrL-------", "..rrL---t~L-----", "L-----rrL-------", "rrrrL------gL---", "L-------.rrrL---"], shapes: [[0, 1, 0], [0, -1, 0], [1, 0, 1], [0, 2, 1], [2, 1, 0], [0, 1, 2], [1, 2, 0], [0, 0, 1], [1, 0, -1], [0, 2, 0]], chants: [[0, 0, 0], [0, 0, 1], [1, 1, 0], [0, 0, -1]], chant: 0.15, tresillos: ["L-----L----.L--.", "L----.L----.L---", "L-----L---..L---"], anchors: [0, 1, 1, 2], replies: [[5, 7, 8], [8, 7, 5], [5, 6, 8], [7, 5, 7]] },
       leads: {
         saw: { patch: "trSaw", octave: 3, level: 2.8 },
         super: { patch: "supersaw", octave: 3, level: 1.8 },
@@ -514,10 +543,10 @@ label.check input { accent-color: var(--accent); }
         chip: { patch: "chip", octave: 4, level: 2.6 },
         whistle: { patch: "bgWhistle", octave: 4, level: 1.5 },
         twinkle: { patch: "bgTwinkle", octave: 4, level: 1.9 },
-        dark: { patch: "darkSaw", octave: 3, level: 3.4 },
+        dark: { patch: "bgDark", octave: 3, level: 3.4 },
         marimba: { patch: "marimba", octave: 3, level: 2.2 },
         rhodes: { patch: "rhodes", octave: 3, level: 2.6 },
-        flute: { patch: "breathFlute", octave: 3, level: 2.5 },
+        flute: { patch: "bgFlute", octave: 3, level: 2.5 },
         cowbell: { patch: "cowbell", octave: 3, level: 2.2 },
         airy: { patch: "airyVox", octave: 3, level: 2.6 },
         chop: { patch: "bgChop", octave: 2, level: 2.2 },
@@ -525,7 +554,8 @@ label.check input { accent-color: var(--accent); }
         squareSoft: { patch: "bgSquareSoft", octave: 3, level: 3.4 },
         pulse: { patch: "bgPulse", octave: 4, level: 2 },
         pulse25: { patch: "bgPulse25", octave: 4, level: 2 },
-        xylo: { patch: "bgXylo", octave: 4, level: 3 }
+        xylo: { patch: "bgXylo", octave: 3, level: 6 },
+        xyloLow: { patch: "bgXyloLow", octave: 3, level: 3.2 }
       },
       fills: {
         classic: [{ patch: "snare", p: "........x.x.xxXX" }],
@@ -535,114 +565,139 @@ label.check input { accent-color: var(--accent); }
         kicks: [{ patch: "bgKick", p: "........x.x.x...", level: 0.9 }, { patch: "snare", p: "..............XX" }],
         ghost: [{ patch: "snare", p: "........g.o.x.xX" }, { patch: "bgTomLo", p: "...........x.x..", level: 0.8 }],
         gap: [{ patch: "bgOpenHat", p: "..........X.....", level: 0.8 }, { patch: "bgRim", p: "........x.x....." }, { patch: "snare", p: "..............rr", level: 0.8 }],
+        sweep: [{ patch: "bgTomHi", p: "........xx......", level: 0.8 }, { patch: "bgTom", p: "..........xx....", level: 0.8 }, { patch: "bgTomMid", p: "............xx..", level: 0.85 }, { patch: "bgTomLo", p: "..............xx", level: 0.9 }],
+        sweep2: [{ patch: "bgTomLo", p: "....x.......x...", level: 0.8 }, { patch: "bgTomMid", p: ".....x.....x....", level: 0.8 }, { patch: "bgTom", p: "......x...x.....", level: 0.8 }, { patch: "bgTomHi", p: ".......xxx......", level: 0.8 }, { patch: "bgTomMid", p: ".............x..", level: 0.85 }, { patch: "bgTomLo", p: "..............x.", level: 0.9 }, { patch: "bgRim", p: "...............X", level: 1.2 }],
         trip: [{ patch: "snare", p: "........x..x..x." }, { patch: "bgTom", p: ".........x..x..x", level: 0.8 }]
       },
       dnb: { drums: [{ patch: "dnbKick", p: "X.........x.....X.........x..x..", level: 0.9 }, { patch: "dnbSnare", p: "....X..g.o..X..g..o.X..g....X.o.", level: 0.85 }, { patch: "bgHat", p: "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", level: 0.4 }, { patch: "bgRide", p: "x.x.x.x.x.x.x.x.", level: 0.3, e: [0.6, 1] }], bass: { patch: ["dnbSub"], octave: 0, sub: false, p: ["1---------1-----1---------1--8--"] } },
-      victory: [{ patch: "clap", p: "x...x...x.....X.x...x...x.....X.", level: 0.6 }, { patch: "shaker", p: "oxoxoxoxoxoxoxox", level: 0.5 }],
+      victory: [{ patch: "clap", p: "x...x...x.....X.x...x...x.....X.", level: 0.6 }],
       kits: {
         house: {
+          xylo: 0.5,
+          four: true,
           swing: 0.13,
-          drums: [{ patch: "bgKick", p: "X...x...X...x..." }, { patch: "bgClap", p: "....X.......X...", level: 0.85 }, { patch: "bgHat", p: "g.xgo.xgg.xgo.xg", level: 0.55, e: [0.3, 1] }, { patch: "bgOpenHat", p: "..X...x...X...x.", level: 0.5, e: [0.45, 1] }, { patch: "shaker", p: "oxgxoxgxoxgxoxgx", level: 0.45, e: [0.5, 1] }, { patch: "bgRide", p: "x.o.x.o.x.o.x.o.", level: 0.35, e: [0.8, 1], from: 8 }],
+          drums: [{ patch: "bgShaker", p: "..g...x...g...x.", level: 0.22, e: [0.6, 1], from: 8 }, { patch: "bgKick", p: "X...x...X...x..." }, { patch: "bgClap", p: "....X.......X...", level: 0.85 }, { patch: "bgHat", p: "g.xgo.xgg.xgo.xg", level: 0.55, e: [0.3, 1] }, { patch: "bgOpenHat", p: "..X...x...X...x.", level: 0.5, e: [0.45, 1] }, { patch: "bgRide", p: "x.o.x.o.x.o.x.o.", level: 0.35, e: [0.8, 1], from: 8 }],
           turn: [{ patch: "bgKick", p: "..............o.", level: 0.8 }, { patch: "snare", p: "...........g.g.o", level: 0.6 }],
           breaks: [{ patch: "bgKick", p: "X.........x.....X.x.......x..x.." }, { patch: "snare", p: "....X..g.o..X..g.o..X..g....X.o.", level: 0.9 }, { patch: "bgHat", p: "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", level: 0.45 }, { patch: "bgOpenHat", p: "..............x.................", level: 0.45, e: [0.5, 1] }],
-          fills: ["classic", "toms", "claps", "ghost", "gap"],
-          bass: { patch: ["houseBassDeep", "rubberDeep"], octave: 1, p: ["..1-..1-..1-..1-..1-..1-..1-.5-8", "..1--1-...1--1-...1--1-...5--8-.", "..1-.1.1..1-..5-..1-.1.1..1-.8.5"], breaks: ["1--..1-...5-..1.1--..1-...8-.5.."] },
+          fills: ["classic", "toms", "claps", "ghost", "gap", "sweep"],
+          bass: { patch: ["houseBassDeep", "rubberDeep"], octave: 0, p: ["..1-..1-..1-..1-..1-..1-..1-.5-8", "..1--1-...1--1-...1--1-...5--8-.", "..1-.1.1..1-..5-..1-.1.1..1-.8.5"], breaks: ["1--..1-...5-..1.1--..1-...8-.5.."], bounce: ["1-..8-..1-..8-..1-..8-..5-..8-..", "1-..8-.11-..8-.11-..8-.55-..8-.1"] },
           chords: { patch: "bgOrgan", p: ["..x...x...x...x.", "x..x..x...x..x..", "..x..x....x..x.."], level: 0.8, sevenths: true },
           pad: { patch: "pad", level: 0.55 },
           leads: { soft: ["squareSoft", "pulse25"], hard: ["square", "square", "pwm"] },
           reply: ["pulse", "pulse25"]
         },
         organic: {
+          xylo: 0,
+          bed: "marimba",
           base: "house",
           swing: 0.15,
-          drums: [{ patch: "bgKick", p: "X...x...X...x..." }, { patch: "bgClap", p: "....X.......X...", level: 0.85 }, { patch: "bgHat", p: "g.xgo.xgg.xgo.xg", level: 0.55, e: [0.3, 1] }, { patch: "bgOpenHat", p: "..X...x...X...x.", level: 0.5, e: [0.45, 1] }, { patch: "shaker", p: "oxgxoxgxoxgxoxgx", level: 0.45, e: [0.5, 1] }, { patch: "bgTom", p: "......x..x......", level: 0.55 }, { patch: "bgTomLo", p: "..........x...x.", level: 0.55 }, { patch: "bgRim", p: "...x......x..x..", level: 0.4, e: [0.4, 1] }],
+          drums: [{ patch: "bgShaker", p: "..g...x...g...x.", level: 0.22, e: [0.6, 1], from: 8 }, { patch: "bgKick", p: "X...x...X...x..." }, { patch: "bgClap", p: "....X.......X...", level: 0.85 }, { patch: "bgHat", p: "g.xgo.xgg.xgo.xg", level: 0.55, e: [0.3, 1] }, { patch: "bgOpenHat", p: "..X...x...X...x.", level: 0.5, e: [0.45, 1] }, { patch: "bgTom", p: "......x..x......", level: 0.55 }, { patch: "bgTomLo", p: "..........x...x.", level: 0.55 }, { patch: "bgRim", p: "...x......x..x..", level: 0.4, e: [0.4, 1] }],
           fills: ["toms", "trip", "ghost", "gap"],
-          leads: { soft: ["marimba", "flute", "rhodes"], hard: ["pluck", "whistle", "pwm"] },
+          leads: { soft: ["flute", "rhodes", "flute"], hard: ["pluck", "whistle", "pwm"] },
           reply: ["twinkle", "bell"]
         },
         soft: {
+          xylo: 0.6,
+          four: true,
           swing: 0.14,
-          drums: [{ patch: "bgSoftKick", p: "X...x...X...x..." }, { patch: "snap", p: "....x.......x.o.", level: 0.9 }, { patch: "shaker", p: "x.o.x.o.x.o.x.o.", level: 0.6 }, { patch: "bgHat", p: "..x...x...x...x.", level: 0.35, e: [0.3, 1] }, { patch: "bgRim", p: "..........x.....", level: 0.4, e: [0, 1], from: 8 }],
+          drums: [{ patch: "bgSoftKick", p: "X...x...X...x..." }, { patch: "snap", p: "....x.......x.o.", level: 0.9 }, { patch: "bgHat", p: "..x...x...x...x.", level: 0.35, e: [0.3, 1] }, { patch: "bgRim", p: "..........x.....", level: 0.4, e: [0, 1], from: 8 }],
           turn: [{ patch: "bgSoftKick", p: "..............o.", level: 0.8 }],
-          breaks: [{ patch: "bgSoftKick", p: "X.........x.....X.x.......x..x..", level: 0.9 }, { patch: "snap", p: "....x.......x.......x.......x.o.", level: 0.9 }, { patch: "bgRim", p: "......x..x........x......x.x....", level: 0.5 }, { patch: "shaker", p: "x.o.x.o.x.o.x.o.", level: 0.6 }],
+          breaks: [{ patch: "bgSoftKick", p: "X.........x.....X.x.......x..x..", level: 0.9 }, { patch: "snap", p: "....x.......x.......x.......x.o.", level: 0.9 }, { patch: "bgRim", p: "......x..x........x......x.x....", level: 0.5 }],
           fills: ["toms", "trip", "gap"],
-          bass: { patch: ["rubberDeep", "houseBassDeep"], octave: 1, p: ["1-----..5-..1---1-----..5-..8-5-", "..1-..1-..5-..1-..1-..1-..8-..5-"] },
-          chords: { patch: "marimba", p: ["x.....x...x.....", "..x...x.....x..."], level: 0.5, arp: true, window: 60 },
+          bass: { patch: ["rubberDeep", "houseBassDeep"], octave: 0, p: ["1-----..5-..1---1-----..5-..8-5-", "..1-..1-..5-..1-..1-..1-..8-..5-"] },
+          chords: { patch: "marimba", p: ["x.....x...x.....", "..x...x.....x..."], level: 0.5, arp: true, window: 52 },
           pad: { patch: "pad", level: 0.6 },
           leads: { soft: ["squareSoft", "squareSoft", "whistle"], hard: ["squareSoft", "pulse25"] },
           reply: ["pulse", "twinkle"]
         },
         ritual: {
+          xylo: 0,
+          bed: "box",
+          half: true,
+          four: false,
           base: "soft",
-          drums: [{ patch: "bgSoftKick", p: "X...x...X...x..." }, { patch: "bgTom", p: "x..x..x....x.x..", level: 0.6 }, { patch: "bgTomLo", p: "........x.......", level: 0.6 }, { patch: "snap", p: "....x.......x...", level: 0.8 }, { patch: "shaker", p: "x.o.x.o.x.o.x.o.", level: 0.6 }, { patch: "bgRim", p: "..x.......x..x..", level: 0.4, e: [0.35, 1] }],
+          drums: [{ patch: "bgSoftKick", p: "X...x...X...x..." }, { patch: "bgTom", p: "x..x..x....x.x..", level: 0.6 }, { patch: "bgTomLo", p: "........x.......", level: 0.6 }, { patch: "snap", p: "....x.......x...", level: 0.8 }, { patch: "bgRim", p: "..x.......x..x..", level: 0.4, e: [0.35, 1] }],
           fills: ["toms", "trip"],
-          leads: { soft: ["flute", "whistle", "marimba"], hard: ["whistle", "pluck"] },
+          leads: { soft: ["flute", "whistle"], hard: ["whistle", "pluck"] },
           reply: ["bell", "twinkle"]
         },
         dub: {
+          xylo: 0,
+          bed: "rhodes",
+          half: true,
+          four: false,
           base: "soft",
           swing: 0.1,
-          drums: [{ patch: "bgSoftKick", p: "X.........x.....X......x..x....." }, { patch: "snare", p: "........X.......", level: 0.6 }, { patch: "snap", p: "....x.......x.o.", level: 0.6 }, { patch: "bgHat", p: "..x.g.x...x.g.x.", level: 0.4 }, { patch: "bgRim", p: "...........x....", level: 0.4 }],
+          drums: [{ patch: "bgSoftKick", p: "X.........x.....X......x..x....." }, { patch: "bgClap", p: "........X.......", level: 0.6 }, { patch: "snap", p: "....x.......x.o.", level: 0.6 }, { patch: "bgHat", p: "..x.g.x...x.g.x.", level: 0.4 }, { patch: "bgRim", p: "...........x....", level: 0.4 }],
           bass: { patch: ["sub808"], octave: 0, sub: false, glide: 0.07, p: ["1---------------1---------..7-1-", "1-----..1-------1-----..5---8---"] },
           chords: { patch: "bgOrgan", p: ["..x.......x.....", "......x.......x."], level: 0.55, sevenths: true },
-          leads: { soft: ["whistle", "rhodes", "box"], hard: ["whistle", "dark"] },
+          leads: { soft: ["whistle", "box"], hard: ["whistle", "dark"] },
           reply: ["bell", "twinkle"]
         },
         garage: {
+          xylo: 0.5,
           swing: 0.2,
-          drums: [{ patch: "bgKick", p: "X......x..x.....X.....x...x..x.." }, { patch: "snare", p: "....X.......X...", level: 0.85 }, { patch: "bgClap", p: "....x.......x...", level: 0.5 }, { patch: "bgHat", p: "..x.x.xg..x.x.xg", level: 0.5 }, { patch: "bgOpenHat", p: "......x.......x.", level: 0.45, e: [0.4, 1] }, { patch: "bgRim", p: "...g.....o.....g", level: 0.5 }, { patch: "shaker", p: "oxgxoxgxoxgxoxgx", level: 0.35, e: [0.6, 1] }],
+          drums: [{ patch: "bgKick", p: "X......x..x.....X.....x...x..x.." }, { patch: "bgClap", p: "....X.......X...", level: 0.85 }, { patch: "bgHat", p: "..x.x.xg..x.x.xg", level: 0.5 }, { patch: "bgOpenHat", p: "......x.......x.", level: 0.45, e: [0.4, 1] }, { patch: "bgRim", p: "...g.....o.....g", level: 0.5 }],
           turn: [{ patch: "snare", p: "..........g..g.o", level: 0.6 }],
           breaks: [{ patch: "bgKick", p: "X.........x.....X.x.......x..x.." }, { patch: "snare", p: "....X..g.o..X..g.o..X..g....X.o.", level: 0.9 }, { patch: "bgHat", p: "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", level: 0.45 }, { patch: "bgOpenHat", p: "..............x.................", level: 0.45, e: [0.5, 1] }],
           fills: ["ghost", "claps", "gap", "trip"],
-          bass: { patch: ["rubberDeep", "houseBassDeep"], octave: 1, p: ["1--..1-..5-...1.1--..1-..8-.5-..", "1-.1-...5-.1-...1-.1-..8..5-.7-."] },
+          bass: { patch: ["rubberDeep", "houseBassDeep"], octave: 0, p: ["1--..1-..5-...1.1--..1-..8-.5-..", "1-.1-...5-.1-...1-.1-..8..5-.7-."] },
           chords: { patch: "bgOrgan", p: ["..x...x...x...xx", "x..x....x.x....."], level: 0.8, sevenths: true },
           pad: { patch: "pad", level: 0.45 },
           leads: { soft: ["squareSoft", "pulse25"], hard: ["square", "pulse25", "chop"] },
           reply: ["pulse", "chop"]
         },
         trance: {
+          xylo: 0.25,
+          four: true,
           swing: 0,
-          drums: [{ patch: "bgKick", p: "X...X...X...X..." }, { patch: "bgClap", p: "....X.......X...", level: 0.8 }, { patch: "snare", p: "....x.......x...", level: 0.45, e: [0.6, 1] }, { patch: "bgOpenHat", p: "..X...X...X...X.", level: 0.6 }, { patch: "bgHat", p: "x.ogx.ogx.ogx.og", level: 0.45 }, { patch: "bgHatB", p: ".g...g...g...g..", level: 0.5, e: [0.55, 1] }, { patch: "bgRide", p: "x...x...x...x...", level: 0.4, e: [0.75, 1], from: 8 }],
+          drums: [{ patch: "bgKick", p: "X...X...X...X..." }, { patch: "bgClap", p: "....X.......X...", level: 0.8 }, { patch: "bgOpenHat", p: "..X...X...X...X.", level: 0.6 }, { patch: "bgHat", p: "x.ogx.ogx.ogx.og", level: 0.45 }, { patch: "bgHatB", p: ".g...g...g...g..", level: 0.5, e: [0.55, 1] }, { patch: "bgRide", p: "x...x...x...x...", level: 0.4, e: [0.75, 1], from: 8 }],
           turn: [{ patch: "snare", p: "............o.oo", level: 0.6 }],
           breaks: [{ patch: "bgKick", p: "X.........x.....X.x.......x..x.." }, { patch: "snare", p: "....X..g.o..X..g.o..X..g....X.o.", level: 0.9 }, { patch: "bgHat", p: "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", level: 0.45 }, { patch: "bgOpenHat", p: "..............x.................", level: 0.45, e: [0.5, 1] }],
           fills: ["classic", "roll", "claps", "kicks"],
-          bass: { patch: ["houseBassDeep", "darkBass"], octave: 1, p: [".111.111.111.111.111.111.111.151", "..1-..1-..1-..1-..1-..1-..1-..8-", ".1.1.111.1.1.111.1.1.111.1.1.158"] },
+          bass: { patch: ["houseBassDeep", "darkBass"], octave: 0, p: [".111.111.111.111.111.111.111.151", "..1-..1-..1-..1-..1-..1-..1-..8-", ".1.1.111.1.1.111.1.1.111.1.1.158"] },
           chords: { patch: "gatePad", p: ["x-.x-.x-.x-.x-x-", "x-x-.x-.x-x-.x-."], level: 0.9 },
           pad: { patch: "strings", level: 0.4, e: [0.5, 1] },
           leads: { soft: ["square", "pwm"], hard: ["square", "square", "super"] },
           reply: ["pulse", "pulse25"]
         },
         techno: {
+          xylo: 0.3,
+          four: true,
           swing: 0.03,
           drums: [{ patch: "bgKick", p: "X...X...X...X..." }, { patch: "clank", p: "..x...x...x.x...", level: 0.5 }, { patch: "bgHat", p: "goxgooxggoxgooxg", level: 0.5 }, { patch: "bgOpenHat", p: "..X...X...X...X.", level: 0.5 }, { patch: "bgClap", p: "....x.......x...", level: 0.6, e: [0.5, 1] }, { patch: "bgRide", p: "x.x.x.x.x.x.x.x.", level: 0.35, e: [0.7, 1], from: 8 }, { patch: "bgTomLo", p: "...x......x....x", level: 0.4 }],
           turn: [{ patch: "bgKick", p: "..........o...o.", level: 0.8 }],
           breaks: [{ patch: "bgKick", p: "X.........x.....X.x.......x..x.." }, { patch: "snare", p: "....X..g.o..X..g.o..X..g....X.o.", level: 0.9 }, { patch: "bgHat", p: "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", level: 0.45 }, { patch: "bgOpenHat", p: "..............x.................", level: 0.45, e: [0.5, 1] }],
           fills: ["kicks", "roll", "gap", "classic"],
-          bass: { patch: ["darkBass"], octave: 1, p: ["..11..11..11..11", ".1.1.11..1.1.11.", "..1...1...11..1."] },
+          bass: { patch: ["darkBass"], octave: 0, p: ["..11..11..11..11", ".1.1.11..1.1.11.", "..1...1...11..1."] },
           chords: { patch: "bgStab", p: ["......x.......x.......x.....x.x.", "..x.......x.......x...x........."], level: 0.7 },
           leads: { soft: ["square", "pulse25"], hard: ["square", "square", "stab"] },
           reply: ["pulse", "pulse25"]
         },
         electro: {
+          xylo: 0.3,
+          four: false,
           base: "techno",
           swing: 0.05,
-          drums: [{ patch: "bgKick", p: "X..x..x...x.....X..x..x...x..x.." }, { patch: "snare", p: "....X.......X...", level: 0.9 }, { patch: "bgClap", p: "....x.......x...", level: 0.5 }, { patch: "bgHat", p: "x.xgx.xgx.xgx.xg", level: 0.5 }, { patch: "clank", p: "..x...x...x...xx", level: 0.4 }, { patch: "bgOpenHat", p: "......x.......x.", level: 0.45, e: [0.5, 1] }],
-          bass: { patch: ["darkBass", "rubberDeep"], octave: 1, p: ["1.18.1.81.18.1.8", "1..1..8.1.1...8."] },
+          drums: [{ patch: "bgKick", p: "X..x..x...x.....X..x..x...x..x.." }, { patch: "bgClap", p: "....X.......X...", level: 0.9 }, { patch: "bgHat", p: "x.xgx.xgx.xgx.xg", level: 0.5 }, { patch: "clank", p: "..x...x...x...xx", level: 0.4 }, { patch: "bgOpenHat", p: "......x.......x.", level: 0.45, e: [0.5, 1] }],
+          bass: { patch: ["darkBass", "rubberDeep"], octave: 0, p: ["1.18.1.81.18.1.8", "1..1..8.1.1...8."] },
           chords: { patch: "bgStab", p: ["x..x....x.x.....", "..x...x...x...xx"], level: 0.65 },
           leads: { soft: ["square", "pwm"], hard: ["square", "pulse25", "pwm"] },
           reply: ["pulse", "pulse25"]
         },
         hard: {
+          xylo: 0,
           base: "techno",
           swing: 0,
-          drums: [{ patch: "kickHard", p: "X...X...X...X..." }, { patch: "clank", p: "..x...x...x.x...", level: 0.7 }, { patch: "snare", p: "....x.......x...", level: 0.7 }, { patch: "bgHat", p: "xoxoxoxoxoxoxoxo", level: 0.45 }, { patch: "bgOpenHat", p: "..X...X...X...X.", level: 0.55 }, { patch: "bgRide", p: "x.x.x.x.x.x.x.x.", level: 0.4, e: [0.7, 1] }],
+          drums: [{ patch: "kickHard", p: "X...X...X...X..." }, { patch: "clank", p: "..x...x...x.x...", level: 0.7 }, { patch: "bgClap", p: "....X.......X...", level: 0.7 }, { patch: "snare", p: "....x.......x...", level: 0.5 }, { patch: "bgHat", p: "xoxoxoxoxoxoxoxo", level: 0.45 }, { patch: "bgOpenHat", p: "..X...X...X...X.", level: 0.55 }, { patch: "bgRide", p: "x.x.x.x.x.x.x.x.", level: 0.4, e: [0.7, 1] }],
           breaks: [{ patch: "kickHard", p: "X.........x.....X.x.......x..x.." }, { patch: "snare", p: "....X..g.o..X..g.o..X..g....X.o.", level: 0.9 }, { patch: "bgHat", p: "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", level: 0.45 }, { patch: "bgOpenHat", p: "..............x.................", level: 0.45, e: [0.5, 1] }],
-          bass: { patch: ["reese"], octave: 1, p: ["1---1-8-1---5-8-", "..1-..1-..1-.1.1", "1-.1-.1-1-.1-.8-"] },
+          bass: { patch: ["reese"], octave: 0, p: ["1---1-8-1---5-8-", "..1-..1-..1-.1.1", "1-.1-.1-1-.1-.8-"] },
           chords: { patch: "bgStab", p: ["..x...x...x...x.", "x..x..x...x..x.."], level: 0.7 },
           leads: { soft: ["square", "dark"], hard: ["square", "square", "super"] },
           reply: ["pulse25", "pulse"]
         },
         acid: {
+          xylo: 0.35,
           base: "house",
           swing: 0.08,
           bass: { patch: ["acid"], octave: 1, sub: true, level: 1.6, glide: 0.05, p: ["1.18.51.8.1.5.18", "11.1.8.1.15.1.8.", "1.1.8.11.5.1.8.7"] },
@@ -651,12 +706,13 @@ label.check input { accent-color: var(--accent); }
           reply: ["pulse", "pulse25"]
         },
         breaks: {
+          xylo: 0.4,
           swing: 0.07,
           drums: [{ patch: "kickHard", p: "X.........x.....X.x.......x..x..", level: 0.95 }, { patch: "snare", p: "....X..g.o..X..g.o..X..g....X.o." }, { patch: "bgClap", p: "....x.......x.......x.......x...", level: 0.45 }, { patch: "bgHat", p: "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", level: 0.5 }, { patch: "bgOpenHat", p: "..............x...............x.", level: 0.5 }, { patch: "bgRide", p: "x.x.x.x.x.x.x.x.", level: 0.35, e: [0.8, 1], from: 8 }],
           turn: [{ patch: "snare", p: ".............ggo", level: 0.7 }],
           breaks: [{ patch: "kickHard", p: "X.........x.x...X.....x...x.....", level: 0.95 }, { patch: "snare", p: "....X.g..o..X.g.o...X..g.o..X..o" }, { patch: "bgHat", p: "x.xox.xox.xox.xrx.xox.xox.xox.xo", level: 0.5 }],
           fills: ["roll", "ghost", "toms", "classic"],
-          bass: { patch: ["reese"], octave: 1, p: ["1-------..1-5---1-----1-..8-5-7-", "1---------1-----1---------1--8--"] },
+          bass: { patch: ["reese"], octave: 0, p: ["1-------..1-5---1-----1-..8-5-7-", "1---------1-----1---------1--8--"] },
           chords: { patch: "bgStab", p: ["x..x....x.x.....", "..x...x.....x.x."], level: 0.7, sevenths: true },
           pad: { patch: "choir", level: 0.5 },
           leads: { soft: ["square", "pwm"], hard: ["square", "square", "chop"] },
@@ -666,35 +722,41 @@ label.check input { accent-color: var(--accent); }
           base: "breaks",
           drums: [{ patch: "kickHard", p: "X.........x.x...X.....x...x.....", level: 0.95 }, { patch: "snare", p: "....X.g..o..X.g.o...X..g.o..X..o" }, { patch: "bgHat", p: "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", level: 0.5 }, { patch: "bgRide", p: "x.x.x.x.x.x.x.x.", level: 0.4, e: [0.6, 1] }, { patch: "bgOpenHat", p: "..............x.", level: 0.5 }],
           breaks: [{ patch: "kickHard", p: "X.........x.....X.x.......x..x.." }, { patch: "snare", p: "....X..g.o..X..g.o..X..g....X.o.", level: 0.9 }, { patch: "bgHat", p: "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", level: 0.45 }, { patch: "bgOpenHat", p: "..............x.................", level: 0.45, e: [0.5, 1] }],
-          bass: { patch: ["reese"], octave: 1, p: ["1-------5---8---1-----1-..8-5-7-", "1---------1-----1---------1--8--"] }
+          bass: { patch: ["reese"], octave: 0, p: ["1-------5---8---1-----1-..8-5-7-", "1---------1-----1---------1--8--"] }
         },
         trap: {
+          xylo: 0,
+          bed: "box",
+          half: true,
           swing: 0,
-          drums: [{ patch: "kick808", p: "X.........x.....X......x..x.....", level: 0.9 }, { patch: "snare", p: "........X.......", level: 0.85 }, { patch: "bgClap", p: "........x.......", level: 0.6 }, { patch: "bgHat", p: "x.x.x.x.xrx.x.rrx.x.x.x.rrrrx.x.", level: 0.5 }, { patch: "bgOpenHat", p: "......................x.........", level: 0.45 }, { patch: "bgRim", p: "...x.........x..", level: 0.4, e: [0.3, 1] }],
+          drums: [{ patch: "kick808", p: "X.........x.....X......x..x.....", level: 0.9 }, { patch: "bgClap", p: "........X.......", level: 0.85 }, { patch: "bgHat", p: "x.x.x.x.xrx.x.rrx.x.x.x.rrrrx.x.", level: 0.5 }, { patch: "bgOpenHat", p: "......................x.........", level: 0.45 }, { patch: "bgRim", p: "...x.........x..", level: 0.4, e: [0.3, 1] }],
           turn: [{ patch: "snare", p: ".............o.o", level: 0.6 }],
-          breaks: [{ patch: "kick808", p: "X.....x...x..x..X.....x...x.....", level: 0.9 }, { patch: "snare", p: "........X.......", level: 0.85 }, { patch: "bgHat", p: "xrx.x.xrx.x.rrrrx.x.xrx.x.xrrrrr", level: 0.5 }, { patch: "bgClap", p: "........x......o", level: 0.6 }],
+          breaks: [{ patch: "kick808", p: "X.....x...x..x..X.....x...x.....", level: 0.9 }, { patch: "bgClap", p: "........X.......", level: 0.85 }, { patch: "bgHat", p: "xrx.x.xrx.x.rrrrx.x.xrx.x.xrrrrr", level: 0.5 }],
           fills: ["roll", "gap", "trip"],
           bass: { patch: ["sub808"], octave: 0, sub: false, glide: 0.08, p: ["1---------1-----1------1--1-.8--", "1-----1---8--5--1-----1---1-.8--"] },
-          chords: { patch: "lowChoir", p: ["x---------------"], level: 0.6, window: 50 },
+          chords: { patch: "lowChoir", p: ["x---------------"], level: 0.6, window: 48 },
           pad: { patch: "choir", level: 0.55 },
-          leads: { soft: ["box", "whistle", "dark"], hard: ["dark", "box", "whistle"] },
+          leads: { soft: ["whistle", "dark"], hard: ["dark", "whistle"] },
           reply: ["bell", "chop"]
         },
         phonk: {
+          xylo: 0,
           base: "trap",
-          drums: [{ patch: "kick808", p: "X.....x...x..x..X.....x...x.....", level: 0.9 }, { patch: "bgClap", p: "....X.......X...", level: 0.8 }, { patch: "snare", p: "....x.......x...", level: 0.5 }, { patch: "bgHat", p: "x.x.x.x.xrx.x.rrx.x.x.x.rrrrx.x.", level: 0.5 }, { patch: "bgOpenHat", p: "..x...........x.", level: 0.4 }],
+          drums: [{ patch: "kick808", p: "X.....x...x..x..X.....x...x.....", level: 0.9 }, { patch: "bgClap", p: "....X.......X...", level: 0.8 }, { patch: "bgHat", p: "x.x.x.x.xrx.x.rrx.x.x.x.rrrrx.x.", level: 0.5 }, { patch: "bgOpenHat", p: "..x...........x.", level: 0.4 }],
           bass: { patch: ["sub808"], octave: 0, sub: false, glide: 0.08, p: ["1-----1---8--5--1-----1---1-.8--"] },
-          leads: { soft: ["cowbell", "box"], hard: ["cowbell", "dark"] },
+          leads: { soft: ["cowbell"], hard: ["cowbell", "dark"] },
           reply: ["bell", "chop"]
         },
         chip: {
+          xylo: 0.4,
+          four: true,
           swing: 0,
-          drums: [{ patch: "bgKick", p: "X...X...X...X..." }, { patch: "bgClap", p: "....X.......X...", level: 0.8 }, { patch: "bgHat", p: "x.xxx.xxx.xxx.xx", level: 0.45 }, { patch: "bgOpenHat", p: "..x...x...x...x.", level: 0.45, e: [0.5, 1] }, { patch: "snare", p: "..............o.", level: 0.5 }],
+          drums: [{ patch: "bgKick", p: "X...X...X...X..." }, { patch: "bgClap", p: "....X.......X...", level: 0.8 }, { patch: "bgHat", p: "x.xxx.xxx.xxx.xx", level: 0.45 }, { patch: "bgOpenHat", p: "..x...x...x...x.", level: 0.45, e: [0.5, 1] }],
           turn: [{ patch: "snare", p: "..........o.o.oo", level: 0.6 }],
           breaks: [{ patch: "bgKick", p: "X.........x.....X.x.......x..x.." }, { patch: "snare", p: "....X..g.o..X..g.o..X..g....X.o.", level: 0.9 }, { patch: "bgHat", p: "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", level: 0.45 }, { patch: "bgOpenHat", p: "..............x.................", level: 0.45, e: [0.5, 1] }],
           fills: ["classic", "claps", "roll", "kicks"],
           bass: { patch: ["chipBass"], octave: 1, sub: true, level: 2.5, p: ["1.8.1.8.1.8.1.8.", "1.88.18.1.88.18."] },
-          chords: { patch: "arp", p: ["xxxxxxxxxxxxxxxx", "x.x.x.x.x.x.x.x."], level: 1.2, arp: true, window: 69 },
+          chords: { patch: "arp", p: ["xxxxxxxxxxxxxxxx", "x.x.x.x.x.x.x.x."], level: 1.2, arp: true, window: 57 },
           pad: { patch: "gatePad", level: 0 },
           leads: { soft: ["pulse25", "square"], hard: ["pulse25", "square", "pulse"] },
           reply: ["pulse", "twinkle"]
@@ -3666,7 +3728,7 @@ label.check input { accent-color: var(--accent); }
         if (s + 2 < 16 && !out[s + 2] && !out[s + 1]) out[s + 2] = { ...n, dur: Math.max(1, n.dur - 2) };
       }
     }
-    const onsets2 = () => out.map((n, s) => n ? s : -1).filter((s) => s >= 0);
+    const onsets = () => out.map((n, s) => n ? s : -1).filter((s) => s >= 0);
     const cutBefore = (s) => {
       for (let j = s - 1; j >= 0; j--) if (out[j]) {
         out[j].dur = Math.min(out[j].dur, s - j);
@@ -3691,7 +3753,7 @@ label.check input { accent-color: var(--accent); }
       }
     }
     if ((q === 1 || q === 2) && (rule.octave ?? 0) > 0 && r(1) < rule.octave) {
-      const off = onsets2().filter((s) => s % 4 !== 0 && s < 12 && out[s].dur <= 2);
+      const off = onsets().filter((s) => s % 4 !== 0 && s < 12 && out[s].dur <= 2);
       if (off.length) {
         const s = off[Math.floor(r(2) * off.length)], n = out[s];
         n.k = n.k >= 7 ? n.k - 7 : n.k + 7;
@@ -3699,7 +3761,7 @@ label.check input { accent-color: var(--accent); }
     }
     if (q === 3 && rule.fill && rule.fill !== "none" && r(3) < (rule.fillChance ?? 0.7)) {
       if (rule.fill === "octave") {
-        for (const s of onsets2()) if (s >= 12 || s >= 8 && !onsets2().some((t) => t >= 12)) {
+        for (const s of onsets()) if (s >= 12 || s >= 8 && !onsets().some((t) => t >= 12)) {
           const n = out[s];
           if (n.k < 7) n.k += 7;
         }
@@ -3719,7 +3781,7 @@ label.check input { accent-color: var(--accent); }
       const room = kick ? (hit2(s - 1) || hit2(s)) && !hit2(s + 1) : s % 4 === 3;
       if (room && r(20 + s) < rule.ghost) out[s] = { k: r(40 + s) < 0.5 ? 7 : 0, vel: 0.45, dur: 1 };
     }
-    const chance = rule.approach ?? approach, last = onsets2().filter((s) => s >= 12).pop();
+    const chance = rule.approach ?? approach, last = onsets().filter((s) => s >= 12).pop();
     const want = marks.some((c) => c === "a") || next !== null && next !== root && r(5) < chance;
     if (want && next !== null) {
       let s = marks.lastIndexOf("a") >= 12 ? marks.lastIndexOf("a") : last ?? -1;
@@ -4010,7 +4072,7 @@ label.check input { accent-color: var(--accent); }
       else if (b >= half && hash2(sd(b) + b, 421, salt) < 0.5) rhythm.push(rhythm[b - half]);
       else rhythm.push(pick(F.cells[kind], r));
     }
-    const [lo, hi] = F.range, out = new Array(P * 16).fill(null), onsets2 = [];
+    const [lo, hi] = F.range, out = new Array(P * 16).fill(null), onsets = [];
     const SPAN = 4, mod7 = (d) => mod(d, 7);
     const windows = [];
     for (let w = lo; w + SPAN <= hi; w++) if (Array.from({ length: SPAN + 1 }, (_, k) => w + k).some((d) => mod7(d) === 0)) windows.push(w);
@@ -4032,7 +4094,7 @@ label.check input { accent-color: var(--accent); }
         if (strong) v = nearest(v + pick(sungLetter ? [-2, -1, 0, 0, 1, 2] : [-2, -1, 0, 1, 2, 3], r), (d) => tones.includes(mod7(d)));
         else v = Math.max(wlo, Math.min(whi, v + pick(sungLetter ? [-1, -1, 0, 1, 1] : [-2, -1, -1, 1, 1, 2], r)));
         out[i] = { deg: v, dur, off: pos - Math.floor(pos) };
-        onsets2.push(i);
+        onsets.push(i);
       };
       for (let s = 0; s < 16; s++) {
         const c = cell[s];
@@ -4046,14 +4108,14 @@ label.check input { accent-color: var(--accent); }
         }
       }
     }
-    const last = onsets2[onsets2.length - 1];
+    const last = onsets[onsets.length - 1];
     if (last !== void 0) {
       const n = out[last], chordEnd = formChord(style2, seed2, at2 + P - 1).tones.map((t) => mod(t, 7));
       const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : chordEnd.filter((t) => t !== 0);
       v = n.deg;
       n.deg = nearest(n.deg, (d) => ends.includes(mod7(d)));
-      for (let k = onsets2.length - 2; k >= 0 && sungLetter; k--) {
-        const cur = out[onsets2[k]], nxt = out[onsets2[k + 1]];
+      for (let k = onsets.length - 2; k >= 0 && sungLetter; k--) {
+        const cur = out[onsets[k]], nxt = out[onsets[k + 1]];
         if (Math.abs(nxt.deg - cur.deg) <= maxLeap) break;
         cur.deg = nxt.deg + Math.sign(cur.deg - nxt.deg) * maxLeap;
       }
@@ -4068,7 +4130,7 @@ label.check input { accent-color: var(--accent); }
     const F = style2.form, H = style2.haunted, P = F.phraseBars, half = Math.floor(P / 2), salt = letter.charCodeAt(0) * 13 + 5;
     const at2 = F.order.indexOf(letter) * P, hookBars = letter !== "A" && hookSeed !== void 0 && hookSeed !== seed2 ? F.sung.hookBars ?? 0 : 0;
     const sd = (b) => b < hookBars ? hookSeed : seed2;
-    const out = new Array(P * 16).fill(null), onsets2 = [];
+    const out = new Array(P * 16).fill(null), onsets = [];
     const [lo, hi] = F.range, SPAN = 4, mod7 = (d) => mod(d, 7), windows = [];
     for (let w = lo; w + SPAN <= hi; w++) if (Array.from({ length: SPAN + 1 }, (_, k) => w + k).some((d) => mod7(d) === 0)) windows.push(w);
     const wlo = windows.length ? windows[Math.floor(hash2(sd(0), 437, salt) * windows.length)] : lo, whi = windows.length ? wlo + SPAN : hi;
@@ -4091,19 +4153,19 @@ label.check input { accent-color: var(--accent); }
         const tones = formChord(style2, seed2, hauntedBar(F, at2 + b)).tones.map((t) => mod(t, 7));
         v = i % 8 === 0 ? nearest(v + pick([-2, -1, 0, 0, 1, 2], r), (d) => tones.includes(mod7(d))) : Math.max(wlo, Math.min(whi, v + pick([-1, -1, 0, 1, 1], r)));
         out[pos] = { deg: v, dur, off: 0 };
-        onsets2.push(pos);
+        onsets.push(pos);
         mine.push(pos);
       }
       for (const p of mine.slice(-2)) out[p].cad = true;
     }
-    const last = onsets2[onsets2.length - 1];
+    const last = onsets[onsets.length - 1];
     if (last !== void 0) {
       const n = out[last], chordEnd = formChord(style2, seed2, hauntedBar(F, at2 + P - 1)).tones.map((t) => mod(t, 7));
       const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : chordEnd.filter((t) => t !== 0);
       v = n.deg;
       n.deg = nearest(n.deg, (d) => ends.includes(mod7(d)));
-      for (let k = onsets2.length - 2; k >= 0; k--) {
-        const cur = out[onsets2[k]], nxt = out[onsets2[k + 1]];
+      for (let k = onsets.length - 2; k >= 0; k--) {
+        const cur = out[onsets[k]], nxt = out[onsets[k + 1]];
         if (Math.abs(nxt.deg - cur.deg) <= 2) break;
         cur.deg = nxt.deg + Math.sign(cur.deg - nxt.deg) * 2;
       }
@@ -4407,14 +4469,15 @@ label.check input { accent-color: var(--accent); }
   function scoreNotes(style2, plan, next, step2, ctx2) {
     const bar2 = Math.floor(step2 / 16), s = step2 - bar2 * 16, barIn = bar2 - plan.start;
     const sec = resolveSection(style2, plan.section), a = arcStep(style2, plan.arc), BG = bangerOn(style2);
-    const scale = style2.scales[a.scale ?? style2.scale] ?? style2.scales[style2.scale], transpose = (a.transpose ?? 0) + (sec.transpose ?? 0);
+    const scaleName = BG ? bangerScaleName(style2, a, ctx2.seed) : a.scale ?? style2.scale;
+    const scale = style2.scales[scaleName] ?? style2.scales[style2.scale], transpose = (a.transpose ?? 0) + (sec.transpose ?? 0);
     const nightSeed = ctx2.seed;
     ctx2 = a.tune ? { ...ctx2, seed: tuneSeed(ctx2.seed, a.tune) } : ctx2;
     const progress = (barIn + s / 16) / Math.max(1, plan.bars), pass = plan.pass ?? 0;
     const formBar = bar2 - (ctx2.formStart ?? 0), form = style2.form;
     const H = hauntedOn(style2), haunt = !!H && H.sections.includes(plan.section) && ctx2.only !== "circle", comp = composeOn(style2), dance = danceOn(style2);
     const danceBass = dance ? dance.dance.bass[a.family ?? ""] : void 0;
-    const chordOf = (slow) => BG ? bangerChord(style2, a, ctx2.seed, formBar, !!sec.sevenths, slow) : form ? formChord(style2, ctx2.seed, slow ? hauntedBar(form, formBar) : formBar, !!sec.sevenths) : chordAt(style2, sec, a, barIn + pass * Math.max(1, sec.chordBars));
+    const chordOf = (slow) => BG ? bangerChord(style2, a, ctx2.seed, formBar, !!sec.sevenths, slow, scaleName) : form ? formChord(style2, ctx2.seed, slow ? hauntedBar(form, formBar) : formBar, !!sec.sevenths) : chordAt(style2, sec, a, barIn + pass * Math.max(1, sec.chordBars));
     const chordMain = chordOf(haunt), circleChord = H && form ? chordOf(true) : chordMain;
     const dropAt = haunt ? hauntedDrop(style2, plan.bars) : Infinity, dropped = barIn >= dropAt;
     let secParts = sec.parts;
@@ -4719,12 +4782,18 @@ label.check input { accent-color: var(--accent); }
   var VEL2 = { X: 1, x: 0.8, o: 0.45, g: 0.28, r: 0.7 };
   var PENT = [0, 2, 3, 4, 6];
   var pentDeg = (i) => PENT[mod2(i, 5)] + 7 * Math.floor(i / 5);
-  var onsets = (p) => {
+  var STAB = [0, 2, 4];
+  var stabDeg = (i) => STAB[mod2(i, 3)] + 7 * Math.floor(i / 3);
+  var toks = (p) => {
     const out = [];
-    for (let i = 0; i < p.length; i++) if (p[i] !== "." && p[i] !== "-") {
-      let d = 1;
-      while (i + d < p.length && p[i + d] === "-") d++;
-      out.push({ pos: i, dur: d });
+    for (let i = 0; i < p.length; i++) {
+      const c = p[i];
+      if (c === "L") {
+        let d = 1;
+        while (i + d < p.length && p[i + d] === "-") d++;
+        out.push({ pos: i, kind: "L", dur: d });
+      } else if (c === "r" || c === "g") out.push({ pos: i, kind: c, dur: 1 });
+      else if (c === "t") out.push({ pos: i, kind: "t", dur: 2 });
     }
     return out;
   };
@@ -4735,24 +4804,75 @@ label.check input { accent-color: var(--accent); }
     const had = m.get(seed2);
     if (had) return had;
     const r = (k) => hash2(seed2, 811 + k, 3), H = B.hook;
-    const motif2 = pick2(H.motifs, r(1)), shape = pick2(H.shapes, r(2)), anchor = pick2(H.anchors, r(3));
+    const motif2 = H.tresillos?.length && r(10) < (H.chant ?? 0) ? pick2(H.tresillos, r(11)) : pick2(H.motifs, r(1)), chant = !/[rgt]/.test(motif2) && !!H.chants?.length;
+    const shape = pick2(chant ? H.chants : H.shapes, r(2)), anchor = pick2(H.anchors, r(3));
     const ai = Math.floor(r(4) * H.answers.length), question = H.answers[ai], answer = H.answers[(ai + 1 + Math.floor(r(5) * (H.answers.length - 1))) % H.answers.length];
-    const M2 = onsets(motif2).map((o, j) => ({ ...o, i: anchor + shape[j % shape.length] }));
-    const M22 = M2.map((n, j) => j === M2.length - 1 ? { ...n, i: n.i + pick2([1, -1, 2], r(6)) } : n);
-    const top = Math.max(...M2.map((n) => n.i)), into = (p, end) => {
-      const os = onsets(p);
-      return os.map((o, j) => ({ ...o, i: Math.min(top + 1, end + (os.length - 1 - j)) }));
+    const longsOf = (p) => toks(p).filter((t) => t.kind === "L").length;
+    const M2 = Array.from({ length: longsOf(motif2) }, (_, j) => stabDeg(anchor + shape[j % shape.length]));
+    const lastM = anchor + shape[(M2.length - 1) % shape.length], vary = chant ? stabDeg(lastM) + (r(6) < 0.5 ? 1 : -1) : pick2([stabDeg(lastM + 1), stabDeg(lastM - 1), 5 + 7 * Math.floor(stabDeg(lastM) / 7)], r(6));
+    const M22 = M2.map((d, j) => j === M2.length - 1 ? vary === d ? stabDeg(lastM + 1) : vary : d);
+    const high = anchor >= 2, home = high ? 7 : 0, qEnd = high ? pick2([4, 6, 4], r(7)) : pick2([4, -1, 1], r(7));
+    const above = (d) => {
+      let i = -6;
+      while (stabDeg(i) <= d) i++;
+      return i;
     };
-    const qEnd = anchor >= 3 ? pick2([3, 4], r(7)) : pick2([3, 1], r(7)), home = anchor >= 3 ? 5 : 0;
-    const bars = [M2, M22, M2, into(question, qEnd), M2, M22, M2, into(answer, home)];
-    const period = Array(128).fill(null), reply = Array(128).fill(null), seq = [];
-    const rs = pick2(H.replies, r(8));
+    const down = (n, end) => Array.from({ length: n }, (_, j) => j === n - 1 ? end : stabDeg(Math.min(anchor + 3, above(end) + n - 2 - j)));
+    const Q = down(longsOf(question), qEnd), A2 = down(longsOf(answer), home);
+    if (mod2(qEnd, 7) === 4 && Q.length > 1) Q[Q.length - 2] = qEnd + 1;
+    const bars = [motif2, motif2, motif2, question, motif2, motif2, motif2, answer].map((p, b) => ({ p, longs: b === 3 ? Q : b === 7 ? A2 : b % 2 ? M22 : M2 }));
+    const period = Array(128).fill(null), orn = Array.from({ length: 128 }, () => []), reply = Array(128).fill(null), seq = [];
+    const line = [];
+    let prev = null;
     bars.forEach((bar2, b) => {
+      const ts = toks(bar2.p), next = bars[(b + 1) % 8], nextFirst = toks(next.p)[0];
+      let li = 0;
+      if (b % 2 === 0) prev = M22[M22.length - 1];
+      for (let i = 0; i < ts.length; i++) {
+        const t = ts[i], at2 = b * 16 + t.pos;
+        if (t.kind === "L") {
+          const n = { deg: bar2.longs[li++], dur: t.dur, ...t.dur >= 3 ? { long: true } : {} };
+          period[at2] = n;
+          line.push(n);
+          prev = n.deg;
+          continue;
+        }
+        let j = i, k = 0;
+        while (j < ts.length && ts[j].kind !== "L") j++;
+        const inBar = j < ts.length, T = inBar ? bar2.longs[li] : nextFirst?.kind === "L" && nextFirst.pos === 0 ? next.longs[0] : null;
+        if (T === null) continue;
+        for (let q = i + 1; q < j; q++) k += ts[q].kind === "t" ? 3 : ts[q].kind === "g" ? 2 : 1;
+        const up = prev === null || prev < T || prev === T && hash2(seed2, 815, (b === 3 || b === 7 ? b : b % 2) * 16 + (inBar ? ts[j].pos : 16)) < 0.5, into = inBar ? {} : { into: true };
+        const put = (slot, n) => {
+          if (n.off) orn[slot].push(n);
+          else period[slot] = n;
+          line.push(n);
+        };
+        if (t.kind === "r") put(at2, { deg: up ? T - k - 1 : T + k + 1, dur: 1, ...into });
+        else if (t.kind === "g") {
+          put(at2, { deg: T + 1, dur: 0.5, ...into });
+          put(at2, { deg: T - 1, dur: 0.5, off: 0.5, ...into });
+        } else {
+          const ds = up ? [T - k - 3, T - k - 2, T - k - 1] : [T + 1 + k, T + k, T - 1 + k];
+          put(at2, { deg: ds[0], dur: 2 / 3, ...into });
+          put(at2, { deg: ds[1], dur: 2 / 3, off: 2 / 3, ...into });
+          put(at2 + 1, { deg: ds[2], dur: 2 / 3, off: 1 / 3, ...into });
+        }
+      }
+    });
+    const qLast = period[3 * 16 + toks(question).filter((t) => t.kind === "L").slice(-1)[0].pos];
+    line.forEach((n, i) => {
+      if (mod2(n.deg, 7) === 6 && (line[(i + 1) % line.length].deg === n.deg + 1 || n === qLast)) n.sharp = true;
+    });
+    const rs = pick2(H.replies, r(8)), pa = [0, 1, 3][mod2(anchor, 3)] + 5 * Math.floor(anchor / 3);
+    for (let b = 0; b < 8; b++) {
       const busy = Array(16).fill(false);
-      for (const n of bar2) {
-        period[b * 16 + n.pos] = { deg: pentDeg(n.i), dur: n.dur };
-        for (let k = 0; k < n.dur; k++) busy[n.pos + k] = true;
-        if (b < 2 || b === 7) seq.push(pentDeg(n.i));
+      for (let i = 0; i < 16; i++) {
+        const n = period[b * 16 + i];
+        if (n) {
+          for (let k = 0; k < Math.ceil(n.dur); k++) if (i + k < 16) busy[i + k] = true;
+        }
+        if (orn[b * 16 + i].length) busy[i] = true;
       }
       let best = 0, at2 = -1;
       for (let i = 0; i < 16; i++) {
@@ -4767,15 +4887,86 @@ label.check input { accent-color: var(--accent); }
       }
       if (best >= 4) {
         const s0 = at2 + at2 % 2, n = Math.min(3, Math.floor((at2 + best - s0) / 2));
-        for (let j = 0; j < n; j++) reply[b * 16 + s0 + 2 * j] = { deg: pentDeg(anchor + rs[j % rs.length] - 5), dur: 2 };
+        for (let j = 0; j < n; j++) reply[b * 16 + s0 + 2 * j] = { deg: pentDeg(pa + rs[j % rs.length] - 5), dur: 2 };
       }
-    });
-    const degs = period.filter((x) => x).map((x) => x.deg), rdegs = reply.filter((x) => x).map((x) => x.deg);
-    const hook = { period, reply, seq, motif: motif2, anchor, top: Math.max(...degs), low: Math.min(...degs), replyTop: rdegs.length ? Math.max(...rdegs) : 0 };
+    }
+    for (const b of [0, 1, 7]) for (let i = 0; i < 16; i++) {
+      const n = period[b * 16 + i];
+      if (n) seq.push(n.deg);
+    }
+    const degs = line.map((x) => x.deg), rdegs = reply.filter((x) => x).map((x) => x.deg);
+    const hook = { period, orn, reply, seq, motif: motif2, anchor, top: Math.max(...degs), low: Math.min(...degs), replyTop: rdegs.length ? Math.max(...rdegs) : 0 };
     m.set(seed2, hook);
     return hook;
   }
+  var OSTS = /* @__PURE__ */ new WeakMap();
+  function ostinato(B, seed2, rep, hits = false) {
+    const O = B.ostinato, key = `${seed2}:${rep % 2 ? rep : 0}:${hits}`;
+    let m = OSTS.get(B);
+    if (!m) OSTS.set(B, m = /* @__PURE__ */ new Map());
+    const had = m.get(key);
+    if (had) return had;
+    const r = (k) => hash2(seed2, 883 + k, 5);
+    const TR = O.tresillo;
+    if (TR && TR.groups.length && TR.shapes.length && hash2(seed2, 893, 1) < TR.share) {
+      const groups2 = pick2(TR.groups, r(1)), si2 = Math.floor(r(4) * TR.shapes.length), shape3 = TR.shapes[si2];
+      const shape22 = rep % 2 ? TR.shapes[(si2 + 1 + Math.floor(hash2(seed2, 889, rep) * (TR.shapes.length - 1))) % TR.shapes.length] : shape3;
+      const base2 = stabDeg(pick2([0, 0, 1, 2], r(5))), period2 = Array(32).fill(null), reply2 = Array(32).fill(null);
+      let pos2 = 0;
+      groups2.forEach((g, i) => {
+        if (pos2 < 32) period2[pos2] = { deg: base2 + (pos2 < 16 ? shape3 : shape22)[i % shape3.length], dur: Math.min(g - 1, 4), vel: pos2 % 16 === 0 ? 1 : 0.84, acc: true };
+        pos2 += g;
+      });
+      const d02 = pick2([12, 9, 11, 7], r(9));
+      if (hits) for (const at2 of [20, 22, 26, 28]) reply2[at2] = { deg: d02 - (at2 >= 26 ? 1 : 0), dur: 1, vel: 0.9, acc: true };
+      else {
+        reply2[20] = { deg: d02, dur: 6, long: true };
+        reply2[26] = { deg: d02 - 1, dur: 6, long: true };
+      }
+      const all2 = TR.shapes.flat(), hook2 = { period: period2, orn: Array.from({ length: 32 }, () => []), reply: reply2, seq: [], motif: "tresillo:" + groups2.join("+"), anchor: base2, top: base2 + Math.max(...all2), low: base2 + Math.min(...all2), replyTop: d02 };
+      m.set(key, hook2);
+      return hook2;
+    }
+    const head = pick2(O.heads, r(1)), n3 = pick2(O.threes, r(2)), used = head.reduce((x, y) => x + y, 0) + 3 * n3;
+    const groups = [...head, ...Array(n3).fill(3), ...Array(Math.max(0, Math.floor((32 - used) / 2))).fill(2)];
+    const arts = pick2(O.arts, r(3)), si = Math.floor(r(4) * O.shapes.length), shape = O.shapes[si];
+    const shape2 = rep % 2 ? O.shapes[(si + 1 + Math.floor(hash2(seed2, 889, rep) * (O.shapes.length - 1))) % O.shapes.length] : shape;
+    const base = pick2([0, 0, 1, 3], r(5)), restAt = r(6) < 0.6 ? head.length + 1 + Math.floor(r(7) * (n3 - 1)) : -1;
+    const period = Array(32).fill(null), reply = Array(32).fill(null);
+    let pos = 0, lastAt = -1;
+    groups.forEach((g, i) => {
+      if (i !== restAt && pos < 32) {
+        const isHead = i < head.length, art = isHead ? "A" : arts[(i - head.length) % arts.length], sh = pos < 16 ? shape : shape2;
+        period[pos] = { deg: pentDeg(base + sh[isHead ? 0 : (i - head.length + 1) % sh.length]), dur: art === "t" ? g : art === "A" ? Math.min(g, 2) : 1, vel: art === "A" ? 1 : art === "t" ? 0.82 : 0.7, ...art === "A" ? { acc: true } : {} };
+        lastAt = pos;
+      }
+      pos += g;
+    });
+    const first = period[0];
+    if (lastAt > 16 && mod2(first.deg, 7) === 0 && r(8) < 0.6) period[lastAt] = { ...period[lastAt], deg: first.deg - 1, sharp: true };
+    const d0 = pick2([12, 9, 11, 7], r(9));
+    if (hits) for (const at2 of [20, 22, 26, 28]) reply[at2] = { deg: d0 - (at2 >= 26 ? 1 : 0), dur: 1, vel: 0.9, acc: true };
+    else {
+      reply[20] = { deg: d0, dur: 6, long: true };
+      reply[26] = { deg: d0 - 1, dur: 6, long: true };
+    }
+    const all = O.shapes.flat(), hook = { period, orn: Array.from({ length: 32 }, () => []), reply, seq: [], motif: groups.join("+"), anchor: base, top: pentDeg(base + Math.max(...all)), low: Math.min(pentDeg(base + Math.min(...all)), first.deg - 1), replyTop: d0 };
+    m.set(key, hook);
+    return hook;
+  }
+  function bangerScaleName(style2, a, nightSeed) {
+    const M2 = bangerOn(style2)?.minor;
+    if (a.scale || !M2 || !style2.scales[M2.scale]) return a.scale ?? style2.scale;
+    return hash2(nightSeed, 877, (a.tune ?? 0) * 31 + (a.name?.length ?? 0)) < M2.dorian ? style2.scale : M2.scale;
+  }
   var KITS = /* @__PURE__ */ new WeakMap();
+  function xyloFigure(B, xyloShare, seed2, formBar, pass) {
+    const X = B.space?.xylo, ph = Math.floor(formBar / 8) + pass * 131;
+    if (!X || !B.leads[X.voice] || hash2(seed2, 865, ph) >= xyloShare) return null;
+    const names = Object.keys(X.figures).filter((n) => n !== X.roll);
+    if (formBar % 4 === 3 && X.figures[X.roll] && hash2(seed2, 869, formBar) < 0.5) return X.roll;
+    return names.length ? pick2(names, hash2(seed2, 867, ph)) : null;
+  }
   function kitOf(B, name) {
     let m = KITS.get(B);
     if (!m) KITS.set(B, m = /* @__PURE__ */ new Map());
@@ -4789,7 +4980,7 @@ label.check input { accent-color: var(--accent); }
         n = K.base;
       }
       const all = Object.assign({}, ...chain);
-      k = { swing: all.swing ?? 0, drums: all.drums ?? [], breaks: all.breaks ?? all.drums ?? [], fills: all.fills ?? [], bass: all.bass ?? { patch: [], octave: 1, p: [] }, chords: all.chords ?? { patch: "", p: [] }, leads: all.leads ?? { soft: [], hard: [] }, reply: all.reply ?? [], pad: all.pad, turn: all.turn };
+      k = { swing: all.swing ?? 0, drums: all.drums ?? [], breaks: all.breaks ?? all.drums ?? [], fills: all.fills ?? [], bass: all.bass ?? { patch: [], octave: 1, p: [] }, chords: all.chords ?? { patch: "", p: [] }, leads: all.leads ?? { soft: [], hard: [] }, reply: all.reply ?? [], pad: all.pad, turn: all.turn, xylo: all.xylo ?? 0, bed: all.bed, half: all.half, four: all.four };
       m.set(name, k);
     }
     return k;
@@ -4812,6 +5003,12 @@ label.check input { accent-color: var(--accent); }
     if (role === "build") return barIn * 2 < bars ? "slow" : gentle ? null : "tease";
     return null;
   }
+  function lightPhrase(B, style2, role, use2, gentle, seed2, formBar, pass) {
+    const SP = B.spice;
+    if (!SP || !style2.patches[SP.snap]) return false;
+    if (role === "victory") return false;
+    return gentle || role === "drop" && use2 !== "whole" && hash2(seed2, 851, Math.floor(formBar / 8) + pass * 131) < SP.snaps;
+  }
   function bangerRole(style2, plan, a, sec, formStart = 0) {
     if (plan.section === style2.intro || plan.section === style2.knockout) return null;
     if (style2.victory && plan.section === style2.victory) return "victory";
@@ -4827,18 +5024,19 @@ label.check input { accent-color: var(--accent); }
     if (/breaks?$/i.test(plan.section) && plan.section !== "breaks") return "breaks";
     return "drop";
   }
-  function bangerChord(style2, a, seed2, formBar, sevenths = false, slow = false) {
+  function bangerChord(style2, a, seed2, formBar, sevenths = false, slow = false, scaleName = a.scale ?? style2.scale) {
     const B = style2.banger, F = style2.form, P8 = F?.phraseBars ?? 8, L2 = (F?.order.length ?? 4) * P8;
-    const P = B.progressions[a.scale ?? style2.scale] ?? B.progressions[style2.scale] ?? Object.values(B.progressions)[0];
+    const P = B.progressions[scaleName] ?? B.progressions[style2.scale] ?? Object.values(B.progressions)[0];
     const fb = mod2(formBar, L2), ph = Math.floor(fb / P8), k = fb % P8;
     const loop = ph === 2 ? pick2(P.b, hash2(seed2, 823, 2)) : pick2(P.a, hash2(seed2, 821, 1));
-    const root = loop[(ph === 3 || slow ? Math.floor(k / 2) : k) % loop.length];
-    return { root, tones: sevenths ? [root, root + 2, root + 4, root + 6] : [root, root + 2, root + 4] };
+    const at2 = (ph === 3 || slow ? Math.floor(k / 2) : k) % loop.length, root = loop[at2];
+    const raise = !!B.minor?.cadence && scaleName === B.minor.scale && root === 4 && at2 === loop.length - 1;
+    return { root, tones: sevenths ? [root, root + 2, root + 4, root + 6] : [root, root + 2, root + 4], ...raise ? { raise: true } : {} };
   }
   function hookNoteAt(style2, seed2, formStep) {
     if (formStep % 2) return null;
     const n = nightHook(style2.banger, seed2).period[mod2(formStep / 2, 128)];
-    return n && { deg: n.deg, dur: n.dur * 2 };
+    return n && n.dur >= 1 ? { ...n, dur: n.dur * 2 } : null;
   }
   var charAt = (p, i) => {
     const ch = p[i];
@@ -4850,7 +5048,7 @@ label.check input { accent-color: var(--accent); }
   function bangerNotes(style2, plan, sec, step2, ctx2, role) {
     const B = style2.banger, bar2 = Math.floor(step2 / 16), s = step2 - bar2 * 16, barIn = bar2 - plan.start, pass = plan.pass ?? 0;
     const a = style2.arc[Math.max(0, Math.min(style2.arc.length - 1, plan.arc))];
-    const scale = style2.scales[a.scale ?? style2.scale] ?? style2.scales[style2.scale], transpose = (a.transpose ?? 0) + (sec.transpose ?? 0);
+    const scaleName = bangerScaleName(style2, a, ctx2.seed), scale = style2.scales[scaleName] ?? style2.scales[style2.scale], transpose = (a.transpose ?? 0) + (sec.transpose ?? 0);
     const night = ctx2.seed, seed2 = a.tune ? tuneSeed(ctx2.seed, a.tune) : ctx2.seed;
     const gentle = ctx2.stumps !== void 0 && ctx2.stumps < B.gentle.stumps;
     const formBar = bar2 - (ctx2.formStart ?? 0), E2 = gentle ? Math.min(B.gentle.energy, a.energy) : Math.max(B.energyFloor, a.energy);
@@ -4859,31 +5057,43 @@ label.check input { accent-color: var(--accent); }
     const H = hauntedOn(style2), haunt = role === "breakdown" && !!H && H.sections.includes(plan.section);
     const dropAt = role === "breakdown" ? haunt ? hauntedDrop(style2, plan.bars) : Infinity : 0, dropped = role === "breakdown" && barIn >= dropAt;
     const use2 = hookUse(role, barIn, plan.bars, pass, dropAt, gentle);
-    const chord = bangerChord(style2, a, seed2, formBar, !!kit.chords.sevenths);
+    const chord = bangerChord(style2, a, seed2, formBar, !!kit.chords.sevenths, false, scaleName);
+    const up = (deg, c = chord) => c.raise && mod2(deg, 7) === 6 ? 1 : 0;
+    const sharpOk = scale[6] - scale[5] <= 2 && scale[6] === 10 && !chord.tones.slice(0, 3).some((t) => mod2(t, 7) === 6);
+    const semi = (n) => mod2(n.deg, 7) === 6 && (chord.raise || n.sharp && sharpOk) ? 1 : 0;
+    const offOf = (n) => n.off ? s % 2 ? kit.swing + n.off * (1 - kit.swing) : n.off * (1 + kit.swing) : sw;
     const pb = barIn % 8, last = barIn === plan.bars - 1, sw = s % 2 === 1 ? kit.swing : 0;
-    const out = [], quiet = gentle ? 0.72 : 1;
+    const dreamy = !gentle && (role === "breakdown" && !dropped || role === "build" && barIn * 2 < plan.bars), down = dreamy ? B.dream?.down ?? 1 : 1;
+    const out = [], quiet = gentle ? 0.72 : down;
+    const SPC = B.space, BAL = SPC?.balance ?? { drums: 1, bass: 1, pad: 1, chords: 1, vocals: 1 };
     const r = (salt) => hash2(step2, salt, seed2 + pass * 7919);
     const ev = (patch, midi, vel, dur, extra = {}) => {
       if (style2.patches[patch]) out.push({ part: "b:" + patch, patch, step: step2, offset: sw, dur, midi, vel: vel * quiet, straight: true, ...extra });
     };
     const kindOf = (patch) => {
       const p = style2.patches[patch];
-      return !p ? "" : p.kind === "kick" && !p.noDuck ? "kick" : p.kind === "snare" || p.bursts ? "snare" : "top";
+      return !p ? "" : p.kind === "kick" && !p.noDuck ? "kick" : p.kind === "snare" || p.bursts || patch === "snap" ? "snare" : "top";
     };
     const SP = B.spice, phraseNo = Math.floor(formBar / 8), deal = (salt) => hash2(seed2, salt, phraseNo + pass * 131);
-    const snapsOn = !!SP && !!style2.patches[SP.snap] && deal(851) < (gentle ? SP.gentleSnaps : SP.snaps), snapsAlone = snapsOn && deal(853) < SP.replace;
-    const xylo = SP ? B.leads[SP.xylo] : void 0, xyAnswer = !!xylo && deal(857) < SP.answer, xyRun = !!xylo && hash2(seed2, 859, bar2) < SP.flourish;
+    const light = lightPhrase(B, style2, role, use2, gentle, seed2, formBar, pass);
+    const BED = SPC?.bed, DR = B.drive, DM = B.dream;
+    const bedName = BED ? kit.bed && B.leads[kit.bed] ? kit.bed : gentle ? BED.low : BED.voice : "", bedXylo = !!BED && !!SP && (bedName === BED.voice || bedName === BED.low);
+    const xylo = SP ? B.leads[SP.xylo] : void 0, xyAnswer = !!xylo && !bedXylo && deal(857) < SP.answer, xyRun = !!xylo && hash2(seed2, 859, bar2) < SP.flourish;
+    const OS = B.ostinato, ost = !!OS && role === "drop" && use2 === null && !gentle && !!kit.four && !kit.half, ostLevel = !ost ? 0 : pass === 0 ? 0 : Math.min(3, 2 * pass - 1 + Math.floor(barIn / 8));
     const drums = (voices, level = 1, keep2, backbeat = false) => {
       let snapped = false;
       for (const v of voices) {
         if (!within(v, E2, barIn, pass) || keep2 && !keep2(kindOf(v.patch))) continue;
-        const snare = backbeat && snapsOn && kindOf(v.patch) === "snare";
-        const ch = v.p[(barIn * 16 + s) % v.p.length], lv = (v.level ?? 1) * level * (snare ? snapsAlone ? 0 : 0.45 : 1) * (0.94 + 0.06 * r(v.patch.length * 31 + v.p.length));
-        if (snare && !snapped && (ch === "X" || ch === "x")) {
-          snapped = true;
-          ev(SP.snap, null, SP.snapLevel * level, 1);
+        if (role === "victory" && (v.patch === SP?.snap || v.patch === "snap")) continue;
+        const snare = backbeat && light && kindOf(v.patch) === "snare";
+        const ch = v.p[(barIn * 16 + s) % v.p.length], lv = BAL.drums * (v.level ?? 1) * level * (0.94 + 0.06 * r(v.patch.length * 31 + v.p.length));
+        if (snare) {
+          if (!snapped && (ch === "X" || ch === "x")) {
+            snapped = true;
+            ev(SP.snap, null, SP.snapLevel * BAL.drums * level, 1);
+          }
+          continue;
         }
-        if (lv <= 0) continue;
         if (ch === "." || ch === "-" || VEL2[ch] === void 0) continue;
         if (ch === "r") {
           ev(v.patch, null, 0.6 * lv, 0.5);
@@ -4893,53 +5103,108 @@ label.check input { accent-color: var(--accent); }
         ev(v.patch, null, VEL2[ch] * lv, 1);
       }
     };
-    const bass = (D2, figures, level, until = 16) => {
+    const bass = (D2, figures, level, until = 16, grit2 = 0, gliss = false, bnc = false) => {
       if (!figures.length || !D2.patch.length || s >= until) return;
-      const p = pick2(figures, hash2(seed2, 829, Math.floor(formBar / 8))), i = (barIn * 16 + s) % p.length, { ch, dur: d0 } = charAt(p, i);
+      if (gliss && s >= 8 && s !== 8 && s !== 10) return;
+      const p = gliss && s >= 8 ? (s === 8 ? "8-" : "1-").padStart(s + 2, ".").padEnd(16, ".") : pick2(figures, hash2(seed2, 829, Math.floor(formBar / 8))), i = (barIn * 16 + s) % p.length, { ch, dur: d0 } = charAt(p, i);
       const k = { "1": 0, "3": 2, "5": 4, "7": 6, "8": 7 }[ch];
       if (k === void 0) return;
       const dur = until >= 16 ? d0 : Math.min(d0, until - s), lo = 28 + 12 * D2.octave;
       let rootM = degreeToMidi(style2, scale, chord.root, 0, transpose);
       while (rootM >= lo + 12) rootM -= 12;
       while (rootM < lo) rootM += 12;
-      let m = rootM + degreeToMidi(style2, scale, chord.root + k, 0, 0) - degreeToMidi(style2, scale, chord.root, 0, 0);
+      let m = rootM + degreeToMidi(style2, scale, chord.root + k, 0, 0) - degreeToMidi(style2, scale, chord.root, 0, 0) + up(chord.root + k);
       if (m > lo + 19) m -= 12;
-      const patch = pick2(D2.patch, hash2(seed2, 831, 3)), vel = 0.7 * (D2.level ?? 1) * level * (0.95 + 0.05 * r(977));
-      ev(patch, m, vel, dur, D2.glide ? { glide: D2.glide } : {});
-      if (D2.sub !== false && D2.octave > 0 && style2.patches.bgSub) {
-        let sm = m - 12;
+      if (bnc && ch === "8") m = rootM + 12 <= 40 ? rootM + 12 : rootM <= 33 ? rootM + 7 : rootM - 5;
+      else if (bnc && m > 40) m = m - 12 >= 28 ? m - 12 : rootM;
+      const patch = pick2(D2.patch, hash2(seed2, 831, 3)), vel = 0.7 * BAL.bass * (D2.level ?? 1) * level * (0.95 + 0.05 * r(977));
+      ev(patch, m, vel, dur, gliss && s === 10 ? { glide: 0.12 } : D2.glide ? { glide: D2.glide } : {});
+      if (grit2 > 0 && DR && style2.patches[DR.bass.patch]) {
+        let gm = m;
+        while (gm < 40) gm += 12;
+        while (gm >= 52) gm -= 12;
+        ev(DR.bass.patch, gm, 0.7 * BAL.bass * grit2 * level, dur);
+      }
+      if (D2.sub !== false && style2.patches.bgSub) {
+        let sm = D2.octave > 0 ? m - 12 : m;
         while (sm >= 40) sm -= 12;
-        ev("bgSub", sm, 0.9 * level, dur);
+        ev("bgSub", sm, (D2.octave > 0 ? 0.9 : 0.35) * BAL.bass * level, dur);
       }
     };
-    const chords = (level, until = 16) => {
-      const C2 = kit.chords;
-      if (!C2.patch || !C2.p.length || s >= until) return;
-      const p = pick2(C2.p, hash2(seed2, 833, Math.floor(formBar / 8))), i = (barIn * 16 + s) % p.length, { ch, dur } = charAt(p, i);
-      if (VEL2[ch] === void 0) return;
-      const lo = (C2.window ?? 57) + mod2(transpose + 6, 12) - 6, fold = (t) => {
-        let m = degreeToMidi(style2, scale, t, 0, transpose);
+    const bed = (level, eighths, until = 16) => {
+      const L2 = BED && B.leads[bedName];
+      if (!BED || !L2 || level <= 0 || s >= until || eighths && s % 2 || figBar(barIn)) return;
+      const fig = pick2(BED.figures, hash2(seed2, 881, phraseNo + pass * 131)), c = fig[(eighths ? s / 2 : barIn % 2 * 16 + s) % fig.length], k = "abcd".indexOf(c);
+      if (k < 0) return;
+      const lo = gentle ? BED.lowWindow : BED.window, ts = chord.tones.slice(0, 3).map((t) => {
+        let m = degreeToMidi(style2, scale, t, 0, transpose) + up(t);
         while (m < lo) m += 12;
         while (m >= lo + 12) m -= 12;
         return m;
+      }).sort((x, y) => x - y);
+      ev(L2.patch, k === 3 ? ts[0] + 12 : ts[k % ts.length], 0.8 * BED.level * L2.level * (R?.level ?? 1) * BAL.chords * level * (s % 4 === 0 ? 1 : 0.9), 1);
+    };
+    const figBar = (b) => bedXylo && (role === "breaks" ? b < 4 : role === "drop" && !ost && !!SPC?.riffRest && b % 8 % 4 === 2 && hookUse(role, b, plan.bars, pass, dropAt, gentle) === null) && !!xyloFigure(B, kit.xylo, seed2, formBar - barIn + b, pass);
+    const chordsOn = (b) => {
+      if (!BED || role === "victory" || figBar(b)) return true;
+      const u = hookUse(role, b, plan.bars, pass, dropAt, gentle);
+      return u === "whole" || u === "slow" || u === null && (ost ? !!OS.stabs : !!SPC?.riffRest && b % 8 % 4 === 2);
+    };
+    const chordHit = (at2, thin) => {
+      if (at2 < 0) return null;
+      const b = Math.floor(at2 / 16), fb = formBar - barIn + b, cs = at2 - b * 16, ch0 = b === barIn ? chord : bangerChord(style2, a, seed2, fb, !!kit.chords.sevenths, false, scaleName);
+      if (!chordsOn(b)) return null;
+      const X = SPC?.xylo, fig = X && (!bedXylo || figBar(b)) ? xyloFigure(B, kit.xylo, seed2, fb, pass) : null;
+      const foldTo = (lo0, fixed = false) => {
+        const lo = fixed ? lo0 : lo0 + mod2(transpose + 6, 12) - 6;
+        return (t) => {
+          let m = degreeToMidi(style2, scale, t, 0, transpose) + up(t, ch0);
+          while (m < lo) m += 12;
+          while (m >= lo + 12) m -= 12;
+          return m;
+        };
       };
-      const vel = VEL2[ch] * (C2.level ?? 1) * level;
-      if (C2.arp) {
+      if (fig && X) {
+        const V0 = B.leads[gentle ? X.low : X.voice] ?? B.leads[X.voice], p2 = X.figures[fig], c = p2[at2 % p2.length], fold2 = foldTo(gentle ? X.lowWindow : X.window, true), tones2 = ch0.tones.slice(0, 3).map(fold2).sort((x, y) => x - y);
+        const vel2 = 0.8 * X.level * V0.level * (R?.level ?? 1) * BAL.chords * (cs % 4 === 0 ? 1 : 0.88);
+        if (c === "x") return { patch: V0.patch, midis: tones2, vel: vel2, dur: 1 };
+        if (c === "a" || c === "b" || c === "c") return { patch: V0.patch, midis: [tones2["abc".indexOf(c) % tones2.length]], vel: vel2, dur: 1 };
+        if (c === "1") return { patch: V0.patch, midis: [fold2(ch0.root) - 12 < 52 ? fold2(ch0.root) : fold2(ch0.root) - 12], vel: vel2, dur: 1 };
+        if (c === "t") return { patch: V0.patch, midis: [tones2[0], tones2[tones2.length - 1]], vel: vel2 * (0.45 + 0.04 * (cs % 8)), dur: 1 };
+        return null;
+      }
+      const C2 = kit.chords;
+      if (!C2.patch || !C2.p.length) return null;
+      const p = ost && OS.stabs ? OS.stabs : pick2(C2.p, hash2(seed2, 833, Math.floor(fb / 8))), i = at2 % p.length, { ch, dur } = charAt(p, i);
+      if (VEL2[ch] === void 0) return null;
+      const fold = foldTo(C2.window ?? SPC?.chordWindow ?? 57), vel = VEL2[ch] * (C2.level ?? 1) * BAL.chords * (ost ? OS.stabLevel ?? 1 : 1);
+      if (C2.arp && !ost) {
         let n = 0;
-        for (let j = i - i % 16; j < i; j++) if (VEL2[p[j]] !== void 0) n++;
-        const T = chord.tones.length;
-        ev(C2.patch, fold(chord.tones[n % T]) + 12 * (Math.floor(n / T) % 2), vel, Math.min(dur, until - s));
-      } else for (const t of chord.tones) ev(C2.patch, fold(t), vel, Math.min(dur, until - s));
+        for (let k = i - i % 16; k < i; k++) if (VEL2[p[k]] !== void 0) n++;
+        const T = ch0.tones.length;
+        return { patch: C2.patch, midis: [fold(ch0.tones[n % T]) + 12 * (Math.floor(n / T) % 2)], vel, dur };
+      }
+      const tones = ch0.tones.slice(0, 4), thinned = thin && SPC?.thin && tones.length > 2 ? tones.slice(1, 3) : tones.slice(0, 3);
+      return { patch: C2.patch, midis: thinned.map(fold), vel, dur };
+    };
+    const chords = (level, until = 16, thin = false) => {
+      const at2 = barIn * 16 + s, h = s < until ? chordHit(at2, thin) : null;
+      if (h) for (const m of h.midis) ev(h.patch, m, h.vel * level, Math.min(h.dur, until - s));
+      const EC = SPC?.echo;
+      if (EC && s < until && !ost) EC.levels.forEach((lv, k) => {
+        const e = chordHit(at2 - EC.steps * (k + 1), thin), side = e && e.patch + (k % 2 ? "L" : "R");
+        if (e && side && style2.patches[side] && (at2 - EC.steps * (k + 1)) % 16 < (pb === 7 || last ? 12 : 16)) for (const m of e.midis) ev(side, m, e.vel * level * lv, 1);
+      });
     };
     const pad = (level) => {
       const P = kit.pad;
       if (!P || s !== 0 || P.level <= 0 || P.e && (E2 < P.e[0] || E2 > P.e[1])) return;
-      const lo = 57 + mod2(transpose + 6, 12) - 6;
+      const lo = (SPC?.chordWindow ?? 57) + mod2(transpose + 6, 12) - 6;
       for (const t of chord.tones.slice(0, 3)) {
-        let m = degreeToMidi(style2, scale, t, 0, transpose);
+        let m = degreeToMidi(style2, scale, t, 0, transpose) + up(t);
         while (m < lo) m += 12;
         while (m >= lo + 12) m -= 12;
-        out.push({ part: "b:" + P.patch, patch: P.patch, step: step2, offset: 0, dur: 16, midi: m, vel: 0.85 * P.level * level, straight: true });
+        out.push({ part: "b:" + P.patch, patch: P.patch, step: step2, offset: 0, dur: 16, midi: m, vel: 0.85 * P.level * BAL.pad * level * down, straight: true });
       }
     };
     const tier = E2 < B.softBelow ? kit.leads.soft : kit.leads.hard;
@@ -4957,42 +5222,129 @@ label.check input { accent-color: var(--accent); }
       while (low + sh < R.floor && top + sh + 12 <= ceil) sh += 12;
       return sh;
     };
-    const tune = (L2, n, level, extra = {}, until = 16, T = hook, part = "period") => {
-      if (!L2 || !n || s >= until) return;
-      const sh = shiftOf(L2, T, part, L2 === reply ? R?.reply : R?.lead);
-      ev(L2.patch, (R ? raw(n.deg, L2.octave) : degreeToMidi(style2, scale, n.deg, L2.octave, transpose)) + sh, (s % 4 === 0 ? 0.9 : 0.8) * L2.level * level * (R?.level ?? 1), Math.min(n.dur, until - s), extra);
+    const tune = (L2, n, level, extra = {}, until = 16, T = hook, part = "period", under = false) => {
+      if (!L2 || !n || s >= until) return null;
+      const ceil = L2 === reply ? R?.reply : R?.lead, sh0 = shiftOf(L2, T, part, ceil);
+      const sh = sh0 - (under && R && raw(T.low, L2.octave) + sh0 - 12 >= R.floor ? 12 : 0), m0 = (R ? raw(n.deg, L2.octave) : degreeToMidi(style2, scale, n.deg, L2.octave, transpose)) + sh + semi(n);
+      const m1 = ceil !== void 0 && m0 > ceil ? m0 - 12 : m0;
+      ev(L2.patch, m1, (n.vel ?? (n.long ? 0.92 : part === "reply" ? 0.8 : 0.72)) * L2.level * level * (R?.level ?? 1), Math.min(n.dur, until - s), { offset: offOf(n), ...extra });
+      return m1;
+    };
+    const play = (L2, T, slot, level, until = 16, noInto = false, under = false) => {
+      const n = T.period[slot];
+      if (n && !(noInto && n.into)) tune(L2, n, level, {}, until, T, "period", under);
+      for (const o of T.orn[slot]) if (!(noInto && o.into)) tune(L2, o, level, {}, until, T, "period", under);
     };
     const F = style2.form, vocal = a.vocal && a.vocal !== "none" && style2.patches[a.vocal] ? a.vocal : F?.sung.patch;
+    let sungAt = null;
+    const singer = !!F && !!vocal && !!style2.patches[vocal];
     const sing = (n, dur, level) => {
       if (!n || !F || !vocal || !style2.patches[vocal]) return false;
       let deg = n.deg;
       while (deg > F.range[1]) deg -= 7;
       while (deg < F.range[0]) deg += 7;
       const fx = style2.voiceFxDark?.families?.includes(a.family ?? "") ? "dark" : "pure", base = { part: F.sung.part, patch: vocal, step: step2, offset: 0, dur, fx };
-      out.push({ ...base, midi: degreeToMidi(style2, scale, deg, F.sung.octave, transpose), vel: 0.8 * level });
-      if (haunt && H.ghost.gain > 0) out.push({ ...base, midi: degreeToMidi(style2, scale, deg + H.ghost.interval, F.sung.octave, transpose), vel: 0.8 * level * H.ghost.gain, ghost: true });
-      else if (F.sung.wash) for (const iv of F.sung.wash.intervals) out.push({ ...base, offset: F.sung.wash.late, dur: Math.max(1, dur - F.sung.wash.late), midi: degreeToMidi(style2, scale, deg + iv, F.sung.octave, transpose), vel: 0.8 * level * F.sung.wash.level, double: true });
+      const lift = (m) => {
+        const VR = B.vocals?.line;
+        if (VR) {
+          while (m < VR[0]) m += 12;
+          while (m > VR[1]) m -= 12;
+        }
+        return m;
+      };
+      const mine = lift(degreeToMidi(style2, scale, deg, F.sung.octave, transpose) + semi(n));
+      level *= down;
+      out.push({ ...base, midi: mine, vel: 0.8 * level });
+      if (haunt && H.ghost.gain > 0) {
+        let g = degreeToMidi(style2, scale, deg + H.ghost.interval, F.sung.octave, transpose);
+        while (g < mine - 12) g += 12;
+        out.push({ ...base, midi: g, vel: 0.8 * level * H.ghost.gain, ghost: true });
+      } else if (F.sung.wash) for (const iv of F.sung.wash.intervals) out.push({ ...base, offset: F.sung.wash.late, dur: Math.max(1, dur - F.sung.wash.late), midi: degreeToMidi(style2, scale, deg + iv, F.sung.octave, transpose), vel: 0.8 * level * F.sung.wash.level, double: true });
+      sungAt = mine;
       return true;
     };
     const slow = () => {
       const t = barIn * 16 + s;
       if (t % 2) return null;
       const n = hook.period[t / 2 % 128];
-      return n && { deg: n.deg, dur: n.dur * 2 };
+      return n && n.dur >= 1 ? { ...n, dur: n.dur * 2 } : null;
     };
     const soft = gentle ? 0.6 : 1;
-    const V = gentle ? void 0 : B.vocals;
-    const voxAt = (deg) => {
-      let m = degreeToMidi(style2, scale, deg, 2, transpose);
+    const V = gentle ? void 0 : B.vocals, HV = B.vocals?.harmony;
+    const sungChord = (n) => {
+      const VV = B.vocals, lo = HV?.window ?? VV.range[0], ts = [chord.root, chord.root + 4, chord.tones.length > 3 ? chord.root + 6 : chord.root + 2].slice(0, n);
+      return ts.map((t) => {
+        let m = degreeToMidi(style2, scale, t, 0, transpose) + up(t);
+        while (m < lo) m += 12;
+        while (m >= lo + 12) m -= 12;
+        return m;
+      });
+    };
+    const voxAt = (n) => {
+      let m = degreeToMidi(style2, scale, n.deg, 2, transpose) + semi(n);
       while (m > V.range[1]) m -= 12;
       while (m < V.range[0]) m += 12;
       return m;
     };
-    const vox = (n, level, until = 16) => {
-      if (V && n && s < until && style2.patches[V.double]) out.push({ part: "b:" + V.double, patch: V.double, step: step2, offset: sw, dur: Math.min(Math.max(2, n.dur), Math.max(1, until - s)), midi: voxAt(n.deg), vel: 0.85 * level, straight: true });
+    const vox = (n, level, until = 16, third = 0) => {
+      if (!V || !(n?.long || n?.acc) || s >= until || !style2.patches[V.double]) return;
+      const note = (m, lv) => out.push({ part: "b:" + V.double, patch: V.double, step: step2, offset: sw, dur: Math.min(Math.max(2, n.dur), Math.max(1, until - s)), midi: m, vel: 0.85 * BAL.vocals * level * lv, straight: true });
+      note(voxAt(n), 1);
+      if (third > 0) note(voxAt({ deg: n.deg - 2, dur: n.dur }), third);
+    };
+    const LV = V?.lead && style2.patches[V.lead.patch] ? V.lead : void 0, she = !!LV && !kit.bed;
+    const herAt = (T, n) => {
+      const [lo, hi] = LV.range, top = raw(T.top, 2) + 1, low = raw(T.low, 2);
+      let sh = 0;
+      while (top + sh > hi) sh -= 12;
+      while (low + sh < lo && top + sh + 12 <= hi) sh += 12;
+      let m = raw(n.deg, 2) + semi(n) + sh;
+      while (m < V.range[0] - 7) m += 12;
+      while (m > V.range[1]) m -= 12;
+      return m;
+    };
+    const her = (T, n, level, until = 16, third = 0) => {
+      if (!LV || !n || n.off || s >= until) return;
+      const big = !!n.long || !!n.acc || T.period.length === 32 && n.dur >= 2, run2 = !big && LV.runs && n.dur === 1 && T.period.length !== 32;
+      if (!big && !run2) return;
+      const m = herAt(T, n), dur = Math.min(big ? Math.max(2, n.dur) : n.dur, Math.max(1, until - s)), lv = 0.85 * BAL.vocals * LV.level * level;
+      const note = (patch, midi, vel) => {
+        if (style2.patches[patch]) out.push({ part: "b:" + patch, patch, step: step2, offset: sw, dur, midi, vel, straight: true });
+      };
+      note(LV.patch, m, lv * (big ? 1 : LV.runLevel));
+      if (!big || n.dur < 3) return;
+      for (const patch of LV.stack) note(patch, m, lv * LV.stackLevel);
+      note(LV.shimmer, m + 12, lv * LV.shimmerLevel);
+      if (third > 0) {
+        let t = herAt(T, { deg: n.deg - 2, dur: n.dur });
+        if (t > m) t -= 12;
+        if (t < V.range[0] - 7) t += 12;
+        note(V.double, t, lv * third);
+      }
+    };
+    const herLine = (T, slot, level, until = 16, noInto = false, third = 0) => {
+      const n = T.period[slot];
+      if (n && !(noInto && n.into)) her(T, n, level, until, third);
     };
     const ooh = (level) => {
-      if (V && s === 0 && style2.patches[V.pad]) for (const t of [chord.root, chord.root + 4]) out.push({ part: "b:" + V.pad, patch: V.pad, step: step2, offset: 0, dur: 16, midi: voxAt(t), vel: 0.8 * V.padLevel * level, straight: true });
+      const VV = B.vocals;
+      if (!VV || s !== 0 || !style2.patches[VV.pad] || gentle && !HV) return;
+      const n = gentle ? HV.gentleVoices : HV?.voices ?? 2, lv = gentle ? HV.gentleLevel : 1;
+      sungChord(n).forEach((m, k) => {
+        const side = VV.pad + ["", "L", "R"][k % 3], patch = style2.patches[side] ? side : VV.pad;
+        out.push({ part: "b:" + patch, patch, step: step2, offset: 0, dur: 16, midi: m, vel: 0.8 * VV.padLevel * level * lv * quiet, straight: true });
+      });
+    };
+    const stack = (n, sung) => {
+      const VV = B.vocals;
+      if (!DM || !VV || !n.long) return;
+      let m = sung ?? degreeToMidi(style2, scale, n.deg, 2, transpose) + semi(n);
+      const [lo, hi] = VV.line ?? VV.range;
+      while (m < lo) m += 12;
+      while (m > hi) m -= 12;
+      const lv = DM.level * BAL.vocals * (gentle ? 0.5 : 1) * quiet, oct = m + 12 <= VV.range[1] ? m + 12 : m - 12;
+      for (const patch of DM.stack) if (style2.patches[patch]) out.push({ part: "b:" + patch, patch, step: step2, offset: 0, dur: n.dur, midi: m, vel: lv, straight: true });
+      if (style2.patches[DM.octave] && oct >= 55) out.push({ part: "b:" + DM.octave, patch: DM.octave, step: step2, offset: 0, dur: n.dur, midi: oct, vel: lv * DM.octaveLevel, straight: true });
     };
     const crash = (vel) => {
       if (s === 0) ev("bgCrash", null, vel, 16, { offset: 0 });
@@ -5005,8 +5357,11 @@ label.check input { accent-color: var(--accent); }
     };
     const fillBar = (voices, level = 1) => {
       drums(voices, level, (k) => s < 8 ? true : s < 12 ? k === "top" : false, true);
-      if (xyRun && s >= 12) tune(xylo, { deg: pentDeg(hook.anchor + s - 15), dur: 1 }, 0.8);
-      const f = B.fills[pick2(kit.fills.length ? kit.fills : Object.keys(B.fills), hash2(seed2, 843, bar2))];
+      if (xyRun && s >= 12) {
+        const A2 = stabDeg(hook.anchor), deg = A2 + s - 16;
+        tune(xylo, { deg, dur: 1, ...mod2(deg, 7) === 6 ? { sharp: true } : {} }, 0.8);
+      }
+      const f = ost && (ostLevel >= 3 ? B.fills.sweep2 : hash2(seed2, 845, bar2) < 0.5 ? B.fills.sweep : void 0) || B.fills[pick2(kit.fills.length ? kit.fills : Object.keys(B.fills), hash2(seed2, 843, bar2))];
       if (f) drums(f, level);
     };
     if (role === "drop" || role === "victory" || role === "breaks") {
@@ -5016,6 +5371,7 @@ label.check input { accent-color: var(--accent); }
         drums(voices, 1, void 0, true);
         if (pb === 3 && kit.turn) drums(kit.turn);
       }
+      if (DR && !gentle && !light && role !== "victory") drums(role === "breaks" ? DR.breaks : kit.half ? [] : DR.groove, 1, fill2 ? () => s < 8 : void 0);
       if (role === "victory") drums(B.victory);
       if (barIn === 0) {
         crash(0.9 * soft * soft);
@@ -5023,88 +5379,136 @@ label.check input { accent-color: var(--accent); }
       } else if (pb === 0 && !gentle) crash(0.6);
       if (pb === 7 && !last && !gentle) riser(0.35, 0.85, 12, "bgSweep");
       const until = fill2 ? 12 : 16;
-      bass(kit.bass, role === "breaks" && kit.bass.breaks ? kit.bass.breaks : kit.bass.p, 1, until);
-      chords(1, until);
-      pad(1);
+      const bounce = ost && kit.bass.bounce?.length ? [kit.bass.bounce[Math.min(kit.bass.bounce.length - 1, ostLevel >= 2 ? 1 : 0)]] : null;
+      bass(kit.bass, bounce ?? (role === "breaks" && kit.bass.breaks ? kit.bass.breaks : kit.bass.p), 1, until, !DR || gentle ? 0 : role === "breaks" ? DR.bass.breaks : use2 === "whole" && role === "drop" ? DR.bass.landing : 0, !!bounce && fill2, !!bounce);
+      const groove2 = !gentle && use2 !== "whole" && role !== "victory", xyChords = (!bedXylo || figBar(barIn)) && !!xyloFigure(B, kit.xylo, seed2, formBar, pass);
+      chords(1, until, groove2);
+      if (!ost) bed(1, gentle || !!kit.half, until);
+      if (!groove2 || !SPC) pad(1);
+      if (V && HV && xyChords && s < until && deal(871) < HV.stabs) {
+        const h = chordHit(barIn * 16 + s, false);
+        if (h && h.midis.length > 2) for (const m of sungChord(2)) out.push({ part: "b:" + V.double, patch: V.double, step: step2, offset: sw, dur: 2, midi: m, vel: HV.chordStabLevel * BAL.vocals, straight: true });
+      }
       const slot = (pb * 16 + s) % 128;
       ooh(1);
       if (use2 === "whole") {
-        tune(lead, hook.period[slot], 1);
-        vox(hook.period[slot], V?.doubleLevel ?? 0);
+        if (she) {
+          play(lead, hook, slot, LV.support, 16, false, true);
+          herLine(hook, slot, 1, 16, false, V?.thirds ?? 0);
+        } else {
+          play(lead, hook, slot, 1);
+          vox(hook.period[slot], (V?.doubleLevel ?? 0) * (LV?.more ?? 1), 16, V?.thirds ?? 0);
+        }
         if (role === "victory") tune(reply, hook.reply[slot], 0.7, {}, 16, hook, "reply");
-        if (xyAnswer) tune(xylo, hook.reply[slot], 0.8, {}, 16, hook, "reply");
+        else if (xyAnswer && !xyChords) tune(xylo, hook.reply[slot], 0.8, {}, 16, hook, "reply");
       } else if (use2 === "slow") tune(lead, slow(), 0.9);
-      else {
+      else if (ost) {
+        const O = ostinato(B, seed2, Math.floor(barIn / 2) + pass * 64, ostLevel >= 2), oslot = pb % 2 * 16 + s, n = O.period[oslot];
+        if (n && s < until) {
+          const m = tune(lead, n, 1.15 * (she ? LV.ostSupport : 1), {}, until, O);
+          if (m !== null && xylo) ev(xylo.patch, m - 12 >= 55 ? m - 12 : m, 0.8 * OS.xylo * xylo.level * (R?.level ?? 1) * (n.vel ?? 0.8), 1);
+          if (she) her(O, n, LV.ostinato, until);
+          else if (n.acc && !light) vox(n, OS.vocal * (LV?.more ?? 1), until);
+          if (ostLevel >= 1) tune(lead, { deg: n.deg - 2, dur: n.dur, vel: (n.vel ?? 0.8) * OS.thirds }, 1.15 * (she ? LV.ostSupport : 1), {}, until, O);
+        }
+        tune(reply, O.reply[oslot], 0.7, {}, until, O, "reply");
+      } else {
         const rests = role === "breaks" ? barIn < 4 : pass % 2 === 1 && barIn < 8;
-        tune(rests ? reply : lead, riff.period[slot], rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1), {}, 16, riff);
-        if (!rests && (half || role === "breaks")) tune(reply, riff.reply[slot], 0.7, {}, 16, riff, "reply");
-        if (xyAnswer) tune(xylo, riff.reply[slot], 0.8, {}, 16, riff, "reply");
-        if (!rests && V) {
-          const first = riff.period.slice(pb * 16, pb * 16 + 16).findIndex((x) => x);
+        const gapBar = !!SPC?.riffRest && pb % 4 === 2, answer = xyAnswer && !xyChords;
+        const noInto = !!SPC?.riffRest && pb % 4 === 1, hers = she && !rests;
+        if (!gapBar) {
+          play(rests ? reply : lead, riff, slot, rests ? 0.9 : 0.9 * (gentle ? 0.85 : 1) * (hers ? LV.support : 1), 16, noInto, hers);
+          if (hers) herLine(riff, slot, 0.9, 16, noInto);
+        }
+        if (!gapBar && answer) tune(xylo, riff.reply[slot], 0.8, {}, 16, riff, "reply");
+        else if (!gapBar && !rests && (half || role === "breaks")) tune(reply, riff.reply[slot], 0.7, {}, 16, riff, "reply");
+        if (!rests && !gapBar && V && !she) {
+          const first = riff.period.slice(pb * 16, pb * 16 + 16).findIndex((x) => x?.long);
           if (first === s) vox(riff.period[slot], V.stabLevel, until);
         }
       }
     } else if (role === "breakdown") {
       if (!dropped) {
-        pad(0.9);
-        if (s === 0 && barIn % 2 === 0) bass({ patch: ["bgSub"], octave: 0, sub: false, p: ["1-------------------------------"] }, ["1-------------------------------"], 0.7);
+        pad(0.9 * (DM?.pad ?? 1));
+        if (s === 0 && barIn % 2 === 0) bass({ patch: ["bgSub"], octave: 0, sub: false, p: ["1-------------------------------"] }, ["1-------------------------------"], 0.7 * (DM?.sub ?? 1));
         const n = slow();
-        if (n && !sing(n, n.dur, 1)) tune(reply, n, 0.9);
-        if (SP && xylo && hash2(seed2, 861, phraseNo) < SP.breakdown) tune(xylo, hook.reply[(barIn % 8 * 16 + s) % 128], 0.7, {}, 16, hook, "reply");
-        if (SP && s === 8 && style2.patches[SP.snap] && hash2(seed2, 863, phraseNo) < SP.breakdownSnaps) ev(SP.snap, null, 0.7 * SP.snapLevel, 1);
+        if (n) {
+          if (!singer) tune(reply, n, 0.9);
+          else if (n.long) sing(n, n.dur, DM?.sung ?? 1);
+          stack(n, singer ? sungAt : null);
+        }
+        bed(BED?.dream ?? 0, false);
+        if (SP && xylo && !bedXylo && hash2(seed2, 861, phraseNo) < SP.breakdown) tune(xylo, hook.reply[(barIn % 8 * 16 + s) % 128], 0.7, {}, 16, hook, "reply");
+        if (SP && (s === 4 || s === 12) && style2.patches[SP.snap]) ev(SP.snap, null, 0.6 * SP.snapLevel * BAL.drums, 1);
         if (Number.isFinite(dropAt)) {
           const rb = Math.max(0, Math.min(H.drop.riserBars, dropAt)), k = barIn - (dropAt - rb);
-          if (k >= 0 && k < rb) riser(k / rb, (k + 1) / rb);
+          if (k >= 0 && k < rb) riser(k / rb, (k + 1) / rb, 16, DM?.riser && style2.patches[DM.riser] ? DM.riser : "riser");
         } else if (last) drums(B.fills[pick2(kit.fills.length ? kit.fills : Object.keys(B.fills), hash2(seed2, 843, bar2))] ?? []);
       } else {
-        const k = barIn - dropAt;
+        const k = barIn - dropAt, until = last ? 12 : 16;
         if (k === 0) {
           crash(0.9 * soft);
           if (H.drop.impact && !gentle) impact2();
         }
         if (last) fillBar(B.dnb.drums, soft);
         else drums(B.dnb.drums, soft);
-        bass(B.dnb.bass, B.dnb.bass.p, 0.95 * soft, last ? 12 : 16);
+        if (DR && !gentle) drums(DR.breaks, 1, last ? () => s < 8 : void 0);
+        bass(B.dnb.bass, B.dnb.bass.p, 0.95 * soft, until, !DR || gentle ? 0 : DR.bass.dnb);
         pad(0.7);
+        bed(1, gentle, until);
         const slot = (k % 8 * 16 + s) % 128, T = use2 === "whole" ? hook : riff;
-        tune(lead, T.period[slot], 1, {}, last ? 12 : 16, T);
-        if (use2 === "whole") vox(T.period[slot], V?.doubleLevel ?? 0, last ? 12 : 16);
-        tune(reply, T.reply[slot], 0.7, {}, last ? 12 : 16, T, "reply");
+        if (she) {
+          play(lead, T, slot, LV.support, until, false, true);
+          herLine(T, slot, 1, until, false, use2 === "whole" ? V?.thirds ?? 0 : 0);
+        } else {
+          play(lead, T, slot, 1, until);
+          if (use2 === "whole") vox(T.period[slot], (V?.doubleLevel ?? 0) * (LV?.more ?? 1), until, V?.thirds ?? 0);
+        }
+        tune(reply, T.reply[slot], 0.7, {}, until, T, "reply");
       }
     } else {
       const n = plan.bars, q = Math.floor(barIn * 4 / n), p = (barIn + s / 16) / n, gap = last && s >= 12;
       riser(barIn / n, (barIn + 1) / n, last ? 12 : 16, "bgRiser");
-      pad(q < 2 ? 0.8 : 0.5);
+      pad(q < 2 ? 0.8 * (gentle ? 1 : DM?.pad ?? 1) : 0.5);
       if (gentle) {
         if (!last) {
-          drums(kit.drums);
+          drums(kit.drums, 1, void 0, true);
           bass(kit.bass, kit.bass.p, 0.9);
         } else if (!gap) drums(kit.drums, 0.9, (k) => k === "top");
-        if (!gap) ev("shaker", null, (0.25 + 0.5 * p) * (s % 2 ? 0.7 : 1), 1);
+        if (!gap && s % 2 === 0) ev("shaker", null, 0.12 + 0.25 * p, 1);
         const sl = use2 === "slow" ? slow() : null;
         if (use2 === "slow") {
           if (sl && !(a.vocal !== "none" && sing(sl, sl.dur, 0.9))) tune(lead, sl, 0.8);
-        } else if (!gap) tune(lead, riff.period[(pb * 16 + s) % 128], 0.8, {}, 16, riff);
+        } else if (!gap) play(lead, riff, (pb * 16 + s) % 128, 0.8);
+        if (!gap) bed(BED?.dream ?? 0, true);
       } else if (!gap) {
         const kickV = kit.drums.find((v) => kindOf(v.patch) === "kick");
-        if (q < 2) {
-          drums(kit.drums, 1, (k) => k !== "snare");
-          bass(kit.bass, kit.bass.p, 0.9);
+        if (q === 0) {
+          drums(kit.drums, DM ? 0.25 + 0.75 * DM.drums : 1, (k) => k !== "snare");
+          bass(kit.bass, DR?.gallop && !kit.half ? [DR.gallop] : kit.bass.p, 0.9 * (DM?.drums ?? 1));
+        } else if (q === 1) {
+          drums(kit.drums, DM?.drums ?? 1, (k) => k === "top");
+          if (s === 0 && barIn % 2 === 0) bass({ patch: ["bgSub"], octave: 0, sub: false, p: ["1-------------------------------"] }, ["1-------------------------------"], 0.7 * (DM?.sub ?? 1));
         } else if (q === 2) {
           drums(kit.drums, 0.9, (k) => k === "top");
           if (kickV && s % 8 === 0) ev(kickV.patch, null, 0.9, 1);
         }
-        const roll = q === 0 ? s % 4 === 0 : q === 1 ? s % 2 === 0 : true, lv = 0.15 + 0.3 * p;
+        if (q < 2 && SP && (s === 4 || s === 12) && style2.patches[SP.snap]) ev(SP.snap, null, SP.snapLevel * BAL.drums, 1);
+        if (q < 2) bed(BED?.dream ?? 0, false);
+        const roll = q >= 2, lv = 0.15 + 0.3 * p;
         if (roll) {
           ev("snare", null, lv * (s % 4 === 0 ? 1 : 0.8), 1);
           if (q === 3 && barIn >= n - 1) out.push({ part: "b:snare", patch: "snare", step: step2, offset: sw + 0.5, dur: 0.5, midi: null, vel: lv * 0.8, straight: true });
         }
-        const first = hook.period.find((x) => x) ?? null;
+        const first = hook.period.find((x) => x?.long) ?? null;
         if (q < 2) {
-          const sl = slow();
-          if (sl && !(a.vocal !== "none" && sing(sl, sl.dur, 0.9))) tune(lead, sl, 0.7);
-        } else if (q === 2) tune(lead, hook.period[s % 4], 0.2 + 0.2 * p);
-        else if (first && (barIn >= n - 1 || s % 2 === 0)) tune(lead, { deg: first.deg, dur: 1 }, 0.2 + 0.2 * p);
+          const sl = slow(), sg = singer && a.vocal !== "none";
+          if (sl) {
+            if (!sg) tune(lead, sl, 0.7);
+            else if (sl.long) sing(sl, sl.dur, 0.9 * (DM?.sung ?? 1));
+            stack(sl, sg ? sungAt : null);
+          }
+        } else if (first && (q === 2 ? s % 4 === 0 : barIn >= n - 1 || s % 2 === 0)) tune(lead, { deg: first.deg, dur: q === 2 ? 2 : 1 }, 0.2 + 0.2 * p);
       }
     }
     if ((ctx2.party ?? 0) > 0.01 && role !== "build" && !(role === "breakdown" && !dropped)) tune(reply, riff.reply[(pb * 16 + s) % 128], 0.7 * ctx2.party, { hook: "party" }, 16, riff, "reply");
@@ -5127,20 +5531,50 @@ label.check input { accent-color: var(--accent); }
     };
     const bassOf = (where, D2) => {
       for (const p of D2.patch) patch(where, p);
-      for (const p of [...D2.p, ...D2.breaks ?? []]) pat(where, p);
+      for (const p of [...D2.p, ...D2.breaks ?? [], ...D2.bounce ?? []]) pat(where, p);
     };
     for (const [k, L2] of Object.entries(B.leads)) patch(`lead ${k}`, L2.patch);
     for (const [k, f] of Object.entries(B.fills)) voices(`fill ${k}`, f);
     voices("dnb", B.dnb.drums);
     bassOf("dnb bass", B.dnb.bass);
     voices("victory", B.victory);
-    for (const p of [...B.hook.motifs, ...B.hook.answers]) {
-      pat("hook", p);
-      if (p.length !== 16) errs.push(`banger hook: "${p}" isn't one bar`);
+    for (const p of [...B.hook.motifs, ...B.hook.answers, ...B.hook.tresillos ?? []]) {
+      if (p.length !== 16 || /[^L\-.rgt~]/.test(p) || /t(?!~)|(?<!t)~|[rg~]\.|g[^L]|^-|\.-|[rg~]-/.test(p) || !/L-{3}/.test(p)) errs.push(`banger hook: rhythm "${p}"`);
+    }
+    if (B.space?.bed) {
+      const D2 = B.space.bed;
+      for (const l of [D2.voice, D2.low]) if (!B.leads[l]) errs.push(`banger bed: no lead "${l}"`);
+      for (const f of D2.figures) if (f.length % 16 || /[^abcd.]/.test(f)) errs.push(`banger bed: figure "${f}"`);
+    }
+    if (B.drive?.gallop) pat("drive gallop", B.drive.gallop);
+    if (B.ostinato?.stabs) pat("ostinato stabs", B.ostinato.stabs);
+    if (B.drive) {
+      voices("drive groove", B.drive.groove);
+      voices("drive breaks", B.drive.breaks);
+      patch("drive bass", B.drive.bass.patch);
+    }
+    if (B.ostinato?.tresillo) {
+      for (const g of B.ostinato.tresillo.groups) if (g.reduce((x, y) => x + y, 0) !== 32 || g.some((x) => x < 3)) errs.push(`banger ostinato: tresillo ${g.join("+")} isn't two bars`);
+    }
+    for (const p of B.hook.tresillos ?? []) if (/[rgt]/.test(p) || [...p].map((c, i) => c === "L" ? i : -1).filter((i) => i >= 0).join() !== "0,6,12") errs.push(`banger hook: tresillo "${p}"`);
+    if (B.ostinato) {
+      const O = B.ostinato;
+      for (const h of O.heads) for (const n of O.threes) {
+        const left = 32 - h.reduce((x, y) => x + y, 0) - 3 * n;
+        if (left < 0 || left % 2) errs.push(`banger ostinato: ${h.join("+")} and ${n} threes don't fill two bars`);
+      }
+      for (const a of O.arts) if (/[^Ast]/.test(a)) errs.push(`banger ostinato: articulations "${a}"`);
+      if (!O.shapes.length) errs.push("banger ostinato: no shapes");
+    }
+    if (B.dream) for (const p of [...B.dream.stack, B.dream.octave]) patch("dream", p);
+    for (const [n, L2] of Object.entries(B.leads)) {
+      const P = style2.patches[L2.patch], Q = P?.from ? { ...style2.patches[P.from], ...P } : P;
+      if (Q?.glide || Q?.bend) errs.push(`banger lead ${n}: its patch slides (glide or bend)`);
     }
     for (const name of Object.keys(B.kits)) {
       const K = kitOf(B, name);
       if (B.kits[name].base && !B.kits[B.kits[name].base]) errs.push(`banger kit ${name}: no base "${B.kits[name].base}"`);
+      if (K.bed && !B.leads[K.bed]) errs.push(`banger kit ${name}: no bed lead "${K.bed}"`);
       voices(`kit ${name}`, K.drums);
       voices(`kit ${name} turn`, K.turn);
       voices(`kit ${name} breaks`, K.breaks);
@@ -5168,6 +5602,17 @@ label.check input { accent-color: var(--accent); }
     if (B.vocals) {
       patch("vocals", B.vocals.double);
       patch("vocals", B.vocals.pad);
+    }
+    if (B.vocals?.lead) {
+      const L2 = B.vocals.lead;
+      for (const p of [L2.patch, ...L2.stack, L2.shimmer]) patch("vocals lead", p);
+      if (L2.range[1] - L2.range[0] < 12) errs.push("banger vocals lead: its range is under an octave");
+    }
+    if (B.space) {
+      const X = B.space.xylo;
+      for (const l of [X.voice, X.low]) if (!B.leads[l]) errs.push(`banger space: no lead "${l}"`);
+      for (const [n, p] of Object.entries(X.figures)) if (p.length % 16 || /[^xabc1t.]/.test(p)) errs.push(`banger space: figure ${n} "${p}"`);
+      if (!X.figures[X.roll]) errs.push(`banger space: no roll figure "${X.roll}"`);
     }
     if (B.spice) {
       patch("spice", B.spice.snap);
@@ -6111,6 +6556,10 @@ registerProcessor("witch-fof", WitchFof);
      *  (parallel). Nothing feeds it with banger mode or its compressors off. */
     drumBus;
     drumComp = null;
+    /** Banger mode's room (Ed, 2026-11-11: "more space"): the reverb's pre-delay (its hits crisp, the tail blooming behind), in
+     *  the path only while the mix asks; and a short room on the drum bus's top (its snare, clap and hats). */
+    pre = null;
+    room = null;
     duckBus;
     dryBus;
     reverb;
@@ -6354,6 +6803,51 @@ registerProcessor("witch-fof", WitchFof);
               M2.drive.connect(this.limit);
             }
           }
+        }
+      }
+      const preT = this.stems ? 0 : m.reverbPre ?? 0;
+      if (preT > 0 && !this.pre) {
+        const d = this.ctx.createDelay(0.25);
+        d.connect(this.reverb);
+        this.pre = { delay: d, on: false };
+      }
+      if (this.pre) {
+        if (preT > 0) this.pre.delay.delayTime.value = Math.min(0.25, preT);
+        if (preT > 0 !== this.pre.on) {
+          this.pre.on = preT > 0;
+          if (this.pre.on) {
+            this.reverbIn.disconnect(this.reverb);
+            this.reverbIn.connect(this.pre.delay);
+          } else {
+            this.reverbIn.disconnect(this.pre.delay);
+            this.reverbIn.connect(this.reverb);
+          }
+        }
+      }
+      const RM = this.stems || lite ? void 0 : compOf(this.style)?.drums?.room;
+      if (RM && !this.room) {
+        const c = this.ctx, hp = c.createBiquadFilter(), verb = c.createConvolver(), send = c.createGain();
+        hp.type = "highpass";
+        hp.Q.value = 0.7;
+        hp.connect(verb);
+        verb.connect(send);
+        send.connect(this.tone);
+        this.room = { hp, verb, send, on: false, time: 0 };
+      }
+      if (this.room) {
+        const Q = this.room;
+        if (RM) {
+          Q.hp.frequency.value = RM.hp;
+          Q.send.gain.value = RM.send;
+          if (Q.time !== RM.time) {
+            Q.time = RM.time;
+            Q.verb.buffer = this.impulse(RM.time);
+          }
+        }
+        if (!!RM !== Q.on) {
+          Q.on = !!RM;
+          if (RM) this.drumBus.connect(Q.hp);
+          else this.drumBus.disconnect(Q.hp);
         }
       }
       const D2 = this.stems ? void 0 : compOf(this.style)?.drums;
@@ -6772,6 +7266,14 @@ registerProcessor("witch-fof", WitchFof);
           out.connect(f);
           out = f;
         }
+        if (p.air) {
+          const f = c.createBiquadFilter();
+          f.type = "highshelf";
+          f.frequency.value = 7e3;
+          f.gain.value = p.air;
+          out.connect(f);
+          out = f;
+        }
         if (p.pan) {
           const s = c.createStereoPanner();
           s.pan.value = p.pan;
@@ -6959,13 +7461,13 @@ registerProcessor("witch-fof", WitchFof);
     }
     /** A patch, one that starts `from` another with that one's fields under its own (kept: the same object each time). */
     derived = /* @__PURE__ */ new WeakMap();
-    patchOf(name) {
+    patchOf(name, depth = 0) {
       const p = this.style.patches[name];
       if (!p?.from) return p;
       let d = this.derived.get(p);
       if (!d) {
         const { from, ...own } = p;
-        this.derived.set(p, d = { ...this.style.patches[from], ...own });
+        this.derived.set(p, d = { ...depth < 4 ? this.patchOf(from, depth + 1) : this.style.patches[from], ...own });
       }
       return d;
     }
@@ -7002,12 +7504,15 @@ registerProcessor("witch-fof", WitchFof);
     }
     kick(t, p, peak, dest) {
       const c = this.ctx, o = c.createOscillator(), decay = p.decay ?? 0.35;
-      o.frequency.setValueAtTime(p.pitch ?? 150, t);
-      o.frequency.exponentialRampToValueAtTime(p.pitchEnd ?? 45, t + (p.pitchTime ?? 0.08));
+      if (p.blip && p.blipTime) {
+        o.frequency.setValueAtTime(p.blip, t);
+        o.frequency.exponentialRampToValueAtTime(p.pitch ?? 150, t + p.blipTime);
+      } else o.frequency.setValueAtTime(p.pitch ?? 150, t);
+      o.frequency.exponentialRampToValueAtTime(p.pitchEnd ?? 45, t + (p.blipTime && p.blip ? p.blipTime : 0) + (p.pitchTime ?? 0.08));
       const g = c.createGain();
       g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(peak, t + 2e-3);
-      g.gain.setTargetAtTime(peak * 0.6, t + 0.01, decay * 0.25);
+      g.gain.linearRampToValueAtTime(peak, t + (p.attack ?? 2e-3));
+      g.gain.setTargetAtTime(peak * 0.6, t + (p.hold ?? 0.01), decay * 0.25);
       g.gain.setTargetAtTime(0, t + decay * 0.5, decay * 0.18);
       if (p.drive && p.driveTime) {
         const hot = c.createGain(), clean = c.createGain(), sh = this.shaper(p.drive);
@@ -7027,9 +7532,9 @@ registerProcessor("witch-fof", WitchFof);
       if (p.click) {
         const f = c.createBiquadFilter();
         f.type = "bandpass";
-        f.frequency.value = 3500;
+        f.frequency.value = p.clickFreq ?? 3500;
         f.Q.value = 0.8;
-        this.chain([this.noiseSource(t, 0.03), f, this.env(t, peak * p.click, 5e-4, 0.012)], dest);
+        this.chain([this.noiseSource(t, 0.03), f, this.env(t, peak * p.click, 5e-4, p.clickTime ?? 0.012)], dest);
       }
     }
     noiseSource(t, length, metal = false) {
@@ -7388,7 +7893,7 @@ registerProcessor("witch-fof", WitchFof);
         this.voice(t, { ...p, kind: "voice", vowels: ["ah", "oh", "ee", "eh", "oo"], formantShift: 1.18, q: 10, vibrato: 24, attack: 0.06, decay: 0.4, sustain: 0.85, release: 0.3 }, peak, freq, dur, step2, ch);
         return;
       }
-      const c = this.ctx, rate = freq / mtof(root), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = held ? 3600 : Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
+      const c = this.ctx, rate = freq / mtof(root) * (p.cents ? Math.pow(2, p.cents / 1200) : 1), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = held ? 3600 : Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
       if (len < 0.05) return;
       if (!ch.presence) {
         ch.presence = c.createBiquadFilter();
@@ -7413,7 +7918,7 @@ registerProcessor("witch-fof", WitchFof);
       const src = c.createBufferSource(), g = c.createGain();
       src.buffer = rec;
       src.playbackRate.value = rate;
-      const sw = Math.min(0.5, Math.max(0, p.swell ?? 0)), rise = Math.max(0.03, Math.min(len * sw, 1.5)), fall = Math.max(0.08, Math.min(len * sw, 1.5));
+      const sw = Math.min(0.5, Math.max(0, p.swell ?? 0)), rise = p.attack ?? Math.max(0.03, Math.min(len * sw, 1.5)), fall = Math.max(0.08, Math.min(len * sw, 1.5));
       const envelope = (gain, top) => {
         gain.setValueAtTime(0, t);
         gain.linearRampToValueAtTime(top, t + (held ? 0.12 : rise));
