@@ -1,0 +1,6 @@
+{
+  "reason": "The broom's stations (Ed, 2026-11-07), built on the station rework (claude/station-rework): her starting skin light green (#a8d08d, config/default-look.json; it was Monk 4, #eadaba), and in the Workshop the new broom rack and hydraulic lift, the workbench in place of the bay's trestles and the lathe without its spare brooms (art/furniture.js).",
+  "frames": {
+    "*": "wherever her face or hands show: their colour (light green now), and her art landing a frame earlier or later as the new colour's sprite is baked; wherever the Workshop shows: its new and redrawn pieces"
+  }
+}

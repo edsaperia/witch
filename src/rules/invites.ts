@@ -14,6 +14,13 @@ import { bodyRadius } from "./spacing";
 import { hash2 } from "./random";
 import type { Tuning } from "./tuning";
 
+/** The letters' flight before Ed's 2026-11-09 change ("it feels like animals move faster than invitations so it's hard to land a
+ *  hit. And ranges feel small"; now 45 m/s, 42 m, homing within 14 m), kept for `?invites=old` to A/B (app/linkParams.ts). The
+ *  animals' waiting distance is held either way (combatWaiting.inviteReach), so the switch compares the letters alone. */
+export const OLD_LETTERS = { speed: 31.2, range: 33, homingRange: 10 } as const;
+/** The invite tuning with the letters' old flight (`?invites=old`); everything else as given. */
+export const withOldLetters = (I: Tuning["invites"]): Tuning["invites"] => ({ ...I, ...OLD_LETTERS });
+
 export interface Letter {
   claimCast?: number;
   claimShot?: number;

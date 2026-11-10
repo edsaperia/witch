@@ -275,6 +275,8 @@ export class Post {
   lift = 0;
   /** Temporary local bloom boost; normal settings are untouched. */
   potionGlow = 0;
+  /** The share of the bloom kept: 1 but while she's in bed (render/view/witch.ts, the tuning's witch.bedBloom: render/bedPose.ts bedHush). */
+  bedBloom = 1;
   potionCanopy = 0;
   potionNightVision = 0;
   potionVertigo = 0;
@@ -394,7 +396,7 @@ export class Post {
     yield;
 
     // Bloom: the bright parts, at half resolution, blurred twice each way.
-    const bloom = potionBloom(t.bloom.threshold, t.bloom.on ? t.bloom.strength : 0, this.potionGlow);
+    const bloom = potionBloom(t.bloom.threshold, t.bloom.on ? t.bloom.strength * this.bedBloom : 0, this.potionGlow);
     const bloomOn = bloom.strength > 0;
     if (bloomOn) {
       const bw = this.bright.width, bh = this.bright.height;

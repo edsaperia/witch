@@ -9,6 +9,7 @@
 import { rng } from "./core.js";
 import { DEFAULT_OUTFIT, DEFAULT_LOOK, CLOAK_KNEE, cloakDrop, cloakLengthIn } from "./witch.js";
 import { NEW_BROOMS } from "./brooms.js";
+import { HUMAN_SKINS } from "./skinTones.js";
 
 // Ours: every axis as she is.
 export const WITCH_GENOME = {
@@ -16,7 +17,8 @@ export const WITCH_GENOME = {
   hair: "long", top: "jacket", cloak: "none",
   broom: { kind: "classic", length: 1, bend: 0, bristles: 1, thickness: 1 },
   accessories: { phones: true, shades: false, glowsticks: false, scarf: false, satchel: false, pendant: false, earrings: false,
-    lantern: false, vial: false, book: false, patches: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, clutch: false, messenger: false, wristband: false, chunky: false },
+    lantern: false, vial: false, book: false, patches: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, clutch: false, messenger: false, wristband: false, chunky: false,
+    lipstick: false, eyeshadow: false, blush: false }, // (the basin's makeup, Ed 2026-11-07: off till she puts it on)
   cloakLength: 1, scarfLength: 1, bagSize: 1, backpackSize: 0,
   palette: null, // null: hers (DEFAULT_OUTFIT, the style's hues on top)
 };
@@ -54,7 +56,7 @@ export const WITCH_RANDOM = {
   broom: ["classic", "fan", "twig", "round"], // (a broom: the other kinds, art/brooms.js, are the creator's)
   hatHeight: [.75, 1.6], hatBrim: [.75, 1.45], hatTilt: [-.25, .35], broomLength: [.85, 1.3], broomBend: [-.3, .6], bristles: [.8, 1.4], broomThickness: [.85, 1.3],
 };
-const SKINS = [[.07, .25, .96], [.07, .32, .9], [.07, .42, .78], [.06, .5, .62], [.05, .55, .47], [.05, .5, .34]];
+const SKINS = HUMAN_SKINS; // (the Monk scale's ten: art/skinTones.js)
 const HAIRS = [[.07, .4, .14], [.07, .6, .33], [.04, .7, .5], [.11, .45, .88], [.02, .75, .7], [.6, .04, .86], [.85, .5, .8], [.5, .5, .7]]; // black, brown, auburn, blonde, red, silver, pink, teal
 
 // (her hat's glowing band: hers is narrow; a generated witch's broader, so it shows whatever her hat)

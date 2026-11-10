@@ -33,8 +33,8 @@ describe("the starting bags", () => {
     const I = TUNING.invites, s = bagTuning(TUNING, "satchel").invites, q = bagTuning(TUNING, "bumbag").invites, f = bagTuning(TUNING, "purse").invites;
     expect([s.cooldown, s.range]).toEqual([I.cooldown, I.range]);
     expect(s.homing).toBeGreaterThan(I.homing); expect(s.homingCone).toBeGreaterThan(I.homingCone);
-    expect(q.cooldown).toBeCloseTo(0.418, 3); expect(q.range).toBeCloseTo(25.08, 2); expect(q.homing).toBe(I.homing);
-    expect(f.cooldown).toBeCloseTo(0.6985, 3); expect(f.range).toBeCloseTo(42.9, 2);
+    expect(q.cooldown).toBeCloseTo(0.418, 3); expect(q.range).toBeCloseTo(31.92, 2); expect(q.homing).toBe(I.homing);
+    expect(f.cooldown).toBeCloseTo(0.6985, 3); expect(f.range).toBeCloseTo(54.6, 2);
     expect(bagTuning(TUNING, "")).toBe(TUNING);
     // neither of the quick and far strictly better: the quick one throws more a second, the far one reaches further
     expect(1 / q.cooldown).toBeGreaterThan(1 / f.cooldown);
@@ -50,8 +50,8 @@ describe("the starting bags", () => {
     expect(bagOf(null)).toBe("");
   });
 
-  it("sets her 💌s in play: the Bumbag's letters fly 25 m and come every 0.42 s, the purse's 43 m every 0.7 s", () => {
-    for (const [bag, range, every] of [["bumbag", 25.08, 0.418], ["purse", 42.9, 0.6985]] as const) {
+  it("sets her 💌s in play: the Bumbag's letters fly 32 m and come every 0.42 s, the purse's 55 m every 0.7 s", () => {
+    for (const [bag, range, every] of [["bumbag", 31.92, 0.418], ["purse", 54.6, 0.6985]] as const) {
       const g = newGame(5, withTuning({ spells: { ...TUNING.spells, bag } }));
       g.clock.paused = false; g.party.paused = true;
       g.witch = { ...g.witch, seated: false, mode: "ground", lift: 0, vx: 0, vz: 0 }; g.witches[0].health.hp = 1e6;

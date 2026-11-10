@@ -54,6 +54,9 @@ export interface WakeState {
   /** She's used the dressing table this morning (E there, its panel opened: rules/sigilButton.ts): her first morning's first guidance
    *  step, skin and hair (Ed, 2026-10-29; rules/guidance.ts FIRST_MORNING). */
   styled?: boolean;
+  /** She's used the basin this morning (E there: rules/sigilButton.ts): her first morning's first guidance step, before the dressing
+   *  table (Ed, 2026-11-07: "first morning should have the basin as the first thing in the path"; rules/guidance.ts FIRST_MORNING). */
+  washed?: boolean;
 }
 
 /** The wake-up's knobs (the tuning's opening.wake): a snooze's seconds (Ed: 5), the stretch's, and how long the alarm rings before E
@@ -66,6 +69,19 @@ export const WAKE_DEFAULT: WakeTuning = { snooze: 5, stretch: 3, alarmMin: 0.4 }
 export const bedFor = (room: string) => HOUSE_ROOMS.objects.find(o => o.id === `${room}Bed`);
 /** Her own bed (the object `bed`), where she wakes every morning, whichever other beds there are. */
 export const homeBed = () => HOUSE_ROOMS.objects.find(o => o.id === "bed");
+
+/** The bed she's in (or put in, tuckIn) as her wake-up has her: the one she last slept in (`bed`), her assigned room's, else her own.
+ *  For the page: she's drawn sitting up on its mattress (render/view/witch.ts bedLift). */
+export function bedOf(g: Game, W: Witch = g.witches[0]) {
+  const w = wakeOf(g, W);
+  return (w?.bed ? HOUSE_ROOMS.objects.find(o => o.id === w.bed && o.use.kind === "bed") : w?.room !== undefined ? bedFor(w.room) : undefined) ?? homeBed();
+}
+
+/** Her facing in a bed: toward its foot, sitting up in it with her back to her pillows (render/bedPose.ts). A placed bed's front, its
+ *  foot, faces the way its rotation turns the plan's +z (render/housePieces.ts draws it at that yaw, 0 its front to the camera): so
+ *  that turned a quarter more from the plan's +x. (It was its source axes' +x, across the bed: unseen while her seat's sit stood her
+ *  in it, sat up in it her legs ran out across it, toward a side, her back to the other.) A bed not placed: as ever. */
+const bedFacing = (placement: { rotation: number } | undefined) => placementFacing(placement ? placement.rotation + 90 : 0);
 
 /** The bed's middle, a little toward its head along its original local x axis. */
 function inBed(g: Game, bed = homeBed(), W?: Witch): { x: number; z: number } | null {
@@ -93,7 +109,7 @@ export function startWakeFor(g: Game, ht: number, options: WakeStart, W: Witch, 
   if (!at) return false;
   const { dreaming = false, mirrored = false, yesterday = false } = options;
   const placement = bed.placement;
-  W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, ...placementFacing(placement ? placement.rotation - placement.baseRotation : 0) };
+  W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, ...bedFacing(placement) };
   const wake: WakeState = { player: target.player, room: target.room, beat: dreaming ? "dream" : "alarm", at: ht, snoozes: 0, open: false, mirror: mirrored, events: [], pile: [...PILE_SLOTS], ...(yesterday ? { yesterday } : {}) };
   if (target.bed) wake.bed = target.bed;
   if (W === g.witches[0]) g.wake = wake; else W.wake = wake;
@@ -135,7 +151,7 @@ export function startWake(g: Game, ht: number, { dreaming = false, mirrored = fa
   const at = inBed(g);
   if (!at) return false;
   const placement = homeBed()?.placement;
-  W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, ...placementFacing(placement ? placement.rotation - placement.baseRotation : 0) };
+  W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, ...bedFacing(placement) };
   const wake: WakeState = { beat: dreaming ? "dream" : "alarm", at: ht, snoozes: 0, open: false, mirror: mirrored, events: [], pile: [...PILE_SLOTS], ...(yesterday ? { yesterday } : {}) };
   if (W === g.witches[0]) g.wake = wake; else W.wake = wake;
   if (!yesterday) hatOnFloor(g, ht, W);
@@ -187,7 +203,7 @@ function intoBed(g: Game, W: Witch): boolean {
   const at = inBed(g);
   if (!at) return false;
   const placement = homeBed()?.placement;
-  W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, ...placementFacing(placement ? placement.rotation - placement.baseRotation : 0) };
+  W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, ...bedFacing(placement) };
   return true;
 }
 

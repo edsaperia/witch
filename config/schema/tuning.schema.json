@@ -2570,6 +2570,17 @@
       "additionalProperties": false,
       "description": "Each tree's own leaf colour: every tree is dealt two fixed seeds from where it stands (-1 to 1 each)."
     },
+    "treeNormals": {
+      "type": "string",
+      "enum": [
+        "full",
+        "64",
+        "32",
+        "16",
+        "0"
+      ],
+      "description": "The trees' normal maps: \"full\" (the default) as ever; \"64\", \"32\" or \"16\" their directions cut to a k-means palette of that many per tree atlas; \"0\" off, every tree pixel lit flat, as if it faced the camera (the normal 128, 128, 255)."
+    },
     "wind": {
       "type": "object",
       "properties": {
@@ -3067,6 +3078,18 @@
           "type": "number",
           "minimum": 0
         },
+        "bedGlow": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "In her bed (asleep, the alarm, a snooze, the stretch), the share of her own glow and its lift on her kept, so her white nightie keeps its shading."
+        },
+        "bedBloom": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "In her bed, the share of the picture's bloom kept: her white nightie and the pillows beside her bloomed to white over her."
+        },
         "heightSmooth": {
           "type": "number",
           "minimum": 0
@@ -3085,6 +3108,8 @@
         "lightFloor",
         "lightTint",
         "lightRim",
+        "bedGlow",
+        "bedBloom",
         "heightSmooth",
         "heightLookAhead",
         "heightClearance"
@@ -5602,6 +5627,11 @@
           "minimum": 0,
           "maximum": 3
         },
+        "inviteReach": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 200
+        },
         "areaGrowth": {
           "type": "number",
           "minimum": 0,
@@ -5620,12 +5650,13 @@
       },
       "required": [
         "reachScale",
+        "inviteReach",
         "areaGrowth",
         "passPower",
         "passDepth"
       ],
       "additionalProperties": false,
-      "description": "Waiting movement favours room beyond default invitation reach while allowing deliberate close passes."
+      "description": "Waiting movement favours room beyond a set invitation reach (inviteReach: the default bag's old range, not the letters' live one) while allowing deliberate close passes."
     },
     "teamRounds": {
       "type": "object",
@@ -5884,6 +5915,45 @@
           ],
           "additionalProperties": false,
           "description": "How easy the creatures' spells are to see: their size, opacity, glow, how long they last, how thick their lingering zones are and how strong the marks they leave on the ground (1, 0, 1, 1, 0.25 and 0.12 draw them as before 3 November)."
+        },
+        "glow": {
+          "type": "object",
+          "properties": {
+            "core": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "halo": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "pool": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "lights": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 6
+            },
+            "light": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            }
+          },
+          "required": [
+            "core",
+            "halo",
+            "pool",
+            "lights",
+            "light"
+          ],
+          "additionalProperties": false,
+          "description": "How the creatures' spells glow: a bright core the bloom picks up, a dithered pixel halo round it, a pool of its light on the ground under it, and a real light for the brightest few nearest her (core, halo, pool and light 0 draw them as before 9 November; ?spellglow=0 does too, to compare)."
         }
       },
       "required": [
@@ -5898,7 +5968,8 @@
         "turnFrom",
         "turnTo",
         "legendFlash",
-        "visibility"
+        "visibility",
+        "glow"
       ],
       "additionalProperties": false,
       "description": "How attacks feel on screen: attackers crouch and lunge, hits squash their target, and hard knock-backs send it tumbling."
@@ -9846,6 +9917,14 @@
           "type": "string",
           "description": "an audio file to loop (empty: the built-in loop at beat.bpm until there's a real track)."
         },
+        "singer": {
+          "type": "string",
+          "description": "who sings the vocalise: empty for the music style's own singer (Chimera's notes since 2026-11-08), or a sung patch of the style in its place everywhere it sings (recordedVoice the old recorded singer, altoSampled the alto set); ?singer=recorded or ?singer=sampled for a load, to A/B."
+        },
+        "haunted": {
+          "type": "boolean",
+          "description": "The haunted treatment in the quiet sections and a sleeping legend's clearing layer (the music style's haunted block, docs/notes/music.md Haunted); false plays the music as before, as does ?haunted=0 or the Music Lab's Haunted switch."
+        },
         "over": {
           "type": "object",
           "properties": {
@@ -9900,6 +9979,8 @@
         "clear",
         "distort",
         "src",
+        "singer",
+        "haunted",
         "over",
         "beach"
       ],
@@ -11562,6 +11643,24 @@
                   ],
                   "additionalProperties": false
                 },
+                "face": {
+                  "type": "object",
+                  "properties": {
+                    "aim": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "distance": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "aim",
+                    "distance"
+                  ],
+                  "additionalProperties": false
+                },
                 "hat": {
                   "type": "object",
                   "properties": {
@@ -11581,6 +11680,42 @@
                   "additionalProperties": false
                 },
                 "top": {
+                  "type": "object",
+                  "properties": {
+                    "aim": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "distance": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "aim",
+                    "distance"
+                  ],
+                  "additionalProperties": false
+                },
+                "back": {
+                  "type": "object",
+                  "properties": {
+                    "aim": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "distance": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "aim",
+                    "distance"
+                  ],
+                  "additionalProperties": false
+                },
+                "bag": {
                   "type": "object",
                   "properties": {
                     "aim": {
@@ -11674,15 +11809,18 @@
               },
               "required": [
                 "head",
+                "face",
                 "hat",
                 "top",
+                "back",
+                "bag",
                 "legs",
                 "feet",
                 "broom",
                 "board"
               ],
               "additionalProperties": false,
-              "description": "Where the camera aims at a dressing station for each part of her being changed (head, hat, top, legs, feet, broom, the pegboard)."
+              "description": "Where the camera aims at a dressing station for each part of her being changed (head, face, hat, top, back, bag, legs, feet, broom, the pegboard)."
             }
           },
           "required": [
@@ -13080,10 +13218,17 @@
           "minimum": 0,
           "maximum": 4,
           "description": "How strongly coloured spokes shape existing lights, from 0 (ordinary lighting) to 4."
+        },
+        "beatsPerTurn": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 256,
+          "description": "How many beats the coloured-spokes wheel round a playing soundsystem takes to turn once, so it turns faster as the tempo rises."
         }
       },
       "required": [
-        "strength"
+        "strength",
+        "beatsPerTurn"
       ],
       "additionalProperties": false,
       "description": "Drawing-only coloured patterns on existing lights, controlled from the pause page."
@@ -14855,6 +15000,7 @@
     "treeMarginFromSoundsystem",
     "treeDensity",
     "leafJitter",
+    "treeNormals",
     "wind",
     "groundCover",
     "density",

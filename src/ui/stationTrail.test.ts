@@ -10,17 +10,17 @@ import { TRAIL_PRESETS } from "../render/trailColours";
 import { chooseTrail, fitBroom, loadBroom } from "../app/broomSave";
 import { fittedOf } from "../rules/broomParts";
 
-const ctx = { grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 6 : 13, rows: 5 }), swatch: () => [0, 0, 0], palette: (g: Genome) => ({ ...(g.palette ?? {}) }), fitOn: () => true };
+const ctx = { grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 3 : 13, rows: 5 }), swatch: () => [0, 0, 0], palette: (g: Genome) => ({ ...(g.palette ?? {}) }), fitOn: () => true };
 const store = () => { const m = new Map<string, string>(); return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) }; };
 
 describe("the Broom station's Trail row", () => {
-  it("is on the Broom station, a tile a preset", () => {
-    const shelves = shelvesAt("lathe")!, L = stationLines(shelves, { owned: new Set(), fitOn: () => true, grid: () => ({ cols: 13, rows: 5 }) });
+  it("is on the hydraulic lift (Ed, 2026-11-07), a tile a preset", () => {
+    const shelves = shelvesAt("broomLift")!, L = stationLines(shelves, { owned: new Set(), fitOn: () => true, grid: () => ({ cols: 13, rows: 5 }) });
     const t = L.find(l => l.kind === "trail");
-    expect(t).toBeTruthy(); expect(t!.n).toBe(TRAIL_PRESETS.length); expect(shelves[t!.shelf].label).toBe("Trail");
+    expect(t).toBeTruthy(); expect(t!.n).toBe(TRAIL_PRESETS.length); expect(shelves[t!.shelf].label).toBe("Trim"); // (on the Trim card since Ed, 2026-11-07)
   });
   it("sets her trail's colours when a tile is chosen (moving onto it changes nothing)", () => {
-    const p = new PanelChoice(shelvesAt("lathe")!, pleasingWitch(3) as unknown as Genome, new Set(ITEMS.map(i => i.id)), new Set(PARTS.map(x => x.id)), bareBroom(), ctx);
+    const p = new PanelChoice(shelvesAt("broomLift")!, pleasingWitch(3) as unknown as Genome, new Set(ITEMS.map(i => i.id)), new Set(PARTS.map(x => x.id)), bareBroom(), ctx);
     const line = p.lines().findIndex(l => l.kind === "trail");
     p.focus(line, 0); expect(p.choose().trail).toBeUndefined(); // (the one she has: nothing to change)
     p.move(1, 0); expect(p.trail).toBe("warm");

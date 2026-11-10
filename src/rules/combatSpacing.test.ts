@@ -169,6 +169,25 @@ describe("combat waiting spacing", () => {
       }
     }
   });
+  it("holds the waiting room at combatWaiting.inviteReach whatever the letters' live range (Ed, 2026-11-09: \"ranges feel small\")", () => {
+    // The letters went to 42 m with the animals' waiting distance held where it was: (30 + 33) x 0.8 = 50.4 m.
+    expect(TUNING.combatWaiting.inviteReach).toBe(33);
+    expect((TUNING.dash.distance * (TUNING.dash.charges ?? 1) + TUNING.combatWaiting.inviteReach) * TUNING.combatWaiting.reachScale).toBeCloseTo(50.4, 9);
+    const run = (change: (f: ReturnType<typeof fight>) => void) => {
+      const f = fight(true); change(f);
+      stepCombat(f.state, f.world);
+      for (const pack of f.state.packs?.values() ?? []) { pack.phase = "tell"; pack.until = 100; }
+      for (const team of f.state.waitingTeams?.values() ?? []) { team.phase = "tell"; team.nextAt = 100; }
+      for (let i = 1; i < 60; i++) { f.world.time = i / 60; stepCombat(f.state, f.world); }
+      return JSON.stringify(f.world.creatures.map(c => [c.x, c.z]));
+    };
+    const range = (r: number) => run(f => { f.world.t = { ...f.world.t, invites: { ...f.world.t.invites, range: r } }; });
+    expect(range(42)).toBe(range(33)); // (the Clutch bag's 1.6 times and any buff the same: they scale invites.range)
+    expect(range(42 * 1.6)).toBe(range(33));
+    const reach = (r: number) => run(f => { f.world.t = { ...f.world.t, combatWaiting: { ...f.world.t.combatWaiting, inviteReach: r } }; });
+    expect(reach(33)).toBe(range(42));
+    expect(reach(60)).not.toBe(reach(33)); // (the setting is what's read)
+  });
   it("default combat matches the explicitly selected new system on the same seed", () => {
     const a = fight(), b = fight(true);
     for (let i = 0; i < 30; i++) {

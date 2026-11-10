@@ -4,6 +4,7 @@ import { deckOf } from "../../rules/treehouse";
 import type { StationChoice } from "./stationChoice";
 import { atDecks, wakeOf } from "../../rules/wakeUp";
 import { furnitureFor } from "../../rules/guestFurniture";
+import { BROOM_STATIONS } from "../../rules/kit";
 
 export interface StationOwnership { bags: ReadonlySet<string>; hats: ReadonlySet<string>; parts: ReadonlySet<string>; records?: ReadonlySet<string> }
 /** Host-owned collections are supplied by the normal page; no visitor inventory or localStorage is read here. */
@@ -20,7 +21,8 @@ export function stationAuthority(owned: (game: Game) => StationOwnership) {
       if (!hatSlots(deck).some(p => Math.hypot(p.x - body.x, p.z - body.z) <= HOUSE_ROOMS.reach)) return false;
       return choice.id === "none" || owned(game).hats.has(choice.id) && !game.witches.some(other => other !== witch && other.spells.hat === choice.id);
     }
-    const id = choice.kind === "bag" ? "bags" : choice.kind === "hat" ? "hats" : choice.kind === "broom" ? "lathe" : choice.station;
+    // (a broom's parts at whichever of its three modding stations she's at: Ed, 2026-11-07, rules/kit.ts BROOM_STATIONS)
+    const id = choice.kind === "bag" ? "bags" : choice.kind === "hat" ? "hats" : choice.kind === "broom" ? BROOM_STATIONS.map(s => HOUSE_ROOMS.objects.find(o => o.id === s)).filter(o => !!o).sort((a, b) => fromObject(a!, deck, body.x, body.z) - fromObject(b!, deck, body.x, body.z))[0]?.id ?? "lathe" : choice.station;
     const object = HOUSE_ROOMS.objects.find(o => o.id === id);
     if (!object || !furnitureFor(game, witch, object) || fromObject(object, deck, body.x, body.z) > HOUSE_ROOMS.reach) return false;
     const collection = owned(game);

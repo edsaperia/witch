@@ -332,7 +332,7 @@
       "links": [
         "render/bubbleSight.ts"
       ],
-      "notes": "Whole within near less fade, fading to nothing at near; eased in and out over ease seconds, so rising, landing and going indoors fade them. 38 and 8 to start: whole to 30 m, about the letters' reach (invites.range 33), so any creature she can throw at answers where she can read it, and gone by 38. The 💌 replies, the talk and the sleepers' 😴s go by it; a legend's dream (dreams.range) and the night won's island dreams (twice that) keep their own ranges, fading at their edge and hidden from the treetops and the treehouse the same."
+      "notes": "Whole within near less fade, fading to nothing at near; eased in and out over ease seconds, so rising, landing and going indoors fade them. 38 and 8 to start: whole to 30 m, about the letters' reach (invites.range 33), so any creature she can throw at answers where she can read it, and gone by 38. Then 47 (2026-11-09, with the letters' longer reach, invites.range 42: Ed, \"ranges feel small\"): whole to 39 m, gone by 47, so a creature a letter lands on at full range still answers where she can read it. The 💌 replies, the talk and the sleepers' 😴s go by it; a legend's dream (dreams.range) and the night won's island dreams (twice that) keep their own ranges, fading at their edge and hidden from the treetops and the treehouse the same."
     },
     "runeMarkers": {
       "what": "The rune stones marking where soundsystems will come, glowing, and pulsing on the beat when the next wave is coming to them.",
@@ -714,6 +714,44 @@
     },
     "music.src": {
       "what": "an audio file to loop (empty: the built-in loop at beat.bpm until there's a real track). ?music=off silences it."
+    },
+    "music.singer": {
+      "what": "who sings the vocalise: empty for the music style's own singer (Chimera's notes since 2026-11-08), or a sung patch of the style in its place everywhere it sings (recordedVoice the old recorded singer, altoSampled the alto set); ?singer=recorded or ?singer=sampled for a load, to A/B.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-08",
+          "quote": "yes, go for it. Go ahead and swap them over",
+          "rest": "of the Chimera vocalise he'd heard (\"This is surprisingly good!\"); the old voice kept selectable to A/B"
+        }
+      ],
+      "links": [
+        "rules/musicScore.ts",
+        "app/sound.ts"
+      ]
+    },
+    "music.haunted": {
+      "what": "The haunted treatment in the quiet sections and a sleeping legend's clearing layer (the music style's haunted block, docs/notes/music.md Haunted); false plays the music as before, as does ?haunted=0 or the Music Lab's Haunted switch.",
+      "notes": "In its sections (breakdown, ether, whisper): the voice's own long dark reverb, no drums and then a drum and bass drop on a 4-bar line, held notes and slower chords, a ghost voice a sixth below, a root-and-fifth drone, the flattened 2nd or raised 7th as colour (notes outside dorian there only), and the voice lifted.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-08",
+          "quote": "B, 1-6",
+          "rest": "of six ways to bring the music closer to the vocalise demo he liked and three places to apply them: all six, in the quiet sections and the legends' clearings; option 5 lets notes outside dorian into those places only"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-08",
+          "quote": "Instead of 50% of the time, make it a drop - no drums, and then drum and bass kicks in. (Agree, not in legend areas)",
+          "rest": "the quiet sections' drums: silent, then a drum & bass drop; the clearings without drums"
+        }
+      ],
+      "links": [
+        "rules/musicScore.ts",
+        "platform/audio/musicEngine.ts",
+        "app/sound.ts"
+      ]
     },
     "alarms": {
       "what": "The soundsystem alarm [1]: a soundsystem (or the home ring's speakers) hit while off screen shows a 🔇 at the screen's edge toward it, its ring its health, shaking at each blow.",

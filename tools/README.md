@@ -111,7 +111,7 @@ node tools/inventory.mjs [--check]
 - [`momentum/`](momentum/README.md): 1 script — strip.mjs
 - [`multiplayer/`](multiplayer/README.md): 2 scripts — floorPath.cjs, route.cjs
 - [`mushrooms/`](mushrooms/README.md): 9 scripts — brewing-check.mjs, build-preview.mjs, check.mjs, explorer.js, glow-check.mjs, ingame-check.cjs, lab-check.cjs, recipe-book.mjs, sheet.mjs
-- [`music-lab/`](music-lab/README.md): 28 scripts — ab.mjs, ab.ts, analyse.cjs, analyse.ts, boot.mjs, boot.ts, build.mjs, check.cjs, circles.mjs, circles.ts, cost.cjs, cost.ts, flight.cjs, form.mjs, form.ts, fxcost.cjs, fxcost.ts, ingredients.ts, lab.ts, latency.cjs, set.mjs, set.ts, silence.cjs, stems.cjs, stems.ts, tune.cjs, tune.ts, voices.mjs
+- [`music-lab/`](music-lab/README.md): 30 scripts — ab.mjs, ab.ts, analyse.cjs, analyse.ts, boot.mjs, boot.ts, build.mjs, check.cjs, circles.mjs, circles.ts, cost.cjs, cost.ts, flight.cjs, form.mjs, form.ts, fxcost.cjs, fxcost.ts, haunted.mjs, haunted.ts, ingredients.ts, lab.ts, latency.cjs, set.mjs, set.ts, silence.cjs, stems.cjs, stems.ts, tune.cjs, tune.ts, voices.mjs
 - [`music-studio/`](music-studio/README.md): 5 scripts — build.mjs, check.cjs, knobs.ts, main.ts, midi.ts
 - [`occlusion/`](occlusion/README.md): 1 script — envelope-shots.cjs
 - [`opening/`](opening/README.md): 3 scripts — bedroom-budget.cjs, shots.cjs, wake-keys.cjs
@@ -120,6 +120,7 @@ node tools/inventory.mjs [--check]
 - [`props/`](props/README.md): 1 script — ingame.cjs
 - [`qa/`](qa/README.md): 4 scripts — core.cjs, journey.cjs, leash-lake.cjs, win-strip.cjs
 - [`rainbow/`](rainbow/README.md): 1 script — shots.cjs
+- [`refactor/`](refactor/README.md): 4 scripts — a4-browser-preload.cjs, a4-inventory.mjs, a4-proof-artifacts.cjs, a4-split.mjs
 - [`refraction/`](refraction/README.md): 6 scripts — capture-hold.cjs, capture-pair.cjs, depth-coverage.cjs, depth-readback.cjs, foreground.cjs, review-depth-coverage.mjs
 - [`relics/`](relics/README.md): 1 script — map.mjs
 - [`rig/`](rig/README.md): 4 scripts — demo.cjs, legends.cjs, perf.cjs, strip.mjs
@@ -141,7 +142,7 @@ node tools/inventory.mjs [--check]
 - [`telephone/`](telephone/README.md): 1 script — panel-input-proof.cjs
 - [`telescope/`](telescope/README.md): 2 scripts — moon.cjs, shots.cjs
 - [`view/`](view/README.md): 9 scripts — build-budget.cjs, chart-target.cjs, coast-first-use.cjs, landing-limit-preload.cjs, sail-timing.cjs, start-hold.cjs, travel-failure.cjs, travel-probe.cjs, worker-checkpoint.cjs
-- [`voice/`](voice/README.md): 1 script — sing.mjs
+- [`voice/`](voice/README.md): 2 scripts — chimera-notes.mjs, sing.mjs
 - [`witch/`](witch/README.md): 10 scripts — bags-sheet.mjs, brooms-gif.mjs, brooms-sheet.mjs, hats-sheet.mjs, longwear-sheet.mjs, nightie-sheet.mjs, slider-audit.mjs, sliders-sheet.mjs, thickness-sheet.mjs, walk-sheet.mjs
 - [`workshop/`](workshop/README.md): 2 scripts — parts-sheet.mjs, shots.cjs
 - [`zoo/`](zoo/README.md): 7 scripts — coasts.cjs, map.mjs, order.mjs, perf.cjs, shots.cjs, trees.cjs, versailles-tall-mock.cjs

@@ -26,6 +26,7 @@
 //   node art/preview.mjs pathpieces all|<ids> art/previews/path-pieces.png [scale]   (the 3D pieces; with all, the railway's points, broken end and crossing)
 //   node art/preview.mjs species all|<ids> art/previews/tree-species.png [scale]   (each species at mature height from the side, then its crown as treetop mode shows it, then its trunk alone as ground mode shows it; PER=n species to a row)
 //   node art/preview.mjs canopy <areas> art/previews/canopy-patches.png [scale]   (a 3 x 3 patch of each area's crowns from the treetops)
+//   node art/preview.mjs witch basin art/previews/basin.png [scale]   (her makeup at the basin on four skins, her light green first, hat off; then brushing her teeth)
 //   node art/preview.mjs witch all art/previews/witch-flight.png [scale]   ("fast" instead of all: hover, lean and the fast pose; "foot": hover and every on-foot pose, POSES=stand,talk,... to pick, ANCHORS=1 to mark her hand and hat tip)
 //   node art/preview.mjs effects all|<ids> art/previews/attack-effects.png [scale]   (the attack effects: light on night ground in red, dark on bright ground in neon, then as the treetop camera sees them, ground and treetop drawings; ground decals laid flat)
 //   node art/preview.mjs partywitches poses|outfits|pairs|lean art/previews/party-witches.png [scale]   (her party poses, a row per facing; the party outfits; pairs put together at their anchors; her lean cycle. ANCHORS=1, POSES=...)
@@ -393,6 +394,11 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
       const base = G.genomeLook(G.WITCH_GENOME).look;
       for (const hat of ["classic", "musketeer", "top", "crown"]) rows.push([null, [.0, .8, 1], [.6, .7, 1]].map(pl => { const outfit = { ...G.DEFAULT_OUTFIT, ...(pl ? { plume: pl } : {}) }; return G.bake(G.witchSprite(st, { look: { ...base, hat }, facing: "towards" }), G.witchColours(st, outfit), st, st.cOutline); }));
       rows.push([["short", .6], ["short", 6], ["long", .6], ["long", 6]].map(([cloak, cloakLength]) => fb({ facing: "away", pose: "stand", frame: 0, look: { ...base, cloak, cloakLength } }))); // (each cloak's shortest and longest: the short at most to her knee, the long at least)
+    }
+    else if (list === "basin") { // the basin (Ed, 2026-11-07): her makeup, hat off, standing towards: none, lipstick, eyeshadow, blush, all three (a row on each of four skins: her starting light green, Ed 2026-11-07, then three more); then brushing her teeth, both frames, facing us
+      const base = { ...G.genomeLook(G.WITCH_GENOME).look, hat: "none" }, kinds = [{}, { lipstick: true }, { eyeshadow: true }, { blush: true }, { lipstick: true, eyeshadow: true, blush: true }];
+      for (const skin of [[.2662, .3221, .8157], null, [.08, .46, .63], [.08, .31, .2]]) rows.push(kinds.map(k => G.bake(G.witchSprite(st, { look: { ...base, ...k }, pose: "idle", frame: 0, facing: "towards" }), G.witchColours(st, { ...G.DEFAULT_OUTFIT, ...(skin ? { skin } : {}) }), st, st.cOutline)));
+      rows.push([0, 1].map(frame => fb({ heading: "towards", pose: "brush", frame, look: base })).concat([0, 1].map(frame => fb({ heading: "towards", pose: "brush", frame, look: { ...base, lipstick: true, eyeshadow: true, blush: true } }))));
     }
     else if (list === "foot") for (const facing of window.FACINGS || ["towards", "away"]) rows.push([b({ facing }), ...Object.entries(G.WITCH_FOOT_POSES).filter(([pose, P]) => window.POSES ? window.POSES.includes(pose) : !P.party).flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => fb({ facing, pose, frame })))]);
     else for (const facing of ["towards", "away"]) rows.push(list === "fast" ? [b({ facing }), b({ facing, lean: true }), ...[0, 1, 2].map(frame => b({ facing, pose: "fast", frame })), ...[0, 1].map(frame => b({ facing, pose: "brake", frame }))] // hover, lean, fast's three frames, brake's two

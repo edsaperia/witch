@@ -1,0 +1,6 @@
+{
+  "reason": "Her starting skin light green (Ed, 2026-11-07: \"the default skin should be a light green\"): the skin grid's moss green became a light green, #a8d08d (art/skinTones.js), and a brand-new witch starts in it (config/default-look.json; it was Monk 4, #eadaba). Random and party witches keep the ten human tones.",
+  "frames": {
+    "*": "wherever her face or hands show: their colour (now light green, #a8d08d), and her art landing a frame earlier or later as the new colour's sprite is baked"
+  }
+}

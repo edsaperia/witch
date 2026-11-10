@@ -6,6 +6,7 @@ import { FURNITURE_IDS } from "../../art/furniture.js";
 import legacy from "../../config/house/layouts/editor-v1-baseline.json";
 import identities from "../../config/house/layouts/editor-v2-identities.json";
 import current from "../../config/house/layouts/ed-current.json";
+import provisional from "../../config/house/layouts/provisional.json";
 import { kitchenPlan, type MushroomColour } from "../rules/mushrooms";
 import { HOUSE_CONFIG } from "../rules/houseConfig";
 import { migratedGuestFurnitureId } from "../rules/guestFurnitureMigration";
@@ -83,10 +84,15 @@ export const artKey = (o: LayoutItem, p: Placement): string => `${o.id}:${p.rota
 /** Objects gone from the house that an older layout still places: the guests' bedrooms' doors (Ed, 2026-11-03: the bedrooms open).
  *  Their placements are dropped on import, so his layouts from before still load. */
 export const RETIRED_OBJECTS: readonly string[] = ["bedroom2Door", "bedroom3Door"];
+/** Objects new to the house that an older layout doesn't place: the basins and the guests' shoe racks (Ed, 2026-11-07: the basin, a new
+ *  station; "Guests need basins and shoe racks"). An older layout gets each at its default (its room file's provisional place), for Ed
+ *  to move in the editor; his next export places them. */
+export const ADDED_OBJECTS: readonly string[] = ["basin", "bedroom2Basin", "bedroom3Basin", "bedroom2ShoeRack", "bedroom3ShoeRack", "broomRack", "broomLift"]; // (and the broom rack and the hydraulic lift: Ed, 2026-11-07, at their provisional poses in his arrangement, config/house/layouts/provisional.json)
 export function parseLayout(raw: unknown, items: LayoutItem[], floorplan: string): Layout {
   if ((raw as { version?: unknown } | null)?.version === 1) return migrateCameraV1(raw, items, floorplan);
   let l = raw as Layout;
   if (Array.isArray(l?.objects) && l.objects.some(p => RETIRED_OBJECTS.includes(p?.id))) l = { ...l, objects: l.objects.filter(p => !RETIRED_OBJECTS.includes(p?.id)) };
+  if (Array.isArray(l?.objects)) { const missing = items.filter(o => ADDED_OBJECTS.includes(o.id) && !l.objects.some(p => p?.id === o.id)); if (missing.length) l = { ...l, objects: [...l.objects, ...defaultLayout(missing, floorplan).objects.map(p => { const q = provisional.objects.find(o => o.id === p.id); return q ? { id: p.id, x: q.x, z: q.z, rotation: q.rotation } : p; })] }; } // (new since that layout: at their provisional poses, else their defaults)
   // Explicit source-catalogue upgrade: Ed replaced the two unused guest chests in place.
   if (floorplan === identities.canonical && identities.legacy.includes(l?.floorplan) && Array.isArray(l.objects))
     l = { ...l, objects: l.objects.map(p => ({ ...p, id: migratedGuestFurnitureId(p.id) })) };
@@ -147,6 +153,8 @@ export function migrateCameraV1(raw: unknown, items: LayoutItem[], floorplan: st
     const target = result.objects.find(p => p.id === `hat-point:${point.slot + 1}`);
     if (target) Object.assign(target, { x: point.x, z: point.z });
   }
+  // (objects new since, with a provisional pose in Ed's arrangement: there, config/house/layouts/provisional.json)
+  for (const q of provisional.objects) { const t = result.objects.find(p => p.id === q.id); if (t && ADDED_OBJECTS.includes(q.id)) Object.assign(t, { x: q.x, z: q.z, rotation: q.rotation }); }
   result.migration = { from: 1, cameraPreserved: true, held };
   // New defaults must not silently restore the clutter Ed explicitly deleted on 2026-11-01.
   result.removed = current.removed.filter(id => items.some(o => o.id === id));

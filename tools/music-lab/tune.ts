@@ -1,5 +1,5 @@
 // The singer's tuning check (Ed's singer review, 2026-10-14, docs/backlog/music.md "The singer, and the music round it"):
-// the game's own engine renders the sung line alone (the recorded voice, as the game plays it) over a breakdown, offline, and
+// the game's own engine renders the sung line alone (the game's singer, as the game plays it) over a breakdown, offline, and
 // reports every sung note it scheduled, so Node can pitch-track the render and compare (tools/music-lab/tune.cjs). Lab-only.
 import { MusicEngine } from "../../src/platform/audio/musicEngine";
 import { tractReady } from "../../src/platform/audio/tract/tract";
@@ -20,10 +20,13 @@ export interface TuneOptions {
   fx: boolean;
   /** The breakdown's wash (the doubling voices) kept; off for the tracker, which wants one voice. */
   wash: boolean;
-  /** Base64 Ogg recordings by id (samples/voices, samples/alto). */
+  /** Base64 Ogg recordings by id (samples/voices, samples/alto, samples/chimera). */
   samples: Record<string, string>;
-  /** The sung patch to render (the game's recordedVoice; altoSampled, the sample set; altoTract, the vocal-tract worklet). */
+  /** The sung patch to render (the game's chimeraVoice; recordedVoice, the old singer; altoSampled, the sample set; altoTract, the
+   *  vocal-tract worklet). */
   voice?: string;
+  /** The music kept under the sung line (the A/B's mix: Ed hears the singer as the game plays it), not the line alone. */
+  mix?: boolean;
 }
 
 const b64 = (s: string) => { const bin = atob(s), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; };
@@ -31,7 +34,8 @@ const b64 = (s: string) => { const bin = atob(s), u = new Uint8Array(bin.length)
 async function tuneRender(o: TuneOptions) {
   const style = clone(base);
   if (!o.fx) { style.voiceFx = { chorus: 0, saturation: 0, air: 0, delay: 0, hall: 0, shimmer: 0, duck: 0, swells: 0, freeze: 0, whisper: 0, octave: 0 }; delete style.voiceFxDark; }
-  if (!o.wash) delete style.form!.sung.wash;
+  if (!o.wash) { delete style.form!.sung.wash; if (style.haunted) style.haunted.ghost.gain = 0; } // (one voice for the tracker: no wash, no haunted ghost)
+  if (!o.mix && style.haunted) style.haunted.drone.gain = 0; // (nor the haunted drone, which no solo silences: it's the bus's)
   if (o.voice && style.patches[o.voice]) style.form!.sung.patch = o.voice;
   const spb = 60 / style.bpm / 4, seconds = o.bars * 16 * spb + 2;
   const oc = new OfflineAudioContext(1, Math.ceil(seconds * RATE), RATE);
@@ -39,12 +43,13 @@ async function tuneRender(o: TuneOptions) {
   for (const [id, data] of Object.entries(o.samples)) samples[id] = await oc.decodeAudioData(b64(data));
   if (style.patches[style.form!.sung.patch]?.kind === "tract" && !(await tractReady(oc))) throw new Error("the vocal-tract worklet didn't load");
   const e = new MusicEngine(oc, oc.destination, style, o.seed), sung = style.form!.sung.part;
-  e.solo = new Set([sung]);
+  if (!o.mix) e.solo = new Set([sung]);
   e.setRecordings(samples); if (samples.whispers) e.setWhisper(samples.whispers);
   const notes: { at: number; dur: number; midi: number; double: boolean }[] = [];
+  const sp = style.patches[style.form!.sung.patch], longest = sp?.kind === "sample" && sp.notes?.length ? Math.max(0.1, Math.min(...sp.notes.map(n => samples[n.sample]?.duration ?? Infinity)) - 0.05) : Infinity;
   const play = (e as unknown as { play: (ev: NoteEvent, t: number, dur: number, sps: number, chord?: number[]) => void }).play.bind(e);
   (e as unknown as { play: typeof play }).play = (ev, t, dur, sps, chord) => {
-    if (ev.part === sung && ev.midi !== null) notes.push({ at: t, dur, midi: ev.midi, double: !!ev.double });
+    if (ev.part === sung && ev.midi !== null) notes.push({ at: t, dur: Math.min(dur, longest), midi: ev.midi, double: !!(ev.double || ev.ghost) }); // (a held note sounds as long as its recording at most)
     play(ev, t, dur, sps, chord);
   };
   const cue: MusicCue = { waves: Array.from({ length: o.wave }, () => 0), nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, forceWave: o.wave, forceSection: o.section };

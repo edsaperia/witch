@@ -84,7 +84,7 @@ export class MusicLab {
 
   private styleKey(): string {
     const s = this.state;
-    return JSON.stringify([s.mode, s.record, s.voice, s.fofChoir, s.breath, s.chain, s.arpeggio, FX.map(f => s.voiceFx[f] > 0)]);
+    return JSON.stringify([s.mode, s.record, s.voice, s.fofChoir, s.breath, s.chain, s.arpeggio, s.haunted, FX.map(f => s.voiceFx[f] > 0)]);
   }
 
   /** The night's style with the settings on it (the same object while nothing changes, so the sound sets it once):
@@ -106,6 +106,7 @@ export class MusicLab {
       if (s.breath !== null && sungPatch && st.patches[sungPatch]) st.patches = { ...st.patches, [sungPatch]: { ...st.patches[sungPatch], breath: s.breath } };
       if (s.fofChoir && st.parts.choir && st.patches.fofChoir) st.parts = { ...st.parts, choir: { ...st.parts.choir, patch: "fofChoir" } };
       if (s.arpeggio && st.form) st.form = { ...st.form, sung: { ...st.form.sung, arpeggio: true } };
+      if (st.haunted) st.haunted = { ...st.haunted, on: s.haunted && st.haunted.on !== false }; // (the haunted treatment off, to A/B: Ed, 2026-11-08)
       st.voiceFx = { ...st.voiceFx, ...s.voiceFx };
       if (s.chain !== "auto") delete st.voiceFxDark;
     }

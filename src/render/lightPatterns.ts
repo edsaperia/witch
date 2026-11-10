@@ -7,7 +7,9 @@ export type LightPatternKind = keyof typeof LIGHT_PATTERN;
 export interface LightPattern { kind: LightPatternKind; scale: number; contrast: number; angle: number; phase: number }
 export interface LightPoint { x: number; y: number; z: number }
 // Ed, 2026-10-31 via coordinator1542#6545860556: "Strong", about triple the first preview.
-export const PATTERN_DEFAULTS = { scale: 6, contrast: .9, beatsPerTurn: 32, projectorCap: 3 } as const;
+// beatsPerTurn: Ed, 2026-11-07, "it should rotate, speed scaled by bpm": the colour-spokes wheel turns once every 2 bars
+// (tuning patternLight.beatsPerTurn; it was once per 128 beats, too slow to see).
+export const PATTERN_DEFAULTS = { scale: 6, contrast: .9, beatsPerTurn: 8, projectorCap: 3 } as const;
 const TAU = Math.PI * 2;
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 /** Prepare only spatially constant work, using the same phase/scale precision sent to GLSL. */
@@ -16,9 +18,12 @@ export function prepareLightPattern(scale: number, phase: number): [number, numb
   return [1 / Math.max(.1, scale), clamp(.5 + .3 * Math.sin(phase) + .2 * Math.sin(phase * 1.73 + 1.2), 0, 1)];
 }
 
-/** Absolute musical phase: deterministic across frame subdivision, tempo ramps and pauses. */
-export function lightPatternPhase(clock: BeatClock, gameTime: number): number {
-  return beatAt(clock, gameTime) * TAU / PATTERN_DEFAULTS.beatsPerTurn;
+/** Absolute musical phase: deterministic across frame subdivision, tempo ramps and pauses. One colour-spokes turn every
+ *  beatsPerTurn beats, so it turns faster with the tempo; kept within one turn so the shader's float stays exact all night. */
+export function lightPatternPhase(clock: BeatClock, gameTime: number, beatsPerTurn: number = PATTERN_DEFAULTS.beatsPerTurn): number {
+  const per = Number.isFinite(beatsPerTurn) && beatsPerTurn > 0 ? beatsPerTurn : PATTERN_DEFAULTS.beatsPerTurn;
+  const beats = beatAt(clock, gameTime) % per;
+  return (beats < 0 ? beats + per : beats) * TAU / per;
 }
 
 /** Comfort/off returns the exact identity, not a separate animation clock or a bright flash. */
@@ -47,7 +52,7 @@ export function lightPatternSample(point: LightPoint, origin: LightPoint, patter
       const r = Math.hypot(x, z), blend = clamp(r / .3, 0, 1);
       const angle = pattern.kind === 'colour-spokes' && r < .00001 ? 0 : Math.atan2(z, x);
       if (pattern.kind === 'colour-spokes') {
-        const rotated = angle - phase / 4, spoke = .5 + .5 * Math.sin(rotated * 4);
+        const rotated = angle - phase, spoke = .5 + .5 * Math.sin(rotated * 4);
         return [0, TAU / 3, 2 * TAU / 3].map(offset =>
           1 - contrast + contrast * (1 - blend + blend * spoke * (.5 + .5 * Math.sin(rotated + offset)) * Math.max(1, Math.min(4, pattern.contrast / .9)))) as [number, number, number];
       }
@@ -75,7 +80,7 @@ vec3 lightPattern(vec3 relativeWorld, vec4 pattern, vec2 rotation, float lightDi
     float radius = length(p.xz), blend = clamp(radius / 0.3, 0.0, 1.0);
     float angle = radius < 0.00001 ? 0.0 : atan(p.z, p.x);
     if (pattern.x > 5.5) {
-      float rotated = angle - pattern.w * 0.25;
+      float rotated = angle - pattern.w;
       float spoke = 0.5 + 0.5 * sin(rotated * 4.0);
       bands = mix(vec3(1.0), spoke * (0.5 + 0.5 * sin(vec3(rotated) + vec3(0.0, 2.09439510239, 4.18879020479))) * max(1.0, min(4.0, pattern.z / 0.9)), blend);
       return mix(vec3(1.0), bands, clamp(pattern.z, 0.0, 1.0));

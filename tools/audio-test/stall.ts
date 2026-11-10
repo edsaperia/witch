@@ -23,7 +23,8 @@ const $ = (id: string) => document.getElementById(id)!;
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 const r1 = (x: number) => Math.round(x * 10) / 10;
 
-const CUE: MusicCue = { waves: [0, 0, 0], nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, forceWave: 3, forceSection: "drop" };
+// (the drop by default; ?section=<name> another, e.g. a haunted breakdown: Ed, 2026-11-08, "B, 1-6")
+const SECTION = new URLSearchParams(location.search).get("section") ?? "", CUE: MusicCue = { waves: [0, 0, 0], nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, forceWave: 3, forceSection: STYLE.sections[SECTION] ? SECTION : "drop" };
 const MIX: MusicMix = { volume: 1, cutoff: 16000, distort: 0, distance: 0 };
 /** When the page's thread is held (s into the run), how long (ms), and the run's length (s). */
 const STALLS = [8, 18, 28, 38], STALL_MS = 1500, RUN_S = 48;

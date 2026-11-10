@@ -9,7 +9,7 @@ import { hitWitch, newGame as fullGame } from "./game";
 import { smallWorld } from "../test/worlds";
 const newGame = smallWorld(fullGame, "Music cue and knockdown tempo integration consumes one witch's beat state, not distant areas.");
 import { Conductor, formClock, musicCue, silentAt, type MusicCue } from "./musicPlan";
-import { arcStep, degreeToMidi, formBars, formChord, formInstrument, formNoteAt, formPhrase, musicSeed, notesAt, resolveSection, sungHere, type BlockPlan, type MusicStyle } from "./musicScore";
+import { arcStep, degreeToMidi, formBars, formChord, formInstrument, formNoteAt, formPhrase, isHaunted, musicSeed, notesAt, resolveSection, sungHere, withHaunted, type BlockPlan, type MusicStyle } from "./musicScore";
 import { TUNING, type Tuning } from "./tuning";
 
 const style = styleJson as unknown as MusicStyle, F = style.form!;
@@ -58,13 +58,21 @@ describe("the melodies' 32-bar ABAC form", () => {
       expect(parts).toEqual(new Set([inst, F.sung.part]));
     }
     expect([...seen].sort()).toEqual(["bell", "chiplead", "lead", "lgHorn", "pluck", "vox"]);
-    // (a woman's voice: since Ed's pick, 2026-10-11, "e Recorded + ethereal", a recording of one, sung "laa" and "loo"; the formant
-    // soprano before it, higher than the old vox, still singing till the recording loads)
+    // (a woman's voice: since Ed's swap, 2026-11-08, "Go ahead and swap them over", Chimera's, a note rendered on every semitone
+    // of the alto's reach, G3 to G5, on "ah" and on "ooh", so no note is retuned; the vowels as the old recorded singer's, "aa" and
+    // "oo" in turn; the formant soprano before it, higher than the old vox, still singing till the recordings load)
     const sung = style.patches[F.sung.patch];
     expect(sung.kind).toBe("sample");
-    expect(sung.sample).toBe("female-note");
-    expect(sung.onset).toBe("l");
     expect(sung.vowels).toEqual(["aa", "aa", "oo"]);
+    for (const vowel of ["aa", "oo"]) {
+      const notes = sung.notes!.filter(n => n.vowel === vowel);
+      expect(notes.map(n => n.midi), vowel).toEqual(Array.from({ length: 25 }, (_, i) => 55 + i));
+      for (const n of notes) expect(n.sample).toBe(`chimera-${vowel === "aa" ? "ah" : "ooh"}-${n.midi}`);
+    }
+    // (the old singer kept, to A/B: ?singer=recorded, the woman's G4 retuned, "laa" and "loo")
+    const old = style.patches.recordedVoice;
+    expect(old.sample).toBe("female-note");
+    expect(old.onset).toBe("l");
     expect(style.patches.soprano.formantShift!).toBeGreaterThan(style.patches.vox.formantShift!);
   });
 
@@ -82,7 +90,7 @@ describe("the melodies' 32-bar ABAC form", () => {
 });
 
 describe("everything in dorian, each stage in its own key", () => {
-  it("every arc step, section and layer", () => {
+  it("every arc step, section and layer (the haunted places' colour aside: musicHaunted.test.ts)", () => {
     expect(style.scale).toBe("dorian");
     // (the key changes between stages stay: Ed, 2026-10-09, via the coordinator)
     expect(style.arc.map(a => a.transpose ?? 0)).toEqual([0, 0, 0, 0, 2, 3, 5, 0, 1]);
@@ -92,7 +100,9 @@ describe("everything in dorian, each stage in its own key", () => {
       const dorian = new Set(style.scales.dorian.map(d => (d + style.root + tr) % 12));
       for (let step = 0; step < 32 * 16; step += 1) {
         for (const e of notesAt(style, plan, null, step, { seed: 5 + arc, siege: 1, party: 1, legend: 1, circle: { species: "elk", level: 1 } })) {
-          if (e.midi !== null) expect(dorian.has(e.midi % 12), `${section} ${e.part} ${e.midi}`).toBe(true);
+          // (Ed, 2026-11-08, "B, 1-6": a haunted section's melody and a clearing's layer may take the flat 2nd or the raised 7th)
+          const colour = e.layer === "circle" || isHaunted(style, section) ? [1, 11].map(d => (d + style.root + tr) % 12) : [];
+          if (e.midi !== null) expect(dorian.has(e.midi % 12) || colour.includes(e.midi % 12), `${section} ${e.part} ${e.midi}`).toBe(true);
         }
       }
     }
@@ -278,10 +288,12 @@ describe("the singer's redesign (Ed, 2026-10-14: an alto in tune, stepwise, in t
     // the form's bars 0-15 (A and B) in the four-on-the-floor section: nothing sung
     expect(events(S.four[0], 0, 16).filter(e => e.part === F.sung.part)).toEqual([]);
     expect(events(S.four[0], 0, 16).some(e => style.parts[e.part]?.role === "motif")).toBe(true);
-    // bars 24-31 (C) in the breakdown: sung, each note washed a fifth and an octave up at half the level, in the pure chain
+    // bars 24-31 (C) in the breakdown: sung, each note washed a fifth and an octave up at half the level, in the pure chain (with
+    // the haunted treatment off: on, the ghost voice takes the wash's place, musicHaunted.test.ts)
     let sungIn = 0;
+    const plain = withHaunted(style, false);
     for (const seed of [7, 8, 9, 10]) {
-      const ev = Array.from({ length: 8 * 16 }, (_, i) => notesAt(style, { section: S.breakdown[0], start: 24, bars: 8, wave: 1, arc: 1 }, null, 24 * 16 + i, { seed, siege: 0, formStart: 0 })).flat().filter(e => e.part === F.sung.part);
+      const ev = Array.from({ length: 8 * 16 }, (_, i) => notesAt(plain, { section: S.breakdown[0], start: 24, bars: 8, wave: 1, arc: 1 }, null, 24 * 16 + i, { seed, siege: 0, formStart: 0 })).flat().filter(e => e.part === F.sung.part);
       if (!ev.length) continue;
       sungIn++;
       const leads = ev.filter(e => !e.double), wash = ev.filter(e => e.double);

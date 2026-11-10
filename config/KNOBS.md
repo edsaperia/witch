@@ -992,6 +992,19 @@ Code: `docs/ART-GUIDE.md`
 | `leafJitter.value` | number | 0 to … |
 | `leafJitter.hue` | number | 0 to 180 |
 
+### `treeNormals`
+
+The trees' normal maps: "full" (the default) as ever; "64", "32" or "16" their directions cut to a k-means palette of that many per tree atlas; "0" off, every tree pixel lit flat, as if it faced the camera (the normal 128, 128, 255).
+
+1. Ed, 2026-11-07: "Make the normal maps switch." (to judge in play whether trees still look right without normal maps: dropping them would make the pre-baked tree art about 3 times smaller (PR #1884's measurement))
+2. Ed, 2026-11-07: "Normal maps do improve things, can we try a low number (16? 32? 64?)" (to see the trees in play with their normal maps cut to a small palette of directions, as a bake could ship them much smaller)
+A test choice. Live: the pause page's Tree normal maps choice, or the link's d_treeNormals=64 (or 32, 16; 0 off; anything else full). 64, 32 and 16: each loaded area type's atlas has its trees' normals (the big pieces' frames) cut to a k-means palette of that many directions (render/treeQuant.ts, ported from PR #1884's measurement: weighted by pixel count, unit directions, the centres renormalised), the alpha (the wind's sway code) kept exactly and empty pixels skipped, and its normal texture uploaded again in place (render/treeNormalDirs.ts); the original plane is kept beside it, so full puts the very bytes back, and each atlas's palettes are kept by count, so flipping back is an upload. The palettes are worked out by a worker of their own, a quarter to two-thirds of a second an atlas at 64 (less at 32 and 16), after the plane is read back from the GPU; atlases landing while a reduced setting is on are cut as they land. Off: her glow, the campfires, the soundsystems and the moon light a tree flat, a shader uniform (uTreeNormals), redrawing nothing. Only the forest's trees (their trunks, crowns and far crowns: the instances marked tree in render/view/scenery.ts) change; bushes, walls, set pieces, rocks, palms, creatures, the witch and the ground keep their normals. Nothing is held or done until a reduced setting is first picked.
+Code: `render/sprites.ts`, `render/treeNormalDirs.ts`, `render/treeQuant.ts`, `render/view/frameUniforms.ts`
+
+| knob | type | range |
+|---|---|---|
+| `treeNormals` | string | "full" / "64" / "32" / "16" / "0" |
+
 ### `wind`
 
 Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across; Walls and set pieces stand still. ?wind=0 turns it off.
@@ -1288,6 +1301,14 @@ Speeds per mode, and how long rising and descending take. The witch is lit by th
   2. Ed: "don't make it stop at scenery"
   The witch knocked back and staggered by a blow [1]: thrown straight away from the blow, base metres for any blow (bites, swipes, shots) plus scale times the attack's own knockback (combat.json; so a maul, quake or slam sits in between), at least charge metres when it rams her (a charge, or a leap landing on her), at most max; eased off at ease a second (like a creature's knockback), straight through scenery [2], nudged to the nearest clear spot at the end if she'd rest inside a trunk, rock, speaker, soundsystem or the treehouse (the blink's clearances). Staggered (no moving, blinking or 💌s, a wobble and stars) stunBase seconds plus stunScale a metre thrown past base, at most stunMax; then not staggered again for immune seconds (the blows still count), so a pack can't stun-lock her. A blink dodges it all; the blow that knocks her out throws nothing. on false, or ?knock=0, turns it off.
   Code: `rules/knock.ts`
+- **`witch.bedGlow`**: In her bed (asleep, the alarm, a snooze, the stretch), the share of her own glow and its lift on her kept, so her white nightie keeps its shading.
+  1. Ed, 2026-11-07: "fix the glow in #1908 first" (her nightie clipped to white in bed under her own glow and its lift)
+  Only her own sprite and only in bed: 1 keeps all of it (as anywhere else), 0 none. Taken off at once as she's put in bed; given back over the stretch (half of what's off) and the second after she's up beside the bed, so nothing pops. Her glow's pool on the world round her is unchanged.
+  Code: `render/bedPose.ts`
+- **`witch.bedBloom`**: In her bed, the share of the picture's bloom kept: her white nightie and the pillows beside her bloomed to white over her.
+  1. Ed, 2026-11-07: "fix the glow in #1908 first" (her nightie clipped to white in bed)
+  Eased with witch.bedGlow (taken at once as she's put in bed, given back over the stretch and the second after she's up), so nothing pops. 1 keeps all of it; anywhere but her bed, all of it.
+  Code: `render/post.ts`, `render/bedPose.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -1304,6 +1325,8 @@ Speeds per mode, and how long rising and descending take. The witch is lit by th
 | `witch.lightFloor` | number | 0 to … |
 | `witch.lightTint` | number | 0 to … |
 | `witch.lightRim` | number | 0 to … |
+| `witch.bedGlow` | number | 0 to 1 |
+| `witch.bedBloom` | number | 0 to 1 |
 | `witch.heightSmooth` | number | 0 to … |
 | `witch.heightLookAhead` | number | 0 to … |
 | `witch.heightClearance` | number | 0 to … |
@@ -1659,7 +1682,8 @@ The 💌 invite: on the ground she fires spinning love letters at creatures to w
 1. Ed, 2026-10-05: issue #87
 2. Ed: "base invite should be one envelope at a time (rebalance hits accordingly), they should arc a little and disappear when they hit the ground, go 50% further, 20% faster, and they should rotate by pitching instead of yawing"
 3. 2026-10-07: balance, the overnight pass, with the wider level gap
-The 💌 invite [1], replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; Round 11 [2]: one 💌 a shot (burst 1, multiShot 1), cooldown 0.55 (just over the old 0.5 s per-creature gap), hits [4, 9, 18, 36] so a meter fills in about the time it did with bursts of three (they gave one hit each 0.84 s); then [3] [4, 7, 14, 36]: the young and adults quicker to win over, so good play counts for more (a skilled player lasts about 2.5 minutes longer, a crude one no longer), range 33 (was 22) and speed 31.2 (was 26).
+4. Ed, 2026-11-09: "it feels like animals move faster than invitations so it's hard to land a hit. And ranges feel small" (speed 45 (was 31.2), range 42 (was 33), homingRange 14 (was 10); homing and homingCone unchanged; the animals' waiting distance held where it was (combatWaiting.inviteReach 33), and ?invites=old flies the old letters to A/B)
+The 💌 invite [1], replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; Round 11 [2]: one 💌 a shot (burst 1, multiShot 1), cooldown 0.55 (just over the old 0.5 s per-creature gap), hits [4, 9, 18, 36] so a meter fills in about the time it did with bursts of three (they gave one hit each 0.84 s); then [3] [4, 7, 14, 36]: the young and adults quicker to win over, so good play counts for more (a skilled player lasts about 2.5 minutes longer, a crude one no longer), range 33 (was 22) and speed 31.2 (was 26). Then [4]: speed 45 (was 31.2: faster than the witch on the ground, 19.25, and well clear of animals running in a fight, about 14), range 42 (was 33), homingRange 14 (was 10); a letter takes 0.93 s to its full range (was 1.06 s). The animals' waiting room no longer follows this range (combatWaiting.inviteReach), so the longer letters reach the circling animals; ?invites=old flies 31.2 / 33 / 10 to A/B.
 
 - **`invites.arc`**: the height (m) its lob rises over the straight line from her hand to the ground at its range, where it lands, with a puff (drawn only: the rules fly it flat).
 - **`invites.hits`**: How many letters it takes to win a creature over by its level, and how fast its meter drains when not being hit.
@@ -2070,14 +2094,16 @@ The fight's scale and speed [1]: fights are drawn and played at the ground camer
 
 ### `combatWaiting`
 
-Waiting movement favours room beyond default invitation reach while allowing deliberate close passes.
+Waiting movement favours room beyond a set invitation reach (inviteReach: the default bag's old range, not the letters' live one) while allowing deliberate close passes.
 
 1. Ed, 2026-11-02: "creatures should be moving most of the time, and tend to be outside of her (default bag) range if they're not attacking"
-reachScale multiplies dash distance times charges plus default invitation range; areaGrowth adds a fraction of area radius beyond that reference, without clamping small areas. passPower concentrates the smooth close-pass pulse; passDepth sets how far that pulse relaxes the outward preference. Species routes, speed and turning remain in the pack profiles.
+2. Ed, 2026-11-09: "it feels like animals move faster than invitations so it's hard to land a hit. And ranges feel small" (the letters' speed and range raised while holding the animals' waiting distance where it was: inviteReach 33, the old invite range, so the reference stays (30 + 33) x 0.8 = 50.4 m)
+reachScale multiplies dash distance times charges plus inviteReach, the default invitation range that set the room (33 m, held there when the letters got 42 m, so they reach the circling animals; neither buffs nor a bag like the Clutch move it); areaGrowth adds a fraction of area radius beyond that reference, without clamping small areas. passPower concentrates the smooth close-pass pulse; passDepth sets how far that pulse relaxes the outward preference. Species routes, speed and turning remain in the pack profiles.
 
 | knob | type | range |
 |---|---|---|
 | `combatWaiting.reachScale` | number | 0 to 3 |
+| `combatWaiting.inviteReach` | number | 0 to 200 |
 | `combatWaiting.areaGrowth` | number | 0 to 1 |
 | `combatWaiting.passPower` | number | 1 to 64 |
 | `combatWaiting.passDepth` | number | 0 to 1 |
@@ -2147,6 +2173,10 @@ Code: `render/attackFeel.ts`
   1. Ed, 2026-11-03: "Let's dial up current creature spell effects a lot so they're easier to see. Larger, extra Bloom. Don't bring back the flash and rings yet." (size 1.75, opacity 0.9, bloom 2, duration 1.5, zoneDensity 0.5, groundMark 0.45; the pause page's Creature spells sliders (config/decisions))
   size: every creature spell's size times this (bolts and lobs, their trails, hits, ground marks, beams' width, status icons, pack specials; a quake's or pulse's ground spreads a little past its true reach, 40% of the extra). opacity: how far each spell's own opacity is raised toward solid (0: as it was; 1: all solid), so a themed shot's 0.45 goes to 0.95 and a beam's 0.65 to 0.97. bloom: its halo, the halo seen through the crowns, its glow on the ground and the extra glow round bolts, hits, beams and zones, times their own (lights by half as much, at most 1.5 times). duration: hits, marks, quakes and trails last this many times as long. zoneDensity: the share of a lingering zone's tiles drawn (0.25 was every fourth; 1 every one). groundMark: how opaque a hit's mark on the ground starts (it was 0.12).
   Code: `render/leash/attackLook.ts`, `render/fx/system.ts`
+- **`attackFx.glow`**: How the creatures' spells glow: a bright core the bloom picks up, a dithered pixel halo round it, a pool of its light on the ground under it, and a real light for the brightest few nearest her (core, halo, pool and light 0 draw them as before 9 November; ?spellglow=0 does too, to compare).
+  1. Ed, 2026-11-09: "The animal magic effects need to glow." (core 1, halo 1, pool 1, lights 5, light 1; the look is the magic brief's (docs/backlog/magic-effects.md §5, Ed 2026-10-28: "Pixel cores and dithered pixel halos, with a small smooth bloom over the top"; effect lights allowed, capped at about six))
+  core: how bright the glowing core added over each spell's own is, in its element's bright colour (a party animal's: its neon), enough to cross the bloom's threshold, so the bloom gives it a small smooth glow (0 none). halo: the dithered halo round bolts, hits and beams, in three art-pixel steps fading out (0 none). pool: its light's pool on the ground under every spell in flight (smaller and fainter the higher it flies, so the lit spot shows its height), at its hits and across lingering zones and quakes (0 none). lights: at most this many spells light the world around them at once (the strongest nearest her first, sharing the effects' six slots, config/fx/intensity.json lightCap, within the light budget; easing in and out, the world's farthest lights making room the same way, so none pops); 0 none. light: those lights' strength (1 as the magic layers' own). Reduce flashing (the Settings page) halves core, halo, pool and light; nothing in the glow flickers.
+  Code: `render/fx/spellGlow.ts`, `render/fx/batch.ts`, `render/fx/system.ts`, `render/leash/attackLook.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -2167,6 +2197,11 @@ Code: `render/attackFeel.ts`
 | `attackFx.visibility.duration` | number | 0.25 to 4 |
 | `attackFx.visibility.zoneDensity` | number | 0.05 to 1 |
 | `attackFx.visibility.groundMark` | number | 0 to 1 |
+| `attackFx.glow.core` | number | 0 to 4 |
+| `attackFx.glow.halo` | number | 0 to 4 |
+| `attackFx.glow.pool` | number | 0 to 4 |
+| `attackFx.glow.lights` | number | 0 to 6 |
+| `attackFx.glow.light` | number | 0 to 4 |
 
 ### `combat`
 
@@ -2908,7 +2943,7 @@ Code: `render/bubbles.ts`
   1. Ed, 2026-10-05: "the speech bubbles should scale with the level of the animal, with the legends as the largest"
 - **`bubbles.near`, `bubbles.fade`, `bubbles.ease`**: How close (metres) she must be on the ground to see a creature's speech or thought bubble; none from the treetops or the treehouse.
   1. Ed, 2026-10-28: "Animal speech bubbles / thought bubbles should fade into view when the witch gets close. I shouldn't see them on the ground when I'm at the treetops. I shouldn't see them on the ground when I'm in the treehouse."
-  Whole within near less fade, fading to nothing at near; eased in and out over ease seconds, so rising, landing and going indoors fade them. 38 and 8 to start: whole to 30 m, about the letters' reach (invites.range 33), so any creature she can throw at answers where she can read it, and gone by 38. The 💌 replies, the talk and the sleepers' 😴s go by it; a legend's dream (dreams.range) and the night won's island dreams (twice that) keep their own ranges, fading at their edge and hidden from the treetops and the treehouse the same.
+  Whole within near less fade, fading to nothing at near; eased in and out over ease seconds, so rising, landing and going indoors fade them. 38 and 8 to start: whole to 30 m, about the letters' reach (invites.range 33), so any creature she can throw at answers where she can read it, and gone by 38. Then 47 (2026-11-09, with the letters' longer reach, invites.range 42: Ed, "ranges feel small"): whole to 39 m, gone by 47, so a creature a letter lands on at full range still answers where she can read it. The 💌 replies, the talk and the sleepers' 😴s go by it; a legend's dream (dreams.range) and the night won's island dreams (twice that) keep their own ranges, fading at their edge and hidden from the treetops and the treehouse the same.
   Code: `render/bubbleSight.ts`
 
 | knob | type | range |
@@ -3333,6 +3368,14 @@ Code: `tools/music-lab/check.cjs`
 - **`music.house.muffle`**: on the house its low-pass closes to this many Hz as its world slows (eased with the slowing), its volume as it is; lighter than a legend circle's circle.muffle.
   1. Ed, 2026-10-26: "When in the treehouse, the house music slows and muffles. Other sounds stay the same"
 - **`music.src`**: an audio file to loop (empty: the built-in loop at beat.bpm until there's a real track). ?music=off silences it.
+- **`music.singer`**: who sings the vocalise: empty for the music style's own singer (Chimera's notes since 2026-11-08), or a sung patch of the style in its place everywhere it sings (recordedVoice the old recorded singer, altoSampled the alto set); ?singer=recorded or ?singer=sampled for a load, to A/B.
+  1. Ed, 2026-11-08: "yes, go for it. Go ahead and swap them over" (of the Chimera vocalise he'd heard ("This is surprisingly good!"); the old voice kept selectable to A/B)
+  Code: `rules/musicScore.ts`, `app/sound.ts`
+- **`music.haunted`**: The haunted treatment in the quiet sections and a sleeping legend's clearing layer (the music style's haunted block, docs/notes/music.md Haunted); false plays the music as before, as does ?haunted=0 or the Music Lab's Haunted switch.
+  1. Ed, 2026-11-08: "B, 1-6" (of six ways to bring the music closer to the vocalise demo he liked and three places to apply them: all six, in the quiet sections and the legends' clearings; option 5 lets notes outside dorian into those places only)
+  2. Ed, 2026-11-08: "Instead of 50% of the time, make it a drop - no drums, and then drum and bass kicks in. (Agree, not in legend areas)" (the quiet sections' drums: silent, then a drum & bass drop; the clearings without drums)
+  In its sections (breakdown, ether, whisper): the voice's own long dark reverb, no drums and then a drum and bass drop on a 4-bar line, held notes and slower chords, a ghost voice a sixth below, a root-and-fifth drone, the flattened 2nd or raised 7th as colour (notes outside dorian there only), and the voice lifted.
+  Code: `rules/musicScore.ts`, `platform/audio/musicEngine.ts`, `app/sound.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -3358,6 +3401,8 @@ Code: `tools/music-lab/check.cjs`
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
+| `music.singer` | string |  |
+| `music.haunted` | boolean |  |
 | `music.over.stop` | number | 0 to … |
 | `music.over.floor` | number | 0 to … |
 | `music.beach.fade` | number | 0 to … |
@@ -3864,13 +3909,15 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
   1. Ed, 2026-10-21
   Code: `ui/stationPanel.ts`
 - **`camera.station.aim`**: with no part, the camera aimed that share of her height (as she's drawn) up her.
-- **`camera.station.parts`**: Where the camera aims at a dressing station for each part of her being changed (head, hat, top, legs, feet, broom, the pegboard).
+- **`camera.station.parts`**: Where the camera aims at a dressing station for each part of her being changed (head, face, hat, top, back, bag, legs, feet, broom, the pegboard).
   1. Ed, 2026-10-23: "zoom in on what's being chosen"
   2. Ed's playtest, 2026-10-23: aimed by metres from her feet, her head went off the top of the screen up close; by her height it stays on the part chosen at any zoom
-  for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed aim of her height (as drawn: 0 her feet, 1 the top of her hat) up her and look metres higher (a thing by her: the board, the broom), and its distance times distance in place of the station's own, eased from part to part as the cursor moves [2].
+  3. Ed, 2026-11-07: "frame the part of her that station changes ... Every station now changes one part of her, so each gets its part framed. Trousers and shoes frame from the waist down."
+  for the part of her the row in focus is about (config/wardrobe.json's frame: head, face (the basin), hat, top, back (the cloak pegs), bag, legs (her waist down: the shoe rack's trousers and shoes), feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed aim of her height (as drawn: 0 her feet, 1 the top of her hat) up her and look metres higher (a thing by her: the board, the broom), and its distance times distance in place of the station's own, eased from part to part as the cursor moves [2].
   Code: `config/wardrobe.json`
 - **`camera.station.whole`**: At a dressing station the camera frames her whole, top of her hat to the soles of her shoes, in the right half of the screen while the panel takes the left half.
   1. Ed, 2026-10-29: "Menus should be left half of the screen, and the witch right half of the screen, and she should be nicely centred and visible top of hat to bottom of shoes."
+  2. Ed, 2026-11-07: "frame the part of her that station changes, using the existing per-part framing" (so whole.on is off: each station frames its part (parts))
   margin is the share of the screen's height left clear above and below her; at is where across the screen's width she stands (0.75: the right half's middle). On, it replaces distance, side, aim and parts (the zoom on the part of her being chosen), which stay for it off.
   Code: `src/render/view/camera.ts`, `src/ui/stationPanel.ts`
 - **`camera.station.dim`**: How dark the picture behind her goes while she's framed at a station, so she stands out: 0 leaves it as it is, 1 makes it black.
@@ -3934,10 +3981,16 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
 | `camera.station.aim` | number | 0 to … |
 | `camera.station.parts.head.aim` | number | 0 to … |
 | `camera.station.parts.head.distance` | number | 0 to … |
+| `camera.station.parts.face.aim` | number | 0 to … |
+| `camera.station.parts.face.distance` | number | 0 to … |
 | `camera.station.parts.hat.aim` | number | 0 to … |
 | `camera.station.parts.hat.distance` | number | 0 to … |
 | `camera.station.parts.top.aim` | number | 0 to … |
 | `camera.station.parts.top.distance` | number | 0 to … |
+| `camera.station.parts.back.aim` | number | 0 to … |
+| `camera.station.parts.back.distance` | number | 0 to … |
+| `camera.station.parts.bag.aim` | number | 0 to … |
+| `camera.station.parts.bag.distance` | number | 0 to … |
 | `camera.station.parts.legs.aim` | number | 0 to … |
 | `camera.station.parts.legs.distance` | number | 0 to … |
 | `camera.station.parts.feet.aim` | number | 0 to … |
@@ -4517,10 +4570,14 @@ Drawing-only coloured patterns on existing lights, controlled from the pause pag
 - **`patternLight.strength`**: How strongly coloured spokes shape existing lights, from 0 (ordinary lighting) to 4.
   1. Ed, 2026-11-05: "this is imperceptible atm; put it live with a strength slider and I'll just test it in game." (Colour spokes on by default; strength 0–4, default 3, at most three existing light slots and no extra lights.)
   Changes immediately from the pause page; reduced flashing disables all patterns. Strength 1 preserves original 0.9 contrast; default 3 brightens only the colour-spokes lit bands threefold, with dark gaps and centre fade preserved; at most three existing light slots, no added lights or shadows.
+- **`patternLight.beatsPerTurn`**: How many beats the coloured-spokes wheel round a playing soundsystem takes to turn once, so it turns faster as the tempo rises.
+  1. Ed, 2026-11-07: "Patterned lighting around treestumps; it should rotate, speed scaled by bpm" (One turn every 2 bars (8 beats: 4 s at 120 bpm); it was one turn every 128 beats, too slow to see.)
+  Read from the game's beat clock, so it follows the record's bpm and her knockdowns' tempo rises. The other ?patternlight= looks share the phase and speed up by the same factor.
 
 | knob | type | range |
 |---|---|---|
 | `patternLight.strength` | number | 0 to 4 |
+| `patternLight.beatsPerTurn` | number | 1 to 256 |
 
 ### `lightBudget`
 

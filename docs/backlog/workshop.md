@@ -20,6 +20,7 @@ The status index checks the requests below against prototype `ab06904b` and cite
 | Host-owned parts and exclusive multiplayer use | **Partly built** | #1538 typed equipment approval exists; ordinary calls remain off and full multi-client Workshop acceptance incomplete. No live multiplayer-Workshop version claimed. |
 | Next nine parts and new/silly sets | — | Current config contains original nine parts/five sets; no requested second batch found. |
 | Set-specific treetop trails | — | Current generic flight trail is not a set-specific trail implementation. |
+| Broom picked up at a rack, modded at three stations (Ed, 2026-11-07) | **Built** | The broom rack (E takes her broom, no menu), the workbench (tips), the lathe (chassis, Body, length/thickness/bend), the hydraulic lift (exhausts, Trim, bristle size, trail); sets and "Her broom" at each one's foot; the pegboard scenery; the modding stations only while she carries her broom; pins only to the rack. docs/notes/house.md **The broom's stations**. |
 
 
 Proposal (2026-10-23); **Ed's go the same day; built (PR 1 the rules and finds, PR 2 the room)** (his decisions below win over the proposal where they differ). It takes [unlocks.md](unlocks.md)'s "The broom garage", renamed **the Workshop** and moved to the round room off the Terrace in the Ent's own house (v3: `tools/house/organic.mjs`, `config/house.json`, rules/houseRooms.ts), and fills it in with Ed's decisions of 2026-10-22/23, which win where they differ from unlocks.md:

@@ -6,7 +6,7 @@ import { TUNING } from "../../rules/tuning";
 import { mixAt } from "../../rules/music";
 import { newBeatClock } from "../../rules/beat";
 import type { MusicCue } from "../../rules/musicPlan";
-import type { MusicStyle } from "../../rules/musicScore";
+import { withHaunted, type MusicStyle } from "../../rules/musicScore";
 
 const style = styleJson as unknown as MusicStyle;
 
@@ -208,6 +208,25 @@ describe("a new night on the same page (docs/plans/sail-without-reload.md, A4)",
     expect((e as unknown as { knocksHeard: number }).knocksHeard).toBe(0);
   });
 
+  it("sings each note from Chimera's own note on its vowel, untuned, the vowels in turn through a phrase (Ed, 2026-11-08: the swap)", () => {
+    const ctx = fakeContext(), e = new MusicEngine(ctx, (ctx as unknown as { destination: AudioNode }).destination, style, 7);
+    const sources: { buffer: unknown; playbackRate: { value: number } }[] = [];
+    (ctx as unknown as Record<string, unknown>).createBufferSource = () => { const n = { buffer: null as unknown, playbackRate: { value: 1 }, connect: () => n, disconnect() {}, start() {}, stop() {}, loop: false }; sources.push(n); return n; };
+    const recs = Object.fromEntries([...style.patches.chimeraVoice.notes!.map(n => n.sample), "female-note"].map(id => [id, { id, duration: 2.7 } as unknown as AudioBuffer]));
+    e.setRecordings(recs);
+    const play = (e as unknown as { play: (ev: object, t: number, dur: number, sps: number) => void }).play.bind(e), sung = (src: { buffer: unknown }) => Object.values(recs).includes(src.buffer as AudioBuffer);
+    for (const [i, midi] of [60, 62, 64].entries()) play({ part: "sung", patch: "chimeraVoice", step: i * 4, offset: 0, dur: 4, midi, vel: 0.8 }, 1 + i * 0.5, 0.5, 0.125);
+    const new3 = sources.filter(sung);
+    expect(new3.map(s => (s.buffer as { id: string }).id)).toEqual(["chimera-ah-60", "chimera-ah-62", "chimera-ooh-64"]);
+    for (const s of new3) expect(s.playbackRate.value).toBeCloseTo(1, 9);
+    // (the old singer, kept to A/B: the one recording retuned)
+    sources.length = 0;
+    play({ part: "sung", patch: "recordedVoice", step: 0, offset: 0, dur: 4, midi: 60, vel: 0.8 }, 10, 0.5, 0.125);
+    const old = sources.filter(sung);
+    expect(new Set(old.map(s => (s.buffer as { id: string }).id))).toEqual(new Set(["female-note"])); // (and its phrase's swell into the hall)
+    expect(old.at(-1)!.playbackRate.value).toBeCloseTo(2 ** ((60 - 67.2) / 12), 6);
+  });
+
   it("builds the sung part's channel again after a new style (its first note no stall)", () => {
     const ctx = fakeContext(), e = new MusicEngine(ctx, (ctx as unknown as { destination: AudioNode }).destination, style, 7);
     const channels = () => (e as unknown as { channels: Map<string, unknown> }).channels;
@@ -215,5 +234,51 @@ describe("a new night on the same page (docs/plans/sail-without-reload.md, A4)",
     expect(channels().has(sung)).toBe(true);
     e.setStyle({ ...style });
     expect([...channels().keys()]).toEqual([sung]);
+  });
+});
+
+describe("the haunted treatment in the engine (Ed, 2026-11-08: \"B, 1-6\")", () => {
+  const cue: MusicCue = { waves: [0, 0], nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, forceWave: 2, forceSection: "breakdown" };
+  /** 16 bars of a breakdown scheduled on a fake context; what was made, and the haunted automation asked for. */
+  function render(st: MusicStyle) {
+    const ctx = fakeContext(), made: Record<string, number> = {};
+    for (const k of ["createConvolver", "createOscillator"]) { const f = (ctx as unknown as Record<string, () => unknown>)[k]; (ctx as unknown as Record<string, unknown>)[k] = () => { made[k] = (made[k] ?? 0) + 1; return f(); }; }
+    const e = new MusicEngine(ctx, (ctx as unknown as { destination: AudioNode }).destination, st, 7), haunts: [boolean, number, number][] = [], ghosts: number[] = [];
+    const bus = e.bus, haunt = bus.haunt!;
+    bus.haunt = (on, root, t) => { haunts.push([on, root, t]); haunt(on, root, t); };
+    const ghostCh = (e as unknown as { ghostChannel: (p: string, c: boolean) => unknown }).ghostChannel.bind(e);
+    (e as unknown as { ghostChannel: unknown }).ghostChannel = (p: string, c: boolean) => { ghosts.push(ctx.currentTime); return ghostCh(p, c); };
+    e.renderAhead(cue, 0, 16 * 2, newBeatClock(st.bpm));
+    return { made, haunts, ghosts };
+  }
+
+  it("asks for the voice's reverb, its lift and the drone each bar of a haunted section, in the key, at most one convolver more", () => {
+    const on = render(style), off = render(withHaunted(style, false));
+    expect(on.haunts.length).toBe(16);
+    expect(on.haunts.every(([h, root]) => h && root === style.root + (style.arc[2].transpose ?? 0) + 12 * style.haunted!.drone.octave)).toBe(true);
+    expect(off.haunts).toEqual([]); // (off: nothing asked, nothing made)
+    expect((on.made.createConvolver ?? 0) - (off.made.createConvolver ?? 0)).toBeLessThanOrEqual(1);
+    expect(on.made.createConvolver ?? 0).toBeGreaterThan(off.made.createConvolver ?? 0);
+    expect(on.ghosts.length).toBeGreaterThan(0);
+    expect(off.ghosts.length).toBe(0);
+  });
+
+  it("makes the drone cheaply: six sines and three swells, once", () => {
+    const ctx = fakeContext(), e = new MusicEngine(ctx, (ctx as unknown as { destination: AudioNode }).destination, style, 7);
+    let oscs = 0;
+    const f = (ctx as unknown as Record<string, () => unknown>).createOscillator;
+    (ctx as unknown as Record<string, unknown>).createOscillator = () => { oscs++; return f(); };
+    e.bus.haunt!(true, 45, 0); e.bus.haunt!(true, 45, 2); e.bus.haunt!(false, 45, 4); e.bus.haunt!(true, 47, 6);
+    expect(oscs).toBe(9);
+  });
+
+  it("plays a ghost note late by the style's delay, on a channel of its own", () => {
+    const ctx = fakeContext(), e = new MusicEngine(ctx, (ctx as unknown as { destination: AudioNode }).destination, style, 7), starts: number[] = [];
+    (ctx as unknown as Record<string, unknown>).createBufferSource = () => { const n = { buffer: null as unknown, playbackRate: { value: 1 }, connect: () => n, disconnect() {}, start(t: number) { starts.push(t); }, stop() {}, loop: false }; return n; };
+    e.setRecordings(Object.fromEntries(style.patches.chimeraVoice.notes!.map(n => [n.sample, { duration: 2.7 } as unknown as AudioBuffer])));
+    const play = (e as unknown as { play: (ev: object, t: number, dur: number, sps: number) => void }).play.bind(e);
+    play({ part: "sung", patch: "chimeraVoice", step: 0, offset: 0, dur: 16, midi: 55, vel: 0.3, ghost: true }, 1, 2, 0.125);
+    expect(starts[0]).toBeCloseTo(1 + style.haunted!.ghost.delay, 9);
+    expect((e as unknown as { channels: Map<string, unknown> }).channels.has("ghost:sung")).toBe(true);
   });
 });

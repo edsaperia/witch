@@ -12,16 +12,20 @@ import { SPECIES_ATTACKS } from "../../rules/attacks/species";
 import { elements as FX } from "../fx/model";
 import { attackLookAtlas } from "../../../art/attackLook.js";
 import type { Game } from "../../rules/game";
+import { NO_GLOW, SPELL_GLOW, type GlowLook, type GlowTuning } from "../fx/spellGlow";
+import { comfort } from "../comfort";
 
-type Call = { form: string; size: number; alpha: number; glow: number; tint: readonly number[] | null; width?: number };
-/** An attack look whose magic layers record what they were asked to draw. */
-function recorder(vis: Visibility) {
+type Call = { form: string; size: number; alpha: number; glow: number; tint: readonly number[] | null; width?: number; look?: GlowLook | null; lit?: boolean };
+/** An attack look whose magic layers record what they were asked to draw (glowT: the spell glow's knobs, none by default). */
+function recorder(vis: Visibility, glowT: GlowTuning = NO_GLOW) {
   const look = new AttackLook(new THREE.Scene(), { tuning: TUNING } as unknown as Game), calls: Call[] = [];
   const m = look.magic as unknown as Record<string, unknown>;
-  m.draw = (_el: string, form: string, _x: number, _y: number, _z: number, _lv: number, size = 1, alpha = 1, _ph = 0, _seed = 0, tint: readonly number[] | null = null, _i?: number, glow = 1) => { calls.push({ form, size, alpha, glow, tint }); };
-  m.beam = (_el: string, _x0: number, _z0: number, _x1: number, _z1: number, _y: number, width: number, _lv: number, alpha: number, _seed: number, tint: readonly number[] | null = null, _i?: number, glow = 1) => { calls.push({ form: "beam", size: width, width, alpha, glow, tint }); };
-  m.ribbon = (_el: string, _x: number, _y: number, _z: number, _vx: number, _vy: number, _vz: number, _lv: number, _seed: number, tint: readonly number[] | null, _i: number | undefined, L: { width: number; alpha: number; life: number; glow: number }) => { calls.push({ form: "trail", size: L.width, alpha: L.alpha, glow: L.glow, tint }); };
-  look.begin(vis);
+  m.draw = (_el: string, form: string, _x: number, _y: number, _z: number, _lv: number, size = 1, alpha = 1, _ph = 0, _seed = 0, tint: readonly number[] | null = null, _i?: number, glow = 1, gl: GlowLook | null = null, lit = true) => { calls.push({ form, size, alpha, glow, tint, look: gl, lit }); };
+  m.beam = (_el: string, _x0: number, _z0: number, _x1: number, _z1: number, _y: number, width: number, _lv: number, alpha: number, _seed: number, tint: readonly number[] | null = null, _i?: number, glow = 1, gl: GlowLook | null = null) => { calls.push({ form: "beam", size: width, width, alpha, glow, tint, look: gl }); };
+  m.ribbon = (_el: string, _x: number, _y: number, _z: number, _vx: number, _vy: number, _vz: number, _lv: number, _seed: number, tint: readonly number[] | null, _i: number | undefined, L: { width: number; alpha: number; life: number; glow: number }, gl: GlowLook | null = null) => { calls.push({ form: "trail", size: L.width, alpha: L.alpha, glow: L.glow, tint, look: gl }); };
+  m.glowPool = (_el: string, _x: number, _z: number, size: number, _lv: number, alpha: number, _seed: number, tint: readonly number[] | null, gl: GlowLook) => { calls.push({ form: "pool", size, alpha, glow: 1, tint, look: gl }); };
+  m.glowBurst = (_el: string, _x: number, _y: number, _z: number, size: number, _lv: number, alpha: number, _seed: number, tint: readonly number[] | null, gl: GlowLook) => { calls.push({ form: "blow", size, alpha, glow: 1, tint, look: gl }); };
+  look.begin(vis, glowT);
   return { look, calls };
 }
 const wild: Dress = { el: "fire", level: 2 };
@@ -79,6 +83,54 @@ describe("the creatures' spells, dialled up (attackFx.visibility)", () => {
   it("draws status icons size times bigger", () => {
     const size = (s: number) => { const r = recorder({ ...OLD_VISIBILITY, size: s }); const L = r.look.paint as unknown as { size: Float32Array }; r.look.motif("slow", wild, 0, 1.4, 0, 0, 0); return L.size[0]; };
     expect(size(1.75) / size(1)).toBeCloseTo(1.75);
+  });
+});
+
+describe("the creatures' spells glow (Ed, 2026-11-09: \"The animal magic effects need to glow\")", () => {
+  const GLOW = TUNING.attackFx.glow;
+  it("asks every spell's part for its glow: bolts and trails, hits, beams, quakes", () => {
+    const { look, calls } = recorder(NEW, GLOW);
+    look.core(wild, 0, 1, 0, 8, 0, 0, 0, 1); look.impact(wild, 0, 1, 0, 0.3, 1); look.beam(wild, 0, 0, 10, 0, 0.7, 1.4, 0, 1); look.area(wild, 0, 0, 3, 0.3, 1);
+    for (const f of ["projectile", "trail", "burst", "beam", "zone"]) expect(calls.find(c => c.form === f)?.look, f).toMatchObject({ core: GLOW.core, halo: GLOW.halo, pool: GLOW.pool, lights: GLOW.lights, light: GLOW.light });
+    // (a hit's mark, left after it, doesn't glow)
+    calls.length = 0; look.mark(wild, 0, 0, 0.2); expect(calls[0].look).toBeNull();
+  });
+  it("in a party animal's neon: its tint goes with it", () => {
+    const { look, calls } = recorder(NEW, GLOW), neon: [number, number, number] = [1, 0.3, 0.8];
+    look.core({ ...wild, tint: neon }, 0, 1, 0, 8, 0, 0, 0, 1);
+    expect(calls[0].look).not.toBeNull(); expect(calls[0].tint).toEqual(neon);
+  });
+  it("lights a lingering zone once, not a light a tile", () => {
+    const { look, calls } = recorder(NEW, GLOW);
+    look.zone(wild, 0, 0, 4, 0.5, 9, () => true, 0);
+    const tiles = calls.filter(c => c.form === "trap");
+    expect(tiles.length).toBeGreaterThan(1); for (const t of tiles) { expect(t.look).toBeNull(); expect(t.lit).toBe(false); }
+    expect(calls.filter(c => c.form === "pool")).toHaveLength(1);
+  });
+  it("takes the dithered halo in place of the smooth extra bloom", () => {
+    const r = recorder(NEW, GLOW); r.look.core(wild, 0, 1, 0, 8, 0, 0, 0, 1); r.look.impact(wild, 0, 1, 0, 0.2, 1); r.look.end();
+    expect((r.look.glow.mesh.geometry as THREE.InstancedBufferGeometry).instanceCount).toBe(0);
+  });
+  it("glows a legend's blow in its element, for a moment", () => {
+    const { look, calls } = recorder(NEW, GLOW);
+    look.blow({ el: "fire", level: 3 }, 0, 1, 0, 10, 5); look.drawFx(10.1);
+    expect(calls.filter(c => c.form === "blow")).toHaveLength(1);
+    calls.length = 0; look.drawFx(10 + 0.56 * NEW.duration); expect(calls).toHaveLength(0);
+    const off = recorder(NEW); off.look.blow({ el: "fire", level: 3 }, 0, 1, 0, 10, 5); off.look.drawFx(10.1); expect(off.calls).toHaveLength(0);
+  });
+  it("draws as before with ?spellglow=0, with every knob at 0, or with the old magic", () => {
+    const before = SPELL_GLOW.on;
+    try {
+      SPELL_GLOW.on = false; expect(recorder(NEW, GLOW).look.spellGlow).toBeNull();
+      SPELL_GLOW.on = true; expect(recorder(NEW, GLOW).look.spellGlow).not.toBeNull(); expect(recorder(NEW, NO_GLOW).look.spellGlow).toBeNull();
+      const r = recorder(NEW, GLOW); r.look.magic.enabled = false; r.look.begin(NEW, GLOW); expect(r.look.spellGlow).toBeNull();
+    } finally { SPELL_GLOW.on = before; }
+  });
+  it("halves with Reduce flashing", () => {
+    try {
+      comfort.reduceFlashing = true; const g = recorder(NEW, GLOW).look.spellGlow!;
+      expect(g.core).toBeCloseTo(GLOW.core / 2); expect(g.halo).toBeCloseTo(GLOW.halo / 2); expect(g.pool).toBeCloseTo(GLOW.pool / 2); expect(g.light).toBeCloseTo(GLOW.light / 2);
+    } finally { comfort.reduceFlashing = false; }
   });
 });
 

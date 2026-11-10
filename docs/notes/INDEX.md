@@ -95,6 +95,7 @@ says what each note covers.
 - Momentum class selection
 - Accepted attack outcomes
 - Talk / invite
+- Letters' reach
 - Bubble sight
 - Babies on her leash
 - Followers in the treehouse
@@ -155,6 +156,7 @@ says what each note covers.
 - The treehouse's rooms
 - The oak
 - Furniture: size, freestanding, mess and layout
+- The stations regrouped
 - Station menus
 - Starting bags
 - Found bags
@@ -177,6 +179,7 @@ says what each note covers.
 - Find sets
 - Sleeping before the party
 - Finds pool
+- The broom's stations
 - Workshop
 - Invitations and brooms / her night's kit
 - Broom parts / slots
@@ -221,6 +224,7 @@ says what each note covers.
 
 - Potion isolation
 - Music style
+- Haunted
 - Section
 - Boot-up
 - Form
@@ -232,11 +236,13 @@ says what each note covers.
 - The singer's redesign
 - Music Lab
 - The singer's A/B
+- The Chimera singer
 - Music Studio
 - Live Music Lab
 - Music ahead
 - Voices
 - The alto set
+- The Chimera set
 - A/B renders
 
 ## [Two-browser prototype](online-prototype.md)
@@ -382,6 +388,8 @@ says what each note covers.
 - Moon
 - Cooldown trail
 - Trail colours
+- Tree normal maps switch
+- Tree normal directions
 
 ## [The witch's art](witch-art.md)
 
@@ -406,6 +414,7 @@ says what each note covers.
 - Party objects
 - Attack effects
 - Attack look
+- Spell glow
 - Colour temperatures
 - Path kinds
 - Path looks

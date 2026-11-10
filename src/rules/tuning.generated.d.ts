@@ -493,6 +493,7 @@ export type SchemaTuning = {
     "value": number;
     "hue": number;
   };
+  "treeNormals": "full" | "64" | "32" | "16" | "0";
   "wind": {
     "on": boolean;
     "strength": number;
@@ -598,6 +599,8 @@ export type SchemaTuning = {
     "lightFloor": number;
     "lightTint": number;
     "lightRim": number;
+    "bedGlow": number;
+    "bedBloom": number;
     "heightSmooth": number;
     "heightLookAhead": number;
     "heightClearance": number;
@@ -1088,6 +1091,7 @@ export type SchemaTuning = {
   };
   "combatWaiting": {
     "reachScale": number;
+    "inviteReach": number;
     "areaGrowth": number;
     "passPower": number;
     "passDepth": number;
@@ -1143,6 +1147,13 @@ export type SchemaTuning = {
       "duration": number;
       "zoneDensity": number;
       "groundMark": number;
+    };
+    "glow": {
+      "core": number;
+      "halo": number;
+      "pool": number;
+      "lights": number;
+      "light": number;
     };
   };
   "combat": {
@@ -1929,6 +1940,8 @@ export type SchemaTuning = {
     "clear": number;
     "distort": number;
     "src": string;
+    "singer": string;
+    "haunted": boolean;
     "over": {
       "stop": number;
       "floor": number;
@@ -2265,11 +2278,23 @@ export type SchemaTuning = {
           "aim": number;
           "distance": number;
         };
+        "face": {
+          "aim": number;
+          "distance": number;
+        };
         "hat": {
           "aim": number;
           "distance": number;
         };
         "top": {
+          "aim": number;
+          "distance": number;
+        };
+        "back": {
+          "aim": number;
+          "distance": number;
+        };
+        "bag": {
           "aim": number;
           "distance": number;
         };
@@ -2556,6 +2581,7 @@ export type SchemaTuning = {
   "glowHeight": number;
   "patternLight": {
     "strength": number;
+    "beatsPerTurn": number;
   };
   "lightBudget": number;
   "lights": {

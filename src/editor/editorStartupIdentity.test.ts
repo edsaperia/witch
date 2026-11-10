@@ -29,8 +29,10 @@ it("starts with every authored pose under either one-ulp sine result, with the s
   expect(a.key).toBe(identities.canonical); expect(b.key).toBe(a.key);
   expect(JSON.stringify(b.selected)).toBe(JSON.stringify(a.selected));
   // (less the guests' bedrooms' doors: gone since Ed, 2026-11-03, their placements dropped on import)
-  expect(a.selected.objects).toHaveLength(proposal.objects.filter(p => !a.x.RETIRED_OBJECTS.includes(p.id)).length);
+  // (and the objects new since, the basins and the guests' shoe racks, Ed 2026-11-07: at their defaults)
+  expect(a.selected.objects).toHaveLength(proposal.objects.filter(p => !a.x.RETIRED_OBJECTS.includes(p.id)).length + a.x.ADDED_OBJECTS.length);
   for (const p of a.selected.objects) {
+    if (a.x.ADDED_OBJECTS.includes(p.id)) continue;
     // Migration v1 substitutes only the two guest chests (Ed 1609#6557564092).
     const sourceId = p.id === "bedroom2DressingTable" ? "bedroom2Chest" : p.id === "bedroom3DressingTable" ? "bedroom3Chest" : p.id;
     const old = proposal.objects.find(o => o.id === sourceId)!;
