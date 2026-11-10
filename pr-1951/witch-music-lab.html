@@ -512,7 +512,7 @@ label.check input { accent-color: var(--accent); }
       comp: { on: true, drums: { threshold: -7, knee: 6, ratio: 4, attack: 0.02, releaseBeats: 0.25, mix: 0.65, makeup: 1.5, room: { time: 0.35, send: 0.2, hp: 450 } }, glue: { threshold: -6, knee: 8, ratio: 2, attack: 0.03, release: 0.25, makeup: 1.3 } },
       vocals: { double: "bgChop", doubleLevel: 1, pad: "bgOoh", padLevel: 0.9, stabLevel: 0.8, range: [55, 76], harmony: { voices: 3, window: 55, gentleVoices: 2, gentleLevel: 0.5, stabs: 0.5, chordStabLevel: 0.7 } },
       space: { balance: { drums: 1.3, bass: 1.17, pad: 0.7, chords: 0.75, vocals: 0.8 }, echo: { steps: 3, levels: [0.42, 0.2] }, riffRest: true, thin: true, xylo: { voice: "xylo", low: "xyloLow", window: 67, lowWindow: 62, level: 1.7, roll: "roll", figures: { off: "..x...x...x...x.", push: "..x..x....x..x..", arp: "a.b.c.b.a.b.c.b.", wide: "a..b..c.a..b..c.", skeleton: "1..ab...1..ab.c.", bones: "1.a.b...1.a.b.ab", roll: "tttttt....x....." } } },
-      spice: { xylo: "xylo", answer: 0.3, flourish: 0.33, breakdown: 0.4, snap: "bgSnap", snaps: 0.3, gentleSnaps: 0.5, replace: 0.5, breakdownSnaps: 0.35, snapLevel: 0.9 },
+      spice: { xylo: "xylo", answer: 0.3, flourish: 0.33, breakdown: 0.4, snap: "bgSnap", snaps: 0.5, snapLevel: 0.9 },
       register: { lead: 84, reply: 88, floor: 57, level: 0.66 },
       progressions: { dorian: { a: [[0, 0, 3, 3], [0, 6, 3, 3], [0, 2, 6, 3], [0, 4, 6, 3], [0, 6, 0, 3], [0, 3, 6, 0]], b: [[2, 6, 3, 0], [3, 3, 0, 0], [6, 3, 0, 0], [2, 3, 0, 0]] }, aeolian: { a: [[0, 5, 2, 6], [0, 6, 5, 6], [0, 0, 5, 6], [0, 5, 3, 4], [0, 3, 5, 6]], b: [[5, 6, 0, 0], [5, 2, 6, 0], [3, 5, 6, 0]] }, phrygian: { a: [[0, 1, 0, 6], [0, 0, 1, 1], [0, 5, 1, 0]], b: [[5, 1, 0, 0], [3, 1, 0, 0]] }, harmonicMinor: { a: [[0, 5, 3, 4], [0, 3, 4, 4], [0, 5, 4, 4]], b: [[5, 4, 0, 0], [3, 4, 0, 0]] } },
       hook: { motifs: ["x-.x-.x-x-.x-...", "x-x-..x-x--.....", "..x-x-x-..x-x-..", "x--x--x-..x-....", "x-..x-x-.x-.x-..", "x-x-x-..x--x--..", ".x-x-.x-x---....", "x---..x-x-x-....", "x-.x-.x-..x-.x-.", "x-x-.x-.x---....", "x--x-.x-x-..x-..", "..x-.x-.x-x-x---"], answers: ["x-----x---x-----", "x---x---x-------", "..x---x-x-------", "x--x--x---------", "x-x-x---x-------"], shapes: [[0, 0, 2, 1, 0], [0, 2, 1, 2, 0], [0, 1, 2, 1, 3], [2, 0, 2, 0, 1], [0, 3, 2, 1, 2], [0, 0, 3, 2, 0], [2, 2, 1, 0, 1], [0, 1, 0, 2, 0], [3, 2, 0, 2, 0], [0, 2, 2, 1, 3]], anchors: [0, 1, 3, 3], replies: [[5, 7, 8], [8, 7, 5], [5, 6, 8], [7, 5, 7]] },
@@ -610,7 +610,7 @@ label.check input { accent-color: var(--accent); }
         garage: {
           xylo: 0.5,
           swing: 0.2,
-          drums: [{ patch: "bgKick", p: "X......x..x.....X.....x...x..x.." }, { patch: "bgClap", p: "....X.......X...", level: 0.85 }, { patch: "bgSnap", p: "....x.......x...", level: 0.5 }, { patch: "bgHat", p: "..x.x.xg..x.x.xg", level: 0.5 }, { patch: "bgOpenHat", p: "......x.......x.", level: 0.45, e: [0.4, 1] }, { patch: "bgRim", p: "...g.....o.....g", level: 0.5 }, { patch: "bgShaker", p: "oxgxoxgxoxgxoxgx", level: 0.35, e: [0.6, 1] }],
+          drums: [{ patch: "bgKick", p: "X......x..x.....X.....x...x..x.." }, { patch: "bgClap", p: "....X.......X...", level: 0.85 }, { patch: "bgHat", p: "..x.x.xg..x.x.xg", level: 0.5 }, { patch: "bgOpenHat", p: "......x.......x.", level: 0.45, e: [0.4, 1] }, { patch: "bgRim", p: "...g.....o.....g", level: 0.5 }, { patch: "bgShaker", p: "oxgxoxgxoxgxoxgx", level: 0.35, e: [0.6, 1] }],
           turn: [{ patch: "snare", p: "..........g..g.o", level: 0.6 }],
           breaks: [{ patch: "bgKick", p: "X.........x.....X.x.......x..x.." }, { patch: "snare", p: "....X..g.o..X..g.o..X..g....X.o.", level: 0.9 }, { patch: "bgHat", p: "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", level: 0.45 }, { patch: "bgOpenHat", p: "..............x.................", level: 0.45, e: [0.5, 1] }],
           fills: ["ghost", "claps", "gap", "trip"],
@@ -623,7 +623,7 @@ label.check input { accent-color: var(--accent); }
         trance: {
           xylo: 0.25,
           swing: 0,
-          drums: [{ patch: "bgKick", p: "X...X...X...X..." }, { patch: "bgClap", p: "....X.......X...", level: 0.8 }, { patch: "bgSnap", p: "....x.......x...", level: 0.45, e: [0.6, 1] }, { patch: "bgOpenHat", p: "..X...X...X...X.", level: 0.6 }, { patch: "bgHat", p: "x.ogx.ogx.ogx.og", level: 0.45 }, { patch: "bgHatB", p: ".g...g...g...g..", level: 0.5, e: [0.55, 1] }, { patch: "bgRide", p: "x...x...x...x...", level: 0.4, e: [0.75, 1], from: 8 }],
+          drums: [{ patch: "bgKick", p: "X...X...X...X..." }, { patch: "bgClap", p: "....X.......X...", level: 0.8 }, { patch: "bgOpenHat", p: "..X...X...X...X.", level: 0.6 }, { patch: "bgHat", p: "x.ogx.ogx.ogx.og", level: 0.45 }, { patch: "bgHatB", p: ".g...g...g...g..", level: 0.5, e: [0.55, 1] }, { patch: "bgRide", p: "x...x...x...x...", level: 0.4, e: [0.75, 1], from: 8 }],
           turn: [{ patch: "snare", p: "............o.oo", level: 0.6 }],
           breaks: [{ patch: "bgKick", p: "X.........x.....X.x.......x..x.." }, { patch: "snare", p: "....X..g.o..X..g.o..X..g....X.o.", level: 0.9 }, { patch: "bgHat", p: "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", level: 0.45 }, { patch: "bgOpenHat", p: "..............x.................", level: 0.45, e: [0.5, 1] }],
           fills: ["classic", "roll", "claps", "kicks"],
@@ -649,7 +649,7 @@ label.check input { accent-color: var(--accent); }
           xylo: 0.3,
           base: "techno",
           swing: 0.05,
-          drums: [{ patch: "bgKick", p: "X..x..x...x.....X..x..x...x..x.." }, { patch: "bgClap", p: "....X.......X...", level: 0.9 }, { patch: "bgSnap", p: "....x.......x...", level: 0.5 }, { patch: "bgHat", p: "x.xgx.xgx.xgx.xg", level: 0.5 }, { patch: "clank", p: "..x...x...x...xx", level: 0.4 }, { patch: "bgOpenHat", p: "......x.......x.", level: 0.45, e: [0.5, 1] }],
+          drums: [{ patch: "bgKick", p: "X..x..x...x.....X..x..x...x..x.." }, { patch: "bgClap", p: "....X.......X...", level: 0.9 }, { patch: "bgHat", p: "x.xgx.xgx.xgx.xg", level: 0.5 }, { patch: "clank", p: "..x...x...x...xx", level: 0.4 }, { patch: "bgOpenHat", p: "......x.......x.", level: 0.45, e: [0.5, 1] }],
           bass: { patch: ["darkBass", "rubberDeep"], octave: 0, p: ["1.18.1.81.18.1.8", "1..1..8.1.1...8."] },
           chords: { patch: "bgStab", p: ["x..x....x.x.....", "..x...x...x...xx"], level: 0.65 },
           leads: { soft: ["square", "pwm"], hard: ["square", "pulse25", "pwm"] },
@@ -697,9 +697,9 @@ label.check input { accent-color: var(--accent); }
         trap: {
           xylo: 0,
           swing: 0,
-          drums: [{ patch: "kick808", p: "X.........x.....X......x..x.....", level: 0.9 }, { patch: "bgClap", p: "........X.......", level: 0.85 }, { patch: "bgSnap", p: "........x.......", level: 0.6 }, { patch: "bgHat", p: "x.x.x.x.xrx.x.rrx.x.x.x.rrrrx.x.", level: 0.5 }, { patch: "bgOpenHat", p: "......................x.........", level: 0.45 }, { patch: "bgRim", p: "...x.........x..", level: 0.4, e: [0.3, 1] }],
+          drums: [{ patch: "kick808", p: "X.........x.....X......x..x.....", level: 0.9 }, { patch: "bgClap", p: "........X.......", level: 0.85 }, { patch: "bgHat", p: "x.x.x.x.xrx.x.rrx.x.x.x.rrrrx.x.", level: 0.5 }, { patch: "bgOpenHat", p: "......................x.........", level: 0.45 }, { patch: "bgRim", p: "...x.........x..", level: 0.4, e: [0.3, 1] }],
           turn: [{ patch: "snare", p: ".............o.o", level: 0.6 }],
-          breaks: [{ patch: "kick808", p: "X.....x...x..x..X.....x...x.....", level: 0.9 }, { patch: "bgClap", p: "........X.......", level: 0.85 }, { patch: "bgHat", p: "xrx.x.xrx.x.rrrrx.x.xrx.x.xrrrrr", level: 0.5 }, { patch: "bgSnap", p: "........x......o", level: 0.6 }],
+          breaks: [{ patch: "kick808", p: "X.....x...x..x..X.....x...x.....", level: 0.9 }, { patch: "bgClap", p: "........X.......", level: 0.85 }, { patch: "bgHat", p: "xrx.x.xrx.x.rrrrx.x.xrx.x.xrrrrr", level: 0.5 }],
           fills: ["roll", "gap", "trip"],
           bass: { patch: ["sub808"], octave: 0, sub: false, glide: 0.08, p: ["1---------1-----1------1--1-.8--", "1-----1---8--5--1-----1---1-.8--"] },
           chords: { patch: "lowChoir", p: ["x---------------"], level: 0.6, window: 50 },
@@ -710,7 +710,7 @@ label.check input { accent-color: var(--accent); }
         phonk: {
           xylo: 0,
           base: "trap",
-          drums: [{ patch: "kick808", p: "X.....x...x..x..X.....x...x.....", level: 0.9 }, { patch: "bgClap", p: "....X.......X...", level: 0.8 }, { patch: "bgSnap", p: "....x.......x...", level: 0.5 }, { patch: "bgHat", p: "x.x.x.x.xrx.x.rrx.x.x.x.rrrrx.x.", level: 0.5 }, { patch: "bgOpenHat", p: "..x...........x.", level: 0.4 }],
+          drums: [{ patch: "kick808", p: "X.....x...x..x..X.....x...x.....", level: 0.9 }, { patch: "bgClap", p: "....X.......X...", level: 0.8 }, { patch: "bgHat", p: "x.x.x.x.xrx.x.rrx.x.x.x.rrrrx.x.", level: 0.5 }, { patch: "bgOpenHat", p: "..x...........x.", level: 0.4 }],
           bass: { patch: ["sub808"], octave: 0, sub: false, glide: 0.08, p: ["1-----1---8--5--1-----1---1-.8--"] },
           leads: { soft: ["cowbell", "box"], hard: ["cowbell", "dark"] },
           reply: ["bell", "chop"]
@@ -718,7 +718,7 @@ label.check input { accent-color: var(--accent); }
         chip: {
           xylo: 0.4,
           swing: 0,
-          drums: [{ patch: "bgKick", p: "X...X...X...X..." }, { patch: "bgClap", p: "....X.......X...", level: 0.8 }, { patch: "bgHat", p: "x.xxx.xxx.xxx.xx", level: 0.45 }, { patch: "bgOpenHat", p: "..x...x...x...x.", level: 0.45, e: [0.5, 1] }, { patch: "bgSnap", p: "..............o.", level: 0.5 }],
+          drums: [{ patch: "bgKick", p: "X...X...X...X..." }, { patch: "bgClap", p: "....X.......X...", level: 0.8 }, { patch: "bgHat", p: "x.xxx.xxx.xxx.xx", level: 0.45 }, { patch: "bgOpenHat", p: "..x...x...x...x.", level: 0.45, e: [0.5, 1] }],
           turn: [{ patch: "snare", p: "..........o.o.oo", level: 0.6 }],
           breaks: [{ patch: "bgKick", p: "X.........x.....X.x.......x..x.." }, { patch: "snare", p: "....X..g.o..X..g.o..X..g....X.o.", level: 0.9 }, { patch: "bgHat", p: "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo", level: 0.45 }, { patch: "bgOpenHat", p: "..............x.................", level: 0.45, e: [0.5, 1] }],
           fills: ["classic", "claps", "roll", "kicks"],
@@ -4848,6 +4848,12 @@ label.check input { accent-color: var(--accent); }
     if (role === "build") return barIn * 2 < bars ? "slow" : gentle ? null : "tease";
     return null;
   }
+  function lightPhrase(B, style2, role, use2, gentle, seed2, formBar, pass) {
+    const SP = B.spice;
+    if (!SP || !style2.patches[SP.snap]) return false;
+    if (role === "victory") return false;
+    return gentle || role === "drop" && use2 !== "whole" && hash2(seed2, 851, Math.floor(formBar / 8) + pass * 131) < SP.snaps;
+  }
   function bangerRole(style2, plan, a, sec, formStart = 0) {
     if (plan.section === style2.intro || plan.section === style2.knockout) return null;
     if (style2.victory && plan.section === style2.victory) return "victory";
@@ -4905,22 +4911,25 @@ label.check input { accent-color: var(--accent); }
     };
     const kindOf = (patch) => {
       const p = style2.patches[patch];
-      return !p ? "" : p.kind === "kick" && !p.noDuck ? "kick" : p.kind === "snare" || p.bursts ? "snare" : "top";
+      return !p ? "" : p.kind === "kick" && !p.noDuck ? "kick" : p.kind === "snare" || p.bursts || patch === "snap" ? "snare" : "top";
     };
     const SP = B.spice, phraseNo = Math.floor(formBar / 8), deal = (salt) => hash2(seed2, salt, phraseNo + pass * 131);
-    const snapsOn = !!SP && !!style2.patches[SP.snap] && deal(851) < (gentle ? SP.gentleSnaps : SP.snaps), snapsAlone = snapsOn && deal(853) < SP.replace;
+    const light = lightPhrase(B, style2, role, use2, gentle, seed2, formBar, pass);
     const xylo = SP ? B.leads[SP.xylo] : void 0, xyAnswer = !!xylo && deal(857) < SP.answer, xyRun = !!xylo && hash2(seed2, 859, bar2) < SP.flourish;
     const drums = (voices, level = 1, keep2, backbeat = false) => {
       let snapped = false;
       for (const v of voices) {
         if (!within(v, E2, barIn, pass) || keep2 && !keep2(kindOf(v.patch))) continue;
-        const snare = backbeat && snapsOn && kindOf(v.patch) === "snare";
-        const ch = v.p[(barIn * 16 + s) % v.p.length], lv = BAL.drums * (v.level ?? 1) * level * (snare ? snapsAlone ? 0 : 0.45 : 1) * (0.94 + 0.06 * r(v.patch.length * 31 + v.p.length));
-        if (snare && !snapped && (ch === "X" || ch === "x")) {
-          snapped = true;
-          ev(SP.snap, null, SP.snapLevel * level, 1);
+        if (role === "victory" && (v.patch === SP?.snap || v.patch === "snap")) continue;
+        const snare = backbeat && light && kindOf(v.patch) === "snare";
+        const ch = v.p[(barIn * 16 + s) % v.p.length], lv = BAL.drums * (v.level ?? 1) * level * (0.94 + 0.06 * r(v.patch.length * 31 + v.p.length));
+        if (snare) {
+          if (!snapped && (ch === "X" || ch === "x")) {
+            snapped = true;
+            ev(SP.snap, null, SP.snapLevel * BAL.drums * level, 1);
+          }
+          continue;
         }
-        if (lv <= 0) continue;
         if (ch === "." || ch === "-" || VEL2[ch] === void 0) continue;
         if (ch === "r") {
           ev(v.patch, null, 0.6 * lv, 0.5);
@@ -5137,7 +5146,7 @@ label.check input { accent-color: var(--accent); }
         const n = slow();
         if (n && !sing(n, n.dur, 1)) tune(reply, n, 0.9);
         if (SP && xylo && hash2(seed2, 861, phraseNo) < SP.breakdown) tune(xylo, hook.reply[(barIn % 8 * 16 + s) % 128], 0.7, {}, 16, hook, "reply");
-        if (SP && s === 8 && style2.patches[SP.snap] && hash2(seed2, 863, phraseNo) < SP.breakdownSnaps) ev(SP.snap, null, 0.7 * SP.snapLevel, 1);
+        if (SP && (s === 4 || s === 12) && style2.patches[SP.snap]) ev(SP.snap, null, 0.6 * SP.snapLevel * BAL.drums, 1);
         if (Number.isFinite(dropAt)) {
           const rb = Math.max(0, Math.min(H.drop.riserBars, dropAt)), k = barIn - (dropAt - rb);
           if (k >= 0 && k < rb) riser(k / rb, (k + 1) / rb);
@@ -5163,7 +5172,7 @@ label.check input { accent-color: var(--accent); }
       pad(q < 2 ? 0.8 : 0.5);
       if (gentle) {
         if (!last) {
-          drums(kit.drums);
+          drums(kit.drums, 1, void 0, true);
           bass(kit.bass, kit.bass.p, 0.9);
         } else if (!gap) drums(kit.drums, 0.9, (k) => k === "top");
         if (!gap) ev("shaker", null, (0.25 + 0.5 * p) * (s % 2 ? 0.7 : 1), 1);
@@ -5176,11 +5185,12 @@ label.check input { accent-color: var(--accent); }
         if (q < 2) {
           drums(kit.drums, 1, (k) => k !== "snare");
           bass(kit.bass, kit.bass.p, 0.9);
+          if (SP && (s === 4 || s === 12) && style2.patches[SP.snap]) ev(SP.snap, null, SP.snapLevel * BAL.drums, 1);
         } else if (q === 2) {
           drums(kit.drums, 0.9, (k) => k === "top");
           if (kickV && s % 8 === 0) ev(kickV.patch, null, 0.9, 1);
         }
-        const roll = q === 0 ? s % 4 === 0 : q === 1 ? s % 2 === 0 : true, lv = 0.15 + 0.3 * p;
+        const roll = q >= 2, lv = 0.15 + 0.3 * p;
         if (roll) {
           ev("snare", null, lv * (s % 4 === 0 ? 1 : 0.8), 1);
           if (q === 3 && barIn >= n - 1) out.push({ part: "b:snare", patch: "snare", step: step2, offset: sw + 0.5, dur: 0.5, midi: null, vel: lv * 0.8, straight: true });
