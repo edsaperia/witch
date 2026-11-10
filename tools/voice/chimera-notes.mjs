@@ -5,7 +5,8 @@
 // (tools/samples/build.mjs, the `generated` sources) calls renderNote for every entry of samples/sources.json's chimera set, then
 // trims, cuts, levels and encodes each as it does every sample; run alone, this writes the raw WAVs to listen to.
 //   node tools/voice/chimera-notes.mjs <path to the chimera binary> [out dir] [lowest-highest MIDI, 55-79] [syllables, ah,ooh]
-// Needs Chimera's CLI built (cargo build --release -p chimera-cli: target/release/chimera). The renders are deterministic
+// Needs Chimera's CLI built (cargo build --release -p chimera-cli: target/release/chimera). A blended body (`mix:<female 0..1>,<child 0..1>`,
+// the library's own BodyMix: the samples' is `mix:1,0.7`) needs tools/voice/chimera-bodymix.patch applied to that commit first (git apply). The renders are deterministic
 // (Chimera's engine contract), so the same commit and options give the same notes.
 import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";

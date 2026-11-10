@@ -114,6 +114,10 @@ The haunted treatment's A/B: node tools/music-lab/haunted.mjs <out dir> [ab|circ
 
 The haunted treatment's A/B: the game's engine renders, offline and with the game's singer, a breakdown, a legend's clearing as she walks in on the ground, and a night's set over a few waves, each with the treatment on and off.
 
+## `heard.mjs`
+
+Banger mode's sprinkles are heard: node tools/music-lab/heard.mjs In headless Chromium, the game's engine renders bars of a night where the xylophone has the rolling bed under the lead or the ostinato with it, and the finger snaps the backbeat, each part…
+
 ## `ingredients.ts`
 
 The research ingredients' numbers, shared by the offline A/B renders and the live lab with sliders: the CC0 kit that takes the synthesised drums' place, the frame drums' ritual pattern, the vocalise's level, and the recorded voices' measured pitches.
