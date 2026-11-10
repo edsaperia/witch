@@ -14,6 +14,14 @@ node tools/ci/annotations.cjs --summary
 
 Only the separate, frozen prototype checkout is built.
 
+## `install-chromium.cjs`
+
+Install pinned CI Chromium for every workflow that needs a browser with signed Ubuntu dependencies and privileged timeout cleanup.
+
+```
+node tools/ci/install-chromium.cjs
+```
+
 ## `mockingTests.mjs`
 
 Test files that mock a module with vi.mock, run apart in Vitest's isolated project.
@@ -101,6 +109,7 @@ Inventory real world-constructor calls and explicit small-fixture reasons; comme
 - `PROOF-PLAN.md`
 - `behaviour-report.test.ts`
 - `effects-scene.test.ts`
+- `install-chromium.test.ts`
 - `mockingTests.test.ts`
 - `pages-gc.test.cjs`
 - `pages-policy.test.cjs`
