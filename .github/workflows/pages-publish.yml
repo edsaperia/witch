@@ -84,7 +84,8 @@ jobs:
       # every deployment after GITHUB_SHA, which every publication between two main commits shares (a step's env can't
       # change it: tried in #1934), caps its wait at 10 minutes whatever its timeout says, and gives up when an earlier
       # deployment is stuck "in progress" (release 20 waited 34 minutes behind one of release 19's). This step names
-      # each attempt itself, cancels a stuck deployment that blocks it, waits up to 30 minutes, and tries twice.
+      # each attempt after a real commit (the snapshot's, then main's), cancels a stuck deployment that blocks it, waits up to
+      # 30 minutes, and tries twice.
       - name: Deploy complete snapshot
         id: deployment
         uses: actions/github-script@v7
@@ -93,7 +94,7 @@ jobs:
         with:
           script: |
             const {owner,repo}=context.repo, sleep=ms=>new Promise(r=>setTimeout(r,ms));
-            const artifact_id=Number(process.env.ARTIFACT_ID);
+            const artifact_id=Number(process.env.ARTIFACT_ID), site=JSON.parse(require('fs').readFileSync('pages-publication.json','utf8')).sha;
             if(!artifact_id) throw Error('No Pages artifact id from the packaging step');
             const final=['deployment_failed','deployment_perms_error','deployment_content_failed','deployment_cancelled','deployment_lost'];
             const cancel=async id=>{
@@ -101,7 +102,10 @@ jobs:
               catch(err){core.info(`Cancelling ${id}: ${err.status??''} ${err.message}`);}
             };
             for(let attempt=1;attempt<=2;attempt++){
-              const version=`${context.sha}-${context.runId}-${process.env.GITHUB_RUN_ATTEMPT}-${attempt}`;
+              // A build version must be a real commit (2026-11-10: "SHA-run-attempt" names got 404 Not Found): the first try
+              // names the deployment after the gh-pages snapshot commit it publishes (new with every deploy to gh-pages),
+              // the second after the main commit this workflow runs from.
+              const version=attempt===1?site:context.sha;
               let dep;
               for(let tries=0;!dep&&tries<4;tries++){
                 try{
