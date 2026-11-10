@@ -1,5 +1,16 @@
 # Reliable bounded Chromium installation in CI
 
+## Status (2026-11-10)
+
+Codex's branch (#1889, `codex/chromium-install-reliability` at 5daba0551) is left as it was; the work continues on `claude/chromium-install`, which merges in current `claude/prototype` (including #1929's shared deploy/preview step list) and finishes the remaining scope:
+
+- **Every browser workflow uses the shared installer.** `art-check.yml`'s shards (which ran an unbounded `playwright install --with-deps`) and `proofs-nightly.yml` (the old 300 s loop) now call `node tools/ci/install-chromium.cjs` on `ubuntu-24.04`, like `ci.yml`'s smoke, proofs, largest-world and bench jobs. `workflows.test.ts` now scans every workflow: no direct `playwright install` anywhere, and each installer step runs on the pinned image with no `continue-on-error`. Changing `art-check.yml` invalidates the art-check result cache once (the workflow is part of its fingerprint), so the next nightly art check runs in full.
+- **Measured on CI before this branch** (#1889, run 42321140673, attempts 1 and 2, every stage on its first attempt): proofs 16.11 / 17.64 s, largest-world 15.06 / 19.57 s, smoke 18.43 / 21.96 s. The bench job skipped its install both times (game bytes unchanged).
+- **Bench install path:** pending a throwaway probe PR that changes game bytes.
+- **Not yet measured:** the nightly workflows only run on schedule or by hand, so their first installs through the helper will happen on the nightly after this ships.
+
+## Original brief
+
 Canonical brief:1476#6699804156 (updated2026-11-07T00:45:21Z). Own branch codex/chromium-install-reliability, work/chromium-install-reliability, based on prototype871eec910. Prior CI reuse PR1835 remains merged history.
 
 Investigate real failed installation logs across the named PRs and A4 proof job128054978264/run42264985913 before choosing a correction. Initial A4 evidence: first dependency installation times out at300s; retry fails because apt-get2883 still owns dpkg's frontend lock. Browser cache was already restored. Thus exit100 is a secondary lock failure, not evidence the Chromium download failed.

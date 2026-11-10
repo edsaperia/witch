@@ -1,4 +1,4 @@
-// Install pinned CI Chromium with signed Ubuntu dependencies and privileged timeout cleanup.
+// Install pinned CI Chromium for every workflow that needs a browser (ci, art check, nightly proofs) with signed Ubuntu dependencies and privileged timeout cleanup.
 // node tools/ci/install-chromium.cjs
 const fs = require('node:fs');
 const path = require('node:path');

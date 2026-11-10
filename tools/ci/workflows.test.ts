@@ -157,14 +157,27 @@ describe("shared CI game build", () => {
     expect(jobs.check.steps.some((s: any) => /run-unit/.test(s.run ?? ""))).toBe(false);
   });
   it("uses the shared privileged-cleanup installer on the pinned supported image without masking failures", () => {
-    for (const name of ["smoke", "proofs", "large-world", "game-unchanged"]) {
-      const job = jobs[name], install = job.steps.find((s: any) => s.name === "Install Chromium (bounded, one retry)");
-      expect(job["runs-on"]).toBe("ubuntu-24.04");
-      expect(install.run).toBe(`node ${name === "game-unchanged" ? "head/" : ""}tools/ci/install-chromium.cjs`);
-      expect(install["continue-on-error"]).toBeUndefined();
-      // Full command/timeout/retry semantics are exercised without a browser in install-chromium.test.ts.
-      expect(job.steps.some((s: any) => /playwright install --with-deps/.test(s.run ?? ""))).toBe(false);
+    const expected = { ci: ["smoke", "proofs", "large-world", "game-unchanged"], "art-check": ["shards"], "proofs-nightly": ["pixels"] };
+    const found: string[] = [];
+    // Every workflow that provisions Chromium goes through the one installer: no raw `playwright install` anywhere.
+    for (const file of fs.readdirSync(".github/workflows").filter(f => f.endsWith(".yml"))) {
+      const name = file.replace(/\.yml$/, "");
+      expect(fs.readFileSync(`.github/workflows/${file}`, "utf8"), file).not.toMatch(/playwright install/);
+      for (const [id, job] of Object.entries(workflow(name).jobs) as [string, any][]) {
+        const installs = (job.steps ?? []).filter((s: any) => /install-chromium\.cjs/.test(s.run ?? ""));
+        if (!installs.length) continue;
+        found.push(`${name}/${id}`);
+        expect(installs, `${name}/${id}`).toHaveLength(1);
+        const [install] = installs;
+        expect(job["runs-on"], `${name}/${id}`).toBe("ubuntu-24.04");
+        expect(install.name).toBe("Install Chromium (bounded, one retry)");
+        expect(install.run).toBe(`node ${id === "game-unchanged" ? "head/" : ""}tools/ci/install-chromium.cjs`);
+        expect(install["continue-on-error"]).toBeUndefined();
+        expect(job.env.PLAYWRIGHT_VERSION).toBe(jobs.smoke.env.PLAYWRIGHT_VERSION);
+        // Full command/timeout/retry semantics are exercised without a browser in install-chromium.test.ts.
+      }
     }
+    expect(found.sort()).toEqual(Object.entries(expected).flatMap(([w, ids]) => ids.map(id => `${w}/${id}`)).sort());
   });
   it("gives main publication priority without publishing prototype pushes or forks", () => {
     expect(jobs.deploy.if).toContain("github.ref == 'refs/heads/main'");

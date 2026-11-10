@@ -16,7 +16,7 @@ Only the separate, frozen prototype checkout is built.
 
 ## `install-chromium.cjs`
 
-Install pinned CI Chromium with signed Ubuntu dependencies and privileged timeout cleanup.
+Install pinned CI Chromium for every workflow that needs a browser with signed Ubuntu dependencies and privileged timeout cleanup.
 
 ```
 node tools/ci/install-chromium.cjs
