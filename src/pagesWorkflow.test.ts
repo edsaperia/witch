@@ -32,7 +32,10 @@ describe("managed Pages publication", () => {
     const checkout = publisher.jobs.publish.steps.find((s: any) => s.with?.path === "site");
     expect(checkout.with).toEqual({ ref: "gh-pages", path: "site" });
     expect(publisher.jobs.publish.steps.find((s: any) => s.uses === "actions/upload-pages-artifact@v4").with.path).toBe("site");
-    expect(publisher.jobs.publish.steps.some((s: any) => s.uses === "actions/deploy-pages@v4")).toBe(true);
+    // (our own deployment call, not actions/deploy-pages: per-attempt names, cancels a stuck deployment; 2026-11-10)
+    const deploy = publisher.jobs.publish.steps.find((s: any) => s.id === "deployment");
+    expect(deploy.uses).toMatch(/^actions\/github-script@/);
+    expect(deploy.with.script).toContain("POST /repos/{owner}/{repo}/pages/deployments");
   });
   it("uses default-branch dispatch and retains independent closed-PR cleanup", () => {
     expect(publisher.on.repository_dispatch.types).toEqual(["pages-live", "pages-preview"]);
