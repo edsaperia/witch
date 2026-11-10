@@ -2243,6 +2243,8 @@
     "src": "",
     "singer": "",
     "haunted": true,
+    "melody": "dance",
+    "banger": true,
     "over": {
       "stop": 0.6,
       "floor": 0.15

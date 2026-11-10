@@ -22,6 +22,22 @@ node tools/music-lab/analyse.cjs [out dir] [section,section…]
 
 The Music Lab's measurements of a render: loudness, peak, energy in six bands, the spectral centroid, and a spectrogram picture.
 
+## `banger.mjs`
+
+Banger mode's A/B: node tools/music-lab/banger.mjs <out dir> [seed...] Renders tools/music-lab/banger.ts offline in headless Chromium with the game's singer and writes mp3s, each with a.txt of where things start and what to listen for, to <out dir>: every…
+
+## `banger.ts`
+
+Banger mode's A/B: the game's engine renders, offline and with the game's singer, a window of a night with banger mode on and off, the same seed, so they can be heard side by side.
+
+## `bass.mjs`
+
+The basslines before and after: node tools/music-lab/bass.mjs <out dir> <tag> [seed...].
+
+## `bass.ts`
+
+The basslines before and after: the game's engine renders a section offline, and says which bass pattern each four-bar phrase took and the bass's range.
+
 ## `boot.mjs`
 
 The home speakers' boot, sped up: node tools/music-lab/boot.mjs [bars between speakers, default 1] Renders tools/music-lab/boot.ts offline in headless Chromium: two bars of nothing, then the 12 speakers crackling into life one a bar, the music a layer a…
@@ -113,6 +129,22 @@ The audio output's buffer by latencyHint: For each hint, makes an AudioContext i
 ```
 node tools/music-lab/latency.cjs            (HINTS=interactive,balanced,playback,0.06,0.12  LOAD=60  SECS=8)
 ```
+
+## `leads.mjs`
+
+The dance way's leads auditioned: node tools/music-lab/leads.mjs <out dir> [kind: trance] [seed: 7].
+
+## `leads.ts`
+
+The dance way's leads auditioned: each lead part plays the same 8-bar riff over the same chords, drums and bass, rendered offline by the game's engine; and each alone, its loudness measured, to balance the leads against each other and the old ones.
+
+## `melody.mjs`
+
+The composer's A/B: node tools/music-lab/melody.mjs <out dir> [sections|night|all] [seed...] Renders tools/music-lab/melody.ts offline in headless Chromium with the game's singer and writes mp3s and a.txt of where things start to <out dir>, each passage by…
+
+## `melody.ts`
+
+The composer's A/B: the game's engine renders, offline and with the game's singer, a passage of one section with the melodies and basslines by the old rules and by the composer's, the same seed, so they can be heard side by side.
 
 ## `set.mjs`
 

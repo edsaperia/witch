@@ -3,16 +3,17 @@
 // chip, voice, bell or horn). The tempo should stay the same as knockdown tempo, i.e. it stays at 120 unless you are knocked
 // down, in which case it gains 5bpm. Being knocked down changes the music to a random new seed."
 import { describe, expect, it } from "vitest";
+import { withBanger } from "./musicBanger"; // (the score as it was before banger mode, ?banger=0: banger mode's own tests are musicBanger.test.ts)
 import styleJson from "../../config/music-style.json";
 import { bpmAt, targetTempo, timeAt } from "./beat";
 import { hitWitch, newGame as fullGame } from "./game";
 import { smallWorld } from "../test/worlds";
 const newGame = smallWorld(fullGame, "Music cue and knockdown tempo integration consumes one witch's beat state, not distant areas.");
 import { Conductor, formClock, musicCue, silentAt, type MusicCue } from "./musicPlan";
-import { arcStep, degreeToMidi, formBars, formChord, formInstrument, formNoteAt, formPhrase, isHaunted, musicSeed, notesAt, resolveSection, sungHere, withHaunted, type BlockPlan, type MusicStyle } from "./musicScore";
+import { arcStep, degreeToMidi, formBars, formChord, formInstrument, formNoteAt, formPhrase, isHaunted, musicSeed, notesAt, resolveSection, sungHere, withHaunted, withMelody, type BlockPlan, type MusicStyle } from "./musicScore";
 import { TUNING, type Tuning } from "./tuning";
 
-const style = styleJson as unknown as MusicStyle, F = style.form!;
+const style = withBanger(styleJson as unknown as MusicStyle, false), F = style.form!, old = withMelody(style, "old");
 const P = F.phraseBars * 16, seeds = [1, 7, 42, 123, 9001, 31337];
 const melodyOf = (seed: number, from: number, bars: number) =>
   Array.from({ length: bars * 16 }, (_, i) => { const n = formNoteAt(style, seed, from * 16 + i); return n ? `${n.part}:${n.midi}:${n.dur}` : "."; });
@@ -187,8 +188,9 @@ describe("the melodies' pace (Ed, 2026-10-09: \"keep the melodies relatively slo
       const ph = formPhrase(style, seed, "A");
       for (const n of ph) if (n && n.off) { expect(n.dur % 1).not.toBe(0); expect(n.off).toBeGreaterThan(0); expect(n.off).toBeLessThan(1); }
     }
-    const plan: BlockPlan = { section: "deep", start: 0, bars: 32, wave: 1, arc: 1 };
-    const ev = Array.from({ length: 32 * 16 }, (_, s) => notesAt(style, plan, null, s, { seed: 7, siege: 0 })).flat().filter(e => e.straight);
+    // (the composer's lyrical way and the old rules: the dance way's instrument plays riffs, straight sixteenths and eighths)
+    const plan: BlockPlan = { section: "deep", start: 0, bars: 32, wave: 1, arc: 1 }, lyrical = withMelody(style, "lyrical");
+    const ev = Array.from({ length: 32 * 16 }, (_, s) => notesAt(lyrical, plan, null, s, { seed: 7, siege: 0 })).flat().filter(e => e.straight);
     expect(ev.length).toBeGreaterThan(0);
     for (const e of ev) expect(e.dur % 1).not.toBe(0);
   });
@@ -240,10 +242,17 @@ describe("the singer's redesign (Ed, 2026-10-14: an alto in tune, stepwise, in t
   });
 
   it("walks the sung phrases in steps and thirds within a fifth, and still answers on the root", () => {
+    // (the composer, Ed 2026-11-08 "smarter rules": the phrase's one peak may sit a step over the window, reached by a fourth at
+    // most; every other note within the fifth, steps and thirds; with ?melody=old exactly as before)
     for (let seed = 0; seed < 120; seed++) for (const L of "BC") {
-      const d = degs(seed, L);
-      expect(Math.max(...d) - Math.min(...d), `${seed} ${L} span`).toBeLessThanOrEqual(4);
-      for (let k = 1; k < d.length; k++) expect(Math.abs(d[k] - d[k - 1]), `${seed} ${L} leap at ${k}`).toBeLessThanOrEqual(2);
+      const d = degs(seed, L), top = Math.max(...d), rest = d.filter(x => x !== top);
+      expect(d.filter(x => x === top).length, `${seed} ${L} one peak`).toBe(1);
+      expect(Math.max(...rest) - Math.min(...d), `${seed} ${L} span under the peak`).toBeLessThanOrEqual(4);
+      expect(top - Math.min(...d), `${seed} ${L} span`).toBeLessThanOrEqual(5);
+      for (let k = 1; k < d.length; k++) expect(Math.abs(d[k] - d[k - 1]), `${seed} ${L} leap at ${k}`).toBeLessThanOrEqual(d[k] === top ? 3 : 2);
+      const o = formPhrase(old, seed, L).filter((n): n is NonNullable<typeof n> => !!n).map(n => n.deg);
+      expect(Math.max(...o) - Math.min(...o), `${seed} ${L} old span`).toBeLessThanOrEqual(4);
+      for (let k = 1; k < o.length; k++) expect(Math.abs(o[k] - o[k - 1]), `${seed} ${L} old leap at ${k}`).toBeLessThanOrEqual(2);
     }
     for (const seed of seeds) expect(((degs(seed, "C").pop()! % 7) + 7) % 7).toBe(0);
     // A, the instrument's, keeps its wider walk

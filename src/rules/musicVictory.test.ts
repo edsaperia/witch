@@ -2,10 +2,11 @@
 // round the dancefloor) play the style's victory section: the drop a whole step up, choir,
 // strings and arp over it, the claps in a conga line, looping clean.
 import { describe, expect, it } from "vitest";
+import { withBanger } from "./musicBanger"; // (the score as it was before banger mode, ?banger=0: banger mode's own tests are musicBanger.test.ts)
 import styleJson from "../../config/music-style.json";
 import { checkStyle, notesAt, resolveSection, type BlockPlan, type MusicStyle } from "./musicScore";
 
-const style = styleJson as unknown as MusicStyle;
+const style = withBanger(styleJson as unknown as MusicStyle, false);
 const notes = (section: string, bars = 8) => {
   const plan: BlockPlan = { section, start: 0, bars, wave: 2, arc: 2 };
   return Array.from({ length: bars * 16 }, (_, s) => notesAt(style, plan, null, s, { seed: 7, siege: 0 })).flat();
