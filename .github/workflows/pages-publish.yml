@@ -79,10 +79,15 @@ jobs:
         with:
           path: site
           name: github-pages-${{ github.run_attempt }}
+      # deploy-pages names a deployment by GITHUB_SHA, and every publication between two main commits runs at the same
+      # SHA: a later one was then reported "succeed" from the earlier deployment's status while the public site kept
+      # the earlier snapshot (2026-11-10: v7765 on gh-pages, v7756 public). So each attempt gets its own build version.
       - name: Deploy complete snapshot
         id: deployment
         continue-on-error: true
         uses: actions/deploy-pages@v4
+        env:
+          GITHUB_SHA: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
         with:
           artifact_name: github-pages-${{ github.run_attempt }}
           timeout: 1800000
@@ -90,6 +95,8 @@ jobs:
         id: retry
         if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4
+        env:
+          GITHUB_SHA: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-retry
         with:
           artifact_name: github-pages-${{ github.run_attempt }}
           timeout: 1800000
