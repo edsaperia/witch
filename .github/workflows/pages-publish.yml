@@ -50,7 +50,7 @@ jobs:
       id-token: write
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url || steps.retry.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Checkout the latest complete site including live root
@@ -75,35 +75,64 @@ jobs:
       # one artifact name per attempt (a re-run can deploy again), a longer timeout, one retry in the job, and a check
       # that the public site serves the root this job published.
       - name: Package complete site snapshot
+        id: pack
         uses: actions/upload-pages-artifact@v4
         with:
           path: site
           name: github-pages-${{ github.run_attempt }}
-      # deploy-pages names a deployment by GITHUB_SHA, and every publication between two main commits runs at the same
-      # SHA: a later one was then reported "succeed" from the earlier deployment's status while the public site kept
-      # the earlier snapshot (2026-11-10: v7765 on gh-pages, v7756 public). So each attempt gets its own build version.
+      # Our own Pages deployment call in place of actions/deploy-pages (the coordinator, 2026-11-10). deploy-pages names
+      # every deployment after GITHUB_SHA, which every publication between two main commits shares (a step's env can't
+      # change it: tried in #1934), caps its wait at 10 minutes whatever its timeout says, and gives up when an earlier
+      # deployment is stuck "in progress" (release 20 waited 34 minutes behind one of release 19's). This step names
+      # each attempt itself, cancels a stuck deployment that blocks it, waits up to 30 minutes, and tries twice.
       - name: Deploy complete snapshot
         id: deployment
-        continue-on-error: true
-        uses: actions/deploy-pages@v4
+        uses: actions/github-script@v7
         env:
-          GITHUB_SHA: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          ARTIFACT_ID: ${{ steps.pack.outputs.artifact_id }}
         with:
-          artifact_name: github-pages-${{ github.run_attempt }}
-          timeout: 1800000
-      - name: Deploy again after a failed or cancelled deployment
-        id: retry
-        if: steps.deployment.outcome == 'failure'
-        uses: actions/deploy-pages@v4
-        env:
-          GITHUB_SHA: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-retry
-        with:
-          artifact_name: github-pages-${{ github.run_attempt }}
-          timeout: 1800000
+          script: |
+            const {owner,repo}=context.repo, sleep=ms=>new Promise(r=>setTimeout(r,ms));
+            const artifact_id=Number(process.env.ARTIFACT_ID);
+            if(!artifact_id) throw Error('No Pages artifact id from the packaging step');
+            const final=['deployment_failed','deployment_perms_error','deployment_content_failed','deployment_cancelled','deployment_lost'];
+            const cancel=async id=>{
+              try{await github.request('POST /repos/{owner}/{repo}/pages/deployments/{id}/cancel',{owner,repo,id});core.warning(`Cancelled Pages deployment ${id}`);}
+              catch(err){core.info(`Cancelling ${id}: ${err.status??''} ${err.message}`);}
+            };
+            for(let attempt=1;attempt<=2;attempt++){
+              const version=`${context.sha}-${context.runId}-${process.env.GITHUB_RUN_ATTEMPT}-${attempt}`;
+              let dep;
+              for(let tries=0;!dep&&tries<4;tries++){
+                try{
+                  dep=(await github.request('POST /repos/{owner}/{repo}/pages/deployments',{owner,repo,artifact_id,pages_build_version:version,oidc_token:await core.getIDToken()})).data;
+                }catch(err){
+                  // "Deployment request failed for X due to in progress deployment. Please cancel Y first or wait for it to complete."
+                  const stuck=String(err.message).match(/in progress deployment\. Please cancel ([\w-]+)/i);
+                  if(err.status===400&&stuck){await cancel(stuck[1]);await sleep(10000);continue;}
+                  throw err;
+                }
+              }
+              if(!dep) throw Error('A stuck Pages deployment kept blocking new ones');
+              const id=dep.id??String(dep.status_url).split('/').pop();
+              core.info(`Pages deployment ${id} (build version ${version}), attempt ${attempt}`);
+              const until=Date.now()+30*60e3;
+              let status='';
+              while(Date.now()<until){
+                await sleep(10000);
+                try{status=(await github.request('GET /repos/{owner}/{repo}/pages/deployments/{id}',{owner,repo,id})).data.status;}
+                catch(err){status=`unreadable (${err.status??err.message})`;}
+                if(status==='succeed'){core.setOutput('page_url',dep.page_url);core.info(`Deployed: ${dep.page_url}`);return;}
+                if(final.includes(status)) break;
+              }
+              core.warning(`Deployment ${id} ended "${status||'timed out'}"`);
+              if(!final.includes(status)) await cancel(id); // (timed out: never leave it blocking the next)
+            }
+            core.setFailed('Pages deployment failed twice: re-run this workflow (Actions → Publish Pages snapshot → Run workflow).');
       - name: Check the public site serves the published live root
         uses: actions/github-script@v7
         env:
-          PAGE_URL: ${{ steps.deployment.outputs.page_url || steps.retry.outputs.page_url }}
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         with:
           script: |
             const fs=require('fs'),e=JSON.parse(fs.readFileSync('pages-publication.json','utf8'));
