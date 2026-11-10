@@ -754,8 +754,8 @@
       ]
     },
     "music.banger": {
-      "what": "Banger mode: one hook a night that returns at the key moments, drum kits and grooves by genre family, builds that empty out and drops that land, gentle till the night's second stump has its soundsystem (the music style's banger block, docs/notes/music.md Banger mode); false plays the music as before, as does ?banger=0.",
-      "notes": "Written over the same conductor and engine: the boot's intro, the knockdown's silence and new record, the victory, the siege, party and legend parts and a clearing's layer all as before. Its mix is its own (a deeper kick duck, a high shelf, a low cut, a little drive).",
+      "what": "Banger mode, the music with one hook a night back at its key moments, kits and grooves by family, builds and drops, gentle till the second stump (docs/notes/music.md Banger mode); false or ?banger=0 plays the music as before.",
+      "notes": "The music style's banger block. Written over the same conductor and engine: the boot's intro, the knockdown's silence and new record, the victory, the siege, party and legend parts and a clearing's layer all as before. Its mix is its own (a deeper kick duck, a high shelf, a low cut, a little drive).",
       "decisions": [
         {
           "by": "Ed",

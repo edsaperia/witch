@@ -9936,7 +9936,7 @@
         },
         "banger": {
           "type": "boolean",
-          "description": "Banger mode: one hook a night that returns at the key moments, drum kits and grooves by genre family, builds that empty out and drops that land, gentle till the night's second stump has its soundsystem (the music style's banger block, docs/notes/music.md Banger mode); false plays the music as before, as does ?banger=0."
+          "description": "Banger mode, the music with one hook a night back at its key moments, kits and grooves by family, builds and drops, gentle till the second stump (docs/notes/music.md Banger mode); false or ?banger=0 plays the music as before."
         },
         "over": {
           "type": "object",

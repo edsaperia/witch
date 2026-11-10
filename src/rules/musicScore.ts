@@ -1254,7 +1254,9 @@ function scoreNotes(style: MusicStyle, plan: BlockPlan, next: BlockPlan | null, 
       let hk = 0;
       if (BG && own) { for (let j = 0; j < i; j++) if (pat[j] !== "." && pat[j] !== "-") hk++; hk += Math.floor(at / pat.length) * Math.max(1, [...pat].filter(c => c !== "." && c !== "-").length); }
       const hseq = BG && own ? nightHook(BG, nightSeed).seq : null;
-      const deg = hseq ? hseq[hk % hseq.length] : chord.root + m[pos] + vary + lift, vel = (VEL[ch] ?? accent) * level;
+      // (each species from its own place in the hook, half of them backwards: kin hum it differently)
+      if (hseq) hk = (sh >>> 7) % 2 ? hseq.length * 64 - 1 - hk - (sh % hseq.length) : hk + (sh % hseq.length);
+      const deg = hseq ? hseq[((hk % hseq.length) + hseq.length) % hseq.length] : chord.root + m[pos] + vary + lift, vel = (VEL[ch] ?? accent) * level;
       // (a haunted clearing: its melody now and then coloured, its lead ghosted below, late and quieter)
       const tint = own && H ? hauntedColour(style, scale, deg, false, hash2(at, 467, seed)) : 0;
       out.push({ ...base, midi: degreeToMidi(style, scale, deg, octOwn, transpose) + tint, vel });
