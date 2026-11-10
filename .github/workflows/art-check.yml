@@ -133,7 +133,7 @@ jobs:
     name: art shard ${{ matrix.shard }}
     needs: plan
     if: ${{ needs.plan.outputs.mode == 'affected' || needs.plan.outputs.mode == 'full' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -164,8 +164,10 @@ jobs:
           key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
       - if: steps.browser.outputs.needed == 'true'
         run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
-      - if: steps.browser.outputs.needed == 'true'
-        run: .pw/node_modules/.bin/playwright install --with-deps chromium
+      - name: Install Chromium (bounded, one retry)
+        if: steps.browser.outputs.needed == 'true'
+        shell: bash
+        run: node tools/ci/install-chromium.cjs
       - name: Run assigned art coverage
         shell: bash
         env:

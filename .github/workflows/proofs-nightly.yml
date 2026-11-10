@@ -11,7 +11,7 @@ permissions:
   contents: read
 jobs:
   pixels:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
@@ -51,12 +51,7 @@ jobs:
       - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
       - name: Install Chromium (bounded, one retry)
         shell: bash
-        run: |
-          for try in 1 2; do
-            timeout 300 .pw/node_modules/.bin/playwright install --with-deps chromium && exit 0
-            echo "Chromium install attempt $try failed or exceeded 300 s"; sleep 5
-          done
-          exit 1
+        run: node tools/ci/install-chromium.cjs
       - uses: actions/cache/restore@v4
         id: proof-cache
         with:
