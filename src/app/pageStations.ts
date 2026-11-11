@@ -73,16 +73,17 @@ pageHost.stations.preview = id => (BAGS.some(b => b.id === id) ? new BagPreview(
 }
 
 export function installStations5(pageHost: PageHost): void {
-pageHost.stations.onLook = g => {
+pageHost.stations.onLook = (g, shelf) => {
   if (!pageHost.phone.active && pageHost.N().spec.borrowed) return;
   if (pageHost.phone.active) {
-    if (pageHost.stations.station) { const choice = stationLook(pageHost.stations.station, g); if (!choice || !pageHost.phone.choose(choice)) pageHost.reconcilePickers(); }
+    if (pageHost.stations.station) { const choice = stationLook(pageHost.stations.station, g, shelf); if (!choice || !pageHost.phone.choose(choice)) pageHost.reconcilePickers(); }
     return; // No raw host/guest mutation or visitor wardrobe save before approval.
   }
   pageHost.mutate("dressing: station look and bag", () => {
   saveGenome(lookWithoutLoan(g as Record<string, unknown>, pageHost.loan) as never); pageHost.creator.adopt(g); // (saved without the loan: app/loan.ts)
-  // (not yet dressed: a station's choice puts its piece on her, out of last night's pile: rules/clothesPile.ts; Ed, 2026-10-23)
-  const w = pageHost.N().game.wake; if (w && pageHost.stations.station) wearFromStation(w, pageHost.stations.station);
+  // (not yet dressed: a station's choice puts its piece on her, out of last night's pile: rules/clothesPile.ts; Ed, 2026-10-23; the
+  // piece of the shelf it was chosen on, so the shoe rack's Trousers put on only her trousers: Ed, 2026-11-11)
+  const w = pageHost.N().game.wake; if (w && pageHost.stations.station) wearFromStation(w, pageHost.stations.station, shelf);
   if (JSON.stringify(g) !== pageHost.lookNow) { pageHost.lookNow = JSON.stringify(g); pageHost.wearHat(g); setBag(pageHost.N().game.witches[0].spells, bagOf(g as Record<string, unknown>)); } // (her bag's 💌 stats follow the bag she wears: rules/bags.ts)
   pageHost.showLook();
   });

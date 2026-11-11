@@ -2,7 +2,12 @@ import { shelvesAt, wears } from "../../rules/wardrobe";
 import { appearance, type Appearance } from "./appearance";
 
 export type LookValue = string | number | boolean | number[];
-export interface StationLook { kind: "look"; station: string; changes: Record<string, LookValue> }
+/** `shelf`: the station's shelf it was chosen on (its id), for the piece it puts on her before she's dressed (rules/clothesPile.ts
+ *  slotOf; Ed, 2026-11-11, "When I go to the wardrobe and put top/jacket on, trousers are put on too"); an older message without it,
+ *  the station's piece, as before. */
+export interface StationLook { kind: "look"; station: string; changes: Record<string, LookValue>; shelf?: string }
+/** A shelf of `station`'s by its id (a message's `shelf`, rules/wardrobe.ts shelvesAt). */
+export const shelfAt = (station: string, shelf: unknown): shelf is string => typeof shelf === "string" && !!shelvesAt(station)?.some(s => s.id === shelf);
 const axisPath = (axis: string) => axis === "bristles" ? "broom.bristles" : ["hat", "broom"].some(part => axis.startsWith(part))
   ? axis.replace(/^(hat|broom)([A-Z])/, (_s, part: string, letter: string) => `${part}.${letter.toLowerCase()}`) : axis;
 const pathsAt = (station: string) => {
@@ -11,16 +16,18 @@ const pathsAt = (station: string) => {
 };
 const get = (look: Appearance, path: string): unknown => path.split(".").reduce<unknown>((v, key) => (v as Appearance | undefined)?.[key], look);
 /** Only shelf-owned fields cross the wire, never a replacement full genome or player identity. */
-export function stationLook(station: string, value: unknown): StationLook | null {
+export function stationLook(station: string, value: unknown, shelf?: string): StationLook | null {
   const look = appearance(value), paths = pathsAt(station); if (!look || !paths) return null;
   const changes: Record<string, LookValue> = {};
   for (const path of paths) { const value = get(look, path); if (value !== undefined) changes[path] = structuredClone(value) as LookValue; }
-  return { kind: "look", station, changes };
+  return { kind: "look", station, changes, ...(shelfAt(station, shelf) ? { shelf } : {}) };
 }
 export function readStationLook(value: unknown): StationLook | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const v = value as Record<string, unknown>, paths = typeof v.station === "string" ? pathsAt(v.station) : null;
-  if (Object.keys(v).length !== 3 || v.kind !== "look" || !paths || !v.changes || typeof v.changes !== "object" || Array.isArray(v.changes)) return null;
+  const shelf = Object.hasOwn(v, "shelf"); // (optional: an older message names none)
+  if (Object.keys(v).length !== (shelf ? 4 : 3) || v.kind !== "look" || !paths || !v.changes || typeof v.changes !== "object" || Array.isArray(v.changes)) return null;
+  if (shelf && !shelfAt(v.station as string, v.shelf)) return null;
   const changes: Record<string, LookValue> = {};
   for (const [path, item] of Object.entries(v.changes)) {
     if (!paths.has(path)) return null;
@@ -29,7 +36,7 @@ export function readStationLook(value: unknown): StationLook | null {
     } else if (!["string", "boolean", "number"].includes(typeof item) || typeof item === "number" && !Number.isFinite(item)) return null;
     changes[path] = structuredClone(item) as LookValue;
   }
-  return { kind: "look", station: v.station as string, changes };
+  return { kind: "look", station: v.station as string, changes, ...(shelf ? { shelf: v.shelf as string } : {}) };
 }
 /** Merge into the last approved look. A changed shelf item must be in the host's wardrobe. */
 export function applyStationLook(before: Appearance, request: StationLook, owned?: ReadonlySet<string>, basePalette?: Record<string, number[]>): Appearance | null {
