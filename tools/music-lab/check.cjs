@@ -11,6 +11,7 @@
 //    game time after 10 s (and, without newTimeline, far out: the measure works);
 // 5. plays it live for a few seconds: the engine schedules and the sections show.
 // 6. banger mode's xylophone and finger snaps are heard and reach the render-ahead stems (tools/music-lab/heard.mjs).
+// 7. the music's load as the game plays it, its bars drawn ahead, within its budgets (tools/music-lab/load.mjs).
 const { execFileSync } = require("child_process");
 const path = require("path");
 let playwright;
@@ -68,6 +69,8 @@ const ok = (cond, what) => { console.log(`${cond ? "ok  " : "FAIL"} ${what}`); i
   await browser.close();
   // 6. banger mode's sprinkles are heard, and reach the stems the music ahead draws (tools/music-lab/heard.mjs)
   try { execFileSync("node", [path.join(__dirname, "heard.mjs")], { stdio: "inherit" }); } catch { failed++; console.log("FAIL tools/music-lab/heard.mjs"); }
+  // 7. the music's load within its budgets (Ed, 2026-11-11: "the sound crunches and cuts out"; tools/music-lab/load.mjs)
+  try { execFileSync("node", [path.join(__dirname, "load.mjs")], { stdio: "inherit" }); } catch { failed++; console.log("FAIL tools/music-lab/load.mjs"); }
   if (failed) { console.log(`${failed} failed`); process.exit(1); }
   console.log(`all ok in ${secs()} s`);
 })().catch(e => { console.error(e); process.exit(1); });

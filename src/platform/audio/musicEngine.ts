@@ -291,13 +291,15 @@ export class MusicEngine {
     // (banger mode's master, between the low-pass and the limiter while its mix asks for any of it: a low cut, a high shelf of
     // air, the drive into the limiter; without them the low-pass straight into the limiter, as ever: setMix)
     this.limit = limit;
-    this.tone.connect(limit); limit.connect(this.post); this.post.connect(this.gate); this.gate.connect(this.out); this.out.connect(dest);
+    // (a renderer's own buses hear nothing, its notes all going to the stems: left unconnected, so its context never works them,
+    // about a tenth of a bar's render; Ed, 2026-11-11, "the sound crunches and cuts out")
+    this.tone.connect(limit); limit.connect(this.post); this.post.connect(this.gate); this.gate.connect(this.out); if (!this.stems) this.out.connect(dest);
     // the legend's clearing layer: not through the section's low-pass, its own reverb and a limiter
     this.circleIn = c.createGain(); this.circleVerbIn = c.createGain(); this.circleVerb = c.createConvolver();
     const circleLimit = c.createDynamicsCompressor();
     circleLimit.threshold.value = -10; circleLimit.knee.value = 6; circleLimit.ratio.value = 8; circleLimit.attack.value = 0.005; circleLimit.release.value = 0.3;
     this.circleVerbIn.connect(this.circleVerb); this.circleVerb.connect(this.circleIn);
-    this.circleIn.connect(circleLimit); circleLimit.connect(circleDest);
+    this.circleIn.connect(circleLimit); if (!this.stems) circleLimit.connect(circleDest);
     let shared = SHARED.get(c.sampleRate);
     if (!shared) {
       const noise = noiseBuffer(c, 2, 22222), metal = c.createBuffer(1, 2 * c.sampleRate, c.sampleRate);

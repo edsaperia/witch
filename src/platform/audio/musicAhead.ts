@@ -40,6 +40,18 @@ interface Bar {
   asked: number;
 }
 
+/** Which of a rendered bar's stems have anything in them (a channel all exact zeros: nothing was played into it). */
+export function stemsHeard(buf: AudioBuffer): boolean[] {
+  const out: boolean[] = [];
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    const d = buf.getChannelData(ch);
+    let any = false;
+    for (let i = 0; i < d.length; i++) if (d[i] !== 0) { any = true; break; }
+    out.push(any);
+  }
+  return out;
+}
+
 /** What of a cue the bars drawn ahead hang on (the hooks' levels and a legend's clearing are live's). */
 const cueKey = (c: MusicCue): string => JSON.stringify({ ...c, siege: 0, party: 0, legend: 0, circle: undefined });
 const styleIds = new WeakMap<object, number>();
@@ -168,11 +180,15 @@ export class MusicAhead {
     if (!Number.isFinite(at)) { B.state = "dropped"; return; } // (the timeline reset while it rendered, a new night: nowhere to put it)
     if (at < now) this.stats.late++;
     if (at + B.dur < now) { B.state = "dropped"; return; } // (the whole bar past: the hitch was longer than the queue)
-    const bus = E.bus, sung = E.style.form?.sung.part, voiceIn = sung ? E.voiceIn(sung) : null;
+    // (a stem this bar left silent isn't connected: a convolver fed a buffer's zeros never rests, so the voice line's stem, silent
+    // whenever she isn't singing, kept its 5.5 s hall, echoes and vocoder working all night; Ed, 2026-11-11, "the sound crunches
+    // and cuts out": docs/notes/music.md "Music ahead". Its effects ring on as ever, then rest.)
+    const heard = stemsHeard(buf);
+    const bus = E.bus, sung = E.style.form?.sung.part, voiceIn = sung && heard[VOICE] ? E.voiceIn(sung) : null;
     const src = c.createBufferSource(), sp = c.createChannelSplitter(STEMS), nodes: AudioNode[] = [sp];
     src.buffer = buf; src.connect(sp);
-    const ghost = E.style.haunted ? E.ghostIn() : null; // (the haunted ghost voice's stem: only a style with the treatment has one)
-    [bus.duck, bus.dry, bus.reverb, bus.delay, ghost, bus.drums].forEach((d, i) => { if (!d) return; const m = c.createChannelMerger(2); sp.connect(m, 2 * i, 0); sp.connect(m, 2 * i + 1, 1); m.connect(d); nodes.push(m); });
+    const ghost = E.style.haunted && (heard[8] || heard[9]) ? E.ghostIn() : null; // (the haunted ghost voice's stem: only a style with the treatment has one)
+    [bus.duck, bus.dry, bus.reverb, bus.delay, ghost, bus.drums].forEach((d, i) => { if (!d || !(heard[2 * i] || heard[2 * i + 1])) return; const m = c.createChannelMerger(2); sp.connect(m, 2 * i, 0); sp.connect(m, 2 * i + 1, 1); m.connect(d); nodes.push(m); });
     if (voiceIn) sp.connect(voiceIn, VOICE);
     src.onended = () => { for (const n of nodes) try { n.disconnect(); } catch { /* gone */ } };
     if (at >= now) src.start(at); else src.start(now, now - at);
