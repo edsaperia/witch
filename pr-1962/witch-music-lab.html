@@ -6488,7 +6488,7 @@ registerProcessor("witch-fof", WitchFof);
       limit.connect(this.post);
       this.post.connect(this.gate);
       this.gate.connect(this.out);
-      this.out.connect(dest);
+      if (!this.stems) this.out.connect(dest);
       this.circleIn = c.createGain();
       this.circleVerbIn = c.createGain();
       this.circleVerb = c.createConvolver();
@@ -6501,7 +6501,7 @@ registerProcessor("witch-fof", WitchFof);
       this.circleVerbIn.connect(this.circleVerb);
       this.circleVerb.connect(this.circleIn);
       this.circleIn.connect(circleLimit);
-      circleLimit.connect(circleDest);
+      if (!this.stems) circleLimit.connect(circleDest);
       let shared = SHARED.get(c.sampleRate);
       if (!shared) {
         const noise = noiseBuffer(c, 2, 22222), metal = c.createBuffer(1, 2 * c.sampleRate, c.sampleRate);
@@ -8132,6 +8132,19 @@ registerProcessor("witch-fof", WitchFof);
   var RENDERING = 2;
   var STEMS = 13;
   var VOICE = 12;
+  function stemsHeard(buf) {
+    const out = [];
+    for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+      const d = buf.getChannelData(ch);
+      let any = false;
+      for (let i = 0; i < d.length; i++) if (d[i] !== 0) {
+        any = true;
+        break;
+      }
+      out.push(any);
+    }
+    return out;
+  }
   var cueKey = (c) => JSON.stringify({ ...c, siege: 0, party: 0, legend: 0, circle: void 0 });
   var styleIds = /* @__PURE__ */ new WeakMap();
   var styleNext = 0;
@@ -8295,13 +8308,14 @@ registerProcessor("witch-fof", WitchFof);
         B.state = "dropped";
         return;
       }
-      const bus = E2.bus, sung = E2.style.form?.sung.part, voiceIn = sung ? E2.voiceIn(sung) : null;
+      const heard = stemsHeard(buf);
+      const bus = E2.bus, sung = E2.style.form?.sung.part, voiceIn = sung && heard[VOICE] ? E2.voiceIn(sung) : null;
       const src = c.createBufferSource(), sp = c.createChannelSplitter(STEMS), nodes = [sp];
       src.buffer = buf;
       src.connect(sp);
-      const ghost = E2.style.haunted ? E2.ghostIn() : null;
+      const ghost = E2.style.haunted && (heard[8] || heard[9]) ? E2.ghostIn() : null;
       [bus.duck, bus.dry, bus.reverb, bus.delay, ghost, bus.drums].forEach((d, i) => {
-        if (!d) return;
+        if (!d || !(heard[2 * i] || heard[2 * i + 1])) return;
         const m = c.createChannelMerger(2);
         sp.connect(m, 2 * i, 0);
         sp.connect(m, 2 * i + 1, 1);
