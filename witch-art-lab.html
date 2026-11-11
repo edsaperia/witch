@@ -3432,9 +3432,14 @@ function kneeOf(hip, foot, l) {
 function footModel(pose, frame, L = DEFAULT_LOOK) {
   const fr = FOOT_FRAMES[pose], K = { crouch: 0, bend: 0, roll: 0, hop: 0, breathe: 0, sway: 0, tilt: 0, look: 0, nod: 0, broom: UPRIGHT, ...fr[frame % fr.length] };
   const m = new Model({ blend: .03 }), hop = K.hop, sway = K.sway;
+  // her nightie, whole (`nightie`: both its halves), or half, her top or her trousers already on from a station (Ed, 2026-11-11: "When
+  // I go to the wardrobe and put top/jacket on, trousers are put on too"; rules/clothesPile.ts wornGenome): `nightieTop`, the chemise
+  // over her jeans (its skirt over their hips, her jeans legs below); `nightieSkirt`, her top pulled on over it, its skirt below her
+  // jacket over bare legs
+  const bodice = !!(L.nightie || L.nightieTop), skirt = bodice || !!L.nightieSkirt, bareLegs = !!(L.nightie || L.nightieSkirt);
   const hipY = K.sit ? (K.seat ?? WITCH_SEAT_HEIGHT) + .06 : .45 - K.crouch * .21 + hop, hipX = -K.crouch * .12 + (K.hipX || 0);
   // the broom: astride it (the handle level between her legs), a binding point and a direction, through her far hand, or put down
-  const B = L.nightie || L.barefoot || L.broomless ? null : K.broom, astride = !!(B && B.astride), yb = hipY - .04; // (not yet dressed, or a station card's picture of her clothes: never her broom)
+  const B = skirt || L.barefoot || L.broomless ? null : K.broom, astride = !!(B && B.astride), yb = hipY - .04; // (not yet dressed, or a station card's picture of her clothes: never her broom)
   // (a canoe, a basket, a bicycle, a jet or speeder bike, a drone isn't held like a staff: it stands on the ground beside her, art/brooms.js)
   const parked = !!B && !astride && PARKED[L.broom] !== undefined;
   const bdir = !B || astride || parked ? [1, 0, 0] : v3.norm(B.dir), bind = astride ? [-.36, yb, 0] : !B ? null : parked ? [-.5, PARKED[L.broom], -.36] : B.held !== undefined ? v3.sub(K.far, v3.mul(bdir, B.held)) : B.binding;
@@ -3451,7 +3456,7 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
     const knee = K.sit && !given ? [.21, hipY + .01, side * .09] : kneeOf(hip, foot, .21);
     const toe = K.toes ? [.03, -.045, 0] : [.05, -.03, 0];
     // in her nightie (Ed, 2026-10-23: "When waking up she wears only a nightie"; mid-thigh since 2026-10-29): bare legs below its hem; barefoot till her shoes are on
-    if (L.nightie) { m.seg(hip, knee, .05, .04, M.SKIN, { group: g }); m.seg(knee, foot, .04, .033, M.SKIN, { group: g }); }
+    if (bareLegs) { m.seg(hip, knee, .05, .04, M.SKIN, { group: g }); m.seg(knee, foot, .04, .033, M.SKIN, { group: g }); }
     else { m.seg(hip, knee, .055, .045, M.JEANS, { group: g }); m.seg(knee, foot, .045, .04, M.JEANS, { group: g }); }
     if (L.barefoot) m.ell(v3.add(foot, [.035, -.035, 0]), [.06, .026, .036], M.SKIN, { dir: K.toes ? [1, -.6, 0] : [1, 0, 0], group: g });
     else m.ell(v3.add(foot, toe), shoeR(L), M.SHOES, { dir: K.toes ? [1, -.6, 0] : [1, 0, 0], group: g, paint: p => p[1] < foot[1] + toe[1] - .015 ? M.BELLY : undefined });
@@ -3460,15 +3465,17 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   const spine = v3.norm([Math.sin(K.bend), Math.cos(K.bend), Math.sin(K.roll)]), fwd = [Math.cos(K.bend), -Math.sin(K.bend), 0];
   const hips = [hipX, hipY + .03, 0];
   const chest = v3.add(hips, v3.add(v3.mul(spine, .19), [0, K.breathe, 0]));
-  if (L.nightie) { // a short white cotton chemise (Ed's reference, 2026-10-29): thin straps over bare shoulders, a lace-edged V at the neck, gathered under the bust, falling loose to mid-thigh and a ruffled tier at its hem, all white
+  if (skirt) { // a short white cotton chemise (Ed's reference, 2026-10-29): thin straps over bare shoulders, a lace-edged V at the neck, gathered under the bust, falling loose to mid-thigh and a ruffled tier at its hem, all white
     const up = p => v3.dot(v3.sub(p, chest), spine), front = p => v3.dot(v3.sub(p, chest), fwd) > .015, across = p => Math.abs(p[2] - chest[2]);
     // the bodice: bare above its neckline, a V at the front and straight across at the back (the straps carry it); no lines drawn on it
     // (its lace and its seams too fine for her few pixels: dashes along the edge, a ring under the bust, read as dirt)
     const neck = p => (front(p) ? .02 + across(p) * 1.1 : .075);
-    m.ell(chest, [.095, .15 + K.breathe * .5, .11], M.BELLY, { dir: fwd, group: 1, paint: p => (up(p) > neck(p) ? M.SKIN : undefined) });
-    for (const side of [-1, 1]) { // (its straps, over each shoulder, front to back)
-      const at = (f, u) => v3.add(chest, v3.add(v3.mul(fwd, f), v3.add(v3.mul(spine, u), [0, 0, side * .075])));
-      m.seg(at(.06, .1), at(0, .15), .011, .011, M.BELLY, { group: 1 }); m.seg(at(0, .15), at(-.06, .09), .011, .011, M.BELLY, { group: 1 });
+    if (bodice) { // (under her jacket, `nightieSkirt`: none of it seen)
+      m.ell(chest, [.095, .15 + K.breathe * .5, .11], M.BELLY, { dir: fwd, group: 1, paint: p => (up(p) > neck(p) ? M.SKIN : undefined) });
+      for (const side of [-1, 1]) { // (its straps, over each shoulder, front to back)
+        const at = (f, u) => v3.add(chest, v3.add(v3.mul(fwd, f), v3.add(v3.mul(spine, u), [0, 0, side * .075])));
+        m.seg(at(.06, .1), at(0, .15), .011, .011, M.BELLY, { group: 1 }); m.seg(at(0, .15), at(-.06, .09), .011, .011, M.BELLY, { group: 1 });
+      }
     }
     // the skirt: from under the bust, loose and flaring to mid-thigh (sat, over her lap), its ruffled tier flared wider (the step in its
     // outline is the ruffle)
@@ -3476,8 +3483,9 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
     const axis = v3.norm(v3.sub(top, hem)), tier = v3.add(hem, v3.mul(axis, .055)), low = v3.add(hem, v3.mul(axis, -.012));
     m.seg(top, tier, .1, .135, M.BELLY, { group: 1 });
     m.seg(tier, low, .145, .172, M.BELLY, { group: 1 });
-  } else m.ell(hips, [.1, .08, .105], M.JEANS, { group: 1 });
-  if (!L.nightie) m.ell(chest, [.1, .15 + K.breathe * .5, .115], M.JACKET, { dir: fwd, group: 1, paint: torsoPaint(L, chest, fwd) });
+  }
+  if (!bareLegs) m.ell(hips, [.1, .08, .105], M.JEANS, { group: 1 }); // (her jeans' hips: under the chemise's skirt, `nightieTop`)
+  if (!bodice) m.ell(chest, [.1, .15 + K.breathe * .5, .115], M.JACKET, { dir: fwd, group: 1, paint: torsoPaint(L, chest, fwd) });
   // in bed: the bed's covers over her legs and lap to her waist (its colours, art/bedColours.js: the duvet and its stripes), a mound
   // over her lap and lower over her legs
   if (K.covers) {
@@ -3486,8 +3494,8 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
     m.box([.36, .055, 0], [.22, .055, .21], M.SHELL, { ...duvet, round: .05 }); // over her legs and feet, out to the foot of the bed
   }
   // the jacket's hem hanging behind, stirring (a poncho or a cape instead)
-  if (!L.nightie && L.top !== "poncho" && L.top !== "cape") m.chain([[...v3.add(chest, v3.add(v3.mul(fwd, -.07), v3.mul(spine, -.08))), .07], [...v3.add(chest, v3.add(v3.mul(fwd, -.11 - sway), v3.mul(spine, -.2))), .05], [...v3.add(chest, v3.add(v3.mul(fwd, -.13 - sway * 1.6), v3.mul(spine, -.29))), .025]], M.JACKET, { group: 12 });
-  if (!L.nightie) drawWrap(m, L, chest, fwd, spine, false);
+  if (!bodice && L.top !== "poncho" && L.top !== "cape") m.chain([[...v3.add(chest, v3.add(v3.mul(fwd, -.07), v3.mul(spine, -.08))), .07], [...v3.add(chest, v3.add(v3.mul(fwd, -.11 - sway), v3.mul(spine, -.2))), .05], [...v3.add(chest, v3.add(v3.mul(fwd, -.13 - sway * 1.6), v3.mul(spine, -.29))), .025]], M.JACKET, { group: 12 });
+  if (!bodice) drawWrap(m, L, chest, fwd, spine, false);
   // head: tilted to one side, looking up or down, nodding
   const H = v3.add(chest, v3.add(v3.mul(spine, .27), [K.look * .03 + K.nod * .07, -K.nod * .05, K.tilt * .04]));
   // arms: the far hand grips the broom (or not); the near hand is free (or on the handle, astride)
@@ -3498,7 +3506,7 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   for (const side of [-1, 1]) {
     const g = side > 0 ? 7 : 5, sh = shoulder(side), hand = side > 0 ? free : K.far || grip || [hipX + .03, hipY + .02, -.16]; // (no broom to hold: at her side)
     const elbow = side > 0 && K.elbow ? K.elbow : side < 0 && K.farElbow ? K.farElbow : v3.add(v3.lerp(sh, hand, .5), [-.03, -.02, side * .05]);
-    if (L.nightie) { m.ell(sh, [.036, .034, .036], M.SKIN, { group: g }); m.seg(sh, elbow, .031, .028, M.SKIN, { group: g }); m.seg(elbow, hand, .028, .025, M.SKIN, { group: g }); } // (bare shoulders and arms: only its straps over them)
+    if (bodice) { m.ell(sh, [.036, .034, .036], M.SKIN, { group: g }); m.seg(sh, elbow, .031, .028, M.SKIN, { group: g }); m.seg(elbow, hand, .028, .025, M.SKIN, { group: g }); } // (bare shoulders and arms: only its straps over them)
     else { m.seg(sh, elbow, .04, .035, M.JACKET, { group: g }); m.seg(elbow, hand, .035, .03, M.JACKET, { group: g }); }
     drawHand(m, side > 0 ? (astride ? "grip" : K.hand) : K.farHand || "grip", hand, g);
     drawGlowsticks(m, L, elbow, hand, side, g);
@@ -3758,19 +3766,23 @@ function witchHatSprite(st = {}, { look, facing = "towards" } = {}) {
 // Last night's clothes in a pile on her bedroom floor (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes
 // are in a pile on the floor"): her own (the look's top and jacket, jeans, trainers, cloak, headphones, and her hat on top, her
 // look's colours as she wears them), heaped low, at the bedroom furniture's double size; `slots`, which are still in it (rules/
-// clothesPile.ts: top, shoes, cloak, hat, bits), the rest already on her. Its middle on the floor is the bottom of the sprite; null
+// clothesPile.ts: top, trousers, shoes, cloak, hat, bits), the rest already on her. Its middle on the floor is the bottom of the sprite; null
 // when the pile's empty.
-function clothesPileSprite(st = {}, { look, facing = "towards", slots = ["top", "shoes", "cloak", "hat", "bits"] } = {}) {
+function clothesPileSprite(st = {}, { look, facing = "towards", slots = ["top", "trousers", "shoes", "cloak", "hat", "bits"] } = {}) {
   const L = { ...DEFAULT_LOOK, ...look }, m = new Model({ blend: .04 }), has = k => slots.includes(k);
   if (!slots.length) return null;
   let top = .02; // (how high the heap is so far: the hat sits on what's there)
-  if (has("top")) {
+  if (has("trousers")) { // (their own piece since Ed's report of 2026-11-11: the shoe rack's Trousers shelf's)
     m.ell([.02, .05, .02], [.22, .05, .15], M.JEANS, { group: 1 }); // the jeans, folded under
     m.seg([-.2, .03, -.08], [-.32, .025, .02], .045, .04, M.JEANS, { group: 1 }); // a leg trailing off
-    m.ell([-.03, .11, -.02], [.19, .055, .14], M.JACKET, { dir: [1, .15, .3], group: 2 }); // the jacket, crumpled over it
-    m.seg([.12, .1, .05], [.25, .04, .13], .04, .035, M.JACKET, { group: 2 }); // a sleeve, flung out
-    m.ell([.06, .15, .03], [.11, .035, .09], M.TOP, { dir: [1, -.2, .5], group: 3 }); // her top on top
-    top = .17;
+    top = .1;
+  }
+  if (has("top")) {
+    const y = has("trousers") ? 0 : -.05; // (on the jeans, or on the floor without them)
+    m.ell([-.03, .11 + y, -.02], [.19, .055, .14], M.JACKET, { dir: [1, .15, .3], group: 2 }); // the jacket, crumpled over it
+    m.seg([.12, .1 + y, .05], [.25, .04, .13], .04, .035, M.JACKET, { group: 2 }); // a sleeve, flung out
+    m.ell([.06, .15 + y, .03], [.11, .035, .09], M.TOP, { dir: [1, -.2, .5], group: 3 }); // her top on top
+    top = .17 + y;
   }
   if (has("cloak") && L.cloak && L.cloak !== "none") { m.ell([-.12, top - .01, .1], [.17, .04, .12], M.CLOTH, { dir: [1, .1, -.4], group: 6 }); top += .03; } // her cloak, bundled
   if (has("shoes")) for (const [x, z, a] of [[.27, -.1, .4], [.33, .03, -.3]]) m.ell([x, .035, z], shoeR(L), M.SHOES, { dir: [Math.cos(a), 0, Math.sin(a)], group: 4, paint: p => (p[1] < .015 ? M.BELLY : undefined) }); // her trainers, kicked off
