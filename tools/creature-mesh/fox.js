@@ -5,22 +5,11 @@
 // tipped silver-white, a grizzled muzzle and a bitten ear, a red rope at its throat with a bell, rings in its ears, stone prayer
 // beads on its legs), made stranger and older still on Ed's word (below). The red fox's own proportions underneath: long in the leg, a deep narrow chest tucked up to
 // the loin, a wedge of a head. Metres; y up; its head along +z.
-import { band, head, leg, plan, tail, torso } from "./kit.js";
+import { band, fourLegs, head, plan, tail, torso, tufts, walk } from "./kit.js";
 
 const WHITE = "#f4efe6", SOCK = "#2a1a16", NOSE = "#16100e", EAR = "#1f1512";
 
-/** The four legs on a torso: len and thick for all, fore a little shorter as the shoulder sits lower. */
-function legs(body, o) {
-  const out = [];
-  for (const [s, tag] of [[1, "L"], [-1, "R"]]) {
-    const hip = body.hip(s), sh = body.shoulder(s);
-    out.push(leg("hind", tag, s, [hip[0], 0.37 * o.len, hip[2]], { ...o, parent: "pelvis" }), leg("fore", tag, s, [sh[0], 0.34 * o.len, sh[2]], { ...o, parent: "chest" }));
-  }
-  return out;
-}
-// a walk: left hind, left fore, right hind, right fore, a quarter apart; `k` scales how far the joints swing and fold
-const walk = (k = 1) => [["hip", "knee", "hock", 0, 0.33, [0.5, -0.65], -0.06], ["shoulder", "elbow", "wrist", 0.75, 0.34, [-0.5, 1.0], -0.16]].flatMap(([a, b, c, ph, swing, fold, lift]) =>
-  [["L", 0], ["R", 0.5]].map(([tag, off]) => ({ bones: [a + tag, b + tag, c + tag], phase: (ph + off) % 1, swing: swing * k, fold: fold.map(f => f * k), lift: lift * k })));
+const legs = (body, o) => fourLegs(body, o);
 
 function baby() {
   const C = { coat: "#a8643a", belly: "#eadfce", nose: NOSE, upper: "#a8643a", mid: "#96552f", sock: "#4a2f25" }, L = 0.52;
@@ -36,18 +25,6 @@ function young() {
   const skull = head(body.pivot, { size: 0.93, muzzle: 1.08, ear: { tall: 1.25, wide: 1.05, back: EAR }, cheek: 0.35, eye: 1.15, colours: C });
   const brush = tail("tail", "pelvis", [0, 0.37 * L + 0.015, -0.33], { len: 0.54, r: 0.088, pitch: -0.3, colours: { coat: C.coat, under: "#b85c1b", tip: WHITE } });
   return plan("fox-young", body, skull, [...legs(body, { len: L, thick: 0.86, colours: C }), brush], { seconds: 0.62, duty: 0.58, bob: 0.008, sway: 0.05, tailSwing: 0.16, tails: [brush.chain], legs: walk(1.05) });
-}
-
-/** Fur standing off a ring of the skin: n tufts round it from angle a0 to a1 (0 the top, going down its left; mirrored), each
- *  `long`, swept back by `sweep`. colour(i) picks each one's. */
-function tufts(ring, bone, o) {
-  const out = [], { n = 6, a0 = 0.2, a1 = 2.6, long = 0.2, sweep = 0.6, r = 0.045, colour, tip, grow = 0 } = o; // (droop: how far each hangs)
-  for (const s of [1, -1]) for (let i = 0; i < n; i++) {
-    const a = a0 + (a1 - a0) * (n === 1 ? 0 : i / (n - 1)), cx = Math.sin(a) * s, cy = Math.cos(a), L = long * (1 + grow * (i / Math.max(1, n - 1))) * (0.85 + 0.3 * ((i * 7 + (s > 0 ? 0 : 3)) % 5) / 4);
-    const at = [ring.at[0] + cx * ring.rx * 0.8, ring.at[1] + cy * ring.ry * 0.8, ring.at[2]];
-    out.push({ at, rx: r, ry: r * 0.8, tip: [at[0] + cx * L * (1 - sweep) * 0.8, at[1] + cy * L * (1 - sweep) * 0.8 - L * (o.droop ?? 0.15), at[2] - L * sweep], bone, colour: colour(i, s), tipColour: tip?.(i, s) ?? colour(i, s), split: 0.5, up: [0, 0, 1] });
-  }
-  return out;
 }
 
 // (Ed, 2026-11-11: "I think the adult should be more like the legend (all the tails and spikes)": the first pass's legend, without

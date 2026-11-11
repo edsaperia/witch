@@ -1,6 +1,8 @@
 // Writes a creature drawn in code (tools/creature-mesh/quadruped.js and its species' plan) as a rigged, animated .glb, for
 // tools/creature-bake/bake.mjs or any 3D tool: the trial of low-poly creatures on real skeletons (docs/plans/creature-meshes.md).
-//   node tools/creature-mesh/make.mjs fox-adult out/fox-adult.glb     (fox-baby, fox-young, fox-adult, fox-legend)
+//   node tools/creature-mesh/make.mjs fox-adult out/fox-adult.glb
+// A plan is <species>-<baby|young|adult|legend>, for home's ten: fox, badger, snail, hedgehog, hare, squirrel, marten, stoat, mole,
+// dormouse (page.js lists them).
 // Needs Playwright's Chromium, as the art tools do (three.js's exporter runs in a page).
 import { build } from "esbuild";
 import { createRequire } from "node:module";

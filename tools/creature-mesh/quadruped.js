@@ -75,7 +75,7 @@ function gaitClip(plan, bones, name = "Walk", steps = 24) {
   const G = plan.gait, T = G.seconds, times = Array.from({ length: steps + 1 }, (_, i) => (i / steps) * T), tracks = [];
   const rot = (bone, f) => { const v = []; for (const t of times) { const [x = 0, y = 0, z = 0] = f((t / T) % 1); const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z, "YXZ")); v.push(q.x, q.y, q.z, q.w); } tracks.push(new THREE.QuaternionKeyframeTrack(`${bone}.quaternion`, times, v)); };
   const ease = s => s * s * (3 - 2 * s), TAU = Math.PI * 2;
-  for (const leg of G.legs) {
+  for (const leg of G.legs ?? []) {
     const [upper, lower, foot] = leg.bones, [foldLower, foldFoot] = leg.fold, d = G.duty;
     const cyc = u => (u + leg.phase) % 1, sw = u => { const c = cyc(u); return c < d ? null : (c - d) / (1 - d); };
     // (a leg hangs down: turning it about x by +a carries the foot back, so forward is negative)
@@ -83,14 +83,16 @@ function gaitClip(plan, bones, name = "Walk", steps = 24) {
     rot(lower, u => { const s = sw(u); return [s === null ? 0 : foldLower * Math.sin(Math.PI * s)]; });
     rot(foot, u => { const s = sw(u), c = cyc(u); return [s === null ? (leg.push ?? 0) * Math.max(0, (c / d - 0.6) / 0.4) : foldFoot * Math.sin(Math.PI * Math.min(1, s * 1.15))]; });
   }
-  const S = G.sway ?? 0.05, B = G.bob ?? 0.008;
-  rot(G.hips, u => [0, S * Math.sin(TAU * u), (G.roll ?? 0.03) * Math.sin(TAU * u + 1)]);
-  rot(G.chest, u => [0.02 * Math.sin(TAU * 2 * u + 1), -S * 1.6 * Math.sin(TAU * u), -(G.roll ?? 0.03) * Math.sin(TAU * u + 1.4)]);
-  rot(G.neck, u => [0.035 * Math.sin(TAU * 2 * u + 2.2), S * 0.5 * Math.sin(TAU * u), 0]);
-  rot(G.head, u => [-0.03 * Math.sin(TAU * 2 * u + 2.2), S * 0.4 * Math.sin(TAU * u), 0]);
-  (G.tails ?? [G.tail]).forEach((chain, n) => chain.forEach((b, i) => rot(b, u => [0.05 * Math.sin(TAU * 2 * u - i * 0.9 + n * 1.3), (G.tailSwing ?? 0.14) * Math.sin(TAU * u - 0.8 - i * 0.7 + n * 0.8), 0]))); // (each tail a little out of step with the last)
+  const S = G.sway ?? 0.05, B = G.bob ?? 0.008, K = G.rock ?? 0; // (rock: the whole back pitching once a stride, a bound's)
+  if (G.hips) rot(G.hips, u => [K * Math.sin(TAU * u + (G.rockAt ?? 0)), S * Math.sin(TAU * u), (G.roll ?? 0.03) * Math.sin(TAU * u + 1)]);
+  if (G.chest) rot(G.chest, u => [0.02 * Math.sin(TAU * 2 * u + 1) - K * 1.6 * Math.sin(TAU * u + (G.rockAt ?? 0) + 0.5), -S * 1.6 * Math.sin(TAU * u), -(G.roll ?? 0.03) * Math.sin(TAU * u + 1.4)]);
+  if (G.neck) rot(G.neck, u => [K * 0.6 * Math.sin(TAU * u + (G.rockAt ?? 0) + 0.5) + 0.035 * Math.sin(TAU * 2 * u + 2.2), S * 0.5 * Math.sin(TAU * u), 0]);
+  if (G.head) rot(G.head, u => [-0.03 * Math.sin(TAU * 2 * u + 2.2), S * 0.4 * Math.sin(TAU * u), 0]);
+  (G.tails ?? (G.tail ? [G.tail] : [])).forEach((chain, n) => chain.forEach((b, i) => rot(b, u => [0.05 * Math.sin(TAU * 2 * u - i * 0.9 + n * 1.3), (G.tailSwing ?? 0.14) * Math.sin(TAU * u - 0.8 - i * 0.7 + n * 0.8), 0]))); // (each tail a little out of step with the last)
   for (const e of G.ears ?? []) rot(e, u => [0.05 * Math.sin(TAU * 2 * u + 3), 0, 0]);
-  const root = bones[G.root], y0 = root.position.y, pv = []; for (const t of times) pv.push(root.position.x, y0 + B * Math.sin(TAU * 2 * (t / T) + 0.6), root.position.z);
+  // (anything else that moves: { bone, rot: u => [x, y, z] } or { bone, pos: u => [dx, dy, dz] } from where it rests)
+  for (const e of G.extra ?? []) { if (e.rot) rot(e.bone, e.rot); if (e.pos) { const b = bones[e.bone], v = []; for (const t of times) { const d = e.pos((t / T) % 1); v.push(b.position.x + d[0], b.position.y + d[1], b.position.z + d[2]); } tracks.push(new THREE.VectorKeyframeTrack(`${e.bone}.position`, times, v)); } }
+  const bobs = G.bobs ?? 2, root = bones[G.root], y0 = root.position.y, pv = []; for (const t of times) pv.push(root.position.x, y0 + B * Math.sin(TAU * bobs * (t / T) + 0.6), root.position.z);
   tracks.push(new THREE.VectorKeyframeTrack(`${G.root}.position`, times, pv));
   return new THREE.AnimationClip(name, T, tracks);
 }
