@@ -46,6 +46,15 @@ Canonical/cloud only.
 
 Canonical/cloud program-count evidence only, not latency or native-route acceptance.
 
+## `prune-merged-branches.mjs`
+
+Deletes the remote branches whose work is already merged.
+
+```
+node tools/ci/prune-merged-branches.mjs            the list only: branch, tip, its last merged pull request
+node tools/ci/prune-merged-branches.mjs --go       deletes them, 50 a push
+```
+
 ## `release-reuse.mjs`
 
 Reuse full release-PR validation only for an identical main tree and execution environment.
@@ -115,6 +124,7 @@ Inventory real world-constructor calls and explicit small-fixture reasons; comme
 - `pages-policy.test.cjs`
 - `proofs.json`
 - `proofs.test.cjs`
+- `prune-merged-branches.test.ts`
 - `release-reuse.test.ts`
 - `reporting.test.cjs`
 - `run-unit.test.ts`
