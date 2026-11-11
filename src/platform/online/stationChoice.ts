@@ -6,10 +6,10 @@ import { hatSpell, setParts } from "../../rules/spells";
 import { STATION_SLOT, wearFromStation } from "../../rules/clothesPile";
 import { wakeOf, startParty } from "../../rules/wakeUp";
 import { recordById } from "../../rules/records";
-import { readStationLook, type StationLook } from "./stationAppearance";
+import { readStationLook, shelfAt, type StationLook } from "./stationAppearance";
 
 /** Data requests only: no player ID, callbacks, tuning, inventory or replacement world from a visitor. */
-export type StationChoice = { kind: "party"; id: string } | { kind: "bag"; id: string } | { kind: "hat"; id: string } | { kind: "broom"; fitted: Fitted } | { kind: "dress"; station: string } | StationLook;
+export type StationChoice = { kind: "party"; id: string } | { kind: "bag"; id: string } | { kind: "hat"; id: string } | { kind: "broom"; fitted: Fitted } | { kind: "dress"; station: string; shelf?: string } | StationLook;
 const fields = (value: Record<string, unknown>, names: string[]) => Object.keys(value).length === names.length && names.every(name => Object.hasOwn(value, name));
 export function stationChoice(value: unknown): StationChoice | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
@@ -18,7 +18,8 @@ export function stationChoice(value: unknown): StationChoice | null {
   if (c.kind === "party" && fields(c, ["kind", "id"]) && typeof c.id === "string" && recordById(c.id)) return { kind: "party", id: c.id };
   if (c.kind === "bag" && fields(c, ["kind", "id"]) && typeof c.id === "string" && (c.id === "" || BAGS.some(b => b.id === c.id))) return { kind: "bag", id: c.id };
   if (c.kind === "hat" && fields(c, ["kind", "id"]) && typeof c.id === "string" && (c.id === "none" || hatSpell(c.id)?.built)) return { kind: "hat", id: c.id };
-  if (c.kind === "dress" && fields(c, ["kind", "station"]) && typeof c.station === "string" && Object.hasOwn(STATION_SLOT, c.station)) return { kind: "dress", station: c.station };
+  // (`shelf`, the station's shelf it was chosen on, for the piece it puts on: Ed, 2026-11-11; an older message without it, the station's)
+  if (c.kind === "dress" && fields(c, Object.hasOwn(c, "shelf") ? ["kind", "station", "shelf"] : ["kind", "station"]) && typeof c.station === "string" && Object.hasOwn(STATION_SLOT, c.station) && (!Object.hasOwn(c, "shelf") || shelfAt(c.station, c.shelf))) return { kind: "dress", station: c.station, ...(typeof c.shelf === "string" ? { shelf: c.shelf } : {}) };
   if (c.kind === "broom" && fields(c, ["kind", "fitted"]) && c.fitted && typeof c.fitted === "object" && !Array.isArray(c.fitted)) {
     const fitted = c.fitted as Record<string, unknown>, slots = ["tip", "chassis", "exhaust"] as const;
     if (fields(fitted, [...slots]) && slots.every(slot => fitted[slot] === null || typeof fitted[slot] === "string" && partById(fitted[slot] as string)?.slot === slot)) return { kind: "broom", fitted: { tip: fitted.tip as string | null, chassis: fitted.chassis as string | null, exhaust: fitted.exhaust as string | null } };
@@ -40,10 +41,10 @@ export function applyStationChoice(game: Game, player: 0 | 1, choice: StationCho
     if (game.witches.some(other => other !== witch && Object.values(choice.fitted).some(id => id !== null && Object.values(other.spells.parts ?? {}).includes(id)))) return false;
     setParts(witch.spells, choice.fitted);
   } else if (choice.kind === "look") {
-    const wake = wakeOf(game, witch); if (wake) wearFromStation(wake, choice.station);
+    const wake = wakeOf(game, witch); if (wake) wearFromStation(wake, choice.station, choice.shelf);
   } else {
     const wake = wakeOf(game, witch); if (!wake) return false;
-    wearFromStation(wake, choice.station);
+    wearFromStation(wake, choice.station, choice.shelf);
   }
   return true;
 }

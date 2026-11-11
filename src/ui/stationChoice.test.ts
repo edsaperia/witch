@@ -8,6 +8,7 @@ import { pleasingWitch } from "./looks";
 import { PanelChoice, type Genome } from "./stationChoice";
 import { bindings, PAD_BUTTONS } from "../platform/bindings";
 import { panelPad, itemAt } from "./stationLines";
+import { awaitingShelves, PILE_SLOTS } from "../rules/clothesPile";
 
 const STATIONS = ["mirror", "dressingTable", "basin", "wardrobe", "cloakPegs", "shoeRack", "bags", "broomBay", "lathe", "broomLift"];
 const ctx = {
@@ -80,6 +81,29 @@ describe("a station panel: moving only moves the focus, choosing changes her (Ed
       expect(p.awaitingDress, station).toBe(false);
       expect(p.choose().look, station).toBeUndefined();
     }
+  });
+
+  // Ed, 2026-11-11: "When I go to the wardrobe and put top/jacket on, trousers are put on too": at the shoe rack her trousers and her
+  // shoes are each their own piece, waiting on their own shelf (rules/clothesPile.ts awaitingShelves).
+  it("at the shoe rack, choosing her trousers' colour dresses only the Trousers shelf: her shoes still wait, and choosing them dresses her", () => {
+    const p = panel("shoeRack"), L = p.lines(), shelfOf = (id: string) => p.shelves.find(s => s.id === id)!;
+    p.awaitingDress = awaitingShelves(PILE_SLOTS, "shoeRack", p.shelves.map(s => s.id));
+    expect(p.awaitingDress).toEqual({ trousers: "trousers", shoes: "shoes" });
+    const grid = L.findIndex(l => l.kind === "grid" && p.shelves[l.shelf].id === "trousers");
+    p.focus(grid, 0);
+    expect(p.choose().look).toBeDefined();
+    expect(p.awaits(shelfOf("trousers"))).toBe(false); expect(p.awaits(shelfOf("shoes"))).toBe(true);
+    const line = L.findIndex(l => l.kind === "items" && p.shelves[l.shelf].id === "shoes"), l = L[line];
+    const col = Array.from({ length: l.n }, (_, i) => i).find(i => wears(p.g, itemAt(p.shelves[l.shelf], l, i)))!;
+    expect(p.wears(itemAt(p.shelves[l.shelf], l, col), shelfOf("shoes"))).toBe(false); // (her shoes still in the pile)
+    p.focus(line, col);
+    expect(p.choose().look).toBeDefined(); // (the same shoes: still a choice, putting them on)
+    expect(p.awaitingDress).toBe(false);
+    // the wardrobe's Jacket and Top wait for her top together: either dresses both
+    const w = panel("wardrobe");
+    w.awaitingDress = awaitingShelves(PILE_SLOTS, "wardrobe", w.shelves.map(s => s.id));
+    expect(w.awaitingDress).toEqual({ jacket: "top", top: "top" });
+    w.dressed("jacket"); expect(w.awaitingDress).toBe(false);
   });
 
   it("choosing an item she owns and isn't wearing puts it on; choosing again changes nothing more", () => {
