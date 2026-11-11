@@ -908,9 +908,6 @@ export function confusedAim(W: Witch, c: Controls, ht: number): Controls {
   return { ...c, aimX: c.aimX * cs - c.aimZ * sn, aimZ: c.aimX * sn + c.aimZ * cs };
 }
 
-/** Fights and sieges (rules/combat.ts): new soundsystems come under siege, every creature near a
- *  witch or busy with a siege fights, blows land on creatures, witches and soundsystems; a fallen
- *  soundsystem ends its party and its besiegers march on; the run ends when none stands. */
 /** Whether (x, z) is in a creature's area, for its fights (combat's world.inArea: its edge, chases past it, defending): a legend
  *  area and its pair as one (Ed, 2026-10-26: "for legends getting enraged, and also for animals attacking and defending, the
  *  adjacent areas should count as one"; map.sameArea). */
@@ -919,6 +916,10 @@ export const creatureInArea = (map: ForestMap) => (c: { cell: readonly [number, 
   return (k[0] === c.cell[0] && k[1] === c.cell[1]) || (!!map.sameArea && map.sameArea(k, c.cell as [number, number]));
 };
 
+/** Fights and sieges (rules/combat.ts): new soundsystems come under siege, every creature near a
+ *  witch or busy with a siege fights, blows land on creatures, witches and soundsystems; a fallen
+ *  soundsystem ends its party and its besiegers march on; the run ends when the home ring's last
+ *  speaker falls (Ed, 2026-10-10; rules/partyOver.ts). */
 function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolean): void {
   const S = g.combat, time = g.clock.time;
   // A new soundsystem: its area's wild creatures are enraged and march on it (#87: its quest done or not).
