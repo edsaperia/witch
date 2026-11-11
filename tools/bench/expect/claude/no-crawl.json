@@ -1,0 +1,4 @@
+{
+  "reason": "the camera's pixel snap is taken along the ground (north or south) instead of straight up the screen, so the camera sits up to a fraction of a metre nearer or further along its view than before and things off the focus's depth can land a pixel apart; and meshes of one renderOrder are sorted by a fixed world depth, not the camera's distance (no picture change from that on the quick bench); the rules are untouched",
+  "frames": { "*": "things away from the focus's depth may stand a pixel from where they stood (the camera's snap along the ground)" }
+}

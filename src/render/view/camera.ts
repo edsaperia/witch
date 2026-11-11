@@ -23,6 +23,7 @@ import { potionBend, potionStrength, potionCamera, vertigoAmount, tripIndicatorS
 import { potionSettings } from "../../rules/potionSettings";
 import { hueSpinPhase } from "../../rules/potionCycle";
 import { THERMAL_UNIFORMS } from '../thermalVision';
+import { crawlOld } from "../drawOrder";
 
 /** At a station (camera.station.whole; Ed, 2026-10-29: "the witch right half of the screen, and she should be nicely centred and
  *  visible top of hat to bottom of shoes"): the camera's distance made so she, feet to the top of her hat as drawn (last frame's,
@@ -60,6 +61,22 @@ export function ridePoint(v: Pick<View, "herOffset" | "game">, pose: { tx: numbe
 export function rideCamera(ride: Ride, flying: boolean, dt: number, R: { x: number; z: number }, W: { vx: number; vz: number }, full: number, ground: (x: number, z: number) => number, T: RideTuning): number {
   if (flying) ride.h = Number.NaN;
   return ride.update(dt, R.x, R.z, W.vx, W.vz, full, ground, T, Infinity);
+}
+
+/** The camera's aim snapped to the picture's pixel grid (placeCamera): across the screen by whole pixels (`er`, metres), and up it
+ *  (`eu`) by moving the aim along the ground, north or south, so far that its height up the screen lands on the grid, not straight
+ *  up the screen (`old`, ?crawl=old: as before). Moved up the screen the aim kept its depth, so walking north or south the camera
+ *  crept toward what it looks at a hair every frame while it stepped up the screen a pixel now and then, and everything off the
+ *  focus's depth slid a fraction of a pixel back between the steps and jumped on at each: things standing over each other swapped
+ *  pixels to and fro (Ed, 2026-11-11, after blendi's "Oil paint": "Which of two overlapping strokes is on top must never depend on
+ *  where the camera is, or the paint crawls as you breathe"). Along the ground the creep and the step come together, once a pixel,
+ *  every one the same way. `a`: the pitch (radians); `up`: the camera's up; mutates `target`. */
+export function snapAim(target: THREE.Vector3, up: THREE.Vector3, a: number, wpp: number, old = false): { eu: number; er: number } {
+  const u = target.dot(up), r = target.x, eu = Math.round(u / wpp) * wpp - u, er = Math.round(r / wpp) * wpp - r;
+  const sa = Math.sin(a);
+  if (sa >= 0.2 && !old) target.z -= eu / sa; else target.addScaledVector(up, eu); // (a camera near level, the beach's: as before)
+  target.x += er;
+  return { eu, er };
 }
 
 /** Places the camera for this frame; returns the camera's up (tilted with its pitch), for the sprites' facing. */
@@ -200,9 +217,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   }
   v.time("sky");
   if (v.telescope && !F) return placeTelescope(v, v.telescope, moonNow);
-  const u = target.dot(up), r = target.x, eu = Math.round(u / wpp) * wpp - u, er = Math.round(r / wpp) * wpp - r;
-  target.addScaledVector(up, eu);
-  target.x += er;
+  const { eu, er } = snapAim(target, up, a, wpp, crawlOld());
   // What the snap took off (in the picture's pixels): main.ts moves the canvas back by it, in whole
   // screen pixels, so the art stays on its grid but the view glides (Ed, 2026-10-05: whole art-pixel
   // steps of the camera felt like a low framerate). Moved right, the picture moves left; up, down.
