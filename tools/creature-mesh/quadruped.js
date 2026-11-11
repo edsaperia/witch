@@ -4,6 +4,7 @@
 // out as a .glb for tools/creature-bake/bake.mjs.
 // The model: y up, its head along +z (glTF's forward), metres. A plan gives joints (named points), bones (joint to joint, each
 // with its parent), lofts (rings along a path, each ring riding one bone, joined into faceted tubes) and cones (ears, tufts).
+// A ring or cone marked `glow` is drawn unlit, in a second material named "glow" (fox-fire, a lit eye): the bake keeps it bright.
 import * as THREE from "three";
 
 const V = p => new THREE.Vector3(...p);
@@ -22,13 +23,16 @@ function skeleton(plan) {
 
 /** Collects flat-shaded triangles: each corner its own vertex, with its colour and the one bone it rides. */
 class Faces {
-  constructor(index) { this.index = index; this.pos = []; this.col = []; this.skin = []; }
-  tri(a, b, c) { for (const v of [a, b, c]) { this.pos.push(v.p.x, v.p.y, v.p.z); const k = new THREE.Color(v.c); this.col.push(k.r, k.g, k.b); this.skin.push(this.index[v.bone]); } }
+  constructor(index) { this.index = index; this.lit = { pos: [], col: [], skin: [] }; this.glow = { pos: [], col: [], skin: [] }; }
+  // (a face glows if its first corner does: fox-fire, an eye; drawn unlit, in its own group)
+  tri(a, b, c) { const to = a.glow ? this.glow : this.lit; for (const v of [a, b, c]) { to.pos.push(v.p.x, v.p.y, v.p.z); const k = new THREE.Color(v.c); to.col.push(k.r, k.g, k.b); to.skin.push(this.index[v.bone]); } }
   quad(a, b, c, d) { this.tri(a, b, c); this.tri(a, c, d); }
   geometry() {
-    const g = new THREE.BufferGeometry(), n = this.skin.length, si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
-    for (let i = 0; i < n; i++) { si[i * 4] = this.skin[i]; sw[i * 4] = 1; }
-    g.setAttribute("position", new THREE.Float32BufferAttribute(this.pos, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(this.col, 3));
+    const pos = [...this.lit.pos, ...this.glow.pos], col = [...this.lit.col, ...this.glow.col], skin = [...this.lit.skin, ...this.glow.skin];
+    const g = new THREE.BufferGeometry(), n = skin.length, si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
+    for (let i = 0; i < n; i++) { si[i * 4] = skin[i]; sw[i * 4] = 1; }
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+    g.addGroup(0, this.lit.skin.length, 0); if (this.glow.skin.length) g.addGroup(this.lit.skin.length, this.glow.skin.length, 1);
     g.setAttribute("skinIndex", new THREE.Uint16BufferAttribute(si, 4)); g.setAttribute("skinWeight", new THREE.Float32BufferAttribute(sw, 4));
     g.computeVertexNormals(); // (no shared corners, so every face is flat)
     return g;
@@ -44,7 +48,7 @@ function loft(faces, rings, sides, up = [0, 1, 0]) {
     const t = next.sub(prev).normalize(), u0 = V(r.up ?? up), s = new THREE.Vector3().crossVectors(u0, t).normalize(), u = new THREE.Vector3().crossVectors(t, s).normalize();
     return Array.from({ length: sides }, (_, k) => {
       const a = (k + (r.turn ?? 0.5)) / sides * Math.PI * 2, frac = k / sides; // (turn 0.5: a flat on top, a corner each side)
-      return { p: here.clone().addScaledVector(s, Math.sin(a) * r.rx).addScaledVector(u, Math.cos(a) * r.ry), c: typeof r.colour === "function" ? r.colour(Math.cos(a), Math.sin(a), frac) : r.colour, bone: r.bone };
+      return { p: here.clone().addScaledVector(s, Math.sin(a) * r.rx).addScaledVector(u, Math.cos(a) * r.ry), c: typeof r.colour === "function" ? r.colour(Math.cos(a), Math.sin(a), frac) : r.colour, bone: r.bone, glow: !!r.glow };
     });
   });
   // (faces wound to look outward, whichever way the path and its frame happen to turn)
@@ -53,7 +57,7 @@ function loft(faces, rings, sides, up = [0, 1, 0]) {
   const n0 = new THREE.Vector3().crossVectors(made[j + 1][0].p.clone().sub(made[j][0].p), made[j][1].p.clone().sub(made[j][0].p)), out = n0.dot(made[j][0].p.clone().add(made[j][1].p).multiplyScalar(0.5).sub(mids[j])) >= 0;
   for (let i = 0; i + 1 < made.length; i++) for (let k = 0; k < sides; k++) { const a = made[i][k], b = made[i][(k + 1) % sides], c = made[i + 1][(k + 1) % sides], d = made[i + 1][k]; out ? faces.quad(a, d, c, b) : faces.quad(a, b, c, d); }
   for (const [ring, last] of [[made[0], false], [made[made.length - 1], true]]) { // the ends, as fans
-    const mid = { p: ring.reduce((m, v) => m.add(v.p), new THREE.Vector3()).multiplyScalar(1 / sides), c: ring[0].c, bone: ring[0].bone };
+    const mid = { p: ring.reduce((m, v) => m.add(v.p), new THREE.Vector3()).multiplyScalar(1 / sides), c: ring[0].c, bone: ring[0].bone, glow: ring[0].glow };
     for (let k = 0; k < sides; k++) last === out ? faces.tri(mid, ring[(k + 1) % sides], ring[k]) : faces.tri(mid, ring[k], ring[(k + 1) % sides]);
   }
 }
@@ -61,7 +65,7 @@ function loft(faces, rings, sides, up = [0, 1, 0]) {
 /** A cone: a base ring { at, rx, ry, up } and a tip, for ears, cheek tufts and claws. tipColour for the last part of it. */
 function cone(faces, o) {
   const mid = { at: V(o.at).lerp(V(o.tip), o.split ?? 0.6).toArray(), rx: o.rx * (1 - (o.split ?? 0.6)), ry: o.ry * (1 - (o.split ?? 0.6)) };
-  loft(faces, [{ ...o, colour: o.colour }, { ...mid, bone: o.bone, colour: o.tipColour ?? o.colour, up: o.up }, { at: o.tip, rx: 0.0005, ry: 0.0005, bone: o.bone, colour: o.tipColour ?? o.colour, up: o.up }], o.sides ?? 4, o.up ?? [0, 0, 1]);
+  loft(faces, [{ ...o, colour: o.colour }, { ...mid, bone: o.bone, colour: o.tipColour ?? o.colour, up: o.up, glow: o.glow }, { at: o.tip, rx: 0.0005, ry: 0.0005, bone: o.bone, colour: o.tipColour ?? o.colour, up: o.up, glow: o.glow }], o.sides ?? 4, o.up ?? [0, 0, 1]);
 }
 
 /** The gait as a looping clip: each leg's joints swing by its phase (stance back, swing forward with the joints folding), the
@@ -96,7 +100,8 @@ export function build(plan) {
   const { bones, list } = skeleton(plan), faces = new Faces(Object.fromEntries(list.map((b, i) => [b.name, i])));
   for (const l of plan.lofts) loft(faces, l.rings, l.sides ?? 6, l.up);
   for (const c of plan.cones ?? []) cone(faces, c);
-  const mesh = new THREE.SkinnedMesh(faces.geometry(), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0, flatShading: true }));
+  const body = new THREE.MeshStandardMaterial({ name: "body", vertexColors: true, roughness: 1, metalness: 0, flatShading: true }), glow = new THREE.MeshBasicMaterial({ name: "glow", vertexColors: true });
+  const mesh = new THREE.SkinnedMesh(faces.geometry(), [body, glow]);
   mesh.name = plan.name; const root = list[0]; mesh.add(root); mesh.updateMatrixWorld(true); mesh.bind(new THREE.Skeleton(list));
   const scene = new THREE.Scene(); scene.add(mesh);
   return { scene, clips: plan.gait ? [gaitClip(plan, bones)] : [] };

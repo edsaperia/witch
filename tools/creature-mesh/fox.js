@@ -1,9 +1,9 @@
 // The fox's four levels as plans for tools/creature-mesh/quadruped.js, each its own build and not the last one enlarged (Ed,
 // 2026-10-05: "the evolved design per stage (not just being larger)"). Its signature is the brush and the pointed mask, pushed
-// further a level: a kit that's all ears with a stub of a tail; a leggy young with a full brush; an adult with its ruff and a
-// second, smaller tail; and the old shrine fox, the elder of its kind (the genome's brief, art/creatures/fox/genome.js): nine
-// soft tails tipped silver-white, a grizzled muzzle and a bitten ear, a red rope at its throat with a bell, rings in its ears,
-// stone prayer beads on its legs. The red fox's own proportions underneath: long in the leg, a deep narrow chest tucked up to
+// further a level: a kit that's all ears with a stub of a tail; a leggy young with a full brush; an adult with five tails fanned
+// and a spiked ruff; and the old shrine fox, the elder of its kind (the genome's brief, art/creatures/fox/genome.js: nine tails
+// tipped silver-white, a grizzled muzzle and a bitten ear, a red rope at its throat with a bell, rings in its ears, stone prayer
+// beads on its legs), made stranger and older still on Ed's word (below). The red fox's own proportions underneath: long in the leg, a deep narrow chest tucked up to
 // the loin, a wedge of a head. Metres; y up; its head along +z.
 import { band, head, leg, plan, tail, torso } from "./kit.js";
 
@@ -38,35 +38,66 @@ function young() {
   return plan("fox-young", body, skull, [...legs(body, { len: L, thick: 0.86, colours: C }), brush], { seconds: 0.62, duty: 0.58, bob: 0.008, sway: 0.05, tailSwing: 0.16, tails: [brush.chain], legs: walk(1.05) });
 }
 
-function adult() {
-  const C = { coat: "#e07a1f", belly: WHITE, nose: NOSE, upper: "#e07a1f", mid: "#c9641a", sock: SOCK }, L = 1;
-  const body = torso({ back: 0.38, len: 1, girth: 1, deep: 1.04, tuck: 0.86, neck: [0.17, 0.15], neckThick: 1.12, white: 0.5, colours: C });
-  const skull = head(body.pivot, { size: 1, muzzle: 1, ear: { tall: 1, wide: 1, back: EAR, tip: EAR }, cheek: 1.35, eye: 1, colours: C });
-  const T = { coat: C.coat, under: "#a44f18", tip: WHITE };
-  const brush = tail("tail", "pelvis", [-0.015, 0.385, -0.335], { len: 0.54, r: 0.096, yaw: -0.16, pitch: -0.3, colours: T }), second = tail("tailb", "pelvis", [0.03, 0.4, -0.32], { len: 0.42, r: 0.07, yaw: 0.3, pitch: 0.28, curl: -0.25, tip: 0.26, colours: T });
-  // the ruff: white fur standing off the throat and the chest's front
-  const n = body.rings[5].at, ruff = [[0.055, -0.03, 0.02, 0.1, -0.1, -0.02], [-0.055, -0.03, 0.02, -0.1, -0.1, -0.02], [0, -0.07, 0.03, 0, -0.16, 0.0]].map(([x, y, z, tx, ty, tz]) => ({ at: [n[0] + x, n[1] + y, n[2] + z], rx: 0.04, ry: 0.035, tip: [n[0] + tx, n[1] + ty, n[2] + tz], bone: "neck", colour: WHITE, split: 0.5, up: [0, 0, 1] }));
-  return plan("fox-adult", body, skull, [...legs(body, { len: L, thick: 1, colours: C }), brush, second], { seconds: 0.72, duty: 0.6, bob: 0.007, sway: 0.045, tailSwing: 0.13, tails: [brush.chain, second.chain], legs: walk(1) }, { cones: ruff });
+/** Fur standing off a ring of the skin: n tufts round it from angle a0 to a1 (0 the top, going down its left; mirrored), each
+ *  `long`, swept back by `sweep`. colour(i) picks each one's. */
+function tufts(ring, bone, o) {
+  const out = [], { n = 6, a0 = 0.2, a1 = 2.6, long = 0.2, sweep = 0.6, r = 0.045, colour, tip, grow = 0 } = o; // (droop: how far each hangs)
+  for (const s of [1, -1]) for (let i = 0; i < n; i++) {
+    const a = a0 + (a1 - a0) * (n === 1 ? 0 : i / (n - 1)), cx = Math.sin(a) * s, cy = Math.cos(a), L = long * (1 + grow * (i / Math.max(1, n - 1))) * (0.85 + 0.3 * ((i * 7 + (s > 0 ? 0 : 3)) % 5) / 4);
+    const at = [ring.at[0] + cx * ring.rx * 0.8, ring.at[1] + cy * ring.ry * 0.8, ring.at[2]];
+    out.push({ at, rx: r, ry: r * 0.8, tip: [at[0] + cx * L * (1 - sweep) * 0.8, at[1] + cy * L * (1 - sweep) * 0.8 - L * (o.droop ?? 0.15), at[2] - L * sweep], bone, colour: colour(i, s), tipColour: tip?.(i, s) ?? colour(i, s), split: 0.5, up: [0, 0, 1] });
+  }
+  return out;
 }
 
+// (Ed, 2026-11-11: "I think the adult should be more like the legend (all the tails and spikes)": the first pass's legend, without
+// the elder's trappings: five tails fanned, a spiked ruff and a crest down its back)
+function adult() {
+  const C = { coat: "#e07a1f", belly: WHITE, nose: NOSE, upper: "#e07a1f", mid: "#c9641a", sock: SOCK }, L = 1.06;
+  const body = torso({ back: 0.37 * L + 0.01, len: 1.02, girth: 1.06, deep: 1.14, tuck: 0.74, neck: [0.19, 0.14], neckThick: 1.25, white: 0.5, colours: C });
+  const skull = head(body.pivot, { size: 1.06, muzzle: 1.05, ear: { tall: 1.25, wide: 1, back: EAR, tip: EAR }, cheek: 1.75, eye: 1.15, colours: C });
+  const tails = Array.from({ length: 5 }, (_, i) => { const f = (i - 2) / 2, a = Math.abs(f);
+    return tail(`tail${"abcde"[i]}`, "pelvis", [0.045 * f, body.rings[1].at[1] + 0.05 - 0.03 * a, body.rings[1].at[2] - 0.03 + 0.03 * a], { len: 0.66 - 0.12 * a, r: 0.108 - 0.012 * a, yaw: f * 0.85, pitch: 0.6 - 0.5 * a, curl: -0.35, wave: 0.12, phase: i, tip: 0.2, blunt: 0.22, colours: { coat: C.coat, under: "#a44f18", tip: WHITE } }); });
+  const ruff = tufts(body.rings[5], "neck", { n: 5, a0: 0.9, a1: 2.9, long: 0.19, sweep: 0.6, droop: 0.3, r: 0.05, colour: () => WHITE });
+  const crest = tufts(body.rings[4], "chest", { n: 1, a0: 0.12, long: 0.12, sweep: 0.9, r: 0.035, colour: () => C.coat, tip: () => "#a44f18" }).concat(tufts(body.rings[3], "chest", { n: 1, a0: 0.12, long: 0.1, sweep: 0.9, r: 0.03, colour: () => C.coat, tip: () => "#a44f18" }));
+  return plan("fox-adult", body, skull, [...legs(body, { len: L, thick: 1, colours: C }), ...tails], { seconds: 0.74, duty: 0.6, bob: 0.007, sway: 0.045, tailSwing: 0.1, tails: tails.map(t => t.chain), legs: walk(1) }, { cones: [...ruff, ...crest] });
+}
+
+// (Ed, 2026-11-11: "the legend should be even more epic, gnarly, ancient, magical, fantastic (not just \"big\"!)". The old shrine
+// fox, the elder of its kind: gaunt and towering on knotted legs, its withers humped under a hanging mane, its head carried
+// low and forward behind a pale mask and a beard, one eye lit and one gone white, its brows grown out, an ear torn; nine
+// tails longer than itself that rise and coil like smoke, each tipped silver and carrying fox-fire, the middle one
+// holding its star-ball (the kitsune's pearl); the shrine's rope and paper streamers, its bell, gold bound on its tails, stone
+// beads on its legs)
 function legend() {
-  const SILVER = "#eef2f5", GREY = "#cdc6bd", GOLD = "#e9b949", ROPE = "#c5222c", STONE = "#8d9398";
-  const C = { coat: "#c75e17", belly: "#efe8dc", nose: NOSE, muzzle: GREY, eye: "#ffd15c", upper: "#c75e17", mid: "#a94d14", sock: "#211512" }, L = 1.2;
-  const body = torso({ back: 0.37 * L + 0.01, len: 1.06, girth: 1.12, deep: 1.22, tuck: 0.66, neck: [0.23, 0.13], neckThick: 1.3, white: 0.55, colours: C });
-  const skull = head(body.pivot, { size: 1.14, muzzle: 1.25, ear: { tall: 1.45, wide: 1, back: EAR, tip: EAR, torn: -1 }, cheek: 1.6, eye: 1.8, white: 0.6, colours: C });
-  // nine tails rooted across the rump, fanned up and back like a held breath, the middle ones tallest, every tip silver
-  const tails = Array.from({ length: 9 }, (_, i) => { const f = (i - 4) / 4, a = Math.abs(f);
-    return tail(`tail${"abcdefghi"[i]}`, "pelvis", [0.05 * f, body.rings[1].at[1] + 0.05 - 0.03 * a, body.rings[1].at[2] - 0.03 + 0.04 * a], { len: 0.74 - 0.14 * a + (i % 2) * 0.05, r: 0.118 - 0.014 * a, yaw: f * 0.95, pitch: 0.62 - 0.5 * a - (i % 2) * 0.22, curl: 0.3 + 0.12 * a, tip: 0.17, blunt: 0.26, sides: 7, colours: { coat: C.coat, under: "#93440f", tip: SILVER } }); });
-  // a mane of pale old fur off the neck and shoulders
-  const n = body.rings[5].at, sh = body.rings[4].at, mane = [[0.07, 0.0, 0, 0.17, -0.1, -0.08], [-0.07, 0, 0, -0.17, -0.1, -0.08], [0.06, -0.07, 0.03, 0.12, -0.2, -0.02], [-0.06, -0.07, 0.03, -0.12, -0.2, -0.02], [0, -0.1, 0.05, 0, -0.25, 0.02], [0.05, 0.06, -0.03, 0.1, 0.07, -0.16], [-0.05, 0.06, -0.03, -0.1, 0.07, -0.16]]
-    .map(([x, y, z, tx, ty, tz]) => ({ at: [n[0] + x, n[1] + y, n[2] + z], rx: 0.05, ry: 0.045, tip: [n[0] + tx, n[1] + ty, n[2] + tz], bone: "neck", colour: y > 0.03 ? C.coat : C.belly, tipColour: GREY, split: 0.55, up: [0, 0, 1] }));
-  // the shrine's rope high on its throat, its bell under it; a ring in each ear; grey brows
-  const top = body.rings[6].at, rope = band("neck", n, top, { at: 0.6, r: 0.1, ry: 0.118, wide: 0.04, colour: ROPE }), P = skull.P;
-  const by = top[1] - 0.24, bz = top[2] + 0.06, bell = [{ at: [0, by, bz], rx: 0.045, ry: 0.045, tip: [0, by - 0.075, bz], bone: "neck", colour: GOLD, split: 0.8, up: [0, 0, 1], sides: 6 }, { at: [0, by, bz], rx: 0.045, ry: 0.045, tip: [0, by + 0.05, bz - 0.01], bone: "neck", colour: GOLD, up: [0, 0, 1], sides: 6 }];
-  const rings = [1, -1].map(s => ({ at: P(0.088 * s, 0.13, 0.02), rx: 0.014, ry: 0.014, tip: P(0.1 * s, 0.075, 0.02), bone: s > 0 ? "earL" : "earR", colour: GOLD, split: 0.8, up: [0, 0, 1], sides: 5 }));
-  const brows = [1, -1].map(s => ({ at: P(0.045 * s, 0.092, 0.1), rx: 0.018, ry: 0.012, tip: P(0.085 * s, 0.125, 0.04), bone: "head", colour: GREY, split: 0.5, up: [0, 1, 0] }));
-  const four = legs(body, { len: L, thick: 1.02, colours: C, band: { colour: STONE, at: 0.3, r: 0.036 } });
-  return plan("fox-legend", body, skull, [...four, ...tails, rope], { seconds: 0.95, duty: 0.64, bob: 0.006, sway: 0.035, tailSwing: 0.08, tails: tails.map(t => t.chain), legs: walk(0.9) }, { cones: [...mane, ...bell, ...rings, ...brows] });
+  const SILVER = "#eef2f5", GREY = "#bdb6ad", PALE = "#e9e2d6", GOLD = "#e9b949", ROPE = "#c5222c", STONE = "#8d9398", FIRE = "#9fdcff", FIRE2 = "#effaff", PEARL = "#fff0b0", DEEP = "#7d360b";
+  const C = { coat: "#b9520f", back: "#a9a39b", belly: PALE, mask: PALE, muzzle: GREY, nose: NOSE, eyes: [{ colour: "#ffd24a", glow: true }, { colour: "#e3edf2" }], upper: "#b9520f", mid: "#8c3f0e", sock: "#1c1210" }, L = 1.4;
+  const body = torso({ back: 0.37 * L + 0.01, len: 1.14, girth: 1.02, deep: 1.36, tuck: 0.5, hump: 1.1, neck: [0.11, 0.25], neckThick: 1.4, white: 0.5, colours: C });
+  const skull = head(body.pivot, { size: 1.42, muzzle: 1.45, ear: { tall: 1.9, wide: 0.9, back: EAR, tip: EAR, torn: -1 }, cheek: 2.3, eye: 1.7, white: 0.6, colours: C }), P = skull.P;
+  const tails = Array.from({ length: 9 }, (_, i) => { const f = (i - 4) / 4, a = Math.abs(f), mid = i === 4;
+    return tail(`tail${"abcdefghi"[i]}`, "pelvis", [0.055 * f, body.rings[1].at[1] + 0.06 - 0.03 * a, body.rings[1].at[2] - 0.02 + 0.05 * a], {
+      len: 1.02 - 0.26 * a + (i % 2) * 0.09, r: 0.12 - 0.02 * a, yaw: f * 0.75, twist: f * 0.75, pitch: 1.5 - 0.5 * a - (i % 2) * 0.14, curl: -0.75 + 0.15 * a, wave: 0.3, waves: 1.25, phase: i * 1.9, bones: 6, tip: 0.2, plume: true, sides: 6,
+      colours: { coat: C.coat, under: DEEP, tip: SILVER }, ring: i % 2 ? { colour: GOLD, at: 0.2 } : undefined,
+      ...(mid ? { orb: { colour: PEARL, size: 1.1 } } : { fire: { colour: FIRE, tip: FIRE2, size: 1.15 - 0.25 * a } }) }); });
+  // the mane: long pale fur hanging off the neck and the humped withers, darker and silver-tipped along the top
+  const neckRing = body.rings[5], withers = body.rings[4], ribs = body.rings[3], loin = body.rings[2];
+  const mane = [...tufts(neckRing, "neck", { n: 4, a0: 0.5, a1: 2.8, long: 0.2, sweep: 0.8, droop: 0.45, r: 0.08, grow: 0.5, colour: i => (i < 1 ? C.coat : PALE), tip: i => (i < 1 ? C.back : GREY) }),
+    ...tufts(withers, "chest", { n: 4, a0: 0.25, a1: 2.5, long: 0.2, sweep: 0.85, droop: 0.4, r: 0.085, grow: 0.5, colour: i => (i < 2 ? C.coat : PALE), tip: i => (i < 2 ? C.back : GREY) }),
+    ...tufts(ribs, "chest", { n: 1, a0: 0.15, long: 0.12, sweep: 0.95, r: 0.06, colour: () => C.back, tip: () => SILVER }),
+    // tatters under the chest
+    ...tufts(withers, "chest", { n: 2, a0: 2.75, a1: 3.05, long: 0.17, sweep: 0.25, droop: 0.7, r: 0.06, colour: () => PALE, tip: () => GREY })];
+  // its face: a beard, and brows grown out long
+  const face = [{ at: P(0, -0.03, 0.2), rx: 0.035, ry: 0.035, tip: P(0, -0.2, 0.13), bone: "head", colour: PALE, tipColour: GREY, split: 0.5, up: [0, 0, 1] },
+    ...[1, -1].map(s => ({ at: P(0.048 * s, 0.09, 0.1), rx: 0.028, ry: 0.018, tip: P(0.15 * s, 0.17, -0.04), bone: "head", colour: PALE, tipColour: GREY, split: 0.5, up: [0, 1, 0] }))];
+  // the shrine's rope low on its neck, paper streamers and its bell hanging from it
+  const top = body.rings[6].at, n = neckRing.at, rope = band("neck", n, top, { at: 0.42, r: 0.135, ry: 0.15, wide: 0.05, colour: ROPE });
+  const hang = [[0.1, -0.1, 0.06], [-0.1, -0.1, 0.06], [0.05, -0.15, 0.1], [-0.05, -0.15, 0.1]].map(([x, y, z]) => ({ at: [n[0] + x, n[1] + y + 0.05, n[2] + z + 0.05], rx: 0.026, ry: 0.008, tip: [n[0] + x * 1.15, n[1] + y - 0.14, n[2] + z + 0.06], bone: "neck", colour: "#ffffff", split: 0.9, up: [0, 0, 1], sides: 4 }));
+  const by = n[1] - 0.2, bz = n[2] + 0.17, bell = [{ at: [0, by, bz], rx: 0.055, ry: 0.055, tip: [0, by - 0.09, bz], bone: "neck", colour: GOLD, split: 0.85, up: [0, 0, 1], sides: 6 }, { at: [0, by, bz], rx: 0.055, ry: 0.055, tip: [0, by + 0.06, bz - 0.02], bone: "neck", colour: GOLD, up: [0, 0, 1], sides: 6 }];
+  const rings = [1, -1].map(s => ({ at: P(0.092 * s, 0.14, 0.025), rx: 0.02, ry: 0.02, tip: P(0.11 * s, 0.06, 0.025), bone: s > 0 ? "earL" : "earR", colour: GOLD, split: 0.85, up: [0, 0, 1], sides: 5 }));
+  const four = legs(body, { len: L, thick: 0.88, knob: 1.5, colours: C, claws: { colour: "#ddd6c8", len: 0.9 }, band: { colour: STONE, at: 0.32, r: 0.04 } });
+  // feathering behind each leg, as an old hound's
+  const feather = four.flatMap(l => { const r = l.lofts[0].rings[1]; return [{ at: [r.at[0], r.at[1] - 0.02, r.at[2] - r.ry * 0.7], rx: 0.04, ry: 0.04, tip: [r.at[0], r.at[1] - 0.15, r.at[2] - r.ry - 0.08], bone: r.bone, colour: C.coat, tipColour: GREY, split: 0.5, up: [1, 0, 0] }]; });
+  return plan("fox-legend", body, skull, [...four, ...tails, rope], { seconds: 1.15, duty: 0.66, bob: 0.006, sway: 0.03, tailSwing: 0.07, tails: tails.map(t => t.chain), legs: walk(0.85) }, { cones: [...mane, ...face, ...hang, ...bell, ...rings, ...feather] });
 }
 
 export const FOX = { baby, young, adult, legend };

@@ -57,9 +57,12 @@ export async function bake(o) {
     if (src.map) { src.map.magFilter = THREE.NearestFilter; src.map.minFilter = THREE.NearestFilter; src.map.generateMipmaps = false; src.map.needsUpdate = true; }
     flat.set(m, new THREE.MeshBasicMaterial({ map: src.map ?? null, color: src.color ?? 0xffffff, vertexColors: !!src.vertexColors, side: THREE.DoubleSide })); m.frustumCulled = false; });
   const normals = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide }), depths = new THREE.MeshDepthMaterial({ side: THREE.DoubleSide });
+  // (what glows: a part whose material is named glow..., fox-fire or a lit eye: drawn unlit, and marked for the game as a hand-drawn frame marks it, alpha 254)
+  const white = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }), black = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide });
   const gl = renderer.getContext(), read = () => { const px = new Uint8Array(big * big * 4); gl.readPixels(0, 0, big, big, gl.RGBA, gl.UNSIGNED_BYTE, px); return px; };
   const draw = how => {
     if (how === "colour") { scene.overrideMaterial = null; model.traverse(m => { if (m.isMesh) { m.userData.own ??= m.material; m.material = flat.get(m); } }); }
+    else if (how === "glow") { scene.overrideMaterial = null; model.traverse(m => { if (m.isMesh) { m.userData.own ??= m.material; m.material = /^glow/.test(m.userData.own.name ?? "") ? white : black; } }); }
     else { model.traverse(m => { if (m.isMesh && m.userData.own) m.material = m.userData.own; }); scene.overrideMaterial = how === "normal" ? normals : depths; }
     renderer.render(scene, camera); return read();
   };
@@ -77,21 +80,21 @@ export async function bake(o) {
     aim(yaw);
     for (let i = 0; i < frames; i++) {
       pose(i);
-      const C = draw("colour"), N = draw("normal"), D = draw("depth");
-      const rgb = new Float32Array(S * S * 3), nrm = new Float32Array(S * S * 3), dep = new Float32Array(S * S), on = new Uint8Array(S * S);
+      const C = draw("colour"), N = draw("normal"), D = draw("depth"), W = draw("glow");
+      const rgb = new Float32Array(S * S * 3), nrm = new Float32Array(S * S * 3), dep = new Float32Array(S * S), on = new Uint8Array(S * S), lamp = new Uint8Array(S * S);
       for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
-        let n = 0, r = 0, g = 0, b = 0, nx = 0, ny = 0, nz = 0, d = 0;
+        let n = 0, r = 0, g = 0, b = 0, nx = 0, ny = 0, nz = 0, d = 0, lit = 0;
         for (let v = 0; v < ss; v++) for (let u = 0; u < ss; u++) {
           const k = ((big - 1 - (y * ss + v)) * big + x * ss + u) * 4; // (readPixels starts at the bottom)
           if (C[k + 3] < 128) continue;
-          n++; r += C[k]; g += C[k + 1]; b += C[k + 2]; nx += N[k] / 127.5 - 1; ny += N[k + 1] / 127.5 - 1; nz += N[k + 2] / 127.5 - 1; d += 1 - D[k] / 255;
+          n++; if (W[k] > 127) lit++; r += C[k]; g += C[k + 1]; b += C[k + 2]; nx += N[k] / 127.5 - 1; ny += N[k + 1] / 127.5 - 1; nz += N[k + 2] / 127.5 - 1; d += 1 - D[k] / 255;
         }
         if (n < cover * ss * ss) continue;
         const j = y * S + x, l = Math.hypot(nx, ny, nz) || 1;
-        on[j] = 1; rgb[j * 3] = r / n; rgb[j * 3 + 1] = g / n; rgb[j * 3 + 2] = b / n; nrm[j * 3] = nx / l; nrm[j * 3 + 1] = ny / l; nrm[j * 3 + 2] = nz / l; dep[j] = d / n;
-        if ((x + y * 7 + i * 3) % 5 === 0) samples.push([rgb[j * 3], rgb[j * 3 + 1], rgb[j * 3 + 2]]);
+        on[j] = 1; lamp[j] = lit * 2 > n ? 1 : 0; rgb[j * 3] = r / n; rgb[j * 3 + 1] = g / n; rgb[j * 3 + 2] = b / n; nrm[j * 3] = nx / l; nrm[j * 3 + 1] = ny / l; nrm[j * 3 + 2] = nz / l; dep[j] = d / n;
+        if (lamp[j] || (x + y * 7 + i * 3) % 5 === 0) samples.push([rgb[j * 3], rgb[j * 3 + 1], rgb[j * 3 + 2]]); // (every glowing pixel: small, and its colour must reach the palette)
       }
-      raw.push({ yaw, i, rgb, nrm, dep, on });
+      raw.push({ yaw, i, rgb, nrm, dep, on, lamp });
     }
   }
   renderer.dispose();
@@ -117,7 +120,7 @@ export async function bake(o) {
       const step = 0.02, behind = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => at(x + a, y + b) && depth(x + a, y + b) < f.dep[j] - step);
       const dot = n[0] * L.x + n[1] * L.y + n[2] * L.z, band = dot < 0.12 ? 0.58 : dot < 0.62 ? 0.84 : 1.06;
       const s = edge ? dark : behind ? c.map(v => v * 0.5) : [c[0] * band, c[1] * band * (band < 0.7 ? 0.98 : 1), c[2] * (band < 0.7 ? band * 1.12 : band)];
-      lit.set([s[0], s[1], s[2], 255], k);
+      if (f.lamp[j]) lit.set([c[0], c[1], c[2], 254], k); else lit.set([s[0], s[1], s[2], 255], k);
     }
     out.push({ yaw: f.yaw, i: f.i, albedo: png(w, h, albedo).toDataURL(), normal: png(w, h, normal).toDataURL(), lit: png(w, h, lit).toDataURL(), canvas: png(w, h, lit) });
   }
