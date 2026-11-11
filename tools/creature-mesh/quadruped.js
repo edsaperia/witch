@@ -3,7 +3,8 @@
 // there no way that you can draw things yourself, instead of using an image generator?"). tools/creature-mesh/make.mjs writes it
 // out as a .glb for tools/creature-bake/bake.mjs.
 // The model: y up, its head along +z (glTF's forward), metres. A plan gives joints (named points), bones (joint to joint, each
-// with its parent), lofts (rings along a path, each ring riding one bone, joined into faceted tubes) and cones (ears, tufts).
+// with its parent), lofts (rings along a path, each ring riding one bone, joined into faceted tubes), cones (ears, tufts) and
+// armour (patches of a loft's skin raised into plate, with lit runes).
 // A ring or cone marked `glow` is drawn unlit, in a second material named "glow" (fox-fire, a lit eye): the bake keeps it bright.
 import * as THREE from "three";
 
@@ -60,6 +61,70 @@ function loft(faces, rings, sides, up = [0, 1, 0]) {
     const mid = { p: ring.reduce((m, v) => m.add(v.p), new THREE.Vector3()).multiplyScalar(1 / sides), c: ring[0].c, bone: ring[0].bone, glow: ring[0].glow };
     for (let k = 0; k < sides; k++) last === out ? faces.tri(mid, ring[(k + 1) % sides], ring[k]) : faces.tri(mid, ring[k], ring[(k + 1) % sides]);
   }
+  return made;
+}
+
+// Rune shapes for armour: made-up marks of a few straight strokes each, [x0, y0, x1, y1] in a unit square, y towards the spine.
+const RUNES = [
+  [[0.35, 0, 0.35, 1], [0.35, 1, 0.8, 0.62], [0.35, 0.55, 0.8, 0.2]],
+  [[0.15, 0, 0.5, 1], [0.5, 1, 0.85, 0]],
+  [[0.35, 0, 0.35, 1], [0.35, 0.8, 0.8, 0.5], [0.8, 0.5, 0.35, 0.2]],
+  [[0.12, 0.5, 0.5, 1], [0.5, 1, 0.88, 0.5], [0.88, 0.5, 0.5, 0], [0.5, 0, 0.12, 0.5]],
+  [[0.15, 0, 0.85, 1], [0.15, 1, 0.85, 0]],
+  [[0.22, 0, 0.22, 1], [0.78, 0, 0.78, 1], [0.22, 0.68, 0.78, 0.32]],
+  [[0.4, 0, 0.4, 1], [0.4, 1, 0.8, 0.6]],
+  [[0.15, 0.1, 0.85, 0.1], [0.5, 0.1, 0.5, 1]],
+];
+
+/** Armour (Ed, 2026-11-11: "Armour should just be thickened polygons on their torso with a different colour and glowing
+ *  runes"): a patch of a loft's own skin raised into plate. `made` is the loft's corners (what `loft` returns). o: from, to (the
+ *  rings it runs between, counted along the loft; fractions fall between rings), round [a0, a1] (the facets it covers by their
+ *  angle from the top, radians, both sides; side 1 or -1 for one flank only), thick, lames (it's cut into that many plates along
+ *  its length, each one's rear edge standing `step` proud of the next, as a lobster's tail), colour, rim (its edges' colour),
+ *  inset (each facet drawn in that share from its edges: a stripe), glow (drawn unlit: a line of light and not a plate),
+ *  runes { colour, round (which facets carry them), size (of the facet, 0..1), every, seed, w (a stroke's width), max (to a plate) }: a lit mark
+ *  on each plate's facets, drawn unlit like fox-fire. */
+function armour(faces, made, o) {
+  const sides = made[0].length, N = made.length - 1, { from = 0, to = N, round = [0, 1.7], side = 0, thick = 0.014, step = 0.006, lames = 1, colour, rim = colour, runes, inset = 0, glow = false } = o;
+  const mids = made.map(r => r.reduce((m, v) => m.add(v.p), new THREE.Vector3()).multiplyScalar(1 / sides));
+  // (a facet's angle from the top, and which side it's on: facet k lies between corners k and k + 1)
+  const ang = k => { const a = ((k + 1) % sides) / sides * Math.PI * 2; return a > Math.PI + 1e-6 ? [Math.PI * 2 - a, -1] : [a, a < 1e-6 || Math.abs(a - Math.PI) < 1e-6 ? 0 : 1]; };
+  const within = (k, r) => { const [a, s] = ang((k + sides) % sides); return a >= r[0] - 1e-6 && a <= r[1] + 1e-6 && (!side || !s || s === side); }, on = k => within(k, round);
+  const at = (t, h) => { const i = Math.min(N - 1, Math.max(0, Math.floor(t + 1e-9))), u = t - i, mid = mids[i].clone().lerp(mids[i + 1], u), skin = made[i].map((v, k) => v.p.clone().lerp(made[i + 1][k].p, u));
+    return { mid, bone: (u < 0.5 ? made[i] : made[i + 1])[0].bone, skin, out: skin.map(p => p.clone().add(p.clone().sub(mid).normalize().multiplyScalar(h))) }; };
+  const vert = (p, c, bone, glow = false) => ({ p, c, bone, glow });
+  // (a quad wound to face away from `ref`)
+  const away = (a, b, c, d, ref) => { const n = b.p.clone().sub(a.p).cross(d.p.clone().sub(a.p)), m = a.p.clone().add(b.p).add(c.p).add(d.p).multiplyScalar(0.25); n.dot(m.sub(ref)) >= 0 ? faces.quad(a, b, c, d) : faces.quad(a, d, c, b); };
+  for (let j = 0; j < lames; j++) {
+    const a = from + (to - from) * j / lames, b = from + (to - from) * (j + 1) / lames, ts = [a]; for (let i = Math.floor(a) + 1; i < b - 1e-6; i++) ts.push(i); ts.push(b);
+    const h = t => thick + step * (1 - (t - a) / (b - a)), st = ts.map(t => at(t, h(t)));
+    for (let n = 0; n + 1 < st.length; n++) for (let k = 0; k < sides; k++) if (on(k)) {
+      // (the facet's four corners, outside and on the skin; `inset` draws each facet in from its neighbours, a stripe and not a sheet)
+      const r = st[n], f = st[n + 1], k1 = (k + 1) % sides, core = r.mid.clone().lerp(f.mid, 0.5), e = (ring, w) => ring[k].clone().lerp(ring[k1], w);
+      const ro = [e(r.out, inset), e(r.out, 1 - inset)], fo = [e(f.out, inset), e(f.out, 1 - inset)], rs = [e(r.skin, inset), e(r.skin, 1 - inset)], fs = [e(f.skin, inset), e(f.skin, 1 - inset)];
+      const cell = [...ro, ...fo, ...rs, ...fs].reduce((m, v) => m.add(v), new THREE.Vector3()).multiplyScalar(1 / 8);
+      away(vert(ro[0], colour, r.bone, glow), vert(ro[1], colour, r.bone, glow), vert(fo[1], colour, f.bone, glow), vert(fo[0], colour, f.bone, glow), core);
+      const wall = (p, q, pb, ps, qs, qb) => away(vert(p, rim, pb, glow), vert(q, rim, qb, glow), vert(qs, rim, qb, glow), vert(ps, rim, pb, glow), cell);
+      if (inset || !on(k - 1)) wall(ro[0], fo[0], r.bone, rs[0], fs[0], f.bone);
+      if (inset || !on(k + 1)) wall(ro[1], fo[1], r.bone, rs[1], fs[1], f.bone);
+      if (n === 0) wall(ro[0], ro[1], r.bone, rs[0], rs[1], r.bone);
+      if (n === st.length - 2) wall(fo[0], fo[1], f.bone, fs[0], fs[1], f.bone);
+    }
+    if (!runes) continue;
+    for (let k = 0; k < sides; k++) if (on(k) && within(k, runes.round ?? round) && (j * 3 + k) % (runes.every ?? 1) === 0) {
+      const k1 = (k + 1) % sides, S = (t, v) => { const s = at(Math.min(b, Math.max(a, t)), h(t) + 0.004); return { p: s.out[k].clone().lerp(s.out[k1], v), mid: s.mid, bone: s.bone }; };
+      const wide = S((a + b) / 2, 0).p.distanceTo(S((a + b) / 2, 1).p), long = S(a, 0.5).p.distanceTo(S(b, 0.5).p), s = (runes.size ?? 0.62) * Math.min(wide, long), dt = s / long * (b - a), dv = s / wide, w = runes.w ?? Math.max(0.006, s * 0.13);
+      const count = Math.max(1, Math.min(runes.max ?? 2, Math.floor(long / (s * 1.7)))), flip = ((k + 1) % sides) / sides > 0.5 ? 1 : -1;
+      for (let c = 0; c < count; c++) {
+        const tc = a + (b - a) * (c + 0.5) / count, G = RUNES[(j * 5 + k * 3 + c * 2 + (runes.seed ?? 0)) % RUNES.length], pt = (gx, gy) => S(tc + (gx - 0.5) * dt, 0.5 + flip * (gy - 0.5) * dv);
+        for (const [x0, y0, x1, y1] of G) for (let q = 0; q < 2; q++) {
+          const P0 = pt(x0 + (x1 - x0) * q / 2, y0 + (y1 - y0) * q / 2), P1 = pt(x0 + (x1 - x0) * (q + 1) / 2, y0 + (y1 - y0) * (q + 1) / 2), d = P1.p.clone().sub(P0.p), out = P0.p.clone().add(P1.p).multiplyScalar(0.5).sub(P0.mid).normalize();
+          const sv = d.clone().cross(out).normalize().multiplyScalar(w / 2), e = d.clone().normalize().multiplyScalar(w * 0.3), v = (p, sgn, end) => vert(p.clone().addScaledVector(sv, sgn).addScaledVector(e, end), runes.colour, P0.bone, true);
+          const A = v(P0.p, 1, -1), B = v(P1.p, 1, 1), C = v(P1.p, -1, 1), D = v(P0.p, -1, -1); faces.quad(A, B, C, D); faces.quad(A, D, C, B);
+        }
+      }
+    }
+  }
 }
 
 /** A cone: a base ring { at, rx, ry, up } and a tip, for ears, cheek tufts and claws. tipColour for the last part of it; bulge and
@@ -67,7 +132,8 @@ function loft(faces, rings, sides, up = [0, 1, 0]) {
 function cone(faces, o) {
   // (bulge: its middle kept that full, so it's a leaf or a lock of fur and not a needle; bend: its middle pushed that way, so it curves)
   const k = o.bulge ?? 1 - (o.split ?? 0.6), mid = { at: V(o.at).lerp(V(o.tip), o.split ?? 0.6).add(V(o.bend ?? [0, 0, 0])).toArray(), rx: o.rx * k, ry: o.ry * k };
-  loft(faces, [{ ...o, colour: o.colour }, { ...mid, bone: o.bone, colour: o.tipColour ?? o.colour, up: o.up, glow: o.glow }, { at: o.tip, rx: 0.0005, ry: 0.0005, bone: o.bone, colour: o.tipColour ?? o.colour, up: o.up, glow: o.glow }], o.sides ?? 4, o.up ?? [0, 0, 1]);
+  // (glow "tip": only its outer half is lit, a spine's burning point)
+  loft(faces, [{ ...o, colour: o.colour, glow: o.glow === true }, { ...mid, bone: o.bone, colour: o.tipColour ?? o.colour, up: o.up, glow: !!o.glow }, { at: o.tip, rx: 0.0005, ry: 0.0005, bone: o.bone, colour: o.tipColour ?? o.colour, up: o.up, glow: !!o.glow }], o.sides ?? 4, o.up ?? [0, 0, 1]);
 }
 
 /** The gait as a looping clip: each leg's joints swing by its phase (stance back, swing forward with the joints folding), the
@@ -102,8 +168,10 @@ function gaitClip(plan, bones, name = "Walk", steps = 24) {
 /** The plan built: { scene, clips }. */
 export function build(plan) {
   const { bones, list } = skeleton(plan), faces = new Faces(Object.fromEntries(list.map((b, i) => [b.name, i])));
-  for (const l of plan.lofts) loft(faces, l.rings, l.sides ?? 6, l.up);
+  const made = plan.lofts.map(l => loft(faces, l.rings, l.sides ?? 6, l.up));
   for (const c of plan.cones ?? []) cone(faces, c);
+  // (armour lies on a loft's own corners: `on` names the loft, or counts to it; the first is a four-legged plan's skin)
+  for (const a of plan.armour ?? []) { const i = typeof a.on === "string" ? plan.lofts.findIndex(l => l.name === a.on) : a.on ?? 0; if (i < 0) throw Error(`${plan.name}: no loft "${a.on}" for armour`); armour(faces, made[i], a); }
   const body = new THREE.MeshStandardMaterial({ name: "body", vertexColors: true, roughness: 1, metalness: 0, flatShading: true }), glow = new THREE.MeshBasicMaterial({ name: "glow", vertexColors: true });
   const mesh = new THREE.SkinnedMesh(faces.geometry(), [body, glow]);
   mesh.name = plan.name; const root = list[0]; mesh.add(root); mesh.updateMatrixWorld(true); mesh.bind(new THREE.Skeleton(list));

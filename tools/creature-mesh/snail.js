@@ -2,9 +2,9 @@
 // one has no legs). Ed's ladder (docs/art-guide/EVOLUTIONS.md and its genome): a near-clear one-turn shell on a baby with big
 // stalk eyes; an amber banded young; a tall ridged cone on a frilled adult; and the elder, its shell the night sky, full of
 // stars, a gold spiral inlaid along its whorls, old grey skin, huge slow eye stalks with glowing tips. On his word for the fox
-// (2026-11-11) the adult wears its signature loud and the legend is stranger and older, with "magical armour pieces": here a
-// gold gorget and a gold lip to its shell. Metres; y up; its head along +z.
-import { ball, plate } from "./kit.js";
+// (2026-11-11) the adult wears its signature loud and the legend is stranger and older, with "magical armour pieces": plate
+// raised from its own skin over its neck, a lit rune on each. Metres; y up; its head along +z.
+import { ball } from "./kit.js";
 
 /** The shell: a tube coiled `turns` times about an axis from its mouth (where the body leaves it) to its apex, the coil and the
  *  tube both shrinking towards the apex. tower 0 lies the coil flat on its side (a garden snail's); 1 stands it up as a spire.
@@ -48,7 +48,7 @@ function snail(name, o) {
   }
   const S = shell({ at: [0, (0.1 + sh.lift) * fat, z(-0.04)], ...sh });
   const sway = (o.sway ?? 0.12), T = Math.PI * 2;
-  return { name, bones, lofts: [...lofts, ...S.lofts, ...(o.lofts ?? [])], cones: [...cones, ...S.cones, ...(o.cones ?? [])],
+  return { name, bones, lofts: [...lofts, ...S.lofts, ...(o.lofts ?? [])], cones: [...cones, ...S.cones, ...(o.cones ?? [])], armour: o.armour ?? [],
     // it glides: a ripple runs up its foot, its shell rocks behind it, its stalks feel about
     gait: { seconds: 1.6, root: "root", bob: 0, legs: [], ...gait, extra: [
       { bone: "tailb", pos: u => [0, 0.004 * Math.sin(T * 2 * u), 0.012 * len * Math.sin(T * 2 * u)] }, { bone: "mid", pos: u => [0, 0.004 * Math.sin(T * 2 * u + 1.5), 0.01 * len * Math.sin(T * 2 * u + 1.5)] }, { bone: "front", pos: u => [0, 0.004 * Math.sin(T * 2 * u + 3), 0.012 * len * Math.sin(T * 2 * u + 3)] },
@@ -64,12 +64,12 @@ export const SNAIL_PLANS = {
   young: () => snail("snail-young", { C: SKIN, stalk: 1.2, eye: 1.2, shell: { lift: 0.035, turns: 2.1, r: 0.1, coil: 0.1, high: 0.05, colour: band2("#d99632", "#f0c56a", 3) } }),
   // a tall shell, its spiral raised into a cone with a ridge on each whorl, banded amber and umber; a broad frill; long stalks
   adult: () => snail("snail-adult", { C: { ...SKIN, frill: "#e9dcc6" }, stalk: 2.0, eye: 1.2, frill: 5, shell: { lift: 0.07, turns: 3.3, r: 0.125, coil: 0.14, high: 0.3, tower: 0.75, colour: band2("#c9811f", "#6e4320", 3), ridge: { colour: "#f0c56a", tip: "#fff0c0", every: 3, long: 0.5 } } }),
-  // the elder: its shell the night sky, full of stars, a gold spiral inlaid along its whorls and a gold lip; old grey skin; huge
-  // slow eye stalks, their tips lit; a gold gorget with a lit stone at its throat
+  // the elder: its shell the night sky, full of stars, a gold spiral inlaid along its whorls; old grey skin; huge
+  // slow eye stalks, their tips lit; night-blue plate edged in gold over its neck, cut with lit marks
   legend() {
     const NIGHT = "#1b2452", NIGHT2 = "#2a3472", GOLD = "#e9b949", STAR = "#f4f8ff", C = { skin: "#8a8a8c", sole: "#b6b6b4", frill: "#d6d6d2", eye: "#bfe6ff", lit: true };
-    const gorget = plate("front", [0, 0.11 * 1.25, 0.2 * 1.15 + 0.03], [0, -0.3, 1], { r: 0.075, ry: 0.06, high: 0.03, colour: GOLD, rim: "#b98a2a", gem: { colour: STAR } });
-    const collar = { sides: 8, up: [0, 0.7, 0.7], rings: [[0.165, 0.9], [0.175, 1.1], [0.19, 1.1], [0.2, 0.9]].map(([zz, f]) => ({ at: [0, 0.07 * 1.25, zz * 1.15], rx: 0.08 * 1.25 * f, ry: 0.058 * 1.25 * f, bone: "front", colour: GOLD })) };
-    return snail("snail-legend", { len: 1.15, fat: 1.25, C, stalk: 3.4, eye: 1.6, frill: 7, sway: 0.09, shell: { lift: 0.09, turns: 4.2, r: 0.17, coil: 0.2, high: 0.5, tower: 0.85, steps: 10, colour: band2(NIGHT, NIGHT2, 4), inlay: GOLD, lip: GOLD, stars: { n: 4, colour: STAR } }, lofts: [collar, ...gorget.lofts], cones: gorget.cones, gait: { seconds: 2.4 } });
+    // its armour (Ed, 2026-11-11: "Armour should just be thickened polygons on their torso with a different colour and glowing runes"): night-blue plate edged in gold over its neck, a star-lit mark on each plate
+    const armour = [{ on: 0, from: 3.3, to: 5.5, round: [0, 1.3], lames: 3, thick: 0.014, step: 0.008, colour: NIGHT, rim: GOLD, runes: { colour: STAR, size: 0.7 } }];
+    return snail("snail-legend", { len: 1.15, fat: 1.25, C, stalk: 3.4, eye: 1.1, frill: 7, sway: 0.09, shell: { lift: 0.09, turns: 4.2, r: 0.17, coil: 0.2, high: 0.5, tower: 0.85, steps: 10, colour: band2(NIGHT, NIGHT2, 4), inlay: GOLD, stars: { n: 4, colour: STAR } }, armour, gait: { seconds: 2.4 } });
   },
 };

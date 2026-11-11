@@ -43,11 +43,11 @@ function adult() {
 // (Ed, 2026-11-11: "the legend should be even more epic, gnarly, ancient, magical, fantastic (not just \"big\"!)". The old shrine
 // fox, the elder of its kind: gaunt and towering on knotted legs, its withers humped under a hanging mane, its head carried
 // low and forward behind a pale mask and a beard, one eye lit and one gone white, its brows grown out, an ear torn; nine
-// tails longer than itself that rise and coil like smoke, each tipped silver and carrying fox-fire, the middle one
-// holding its star-ball (the kitsune's pearl); the shrine's rope and paper streamers, its bell, gold bound on its tails, stone
-// beads on its legs)
+// tails longer than itself that rise and coil like smoke, each tipped silver and carrying fox-fire, the middle one's
+// gold; the shrine's rope and paper streamers, its bell, gold bound on its tails, stone bands on its legs; and on its back
+// black lacquer plate cut with lit marks. No balls of light: Ed, 2026-11-11, "I don't like the random spheres")
 function legend() {
-  const SILVER = "#eef2f5", GREY = "#bdb6ad", PALE = "#e9e2d6", GOLD = "#e9b949", ROPE = "#c5222c", STONE = "#8d9398", FIRE = "#9fdcff", FIRE2 = "#effaff", PEARL = "#fff0b0", DEEP = "#7d360b";
+  const SILVER = "#eef2f5", GREY = "#bdb6ad", PALE = "#e9e2d6", GOLD = "#e9b949", ROPE = "#c5222c", STONE = "#8d9398", FIRE = "#9fdcff", FIRE2 = "#effaff", PEARL = "#fff0b0", DEEP = "#7d360b", LACQUER = "#262a44";
   const C = { coat: "#b9520f", back: "#a9a39b", belly: PALE, mask: PALE, muzzle: GREY, nose: NOSE, eyes: [{ colour: "#ffd24a", glow: true }, { colour: "#e3edf2" }], upper: "#b9520f", mid: "#8c3f0e", sock: "#1c1210" }, L = 1.4;
   const body = torso({ back: 0.37 * L + 0.01, len: 1.14, girth: 1.02, deep: 1.36, tuck: 0.5, hump: 1.1, neck: [0.11, 0.25], neckThick: 1.4, white: 0.5, colours: C });
   const skull = head(body.pivot, { size: 1.42, muzzle: 1.45, ear: { tall: 1.9, wide: 0.9, back: EAR, tip: EAR, torn: -1 }, cheek: 2.3, eye: 1.7, white: 0.6, colours: C }), P = skull.P;
@@ -55,12 +55,11 @@ function legend() {
     return tail(`tail${"abcdefghi"[i]}`, "pelvis", [0.055 * f, body.rings[1].at[1] + 0.06 - 0.03 * a, body.rings[1].at[2] - 0.02 + 0.05 * a], {
       len: 1.02 - 0.26 * a + (i % 2) * 0.09, r: 0.12 - 0.02 * a, yaw: f * 0.75, twist: f * 0.75, pitch: 1.5 - 0.5 * a - (i % 2) * 0.14, curl: -0.75 + 0.15 * a, wave: 0.3, waves: 1.25, phase: i * 1.9, bones: 6, tip: 0.2, plume: true, sides: 6,
       colours: { coat: C.coat, under: DEEP, tip: SILVER }, ring: i % 2 ? { colour: GOLD, at: 0.2 } : undefined,
-      ...(mid ? { orb: { colour: PEARL, size: 1.1 } } : { fire: { colour: FIRE, tip: FIRE2, size: 1.15 - 0.25 * a } }) }); });
+      fire: { colour: mid ? PEARL : FIRE, tip: FIRE2, size: (mid ? 1.5 : 1.15) - 0.25 * a } }); });
   // the mane: long pale fur hanging off the neck and the humped withers, darker and silver-tipped along the top
   const neckRing = body.rings[5], withers = body.rings[4], ribs = body.rings[3], loin = body.rings[2];
   const mane = [...tufts(neckRing, "neck", { n: 4, a0: 0.5, a1: 2.8, long: 0.2, sweep: 0.8, droop: 0.45, r: 0.085, lock: true, grow: 0.5, colour: i => (i < 1 ? C.coat : PALE), tip: i => (i < 1 ? C.back : GREY) }),
     ...tufts(withers, "chest", { n: 4, a0: 0.25, a1: 2.5, long: 0.2, sweep: 0.85, droop: 0.4, r: 0.09, lock: true, grow: 0.5, colour: i => (i < 2 ? C.coat : PALE), tip: i => (i < 2 ? C.back : GREY) }),
-    ...tufts(ribs, "chest", { n: 1, a0: 0.15, long: 0.12, sweep: 0.95, r: 0.06, colour: () => C.back, tip: () => SILVER }),
     // tatters under the chest
     ...tufts(withers, "chest", { n: 2, a0: 2.75, a1: 3.05, long: 0.17, sweep: 0.25, droop: 0.7, r: 0.06, lock: true, colour: () => PALE, tip: () => GREY })];
   // its face: a beard, and brows grown out long
@@ -74,7 +73,9 @@ function legend() {
   const four = legs(body, { len: L, thick: 0.88, knob: 1.5, colours: C, claws: { colour: "#ddd6c8", len: 0.9 }, band: { colour: STONE, at: 0.32, r: 0.04 } });
   // feathering behind each leg, as an old hound's
   const feather = four.flatMap(l => { const r = l.lofts[0].rings[1]; return [{ at: [r.at[0], r.at[1] - 0.02, r.at[2] - r.ry * 0.7], rx: 0.04, ry: 0.04, tip: [r.at[0], r.at[1] - 0.15, r.at[2] - r.ry - 0.08], bone: r.bone, colour: C.coat, tipColour: GREY, split: 0.5, up: [1, 0, 0] }]; });
-  return plan("fox-legend", body, skull, [...four, ...tails, rope], { seconds: 1.15, duty: 0.66, bob: 0.006, sway: 0.03, tailSwing: 0.07, tails: tails.map(t => t.chain), legs: walk(0.85) }, { cones: [...mane, ...face, ...hang, ...bell, ...rings, ...feather] });
+  // its armour (Ed, 2026-11-11: "Armour should just be thickened polygons on their torso with a different colour and glowing runes"): black shrine lacquer edged in gold over its loin and ribs, a fox-fire mark lit on every plate
+  const armour = [{ from: 1.15, to: 3.3, round: [0, 1.7], lames: 3, thick: 0.02, step: 0.012, colour: LACQUER, rim: GOLD, runes: { colour: FIRE } }];
+  return plan("fox-legend", body, skull, [...four, ...tails, rope], { seconds: 1.15, duty: 0.66, bob: 0.006, sway: 0.03, tailSwing: 0.07, tails: tails.map(t => t.chain), legs: walk(0.85) }, { cones: [...mane, ...face, ...hang, ...bell, ...rings, ...feather], armour });
 }
 
 export const FOX = { baby, young, adult, legend };

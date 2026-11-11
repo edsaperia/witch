@@ -1,9 +1,9 @@
 // The stoat and the marten, four levels each, as plans for tools/creature-mesh/quadruped.js (docs/plans/creature-meshes.md; the
 // ladders are proposals till Ed marks them). Both are weasels: a long supple tube of a body on short legs, a flat wedge of a
 // head with round ears, and a bound for a gait, the back arching. On Ed's word for the fox (2026-11-11): the adult already wears
-// its signature loud, and the legend is another, older, stranger creature, not a bigger one; and "I like magical armour pieces
-// on legends".
-import { band, bound, fourLegs, head, plan, plate, stance, tail, torso, tufts } from "./kit.js";
+// its signature loud, and the legend is another, older, stranger creature, not a bigger one; "I like magical armour pieces
+// on legends"; and that armour is plate raised from the torso's own polygons, a lit rune on each.
+import { bound, fourLegs, head, plan, stance, tail, torso, tufts } from "./kit.js";
 
 const NOSE = "#16100e", BLACK = "#17120f", GOLD = "#e9b949";
 
@@ -40,21 +40,21 @@ const stoat = {
     return plan("stoat-adult", w.body, w.skull, [...w.legs, t], lope({ tails: [t.chain] }), { cones: crest });
   },
   // the white one: in full ermine and longer than a stoat should be, its neck risen like a snake's; three black plumes for a
-  // tail; a king's robe turned back on its makers: a collar of ermine tails; a gold circlet and a gorget with lit stones, gold
-  // on its forelegs; eyes that hold you
+  // tail; a king's robe turned back on its makers: a collar of ermine tails; a gold circlet, and its neck sheathed in gold plate
+  // cut with lit marks; gold on its forelegs; eyes that hold you
   legend() {
     const WHITE = "#f4f2ec", C = { coat: WHITE, belly: "#ffffff", back: "#e3ded2", nose: NOSE, upper: WHITE, mid: "#e3ded2", sock: "#d8d2c4", eyes: [{ colour: "#ff5a3c", glow: true }, { colour: "#ff5a3c", glow: true }], ear: "#e3ded2" }, GEM = "#ff6a4a";
     const w = weasel({ C, body: { len: 1.45, girth: 0.72, arch: 1.5, neck: [0.36, 0.08], neckThick: 0.98, white: 0.5 }, legs: { len: 0.6, thick: 1.2, knob: 1.3, claws: { colour: BLACK, len: 0.9 }, band: { colour: GOLD, at: 0.25, r: 0.036 } }, head: { size: 1.16, muzzle: 0.62, eye: 1.5, ear: { shape: "round", tall: 0.62, wide: 1.25, at: [0.012, -0.012, -0.005], back: "#e3ded2", inner: "#c98f6e", torn: 1 } } }), P = w.skull.P;
     const tails = [-1, 0, 1].map((f, i) => tail(`tail${"abc"[i]}`, "pelvis", [0.02 * f, w.root[1], w.root[2]], { len: 0.62 - 0.1 * Math.abs(f), r: 0.07, yaw: f * 0.5, twist: f * 0.4, pitch: 0.9 - 0.3 * Math.abs(f), curl: -0.9, wave: 0.25, phase: i * 2, bones: 5, tip: 0.5, plume: true, colours: { coat: WHITE, tip: BLACK } }));
     // the collar: ermine tails hung round its shoulders, white with black tips
     const robe = [...tufts(w.body.rings[4], "chest", { n: 5, a0: 0.2, a1: 2.3, long: 0.22, sweep: 0.8, droop: 0.25, r: 0.042, flat: 1, jitter: 0.15, colour: () => "#ffffff", tip: () => BLACK }), ...tufts(w.body.rings[3], "chest", { n: 4, a0: 0.25, a1: 2.0, long: 0.2, sweep: 0.85, droop: 0.2, r: 0.04, flat: 1, jitter: 0.15, colour: () => "#ffffff", tip: () => BLACK })];
-    const n = w.body.rings[5].at, top = w.body.rings[6].at, gorget = band("neck", n, top, { at: 0.3, r: 0.07, ry: 0.085, wide: 0.035, colour: GOLD });
-    const stone = plate("neck", [0, n[1] + 0.04, n[2] + 0.085], [0, -0.2, 1], { r: 0.04, high: 0.025, colour: GOLD, gem: { colour: GEM } });
+    // its armour (Ed, 2026-11-11: "Armour should just be thickened polygons on their torso with a different colour and glowing runes"): gold lames up the whole of its long neck, a red mark lit on each
+    const armour = [{ from: 4.45, to: 6.0, round: [0, 3.2], lames: 4, thick: 0.014, step: 0.01, colour: "#c9962e", rim: "#fff0b0", runes: { colour: "#ff3b1f", round: [0.5, 2.0], size: 0.7 } }];
     // the circlet: a gold band on its brow with one stone, and three points
     const crown = [{ at: P(0, 0.085, 0.085), rx: 0.04, ry: 0.016, tip: P(0, 0.23, 0.07), bone: "head", colour: GOLD, split: 0.6, up: [0, 0, 1] }, ...[1, -1].map(s => ({ at: P(0.05 * s, 0.075, 0.07), rx: 0.028, ry: 0.014, tip: P(0.075 * s, 0.18, 0.05), bone: "head", colour: GOLD, split: 0.6, up: [0, 0, 1] })),
       { at: P(0, 0.085, 0.1), rx: 0.016, ry: 0.016, tip: P(0, 0.1, 0.125), bone: "head", colour: GEM, glow: true, up: [0, 1, 0] }];
     const whiskers = [1, -1].map(s => ({ at: P(0.03 * s, -0.005, 0.2), rx: 0.006, ry: 0.006, tip: P(0.17 * s, -0.03, 0.15), bone: "head", colour: "#ffffff", up: [0, 1, 0], sides: 3 }));
-    return plan("stoat-legend", w.body, w.skull, [...w.legs, ...tails, gorget, stone], lope({ seconds: 0.75, bob: 0.01, rock: 0.07, tailSwing: 0.07, tails: tails.map(t => t.chain) }), { cones: [...robe, ...crown, ...whiskers] });
+    return plan("stoat-legend", w.body, w.skull, [...w.legs, ...tails], lope({ seconds: 0.75, bob: 0.01, rock: 0.07, tailSwing: 0.07, tails: tails.map(t => t.chain) }), { cones: [...robe, ...crown, ...whiskers], armour });
   },
 };
 
@@ -82,24 +82,20 @@ const marten = {
     const eartufts = [1, -1].map(s => ({ at: w.skull.P(0.075 * s, 0.14, 0.01), rx: 0.012, ry: 0.01, tip: w.skull.P(0.1 * s, 0.2, -0.005), bone: s > 0 ? "earL" : "earR", colour: "#3d261a", up: [0, 0, 1] }));
     return plan("marten-adult", w.body, w.skull, [...w.legs, t], lope({ seconds: 0.56, tails: [t.chain] }), { cones: [...ruff, ...eartufts] });
   },
-  // the pinewood's old hunter, longer than seems right: its bib become a breastplate of amber with a lit stone at its heart,
-  // amber on its shoulders and in plates down its spine among pine needles, the feathers of a hundred catches braided
-  // at its neck, a tail like a pine bough
+  // the pinewood's old hunter, longer than seems right: plates of dark resin down its spine with amber lit in them, pine
+  // needles along their edges, the feathers of a hundred catches braided at its neck, a tail like a pine bough
   legend() {
     const AMBER = "#f0a23a", AMBER2 = "#ffd27a", NEEDLE = "#2f4a2c", C = { ...MARTEN, coat: "#4a2e1e", back: "#2f1d14", belly: "#e8b874", eyes: [{ colour: AMBER2, glow: true }, { colour: AMBER2, glow: true }] };
     const w = weasel({ C, body: { len: 1.5, girth: 0.84, arch: 1.5, hump: 0.4, neck: [0.2, 0.2], neckThick: 1.2, white: 0.4 }, legs: { len: 0.74, thick: 1.15, knob: 1.35, paw: 1.3, claws: { colour: "#efe6d2", len: 1.5, thick: 1.3 } }, head: { ...martenHead, size: 1.18, muzzle: 0.8, eye: 1.6, ear: { ...martenHead.ear, tall: 1.0, torn: -1 } } }), P = w.skull.P, R = w.body.rings;
     const t = tail("tail", "pelvis", w.root, { len: 0.95, r: 0.165, pitch: 0.75, curl: -1.1, wave: 0.25, waves: 1.2, bones: 6, blunt: 0.25, tip: 0, colours: { coat: C.coat, under: "#2f1d14", tip: C.coat }, spikes: { n: 6, colour: NEEDLE, len: 1.3 } });
-    // pine needles standing along its back, and resin beading between them, lit from inside
-    const needles = [R[1], R[2], R[3], R[4]].flatMap((r, i) => tufts(r, ["pelvis", "loin", "chest", "chest"][i], { n: 2, a0: 0.12, a1: 0.55, long: 0.13, sweep: 0.75, r: 0.022, sides: 3, colour: () => C.back, tip: () => NEEDLE }));
-    // (and plates of it laid down its spine, each with its lit heart)
-    const spine = [R[1], R[2], R[3], R[4]].map((r, i) => plate(["pelvis", "loin", "chest", "chest"][i], [0, r.at[1] + r.ry * 0.92, r.at[2] + 0.03], [0, 1, -0.15], { r: 0.062, ry: 0.05, high: 0.04, colour: AMBER, rim: "#b9701f", gem: { colour: AMBER2 }, up: [0, 0, 1] }));
-    // the breastplate and shoulder pieces
-    const sh = R[4].at, chest = plate("chest", [0, sh[1] - R[4].ry * 0.55, sh[2] + 0.06], [0, -0.5, 1], { r: 0.075, ry: 0.085, high: 0.035, colour: AMBER, rim: "#b9701f", gem: { colour: AMBER2 } });
-    const pauldrons = [1, -1].map(s => plate("chest", [R[4].rx * 0.85 * s, sh[1] + 0.02, sh[2] - 0.01], [s, 0.5, 0.1], { r: 0.06, high: 0.035, colour: AMBER, rim: "#b9701f", gem: { colour: AMBER2 }, up: [0, 0, 1] }));
+    // pine needles standing along the edges of its armour
+    const needles = [R[1], R[2], R[3], R[4]].flatMap((r, i) => tufts(r, ["pelvis", "loin", "chest", "chest"][i], { n: 2, a0: 0.95, a1: 1.3, long: 0.13, sweep: 0.75, r: 0.022, sides: 3, colour: () => C.back, tip: () => NEEDLE }));
+    // its armour (Ed, 2026-11-11: "Armour should just be thickened polygons on their torso with a different colour and glowing runes"): plates of dark resin down its spine from hips to shoulders, amber lit in each
+    const armour = [{ from: 0.9, to: 4.6, round: [0, 0.8], lames: 5, thick: 0.018, step: 0.012, colour: "#8a4a16", rim: AMBER, runes: { colour: AMBER2 } }];
     // feathers at its neck: jay blue, owl barred, crow black
     const FEATHERS = ["#3f7fc4", "#d9c9a8", "#1c1a1c", "#8a5a34", "#e9e2d2"], feathers = tufts(R[5], "neck", { n: 5, a0: 0.15, a1: 2.1, long: 0.26, sweep: 0.8, droop: 0.2, r: 0.045, flat: 0.4, jitter: 0.2, colour: i => FEATHERS[i % 5], tip: i => FEATHERS[(i + 2) % 5] });
     const whiskers = [1, -1].map(s => ({ at: P(0.03 * s, -0.005, 0.2), rx: 0.006, ry: 0.006, tip: P(0.18 * s, -0.04, 0.14), bone: "head", colour: "#efe6d2", up: [0, 1, 0], sides: 3 }));
-    return plan("marten-legend", w.body, w.skull, [...w.legs, t, chest, ...pauldrons, ...spine], lope({ seconds: 0.8, bob: 0.01, rock: 0.07, tailSwing: 0.08, tails: [t.chain] }), { cones: [...needles, ...feathers, ...whiskers] });
+    return plan("marten-legend", w.body, w.skull, [...w.legs, t], lope({ seconds: 0.8, bob: 0.01, rock: 0.07, tailSwing: 0.08, tails: [t.chain] }), { cones: [...needles, ...feathers, ...whiskers], armour });
   },
 };
 

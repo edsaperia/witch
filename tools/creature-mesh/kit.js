@@ -103,19 +103,20 @@ export function head(pivot, o) {
 
 /** Fur, spines or plates standing off a ring of the skin: n a side round it from angle a0 to a1 (0 the top, going down its
  *  flank; mirrored), each `long`, swept back by `sweep` and hanging by `droop`, growing down the flank by `grow`. colour(i, s)
- *  and tip(i, s) pick each one's; r its root's size; sides its facets; glow lights its tip; lock makes each a full curved lock of
- *  fur where it would be a spike. */
+ *  and tip(i, s) pick each one's; r its root's size; sides its facets; glow lights it (true: all of it; "tip": its outer half; or
+ *  (i, s) => either, to light some and not others); lock makes each a full curved lock of fur where it would be a spike. */
 export function tufts(ring, bone, o) {
   const out = [], { n = 6, a0 = 0.2, a1 = 2.6, long = 0.2, sweep = 0.6, r = 0.045, colour, tip, grow = 0, droop = 0.15, sides = 4, glow = false, flat = 0.8, jitter = 0.3, lock = false } = o;
   for (const s of [1, -1]) for (let i = 0; i < n; i++) {
     const a = a0 + (a1 - a0) * (n === 1 ? 0 : i / (n - 1)), cx = Math.sin(a) * s, cy = Math.cos(a), L = long * (1 + grow * (i / Math.max(1, n - 1))) * (1 - jitter / 2 + jitter * ((i * 7 + (s > 0 ? 0 : 3)) % 5) / 4);
     const at = [ring.at[0] + cx * ring.rx * 0.8, ring.at[1] + cy * ring.ry * 0.8, ring.at[2]];
-    out.push({ at, rx: r, ry: r * flat, tip: [at[0] + cx * L * (1 - sweep) * 0.8, at[1] + cy * L * (1 - sweep) * 0.8 - L * droop, at[2] - L * sweep], bone, colour: colour(i, s), tipColour: tip?.(i, s) ?? colour(i, s), split: lock ? 0.45 : 0.5, up: [0, 0, 1], sides: lock ? 5 : sides, glow, ...(lock ? { bulge: 0.9, bend: [cx * L * 0.12, cy * L * 0.12 + L * 0.06, 0] } : {}) });
+    out.push({ at, rx: r, ry: r * flat, tip: [at[0] + cx * L * (1 - sweep) * 0.8, at[1] + cy * L * (1 - sweep) * 0.8 - L * droop, at[2] - L * sweep], bone, colour: colour(i, s), tipColour: tip?.(i, s) ?? colour(i, s), split: lock ? 0.45 : 0.5, up: [0, 0, 1], sides: lock ? 5 : sides, glow: typeof glow === "function" ? glow(i, s) : glow, ...(lock ? { bulge: 0.9, bend: [cx * L * 0.12, cy * L * 0.12 + L * 0.06, 0] } : {}) });
   }
   return out;
 }
 
-/** A plate of armour: a faceted boss of `r` standing `high` off `at` the way `out` points, on `bone`; gem: { colour } a lit stone
+/** A raised boss (a turtle's keel; a legend's armour is not this but `armour`, plate raised from its own skin: see `plan`): a
+ *  faceted boss of `r` standing `high` off `at` the way `out` points, on `bone`; gem: { colour } a lit stone
  *  set in its middle; rim a second colour for its edge. */
 export function plate(bone, at, out, o) {
   const { r = 0.08, high = 0.04, colour, rim, gem, sides = 6, up = [0, 1, 0], ry = r } = o, l = Math.hypot(...out) || 1, d = out.map(v => v / l), top = at.map((v, i) => v + d[i] * high);
@@ -128,10 +129,10 @@ export function plate(bone, at, out, o) {
  *  goes: curl (pitch gained over its length), twist (yaw gained), wave and waves (a sway in pitch, radians and how many), phase.
  *  len, r (its fullest), colours { coat, under, tip }, tip (the share of its length in the tip's colour), blunt (how round its
  *  end: 0.05 a point), sides, bones (4; more for a long one). fire: { colour, size } a flame of that colour standing off its tip,
- *  glowing; orb: { colour, size } a ball there instead; ring: { colour, at } a band round it; spikes: { n, colour, len } tufts of
- *  fur standing off its upper edge; plume: slender from the root and full near its end, a flame's shape. */
+ *  glowing; ring: { colour, at } a band round it; spikes: { n, colour, len, glow } tufts of fur standing off its upper edge
+ *  (glow "tip" lights their points); plume: slender from the root and full near its end, a flame's shape. */
 export function tail(name, parent, root, o) {
-  const { len = 0.5, r = 0.094, yaw = 0, pitch = -0.33, curl = 0, twist = 0, wave = 0, waves = 1, phase = 0, colours: C, tip = 0.2, sides = 7, blunt = 0.05, bones: nb = 4, fire, orb, ring, spikes, plume = false } = o;
+  const { len = 0.5, r = 0.094, yaw = 0, pitch = -0.33, curl = 0, twist = 0, wave = 0, waves = 1, phase = 0, colours: C, tip = 0.2, sides = 7, blunt = 0.05, bones: nb = 4, fire, ring, spikes, plume = false } = o;
   const N = 24, pts = [[...root]], dirs = [];
   for (let i = 0; i < N; i++) { const t = (i + 0.5) / N, p = pitch + curl * t + wave * Math.sin(Math.PI * 2 * waves * t + phase), y = yaw + twist * t, d = [Math.sin(y) * Math.cos(p), Math.sin(p), -Math.cos(y) * Math.cos(p)]; dirs.push(d); pts.push(pts[i].map((v, k) => v + d[k] * len / N)); }
   const at = t => { const f = Math.min(N - 1e-6, Math.max(0, t * N)), i = Math.floor(f), u = f - i; return pts[i].map((v, k) => v + (pts[i + 1][k] - v) * u); }, dir = t => dirs[Math.min(N - 1, Math.max(0, Math.floor(t * N)))];
@@ -144,9 +145,10 @@ export function tail(name, parent, root, o) {
   const out = { bones, cones: [], chain: bones.map(b => b[0]), lofts: [{ sides, up: [0, 1, 0], rings: prof.map(([t, f]) => ({ at: at(t), rx: r * f, ry: r * f * 1.03, bone: bone(t), up: upAt(t), colour: t >= 1 - tip ? C.tip : t > 0.45 ? bib(C.coat, C.under ?? C.coat, -0.3) : C.coat })) }] };
   const along = (t, off) => { const p = at(t), u = upAt(t); return p.map((v, i) => v + u[i] * off); }, end = at(1), d1 = dir(1);
   if (fire) { const s = fire.size ?? 1, base = end.map((v, i) => v + d1[i] * 0.03 * s); out.cones.push({ at: base, rx: 0.045 * s, ry: 0.045 * s, tip: base.map((v, i) => v + d1[i] * 0.06 * s + (i === 1 ? 0.14 * s : 0)), bone: last, colour: fire.colour, tipColour: fire.tip ?? fire.colour, glow: true, split: 0.55, up: upAt(1), sides: 5 }, { at: base, rx: 0.045 * s, ry: 0.045 * s, tip: base.map((v, i) => v - d1[i] * 0.05 * s - (i === 1 ? 0.03 * s : 0)), bone: last, colour: fire.colour, glow: true, up: upAt(1), sides: 5 }); }
-  if (orb) { const s = orb.size ?? 1, c = end.map((v, i) => v + d1[i] * 0.05 * s); out.lofts.push({ sides: 7, up: upAt(1), rings: [[-1, 0.15], [-0.6, 0.8], [0, 1], [0.6, 0.8], [1, 0.15]].map(([z, f]) => ({ at: c.map((v, i) => v + d1[i] * z * 0.06 * s), rx: 0.06 * s * f, ry: 0.06 * s * f, bone: last, colour: orb.colour, glow: true, up: upAt(1) })) }); }
-  if (ring) out.lofts.push({ sides, up: [0, 1, 0], rings: [[-0.018, 0.9], [-0.008, 1.12], [0.008, 1.12], [0.018, 0.9]].map(([dt, f]) => { const t = ring.at + dt, k = t < 0.1 ? 0.5 : t < 0.22 ? 0.8 : 0.96; return { at: at(t), rx: r * k * f, ry: r * k * f, bone: bone(t), up: upAt(t), colour: ring.colour }; }) });
-  if (spikes) for (let i = 0; i < spikes.n; i++) { const t = 0.2 + (i / spikes.n) * 0.62, k = 0.85 + 0.15 * Math.sin(i * 2.3), back = dir(t).map(v => -v * 0.03); out.cones.push({ at: along(t, r * 0.75), rx: 0.03, ry: 0.022, tip: along(t - 0.05, r * 0.9 + 0.07 * (spikes.len ?? 1) * k).map((v, j) => v + back[j]), bone: bone(t), colour: C.coat, tipColour: spikes.colour ?? C.coat, split: 0.5, up: dir(t), sides: 4 }); }
+  // (the tail's own thickness there, so a band sits on it whatever its shape)
+  const fat = t => { let i = 0; while (i + 2 < prof.length && prof[i + 1][0] < t) i++; const [t0, f0] = prof[i], [t1, f1] = prof[i + 1]; return f0 + (f1 - f0) * Math.min(1, Math.max(0, (t - t0) / (t1 - t0))); };
+  if (ring) out.lofts.push({ sides, up: [0, 1, 0], rings: [[-0.018, 0.95], [-0.008, 1.14], [0.008, 1.14], [0.018, 0.95]].map(([dt, f]) => { const t = ring.at + dt, k = fat(t); return { at: at(t), rx: r * k * f, ry: r * k * f, bone: bone(t), up: upAt(t), colour: ring.colour }; }) });
+  if (spikes) for (let i = 0; i < spikes.n; i++) { const t = 0.2 + (i / spikes.n) * 0.62, k = 0.85 + 0.15 * Math.sin(i * 2.3), back = dir(t).map(v => -v * 0.03); out.cones.push({ at: along(t, r * 0.75), rx: 0.03, ry: 0.022, tip: along(t - 0.05, r * 0.9 + 0.07 * (spikes.len ?? 1) * k).map((v, j) => v + back[j]), bone: bone(t), colour: C.coat, tipColour: spikes.colour ?? C.coat, split: 0.5, up: dir(t), sides: 4, glow: spikes.glow }); }
   return out;
 }
 
@@ -157,12 +159,14 @@ export function band(bone, a, b, o) {
   return { bones: [], cones: [], lofts: [{ sides, up, rings: [[-w, 0.82], [-w / 2, 1], [w / 2, 1], [w, 0.82]].map(([d, f]) => ({ at: m(at + d), rx: r * f, ry: ry * f, bone, colour, up })) }] };
 }
 
-/** A plan from its parts: the torso's rings and the head's joined into one skin, every part's bones, lofts and cones, the gait. */
+/** A plan from its parts: the torso's rings and the head's joined into one skin, every part's bones, lofts and cones, the gait.
+ *  extra: { cones, armour }: armour is a list of plates laid on the skin (quadruped.js `armour`: from and to count the skin's
+ *  rings, 0 rump tip, 1 hips, 2 loin, 3 ribs, 4 shoulders, 5 neck, 6 throat; round [a0, a1] the angle from the spine they cover). */
 export function plan(name, body, skull, parts, gait, extra = {}) {
   return { name,
     bones: [...body.bones, ...skull.bones, ...parts.flatMap(p => p.bones)],
     lofts: [{ sides: 8, up: [0, 1, 0], rings: [...body.rings, ...skull.rings] }, ...(skull.lofts ?? []), ...parts.flatMap(p => p.lofts)],
-    cones: [...skull.cones, ...parts.flatMap(p => p.cones), ...(extra.cones ?? [])],
+    cones: [...skull.cones, ...parts.flatMap(p => p.cones), ...(extra.cones ?? [])], armour: extra.armour ?? [],
     gait: { root: "pelvis", hips: "pelvis", chest: "chest", neck: "neck", head: "head", ears: skull.ears, ...gait } };
 }
 
@@ -207,7 +211,7 @@ export function dome(bone, c, o) {
   const { rx = 0.16, rz = 0.2, high = 0.12, colour, rim, seams, sides = 10, rows = 5 } = o, lat = i => (i / rows) * (Math.PI / 2) * 0.97;
   const on = (up, round) => { const f = up * (Math.PI / 2) * 0.97, x = Math.sin(round) * Math.cos(f), z = Math.cos(round) * Math.cos(f), y = Math.sin(f), n = [x / rx, y / high, z / rz], l = Math.hypot(...n) || 1; return { at: [c[0] + x * rx, c[1] + y * high, c[2] + z * rz], out: n.map(v => v / l) }; };
   const rings = Array.from({ length: rows + 1 }, (_, i) => ({ at: [c[0], c[1] + Math.sin(lat(i)) * high, c[2]], rx: rx * Math.cos(lat(i)), ry: rz * Math.cos(lat(i)), bone, up: [0, 0, 1], colour: (cz, sx) => colour(i, cz, sx) }));
-  const lofts = [{ sides, up: [0, 0, 1], rings: [{ ...rings[0], at: [c[0], c[1] - 0.012, c[2]], rx: rx * 0.9, ry: rz * 0.9 }, ...rings] }];
+  const lofts = [{ name: o.name ?? "dome", sides, up: [0, 0, 1], rings: [{ ...rings[0], at: [c[0], c[1] - 0.012, c[2]], rx: rx * 0.9, ry: rz * 0.9 }, ...rings] }];
   if (rim) lofts.push({ sides, up: [0, 0, 1], rings: [[-0.02, 0.96], [-0.006, 1.06], [0.01, 1.06], [0.022, 0.98]].map(([dy, f]) => ({ at: [c[0], c[1] + dy, c[2]], rx: rx * f + (rim.r ?? 0), ry: rz * f + (rim.r ?? 0), bone, up: [0, 0, 1], colour: rim.colour })) });
   if (seams) {
     const w = seams.w ?? 0.007, line = pts => ({ sides: 3, up: [0, 1, 0], rings: pts.map(p => ({ at: p.at.map((v, j) => v + p.out[j] * w * 0.6), rx: w, ry: w, bone, colour: seams.colour, glow: !!seams.glow, up: p.out })) });
