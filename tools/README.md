@@ -111,7 +111,7 @@ node tools/inventory.mjs [--check]
 - [`momentum/`](momentum/README.md): 1 script — strip.mjs
 - [`multiplayer/`](multiplayer/README.md): 2 scripts — floorPath.cjs, route.cjs
 - [`mushrooms/`](mushrooms/README.md): 9 scripts — brewing-check.mjs, build-preview.mjs, check.mjs, explorer.js, glow-check.mjs, ingame-check.cjs, lab-check.cjs, recipe-book.mjs, sheet.mjs
-- [`music-lab/`](music-lab/README.md): 39 scripts — ab.mjs, ab.ts, analyse.cjs, analyse.ts, banger.mjs, banger.ts, bass.mjs, bass.ts, boot.mjs, boot.ts, build.mjs, check.cjs, circles.mjs, circles.ts, cost.cjs, cost.ts, flight.cjs, form.mjs, form.ts, fxcost.cjs, fxcost.ts, haunted.mjs, haunted.ts, heard.mjs, ingredients.ts, lab.ts, latency.cjs, leads.mjs, leads.ts, melody.mjs, melody.ts, set.mjs, set.ts, silence.cjs, stems.cjs, stems.ts, tune.cjs, tune.ts, voices.mjs
+- [`music-lab/`](music-lab/README.md): 41 scripts — ab.mjs, ab.ts, analyse.cjs, analyse.ts, banger.mjs, banger.ts, bass.mjs, bass.ts, boot.mjs, boot.ts, build.mjs, check.cjs, circles.mjs, circles.ts, cost.cjs, cost.ts, flight.cjs, form.mjs, form.ts, fxcost.cjs, fxcost.ts, haunted.mjs, haunted.ts, heard.mjs, ingredients.ts, lab.ts, latency.cjs, leads.mjs, leads.ts, load.mjs, load.ts, melody.mjs, melody.ts, set.mjs, set.ts, silence.cjs, stems.cjs, stems.ts, tune.cjs, tune.ts, voices.mjs
 - [`music-studio/`](music-studio/README.md): 5 scripts — build.mjs, check.cjs, knobs.ts, main.ts, midi.ts
 - [`occlusion/`](occlusion/README.md): 1 script — envelope-shots.cjs
 - [`opening/`](opening/README.md): 3 scripts — bedroom-budget.cjs, shots.cjs, wake-keys.cjs
