@@ -13,7 +13,7 @@ import { wakeInBedroom } from "./opening";
 import { atDecks, startParty, doorShut, endDream, firstMorning, homeBed, morningAfter, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
 /** The room her bed stands in, to walk out of (the tests' own: no rule reads rooms since Ed, 2026-11-03). */
 const bedRoom = (): string => homeBed()!.room;
-import { dressed, pileOut, PILE_SLOTS, wearFromStation, wearPiece, wornGenome, wornNow } from "./clothesPile";
+import { dressed, pileOut, PILE_SLOTS, wearFromStation, wearPiece, wornGenome, wornNow, type PileSlot } from "./clothesPile";
 import { deckOf, onTerrace } from "./treehouse";
 import { furnitureFor } from "./guestFurniture";
 import { heldByRoutine } from "./djSet";
@@ -204,7 +204,7 @@ const outOfBedroom = (g: Game) => { const p = rel(g); return inBlob(HOUSE_ROOMS.
 function upAndDressed(): Game {
   const g = up();
   expect(g.wake!.open).toBe(true);
-  for (const st of ["wardrobe", "shoeRack", "cloakPegs", "bags"]) wearFromStation(g.wake!, st); // (her first night: no pile, each piece at its station)
+  for (const [st, shelf] of [["wardrobe"], ["shoeRack", "trousers"], ["shoeRack", "shoes"], ["cloakPegs"], ["bags"]]) wearFromStation(g.wake!, st, shelf); // (her first night: no pile, each piece at its station)
   wearPiece(g.wake!, "hat");
   expect(dressed(g.wake)).toBe(true);
   return g;
@@ -279,11 +279,52 @@ describe("last night's clothes (Ed, 2026-10-23: \"When waking up she wears only 
     expect(wearFromStation(w, "dressingTable")).toBe(false); // (her hair and face: hers in the nightie too)
     const on = wornGenome(null, w.pile) as unknown as { accessories: Record<string, unknown> };
     expect(on.accessories.nightie).toBeUndefined(); expect(on.accessories.barefoot).toBe(true); // (her top on, her feet still bare)
-    wearFromStation(w, "shoeRack"); wearFromStation(w, "cloakPegs");
+    expect(on.accessories.nightieSkirt).toBe(true); // (her trousers still in the pile: her nightie's skirt over her bare legs)
+    wearFromStation(w, "shoeRack", "trousers"); wearFromStation(w, "shoeRack", "shoes"); wearFromStation(w, "cloakPegs");
     expect(w.pile).toEqual(["hat", "bits"]);
     standAt(g, "clothesPile", 0.4); press(g);
     expect(w.pile).toEqual([]);
     expect(wornGenome(null, w.pile)).toBeNull(); // (dressed: her own look, as it is)
+  });
+
+  // Ed, 2026-11-11: "When I go to the wardrobe and put top/jacket on, trousers are put on too." Her trousers are their own piece, the
+  // shoe rack's Trousers shelf's; the wardrobe (its Jacket and Top) puts on only her top.
+  describe("her trousers, their own piece (Ed, 2026-11-11)", () => {
+    const acc = (pile: readonly PileSlot[]) => (wornGenome(null, pile) as unknown as { accessories: Record<string, unknown> }).accessories;
+    it("the wardrobe's choice (a guest bedroom's too) leaves her trousers in the pile: her top on, her nightie's skirt over bare legs", () => {
+      for (const station of ["wardrobe", "bedroom2Wardrobe", "bedroom3Wardrobe"]) for (const shelf of [undefined, "jacket", "top"]) {
+        const w = { pile: [...PILE_SLOTS] };
+        expect(wearFromStation(w, station, shelf), `${station} ${shelf}`).toBe(true);
+        expect(w.pile).toEqual(PILE_SLOTS.filter(s => s !== "top"));
+        expect(w.pile).toContain("trousers");
+        const a = acc(w.pile);
+        expect(a.nightieSkirt).toBe(true); expect(a.nightie).toBeUndefined(); expect(a.nightieTop).toBeUndefined();
+      }
+    });
+    it("the shoe rack's Trousers shelf puts on only her trousers; its Shoes shelf only her shoes (a guest bedroom's too)", () => {
+      for (const station of ["shoeRack", "bedroom2ShoeRack", "bedroom3ShoeRack"]) {
+        const w = { pile: [...PILE_SLOTS] };
+        expect(wearFromStation(w, station, "trousers")).toBe(true);
+        expect(w.pile).toEqual(PILE_SLOTS.filter(s => s !== "trousers"));
+        const a = acc(w.pile);
+        expect(a.nightieTop).toBe(true); expect(a.nightie).toBeUndefined(); expect(a.barefoot).toBe(true); // (the chemise over her jeans, her feet still bare)
+        const v = { pile: [...PILE_SLOTS] };
+        expect(wearFromStation(v, station, "shoes")).toBe(true);
+        expect(v.pile).toEqual(PILE_SLOTS.filter(s => s !== "shoes"));
+        expect(acc(v.pile).nightie).toBe(true); expect(acc(v.pile).barefoot).toBeUndefined();
+      }
+    });
+    it("a choice naming no shelf, or one with no piece of its own (the cloak pegs' scarf), puts on its station's piece as before", () => {
+      const w = { pile: [...PILE_SLOTS] };
+      expect(wearFromStation(w, "shoeRack")).toBe(true); expect(w.pile).toEqual(PILE_SLOTS.filter(s => s !== "shoes"));
+      expect(wearFromStation(w, "cloakPegs", "scarf")).toBe(true); expect(w.pile).not.toContain("cloak");
+      expect(wearFromStation(w, "dressingTable", "hair")).toBe(false); // (a station that dresses nothing)
+    });
+    it("both on: her whole outfit; neither: the whole nightie", () => {
+      expect(acc(PILE_SLOTS)).toMatchObject({ nightie: true }); expect(acc(PILE_SLOTS).nightieTop).toBeUndefined(); expect(acc(PILE_SLOTS).nightieSkirt).toBeUndefined();
+      const a = acc(["shoes", "cloak"]);
+      expect(a.nightie).toBeUndefined(); expect(a.nightieTop).toBeUndefined(); expect(a.nightieSkirt).toBeUndefined();
+    });
   });
 
   it("in her nightie, a hat taken off the Cloakroom's hats' floor is on her head, out of the pile (so she's drawn in it)", () => {
@@ -297,7 +338,7 @@ describe("last night's clothes (Ed, 2026-10-23: \"When waking up she wears only 
 
   it("half dressed by the stations, she walks out as she is, the rest left in the pile", () => {
     const g = up();
-    for (const st of ["wardrobe", "shoeRack"]) wearFromStation(g.wake!, st);
+    for (const [st, shelf] of [["wardrobe"], ["shoeRack", "trousers"], ["shoeRack", "shoes"]]) wearFromStation(g.wake!, st, shelf);
     expect(doorShut(g)).toBe(false);
     atDoor(g); run(g, 4, outward());
     expect(outOfBedroom(g)).toBe(true);

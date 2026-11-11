@@ -17,6 +17,8 @@ const url = await b.page.evaluate(async S => {
     ["nightie: in bed, the stretch", [["sit", 0], ["sit", 1], ["liftSigil", 0], ["liftSigil", 1], ["liftSigil", 2]].map(([pose, frame]) => one({ pose, frame }, N, nightCol))],
     ["nightie: up, walking", [["idle", 0], ["idle", 1], ["walk", 0], ["walk", 1], ["walk", 2], ["walk", 3]].map(([pose, frame]) => one({ pose, frame }, N, nightCol))],
     ["nightie: away, towards", [["idle", 0, "away"], ["walk", 1, "away"], ["idle", 0, "towards"], ["walk", 1, "towards"]].map(([pose, frame, heading]) => one({ pose, frame, heading }, N, nightCol))],
+    // (half on, Ed, 2026-11-11, "When I go to the wardrobe and put top/jacket on, trousers are put on too": her top on over its skirt, then her jeans under it)
+    ["half: top on / trousers on", [["idle", 0, "towards", "nightieSkirt"], ["walk", 1, "towards", "nightieSkirt"], ["idle", 0, "towards", "nightieTop"], ["walk", 1, "towards", "nightieTop"]].map(([pose, frame, heading, half]) => one({ pose, frame, heading }, { ...N, nightie: false, [half]: true }, nightCol))],
     ["last night's clothes", [G.bake(G.clothesPileSprite(st, { look }), dressedCol, st, st.cOutline), G.bake(G.clothesPileSprite(st, { look, facing: "away" }), dressedCol, st, st.cOutline)]],
     ["dressed (E at the pile)", [["liftSigil", 1], ["idle", 0], ["walk", 1], ["walk", 3]].map(([pose, frame]) => one({ pose, frame }, look, dressedCol))],
   ];

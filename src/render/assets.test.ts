@@ -272,4 +272,13 @@ describe("AssetLibrary: her nightie kept for good", () => {
     expect(a.hasLook(night)).toBe(true);
     const n = inner(a).queue.length; a.keepLook(night); a.keepLook(JSON.parse(JSON.stringify(night))); expect(inner(a).queue.length).toBe(n); // (kept: never asked again)
   });
+  // Ed, 2026-11-11: "When I go to the wardrobe and put top/jacket on, trousers are put on too": her top and her trousers each their own
+  // piece, so her nightie half on is a look of its own, drawn and kept apart from the whole nightie's.
+  it("her nightie half on (her top on, or her trousers) is a look of its own, never the whole nightie's frames", () => {
+    const a = new AssetLibrary(style, 11, 4, null);
+    const skirt = wornGenome(null, PILE_SLOTS.filter(s => s !== "top"), false), bodice = wornGenome(null, PILE_SLOTS.filter(s => s !== "trousers"), false);
+    expect(new Set([night, skirt, bodice].map(g => JSON.stringify(g))).size).toBe(3);
+    inner(a).receive({ job: { kind: "witch", id: "skirt", style, genome: skirt, bare: false } as ArtJob, result: result() });
+    expect(a.hasLook(skirt)).toBe(true); expect(a.hasLook(night)).toBe(false); expect(a.hasLook(bodice)).toBe(false);
+  });
 });
