@@ -35,7 +35,7 @@ const badger = {
   adult() {
     const q = brock(BADGER, { fore: { len: 0.46, thick: 2.4, paw: 1.5, claws: { colour: "#e9e2cf", len: 2.2, thick: 1.8, wide: 1.2 } }, hind: { len: 0.46, thick: 2.0, claws: { colour: "#e9e2cf", len: 1.2, thick: 1.4 } }, body: { len: 1.0, girth: 1.5, deep: 0.92, hump: 0.5 }, head: { size: 1.12 }, bands: 1.25 }), R = q.R;
     const t = tail("tail", "pelvis", q.root, { len: 0.2, r: 0.07, pitch: 0.1, blunt: 0.3, tip: 0, colours: { coat: "#a3a39d", tip: "#a3a39d" }, spikes: { n: 3, colour: WHITE, len: 0.6 } });
-    const shag = [1, 2, 3, 4].flatMap(i => tufts(R[i], BONES[i], { n: 4, a0: 0.15, a1: 1.7, long: 0.13, sweep: 0.95, droop: 0.2, r: 0.085, flat: 0.35, jitter: 0.2, colour: k => (k % 2 ? "#6c6c68" : "#85857f"), tip: () => "#b9b6ab" }));
+    const shag = [1, 2, 3, 4].flatMap(i => tufts(R[i], BONES[i], { n: 4, a0: 0.15, a1: 1.7, long: 0.15, sweep: 0.97, droop: 0.12, r: 0.11, flat: 0.28, jitter: 0.15, sides: 5, lock: true, colour: k => (k % 2 ? "#6c6c68" : "#85857f"), tip: () => "#c9c6bb" }));
     return plan("badger-adult", q.body, q.skull, [...q.legs, t], trundle({ tails: [t.chain] }), { cones: shag });
   },
   // the elder: wide and low as a barrow, grizzled and scarred, its stripes running on down its back as chalk lines that shine
@@ -49,7 +49,7 @@ const badger = {
     // the stones along its spine, tallest over the shoulders, a mark lit on each
     const top = i => [0, R[i].at[1] + R[i].ry * 0.9, R[i].at[2]], stones = [[1, 0.13], [2, 0.17], [3, 0.24], [4, 0.2]].flatMap(([i, h]) => [{ at: top(i), rx: 0.085, ry: 0.04, tip: [0.01, top(i)[1] + h * 1.25, top(i)[2] - 0.02], bone: BONES[i], colour: STONE, tipColour: "#a4a8a5", split: 0.93, up: [0, 0, 1], sides: 5 },
       { at: [0, top(i)[1] + h * 0.55, top(i)[2] + 0.04], rx: 0.03, ry: 0.03, tip: [0, top(i)[1] + h * 0.6, top(i)[2] + 0.065], bone: BONES[i], colour: RUNE, glow: true, up: [0, 1, 0], sides: 4 }]);
-    const moss = [2, 3].flatMap(i => tufts(R[i], BONES[i], { n: 3, a0: 1.3, a1: 2.1, long: 0.08, sweep: 0.5, droop: 0.6, r: 0.05, colour: () => MOSS, tip: () => "#7b9a4c" }));
+    const moss = [2, 3].flatMap(i => tufts(R[i], BONES[i], { n: 3, a0: 1.3, a1: 2.1, long: 0.08, sweep: 0.5, droop: 0.6, r: 0.05, lock: true, colour: () => MOSS, tip: () => "#7b9a4c" }));
     const shag = [1, 2, 3, 4].flatMap(i => tufts(R[i], BONES[i], { n: 3, a0: 1.5, a1: 2.2, long: 0.12, sweep: 0.7, droop: 0.6, r: 0.07, flat: 0.45, colour: k => (k % 2 ? "#505053" : "#7a7a7d"), tip: () => "#a9a69b" }));
     // the torc, its two ends at its throat; bronze on each shoulder with a lit stone
     const torc = band("neck", R[5].at, R[6].at, { at: 0.2, r: R[5].rx * 1.04, ry: R[5].ry * 1.04, wide: 0.022, colour: BRONZE });
@@ -62,37 +62,39 @@ const badger = {
 
 // ---- The mole (fern forest): the spade hands and the velvet barrel, no eyes to speak of.
 const PINK = "#e9a79c", MOLE = { coat: "#574f66", belly: "#6a6179", nose: PINK, upper: "#574f66", mid: "#574f66", sock: PINK, eye: "#15121a" };
-const digger = (C, o) => quad({ C, hind: { len: 0.24, thick: 2.0, ...o.hind }, fore: { len: 0.24, thick: 2.2, paw: 2.8, spread: 2.3, claws: { colour: "#f3e9dc", len: 1.6, thick: 1.8, wide: 2.4 }, ...o.fore }, body: { len: 0.72, girth: 1.3, deep: 0.95, tuck: 1.05, neck: [0.01, 0.08], neckThick: 1.85, white: 0, ...o.body },
-  head: { size: 1.3, muzzle: 0.75, muzzleWide: 1.35, muzzleDeep: 1.25, wide: 1.12, dome: 1.0, cheek: 0, eye: 0.4, nose: 1.9, ...o.head, ear: { shape: "round", tall: 0.08, wide: 0.5, back: C.coat, inner: C.coat } } });
-/** Its spade hands: a broad pink paddle out from each shoulder, palm turned back, four claws fanned from its edge. */
-const spades = (q, size, claw, clawLen = 1) => [1, -1].flatMap(s => { const r = q.R[4], at = [r.rx * 0.9 * s, r.at[1] - r.ry * 0.45, r.at[2] + 0.03], d = [0.75 * s, -0.3, 0.6], L = 0.16 * size, end = at.map((v, i) => v + d[i] * L), bone = s > 0 ? "shoulderL" : "shoulderR";
-  return [{ at, rx: 0.075 * size, ry: 0.028 * size, tip: end, bone, colour: PINK, tipColour: "#f3beb2", split: 0.92, up: [0, 1, 0.3], sides: 6 },
-    ...[-1.5, -0.5, 0.5, 1.5].map(k => ({ at: [end[0], end[1] + k * 0.03 * size, end[2] + k * 0.012 * size], rx: 0.014 * size, ry: 0.014 * size, tip: [end[0] + d[0] * 0.09 * size * clawLen, end[1] + k * 0.045 * size - 0.02 * size, end[2] + d[2] * 0.09 * size * clawLen], bone, colour: claw, up: [0, 1, 0], sides: 3 }))]; });
+const digger = (C, o) => quad({ C, hind: { len: 0.24, thick: 2.0, ...o.hind }, fore: { len: 0.24, thick: 2.2, paw: 2.8, spread: 2.3, claws: { colour: "#f3e9dc", len: 1.6, thick: 1.8, wide: 2.4 }, ...o.fore }, body: { len: 0.72, girth: 1.3, deep: 0.95, tuck: 1.05, neck: [0.0, 0.1], neckThick: 1.22, white: 0, ...o.body },
+  head: { size: 1.08, muzzle: 0.8, muzzleWide: 1.3, muzzleDeep: 1.2, wide: 1.0, dome: 0.95, cheek: 0, eye: 0.4, nose: 2.0, ...o.head, ear: { shape: "round", tall: 0.08, wide: 0.5, back: C.coat, inner: C.coat } } });
+/** Its spade hands: a broad pink paddle flat out from each shoulder, a fan of claws round its outer edge; they ride the shoulders. */
+const spades = (q, size, claw, clawLen = 1) => { const lofts = [], cones = [];
+  for (const s of [1, -1]) { const r = q.R[4], rad = 0.07 * size, c = [(r.rx + rad * 0.75) * s, 0.03 * size + 0.01, r.at[2] + rad * 0.9], bone = s > 0 ? "shoulderL" : "shoulderR";
+    lofts.push(...ball(bone, c, { r: rad, squash: 0.32, colour: PINK, sides: 8 }).lofts);
+    for (let i = 0; i < 5; i++) { const a = -0.35 + i * 0.42, d = [Math.sin(a) * s, 0, Math.cos(a)]; cones.push({ at: [c[0] + d[0] * rad * 0.85, c[1], c[2] + d[2] * rad * 0.85], rx: 0.018 * size, ry: 0.012 * size, tip: [c[0] + d[0] * (rad * 0.85 + 0.075 * size * clawLen), c[1] - 0.012 * size, c[2] + d[2] * (rad * 0.85 + 0.075 * size * clawLen)], bone, colour: claw, bulge: 0.7, split: 0.5, up: [0, 1, 0], sides: 4 }); } }
+  return { bones: [], lofts, cones }; };
 const star = (P, n, r, colour, glow = false) => Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2; return { at: P(Math.cos(a) * 0.012, -0.013 + Math.sin(a) * 0.012, 0.265), rx: 0.007, ry: 0.007, tip: P(Math.cos(a) * r, -0.013 + Math.sin(a) * r, 0.285), bone: "head", colour, glow, up: [0, 0, 1], sides: 3 }; });
 const mole = {
   // a pink-nosed velvet bean, its hands already too big
   baby() {
-    const q = digger(MOLE, { hind: { len: 0.18, thick: 2.2 }, fore: { len: 0.18, thick: 2.4, paw: 2.6, spread: 2.3, claws: { colour: "#f3e9dc", len: 1.0, thick: 1.5, wide: 2.2 } }, body: { len: 0.48, girth: 1.2 }, head: { size: 1.5, muzzle: 0.75, nose: 1.8 } });
+    const q = digger(MOLE, { hind: { len: 0.18, thick: 2.2 }, fore: { len: 0.18, thick: 2.4, paw: 2.6, spread: 2.3, claws: { colour: "#f3e9dc", len: 1.0, thick: 1.5, wide: 2.2 } }, body: { len: 0.48, girth: 1.2 }, head: { size: 1.3, muzzle: 0.7, nose: 2.0 } });
     const t = tail("tail", "pelvis", q.root, { len: 0.05, r: 0.016, pitch: 0.2, blunt: 0.4, tip: 0, colours: { coat: PINK, tip: PINK } });
-    return plan("mole-baby", q.body, q.skull, [...q.legs, t], trundle({ seconds: 0.4, sway: 0.11, tails: [t.chain] }), { cones: spades(q, 0.75, "#f3e9dc", 0.6) });
+    return plan("mole-baby", q.body, q.skull, [...q.legs, t, spades(q, 0.8, "#f3e9dc", 0.6)], trundle({ seconds: 0.4, sway: 0.11, tails: [t.chain] }));
   },
   // a short barrel, broad pink hands turned outward
   young() {
     const q = digger(MOLE, { body: { len: 0.66, girth: 1.15 } });
     const t = tail("tail", "pelvis", q.root, { len: 0.07, r: 0.016, pitch: 0.2, blunt: 0.4, tip: 0, colours: { coat: PINK, tip: PINK } });
-    return plan("mole-young", q.body, q.skull, [...q.legs, t], trundle({ seconds: 0.46, sway: 0.11, tails: [t.chain] }), { cones: spades(q, 1, "#f3e9dc", 0.8) });
+    return plan("mole-young", q.body, q.skull, [...q.legs, t, spades(q, 1.1, "#f3e9dc", 0.8)], trundle({ seconds: 0.46, sway: 0.11, tails: [t.chain] }));
   },
   // huge clawed spade hands, a long snout feeling ahead with its star, whiskers, a body like a furred boulder
   adult() {
-    const q = digger(MOLE, { fore: { len: 0.28, thick: 2.6, paw: 3.8, spread: 2.5, claws: { colour: "#f3e9dc", len: 2.8, thick: 2.4, wide: 3.2 } }, hind: { len: 0.26, thick: 2.2 }, body: { len: 0.78, girth: 1.6, hump: 0.6 }, head: { size: 1.4, muzzle: 1.2 } });
+    const q = digger(MOLE, { fore: { len: 0.28, thick: 2.6, paw: 3.8, spread: 2.5, claws: { colour: "#f3e9dc", len: 2.8, thick: 2.4, wide: 3.2 } }, hind: { len: 0.26, thick: 2.2 }, body: { len: 0.78, girth: 1.6, hump: 0.6, neckThick: 1.1 }, head: { size: 1.2, muzzle: 1.0 } });
     const t = tail("tail", "pelvis", q.root, { len: 0.08, r: 0.018, pitch: 0.3, blunt: 0.4, tip: 0, colours: { coat: PINK, tip: PINK } });
-    return plan("mole-adult", q.body, q.skull, [...q.legs, t], trundle({ seconds: 0.55, sway: 0.1, tails: [t.chain] }), { cones: [...spades(q, 1.6, "#f3e9dc", 0.9), ...star(q.P, 8, 0.045, PINK), ...whiskers(q.P, "#cfc6d6", 0.9)] });
+    return plan("mole-adult", q.body, q.skull, [...q.legs, t, spades(q, 1.9, "#f3e9dc", 1.2)], trundle({ seconds: 0.55, sway: 0.1, tails: [t.chain] }), { cones: [...star(q.P, 8, 0.05, PINK), ...whiskers(q.P, "#cfc6d6", 0.9)] });
   },
   // the delver: blind and certain: hands like ploughshares worn bright, a star for a nose that lights its way; a crust of earth
   // and roots on its back with old coins caught in it; an iron helm with a lamp-stone, iron on its shoulders and wrists
   legend() {
     const STEEL = "#d3dae2", IRON = "#5d646d", LAMP = "#ffd98a", EARTH = "#5c4630", ROOT = "#c9b99a", C = { ...MOLE, coat: "#463f54", belly: "#584f68", upper: "#463f54", mid: "#463f54", eye: "#463f54" };
-    const q = digger(C, { fore: { len: 0.34, thick: 2.8, paw: 4.4, spread: 2.6, knob: 1.2, claws: { colour: STEEL, len: 3.6, thick: 2.6, wide: 3.4 }, band: { colour: IRON, at: 0.1, r: 0.04 } }, hind: { len: 0.3, thick: 2.4, claws: { colour: STEEL, len: 1.4, thick: 1.6 } }, body: { len: 0.9, girth: 1.9, hump: 1.0, neck: [0.0, 0.1], neckThick: 2.0 }, head: { size: 1.6, muzzle: 1.25 } }), R = q.R, P = q.P;
+    const q = digger(C, { fore: { len: 0.34, thick: 2.8, paw: 4.4, spread: 2.6, knob: 1.2, claws: { colour: STEEL, len: 3.6, thick: 2.6, wide: 3.4 }, band: { colour: IRON, at: 0.1, r: 0.04 } }, hind: { len: 0.3, thick: 2.4, claws: { colour: STEEL, len: 1.4, thick: 1.6 } }, body: { len: 0.9, girth: 1.9, hump: 1.0, neck: [0.0, 0.12], neckThick: 1.15 }, head: { size: 1.35, muzzle: 1.1 } }), R = q.R, P = q.P;
     const t = tail("tail", "pelvis", q.root, { len: 0.1, r: 0.02, pitch: 0.3, blunt: 0.4, tip: 0, colours: { coat: PINK, tip: PINK } });
     // the crust: clods of earth over its back, roots trailing from them, coins among them
     const clods = [1, 2, 3, 4].flatMap(i => tufts(R[i], BONES[i], { n: 3, a0: 0.2, a1: 1.3, long: 0.07, sweep: 0.5, droop: 0.0, r: 0.085, flat: 0.8, sides: 5, jitter: 0.5, colour: k => (k % 2 ? EARTH : "#6f563a"), tip: () => "#7a6040" }));
@@ -101,7 +103,7 @@ const mole = {
     // the helm and its lamp; iron on each shoulder
     const helm = plate("head", P(0, 0.075, 0.07), [0, 1, 0.15], { r: 0.105, ry: 0.1, high: 0.075, colour: "#8a929c", rim: IRON, up: [0, 0, 1], sides: 8 }), lamp = ball("head", P(0, 0.13, 0.15), { r: 0.045, colour: LAMP, glow: true });
     const pauldrons = [1, -1].map(s => plate("chest", [R[4].rx * 0.8 * s, R[4].at[1] + R[4].ry * 0.6, R[4].at[2]], [s, 0.9, 0.1], { r: 0.12, high: 0.06, colour: "#8a929c", rim: IRON, gem: { colour: LAMP }, up: [0, 0, 1], sides: 6 }));
-    return plan("mole-legend", q.body, q.skull, [...q.legs, t, helm, lamp, ...pauldrons, ...coins], trundle({ seconds: 0.9, sway: 0.08, tails: [t.chain], legs: walk(0.85) }), { cones: [...spades(q, 2.1, STEEL, 0.9), ...clods, ...roots, ...star(P, 11, 0.085, "#ffb8c8", true), ...whiskers(P, "#cfc6d6", 1.3)] });
+    return plan("mole-legend", q.body, q.skull, [...q.legs, t, helm, lamp, ...pauldrons, ...coins, spades(q, 2.6, STEEL, 1.5)], trundle({ seconds: 0.9, sway: 0.08, tails: [t.chain], legs: walk(0.85) }), { cones: [...clods, ...roots, ...star(P, 11, 0.085, "#ffb8c8", true), ...whiskers(P, "#cfc6d6", 1.3)] });
   },
 };
 
@@ -125,7 +127,7 @@ const hedgehog = {
   // long banded spines flared into a fan, a skirt of fur under them, a longer snout
   adult() {
     const q = urchin(HOG, { body: { len: 0.66, girth: 1.45, hump: 0.8 }, head: { size: 1.02, muzzle: 1.2 } }), R = q.R;
-    const skirt = [2, 3, 4].flatMap(i => tufts(R[i], BONES[i], { n: 2, a0: 1.95, a1: 2.4, long: 0.07, sweep: 0.4, droop: 0.7, r: 0.04, colour: () => HOG.belly, tip: () => "#a98a62" }));
+    const skirt = [2, 3, 4].flatMap(i => tufts(R[i], BONES[i], { n: 2, a0: 1.95, a1: 2.4, long: 0.07, sweep: 0.4, droop: 0.7, r: 0.045, lock: true, colour: () => HOG.belly, tip: () => "#a98a62" }));
     return plan("hedgehog-adult", q.body, q.skull, q.legs, trundle({ seconds: 0.42, sway: 0.05 }), { cones: [...spines(q.R, { n: 6, long: 0.2, sweep: 0.42, r: 0.03, jitter: 0.5, colour: k => (k % 2 ? "#5a4332" : "#3c2c20"), tip: () => "#f3e7c9" }), ...skirt, ...whiskers(q.P, "#e6d2b4", 0.7)] });
   },
   // a walking thicket: spines long as spears, tipped in bronze, old ones snapped; what the wood has left on them: apples, a
@@ -140,7 +142,7 @@ const hedgehog = {
     const lanterns = [[3, 0.25, 1, 0.42], [1, 0.6, -1, 0.3], [4, 1.0, -1, 0.3], [2, 0.1, -1, 0.44]].map(([i, a, s, h]) => ball(BONES[i], top(i, a, s, h), { r: 0.045, colour: LAMP, glow: true, sides: 6, squash: 1.25 }));
     const leaves = [[2, 1.0, 1, 0.28], [4, 0.6, -1, 0.34], [1, 0.3, 1, 0.3]].map(([i, a, s, h]) => { const c = top(i, a, s, h); return { at: c, rx: 0.05, ry: 0.008, tip: [c[0] + 0.08 * s, c[1] + 0.02, c[2] - 0.06], bone: BONES[i], colour: LEAF, tipColour: "#8ab04a", split: 0.6, up: [0, 1, 0], sides: 4 }; });
     const brow = plate("head", P(0, 0.075, 0.085), [0, 1, 0.45], { r: 0.075, ry: 0.06, high: 0.035, colour: BRONZE, rim: BRONZE2, gem: { colour: LAMP }, up: [0, 0, 1], sides: 6 });
-    const skirt = [2, 3, 4].flatMap(i => tufts(R[i], BONES[i], { n: 2, a0: 1.9, a1: 2.4, long: 0.1, sweep: 0.4, droop: 0.7, r: 0.05, colour: () => C.belly, tip: () => "#8f7a5c" }));
+    const skirt = [2, 3, 4].flatMap(i => tufts(R[i], BONES[i], { n: 2, a0: 1.9, a1: 2.4, long: 0.1, sweep: 0.4, droop: 0.7, r: 0.05, lock: true, colour: () => C.belly, tip: () => "#8f7a5c" }));
     return plan("hedgehog-legend", q.body, q.skull, [...q.legs, ...apples, ...lanterns, brow], trundle({ seconds: 0.85, sway: 0.06, legs: walk(0.85) }), { cones: [...spears, ...leaves, ...skirt, ...whiskers(P, "#e6e9ec", 1.4)] });
   },
 };

@@ -17,7 +17,7 @@ const scut = (root, o = {}) => tail("tail", "pelvis", [root[0], root[1] + 0.02, 
 const hare = {
   // a leveret pressed flat: ears short and laid back, huge dark eyes
   baby() {
-    const C = { ...HARE, coat: "#a8845c", upper: "#a8845c", mid: "#a8845c" }, q = hareBuild(C, { hind: { len: 0.4, thick: 1.7, foot: 1.5 }, fore: { len: 0.32, thick: 1.5 }, body: { len: 0.6, girth: 1.05, arch: 0.6, rump: 1.15, neck: [0.06, 0.07], neckThick: 1.2 }, head: { size: 1.22, eye: 2.1 }, ear: { tall: 0.7, lean: 1.15, wide: 1.2 } });
+    const C = { ...HARE, coat: "#a8845c", upper: "#a8845c", mid: "#a8845c" }, q = hareBuild(C, { hind: { len: 0.4, thick: 1.7, foot: 1.5 }, fore: { len: 0.32, thick: 1.5 }, body: { len: 0.6, girth: 1.05, arch: 0.6, rump: 1.15, neck: [0.06, 0.07], neckThick: 1.2 }, head: { size: 1.22, eye: 2.1 }, ear: { tall: 0.8, lean: 0.75, wide: 1.1, inner: C.coat, tip: "#5a4630" } });
     const t = scut(q.root, { len: 0.06, r: 0.04 });
     return plan("hare-baby", q.body, q.skull, [...q.legs, t], hop({ seconds: 0.4, bob: 0.018, rock: 0.09, tails: [t.chain] }));
   },
@@ -31,15 +31,15 @@ const hare = {
   adult() {
     const q = hareBuild(HARE, { hind: { len: 0.9, thick: 1.3, foot: 2.5 }, fore: { len: 0.62, thick: 1.0 }, body: { len: 0.9, girth: 1.02, deep: 1.18, tuck: 0.78, rump: 1.38, neckThick: 1.2 }, head: { size: 1.06 }, ear: { tall: 2.7, lean: 0.12, wide: 1.15, splay: 0.16 } });
     const t = scut(q.root, { len: 0.11, r: 0.065 });
-    const ruff = tufts(q.R[5], "neck", { n: 4, a0: 1.2, a1: 2.95, long: 0.11, sweep: 0.5, droop: 0.45, r: 0.04, colour: () => HARE.belly });
+    const ruff = tufts(q.R[5], "neck", { n: 4, a0: 1.2, a1: 2.95, long: 0.11, sweep: 0.5, droop: 0.45, r: 0.05, lock: true, colour: () => HARE.belly });
     const crest = tufts(q.R[4], "chest", { n: 1, a0: 0.1, long: 0.1, sweep: 0.8, r: 0.035, colour: () => HARE.coat, tip: () => "#6e5334" });
     return plan("hare-adult", q.body, q.skull, [...q.legs, t], hop({ seconds: 0.52, tails: [t.chain] }), { cones: [...ruff, ...crest, ...whiskers(q.P, "#f0e7d6", 1.1)] });
   },
   // the moon's hare: silvered and lean and very tall in the leg, its ears twice its own height, notched and ringed; a crescent
   // lit on its brow and a small moon carried between its ears; moon-silver on its haunches and shins, each plate with a pale stone
   legend() {
-    const MOON = "#f4f7ff", GLOW = "#cfe6ff", C = { coat: "#c9ced6", back: "#9ea5b0", belly: "#f3f5f8", nose: NOSE, upper: "#c9ced6", mid: "#aab0ba", sock: "#7f8794", eyes: [{ colour: GLOW, glow: true }, { colour: GLOW, glow: true }] };
-    const q = hareBuild(C, { hind: { len: 1.1, thick: 1.3, foot: 2.6, knob: 1.25, claws: { colour: "#3a3f48", len: 1 }, band: { colour: SILVER, at: 0.3, r: 0.045 } }, fore: { len: 0.78, thick: 1.0, knob: 1.25, band: { colour: SILVER, at: 0.3, r: 0.036 } }, body: { len: 0.98, girth: 0.96, deep: 1.25, tuck: 0.62, rump: 1.4, hump: 0.3, neck: [0.2, 0.1], neckThick: 1.15 }, head: { size: 1.12, muzzle: 0.62, eye: 1.6 }, ear: { tall: 5.2, lean: 0.06, wide: 1.25, splay: 0.09, back: "#aab0ba", inner: "#e9d2cc", tip: "#3a3f48", torn: -1 } }), P = q.P, R = q.R;
+    const MOON = "#f4f7ff", GLOW = "#cfe6ff", STEEL = "#4f5b78", C = { coat: "#c9ced6", back: "#9ea5b0", belly: "#f3f5f8", nose: NOSE, upper: "#c9ced6", mid: "#aab0ba", sock: "#7f8794", eyes: [{ colour: GLOW, glow: true }, { colour: GLOW, glow: true }] };
+    const q = hareBuild(C, { hind: { len: 1.1, thick: 1.3, foot: 2.6, knob: 1.25, claws: { colour: "#3a3f48", len: 1 }, band: { colour: STEEL, at: 0.3, r: 0.05 } }, fore: { len: 0.78, thick: 1.0, knob: 1.25, band: { colour: SILVER, at: 0.3, r: 0.036 } }, body: { len: 0.98, girth: 0.96, deep: 1.25, tuck: 0.62, rump: 1.4, hump: 0.3, neck: [0.2, 0.1], neckThick: 1.15 }, head: { size: 1.12, muzzle: 0.62, eye: 1.6 }, ear: { tall: 5.2, lean: 0.06, wide: 1.25, splay: 0.09, back: "#aab0ba", inner: "#e9d2cc", tip: "#3a3f48", torn: -1 } }), P = q.P, R = q.R;
     const t = scut(q.root, { len: 0.13, r: 0.07, colours: { coat: "#9ea5b0", tip: "#ffffff" } });
     // the moon it carries, held between its ears; the crescent on its brow
     const moon = ball("head", P(0, 0.62, -0.03), { r: 0.085, colour: MOON, glow: true });
@@ -47,10 +47,10 @@ const hare = {
     // rings in its ears
     const rings = [0.55, 0.8].flatMap((f, i) => [1].map(s => ({ at: P((0.036 + 0.1 * f) * s, 0.07 * 1.12 + 0.82 * f, -0.03), rx: 0.03, ry: 0.012, tip: P((0.036 + 0.1 * f) * s + 0.07, 0.07 * 1.12 + 0.82 * f - 0.02, -0.03), bone: "earL", colour: SILVER, split: 0.8, up: [0, 1, 0], sides: 4 })));
     // armour: a plate on each haunch and shoulder, a crest plate on its chest
-    const hip = R[1].at, sh = R[4].at, plates = [...[1, -1].map(s => plate("pelvis", [R[1].rx * 0.92 * s, hip[1] + 0.02, hip[2] + 0.03], [s, 0.35, -0.1], { r: 0.095, high: 0.04, colour: SILVER, rim: "#8d96a3", gem: { colour: GLOW }, up: [0, 0, 1] })),
-      ...[1, -1].map(s => plate("chest", [R[4].rx * 0.9 * s, sh[1] + 0.03, sh[2] - 0.01], [s, 0.5, 0.1], { r: 0.065, high: 0.035, colour: SILVER, rim: "#8d96a3", gem: { colour: GLOW }, up: [0, 0, 1] })),
-      plate("chest", [0, sh[1] - R[4].ry * 0.5, sh[2] + 0.07], [0, -0.4, 1], { r: 0.07, ry: 0.085, high: 0.03, colour: SILVER, rim: "#8d96a3", gem: { colour: GLOW } })];
-    const mane = tufts(R[5], "neck", { n: 4, a0: 0.9, a1: 2.95, long: 0.16, sweep: 0.55, droop: 0.5, r: 0.05, colour: () => "#f3f5f8", tip: () => "#aab0ba" });
+    const hip = R[1].at, sh = R[4].at, plates = [...[1, -1].map(s => plate("pelvis", [R[1].rx * 0.92 * s, hip[1] + 0.02, hip[2] + 0.03], [s, 0.35, -0.1], { r: 0.115, high: 0.05, colour: STEEL, rim: SILVER, gem: { colour: GLOW }, up: [0, 0, 1], sides: 7 })),
+      ...[1, -1].map(s => plate("chest", [R[4].rx * 0.9 * s, sh[1] + 0.03, sh[2] - 0.01], [s, 0.5, 0.1], { r: 0.085, high: 0.045, colour: STEEL, rim: SILVER, gem: { colour: GLOW }, up: [0, 0, 1], sides: 7 })),
+      plate("chest", [0, sh[1] - R[4].ry * 0.5, sh[2] + 0.07], [0, -0.4, 1], { r: 0.08, ry: 0.095, high: 0.035, colour: STEEL, rim: SILVER, gem: { colour: GLOW } })];
+    const mane = tufts(R[5], "neck", { n: 4, a0: 0.9, a1: 2.95, long: 0.16, sweep: 0.55, droop: 0.5, r: 0.06, lock: true, colour: () => "#f3f5f8", tip: () => "#aab0ba" });
     return plan("hare-legend", q.body, q.skull, [...q.legs, t, moon, ...plates], hop({ seconds: 0.85, bob: 0.02, rock: 0.09, tails: [t.chain], legs: bound(1.05) }), { cones: [...crescent, ...rings, ...mane, ...whiskers(P, "#f3f5f8", 1.6)] });
   },
 };
@@ -59,7 +59,7 @@ const hare = {
 const SQ = { coat: "#b8521f", belly: "#f6efe4", nose: NOSE, upper: "#b8521f", mid: "#a4471a", sock: "#8a3a15" }, SQT = { coat: "#a3441a", under: "#7e3212", tip: "#c96a2c" };
 const sqBuild = (C, o) => quad({ C, hind: { len: 0.5, thick: 1.5, foot: 1.6, ...o.hind }, fore: { len: 0.38, thick: 1.15, ...o.fore }, body: { len: 0.62, girth: 0.98, deep: 1.0, tuck: 0.95, arch: 1.2, rump: 1.25, neck: [0.09, 0.08], neckThick: 1.1, white: 0.55, ...o.body },
   head: { size: 1.08, muzzle: 0.5, muzzleWide: 1.2, muzzleDeep: 1.15, dome: 1.1, wide: 1.02, cheek: 0, eye: 1.75, eyeAt: [0.002, 0.008, -0.015], ...o.head, ear: { tall: 0.8, wide: 0.85, back: C.coat, ...o.ear } } });
-const eartufts = (P, tall, colour) => [1, -1].map(s => ({ at: P(0.07 * s, 0.17, 0.012), rx: 0.016, ry: 0.014, tip: P(0.085 * s, 0.17 + 0.1 * tall, 0.0), bone: s > 0 ? "earL" : "earR", colour, up: [0, 0, 1] }));
+const eartufts = (P, tall, colour) => [1, -1].map(s => ({ at: P(0.07 * s, 0.17, 0.012), rx: 0.02 + 0.004 * tall, ry: 0.016, tip: P(0.085 * s, 0.17 + 0.1 * tall, 0.0), bone: s > 0 ? "earL" : "earR", colour, bulge: 0.75, split: 0.45, up: [0, 0, 1], sides: 5 }));
 const squirrel = {
   // a pink-eared kit with a thin tail like a string
   baby() {
@@ -92,18 +92,18 @@ const squirrel = {
     // the cloak: nuts strung round its shoulders
     const NUTS = ["#7a4d2a", "#b9853f", "#5c3a20", "#c9a35a"], cloak = [...tufts(R[4], "chest", { n: 5, a0: 0.5, a1: 2.6, long: 0.07, sweep: 0.3, droop: 0.9, r: 0.036, flat: 1, sides: 5, jitter: 0.2, colour: i => NUTS[i % 4], tip: i => NUTS[(i + 1) % 4] }), ...tufts(R[5], "neck", { n: 4, a0: 0.6, a1: 2.6, long: 0.06, sweep: 0.3, droop: 0.9, r: 0.03, flat: 1, sides: 5, jitter: 0.2, colour: i => NUTS[(i + 2) % 4] })];
     const tooth = [{ at: P(0.008, -0.03, 0.235), rx: 0.008, ry: 0.006, tip: P(0.008, -0.062, 0.24), bone: "head", colour: GOLD, up: [0, 0, 1], sides: 3 }];
-    return plan("squirrel-legend", q.body, q.skull, [...q.legs, t, ...cap, ...pauldrons], hop({ seconds: 0.7, bob: 0.014, rock: 0.07, tails: [t.chain], tailSwing: 0.04, legs: bound(1.0) }), { cones: [...stalk, ...eartufts(P, 3.2, "#8c8178"), ...cloak, ...tooth, ...whiskers(P, "#efe6d8", 1.5)] });
+    return plan("squirrel-legend", q.body, q.skull, [...q.legs, t, ...cap, ...pauldrons], hop({ seconds: 0.7, bob: 0.014, rock: 0.07, tails: [t.chain], tailSwing: 0.04, legs: bound(1.0) }), { cones: [...stalk, ...eartufts(P, 2.2, "#8c8178"), ...cloak, ...tooth, ...whiskers(P, "#efe6d8", 1.5)] });
   },
 };
 
 // ---- The dormouse (honeysuckle tangle): the big dark eyes, the furred tail, the curl of its sleep.
 const DOR = { coat: "#d59a40", belly: "#f7ecd4", nose: "#c98a80", upper: "#d59a40", mid: "#c0862f", sock: "#f0d9c0", eye: BLACK };
 const dorBuild = (C, o) => quad({ C, hind: { len: 0.32, thick: 1.6, foot: 1.3, ...o.hind }, fore: { len: 0.28, thick: 1.3, ...o.fore }, body: { len: 0.55, girth: 1.0, deep: 1.0, tuck: 1.0, arch: 0.8, rump: 1.15, neck: [0.06, 0.07], neckThick: 1.2, white: 0.5, ...o.body },
-  head: { size: 1.2, muzzle: 0.42, muzzleWide: 1.1, dome: 1.08, wide: 1.05, cheek: 0, eye: 2.1, eyeAt: [0.0, 0.004, -0.012], nose: 0.9, ...o.head, ear: { shape: "round", tall: 0.75, wide: 1.25, at: [0.012, -0.012, -0.012], back: C.coat, inner: "#e9b9a8", ...o.ear } } });
+  head: { size: 1.2, muzzle: 0.42, muzzleWide: 1.1, dome: 1.08, wide: 1.05, cheek: 0, eye: 1.7, eyeAt: [0.0, 0.004, -0.012], nose: 0.9, ...o.head, ear: { shape: "round", tall: 0.75, wide: 1.25, at: [0.012, -0.012, -0.012], back: C.coat, inner: "#e9b9a8", ...o.ear } } });
 const dormouse = {
   // a big-eyed baby with a short thin tail
   baby() {
-    const C = { ...DOR, coat: "#c9a070", upper: "#c9a070", mid: "#c9a070" }, q = dorBuild(C, { hind: { len: 0.26, thick: 1.7 }, fore: { len: 0.24, thick: 1.5 }, body: { len: 0.44, girth: 0.95 }, head: { size: 1.42, eye: 2.4 }, ear: { tall: 0.9, wide: 1.4 } });
+    const C = { ...DOR, coat: "#c9a070", upper: "#c9a070", mid: "#c9a070" }, q = dorBuild(C, { hind: { len: 0.26, thick: 1.7 }, fore: { len: 0.24, thick: 1.5 }, body: { len: 0.44, girth: 0.95 }, head: { size: 1.42, eye: 1.9 }, ear: { tall: 0.9, wide: 1.4 } });
     const t = tail("tail", "pelvis", q.root, { len: 0.16, r: 0.016, pitch: -0.1, blunt: 0.4, tip: 0, colours: { coat: "#b98f62", tip: "#b98f62" } });
     return plan("dormouse-baby", q.body, q.skull, [...q.legs, t], { seconds: 0.4, duty: 0.55, bob: 0.008, sway: 0.07, tailSwing: 0.2, tails: [t.chain], legs: walk(1.1) });
   },

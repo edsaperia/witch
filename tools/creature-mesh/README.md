@@ -2,6 +2,10 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
+## `bee.js`
+
+The bee, four levels, as plans for tools/creature-mesh/quadruped.js: a candidate to stand in for the marten or the stoat.
+
 ## `diggers.js`
 
 The badger, the mole and the hedgehog, four levels each, as plans for tools/creature-mesh/quadruped.js.
@@ -41,3 +45,7 @@ The hare, the squirrel and the dormouse, four levels each, as plans for tools/cr
 ## `snail.js`
 
 The snail, four levels, as plans for tools/creature-mesh/quadruped.js.
+
+## `turtle.js`
+
+The turtle, four levels, as plans for tools/creature-mesh/quadruped.js: a candidate to stand in for the marten or the stoat.

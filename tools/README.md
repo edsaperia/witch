@@ -85,7 +85,7 @@ node tools/inventory.mjs [--check]
 - [`combat-spacing/`](combat-spacing/README.md): 6 scripts — body-radii.mjs, capture-fight.cjs, capture.cjs, diagnose.mjs, measure.ts, run.mjs
 - [`config/`](config/README.md): 9 scripts — check.mjs, format.mjs, generated.mjs, knob-docs.mjs, linkSwitches.mjs, schema-runtime.mjs, schema.mjs, stampChangelog.mjs, typegen.mjs
 - [`creature-bake/`](creature-bake/README.md): 2 scripts — bake.mjs, page.js
-- [`creature-mesh/`](creature-mesh/README.md): 9 scripts — diggers.js, fox.js, kit.js, make.mjs, mustelids.js, page.js, quadruped.js, rodents.js, snail.js
+- [`creature-mesh/`](creature-mesh/README.md): 11 scripts — bee.js, diggers.js, fox.js, kit.js, make.mjs, mustelids.js, page.js, quadruped.js, rodents.js, snail.js, turtle.js
 - [`dj/`](dj/README.md): 5 scripts — booth-sheet.mjs, booth.cjs, candles-sheet.mjs, respawn.cjs, strip.mjs
 - [`docs/`](docs/README.md): 2 scripts — glossary.mjs, tables.mjs
 - [`feel/`](feel/README.md): 1 script — trace.cjs

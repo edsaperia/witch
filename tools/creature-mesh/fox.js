@@ -35,8 +35,8 @@ function adult() {
   const skull = head(body.pivot, { size: 1.06, muzzle: 1.05, ear: { tall: 1.25, wide: 1, back: EAR, tip: EAR }, cheek: 1.75, eye: 1.15, colours: C });
   const tails = Array.from({ length: 5 }, (_, i) => { const f = (i - 2) / 2, a = Math.abs(f);
     return tail(`tail${"abcde"[i]}`, "pelvis", [0.045 * f, body.rings[1].at[1] + 0.05 - 0.03 * a, body.rings[1].at[2] - 0.03 + 0.03 * a], { len: 0.66 - 0.12 * a, r: 0.108 - 0.012 * a, yaw: f * 0.85, pitch: 0.6 - 0.5 * a, curl: -0.35, wave: 0.12, phase: i, tip: 0.2, blunt: 0.22, colours: { coat: C.coat, under: "#a44f18", tip: WHITE } }); });
-  const ruff = tufts(body.rings[5], "neck", { n: 5, a0: 0.9, a1: 2.9, long: 0.19, sweep: 0.6, droop: 0.3, r: 0.05, colour: () => WHITE });
-  const crest = tufts(body.rings[4], "chest", { n: 1, a0: 0.12, long: 0.12, sweep: 0.9, r: 0.035, colour: () => C.coat, tip: () => "#a44f18" }).concat(tufts(body.rings[3], "chest", { n: 1, a0: 0.12, long: 0.1, sweep: 0.9, r: 0.03, colour: () => C.coat, tip: () => "#a44f18" }));
+  const ruff = tufts(body.rings[5], "neck", { n: 5, a0: 0.9, a1: 2.9, long: 0.17, sweep: 0.6, droop: 0.35, r: 0.062, lock: true, colour: () => WHITE });
+  const crest = tufts(body.rings[4], "chest", { n: 1, a0: 0.12, long: 0.12, sweep: 0.9, r: 0.045, lock: true, colour: () => C.coat, tip: () => "#a44f18" }).concat(tufts(body.rings[3], "chest", { n: 1, a0: 0.12, long: 0.1, sweep: 0.9, r: 0.04, lock: true, colour: () => C.coat, tip: () => "#a44f18" }));
   return plan("fox-adult", body, skull, [...legs(body, { len: L, thick: 1, colours: C }), ...tails], { seconds: 0.74, duty: 0.6, bob: 0.007, sway: 0.045, tailSwing: 0.1, tails: tails.map(t => t.chain), legs: walk(1) }, { cones: [...ruff, ...crest] });
 }
 
@@ -58,11 +58,11 @@ function legend() {
       ...(mid ? { orb: { colour: PEARL, size: 1.1 } } : { fire: { colour: FIRE, tip: FIRE2, size: 1.15 - 0.25 * a } }) }); });
   // the mane: long pale fur hanging off the neck and the humped withers, darker and silver-tipped along the top
   const neckRing = body.rings[5], withers = body.rings[4], ribs = body.rings[3], loin = body.rings[2];
-  const mane = [...tufts(neckRing, "neck", { n: 4, a0: 0.5, a1: 2.8, long: 0.2, sweep: 0.8, droop: 0.45, r: 0.08, grow: 0.5, colour: i => (i < 1 ? C.coat : PALE), tip: i => (i < 1 ? C.back : GREY) }),
-    ...tufts(withers, "chest", { n: 4, a0: 0.25, a1: 2.5, long: 0.2, sweep: 0.85, droop: 0.4, r: 0.085, grow: 0.5, colour: i => (i < 2 ? C.coat : PALE), tip: i => (i < 2 ? C.back : GREY) }),
+  const mane = [...tufts(neckRing, "neck", { n: 4, a0: 0.5, a1: 2.8, long: 0.2, sweep: 0.8, droop: 0.45, r: 0.085, lock: true, grow: 0.5, colour: i => (i < 1 ? C.coat : PALE), tip: i => (i < 1 ? C.back : GREY) }),
+    ...tufts(withers, "chest", { n: 4, a0: 0.25, a1: 2.5, long: 0.2, sweep: 0.85, droop: 0.4, r: 0.09, lock: true, grow: 0.5, colour: i => (i < 2 ? C.coat : PALE), tip: i => (i < 2 ? C.back : GREY) }),
     ...tufts(ribs, "chest", { n: 1, a0: 0.15, long: 0.12, sweep: 0.95, r: 0.06, colour: () => C.back, tip: () => SILVER }),
     // tatters under the chest
-    ...tufts(withers, "chest", { n: 2, a0: 2.75, a1: 3.05, long: 0.17, sweep: 0.25, droop: 0.7, r: 0.06, colour: () => PALE, tip: () => GREY })];
+    ...tufts(withers, "chest", { n: 2, a0: 2.75, a1: 3.05, long: 0.17, sweep: 0.25, droop: 0.7, r: 0.06, lock: true, colour: () => PALE, tip: () => GREY })];
   // its face: a beard, and brows grown out long
   const face = [{ at: P(0, -0.03, 0.2), rx: 0.035, ry: 0.035, tip: P(0, -0.2, 0.13), bone: "head", colour: PALE, tipColour: GREY, split: 0.5, up: [0, 0, 1] },
     ...[1, -1].map(s => ({ at: P(0.048 * s, 0.09, 0.1), rx: 0.028, ry: 0.018, tip: P(0.15 * s, 0.17, -0.04), bone: "head", colour: PALE, tipColour: GREY, split: 0.5, up: [0, 1, 0] }))];

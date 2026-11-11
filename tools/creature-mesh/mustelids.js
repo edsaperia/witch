@@ -23,7 +23,7 @@ const stoat = {
     const C = { ...STOAT, coat: "#c99a72", upper: "#c99a72", mid: "#c99a72", sock: "#e9dcc8" };
     const w = weasel({ C, body: { len: 0.78, girth: 0.72, arch: 0.5, neck: [0.07, 0.09], neckThick: 1.15, white: 0.7 }, legs: { len: 0.34, thick: 1.7 }, head: { size: 1.18, muzzle: 0.42, eye: 1.6 } });
     const t = tail("tail", "pelvis", w.root, { len: 0.13, r: 0.03, pitch: 0.1, tip: 0.3, blunt: 0.3, colours: { coat: C.coat, tip: "#5a4234" } });
-    const mane = tufts(w.body.rings[5], "neck", { n: 3, a0: 0.3, a1: 2.0, long: 0.07, sweep: 0.5, r: 0.035, colour: () => "#efe3cf" });
+    const mane = tufts(w.body.rings[5], "neck", { n: 3, a0: 0.3, a1: 2.0, long: 0.07, sweep: 0.5, r: 0.04, lock: true, colour: () => "#efe3cf" });
     return plan("stoat-baby", w.body, w.skull, [...w.legs, t], lope({ seconds: 0.42, tails: [t.chain], rock: 0.08 }), { cones: mane });
   },
   // a slim tube of an animal, the black tip just showing
@@ -78,7 +78,7 @@ const marten = {
   adult() {
     const w = weasel({ C: MARTEN, body: { len: 1.28, girth: 0.72, arch: 1.25, neck: [0.17, 0.15], neckThick: 1.1, white: 0.42 }, legs: { len: 0.62, thick: 1.25, paw: 1.25, claws: { colour: "#e6dcc8", len: 0.8 } }, head: { ...martenHead, size: 1.06, eye: 1.5 } });
     const t = tail("tail", "pelvis", w.root, { len: 0.7, r: 0.125, pitch: 0.55, curl: -0.8, wave: 0.15, bones: 5, blunt: 0.3, tip: 0, colours: { coat: MARTEN.coat, under: "#3d261a", tip: MARTEN.coat }, spikes: { n: 4, colour: "#3d261a", len: 0.9 } });
-    const ruff = tufts(w.body.rings[5], "neck", { n: 4, a0: 1.3, a1: 2.95, long: 0.12, sweep: 0.5, droop: 0.4, r: 0.04, colour: () => MARTEN.belly });
+    const ruff = tufts(w.body.rings[5], "neck", { n: 4, a0: 1.3, a1: 2.95, long: 0.12, sweep: 0.5, droop: 0.4, r: 0.05, lock: true, colour: () => MARTEN.belly });
     const eartufts = [1, -1].map(s => ({ at: w.skull.P(0.075 * s, 0.14, 0.01), rx: 0.012, ry: 0.01, tip: w.skull.P(0.1 * s, 0.2, -0.005), bone: s > 0 ? "earL" : "earR", colour: "#3d261a", up: [0, 0, 1] }));
     return plan("marten-adult", w.body, w.skull, [...w.legs, t], lope({ seconds: 0.56, tails: [t.chain] }), { cones: [...ruff, ...eartufts] });
   },

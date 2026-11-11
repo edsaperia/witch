@@ -62,9 +62,11 @@ function loft(faces, rings, sides, up = [0, 1, 0]) {
   }
 }
 
-/** A cone: a base ring { at, rx, ry, up } and a tip, for ears, cheek tufts and claws. tipColour for the last part of it. */
+/** A cone: a base ring { at, rx, ry, up } and a tip, for ears, cheek tufts and claws. tipColour for the last part of it; bulge and
+ *  bend shape it into a lock of fur. */
 function cone(faces, o) {
-  const mid = { at: V(o.at).lerp(V(o.tip), o.split ?? 0.6).toArray(), rx: o.rx * (1 - (o.split ?? 0.6)), ry: o.ry * (1 - (o.split ?? 0.6)) };
+  // (bulge: its middle kept that full, so it's a leaf or a lock of fur and not a needle; bend: its middle pushed that way, so it curves)
+  const k = o.bulge ?? 1 - (o.split ?? 0.6), mid = { at: V(o.at).lerp(V(o.tip), o.split ?? 0.6).add(V(o.bend ?? [0, 0, 0])).toArray(), rx: o.rx * k, ry: o.ry * k };
   loft(faces, [{ ...o, colour: o.colour }, { ...mid, bone: o.bone, colour: o.tipColour ?? o.colour, up: o.up, glow: o.glow }, { at: o.tip, rx: 0.0005, ry: 0.0005, bone: o.bone, colour: o.tipColour ?? o.colour, up: o.up, glow: o.glow }], o.sides ?? 4, o.up ?? [0, 0, 1]);
 }
 

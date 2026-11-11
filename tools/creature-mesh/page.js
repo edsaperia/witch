@@ -6,8 +6,10 @@ import { MARTEN_PLANS, STOAT_PLANS } from "./mustelids.js";
 import { DORMOUSE_PLANS, HARE_PLANS, SQUIRREL_PLANS } from "./rodents.js";
 import { BADGER_PLANS, HEDGEHOG_PLANS, MOLE_PLANS } from "./diggers.js";
 import { SNAIL_PLANS } from "./snail.js";
+import { TURTLE_PLANS } from "./turtle.js";
+import { BEE_PLANS } from "./bee.js";
 
-const PLANS = Object.fromEntries(Object.entries({ fox: FOX, stoat: STOAT_PLANS, marten: MARTEN_PLANS, hare: HARE_PLANS, squirrel: SQUIRREL_PLANS, dormouse: DORMOUSE_PLANS, badger: BADGER_PLANS, mole: MOLE_PLANS, hedgehog: HEDGEHOG_PLANS, snail: SNAIL_PLANS }).flatMap(([id, levels]) => Object.entries(levels).map(([level, make]) => [`${id}-${level}`, make])));
+const PLANS = Object.fromEntries(Object.entries({ fox: FOX, stoat: STOAT_PLANS, marten: MARTEN_PLANS, hare: HARE_PLANS, squirrel: SQUIRREL_PLANS, dormouse: DORMOUSE_PLANS, badger: BADGER_PLANS, mole: MOLE_PLANS, hedgehog: HEDGEHOG_PLANS, snail: SNAIL_PLANS, turtle: TURTLE_PLANS, bee: BEE_PLANS }).flatMap(([id, levels]) => Object.entries(levels).map(([level, make]) => [`${id}-${level}`, make])));
 window.creatureMesh = async name => {
   const make = PLANS[name]; if (!make) throw Error(`no plan ${name}: ${Object.keys(PLANS).join(", ")}`);
   const plan = make(), { scene, clips } = build(plan);
