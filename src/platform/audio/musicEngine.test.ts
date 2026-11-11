@@ -305,3 +305,16 @@ describe("banger mode's compressors in the graph (Ed, 2026-11-10: \"Is it possib
     expect(made(style).filter).toBe(off.filter + 3); // (its master's low cut and shelf, the drum room's high-pass)
   });
 });
+
+describe("a renderer's own graph (the music drawn ahead; Ed, 2026-11-11: \"the sound crunches and cuts out\")", () => {
+  it("is left unconnected: its notes go to the stems, so its context never works its limiter, reverbs and the rest", () => {
+    const ctx = fakeContext(), dest = (ctx as unknown as { destination: AudioNode }).destination, hits: unknown[] = [];
+    const wrap = (n: object) => new Proxy(n, { get: (o, k) => k === "connect" ? (t: unknown) => { if (t === dest) hits.push(t); return t; } : (o as Record<string | symbol, unknown>)[k] });
+    const rec = new Proxy(ctx, { get: (o, k) => { const v = (o as unknown as Record<string | symbol, unknown>)[k]; return typeof v === "function" && String(k).startsWith("create") && k !== "createBuffer" ? (...a: unknown[]) => wrap((v as (...a: unknown[]) => object)(...a)) : v; } });
+    const sink = new Proxy({}, { get: () => () => ({ connect: () => {} }) });
+    new MusicEngine(rec, dest, style, 7, dest, sink as never);
+    expect(hits).toHaveLength(0);
+    new MusicEngine(rec, dest, style, 7, dest); // (live: its output and the clearing's reach the speakers, as ever)
+    expect(hits).toHaveLength(2);
+  });
+});

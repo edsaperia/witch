@@ -142,6 +142,18 @@ The dance way's leads auditioned: node tools/music-lab/leads.mjs <out dir> [kind
 
 The dance way's leads auditioned: each lead part plays the same 8-bar riff over the same chords, drums and bass, rendered offline by the game's engine; and each alone, its loudness measured, to balance the leads against each other and the old ones.
 
+## `load.mjs`
+
+The music's load budget: renders the densest bars of a night as the game plays them, its bars drawn ahead, in headless Chromium, and fails if the audio thread's work, a bar's render, a bar's nodes or voices sounding at once, or the live graph's convolvers…
+
+```
+node tools/music-lab/load.mjs [from bar: 108] [to bar: 124] [banger 1|0] [out.json] [clip.wav]   (LONG=1: seed 7's night 96-208)
+```
+
+## `load.ts`
+
+The music's load, as the game plays it: Music with its bars drawn ahead, where the "live" context is itself an OfflineAudioContext stepped a frame at a time, so the audio thread's work and each bar's are measured apart and repeatably: the CPU of the…
+
 ## `melody.mjs`
 
 The composer's A/B: node tools/music-lab/melody.mjs <out dir> [sections|night|all] [seed...] Renders tools/music-lab/melody.ts offline in headless Chromium with the game's singer and writes mp3s and a.txt of where things start to <out dir>, each passage by…
