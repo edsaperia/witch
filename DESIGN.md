@@ -1,6 +1,6 @@
 # Witch — design document
 
-*Witch* is a working title; the title screen and the browser tab say **Coven Rush**. This document grows as Ed and the coordinator settle things; anything not written here is undecided. Builders read it before starting work, and record nothing here that Ed has not ruled. Unless marked otherwise, everything here is Ed's, 2026-10-03.
+*Witch* is the codename; **Coven Rush**, which the title screen and the browser tab show, is the top candidate for the release name (Ed, 2026-11-11: "witch is the codename; coven rush is the top candidate for release name"). This document grows as Ed and the coordinator settle things; anything not written here is undecided. Builders read it before starting work, and record nothing here that Ed has not ruled. Unless marked otherwise, everything here is Ed's, 2026-10-03.
 
 ## Priorities
 
