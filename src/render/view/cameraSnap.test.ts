@@ -36,6 +36,13 @@ describe("the camera's pixel snap (render/view/camera.ts snapAim)", () => {
     }
   });
 
+  it("near level (the beach's camera) takes at most five times the step along the view, so the aim never runs far", () => {
+    const a = (5 * Math.PI) / 180, wpp = 0.14, up = new THREE.Vector3(0, Math.cos(a), -Math.sin(a)), t = new THREE.Vector3(1, 2, 3.33), t0 = t.clone();
+    const { eu } = snapAim(t, up, a, wpp);
+    expect(t.dot(up) / wpp).toBeCloseTo(Math.round(t.dot(up) / wpp), 6);
+    expect(t.distanceTo(t0)).toBeLessThanOrEqual(Math.hypot(eu, eu * 5, wpp / 2) + 1e-9);
+  });
+
   it("still puts the aim's height up the screen on the grid, and across it, as before", () => {
     const a = (34 * Math.PI) / 180, wpp = 0.14, up = new THREE.Vector3(0, Math.cos(a), -Math.sin(a));
     for (const [x, y, z] of [[3.21, 0.7, -5.03], [-12.9, 4.4, 88.31], [0, 0, 0]]) {
@@ -44,7 +51,7 @@ describe("the camera's pixel snap (render/view/camera.ts snapAim)", () => {
       expect(t.x / wpp).toBeCloseTo(Math.round(t.x / wpp), 6);
       expect(t.dot(up) - u0).toBeCloseTo(eu, 9); // (what the canvas's glide gives back: the same as before)
       expect(t.x - x).toBeCloseTo(er, 9);
-      expect(t.y).toBe(y); // (moved along the ground: its height kept)
+      expect(t.y).toBeCloseTo(y, 9); // (moved along the ground: its height kept)
     }
   });
 });

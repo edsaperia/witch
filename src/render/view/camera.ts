@@ -63,6 +63,10 @@ export function rideCamera(ride: Ride, flying: boolean, dt: number, R: { x: numb
   return ride.update(dt, R.x, R.z, W.vx, W.vz, full, ground, T, Infinity);
 }
 
+/** The most the aim's snap moves along the view for each metre up the screen (snapAim): cot 11.3°, a camera near level. */
+const AIM_CREEP = 5;
+const SNAP_FWD = new THREE.Vector3();
+
 /** The camera's aim snapped to the picture's pixel grid (placeCamera): across the screen by whole pixels (`er`, metres), and up it
  *  (`eu`) by moving the aim along the ground, north or south, so far that its height up the screen lands on the grid, not straight
  *  up the screen (`old`, ?crawl=old: as before). Moved up the screen the aim kept its depth, so walking north or south the camera
@@ -73,8 +77,11 @@ export function rideCamera(ride: Ride, flying: boolean, dt: number, R: { x: numb
  *  every one the same way. `a`: the pitch (radians); `up`: the camera's up; mutates `target`. */
 export function snapAim(target: THREE.Vector3, up: THREE.Vector3, a: number, wpp: number, old = false): { eu: number; er: number } {
   const u = target.dot(up), r = target.x, eu = Math.round(u / wpp) * wpp - u, er = Math.round(r / wpp) * wpp - r;
-  const sa = Math.sin(a);
-  if (sa >= 0.2 && !old) target.z -= eu / sa; else target.addScaledVector(up, eu); // (a camera near level, the beach's: as before)
+  // Along the ground is up the screen plus cot(a) of it along the view: kept to at most AIM_CREEP of it for a camera near level (the
+  // beach's, lying down), so the aim never runs far off and the snap's way turns smoothly with the pitch.
+  const k = old || a <= 0 ? 0 : Math.min(AIM_CREEP, Math.cos(a) / Math.sin(a));
+  target.addScaledVector(up, eu);
+  if (k > 0) target.add(SNAP_FWD.set(0, -Math.sin(a), -Math.cos(a)).multiplyScalar(eu * k));
   target.x += er;
   return { eu, er };
 }
