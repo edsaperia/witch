@@ -45,12 +45,13 @@ export async function bake(o) {
   // (its height on screen, standing, at the towards heading: the art's own measure)
   const ups = []; pivot.rotation.y = -headings[0]; scene.updateMatrixWorld(true);
   for (const x of [stand.min.x, stand.max.x]) for (const y of [stand.min.y, stand.max.y]) for (const z of [stand.min.z, stand.max.z]) { const p = new THREE.Vector3(x, y, z).applyMatrix4(pivot.matrixWorld); ups.push(p.y * cp - p.z * sp); }
-  const ppu = height / (Math.max(...ups) - Math.min(...ups)), S = Math.ceil(radius * 2 * ppu) + 6, half = S / (2 * ppu), big = S * ss;
+  let ppu = height / (Math.max(...ups) - Math.min(...ups)), S = Math.ceil(radius * 2 * ppu) + 6, half = S / (2 * ppu), big = S * ss;
 
   const canvas = document.createElement("canvas");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, premultipliedAlpha: false, preserveDrawingBuffer: true });
   renderer.setPixelRatio(1); renderer.setSize(big, big, false); renderer.setClearColor(0x000000, 0);
   const camera = new THREE.OrthographicCamera(-half, half, half, -half, 0.01, radius * 6);
+  const aim = yaw => { pivot.rotation.y = -yaw; const c = centre.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -yaw); camera.position.set(c.x, c.y + sp * radius * 3, c.z + cp * radius * 3); camera.lookAt(c); camera.updateMatrixWorld(true); };
   const flat = new Map(); // its own colours, unlit
   model.traverse(m => { if (!m.isMesh) return; const src = m.material; if (!m.geometry.attributes.normal) m.geometry.computeVertexNormals(); // (a model with none: smooth ones from its faces)
     if (src.map) { src.map.magFilter = THREE.NearestFilter; src.map.minFilter = THREE.NearestFilter; src.map.generateMipmaps = false; src.map.needsUpdate = true; }
@@ -63,12 +64,17 @@ export async function bake(o) {
     renderer.render(scene, camera); return read();
   };
 
+  // Its box is a loose guess at its height on screen (a box's corners reach past the animal), so the first frame is drawn once,
+  // its solid rows counted, and the scale set so that frame stands exactly `height` art pixels tall: the art's own measure.
+  { aim(headings[0]); pose(0); const C = draw("colour"); let top = big, bottom = -1;
+    for (let y = 0; y < big; y++) for (let x = 0; x < big; x++) if (C[((big - 1 - y) * big + x) * 4 + 3] >= 128) { top = Math.min(top, y); bottom = Math.max(bottom, y); break; }
+    if (bottom >= top) { ppu *= height / ((bottom - top + 1) / ss); S = Math.ceil(radius * 2 * ppu) + 6; half = S / (2 * ppu); big = S * ss;
+      renderer.setSize(big, big, false); camera.left = -half; camera.right = half; camera.top = half; camera.bottom = -half; camera.updateProjectionMatrix(); } }
+
   // Every frame, brought down to art pixels: colour (mean of the covered samples), normal, depth, solid or not.
   const raw = [], samples = [];
   for (const yaw of headings) {
-    pivot.rotation.y = -yaw;
-    const c = centre.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -yaw);
-    camera.position.set(c.x, c.y + sp * radius * 3, c.z + cp * radius * 3); camera.lookAt(c); camera.updateMatrixWorld(true);
+    aim(yaw);
     for (let i = 0; i < frames; i++) {
       pose(i);
       const C = draw("colour"), N = draw("normal"), D = draw("depth");

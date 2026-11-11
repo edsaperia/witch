@@ -20,14 +20,15 @@ Today a creature is a handful of ellipsoids and cones melted together, placed by
 
 Cloud sessions cannot reach the image or 3D services (tried 2026-11-11: no route), so by that road stages 1 to 3 run where there is a login: Ed in the services' own pages, or a builder on the laptop with their keys.
 
-**A second road for stages 1 to 3: drawn in code** (Ed, 2026-11-11: "Is there no way that you can draw things yourself, instead of using an image generator?"). `tools/creature-mesh/` builds a low-poly animal from a plan a species: its joints and bones at the real animal's proportions, its body as faceted tubes lofted through rings that each ride one bone, cones for ears and tufts, colours by region, and a gait as a looping clip (each leg by its phase, the joints folding in swing, the body bobbing and swaying, the tail trailing). `node tools/creature-mesh/make.mjs fox-adult out/fox-adult.glb` writes the rigged `.glb`; the bake takes it as it takes any other. It needs no service, no key and no picture, a builder can do it in a cloud session, and the builder looks at each bake and corrects the plan. Tried first; the services stay as the fallback for whatever it can't reach (a legend's ornament, perhaps).
+**A second road for stages 1 to 3: drawn in code** (Ed, 2026-11-11: "Is there no way that you can draw things yourself, instead of using an image generator?"). `tools/creature-mesh/` builds a low-poly animal from a plan a species: its joints and bones at the real animal's proportions, its body as faceted tubes lofted through rings that each ride one bone, cones for ears and tufts, colours by region, and a gait as a looping clip (each leg by its phase, the joints folding in swing, the body bobbing and swaying, the tail trailing). `node tools/creature-mesh/make.mjs fox-adult out/fox-adult.glb` (or `fox-baby`, `fox-young`, `fox-legend`) writes the rigged `.glb`; the bake takes it as it takes any other. It needs no service, no key and no picture, a builder can do it in a cloud session, and the builder looks at each bake and corrects the plan. Tried first; the services stay as the fallback for whatever it can't reach (a legend's ornament, perhaps).
 
 ## What is proven (2026-11-11)
 
 - **Stage 4 works.** `node tools/creature-bake/bake.mjs <model.glb> <out dir> [clip] [height px] [frames]` bakes a rigged glTF model at the game's view (the same yaw and pitch as `art/model3d.js`), in about two seconds for 16 frames at adult size. Tried on the Khronos sample fox (mesh CC0, rig and clips CC BY 4.0; a test model only, not committed): it reads as a fox, its legs bend at real joints, and its walk has a spine and a tail.
 - **Stage 5's first seam works.** The lit frames dropped into `art/overrides/fox/adult-walk0.png`, `adult-walk1.png` and their `-away` twins show in the built game with no code changed (`art/overrides/README.md`).
 - **Drawn in code works for an adult fox.** `tools/creature-mesh/fox.js`, about 730 triangles on 28 bones with a walk, made in three passes of bake, look and correct: it reads as a fox beside the artist-made sample, with its mask, bib, socks and brush (`previews/creature-bake/fox-three-ways.png` on `claude/ed-shots`).
-- **Not proven:** a baby, a legend (the test of "not just scaled up"), a creature that isn't four-legged, motion judged moving rather than as frames, any picture-to-mesh step or automatic rig, and the look under the game's coloured lights (an override is lit flat).
+- **The fox's whole ladder, a first pass** (Ed, 2026-11-11: "go"). `tools/creature-mesh/fox.js` has its four levels, put together from `kit.js`'s parts (a torso, legs, a head, tails, bands), each with its own build: a kit that's all ears with a stub of a tail, a leggy young, an adult with a ruff and a second tail, and the old shrine fox with its nine silver-tipped tails, grizzled muzzle, bitten ear, red rope and stone beads (about 2,000 triangles, 60 bones). Each level's silhouette differs with all four drawn at one height (`previews/creature-bake/fox-ladder-compare.png`, `fox-ladder-silhouettes.png`). What's rough: the legend's tails read as paddles more than fur and only six or so of the nine show from the front; its mane is spiky; its eye, bell and ear rings don't show at this view; the adult's second tail sits awkwardly.
+- **Not proven:** a creature that isn't four-legged, motion judged moving rather than as frames, any picture-to-mesh step or automatic rig, and the look under the game's coloured lights (an override is lit flat).
 
 ## Stage 1: concepts
 
@@ -60,7 +61,7 @@ Once a sheet is approved, each level gets one clean picture for the mesh: the an
 
 `tools/creature-bake/bake.mjs` draws each frame four times too big and brings it down a block an art pixel, so thin legs don't flicker; puts every colour of the bake on one small palette (10 by default); and writes for each heading and frame a lit picture (three bands, a dark outline, a line wherever a nearer part stands in front), its flat colours and its normals, with a contact sheet and `bake.json`.
 
-Heights to bake at, in art pixels, are today's sprites' (measured 2026-11-11, `critter(id, level)` facing towards), so nothing changes size in play:
+Heights to bake at, in art pixels, are today's sprites' (measured 2026-11-11, `critter(id, level)` facing towards), so nothing changes size in play; the bake draws its first frame once to measure it and sets the scale so that frame stands exactly that tall:
 
 | | baby | young | adult | legend |
 |---|---|---|---|---|
@@ -137,7 +138,7 @@ Fox, badger and snail are Ed's briefs as they stand in the genomes and `docs/art
 
 ## What Ed decides
 
-1. Whether the code-drawn road is good enough to carry on with, on the evidence of the fox's whole ladder (baby, young, adult, legend), which is the next thing to make.
+1. Whether the code-drawn road is good enough to carry on with, on the evidence of the fox's whole ladder (baby, young, adult, legend).
 2. Whether the seven proposed ladders stand, and the three legends' stories now their areas have moved.
 3. Whether the creature builders on the old system pause while the trial runs.
 4. Only if the code-drawn road falls short: which image model draws concepts and which 3D service makes and rigs meshes (Meshy and Tripo both rig four-legged models; Tripo's also names six- and eight-legged, bird and snake bodies), and the budget for about 40 meshes with retries.

@@ -66,7 +66,7 @@ function cone(faces, o) {
 
 /** The gait as a looping clip: each leg's joints swing by its phase (stance back, swing forward with the joints folding), the
  *  body bobs and sways, the head counters, the tail trails. plan.gait: { seconds, duty, legs: [{ bones: [upper, lower, foot],
- *  phase, swing, fold: [lower, foot] }], bob, sway, tail: [...bones], tailSwing }. */
+ *  phase, swing, fold: [lower, foot] }], bob, sway, tails: [[...bones], ...], tailSwing }. */
 function gaitClip(plan, bones, name = "Walk", steps = 24) {
   const G = plan.gait, T = G.seconds, times = Array.from({ length: steps + 1 }, (_, i) => (i / steps) * T), tracks = [];
   const rot = (bone, f) => { const v = []; for (const t of times) { const [x = 0, y = 0, z = 0] = f((t / T) % 1); const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z, "YXZ")); v.push(q.x, q.y, q.z, q.w); } tracks.push(new THREE.QuaternionKeyframeTrack(`${bone}.quaternion`, times, v)); };
@@ -84,7 +84,7 @@ function gaitClip(plan, bones, name = "Walk", steps = 24) {
   rot(G.chest, u => [0.02 * Math.sin(TAU * 2 * u + 1), -S * 1.6 * Math.sin(TAU * u), -(G.roll ?? 0.03) * Math.sin(TAU * u + 1.4)]);
   rot(G.neck, u => [0.035 * Math.sin(TAU * 2 * u + 2.2), S * 0.5 * Math.sin(TAU * u), 0]);
   rot(G.head, u => [-0.03 * Math.sin(TAU * 2 * u + 2.2), S * 0.4 * Math.sin(TAU * u), 0]);
-  G.tail.forEach((b, i) => rot(b, u => [0.05 * Math.sin(TAU * 2 * u - i * 0.9), (G.tailSwing ?? 0.14) * Math.sin(TAU * u - 0.8 - i * 0.7), 0]));
+  (G.tails ?? [G.tail]).forEach((chain, n) => chain.forEach((b, i) => rot(b, u => [0.05 * Math.sin(TAU * 2 * u - i * 0.9 + n * 1.3), (G.tailSwing ?? 0.14) * Math.sin(TAU * u - 0.8 - i * 0.7 + n * 0.8), 0]))); // (each tail a little out of step with the last)
   for (const e of G.ears ?? []) rot(e, u => [0.05 * Math.sin(TAU * 2 * u + 3), 0, 0]);
   const root = bones[G.root], y0 = root.position.y, pv = []; for (const t of times) pv.push(root.position.x, y0 + B * Math.sin(TAU * 2 * (t / T) + 0.6), root.position.z);
   tracks.push(new THREE.VectorKeyframeTrack(`${G.root}.position`, times, pv));

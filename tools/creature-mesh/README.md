@@ -4,14 +4,18 @@
 
 ## `fox.js`
 
-The fox, adult, as a plan for tools/creature-mesh/quadruped.js: a red fox's own proportions, its signature the brush and the pointed mask.
+The fox's four levels as plans for tools/creature-mesh/quadruped.js, each its own build and not the last one enlarged.
+
+## `kit.js`
+
+Parts a four-legged plan is put together from: a torso, legs, a head, tails and bands, each from a few proportions, so a species' levels can differ in build and not only in size.
 
 ## `make.mjs`
 
 Writes a creature drawn in code as a rigged, animated.glb, for tools/creature-bake/bake.mjs or any 3D tool: the trial of low-poly creatures on real skeletons.
 
 ```
-node tools/creature-mesh/make.mjs fox-adult out/fox-adult.glb
+node tools/creature-mesh/make.mjs fox-adult out/fox-adult.glb     (fox-baby, fox-young, fox-adult, fox-legend)
 ```
 
 ## `page.js`
