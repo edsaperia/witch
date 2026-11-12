@@ -1,5 +1,7 @@
 # The witch's art
 
+<!-- summary: The witch generator, the party witches and their pair poses, her lean cycle. -->
+
 The legacy broom kinds keep `art/brooms.js` as their public entry point. Its
 decorative nose bodies live in `art/brooms/tips.js`, vehicle/frame bodies in
 `chassis.js`, rear effects in `exhausts.js`, and shared geometry in `common.js`
@@ -14,7 +16,7 @@ PR1538 under6552151018 adds remoteWitch/remoteEquipment render modules: assigned
 
 Remote look leases (PR #1538, canonical6549338847/6549394067): AssetLibrary.leaseWitchLook uses existing oneOff witch jobs and unchanged generator/worker dispatch, with distinct remote job IDs and a private four-entry genome-hash/refcount cache. Its atlases/pose tables never enter the local witchLooks map. Last release frees only the lease's albedo/normal planes (and their owned palettes), never the local/shared atlas; aborting while drawing lets the registered oneOff finish and immediately drops its late textures. The only local rebake change is the approved supersession-predicate exception for registered oneOff witch jobs. No queue order, dispatch, generator or view.ts edits. Tiny fake-worker tests cover local pixel/table identity, one bake shared by two leases, bounded pending work and exact texture release. These are resource/byte unit checks, not a full visual/art bake or browser acceptance.
 
-Part of Witch's notes (CLAUDE.md is the index): the witch generator, the party witches and their pair poses, her lean cycle. Moved here from CLAUDE.md as it stood (housekeeping, Ed 2026-10-23: a note an area, so pull requests add to their own area's file, not one shared file); every rule kept. Add to this file, not CLAUDE.md, when you change this area.
+Part of Witch's notes (`docs/notes/INDEX.md` is the index): the witch generator, the party witches and their pair poses, her lean cycle. Moved here from CLAUDE.md as it stood (housekeeping, Ed 2026-10-23: a note an area, so pull requests add to their own area's file, not one shared file); every rule kept. Add to this file, not CLAUDE.md, when you change this area.
 
 - **Party witches**: the witches who fly in to the dancefloor, one for each active soundsystem (`partyWitch(seed)` in `art/witch.js`): generated witches (Ed, 2026-10-05: "the generated witches replace the party witches' outfits"), `witchGenome(seed, { party: true })` with two party neons for their glow sticks; the old outfits (`PARTY_OUTFITS`) still draw with `partyWitch(seed, { outfit })`. They and our witch share the party poses (dances, pairs, social, running, resting).
 - **Pair poses**: party poses two witches do together (`WITCH_PAIRS`): each draws her own sprite, placed so their `pair` anchors meet (the partner mirrored, so they face each other; the conga's hands on the `back` of the witch ahead; the twirl's partner spins under the raised hand; the broom limbo is two witches holding a broom level and a third leaning back under it).

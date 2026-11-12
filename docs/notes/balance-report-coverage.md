@@ -1,5 +1,7 @@
 # Real-rules reports and legacy coverage
 
+<!-- summary: The report tool, how to rerun it, and what the old balance sims still cover. -->
+
 Ed, 2026-10-29: "improving the real-rules balance reporting, then establishing matched-seed/loadout baselines"; no tuning. PR #1463 keeps `src/rules` read-only.
 
 `node tools/balance/report.mjs` runs `newGame`/`stepGame` and the existing `newBot` policies through Vite SSR. It never imports `balance.ts` or `states.ts`. `sloppy` is an alias for the existing `novice`, not a new calibrated human model. All bots get the same explicit bag, no hat and no broom parts. They start unseated at `newGame`'s legacy active headless start, as `runbot` does; the bedroom tutorial and app persistence are outside this experiment. Opening means before wave 1, not a waiting bedroom. Records use the game's `recordTempo`, retaining its tempo arc and knockdown increments.

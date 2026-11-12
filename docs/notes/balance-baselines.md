@@ -1,5 +1,7 @@
 # Balance baselines — v5655 rules
 
+<!-- summary: The matched-seed, matched-bag tables from the real-rules report (v5655; one seed, no tuning). -->
+
 Initial reporting baseline, 2026-10-29, PR #1463. **No tuning changes. One night seed is a reproducibility check, not an estimate of players' win rates.** The coordinator approved this bounded initial slice instead of holding delivery for the longer 144-case extension.
 
 Rules/build: **v5655**, `318c935cf7dda287edae2d39afa8c40b52022f1e`. The reporting milestone is `e491c4aa3d06ef611bf90270fbc1940f7dddbc15`; later fixture validation records retaliation and explicitly checks that combat is active. Raw manifests record the full checkout commit, schema and SHA-256 source fingerprint. Rules did not change between these measurements. The full-run snapshot retains its original schema 1; the stun batch uses schema 2 with explicit fixture metadata. Do not silently mix future sources or fixture versions.

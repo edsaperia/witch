@@ -1,5 +1,7 @@
 # Wide, shallow balance survey — design v1
 
+<!-- summary: The frozen five-study cloud design, first-wave limits and expert feedback gates. -->
+
 Ed approved these five studies on 2026-10-30 (coordinator comments 6512707637, 6512744240, 6512758227, 6512788396 and 6512956726 on PR #1475). **Design now; execute only after the first expert is trained. No game tuning.** Cloud Claude sessions run headless Node rules, one worker per command; no laptop survey batch or GPU/browser work. The older ~200-seed deep study remains a separate, later phase, with its existing playtest gate.
 
 **First dispatch is the 24-shard wave 1 below, not the 190-shard full envelope.** Coordinator refinement 6513283742 freezes the larger design for reference but requires a genuinely shallow first pass, roughly 20 core-hours, before selectively deepening it.
