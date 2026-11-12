@@ -1,5 +1,7 @@
 # Save slots
 
+<!-- summary: Independent progress and settings storage, legacy migration and save-format guards. -->
+
 Ed, 2026-10-30: "We should have save slots that hold progress and settings. By default open the previous one, but you should be able to select a different slot or a new slot from a tab in the settings screen, which restarts the night."
 
 **Save slot storage** (`src/app/saveSlots.ts`): a version-1 index at `witch.saves.v1` holds the last-used slot and independent slot metadata. Existing progress and settings keys listed in `SLOT_KEYS` become `witch.save.<slot-id>.<old-key>`. The wrapper passes device diagnostics and unrelated keys through unchanged. Each data item remains independent, so malformed settings in one slot do not prevent reading the others. Existing readers remain responsible for validating each item's contents. An unreadable index is kept for recovery and blocks persisting a replacement selection; existing namespaced bytes are never replaced with older legacy bytes during recovery.

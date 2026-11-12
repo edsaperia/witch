@@ -59,8 +59,8 @@ const versionFile = () => ({
   },
 });
 
-const TESTS = ["src/**/*.test.ts", "tools/bench/*.test.ts", "tools/shots/*.test.ts", "tools/docs/*.test.ts", "tools/config/*.test.ts", "tools/ci/*.test.ts"];
-const mocking = mockingTests(".").filter(f => !f.startsWith("tools/") || /^tools\/(bench|shots|docs|config|ci)\/[^/]+$/.test(f));
+const TESTS = ["src/**/*.test.ts", "tools/bench/*.test.ts", "tools/shots/*.test.ts", "tools/docs/*.test.ts", "tools/config/*.test.ts", "tools/ci/*.test.ts", "tools/checks/*.test.ts"];
+const mocking = mockingTests(".").filter(f => !f.startsWith("tools/") || /^tools\/(bench|shots|docs|config|ci|checks)\/[^/]+$/.test(f));
 const define = () => ({ __BUILD__: JSON.stringify(sha ? `${version} · ${sha}` : version), __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)), __UPCOMING__: JSON.stringify(upcoming), __ART_HASH__: JSON.stringify(artHash), __ART_KIND_HASHES__: JSON.stringify(artKindHashes) });
 const plugins = () => [artOverrides(), configNotes(), versionFile(), changelogBatches(), houseStanding()];
 const worker = () => ({ format: "es" as const, plugins: () => [artOverrides(), configNotes()] });

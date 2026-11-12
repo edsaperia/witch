@@ -53,6 +53,12 @@ export const TABLES = {
     const K = kinds(), phases = [...new Set(K.map(k => k.phase))], biomes = [...new Set(K.map(k => k.biome))].sort((a, b) => (a === "temperate" ? -1 : b === "temperate" ? 1 : byName(a, b)));
     return table(["Biome", ...phases.map(PHASE)], biomes.map(b => [b, ...phases.map(p => K.filter(k => k.biome === b && k.phase === p).map(k => k.kind).join(", ") || "")]));
   },
+  /** Which check to run when (config/checks.json; tools/checks/which.mjs picks them for a change): who runs it, on what. */
+  checks: async () => {
+    const C = json("config/checks.json"), code = s => `\`${s}\``, cell = s => String(s ?? "").replaceAll("|", "\\|");
+    return table(["Check", "Command", "Who", "Changed paths", "CI", "From"], C.checks.map(c => [`**${c.id}**: ${cell(c.what)}`, code(cell(c.command)), c.runner,
+      [...c.paths.map(code), ...(c.except ?? []).map(g => `not ${code(g)}`)].join(", "), cell(c.ci), cell(c.from)]));
+  },
   /** The broom sets (config/broom-parts.json `sets`): the parts that complete each and its spell. */
   "broom-sets": async () => {
     const B = json("config/broom-parts.json");
