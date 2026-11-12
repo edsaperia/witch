@@ -201,6 +201,7 @@ glossary; these are the prototype's), by note.
 - Furniture: size, freestanding, mess and layout
 - The stations regrouped
 - Station menus
+- No ∅ cards
 - Starting bags
 - Found bags
 - Bag names

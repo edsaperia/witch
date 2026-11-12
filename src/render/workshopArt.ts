@@ -8,10 +8,10 @@
 // (ui/stationPanel.ts: partCanvas). First versions: an art pass should draw each part's own sprite and her broom from its parts.
 import * as THREE from "three";
 import * as Art from "../../art/generator.js";
-import { BOARD, SLOTS, type Fitted } from "../rules/broomParts";
+import { BOARD, SLOTS, type Fitted, type Slot } from "../rules/broomParts";
 import { pieceArt, type FurnitureArt } from "./houseFurniture";
 import type { PiecePixels } from "./housePieces";
-import { partPicture, workshopPicture, type WorkshopPic } from "./workshopPieces";
+import { bareSlotPicture, partPicture, workshopPicture, type WorkshopPic } from "./workshopPieces";
 import { hashText } from "./artCache";
 import type { Style } from "./style";
 
@@ -37,6 +37,11 @@ function coloursOf(st: Style, genome: unknown): Record<string, number[]> {
 export function partCanvas(st: Style, colours: Record<string, number[]>, id: string, o: { fit?: number; pitch?: number; yaw?: number; hung?: boolean } = {}): { c: HTMLCanvasElement; ox: number; oy: number } {
   const p = partPicture(st, colours, id, pageCanvas, o);
   return { ...p, c: p.c as HTMLCanvasElement };
+}
+/** An empty slot's picture on the page (the bay's empty-slot card, ui/stationPanel.ts): the bare broom's own piece there, as partCanvas
+ *  draws a part. */
+export function bareSlotCanvas(st: Style, colours: Record<string, number[]>, slot: Slot, o: { fit?: number; pitch?: number; yaw?: number } = {}): HTMLCanvasElement {
+  return bareSlotPicture(st, colours, slot, pageCanvas, o).c as HTMLCanvasElement;
 }
 function pageCanvas(w: number, h: number): HTMLCanvasElement { const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d", { willReadFrequently: true }); return c; }
 
