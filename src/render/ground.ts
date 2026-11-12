@@ -131,6 +131,7 @@ uniform vec3 uMoonRoad; // the sky's moon on the screen (its x, a fraction from 
 uniform vec4 uLegendRings[6];
 uniform float uLegendGlow[6];
 uniform float uLegendShow[6]; // how far each is there (1; the challenge circle's fading in or out: render/challenge.ts, Ed 2026-11-12)
+uniform float uChallengeShow; // how far it's there (1; fading in or out: render/challenge.ts, Ed 2026-11-12)
 uniform int uLegendRingCount;
 // Their floors (Ed, 2026-10-06: weathered, mossy stone with the legend's sigil carved into it, covered so you can't see it
 // clearly): uLegendCarve holds each nearby circle's carving mask, side by side (render/legendCarving.ts); uLegendFloor:
@@ -165,7 +166,6 @@ uniform sampler2D uDiscoTiles2;
 // carved into the circle"): its middle x, z, its circle's radius (m; 0 none) and the soft moonlit glow in its grooves; its mask.
 uniform vec4 uChallengeCarve;
 uniform vec4 uChallengeLook; // its grooves' glow colour (rgb) and the moonlight on its stone floor (w): render/challenge.ts carvingLook
-uniform float uChallengeShow; // how far it's there (1; fading in or out: render/challenge.ts, Ed 2026-11-12)
 uniform sampler2D uChallengeCarveMap;
 uniform vec4 uDiscoGeom;
 uniform float uDiscoRim;
