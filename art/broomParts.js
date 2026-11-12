@@ -169,7 +169,8 @@ function plainHandle(m, x0, x1, r0, r1) { m.seg([x0, 0, 0], [x1, 0, 0], r0, r1, 
 export const BARE_ART = {
   tip: { len: .45, draw(m) { plainHandle(m, -.225, .225, HANDLE * .9, HANDLE * .85); } }, // (the handle's front half, as long as a tip)
   chassis: { len: 1, draw(m) { plainHandle(m, -.5, .5, HANDLE, HANDLE * .85); } },
-  exhaust: { len: .44, draw(m) { strawTail(m, .22); } }, // (strawTail from x0 back: .42 of bundle and its binding, about its middle)
+  // (her bristles, strawTail from x0 back .42, on a stub of the handle going forward, so the bundle reads as a broom's end; about its middle)
+  exhaust: { len: .6, draw(m) { strawTail(m, .12); m.seg([.1, 0, 0], [.3, 0, 0], HANDLE, HANDLE, M.BROOM, { group: 9 }); } },
 };
 /** A part moved dx along x (its paint with it). */
 function shift(q, dx) {
