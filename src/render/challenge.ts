@@ -191,7 +191,7 @@ export function veilBatch(v: View, type: number): SpriteBatch | undefined {
  *  wholly there), 1 fading (the circle mostly there: no shadows of its own), 2 mostly there (shadows too). */
 export function veilState(g: Game): number {
   const k = revealK(g);
-  return !g.map.challengeVeil || k >= 1 ? 0 : k > 0.5 ? 1 : 2;
+  return !g.map?.challengeVeil || k >= 1 ? 0 : k > 0.5 ? 1 : 2;
 }
 
 /** Each frame (drawChallengeColumns): each of the hidden forest's batches faded by 1 minus the reveal (VEIL_K, set on the module, so

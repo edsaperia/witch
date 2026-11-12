@@ -213,13 +213,13 @@ export const challengeWanted = (g: Pick<Game, "challenge" | "partyOver" | "party
  *  columns, lights and statues by it, the trees on its floor by 1 minus it). 1 with the hiding off. */
 export function revealK(g: Pick<Game, "challenge" | "clock" | "tuning">): number {
   const R = g.challenge?.reveal;
-  if (!R) return 1;
+  if (!R || R.fresh) return 1; // (fresh: not yet stepped, as a night with its hiding off; its first step decides, stepReveal)
   const e = R.at === null ? 1 : Math.max(0, Math.min(1, (g.clock.time - R.at) / Math.max(1e-3, challengeOf(g.tuning).hide.fade)));
   return R.shown ? e : 1 - e;
 }
 
 /** Whether it's there for the rules: shown and wholly faded in (it can't be entered, woken or cast at while hidden or fading in). */
-export const challengeRevealed = (g: Pick<Game, "challenge" | "clock" | "tuning">): boolean => !g.challenge?.reveal || (g.challenge.reveal.shown && revealK(g) >= 1);
+export const challengeRevealed = (g: Pick<Game, "challenge" | "clock" | "tuning">): boolean => !g.challenge?.reveal || g.challenge.reveal.fresh || (g.challenge.reveal.shown && revealK(g) >= 1);
 
 /** Each step, before its statues (rules/game.ts): shown or hidden as challengeWanted says, fading from now; the first step from a night's
  *  start sets it at once (no fade: a night that never waited has it there, one waiting for her spell hidden). */
