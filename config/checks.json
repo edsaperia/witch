@@ -1,0 +1,159 @@
+{
+  "_": "Which check to run when, as data (Ed, 2026-11-12: \"is there text that could be data?\"; it was CLAUDE.md's Testing prose). node tools/checks/which.mjs [--base <ref>] lists the checks a change needs from its changed files; tools/checks/which.test.ts checks this file; docs/notes/testing.md shows it as a table (node tools/docs/tables.mjs --write). Fields: id; command ({files}: the changed files its paths matched; {art-scope}: tools/art-check/scope.mjs's flags); what it checks, in one line; paths (globs, ** any depth, * within a folder) and except, which changed files call for it; runner, builder (before a FINAL) or coordinator (on the combined build), per Ed's builder rules of 2026-10-29; ci, where CI runs it; from, the ruling it comes from; note, where its details live.",
+  "runners": {
+    "builder": "Before your FINAL (Ed, 2026-10-29: \"npm run typecheck plus the tests near what you touched (and node art/check.mjs when you touch the art)\").",
+    "coordinator": "On the combined build, once (Ed, 2026-10-28: \"combine them on one branch, run one check, publish once\"; 2026-10-29: \"Be economical ... Try and batch testing if it saves tokens\"), unless a brief asks a builder."
+  },
+  "checks": [
+    {
+      "id": "typecheck",
+      "command": "npm run typecheck",
+      "what": "TypeScript over src/, config/ and the Vite configs (tsc --noEmit).",
+      "paths": ["**"],
+      "runner": "builder",
+      "ci": "every PR (check-work)",
+      "from": "Ed, 2026-10-29",
+      "note": "docs/notes/testing.md"
+    },
+    {
+      "id": "related-tests",
+      "command": "npx vitest related --run --passWithNoTests {files}",
+      "what": "The unit tests that import what you changed: the tests near what you touched.",
+      "paths": ["src/**", "art/**", "tools/**", "config/**"],
+      "except": ["**/*.md"],
+      "runner": "builder",
+      "ci": "every PR (unit: related or full, tools/ci/run-unit.mjs)",
+      "from": "Ed, 2026-10-29",
+      "note": "docs/notes/testing.md"
+    },
+    {
+      "id": "config-docs",
+      "command": "node tools/config/check.mjs",
+      "what": "The generated config and docs are fresh (tuning format and schemas, link switches, the notes' index, the docs' tables, the tools' READMEs); about a second, and each failure names its fix.",
+      "paths": ["config/**", "docs/**", "tools/**", "src/**", "*.html"],
+      "runner": "builder",
+      "ci": "every PR, before the shared build (a failure stops the PR's whole run)",
+      "from": "Ed's approved architecture review, 2026-10-30 (A1+A2)",
+      "note": "docs/notes/config.md"
+    },
+    {
+      "id": "art-check",
+      "command": "node art/check.mjs {art-scope}",
+      "what": "The art generator's check: every species, area and the lab pages drawn headless (only the touched creatures and areas when that is all that changed).",
+      "paths": ["art/**", "tools/art-lab/**", "tools/art-check/**", "config/style.json"],
+      "runner": "builder",
+      "ci": "nightly only (art-check.yml; Ed, 4 November: \"split, keep nightly\"), never on a PR",
+      "from": "Ed, 2026-10-29",
+      "note": "docs/notes/art-checks.md"
+    },
+    {
+      "id": "server-tests",
+      "command": "npm --prefix server ci && npm --prefix server test",
+      "what": "The relay's protocol and admission tests.",
+      "paths": ["server/**"],
+      "runner": "builder",
+      "ci": "every PR (check-work)",
+      "note": "docs/notes/online-prototype.md"
+    },
+    {
+      "id": "ci-node-tests",
+      "command": "node --test tools/ci/reporting.test.cjs tools/ci/pages-policy.test.cjs tools/ci/pages-gc.test.cjs tools/ci/proofs.test.cjs",
+      "what": "The CI tools' own node:test fixtures (reporting, Pages policy and garbage collection, the proof runner).",
+      "paths": ["tools/ci/**", ".github/workflows/**"],
+      "runner": "builder",
+      "ci": "every PR (check-work, proofs)",
+      "note": "docs/notes/deploys.md"
+    },
+    {
+      "id": "unit-full",
+      "command": "npm test",
+      "what": "The whole Vitest suite (vitest run).",
+      "paths": ["**"],
+      "runner": "coordinator",
+      "ci": "every PR (four shards; the full suite on prototype/main, release branches and shared-core changes)",
+      "from": "Ed, 2026-10-29",
+      "note": "docs/notes/testing.md"
+    },
+    {
+      "id": "build",
+      "command": "npm run build",
+      "what": "The game and its side pages built with Vite into dist/.",
+      "paths": ["**"],
+      "except": ["docs/**", "**/*.md"],
+      "runner": "coordinator",
+      "ci": "every PR (the shared build job)",
+      "note": "docs/notes/testing.md"
+    },
+    {
+      "id": "smoke-quick",
+      "command": "npm run build && npm run smoke:quick",
+      "what": "The quick smoke test: load, fly low and high, walk the treehouse, sail, pause, the next night; fails on errors, a blank picture or a stall.",
+      "paths": ["**"],
+      "except": ["docs/**", "**/*.md"],
+      "runner": "coordinator",
+      "ci": "every PR (smoke)",
+      "from": "Ed, 2026-10-29: not the smoke tests, the coordinator runs those",
+      "note": "docs/notes/testing.md"
+    },
+    {
+      "id": "music-check",
+      "command": "node tools/music-lab/check.cjs",
+      "what": "Every section of the music style rendered offline and live in the Music Lab, failing on a script error, a fetch, silence, NaN, clipping or the audio budget.",
+      "paths": ["src/rules/music*.ts", "src/platform/audio/music*.ts", "src/platform/audio/voice*.ts", "src/platform/audio/dsp.ts", "src/platform/audio/fof/**", "src/platform/audio/tract/**", "src/app/musicLab.ts", "config/music-style.json", "tools/music-lab/**", "tools/voice/**", "samples/**"],
+      "runner": "coordinator",
+      "ci": "every PR (smoke)",
+      "from": "2026-10-04: run it before every push that touches the music",
+      "note": "docs/notes/music.md"
+    },
+    {
+      "id": "singer-tune",
+      "command": "node tools/music-lab/tune.cjs [section] [seed] [bars] [wave]",
+      "what": "The sung line alone, dry and through the voice effects, pitch-tracked: fails on a note over 20 cents off or wobbling, or leaving the alto.",
+      "paths": ["src/platform/audio/voice*.ts", "src/platform/audio/fof/**", "src/platform/audio/tract/**", "src/rules/musicScore.ts", "samples/alto/**", "samples/chimera/**", "samples/voices/**", "tools/voice/**", "tools/music-lab/tune.*"],
+      "runner": "coordinator",
+      "ci": "not in CI",
+      "from": "Ed's singer review, 2026-10-14",
+      "note": "docs/notes/music.md"
+    },
+    {
+      "id": "sfx-check",
+      "command": "node tools/sfx/check.mjs",
+      "what": "Every synthesised sound effect rendered offline, failing on a script error, silence, NaN or clipping (writes previews/sfx/*.wav).",
+      "paths": ["src/platform/audio/**", "tools/sfx/**"],
+      "except": ["src/platform/audio/music*.ts"],
+      "runner": "coordinator",
+      "ci": "not in CI",
+      "note": "docs/notes/sound.md"
+    },
+    {
+      "id": "pause-check",
+      "command": "node tools/smoke/pause-on-top.cjs dist",
+      "what": "Each overlay paused over: the pause page on top, shielding the screen, keys and pad, and Esc back to the overlay.",
+      "paths": ["src/app/**", "src/ui/**", "src/platform/freeze.ts", "src/main.ts", "index.html", "tools/smoke/pause-on-top.cjs"],
+      "runner": "coordinator",
+      "ci": "every PR (smoke)",
+      "note": "docs/notes/testing.md"
+    },
+    {
+      "id": "smoke-full",
+      "command": "npm run build && npm run smoke",
+      "what": "The full smoke test: both modes on laptop and phone layouts, touch, pops at every zoom step, big windows, waves.",
+      "paths": ["src/render/**", "src/app/**", "src/platform/**", "src/ui/**", "src/main.ts", "art/**", "config/tuning.json", "config/style.json", "index.html", "tools/smoke/smoke.cjs"],
+      "except": ["src/platform/audio/**"],
+      "runner": "coordinator",
+      "ci": "not in CI",
+      "note": "docs/notes/testing.md"
+    },
+    {
+      "id": "balance-playthrough",
+      "command": "node tools/balance/playthrough.mjs --seed 123 --minutes 15",
+      "what": "A whole run, headless, with a simple bot on the real rules, reporting exceptions.",
+      "paths": ["src/rules/**", "config/combat.json", "config/attacks.json", "config/packs.json", "config/species-attacks.json", "config/legends.json", "config/states.json"],
+      "except": ["src/rules/**/*.test.ts", "src/rules/music*.ts"],
+      "runner": "coordinator",
+      "ci": "not in CI",
+      "from": "balance note: after a rules change",
+      "note": "docs/notes/balance.md"
+    }
+  ]
+}

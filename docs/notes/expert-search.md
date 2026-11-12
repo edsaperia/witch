@@ -1,5 +1,7 @@
 # Expert search: implementation and fairness audit
 
+<!-- summary: Observation limits, deterministic training, protected seeds and the survey adapter. -->
+
 Guarded coverage (coordinators6521109755/6521665224, 2026-10-30) is default on
 after fixed pilot59bc20ce passed its coverage/KO gate. Explicit
 `guardedCoverageExploration:false` retains the OFF comparison. The same
