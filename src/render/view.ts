@@ -298,6 +298,8 @@ function nightState(t: Tuning) {
     now: 0,
     /** The area she's in for the moods, when it's next looked up, and when they were last eased. */
     moodArea: "",
+    /** Whether that's the wild (an area the party hasn't reached, not home): the wild-only grade's aim (render/mood.ts AreaMoods.wild). */
+    moodWild: false,
     moodAt: -Infinity,
     moodTime: NaN,
     /** Types made again unseen (retype): their batches come back without the fade-in. */

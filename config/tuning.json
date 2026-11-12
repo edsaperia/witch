@@ -2940,8 +2940,17 @@
       "unlit": 0.65,
       "wildGlow": {
         "mix": 0.7,
-        "colour": [80, 200, 205],
+        "hue": 0.506667,
+        "sat": 0.609756,
+        "value": 0.803922,
         "ease": 1.5
+      },
+      "wildGrade": {
+        "strength": 0,
+        "desat": 0.6,
+        "pivot": 0.7,
+        "hue": 0.5,
+        "sat": 0.5
       },
       "moonHue": 0.6,
       "moonSat": 0.4,

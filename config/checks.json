@@ -42,7 +42,7 @@
       "what": "The art generator's check: every species, area and the lab pages drawn headless (only the touched creatures and areas when that is all that changed).",
       "paths": ["art/**", "tools/art-lab/**", "tools/art-check/**", "config/style.json"],
       "runner": "builder",
-      "ci": "nightly only (art-check.yml; Ed, 4 November: \"split, keep nightly\"), never on a PR",
+      "ci": "every PR that changes art, narrowed to it, and skipped at once otherwise (art-check.yml's plan: these paths and {art-scope}; Ed, 2026-11-12: \"(b) also run a narrowed art check on PRs that touch art\"), a release PR over its whole diff, a publish PR not; the full check nightly (Ed, 4 November: \"split, keep nightly\"); no build or release waits on it",
       "from": "Ed, 2026-10-29",
       "note": "docs/notes/art-checks.md"
     },
