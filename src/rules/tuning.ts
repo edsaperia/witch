@@ -18,8 +18,10 @@ export interface Mood {
    *  trees, bushes and creatures times this, the lights (her glow, the party's, fires, lava, runestones, sigils), glowing pixels and her
    *  own shading as they were (1 as before; render/lighting.ts nightLightShaded) */
   unlit?: number;
-  /** In the wild (an area the party hasn't reached), her glow cooled toward this colour (0-255) by mix, eased over ease s (render/view/frameUniforms.ts; Ed, 2026-10-29: "an eerie blue/green"). */
-  wildGlow?: { mix: number; colour: number[]; ease: number };
+  /** In the wild (an area the party hasn't reached), her glow cooled toward this colour (hue, saturation and brightness, 0 to 1) by mix, eased over ease s (render/view/frameUniforms.ts; Ed, 2026-10-29: "an eerie blue/green"). */
+  wildGlow?: { mix: number; hue: number; sat: number; value: number; ease: number };
+  /** A grade over the finished picture in the wild only (render/mood.ts wildGradeInto; Ed, 2026-11-12: "each of these applied in the wild only so I can tweak them"): its strength (0 off), the share of colour drained from the dark and middle tones, the brightness above which nothing is graded, the tint's hue and saturation; laid after the global grade, eased in and out with the area moods (areaEase). */
+  wildGrade?: { strength: number; desat: number; pivot: number; hue: number; sat: number };
   /** The moonlight's hue, saturation and brightness (times the tuning's). */
   moonHue: number; moonSat: number; moon: number;
   /** The fog's colour (hue, saturation, brightness 0 to 1) and where it starts and is whole (m from the witch). */
