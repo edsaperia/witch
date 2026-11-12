@@ -7,7 +7,7 @@
 // colour presets, a tile each (render/trailColours.ts).
 import { BOARD, SETS, SLOTS, broomTuning, completeSet, emptySlot, fitPart, partById, partsFor, partsPull, setProgress, type BroomPart, type Fitted, type Slot } from "../rules/broomParts";
 import { broomSpell } from "../rules/spells";
-import { itemsToChoose, shownItems, type Shelf } from "../rules/wardrobe";
+import { itemsToChoose, shownItems, type Shelf, type WardrobeItem } from "../rules/wardrobe";
 import type { Tuning } from "../rules/tuning";
 import { homeStation } from "../rules/clothesPile";
 import { bindings, type Bindings } from "../platform/bindings";
@@ -88,6 +88,17 @@ export function cardAt(s: Shelf, l: Line, col: number): string | null {
   if (s.board) return BOARD[(l.row ?? 0) * 3 + col]?.part ?? null;
   return null;
 }
+/** What a card of an items line or a slot's line pictures (Ed, 2026-11-12: "Dressing stations that have "∅" options should show what
+ *  those options are (e.g. her nightie) rather than have a ∅ symbol"): a toggle's item its short name; any other item, the "None" and
+ *  "Bare" ones too, itself on her as its shelf shows it (ui/stationPanel.ts wearPicture: no cloak, her back bare; no earrings, her ears
+ *  bare); a slot's part its picture, and the empty slot the bare broom's own piece there (art/workshop.js bareSlotSprite). Never a ∅;
+ *  null for a line of another kind. */
+export type CardFace = { kind: "name"; text: string } | { kind: "wear"; item: WardrobeItem } | { kind: "part"; id: string } | { kind: "bare"; slot: Slot };
+export function cardFace(s: Shelf, l: Line, col: number): CardFace | null {
+  if (l.kind === "items") { const it = itemAt(s, l, col); return s.toggle ? { kind: "name", text: it.short ?? it.name } : { kind: "wear", item: it }; }
+  if (l.kind === "cards" && s.slot) { const id = cardAt(s, l, col); return id === null ? { kind: "bare", slot: s.slot } : { kind: "part", id }; }
+  return null;
+}
 /** Whether a card can be chosen: at the bay, the empty slot or a part she's found (an unfound one is a silhouette: no choosing,
  *  no hint); never on a read-only line. */
 export const canChoose = (s: Shelf, l: Line, col: number, found: ReadonlySet<string>): boolean => {
@@ -95,7 +106,7 @@ export const canChoose = (s: Shelf, l: Line, col: number, found: ReadonlySet<str
   const id = cardAt(s, l, col);
   return id === null || found.has(id);
 };
-/** Her broom with a bay card chosen: the part fitted in its slot, or the slot emptied (∅). */
+/** Her broom with a bay card chosen: the part fitted in its slot, or the slot emptied (its first card). */
 export const choose = (f: Fitted, slot: Slot, id: string | null): Fitted => (id ? fitPart(f, id) : emptySlot(f, slot));
 
 // ---- the Workshop's numbers ----

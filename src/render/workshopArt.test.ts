@@ -2,9 +2,9 @@
 // lathe and the pegboard, ui/stationPanel.ts on the cards): every part its own piece, big and bold on a card, hung on the pegboard
 // within its cell, and her broom resting assembled from whatever she's fitted.
 import { describe, expect, it } from "vitest";
-import { partSprite, restingBroomSprite } from "../../art/workshop.js";
+import { bareSlotSprite, partSprite, restingBroomSprite } from "../../art/workshop.js";
 import { PART_ART } from "../../art/broomParts.js";
-import { PARTS, fittedOf } from "../rules/broomParts";
+import { PARTS, SLOTS, fittedOf } from "../rules/broomParts";
 
 type D = { sp: { w: number; h: number; m: Uint8Array }; origin: { x: number; y: number }; lights: unknown[] };
 const filled = (d: D) => d.sp.m.reduce((n, v) => n + (v ? 1 : 0), 0);
@@ -23,6 +23,16 @@ describe("the parts' pictures", () => {
       seen.add(`${d.sp.w}x${d.sp.h}:${filled(d)}`);
     }
     expect(seen.size).toBe(PARTS.length);
+  });
+  it("draws an empty slot's card as the bare broom's own piece there, the size of the parts beside it (Ed, 2026-11-12: no ∅)", () => {
+    const seen = new Set<string>();
+    for (const slot of SLOTS) {
+      const d = bareSlotSprite(slot, { fit: 58 }) as D;
+      expect(filled(d), slot).toBeGreaterThan(100);
+      expect(d.sp.w, slot).toBeGreaterThanOrEqual(40); expect(d.sp.w, slot).toBeLessThanOrEqual(72);
+      seen.add(`${d.sp.w}x${d.sp.h}:${filled(d)}`);
+    }
+    expect(seen.size).toBe(SLOTS.length);
   });
   it("hangs each on the pegboard within its cell (about 1.6 m across), still readable: a dozen pixels or more each way", () => {
     for (const p of PARTS) {
