@@ -1,6 +1,6 @@
 # Creature ranged attacks: before and after the ranged rule (2026-11-12)
 
-PR #1995. Harness: tools/balance/rangedhit.mjs (before: --ranged old). Real-rules check: scratchpad/ranged/real2.mjs, 3 seeds x 60 s (still running when this was written; rerun mk.py to refresh).
+PR #1995. Harness: tools/balance/rangedhit.mjs (before: --ranged old). Real-rules check: now `tools/balance/rangedreal.mjs`; its results are in [AFTER.md](AFTER.md) (the table below was never filled in).
 
 ## Flags
 - harness home: stoat adult pack: zig-zag 65% (caster still)
@@ -118,7 +118,4 @@ Engine harness, caster still unless the last column says otherwise. Each cell: s
 
 ### Real-rules check
 
-The whole game through `stepGame`, one or three of a kind 25–33 m from her in a wild area, a bot moving her, 3 seeds x 60 s a cell (the report had 2 x 60). Shots counted are those aimed at her (species casts, and old pack bolts for the stoat, hare and badger); hits from `observeAttacks`. Each cell: hit % (hits/shots). "across" in the real game is across the line to the nearest caster, so at close range it circles the caster.
-
-| kind | level | group | before still | before across | before away | before zig-zag | after still | after across | after away | after zig-zag |
-|---|---|---|---|---|---|---|---|---|---|---|
+See [AFTER.md](AFTER.md).
