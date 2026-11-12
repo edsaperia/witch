@@ -183,12 +183,18 @@ export function fourLegs(body, hind, fore = hind) {
   return out;
 }
 
-/** Leg timings for a gait's `legs`: a walk (left hind, left fore, right hind, right fore, a quarter apart) and a bound (the hind
- *  pair together, then the fore pair: a stoat's, a hare's, a squirrel's). k scales how far the joints swing and fold. */
-const stride = (k, phases) => [["hip", "knee", "hock", 0.33, [0.5, -0.65], -0.06], ["shoulder", "elbow", "wrist", 0.34, [-0.5, 1.0], -0.16]].flatMap(([a, b, c, swing, fold, lift], n) =>
-  ["L", "R"].map((tag, side) => ({ bones: [a + tag, b + tag, c + tag], phase: phases[n][side], swing: swing * k, fold: fold.map(f => f * k), lift: lift * k })));
+/** Leg timings for a gait's `legs`, one for each way of going (the plan's gait.type says which: art/mesh/shape.js GAIT_TYPES): a
+ *  walk (left hind, left fore, right hind, right fore, a quarter apart: a badger's, a turtle's), a trot (diagonal pairs together:
+ *  a fox's, a hedgehog's scurry) and a bound (the hind pair together, then the fore pair, with a moment in the air after each: a
+ *  stoat's, a hare's, a squirrel's; Ed, 2026-11-12: "many small creatures bound rather than trot"). k scales how far the joints
+ *  swing and fold: at 1 a leg swings about half a radian each way from where it hangs, so a stride is near twice its leg's length
+ *  over its duty (Ed's playtest, 2026-11-12: "their moving animations don't seem to animate their legs and are very short; they
+ *  appear to vibrate along instead of walk": the swing was a third of a radian and the stride a tenth of a body). */
+const stride = (k, phases, swing = [0.5, 0.5]) => [["hip", "knee", "hock", swing[0], [0.5, -0.65], -0.06], ["shoulder", "elbow", "wrist", swing[1], [-0.5, 1.0], -0.16]].flatMap(([a, b, c, sw, fold, lift], n) =>
+  ["L", "R"].map((tag, side) => ({ bones: [a + tag, b + tag, c + tag], phase: phases[n][side], swing: sw * k, fold: fold.map(f => f * k), lift: lift * k })));
 export const walk = (k = 1) => stride(k, [[0, 0.5], [0.75, 0.25]]);
-export const bound = (k = 1) => stride(k, [[0, 0.06], [0.5, 0.56]]);
+export const trot = (k = 1) => stride(k, [[0, 0.5], [0.5, 0]], [0.52, 0.52]);
+export const bound = (k = 1) => stride(k, [[0, 0.06], [0.46, 0.52]], [0.6, 0.5]);
 
 /** A four-legged build in one go: o.body (the torso's options, its stance worked out from the legs), o.head, o.hind and o.fore
  *  (the legs'; fore defaults to hind), o.C its colours. Returns { body, skull, legs, root (where a tail starts), R (the skin's

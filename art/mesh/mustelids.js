@@ -13,7 +13,8 @@ function weasel(o) {
   const skull = head(body.pivot, { muzzle: 0.55, wide: 0.98, dome: 0.86, muzzleWide: 1.15, cheek: 0, eye: 1.25, ear: { shape: "round", tall: 0.62, wide: 1.25, at: [0.012, -0.012, -0.005], back: o.C.ear ?? o.C.coat, inner: o.C.inner ?? "#c98f6e" }, ...o.head, colours: o.C });
   return { body, skull, legs: fourLegs(body, { colours: o.C, ...o.legs }), root: [0, body.rings[1].at[1] + 0.01, body.rings[0].at[2] + 0.03] };
 }
-const lope = (o = {}) => ({ seconds: 0.5, duty: 0.5, bob: 0.014, bobs: 1, sway: 0.02, rock: 0.11, tailSwing: 0.1, legs: bound(1.15), ...o });
+// (a bound: Ed, 2026-11-12, "many small creatures bound rather than trot"; its long back gathers and stretches, art/mesh/shape.js)
+const lope = (o = {}) => ({ type: "bound", seconds: 0.5, duty: 0.3, bob: 0, bobs: 1, sway: 0.02, rock: 0.2, tailSwing: 0.1, legs: bound(1), ...o });
 
 // ---- The stoat (alder forest): the long neck, the upright stand, the black tail tip; its war dance.
 const PAULDRON = -1; // (which shoulder the legend's pauldron sits on: -1 is the flank the bake's two views both show)
@@ -25,7 +26,7 @@ const stoat = {
     const w = weasel({ C, body: { len: 0.78, girth: 0.72, arch: 0.5, neck: [0.07, 0.09], neckThick: 1.15, white: 0.7 }, legs: { len: 0.34, thick: 1.7 }, head: { size: 1.18, muzzle: 0.42, eye: 1.6 } });
     const t = tail("tail", "pelvis", w.root, { len: 0.13, r: 0.03, pitch: 0.1, tip: 0.3, blunt: 0.3, colours: { coat: C.coat, tip: "#5a4234" } });
     const mane = tufts(w.body.rings[5], "neck", { n: 3, a0: 0.3, a1: 2.0, long: 0.07, sweep: 0.5, r: 0.04, lock: true, colour: () => "#efe3cf" });
-    return plan("stoat-baby", w.body, w.skull, [...w.legs, t], lope({ seconds: 0.42, tails: [t.chain], rock: 0.08 }), { cones: mane });
+    return plan("stoat-baby", w.body, w.skull, [...w.legs, t], lope({ seconds: 0.42, tails: [t.chain], rock: 0.15 }), { cones: mane });
   },
   // a slim tube of an animal, the black tip just showing
   young() {
@@ -56,7 +57,7 @@ const stoat = {
     const crown = [{ at: P(0, 0.085, 0.085), rx: 0.04, ry: 0.016, tip: P(0, 0.23, 0.07), bone: "head", colour: GOLD, split: 0.6, up: [0, 0, 1] }, ...[1, -1].map(s => ({ at: P(0.05 * s, 0.075, 0.07), rx: 0.028, ry: 0.014, tip: P(0.075 * s, 0.18, 0.05), bone: "head", colour: GOLD, split: 0.6, up: [0, 0, 1] })),
       { at: P(0, 0.085, 0.1), rx: 0.016, ry: 0.016, tip: P(0, 0.1, 0.125), bone: "head", colour: GEM, glow: true, up: [0, 1, 0] }];
     const whiskers = [1, -1].map(s => ({ at: P(0.03 * s, -0.005, 0.2), rx: 0.006, ry: 0.006, tip: P(0.17 * s, -0.03, 0.15), bone: "head", colour: "#ffffff", up: [0, 1, 0], sides: 3 }));
-    return plan("stoat-legend", w.body, w.skull, [...w.legs, ...tails], lope({ seconds: 0.75, bob: 0.01, rock: 0.07, tailSwing: 0.07, tails: tails.map(t => t.chain) }), { cones: [...robe, ...crown, ...whiskers], armour });
+    return plan("stoat-legend", w.body, w.skull, [...w.legs, ...tails], lope({ seconds: 0.75, bob: 0.01, rock: 0.13, tailSwing: 0.07, tails: tails.map(t => t.chain) }), { cones: [...robe, ...crown, ...whiskers], armour });
   },
 };
 
@@ -68,7 +69,7 @@ const marten = {
   baby() {
     const w = weasel({ C: MARTEN, body: { len: 0.78, girth: 0.78, arch: 0.4, neck: [0.07, 0.09], neckThick: 1.15, white: 0.45 }, legs: { len: 0.4, thick: 1.7 }, head: { ...martenHead, size: 1.22, muzzle: 0.5, eye: 1.7, ear: { ...martenHead.ear, tall: 1.05, wide: 1.6 } } });
     const t = tail("tail", "pelvis", w.root, { len: 0.2, r: 0.045, pitch: 0.05, blunt: 0.3, tip: 0, colours: { coat: MARTEN.coat, tip: MARTEN.coat } });
-    return plan("marten-baby", w.body, w.skull, [...w.legs, t], lope({ seconds: 0.44, tails: [t.chain], rock: 0.08 }));
+    return plan("marten-baby", w.body, w.skull, [...w.legs, t], lope({ seconds: 0.44, tails: [t.chain], rock: 0.15 }));
   },
   // stretching out, a bushy tail, big paws
   young() {
@@ -97,7 +98,7 @@ const marten = {
     // feathers at its neck: jay blue, owl barred, crow black
     const FEATHERS = ["#3f7fc4", "#d9c9a8", "#1c1a1c", "#8a5a34", "#e9e2d2"], feathers = tufts(R[5], "neck", { n: 5, a0: 0.15, a1: 2.1, long: 0.26, sweep: 0.8, droop: 0.2, r: 0.045, flat: 0.4, jitter: 0.2, colour: i => FEATHERS[i % 5], tip: i => FEATHERS[(i + 2) % 5] });
     const whiskers = [1, -1].map(s => ({ at: P(0.03 * s, -0.005, 0.2), rx: 0.006, ry: 0.006, tip: P(0.18 * s, -0.04, 0.14), bone: "head", colour: "#efe6d2", up: [0, 1, 0], sides: 3 }));
-    return plan("marten-legend", w.body, w.skull, [...w.legs, t], lope({ seconds: 0.8, bob: 0.01, rock: 0.07, tailSwing: 0.08, tails: [t.chain] }), { cones: [...needles, ...feathers, ...whiskers], armour });
+    return plan("marten-legend", w.body, w.skull, [...w.legs, t], lope({ seconds: 0.8, bob: 0.01, rock: 0.13, tailSwing: 0.08, tails: [t.chain] }), { cones: [...needles, ...feathers, ...whiskers], armour });
   },
 };
 

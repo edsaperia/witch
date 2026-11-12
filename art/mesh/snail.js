@@ -50,7 +50,7 @@ function snail(name, o) {
   const sway = (o.sway ?? 0.12), T = Math.PI * 2;
   return { name, bones, lofts: [...lofts, ...S.lofts, ...(o.lofts ?? [])], cones: [...cones, ...S.cones, ...(o.cones ?? [])], armour: o.armour ?? [], anchors: { neck: 4, skull: 5 }, // (its collar round its neck, a hat on its head: art/mesh/gear.js)
     // it glides: a ripple runs up its foot, its shell rocks behind it, its stalks feel about
-    gait: { seconds: 1.6, root: "root", bob: 0, legs: [], sleep: "shell", ...gait, extra: [
+    gait: { type: "glide", seconds: 1.6, root: "root", bob: 0, legs: [], sleep: "shell", ...gait, extra: [
       { bone: "tailb", pos: u => [0, 0.004 * Math.sin(T * 2 * u), 0.012 * len * Math.sin(T * 2 * u)] }, { bone: "mid", pos: u => [0, 0.004 * Math.sin(T * 2 * u + 1.5), 0.01 * len * Math.sin(T * 2 * u + 1.5)] }, { bone: "front", pos: u => [0, 0.004 * Math.sin(T * 2 * u + 3), 0.012 * len * Math.sin(T * 2 * u + 3)] },
       { bone: "shell", rot: u => [0.035 * Math.sin(T * 2 * u + 2), 0, 0.05 * Math.sin(T * u)] }, { bone: "head", rot: u => [0.05 * Math.sin(T * u + 1), 0.08 * Math.sin(T * u), 0] },
       ...["L", "R"].flatMap((tag, n) => [{ bone: `stalk${tag}1`, rot: u => [sway * Math.sin(T * u + n * 2.2), 0, sway * 0.8 * Math.sin(T * u * 2 + n * 1.3)] }, { bone: `stalk${tag}2`, rot: u => [sway * 1.3 * Math.sin(T * u + n * 2.2 + 0.9), 0, sway * Math.sin(T * u * 2 + n * 1.3 + 0.8)] }])] } };

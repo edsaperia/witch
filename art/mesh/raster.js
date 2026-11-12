@@ -38,7 +38,8 @@ export function bakeMesh(sh, o = {}) {
   const pos0 = Float32Array.from([...sh.lit.pos, ...sh.glow.pos]), col = Uint8Array.from([...sh.lit.col, ...sh.glow.col]), bone = Uint16Array.from([...sh.lit.bone, ...sh.glow.bone]), core = Uint8Array.from([...sh.lit.core, ...sh.glow.core]);
   const nv = bone.length, nt = nv / 3, lit = sh.lit.bone.length / 3, eye = Uint8Array.from([...sh.lit.tag, ...sh.glow.tag], t => (t === "eye" ? 1 : 0)), skin = Uint8Array.from([...sh.lit.skin, ...sh.glow.skin]), headBone = sh.bones.findIndex(b => b.name === "head");
   // every frame's corners, in the model's own space
-  const world = Array.from({ length: frames }, (_, i) => { const { R, T } = pose(sh, i / frames), out = new Float32Array(nv * 3);
+  // (o.stand: one more frame after the walk's, standing still on all its feet: what the view shows when it stops)
+  const world = Array.from({ length: frames + (o.stand ? 1 : 0) }, (_, i) => { const { R, T } = pose(sh, i < frames ? i / frames : null), out = new Float32Array(nv * 3);
     for (let v = 0; v < nv; v++) { const b = bone[v], a = sh.bones[b].at, x = pos0[v * 3] - a[0], y = pos0[v * 3 + 1] - a[1], z = pos0[v * 3 + 2] - a[2];
       out[v * 3] = R[b * 9] * x + R[b * 9 + 1] * y + R[b * 9 + 2] * z + T[b * 3]; out[v * 3 + 1] = R[b * 9 + 3] * x + R[b * 9 + 4] * y + R[b * 9 + 5] * z + T[b * 3 + 1]; out[v * 3 + 2] = R[b * 9 + 6] * x + R[b * 9 + 7] * y + R[b * 9 + 8] * z + T[b * 3 + 2]; }
     return { out, head: headBone < 0 ? null : [T[headBone * 3], T[headBone * 3 + 1], T[headBone * 3 + 2]] }; });
@@ -65,7 +66,7 @@ export function bakeMesh(sh, o = {}) {
   const raw = [], samples = [];
   for (const facing of ["towards", "away"]) {
     const view = turn(MESH_YAW[facing]);
-    for (let i = 0; i < frames; i++) {
+    for (let i = 0; i < world.length; i++) {
       const w = world[i].out; zb.fill(-Infinity); id.fill(-1);
       { const th = Math.PI / 2 - MESH_YAW[facing], c = Math.cos(th), sn = Math.sin(th); for (let v = 0; v < nv; v++) { const dx = w[v * 3] - centre[0], dy = w[v * 3 + 1] - centre[1], dz = w[v * 3 + 2] - centre[2], rx = dx * c + dz * sn, rz = -dx * sn + dz * c; sx[v] = big / 2 + rx * k - ux0 * ss; sy[v] = big / 2 - (dy * cp - rz * sp) * k - uy0 * ss; sz[v] = dy * sp + rz * cp; } }
       for (let t = 0; t < nt; t++) {
@@ -119,16 +120,19 @@ export function bakeMesh(sh, o = {}) {
     }
   }
 
-  // one palette for them all; one crop for every frame, tight, so the lowest foot of the walk stands on the bottom row
+  // one palette for them all; one size for every frame, and each heading stood on its own ground: its walk's lowest foot on the
+  // bottom row. (One crop for both headings left whichever stands higher in the picture hanging over empty rows, a fifth of its
+  // height on some: Ed's playtest, 2026-11-12, "animals appear to float above the ground (I guess bottom point not set correctly)".)
   const pal = palette(samples, colours), lum = c => c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11, dark = pal.reduce((a, c) => (lum(c) < lum(a) ? c : a), pal[0]).map(v => v * 0.38);
-  let x0 = W, x1 = -1, y0 = H, y1 = -1;
-  for (const f of raw) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (f.on[y * W + x]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-  if (sh.hover) y1 = Math.max(y1, Math.min(H - 1, Math.round(groundY - uy0)));
-  const w = x1 - x0 + 1, h = y1 - y0 + 1, out = { towards: [], away: [] };
+  let x0 = W, x1 = -1; const tops = { towards: H, away: H }, feet = { towards: -1, away: -1 };
+  for (const f of raw) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (f.on[y * W + x]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < tops[f.facing]) tops[f.facing] = y; if (y > feet[f.facing]) feet[f.facing] = y; }
+  if (sh.hover) for (const facing of ["towards", "away"]) feet[facing] = Math.max(feet[facing], Math.min(H - 1, Math.round(groundY - uy0)));
+  const w = x1 - x0 + 1, h = Math.max(feet.towards - tops.towards, feet.away - tops.away) + 1, out = { towards: [], away: [] };
   for (const f of raw) {
     const albedo = new Uint8ClampedArray(w * h * 4), normal = new Uint8ClampedArray(w * h * 4), flipped = new Uint8ClampedArray(w * h * 4), eyes = new Uint8Array(w * h); let anyEye = false;
-    const at = (x, y) => (x < 0 || y < 0 || x >= w || y >= h ? 0 : f.on[(y + y0) * W + x + x0]), nearer = (x, y, d) => at(x, y) && f.dep[(y + y0) * W + x + x0] < d - 0.02;
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const y0 = feet[f.facing] - h + 1; // (may be above the picture's top for the heading that stands shorter: nothing is there)
+    const at = (x, y) => (x < 0 || y < 0 || x >= w || y >= h || y + y0 < 0 ? 0 : f.on[(y + y0) * W + x + x0]), nearer = (x, y, d) => at(x, y) && f.dep[(y + y0) * W + x + x0] < d - 0.02;
+    for (let y = Math.max(0, -y0); y < h; y++) for (let x = 0; x < w; x++) {
       const j = (y + y0) * W + x + x0, q = (y * w + x) * 4;
       if (!f.on[j]) continue;
       const c = pal[nearest(pal, f.rgb[j * 3], f.rgb[j * 3 + 1], f.rgb[j * 3 + 2])], nx = f.nrm[j * 3], ny = f.nrm[j * 3 + 1], nz = f.nrm[j * 3 + 2];
@@ -146,28 +150,37 @@ export function bakeMesh(sh, o = {}) {
   return { w, h, ppu, bodyHeight: (bodyTop - bodyBottom) * ppu, height: (top - bottom) * ppu, step: (stride(sh) / frames) * ppu / w, palette: pal.map(c => c.map(Math.round)), towards: out.towards, away: out.away };
 }
 
-/** How far a creature walks in one cycle, metres: a planted foot's slide under the body through its stance, so the ground can
- *  pass at that pace (a legless one's is its gait's own `stride`). */
+/** How far a creature goes in one cycle of its walk, metres: how fast a planted paw slides back under its body through its
+ *  stance, kept up for the whole cycle, so the ground passes at that pace and its feet don't slide (a legless one's is its gait's
+ *  own `stride`). The paw is the joint below the leg's last named bone (its ankle, on the ground), not that bone's own joint (its
+ *  hock, half way up the leg, which moves half as far: the stride the first meshes walked by, 2026-11-12). */
 export function stride(sh) {
-  const leg = sh.gait?.legs?.[0]; if (!leg) return sh.gait?.stride ?? 0.3;
-  const foot = sh.bones.findIndex(b => b.name === leg.bones[2]), d = sh.gait.duty ?? 0.6, z = c => pose(sh, (((c - leg.phase) % 1) + 1) % 1).T[foot * 3 + 2];
+  const leg = sh.gait?.legs?.[0]; if (!leg || sh.still) return sh.gait?.stride ?? 0.3;
+  const last = sh.bones.findIndex(b => b.name === leg.bones[2]), paw = sh.bones.findIndex(b => b.parent === last), foot = paw < 0 ? last : paw, d = sh.gait.duty ?? 0.6, z = c => pose(sh, (((c - leg.phase) % 1) + 1) % 1).T[foot * 3 + 2];
   return Math.abs(z(0.2 * d) - z(0.8 * d)) / (0.6 * d);
+}
+
+/** How long its body is, metres: its body proper (no tail, ears or ornament), nose to rump, standing. A stride is judged by it. */
+export function bodyLength(sh) {
+  let lo = Infinity, hi = -Infinity;
+  for (const part of [sh.lit, sh.glow]) for (let v = 0; v < part.core.length; v++) if (part.core[v]) { const z = part.pos[v * 3 + 2]; if (z < lo) lo = z; if (z > hi) hi = z; }
+  return hi > lo ? hi - lo : 0;
 }
 
 /** A walk's step without drawing it: how far it goes between frames as a share of its sprite's width (what bakeMesh's `step`
  *  comes to, within a pixel or two of width): its corners' reach across the picture over the whole walk, both headings. */
 export function meshStep(sh, frames = 8) {
   const all = [...sh.lit.pos, ...sh.glow.pos], bone = [...sh.lit.bone, ...sh.glow.bone]; let lo = Infinity, hi = -Infinity;
-  for (let i = 0; i < frames; i++) { const { R, T } = pose(sh, i / frames);
+  for (let i = 0; i <= frames; i++) { const { R, T } = pose(sh, i < frames ? i / frames : null); // (and standing still: the frame after its walk's)
     for (let v = 0; v < bone.length; v++) { const b = bone[v], a = sh.bones[b].at, x = all[v * 3] - a[0], y = all[v * 3 + 1] - a[1], z = all[v * 3 + 2] - a[2], wx = R[b * 9] * x + R[b * 9 + 1] * y + R[b * 9 + 2] * z + T[b * 3], wz = R[b * 9 + 6] * x + R[b * 9 + 7] * y + R[b * 9 + 8] * z + T[b * 3 + 2];
       for (const yaw of [MESH_YAW.towards, MESH_YAW.away]) { const th = Math.PI / 2 - yaw, rx = wx * Math.cos(th) + wz * Math.sin(th); if (rx < lo) lo = rx; if (rx > hi) hi = rx; } } }
   return stride(sh) / frames / (hi - lo);
 }
 
-/** The scale a shape is drawn at to stand `height` art pixels (its whole silhouette, first frame, towards us), in art pixels a
- *  metre: what bakeMesh works out for itself, for drawing the same animal in another pose at the same size. */
+/** The scale a shape is drawn at to stand `height` art pixels (its whole silhouette, standing still, turned towards us), in art
+ *  pixels a metre, for drawing the same animal in any pose at the same size (Ed, 2026-11-12: "keep the sizes"). */
 export function meshPpu(sh, height) {
-  const { R, T } = pose(sh, 0), all = [...sh.lit.pos, ...sh.glow.pos], bone = [...sh.lit.bone, ...sh.glow.bone], th = Math.PI / 2 - MESH_YAW.towards, c = Math.cos(th), s = Math.sin(th), cp = Math.cos(MESH_PITCH), sp = Math.sin(MESH_PITCH); let lo = Infinity, hi = -Infinity;
+  const { R, T } = pose(sh, null), all = [...sh.lit.pos, ...sh.glow.pos], bone = [...sh.lit.bone, ...sh.glow.bone], th = Math.PI / 2 - MESH_YAW.towards, c = Math.cos(th), s = Math.sin(th), cp = Math.cos(MESH_PITCH), sp = Math.sin(MESH_PITCH); let lo = Infinity, hi = -Infinity;
   for (let v = 0; v < bone.length; v++) { const b = bone[v], a = sh.bones[b].at, x = all[v * 3] - a[0], y = all[v * 3 + 1] - a[1], z = all[v * 3 + 2] - a[2];
     const wx = R[b * 9] * x + R[b * 9 + 1] * y + R[b * 9 + 2] * z + T[b * 3], wy = R[b * 9 + 3] * x + R[b * 9 + 4] * y + R[b * 9 + 5] * z + T[b * 3 + 1], wz = R[b * 9 + 6] * x + R[b * 9 + 7] * y + R[b * 9 + 8] * z + T[b * 3 + 2], u = wy * cp - (-wx * s + wz * c) * sp;
     if (u < lo) lo = u; if (u > hi) hi = u; }

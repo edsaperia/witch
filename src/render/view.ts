@@ -340,7 +340,7 @@ function nightState(t: Tuning) {
     /** Each watching creature's aggro red as last drawn and when (view/creatures.ts), so it eases out when the watch ends. */
     aggroLast: new Map<number, { a: number; at: number }>(),
     /** Each creature's distance walked as drawn, for its baked walk's frames (view/creatures.ts strideFrame). */
-    strides: new Map<number, { x: number; z: number; d: number; at: number }>(),
+    strides: new Map<number, { x: number; z: number; d: number; at: number; t?: number }>(),
     /** A party animal's gear for its rig page (as its party bake wears it), kept per creature and look. */
     rigGears: new Map<string, RigGear>(),
     /** Sparks from campfires lighting up as the party arrives (drawn with the markers' motes, next frame). */

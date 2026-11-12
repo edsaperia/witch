@@ -42,7 +42,7 @@ const WOKEN_EYE = [255, 40, 36, 254]; // (a woken creature's eyes: red, and lit 
 const worn = (gear: unknown): object | null => { const g = gear as { collar?: unknown; hat?: unknown; glasses?: unknown; shoes?: unknown } | null; return g && (g.collar || g.hat != null || g.glasses || g.shoes) ? g : null; };
 
 /** A mesh creature's walk as baked sprites (art/mesh/index.js; Ed, 2026-11-12: "let's do the real build"), in creatureSprites'
- *  order: towards then away, each level, each frame of its cycle; in its party gear if it has any, enraged if gear.woken. */
+ *  order: towards then away, each level, each frame of its cycle and then it standing still; in its party gear if it has any, enraged if gear.woken. */
 function meshSprites(species: string, mk: MakeCanvas, gear: unknown, onlyLevel?: number): Baked[] {
   const levels = onlyLevel === undefined ? [0, 1, 2, 3] : [onlyLevel], walks = levels.map(l => meshWalk(species, l, worn(gear) as null) as MeshWalk), out: Baked[] = [];
   const woken = !!(gear as { woken?: boolean } | null)?.woken, plain = !gear || Object.keys(gear as object).every(k => k === "face");
@@ -112,8 +112,10 @@ export function headPoint(m: ArrayLike<number>, w: number, h: number): [number, 
  *  same, from 4n. */
 export const creatureFrame = (level: number, f: number, away = false, n = 2) => (away ? 4 * n : 0) + level * n + (((f % n) + n) % n);
 
-/** A species' walk: its frames, and how far it moves between them (a share of its sprite's width). */
-export const walkGait = (species: string, st?: Style): { frames: number; step: number } => (st && hasMesh(species, st) ? meshGait(species) : Art.walkGait(species)) as { frames: number; step: number };
+/** A species' walk: its frames, and how far it moves between them (a share of its sprite's width); a mesh creature's says more
+ *  (art/mesh/index.js meshGait: its cycle, its standing frame, each level's step, how it goes). */
+export interface WalkGait { frames: number; step: number; steps?: number[]; cycle?: number; stand?: number; rate?: number; type?: string }
+export const walkGait = (species: string, st?: Style): WalkGait => (st && hasMesh(species, st) ? meshGait(species) : Art.walkGait(species)) as WalkGait;
 
 /** A party animal's gear (seeded by its id). Leashed: its seeded gear and the glowing collar in
  *  `colour`. Happy (colour null): the gear without the collar, always at least a hat so it reads as

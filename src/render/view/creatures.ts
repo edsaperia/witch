@@ -49,15 +49,20 @@ const CHEER: CheerPose = { y: 0, x: 0, sx: 1, sy: 1, flip: false }; // (likewise
 const SLEEP: SleepPose = { sleep: 0, droop: 0 }; // (likewise)
 const FWD = new THREE.Vector3(), CAM_UP = new THREE.Vector3(); // (the camera's look and up, a frame's working)
 
-/** The baked walk's frame (0 or 1) by how far it has gone as drawn (Ed's playtest: feet walking in place, or not walking while it
- *  moves): a step every `step` metres, standing (frame 0) once it has stopped for a quarter of a second. One small record per creature. */
-function strideFrame(v: View, c: { id: number; x: number; z: number }, time: number, step: number, frames = 2): number {
+/** The baked walk's frame by how far it has gone as drawn (Ed's playtest: feet walking in place, or not walking while it moves): a
+ *  step every `step` metres, standing once it has stopped for a quarter of a second (frame 0, or the walk's own standing frame:
+ *  gait.stand, a mesh creature's). One small record per creature. A walk with a `rate` (a mesh creature's: art/mesh/index.js
+ *  MESH_RATE) shows no more than that many frames a second, so at a sprint its feet slide a little rather than its legs blur
+ *  (Ed's playtest, 2026-11-12: "they appear to vibrate along instead of walk"); a flyer's ("fly": the bee) beats by the clock,
+ *  moving or not. */
+function strideFrame(v: View, c: { id: number; x: number; z: number }, time: number, step: number, frames = 2, gait?: { cycle?: number; stand?: number; rate?: number; type?: string }): number {
   let o = v.strides.get(c.id);
-  if (!o) v.strides.set(c.id, (o = { x: c.x, z: c.z, d: 0, at: -1 }));
-  const d = Math.hypot(c.x - o.x, c.z - o.z);
-  if (d > 1e-3 && d < 3) { o.d += d; o.at = time; } // (a jump of metres is a teleport, not a step)
-  o.x = c.x; o.z = c.z;
-  return time - o.at < 0.25 ? Math.floor(o.d / Math.max(0.05, step)) % frames : 0;
+  if (!o) v.strides.set(c.id, (o = { x: c.x, z: c.z, d: 0, at: -1, t: time }));
+  const d = Math.hypot(c.x - o.x, c.z - o.z), s = Math.max(0.05, step), n = gait?.cycle ?? frames;
+  if (gait?.type === "fly" && gait.rate) { o.x = c.x; o.z = c.z; return Math.floor(time * gait.rate + c.id * 0.37) % n; }
+  if (d > 1e-3 && d < 3) { o.d += gait?.rate ? Math.min(d, s * gait.rate * Math.max(0, time - (o.t ?? time))) : d; o.at = time; } // (a jump of metres is a teleport, not a step)
+  o.x = c.x; o.z = c.z; o.t = time;
+  return time - o.at < 0.25 ? Math.floor(o.d / s) % n : gait?.stand ?? 0;
 }
 
 const WOKEN_GEAR: RigGear = { woken: true };
@@ -206,7 +211,7 @@ export function drawCreatures(v: View, time = 0): void {
     const lk = hide ? keyOf("shadow", key) : stone ? keyOf("statue", key) : c.boss && !c.leashed && g.tuning.wildLegends.seen ? keyOf("legend", key) : key; // (a wild legend in a batch of its own: its rim and its light in steps; one hiding, in a shadow batch)
     if (lk !== key && !stone) legendKeys.set(lk, c.species);
     arts.set(lk, art);
-    const gait = art.walk, fi = glided ? art.frame(c.level, Math.floor(time * 3 + c.id * 0.37) % 2) : slept || napped ? art.frame(c.level, Math.floor(time / (slept ? 2.5 : 1.8) + c.id * 0.37) % 2) : art.frame(c.level, strideFrame(v, c, time, art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * (gait?.step ?? 0.3), gait?.frames ?? 2), c.away), frame = art.atlas.frames[fi]; // (walking: its cycle by the distance it's gone, a planted foot staying put) // (asleep: a slow breath, in and out)
+    const gait = art.walk, fi = glided ? art.frame(c.level, Math.floor(time * 3 + c.id * 0.37) % 2) : slept || napped ? art.frame(c.level, Math.floor(time / (slept ? 2.5 : 1.8) + c.id * 0.37) % 2) : art.frame(c.level, strideFrame(v, c, time, art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * (gait?.steps?.[c.level] ?? gait?.step ?? 0.3), gait?.frames ?? 2, gait), c.away), frame = art.atlas.frames[fi]; // (walking: its cycle by the distance it's gone, a planted foot staying put) // (asleep: a slow breath, in and out)
     // A wild legend (Ed, 2026-10-04): bigger and imposing, swelling slowly as it breathes (slower asleep).
     const boss = c.boss && !c.leashed ? g.tuning.wildLegends : null;
     // (its size a constant, so its pixels stay the scene's: its breath a squash in whole art pixels, sy, not a swelling; Ed's round 14 playtest)

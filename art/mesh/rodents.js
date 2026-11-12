@@ -3,10 +3,11 @@
 // their shoulders, a rounded back, a blunt head with the eyes set high on its sides. On Ed's word for the fox (2026-11-11): the
 // adult already wears its signature loud, the legend is another, older, stranger creature, "I like magical armour pieces
 // on legends", and that armour is plate raised from the torso's own polygons, a lit rune on each.
-import { bound, plan, quad, tail, tufts, walk } from "./kit.js";
+import { bound, plan, quad, tail, tufts } from "./kit.js";
 
 const NOSE = "#2a1c18", BLACK = "#17120f", GOLD = "#e9b949", SILVER = "#dfe5ec";
-const hop = (o = {}) => ({ seconds: 0.48, duty: 0.45, bob: 0.03, bobs: 1, sway: 0.015, rock: 0.14, tailSwing: 0.08, legs: bound(1.3), ...o });
+// (a bound: Ed, 2026-11-12, "many small creatures bound rather than trot"; hind feet together, a moment in the air, art/mesh/shape.js)
+const hop = (o = {}) => ({ type: "bound", seconds: 0.48, duty: 0.3, bob: 0, bobs: 1, sway: 0.015, rock: 0.14, tailSwing: 0.08, legs: bound(1), ...o });
 const whiskers = (P, colour, long = 1, bone = "head") => [1, -1].flatMap(s => [[-0.03, 0.15], [0.0, 0.12]].map(([dy, dz]) => ({ at: P(0.03 * s, -0.005, 0.2), rx: 0.006, ry: 0.006, tip: P((0.03 + 0.14 * long) * s, dy * long, dz), bone, colour, up: [0, 1, 0], sides: 3 })));
 
 // ---- The hare (bluebell glade): the ears, and the long hind legs.
@@ -49,7 +50,7 @@ const hare = {
     // haunches and its shoulders, each plate with its lit mark
     const armour = [{ from: 0.75, to: 2.15, round: [0, 1.7], lames: 2, thick: 0.02, step: 0.012, colour: STEEL, rim: SILVER, runes: { colour: GLOW } }, { from: 3.2, to: 4.75, round: [0, 1.7], lames: 2, thick: 0.02, step: 0.012, colour: STEEL, rim: SILVER, runes: { colour: GLOW, seed: 3 } }];
     const mane = tufts(R[5], "neck", { n: 4, a0: 0.9, a1: 2.95, long: 0.16, sweep: 0.55, droop: 0.5, r: 0.06, lock: true, colour: () => "#f3f5f8", tip: () => "#aab0ba" });
-    return plan("hare-legend", q.body, q.skull, [...q.legs, t], hop({ seconds: 0.85, bob: 0.02, rock: 0.09, tails: [t.chain], legs: bound(1.05) }), { cones: [...crescent, ...rings, ...mane, ...whiskers(P, "#f3f5f8", 1.6)], armour });
+    return plan("hare-legend", q.body, q.skull, [...q.legs, t], hop({ seconds: 0.85, bob: 0.02, rock: 0.09, tails: [t.chain], legs: bound(0.9) }), { cones: [...crescent, ...rings, ...mane, ...whiskers(P, "#f3f5f8", 1.6)], armour });
   },
 };
 
@@ -86,7 +87,7 @@ const squirrel = {
     // its armour (Ed, 2026-11-11: "Armour should just be thickened polygons on their torso with a different colour and glowing runes"): dark walnut shell edged in gold over its back and shoulders, a mark lit on every plate
     const armour = [{ from: 2.2, to: 4.65, round: [0, 1.7], lames: 3, thick: 0.02, step: 0.012, colour: WALNUT, rim: GOLD, runes: { colour: LIT } }];
     const tooth = [{ at: P(0.008, -0.03, 0.235), rx: 0.008, ry: 0.006, tip: P(0.008, -0.062, 0.24), bone: "head", colour: GOLD, up: [0, 0, 1], sides: 3 }];
-    return plan("squirrel-legend", q.body, q.skull, [...q.legs, t], hop({ seconds: 0.7, bob: 0.014, rock: 0.07, tails: [t.chain], tailSwing: 0.04, legs: bound(1.0) }), { cones: [...eartufts(P, 1.7, "#7e3212"), ...tooth, ...whiskers(P, "#efe6d8", 1.5)], armour });
+    return plan("squirrel-legend", q.body, q.skull, [...q.legs, t], hop({ seconds: 0.7, bob: 0.014, rock: 0.07, tails: [t.chain], tailSwing: 0.04, legs: bound(0.9) }), { cones: [...eartufts(P, 1.7, "#7e3212"), ...tooth, ...whiskers(P, "#efe6d8", 1.5)], armour });
   },
 };
 
@@ -99,19 +100,19 @@ const dormouse = {
   baby() {
     const C = { ...DOR, coat: "#c9a070", upper: "#c9a070", mid: "#c9a070" }, q = dorBuild(C, { hind: { len: 0.26, thick: 1.7 }, fore: { len: 0.24, thick: 1.5 }, body: { len: 0.44, girth: 0.95 }, head: { size: 1.42, eye: 1.9 }, ear: { tall: 0.9, wide: 1.4 } });
     const t = tail("tail", "pelvis", q.root, { len: 0.16, r: 0.016, pitch: -0.1, blunt: 0.4, tip: 0, colours: { coat: "#b98f62", tip: "#b98f62" } });
-    return plan("dormouse-baby", q.body, q.skull, [...q.legs, t], { seconds: 0.4, duty: 0.55, bob: 0.008, sway: 0.07, tailSwing: 0.2, tails: [t.chain], legs: walk(1.1) });
+    return plan("dormouse-baby", q.body, q.skull, [...q.legs, t], hop({ seconds: 0.4, rock: 0.1, tailSwing: 0.2, tails: [t.chain] }));
   },
   // slim and leggy, its tail not yet bushy
   young() {
     const q = dorBuild(DOR, { hind: { len: 0.42, thick: 1.2 }, fore: { len: 0.36, thick: 1.0 }, body: { len: 0.6, girth: 0.8, tuck: 0.85 }, head: { size: 1.08 } });
     const t = tail("tail", "pelvis", q.root, { len: 0.42, r: 0.026, pitch: -0.05, curl: 0.4, blunt: 0.4, tip: 0, colours: { coat: DOR.mid, tip: DOR.mid } });
-    return plan("dormouse-young", q.body, q.skull, [...q.legs, t], { seconds: 0.44, duty: 0.55, bob: 0.008, sway: 0.06, tailSwing: 0.18, tails: [t.chain], legs: walk(1.1) });
+    return plan("dormouse-young", q.body, q.skull, [...q.legs, t], hop({ seconds: 0.44, rock: 0.1, tailSwing: 0.18, tails: [t.chain] }));
   },
   // fattened for its long sleep, golden, its full furred tail curled up over it like a blanket, whiskers out wide
   adult() {
     const q = dorBuild(DOR, { body: { len: 0.6, girth: 1.42, deep: 1.05, rump: 1.2 }, head: { size: 1.26 } });
     const t = tail("tail", "pelvis", q.root, { len: 0.62, r: 0.085, pitch: 1.1, curl: 2.0, bones: 6, blunt: 0.35, tip: 0.12, colours: { coat: "#c88a30", under: "#a8701f", tip: "#f7ecd4" }, spikes: { n: 5, colour: "#e9bb62", len: 0.7 } });
-    return plan("dormouse-adult", q.body, q.skull, [...q.legs, t], { seconds: 0.62, duty: 0.6, bob: 0.01, sway: 0.08, tailSwing: 0.05, tails: [t.chain], legs: walk(0.95) }, { cones: whiskers(q.P, "#f7ecd4", 1.2) });
+    return plan("dormouse-adult", q.body, q.skull, [...q.legs, t], hop({ seconds: 0.62, rock: 0.08, tailSwing: 0.05, tails: [t.chain] }), { cones: whiskers(q.P, "#f7ecd4", 1.2) });
   },
   // the sleeper: vast and round and never quite awake, its eyes shut; honeysuckle grown through its fur and flowering, lit;
   // plum enamel plate edged in gold over its back in lames, a dream-mark lit on each; whiskers like rods
@@ -123,7 +124,7 @@ const dormouse = {
     const blooms = [...tufts(R[4], "chest", { n: 3, a0: 1.75, a1: 2.5, long: 0.1, sweep: 0.1, droop: -0.1, r: 0.03, sides: 5, jitter: 0.3, colour: () => "#ffd7c8", tip: () => BLOOM, glow: true }), ...tufts(R[5], "neck", { n: 3, a0: 0.4, a1: 2.0, long: 0.08, sweep: 0.0, droop: -0.2, r: 0.026, sides: 5, colour: () => BLOOM, glow: true })];
     // its armour (Ed, 2026-11-11: "Armour should just be thickened polygons on their torso with a different colour and glowing runes"): plum enamel edged in gold over its shoulders, a dream-mark lit on each plate
     const armour = [{ from: 1.75, to: 4.7, round: [0, 1.7], lames: 4, thick: 0.022, step: 0.014, colour: PLUM, rim: GOLD, runes: { colour: DREAM } }];
-    return plan("dormouse-legend", q.body, q.skull, [...q.legs, t], { seconds: 1.2, duty: 0.68, bob: 0.012, sway: 0.09, tailSwing: 0.03, tails: [t.chain], legs: walk(0.8) }, { cones: [...blooms, ...whiskers(P, "#f3e6cc", 2.4)], armour });
+    return plan("dormouse-legend", q.body, q.skull, [...q.legs, t], hop({ seconds: 1.2, duty: 0.36, rock: 0.05, tailSwing: 0.03, tails: [t.chain], legs: bound(0.85) }), { cones: [...blooms, ...whiskers(P, "#f3e6cc", 2.4)], armour });
   },
 };
 

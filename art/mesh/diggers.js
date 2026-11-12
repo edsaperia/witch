@@ -5,10 +5,14 @@
 // first brief); the mole's and hedgehog's are proposals till he marks them. On his word for the fox (2026-11-11): the adult
 // already wears its signature loud, the legend is another, older, stranger creature, "I like magical armour pieces on
 // legends", and that armour is plate raised from the torso's own polygons, a lit rune on each.
-import { ball, band, plan, quad, tail, tufts, walk } from "./kit.js";
+import { ball, band, plan, quad, tail, tufts, trot } from "./kit.js";
 
 const BLACK = "#1b1817", BRONZE = "#b9722e", BRONZE2 = "#e0a04a";
-const trundle = (o = {}) => ({ seconds: 0.6, duty: 0.62, bob: 0.006, sway: 0.085, tailSwing: 0.1, legs: walk(0.95), ...o });
+// (a trot: the heavy and the low go on diagonal pairs, the badger steadily, the mole and the hedgehog at a scurry, a shorter stance)
+const trundle = (o = {}) => ({ type: "trot", seconds: 0.6, duty: 0.5, bob: 0, sway: 0.085, tailSwing: 0.1, legs: trot(1), ...o }), scurry = (o = {}) => trundle({ duty: 0.42, legs: trot(1.15), ...o });
+// (the mole's forefeet are spades with long claws, set on its shoulders: they paddle a little while its hind legs do the striding,
+// and its wrists fold little as they swing, or the claws would stab down through the ground and lift the whole animal)
+const spadework = legs => legs.map(l => (/^shoulder/.test(l.bones[0]) ? { ...l, swing: l.swing * 0.15, fold: [l.fold[0], 0.15] } : l));
 const whiskers = (P, colour, long = 1) => [1, -1].flatMap(s => [[-0.03, 0.15], [0.0, 0.12]].map(([dy, dz]) => ({ at: P(0.03 * s, -0.005, 0.2), rx: 0.006, ry: 0.006, tip: P((0.03 + 0.14 * long) * s, dy * long, dz), bone: "head", colour, up: [0, 1, 0], sides: 3 })));
 const BONES = ["pelvis", "pelvis", "loin", "chest", "chest", "neck", "neck"]; // the bone each ring of the skin rides
 
@@ -54,7 +58,7 @@ const badger = {
     // side of the stones as raised chalk, from its neck to its rump, the barrow's marks lit along them
     const armour = [{ from: 0.7, to: 4.85, round: [0.5, 1.0], inset: 0.14, lames: 6, thick: 0.016, step: 0.006, colour: CHALK, rim: "#c9c6b8", runes: { colour: MARK, size: 0.55, max: 1 } }];
     const scars = [{ at: P(0.03, 0.06, 0.15), rx: 0.006, ry: 0.004, tip: P(0.05, -0.02, 0.2), bone: "head", colour: "#c98a80", up: [0, 0, 1], sides: 3 }];
-    return plan("badger-legend", q.body, q.skull, [...q.legs, t, torc], trundle({ seconds: 0.95, sway: 0.07, tails: [t.chain], legs: walk(0.85) }), { cones: [...shag, ...stones, ...scars], armour });
+    return plan("badger-legend", q.body, q.skull, [...q.legs, t, torc], trundle({ seconds: 0.95, sway: 0.07, tails: [t.chain], legs: trot(0.9) }), { cones: [...shag, ...stones, ...scars], armour });
   },
 };
 
@@ -78,19 +82,19 @@ const mole = {
   baby() {
     const q = digger(MOLE, { hind: { len: 0.18, thick: 2.2 }, fore: { len: 0.18, thick: 2.4, paw: 2.6, spread: 2.3, claws: { colour: "#f3e9dc", len: 1.0, thick: 1.5, wide: 2.2 } }, body: { len: 0.48, girth: 1.2 }, head: { size: 1.3, muzzle: 0.7, nose: 2.0 } });
     const t = tail("tail", "pelvis", q.root, { len: 0.05, r: 0.016, pitch: 0.2, blunt: 0.4, tip: 0, colours: { coat: PINK, tip: PINK } });
-    return plan("mole-baby", q.body, q.skull, [...q.legs, t, spades(q, 0.8, "#f3e9dc", 0.6)], trundle({ seconds: 0.4, sway: 0.11, tails: [t.chain] }));
+    return plan("mole-baby", q.body, q.skull, [...q.legs, t, spades(q, 0.8, "#f3e9dc", 0.6)], scurry({ seconds: 0.4, sway: 0.11, tails: [t.chain] }));
   },
   // a short barrel, broad pink hands turned outward
   young() {
     const q = digger(MOLE, { body: { len: 0.66, girth: 1.15 } });
     const t = tail("tail", "pelvis", q.root, { len: 0.07, r: 0.016, pitch: 0.2, blunt: 0.4, tip: 0, colours: { coat: PINK, tip: PINK } });
-    return plan("mole-young", q.body, q.skull, [...q.legs, t, spades(q, 1.1, "#f3e9dc", 0.8)], trundle({ seconds: 0.46, sway: 0.11, tails: [t.chain] }));
+    return plan("mole-young", q.body, q.skull, [...q.legs, t, spades(q, 1.1, "#f3e9dc", 0.8)], scurry({ seconds: 0.46, sway: 0.11, tails: [t.chain] }));
   },
   // huge clawed spade hands, a long snout feeling ahead with its star, whiskers, a body like a furred boulder
   adult() {
     const q = digger(MOLE, { fore: { len: 0.28, thick: 2.6, paw: 3.8, spread: 2.5 }, hind: { len: 0.26, thick: 2.2 }, body: { len: 0.78, girth: 1.6, hump: 0.6, neckThick: 1.1 }, head: { size: 1.2, muzzle: 1.0 } });
     const t = tail("tail", "pelvis", q.root, { len: 0.08, r: 0.018, pitch: 0.3, blunt: 0.4, tip: 0, colours: { coat: PINK, tip: PINK } });
-    return plan("mole-adult", q.body, q.skull, [...q.legs, t, spades(q, 1.9, "#f3e9dc", 1.2)], trundle({ seconds: 0.55, sway: 0.1, tails: [t.chain] }), { cones: [...star(q.P, 8, 0.05, PINK), ...whiskers(q.P, "#cfc6d6", 0.9)] });
+    return plan("mole-adult", q.body, q.skull, [...q.legs, t, spades(q, 1.9, "#f3e9dc", 1.2)], scurry({ seconds: 0.55, sway: 0.1, tails: [t.chain] }), { cones: [...star(q.P, 8, 0.05, PINK), ...whiskers(q.P, "#cfc6d6", 0.9)] });
   },
   // the delver: blind and certain: hands like ploughshares worn bright, a star for a nose that lights its way; a crust of earth
   // and roots on its rump; iron lames over its back cut with lamp-lit marks, iron on its wrists
@@ -103,7 +107,7 @@ const mole = {
     const roots = [1, 2].flatMap(i => tufts(R[i], BONES[i], { n: 3, a0: 1.0, a1: 1.9, long: 0.2, sweep: 0.7, droop: 0.7, r: 0.014, sides: 3, jitter: 0.6, colour: () => ROOT }));
     // its armour (Ed, 2026-11-11: "Armour should just be thickened polygons on their torso with a different colour and glowing runes"): worn iron in lames over its shoulders and back, a lamp-lit mark on each to dig by
     const armour = [{ from: 2.45, to: 4.9, round: [0, 1.3], lames: 4, thick: 0.024, step: 0.014, colour: "#8a929c", rim: IRON, runes: { colour: LAMP } }];
-    return plan("mole-legend", q.body, q.skull, [...q.legs, t, spades(q, 2.6, STEEL, 1.5, C.belly)], trundle({ seconds: 0.9, sway: 0.08, tails: [t.chain], legs: walk(0.85) }), { cones: [...clods, ...roots, ...star(P, 11, 0.085, "#ffb8c8", true), ...whiskers(P, "#cfc6d6", 1.3)], armour });
+    return plan("mole-legend", q.body, q.skull, [...q.legs, t, spades(q, 2.6, STEEL, 1.5, C.belly)], scurry({ seconds: 0.9, sway: 0.08, tails: [t.chain], legs: trot(1.05) }), { cones: [...clods, ...roots, ...star(P, 11, 0.085, "#ffb8c8", true), ...whiskers(P, "#cfc6d6", 1.3)], armour });
   },
 };
 
@@ -117,18 +121,18 @@ const hedgehog = {
   // a pale soft ball with a few short white quills, a big wet nose
   baby() {
     const C = { ...HOG, coat: "#b9a183", belly: "#e6d2b4", mask: "#e6d2b4", muzzle: "#e6d2b4" }, q = urchin(C, { hind: { len: 0.2, thick: 1.6 }, fore: { len: 0.2, thick: 1.5 }, body: { len: 0.45, girth: 1.25 }, head: { size: 1.25, muzzle: 0.7, nose: 1.7, eye: 1.6 } });
-    return plan("hedgehog-baby", q.body, q.skull, q.legs, trundle({ seconds: 0.34, sway: 0.05 }), { cones: spines(q.R, { n: 3, long: 0.07, r: 0.026, down: 1.3, sweep: 0.45, colour: () => "#8f7a5e", tip: () => "#ffffff" }) });
+    return plan("hedgehog-baby", q.body, q.skull, q.legs, scurry({ seconds: 0.34, sway: 0.05 }), { cones: spines(q.R, { n: 3, long: 0.07, r: 0.026, down: 1.3, sweep: 0.45, colour: () => "#8f7a5e", tip: () => "#ffffff" }) });
   },
   // a full coat of short spines, a pointed snout, quick little legs
   young() {
     const q = urchin(HOG, { body: { len: 0.58, girth: 1.2 } });
-    return plan("hedgehog-young", q.body, q.skull, q.legs, trundle({ seconds: 0.36, sway: 0.05 }), { cones: spines(q.R, { n: 5, long: 0.075 }) });
+    return plan("hedgehog-young", q.body, q.skull, q.legs, scurry({ seconds: 0.36, sway: 0.05 }), { cones: spines(q.R, { n: 5, long: 0.075 }) });
   },
   // long banded spines flared into a fan, a skirt of fur under them, a longer snout
   adult() {
     const q = urchin(HOG, { body: { len: 0.66, girth: 1.45, hump: 0.8 }, head: { size: 1.02, muzzle: 1.2 } }), R = q.R;
     const skirt = [2, 3, 4].flatMap(i => tufts(R[i], BONES[i], { n: 2, a0: 1.95, a1: 2.4, long: 0.07, sweep: 0.4, droop: 0.7, r: 0.045, lock: true, colour: () => HOG.belly, tip: () => "#a98a62" }));
-    return plan("hedgehog-adult", q.body, q.skull, q.legs, trundle({ seconds: 0.42, sway: 0.05 }), { cones: [...spines(q.R, { n: 6, long: 0.2, sweep: 0.42, r: 0.03, jitter: 0.5, colour: k => (k % 2 ? "#5a4332" : "#3c2c20"), tip: () => "#f3e7c9" }), ...skirt, ...whiskers(q.P, "#e6d2b4", 0.7)] });
+    return plan("hedgehog-adult", q.body, q.skull, q.legs, scurry({ seconds: 0.42, sway: 0.05 }), { cones: [...spines(q.R, { n: 6, long: 0.2, sweep: 0.42, r: 0.03, jitter: 0.5, colour: k => (k % 2 ? "#5a4332" : "#3c2c20"), tip: () => "#f3e7c9" }), ...skirt, ...whiskers(q.P, "#e6d2b4", 0.7)] });
   },
   // a walking thicket: spines long as spears, tipped in bronze, every third one's point burning; a silver
   // face, and a bronze collar in lames behind it cut with lit marks
@@ -139,10 +143,10 @@ const hedgehog = {
     // its armour (Ed, 2026-11-11: "Armour should just be thickened polygons on their torso with a different colour and glowing runes"): a bronze collar in lames between its spines and its face, a lamp-lit mark on each
     const armour = [{ from: 4.55, to: 6.0, round: [0, 2.0], lames: 2, thick: 0.02, step: 0.012, colour: BRONZE, rim: BRONZE2, runes: { colour: LAMP } }];
     const skirt = [2, 3, 4].flatMap(i => tufts(R[i], BONES[i], { n: 2, a0: 1.9, a1: 2.4, long: 0.1, sweep: 0.4, droop: 0.7, r: 0.05, lock: true, colour: () => C.belly, tip: () => "#8f7a5c" }));
-    return plan("hedgehog-legend", q.body, q.skull, q.legs, trundle({ seconds: 0.85, sway: 0.06, legs: walk(0.85) }), { cones: [...spears, ...skirt, ...whiskers(P, "#e6e9ec", 1.4)], armour });
+    return plan("hedgehog-legend", q.body, q.skull, q.legs, scurry({ seconds: 0.85, sway: 0.06, legs: trot(1.05) }), { cones: [...spears, ...skirt, ...whiskers(P, "#e6e9ec", 1.4)], armour });
   },
 };
 
 // (asleep, the mole lies on its belly at every level, its great hands flat on the ground beside it: art/mesh/gear.js `napping`
 // reads gait.lie and gait.sleep)
-export const BADGER_PLANS = badger, HEDGEHOG_PLANS = hedgehog, MOLE_PLANS = Object.fromEntries(Object.entries(mole).map(([level, make]) => [level, () => { const p = make(); p.gait.lie = { fore: [-0.3, 0.1, 0.1] }; p.gait.sleep = "sphinx"; return p; }]));
+export const BADGER_PLANS = badger, HEDGEHOG_PLANS = hedgehog, MOLE_PLANS = Object.fromEntries(Object.entries(mole).map(([level, make]) => [level, () => { const p = make(); p.gait.lie = { fore: [-0.3, 0.1, 0.1] }; p.gait.sleep = "sphinx"; p.gait.legs = spadework(p.gait.legs); return p; }]));
