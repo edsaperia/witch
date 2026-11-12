@@ -264,6 +264,12 @@ export function tuningFromLink(params: URLSearchParams) {
   // floor<=>head transition more 'magical'"): a run starting on the press itself (leash.runAfter 0) and the sigil snapping between the
   // ground and her stack (leash.sigilFeel off), to A/B; ?sigilfeel=new, the default.
   if (params.get("sigilfeel") === "old") tuning.leash = { ...tuning.leash, runAfter: 0, ...(tuning.leash.sigilFeel ? { sigilFeel: { ...tuning.leash.sigilFeel, on: false } } : {}) };
+  // ?tautchain=0: the chains as before Ed's 2026-11-12 asks (leash.chain.taut off: "when the chain gets taut you should be pulled back
+  // to ground mode"; "pop-out should also be gradual"; "legend chains yank you back"; "adult chains should look larger"; "'magic chain'
+  // coloured, with the sigil colour as a occasional flash"): no tug, pop or yank, the one drag and pull everywhere, the old links and
+  // colours, to A/B; ?tautchain=1, the default.
+  { const v = params.get("tautchain"), C = tuning.leash.chain;
+    if (C?.taut && (v === "0" || v === "1")) tuning.leash = { ...tuning.leash, chain: { ...C, taut: { ...C.taut, on: v === "1" } } }; }
   applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
   // The sea chart's save (app/chartSave.ts): the islands she's found, so the night's legends favour the others (rules/rosters.ts).
   // and the campaign's world seed (every island's shape), unless ?world= names one for this load

@@ -968,6 +968,39 @@ export type SchemaTuning = {
         "time": number;
       };
       "youthRise": number;
+      "taut": {
+        "on": boolean;
+        "groundDrag": {
+          "youth": number;
+          "adult": number;
+          "legend": number;
+        };
+        "hurry": number;
+        "tug": {
+          "perMetre": number;
+          "rise": number;
+          "commit": number;
+        };
+        "pop": {
+          "fill": number;
+          "drain": number;
+        };
+        "yank": {
+          "metres": number;
+          "every": number;
+        };
+        "links": Array<number>;
+        "look": {
+          "colour": Array<number>;
+          "alpha": number;
+          "glow": number;
+          "flash": {
+            "every": number;
+            "time": number;
+            "width": number;
+          };
+        };
+      };
     };
     "babies": {
       "gap": number;

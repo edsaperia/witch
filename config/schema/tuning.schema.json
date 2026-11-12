@@ -4953,6 +4953,170 @@
             "youthRise": {
               "type": "number",
               "minimum": 0
+            },
+            "taut": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "boolean"
+                },
+                "groundDrag": {
+                  "type": "object",
+                  "properties": {
+                    "youth": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "adult": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "legend": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "youth",
+                    "adult",
+                    "legend"
+                  ],
+                  "additionalProperties": false
+                },
+                "hurry": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "tug": {
+                  "type": "object",
+                  "properties": {
+                    "perMetre": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "rise": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "commit": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "perMetre",
+                    "rise",
+                    "commit"
+                  ],
+                  "additionalProperties": false
+                },
+                "pop": {
+                  "type": "object",
+                  "properties": {
+                    "fill": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "drain": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "fill",
+                    "drain"
+                  ],
+                  "additionalProperties": false
+                },
+                "yank": {
+                  "type": "object",
+                  "properties": {
+                    "metres": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "every": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "metres",
+                    "every"
+                  ],
+                  "additionalProperties": false
+                },
+                "links": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "look": {
+                  "type": "object",
+                  "properties": {
+                    "colour": {
+                      "type": "array",
+                      "items": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "alpha": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "glow": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "flash": {
+                      "type": "object",
+                      "properties": {
+                        "every": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "time": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "width": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "every",
+                        "time",
+                        "width"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "colour",
+                    "alpha",
+                    "glow",
+                    "flash"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "on",
+                "groundDrag",
+                "hurry",
+                "tug",
+                "pop",
+                "yank",
+                "links",
+                "look"
+              ],
+              "additionalProperties": false,
+              "description": "Pulling on a taut chain: up in the treetops it drags her down to the ground, on foot it slides that sigil out of her stack and puts it down, and a legend's chain yanks her back instead; with a lighter drag on foot and the chains' look."
             }
           },
           "required": [
@@ -4961,7 +5125,8 @@
             "fadeFrom",
             "glow",
             "rattle",
-            "youthRise"
+            "youthRise",
+            "taut"
           ],
           "additionalProperties": false,
           "description": "Every creature on her leash is on a chain this long; taut and moving away, she drags it, slowed by the heaviest taut chain's drag by level (a legend's stops her)."

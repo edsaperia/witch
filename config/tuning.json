@@ -1129,7 +1129,40 @@
         "strength": 1,
         "time": 0.5
       },
-      "youthRise": 0.85
+      "youthRise": 0.85,
+      "taut": {
+        "on": true,
+        "groundDrag": {
+          "youth": 0.15,
+          "adult": 0.4,
+          "legend": 1
+        },
+        "hurry": 1.5,
+        "tug": {
+          "perMetre": 0.022,
+          "rise": 0.3,
+          "commit": 0.4
+        },
+        "pop": {
+          "fill": 2.5,
+          "drain": 1.5
+        },
+        "yank": {
+          "metres": 4,
+          "every": 1.2
+        },
+        "links": [0.62, 1, 1.5],
+        "look": {
+          "colour": [184, 182, 210],
+          "alpha": 0.6,
+          "glow": 0.35,
+          "flash": {
+            "every": 4,
+            "time": 0.9,
+            "width": 0.14
+          }
+        }
+      }
     },
     "babies": {
       "gap": 5,

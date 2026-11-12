@@ -145,6 +145,7 @@ glossary; these are the prototype's), by note.
 - Loose sigil
 - Legend tether
 - Chain drag
+- Taut chain
 - Commanded feeding
 - Won ones out of the way
 - Follower buffs

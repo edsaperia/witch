@@ -57,6 +57,7 @@ import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./ha
 import { loadOf, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
 import { beginChains, chainLength, dragWitch } from "./chains";
+import { pullsOf, stepPop, stepTug, tautKnobs, yankFrom, type PopMeter } from "./tautChain";
 // (her follower buffs on her speed and her 💌s: rules/buffs.ts, in place of spells.ts speedMultiplier and invites.ts stepInvites)
 import { buffsOf, dashBuff, drainPips, setBuffs, speedMultiplierBuffed as speedMultiplier, stepInvitesBuffed as stepInvites } from "./buffs";
 import { castOf, castOn, circleSpot, friendSigils, looseAt, scatterSpots, stoneOpen, tetherWitch, type LooseSigil } from "./stoneStacks";
@@ -79,7 +80,7 @@ import { newBeachWitches, stepBeachWitches, type BeachWitches } from "./beach";
 import { newGrowth, type GrowthState } from "./growth";
 import type { Tuning } from "./tuning";
 import { newWitch, seaward, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
-import { deckOf, onTreehouse } from "./treehouse";
+import { deckOf, landsOn, onTreehouse } from "./treehouse";
 import { homeDown, startPartyOver, stepPartyOver, stepWorldAsleep, worldAsleep, type PartyOver } from "./partyOver";
 import { stepWin, winFlare, won, type WinState } from "./win";
 import { newChallenge, spawnPack, stepChallenge, type ChallengeState } from "./challenge";
@@ -125,6 +126,14 @@ export interface Witch {
   confused?: { until: number; drift: number; /** her movement turned, not her aim (the bat's screech) */ move?: boolean };
   /** Up against a party legend's leash (rules/partyLegend.ts, the Easter egg): which, and since when; for the view. */
   pinned?: Pinned | null;
+  /** Up in the treetops, how far her taut chains have pulled her down (rules/tautChain.ts; 0 to 1 of the way, absent: none). */
+  tug?: number;
+  /** On foot, the sigil her taut chain is pulling out of her stack, and how far (rules/tautChain.ts; absent: none). */
+  pop?: PopMeter;
+  /** The creature whose sigil that pull puts down this step (rules/sigilButton.ts popSigil). */
+  popDue?: number;
+  /** Her time a legend's chain last yanked her back (rules/tautChain.ts yankFrom). */
+  yankAt?: number;
   /** Slowed (a snail's slime, a flash) until then: her speeds times slowMult. */
   slowUntil?: number;
   slowMult?: number;
@@ -716,8 +725,31 @@ function fixedStep(g: Game, controls: readonly Controls[], guestCatchUp: readonl
   // slowed by the heaviest taut one (a legend's stops her), and it's pulled after her; sliding round the chain's end. Each witch by her
   // own; replaces the old 30 m anchor (and, on the ground, the sigils' pull: rules/witch.ts). Walking, blinking, flying or thrown; not
   // while she's knocked out, up in the treehouse (her followers guard home then: rules/houseGuard.ts), or in the zoo.
+  // The taut chain (Ed, 2026-11-12; rules/tautChain.ts, one switch: leash.chain.taut): up in the treetops pulling past a chain's end
+  // tugs her down, and pulled on far enough she comes down (never over a lake's water or onto a treehouse floor that way); on foot,
+  // pulling a youth's or adult's chain slides its sigil out of her stack, and pulled on it's put down (rules/sigilButton.ts, below,
+  // W.popDue); past a legend's she's yanked back toward it. A blow's throw, or a yank, isn't her pulling.
   beginChains();
-  if (chainLength(t) > 0 && !g.map.bounds.fence) g.witches.forEach((W, i) => { if (!W.ko && !W.body.perch && !potionPhase(g, W)) W.body = dragWitch(W.body, anchorFrom[i], W.leash.stack, g.creatures, t, hdt, pullOf(W.spells)).body; });
+  g.witches.forEach((W, i) => {
+    if (chainLength(t) > 0 && !g.map.bounds.fence && !W.ko && !W.body.perch && !potionPhase(g, W)) {
+      const r = dragWitch(W.body, anchorFrom[i], W.leash.stack, g.creatures, t, hdt, pullOf(W.spells)), B = r.body, { deck, ht } = motions[i], P = pullsOf(r.pulls);
+      const hold = (!!g.map.bounds.lakes && onLake(g.map.bounds, B.x, B.z, lakeKnobs(t).pad)) || (!!deck && landsOn(deck, B.x, B.z));
+      const thrown = !!W.knock && (!!W.knock.kx || !!W.knock.kz), pull = pullOf(W.spells);
+      const T = stepTug(B, W.tug ?? 0, r.strain, hdt, t, pull, { hold, free: thrown });
+      W.body = T.body;
+      if (T.tug > 0) W.tug = T.tug; else if (W.tug !== undefined) delete W.tug;
+      const onFoot = W.body.mode === "ground" && !W.body.seated && !W.body.perch;
+      const Pm = stepPop(W.pop ?? null, P, hdt, t, onFoot, pull, thrown);
+      if (Pm.meter) W.pop = Pm.meter; else if (W.pop) delete W.pop;
+      if (Pm.pop !== null) W.popDue = Pm.pop;
+      const y = yankFrom(P, hdt, t, ht, W.yankAt, thrown);
+      if (y !== null) {
+        const Lg = g.creatures[y], dx = Lg.x - W.body.x, dz = Lg.z - W.body.z, d = Math.hypot(dx, dz) || 1, v = tautKnobs(t)!.yank.metres * t.witch.knock.ease;
+        const k = (W.knock ??= newKnock()); k.kx = (dx / d) * v; k.kz = (dz / d) * v; k.at = ht; W.yankAt = ht; // (the knock's easing throw, no stagger)
+        g.leashEvents.push({ kind: "yanked", id: y, x: W.body.x, z: W.body.z, at: ht });
+      }
+    } else { if (W.tug !== undefined) delete W.tug; if (W.pop) delete W.pop; }
+  });
   const c = motions[0].c;
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null, onTreehouse(g), !!c.framing && onTreehouse(g), c.framePart ?? null); // (in a legend's circle: the lower view, camera.circle; indoors, camera.house; choosing at a station, camera.station)
   // The afterparty (rules/partyOver.ts): the waves have stopped for good.

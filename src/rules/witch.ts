@@ -143,7 +143,7 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   const wasOver = !!deck?.house && flyOnto(deck, w.x, w.z);
   if (mode === "rising") { lift += dt / Math.max(1e-3, t.riseTime); if (lift >= 1) { lift = 1; mode = "treetop"; perch = false; } }
   else if (mode === "descending") { lift -= dt / Math.max(1e-3, perch && deck?.house ? deck.house.landTime : t.descendTime); if (lift <= 0) { lift = 0; mode = "ground"; } }
-  else if (mode === "treetop" && lift < 1) lift = Math.min(1, lift + dt / Math.max(1e-3, t.riseTime)); // (nothing pulls her out of the sky: Ed, 2026-11-03)
+  else if (mode === "treetop" && lift < 1) lift = Math.min(1, lift + dt / Math.max(1e-3, t.riseTime)); // (back up: nothing holds her out of the sky but a taut chain she's pulling, rules/tautChain.ts, Ed 2026-11-12)
 
   // Never down on a lake's water (Ed, 2026-10-11: rules/lakes.ts): coming down over it, she holds a little off it, and lands
   // once she's over the shore.

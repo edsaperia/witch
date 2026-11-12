@@ -19,7 +19,7 @@ import type { Tuning } from "./tuning";
 import type { Creature } from "./creatures";
 import { heldByCombat } from "./creatures";
 import { homeArea } from "./homeArea";
-import { pressPicks, stackBottom, stepLeash, type LeashControls, type LeashEvent, type PlacedSigil } from "./leash";
+import { pressPicks, stackBottom, stepLeash, toBottom, type LeashControls, type LeashEvent, type PlacedSigil } from "./leash";
 import { flaskUnder } from "./legends";
 import { feedKnobs, feedTarget, growthSpurt, queueBerry } from "./berries";
 import { basketNear, mushroomNear } from "./mushrooms"; // (beside mushroomButton's import above: what the press takes first)
@@ -168,9 +168,17 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     if (held && F.hold > 0) W.leash.feedHold = ht; else feedBottom(g, W, t, ht, relicEvents);
     sigil = false; place = false;
   }
-  stepLeash(W.leash, g.creatures, { sigil, place, held, placeOnly, heldSince, ...pickControls(g, W, t), cycle: !!c.cycle && !W.ko, cycleBack: !!c.cycleBack && !W.ko, dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest,
+  // A sigil pulled out of her stack by its taut chain (Ed, 2026-11-12: "only if you keep pulling it plops onto the ground as if placed";
+  // rules/tautChain.ts stepPop): put down this step by the ordinary put-down, as the button would put down the bottom one. Not with a
+  // press of her own this step (hers first: it's tried again next step), nor where nothing may go down (it's tried again as she moves).
+  const pop = popSigil(W, onFoot && !sigil && !place && !run && !stone && !ring);
+  if (pop) { place = true; placeOnly = true; }
+  stepLeash(W.leash, g.creatures, { sigil, place, held: pop ? false : held, placeOnly, heldSince, ...pickControls(g, W, t), cycle: !!c.cycle && !W.ko, cycleBack: !!c.cycleBack && !W.ko, dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest,
     takeLoose: id => { g.loose = g.loose.filter(p => p.id !== id); g.creatures[id].loose = undefined; },
     dropTether: (id, x, z) => { g.loose.push({ id, x, z, at: g.clock.time, legend: true }); g.creatures[id].loose = true; }, land: (x, z) => isInside(g.map.bounds, x, z, BABY_COAST), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, W.body, W.body.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling, guards, homeArea(g.map));
+  if (pop && !W.leash.events.some(e => e.kind === "placed" && e.id === pop.id)) { // (nowhere to go down: her stack as it was, no refusal said)
+    pop.undo(); W.leash.events = W.leash.events.filter(e => !(e.kind === "fizzled" && e.id === pop.id));
+  }
   W.leash.events.push(...relicEvents);
   // Held with nothing to do (no sigil, relic, rune or hat picked up or put down, nothing refused), on the ground: her hat goes
   // down at her feet (rules/hat.ts putHat).
@@ -301,4 +309,15 @@ function roundAbout(g: Game, c: Creature, gx: number, gz: number, d: number, W: 
   // round it on the creature's own side: away from where the obstacle sits across the way (n = (-uz, ux), the way's left; side = -(r·n))
   const B: { t: number; ox: number; oz: number; r: number; side: number } = best, s = B.side === 0 ? (c.id % 2 ? 1 : -1) : -Math.sign(B.side), out = B.r + 0.6;
   return [B.ox + uz * s * out, B.oz - ux * s * out]; // (the obstacle less s × out along n)
+}
+
+/** The sigil her taut chain pulled out this step (W.popDue, rules/game.ts), moved to the bottom of her stack for the put-down, and how
+ *  to put her stack back as it was if it couldn't go down; null if none (or `can` is false). */
+function popSigil(W: Witch, can: boolean): { id: number; undo(): void } | null {
+  const id = W.popDue;
+  delete W.popDue;
+  if (id === undefined || !can || !W.leash.stack.includes(id)) return null;
+  const stack = [...W.leash.stack], relics = [...W.leash.relics], relicAt = W.leash.relicAt ? { ...W.leash.relicAt } : undefined;
+  toBottom(W.leash, id);
+  return { id, undo() { W.leash.stack.splice(0, W.leash.stack.length, ...stack); W.leash.relics.splice(0, W.leash.relics.length, ...relics); if (relicAt) W.leash.relicAt = relicAt; else delete W.leash.relicAt; } };
 }

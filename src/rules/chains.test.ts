@@ -1,13 +1,16 @@
 // Chains (Ed, 2026-11-03; rules/chains.ts, leash.chain): one length for every leashed creature; at full length, moving away, she
 // drags it, slowed by its level (youth 0.3, adult 0.7, legend 1), the heaviest taut chain deciding ("They don't stack"); her motion
-// round it kept; the dragged creature pulled along, never faster than its top speed; on the ground and in the air alike; nothing
-// pulls her out of the sky; only adults and legends stop her taking off; a refused take-off rattles exactly their chains, once.
+// round it kept; the dragged creature pulled along, never faster than its top speed; on the ground and in the air alike (up there,
+// pulling on past its end tugs her down: rules/tautChain.ts, its own tests; stopped, nothing pulls her out of the sky); only adults and legends stop her taking off; a refused take-off rattles exactly their chains, once.
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning, type Tuning } from "./tuning";
 import { beginChains, chainDrag, chainLength, chainShown, chained, dragWitch, takePulled, weighingChains } from "./chains";
 import { leashSpeed } from "./leash";
 import { newWitchPlayer, stepGame, STEP, type Controls, type Game } from "./game";
-import { newWitch } from "./witch";
+import { newWitch as newOnFoot } from "./witch";
+/** (her body for the drag's own tests: up in the air, where leash.chain.drag and the creatures' top speed hold with the taut chain on;
+ *  on foot it's the taut chain's lighter drag: rules/tautChain.test.ts) */
+const newWitch = (x: number, z: number) => ({ ...newOnFoot(x, z), mode: "treetop" as const, lift: 1 });
 import { smallWorld } from "../test/worlds";
 import type { Creature } from "./creatures";
 import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
@@ -22,6 +25,9 @@ const DT = 1 / 60;
 const out = (step: number, v = 20, z = 0) => ({ body: { ...newWitch(L + step, z), vx: v, vz: 0 }, from: { x: L, z: 0 } });
 /** Creatures that can't be pulled (top speed 0): the slowdown alone. */
 const still = (t: Tuning = TUNING) => withTuning({ ...t, leash: { ...t.leash, runSpeed: 0 } });
+/** The taut chain off (rules/tautChain.ts, ?tautchain=0): the drag alone, the same on foot and flying, as these tests pin it; the
+ *  taut chain's own (the lighter ground drag, the hurry, the tug, the pop, the yank) are rules/tautChain.test.ts's. */
+const noTug = (t: Tuning = TUNING) => withTuning({ ...t, leash: { ...t.leash, chain: { ...t.leash.chain!, taut: { ...t.leash.chain!.taut!, on: false } } } });
 
 describe("one chain length, and the drag by level", () => {
   it("every leashed creature but babies and a party legend is on a chain 80 m long", () => {
@@ -77,8 +83,8 @@ describe("one chain length, and the drag by level", () => {
     expect(dist(r.body, c)).toBeCloseTo(L, 6); // (the chain at its length again)
     expect(takePulled(c)).toBeCloseTo(0.7, 6);
     beginChains();
-    const slow = crit(1, 1, 0, 0), top = leashSpeed(slow, TUNING) * DT, q = dragWitch(out(1).body, from, [1], [c, slow], TUNING, DT);
-    expect(slow.x).toBeCloseTo(top, 6); // (its top speed: no further)
+    const slow = crit(1, 1, 0, 0), top = leashSpeed(slow, TUNING) * C.taut!.hurry * DT, q = dragWitch(out(1).body, from, [1], [c, slow], TUNING, DT);
+    expect(slow.x).toBeCloseTo(top, 6); // (its top speed, hurried while taut (rules/tautChain.ts): no further)
     expect(q.body.x - L).toBeCloseTo(top, 6); // (and she no further than it could come)
   });
 
@@ -97,8 +103,8 @@ describe("one chain length, and the drag by level", () => {
   });
 });
 
-function onGround(t: Tuning = TUNING): Game {
-  const g = newGame(7, t), W = g.witches[0];
+function onGround(t: Tuning = noTug()): Game {
+  const g = newGame(7, noTug(t)), W = g.witches[0];
   g.clock.paused = false; g.party.paused = true;
   W.body = { ...W.body, seated: false, mode: "ground", lift: 0, x: g.map.dancefloor.x + 40, z: g.map.dancefloor.z + 30 };
   for (let i = 0; i < 4 / STEP; i++) stepGame(g, idle, STEP);
@@ -131,7 +137,7 @@ describe("chains in play", () => {
     }
   });
 
-  it("in the air too: a youth's chain slows her flying away; and nothing pulls her out of the sky", () => {
+  it("in the air too: a youth's chain slows her flying away; with the tug off nothing pulls her out of the sky, and stopped never", () => {
     const g = onGround(still()), W = g.witches[0];
     W.body = { ...W.body, mode: "treetop", lift: 1 };
     const y = lead(g, 1, -L + 1, 0);

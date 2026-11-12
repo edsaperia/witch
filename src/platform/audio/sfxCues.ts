@@ -174,6 +174,7 @@ export class SfxCues {
         const W = g.witches.find(q => q.id === e.id); // (and the chains holding her rattle, once: Ed, 2026-11-03; rules/chains.ts weighingChains)
         if (W) S.rattle(pan(e.x), weighingChains(W.leash.stack, g.creatures).length);
       }
+      else if (e.kind === "yanked") S.rattle(pan(e.x), 1); // (a legend's chain yanking her back: its rattle, Ed 2026-11-12; rules/tautChain.ts)
       else if (e.kind === "outsideCircle") S.land(pan(e.x), 0.5); // (put down outside a legend's circle: it does nothing; a soft thud, and the circle flashes)
   }
 
