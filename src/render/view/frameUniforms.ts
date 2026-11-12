@@ -15,7 +15,7 @@ const smoothstep01 = (x: number) => x * x * (3 - 2 * x);
 import { groundHeight, placed } from "../height";
 import { focusOf } from "./culling";
 import { LIGHT_UNIFORMS } from "../lighting";
-import { hsvInto, moodOf } from "../mood";
+import { hsvInto, moodOf, wildAt } from "../mood";
 import { cellKey, partifiedKey } from "../../rules/party";
 import { biomeJitter } from "../../../art/flora/biomes.js";
 import { FADE_MATERIALS, FADE_MESHES, SPRITE_UNIFORMS, treeNormalsUniform } from "../sprites";
@@ -81,7 +81,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
       const wild = partifiedKey(g.party, g.map, cellKey(g.map.areaAt(g.witch.x, g.witch.z).cell)) ? 0 : 1, dt = Math.max(0, Math.min(0.2, time - WILD.at));
       WILD.at = time; WILD.k += (wild - WILD.k) * Math.min(1, dt / Math.max(0.05, W.ease));
       const k = W.mix * WILD.k, G = LIGHT_UNIFORMS.uGlowRgb.value;
-      if (k > 0) G.set(G.x + (W.colour[0] / 255 - G.x) * k, G.y + (W.colour[1] / 255 - G.y) * k, G.z + (W.colour[2] / 255 - G.z) * k);
+      if (k > 0) { const gx = G.x, gy = G.y, gz = G.z; hsvInto(G, W.hue, W.sat, W.value); G.set(gx + (G.x - gx) * k, gy + (G.y - gy) * k, gz + (G.z - gz) * k); } // (its colour as hue, saturation and brightness: the pause page's Wild look sliders, live)
     } }
   for (const b of [v.witchBatch, v.bareBatch]) if (b) { b.silhouetteOpacity = t.occlusion.silhouette; b.silhouetteColour = LIGHT_UNIFORMS.uGlowRgb.value; } // (her silhouette's strength and colour, live too)
   for (const m of FADE_MATERIALS) { m.depthWrite = S.seeWrite; if (m.stencilRef === 1) m.stencilWrite = S.seeStencil; m.blending = S.seeNoBlend ? THREE.NoBlending : THREE.NormalBlending; }
@@ -165,8 +165,11 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
       v.moodAt = time + 0.25;
       const d = g.map.dancefloor;
       v.moodArea = Math.hypot(w.x - d.x, w.z - d.z) < g.map.homeRadius ? "home" : AREA_TYPES[g.map.typeOf(...g.map.cellSafe(w.x, w.z).cell)]?.id ?? "";
+      // (wild as her light reckons it, render/combatLight.ts: an area the party hasn't reached; home never)
+      v.moodWild = wildAt(g, w.x, w.z, v.moodArea);
     }
-    v.areaMoods.update(v.moodArea, Number.isNaN(v.moodTime) ? 0 : time - v.moodTime, LIGHT_UNIFORMS.uHazeColour.value, v.post.gradeTint, v.mist && { setStrength: (k: number) => v.mist!.setStrength(k * (t.mist.gain ?? 1)) }); // (mist.gain: the pause page's Low mist slider, Ed 2026-10-14)
+    v.areaMoods.update(v.moodArea, Number.isNaN(v.moodTime) ? 0 : time - v.moodTime, LIGHT_UNIFORMS.uHazeColour.value, v.post.gradeTint, v.mist && { setStrength: (k: number) => v.mist!.setStrength(k * (t.mist.gain ?? 1)) }, v.moodWild ? 1 : 0); // (mist.gain: the pause page's Low mist slider, Ed 2026-10-14)
+    v.post.wild = v.areaMoods.wild; // (the wild-only grade's share: render/post.ts)
     v.moodTime = time;
   }
 }

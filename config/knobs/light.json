@@ -970,11 +970,52 @@
     "light.spooky.wildGlow.mix": {
       "what": "How far her glow is cooled in the wild (0 her own colour everywhere)."
     },
-    "light.spooky.wildGlow.colour": {
-      "what": "The colour (0-255) her glow cools toward in the wild."
+    "light.spooky.wildGlow.hue": {
+      "what": "The hue (0 to 1 round the colour wheel) her glow cools toward in the wild; 0.507 the teal as built (80, 200, 205).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-12",
+          "quote": "Can you make a new pause menu group that has each of these applied in the wild only so I can tweak them?",
+          "rest": "the colour was rgb [80, 200, 205]; now hue, saturation and brightness so the pause page's Wild look group can slide it, the same colour exactly"
+        }
+      ]
+    },
+    "light.spooky.wildGlow.sat": {
+      "what": "How deep the colour her glow cools toward in the wild is (0 white, 1 the hue at its deepest)."
+    },
+    "light.spooky.wildGlow.value": {
+      "what": "How bright the colour her glow cools toward in the wild is (0 black, 1 full)."
     },
     "light.spooky.wildGlow.ease": {
       "what": "How long (s) her glow takes to cool or warm as she crosses into or out of the party's ground."
+    },
+    "light.spooky.wildGrade": {
+      "what": "A colour grade over the picture in the wild only (an area the party hasn't reached; never on party ground or home), eased in and out as she crosses at the area moods' pace (light.spooky.areaEase); laid after the spooky grade (light.spooky.grade), so in the wild both apply, one after the other.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-12",
+          "quote": "Can you make a new pause menu group that has each of these applied in the wild only so I can tweak them?",
+          "rest": "added at 0, so the look is unchanged till he turns it up"
+        }
+      ],
+      "links": ["src/render/mood.ts", "src/render/post.ts"]
+    },
+    "light.spooky.wildGrade.strength": {
+      "what": "How strong the wild-only grade is (0 off)."
+    },
+    "light.spooky.wildGrade.desat": {
+      "what": "How much colour the wild-only grade drains from the dark and middle tones (0 none, 1 grey before the tint)."
+    },
+    "light.spooky.wildGrade.pivot": {
+      "what": "The brightness above which the wild-only grade leaves the picture alone, so bright lights keep their colour."
+    },
+    "light.spooky.wildGrade.hue": {
+      "what": "The hue (0 to 1 round the colour wheel) the wild-only grade tints toward."
+    },
+    "light.spooky.wildGrade.sat": {
+      "what": "How deep the wild-only grade's tint is (0 none, only drained)."
     },
     "patternLight.strength": {
       "what": "How strongly coloured spokes shape existing lights, from 0 (ordinary lighting) to 4.",
