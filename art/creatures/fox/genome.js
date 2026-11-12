@@ -14,4 +14,3 @@ export const GENOME_FOX = { id: "fox", name: "Fox", template: "quadruped", build
       { kind: "earrings", which: "both" }, { kind: "bells", at: "throat", size: .13 }, // the elder kit: a shrine fox's rings in its ears and a bell at its throat
     ] },
   ] };
-// (a throwaway line for #1980's proof that the art check narrows to fox; reverted next)
