@@ -9,6 +9,11 @@
 import { HAT_COLOURWAYS, SHOE_STYLES } from "../creatures.js";
 
 const LENS = { bar: [24, 18, 34], star: [255, 214, 64], heart: [255, 92, 150] };
+// (turns as shape.js's pose makes them: nine numbers by rows, y then x then z)
+const turnOf = (x, y, z) => { const cx = Math.cos(x), sx = Math.sin(x), cy = Math.cos(y), sy = Math.sin(y), cz = Math.cos(z), sz = Math.sin(z); return [cy * cz + sy * sx * sz, sy * sx * cz - cy * sz, sy * cx, cx * sz, cx * cz, -sx, cy * sx * sz - sy * cz, sy * sz + cy * sx * cz, cy * cx]; };
+const times = (a, b) => [0, 1, 2].flatMap(r => [0, 1, 2].map(c => a[r * 3] * b[c] + a[r * 3 + 1] * b[3 + c] + a[r * 3 + 2] * b[6 + c]));
+const transposed = m => [m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]];
+const eulerOf = m => [Math.asin(Math.max(-1, Math.min(1, -m[5]))), Math.atan2(m[2], m[8]), Math.atan2(m[3], m[4])];
 const unit = v => { const l = Math.hypot(...v) || 1; return v.map(x => x / l); };
 
 /** `plan` in its party gear: { collar: [r, g, b] or null, hat: 0..2 or null, glasses: "bar" | "star" | "heart" or null, shoes: a
@@ -56,15 +61,39 @@ export function napping(plan, how = "sphinx") {
     if (at.tailb) poss.tailb = [0, 0, (mid[2] - at.tailb[2]) * 0.7];
     for (const chain of tails) chain.forEach((bone, i) => { rots[bone] = [i ? 0 : -pitch(chain) - 0.9, 0.5, 0]; });
   } else if (how === "curl" && legs.length) {
-    // rolled onto its side, its back bent round so its nose comes to its tail, its legs drawn up to its belly, its tails wrapped
-    // forward round it; let down so its flank lies on the ground
-    const wide = Math.max(...skin.slice(0, plan.anchors?.skull ?? skin.length).map(r => r.rx));
-    rots[G.root] = [0, 0, -1.42]; poss[G.root] = [0, wide * 0.95 - at[G.root][1], 0];
-    // (every bone from its hips to its head takes a share of the bend)
-    const parent = Object.fromEntries(plan.bones.map(([name, , p]) => [name, p])), spine = []; for (let b = G.head; b && b !== G.root; b = parent[b]) spine.push(b);
-    for (const name of spine) rots[name] = [1.9 / Math.max(1, spine.length), 0, 0];
-    for (const l of legs) { const [upper, lower, foot] = l.bones, fore = at[upper][2] > at[G.root][2]; rots[upper] = [fore ? 0.75 : -1.0, 0, 0]; rots[lower] = [fore ? -1.5 : 1.7, 0, 0]; rots[foot] = [fore ? 0.6 : -0.6, 0, 0]; }
-    for (const chain of tails) chain.forEach((bone, i) => { rots[bone] = [i ? -0.42 : -pitch(chain) - 0.55, 0, 0]; });
+    // curled like a sleeping dog or fawn (Ed's two photographs, 2026-11-12: "It should be like references"): down on its belly
+    // and tipped onto one hip, its back bent sideways into a ring so its head comes round to lie by its hind feet, its neck let
+    // down so its chin is on the ground, every leg folded in under it, its tails brought round the other way to meet its nose.
+    // gait.curl: { turn: the whole bend from hips to nose, roll: how far onto its hip, tail: each tail joint's step round, ears and earsIn: how far its ears lie back and swing in, side }
+    const C = { turn: 3.5, roll: 0.95, rollHead: 0.25, legs: 1.4, tail: 0.42, ears: 1.0, side: 1, ...G.curl }, parent = Object.fromEntries(plan.bones.map(([name, , p]) => [name, p]));
+    const spine = []; for (let b = G.head; b && b !== G.root; b = parent[b]) spine.unshift(b);
+    // (let down until the deepest of its body is on the ground: lying part on its side, that is about half its girth)
+    const girth = Math.max(...skin.slice(0, plan.anchors?.neck ?? skin.length).map(r => Math.max(r.rx, r.ry)));
+    rots[G.root] = [0, 0, C.side * C.roll]; poss[G.root] = [0, girth * 0.95 - at[G.root][1], 0];
+    // (each joint of its back is given where it should face in the world, then that is put in its parent's terms: a neck that
+    // stands up has to be laid flat before it turns, or the turn would tip its head over; its roll eases from its hips, most on
+    // their side, to its head, nearly upright, as the dog's does)
+    const worlds = { [G.root]: turnOf(0, 0, C.side * C.roll) }, yaws = { [G.root]: 0 }; let yaw = 0;
+    spine.forEach((name, i) => { const next = spine[i + 1], k = (i + 1) / spine.length, before = worlds[parent[name]] ?? worlds[G.root];
+      // (its own piece laid level: the rise from this joint to the next; its head's, a little nose-down)
+      const rise = next ? Math.atan2(at[next][1] - at[name][1], Math.max(1e-6, at[next][2] - at[name][2])) : 0.12;
+      yaw += C.side * C.turn * (C.share?.[i] ?? 1 / spine.length);
+      const want = times(turnOf(rise, yaw, 0), turnOf(0, 0, C.side * (C.roll + (C.rollHead - C.roll) * k))); rots[name] = eulerOf(times(transposed(before), want)); worlds[name] = want; yaws[name] = yaw; });
+    // its legs folded as it would fold them standing (thigh forward, shin back, paw forward; a foreleg the other way), then the
+    // whole folded leg laid over flat on the ground, towards the inside of the ring
+    for (const l of legs) { const [upper, lower, foot] = l.bones, fore = at[upper][2] > at[G.root][2] + 1e-6, on = parent[upper];
+      const want = times(turnOf(0, yaws[on] ?? 0, C.side * C.legs), turnOf(fore ? 0.95 : -0.95, 0, 0)); rots[upper] = eulerOf(times(transposed(worlds[on] ?? worlds[G.root]), want));
+      rots[lower] = [fore ? -2.25 : 2.2, 0, 0]; rots[foot] = [fore ? 1.1 : -1.25, 0, 0]; }
+    // its tails laid along the ground and brought round the other way to meet its nose: each piece of a tail, whatever way it
+    // is carried (a plume held up, a fan spread), is turned to lie level, a little of its spread kept, then swung round the
+    // upright, each joint a step further
+    for (const chain of tails) { let turn = 0, before = worlds[parent[chain[0]]] ?? worlds[G.root], lay = turnOf(0, 0, 0);
+      chain.forEach((bone, i) => { const next = chain[i + 1];
+        if (next) { const d = at[next].map((v, j) => v - at[bone][j]), round = Math.atan2(d[0], -d[2]), spread = Math.max(-0.3, Math.min(0.3, round)) * 0.6;
+          lay = times(turnOf(-Math.atan2(d[1], Math.hypot(d[0], d[2])) - (i < 2 ? 0.1 : 0), 0, 0), turnOf(0, round - spread, 0)); }
+        turn -= C.side * C.tail * (i ? 1 : 1.5); const want = times(turnOf(0, turn, 0), lay); rots[bone] = eulerOf(times(transposed(before), want)); before = want; }); }
+    // (its ears laid back; long ones swung in over its own back, so they lie on it and not out across the ground)
+    for (const e of G.ears ?? []) rots[e] = [C.ears, C.side * (C.earsIn ?? 0), 0];
   } else {
     if (legs.length) {
       // sphinx-wise: forelegs out in front along the ground, hind legs folded under, the body let down onto them
@@ -80,7 +109,7 @@ export function napping(plan, how = "sphinx") {
   }
   // (a flyer comes down to the ground and folds its wings back along itself)
   if (plan.hover) { poss[G.root] = [0, -plan.hover, 0]; for (const [name] of plan.bones) if (/^wing/.test(name)) rots[name] = [0, /L$/.test(name) ? -1.15 : 1.15, /L$/.test(name) ? -0.25 : 0.25]; }
-  for (const e of G.ears ?? []) rots[e] = [0.35, 0, 0];
+  for (const e of G.ears ?? []) rots[e] ??= [0.35, 0, 0];
   // (a snail's eye stalks drawn in)
   for (const [name] of plan.bones) if (/^stalk.*1$/.test(name)) rots[name] = [how === "shell" ? -2.2 : -1.1, 0, 0];
   // (in its shell, what stands off its head and its eye stalks is drawn in with them: not there to see)

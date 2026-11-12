@@ -2,12 +2,18 @@
 // docs/backlog/journey.md "Rosters"): every kind of today's area types, each with the phase it's introduced in and its island's
 // bearing on the sea chart.
 import { describe, expect, it } from "vitest";
-import { CLASSIC_SLOTS, KIND_SLOTS, KINDS_TABLE as kinds } from "./kinds";
+import { BENCH, CLASSIC_SLOTS, KIND_SLOTS, KINDS_TABLE as kinds } from "./kinds";
+import { CREATURE_IDS } from "./creatureConfig";
 import { AREA_TYPES, CLASSIC_TYPES } from "./map";
 
 const real = Object.fromEntries(Object.entries(kinds).filter(([, k]) => !k.placeholder));
 
 describe("the kind table", () => {
+  it("gives every creature an island but those on the bench (Ed, 2026-11-12: \"marten is on the bench\"), and the bee the marten's place", () => {
+    expect(CREATURE_IDS.filter(id => !kinds[id]).sort()).toEqual([...BENCH].sort());
+    expect(BENCH).toEqual(["marten"]);
+    expect(kinds.bee).toMatchObject({ phase: 0, biome: "temperate" }); expect(KIND_SLOTS.bee).toBe(4);
+  });
   it("has every area type's species once, and no other", () => {
     const species = AREA_TYPES.map(a => a.creature).sort();
     expect(Object.keys(real).sort()).toEqual(species);

@@ -14,10 +14,11 @@ export const MESH_FRAMES = 8;
  *  Ed looked at the ladders at and passed ("Ok these are good", 2026-11-12); they are not yet squared with the game's own body
  *  sizes (art/genome/size-candidate.js), which measure the body without tails, ears or ornament (Ed, 2026-11-12: "keep the
  *  sizes"). Only species in the game's roster are here. */
-export const MESH_HEIGHTS = { fox: [53, 81, 137, 387], stoat: [41, 63, 88, 229], marten: [45, 69, 97, 237], hare: [74, 114, 164, 491], squirrel: [42, 71, 122, 403], dormouse: [38, 65, 86, 246], badger: [54, 82, 113, 256], mole: [45, 67, 95, 323], hedgehog: [47, 74, 103, 347], snail: [35, 54, 73, 222] };
-/** The bee's and the turtle's, for when they are kinds (art/creatures-pending/README.md says what they wait on): sizes of the
- *  same order as their neighbours', not yet looked at in play. */
-export const MESH_HEIGHTS_PENDING = { bee: [45, 69, 97, 280], turtle: [45, 69, 97, 280] };
+export const MESH_HEIGHTS = { fox: [53, 81, 137, 387], stoat: [41, 63, 88, 229], marten: [45, 69, 97, 237], hare: [74, 114, 164, 491], squirrel: [42, 71, 122, 403], dormouse: [38, 65, 86, 246], badger: [54, 82, 113, 256], mole: [45, 67, 95, 323], hedgehog: [47, 74, 103, 347], snail: [35, 54, 73, 222],
+  // (the bee, in the marten's place on home since 2026-11-12: the marten's order of size, not yet looked at in play)
+  bee: [45, 69, 97, 280] };
+/** The turtle's, for when it is a kind (art/creatures-pending/README.md says what it waits on): its neighbours' order of size. */
+export const MESH_HEIGHTS_PENDING = { turtle: [45, 69, 97, 280] };
 
 /** Whether this species is drawn as a mesh under this style. */
 export const hasMesh = (species, st) => st?.meshCreatures === 1 && Object.hasOwn(MESH_HEIGHTS, species);

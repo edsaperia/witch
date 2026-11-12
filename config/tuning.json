@@ -528,6 +528,7 @@
       "otter": 12,
       "beetle": 12,
       "marten": 11,
+      "bee": 11,
       "beaver": 11,
       "hare": 11,
       "badger": 11,
@@ -1436,6 +1437,7 @@
         "wolf",
         "fox",
         "marten",
+        "bee",
         "bat"
       ],
       "moving": 0.6,
@@ -1578,7 +1580,8 @@
     "fast": [
       "hare",
       "stoat",
-      "marten"
+      "marten",
+      "bee"
     ],
     "fastMult": 1.7,
     "legend": 0.4

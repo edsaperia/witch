@@ -5,7 +5,7 @@ import { defaultStyle } from '../../../art/generator.js';
 import { rigGearKey } from './rigBuild';
 
 const style = defaultStyle();
-const counts: Record<string, number> = { armadillo: 4, bat: 2, beetle: 6, crab: 8, dragonfly: 6, frosttroll: 2, hedgehog: 4, heron: 2, mole: 4, moth: 6, owl: 2, penguin: 2, raven: 2, scorpion: 8, spider: 8, toad: 4, woodlouse: 14 };
+const counts: Record<string, number> = { armadillo: 4, bat: 2, bee: 6, beetle: 6, crab: 8, dragonfly: 6, frosttroll: 2, hedgehog: 4, heron: 2, mole: 4, moth: 6, owl: 2, penguin: 2, raven: 2, scorpion: 8, spider: 8, toad: 4, woodlouse: 14 };
 const legless = new Set(['featheredserpent', 'hydra', 'rattlesnake', 'snail', 'snake']);
 const bakeStiltParts = rigParts as unknown as (id: string, level: number, style: unknown, gear: { stilt: true }) => {
   template: string; joints: { legs: { mat: number }[] }; pieces: { torso: unknown[] | null; head: unknown[] | null }; discs: Record<number, Record<number, unknown>>;

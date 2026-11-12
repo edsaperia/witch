@@ -219,7 +219,7 @@ The roster, each biome's kinds by the phase they come in (each kind's `phase` an
 <!-- data: roster (node tools/docs/tables.mjs --write; edit the data, not this) -->
 | Biome | home | phase 1 | phase 2 | phase 3 | phase 4 |
 |---|---|---|---|---|---|
-| temperate | badger, dormouse, fox, hare, hedgehog, marten, mole, snail, squirrel, stoat | beaver, boar, moth, newt, stag, toad |  |  |  |
+| temperate | badger, bee, dormouse, fox, hare, hedgehog, mole, snail, squirrel, stoat | beaver, boar, moth, newt, stag, toad |  |  |  |
 | badlands |  |  | meerkat, spider | armadillo, rattlesnake | griffin, scorpion |
 | cold |  |  | elk, wolf | arcticfox, penguin | frosttroll, polarbear |
 | cold rainforest |  |  | owl, raccoon | flyingsquirrel, roe | bear, unicorn |

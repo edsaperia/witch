@@ -37,11 +37,11 @@ Each species' attack, made from `config/species-attacks.json` and its kind's `ar
 | Phase | Biome | Species | Attack |
 |---|---|---|---|
 | 0 | temperate | badger | a shoulder-barge lunge that knocks her back |
+| 0 | temperate | bee | two stings loosed in quick succession |
 | 0 | temperate | dormouse | a quick seed flicked straight at her |
 | 0 | temperate | fox | a foxfire wisp curving in |
 | 0 | temperate | hare | a stamp: the ground jolts round it |
 | 0 | temperate | hedgehog | a ring of quills, short reach |
-| 0 | temperate | marten | two pinecones thrown in quick succession |
 | 0 | temperate | mole | the ground heaves up where she stood |
 | 0 | temperate | snail | a slime patch round it that slows |
 | 0 | temperate | squirrel | an acorn lobbed onto where she stands |

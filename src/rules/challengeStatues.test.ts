@@ -334,7 +334,7 @@ describe("its won ones out of the fight's way (Ed, 2026-11-04, on #1804: \"they 
     for (const c of won) befriend(c, g.clock.time);
     const spots: string[] = [];
     let samples = 0, close = 0;
-    const out = runUntil(g, () => won.every(c => Math.hypot(c.x - ch.x, c.z - ch.z) >= ch.radius + S.keepOut - 0.1), 60); // (walking out at its pace: a snail's slow; 30 s before the circle grew to 50 m, Ed on #1827)
+    const out = runUntil(g, () => won.every(c => Math.hypot(c.x - ch.x, c.z - ch.z) >= ch.radius + S.keepOut - 0.1), 90); // (walking out at its pace: a snail's slow; 30 s before the circle grew to 50 m, Ed on #1827; 60 s before the bee took the marten's place on home, 2026-11-12: bees range about a fight as the moth does, and the toad, keeping clear of them, is 65 s getting out where it was 40)
     expect(out).not.toBeNull();
     for (let i = 0; i < 12 * 60; i++) {
       stepGame(g, still, STEP);

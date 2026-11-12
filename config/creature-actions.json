@@ -164,6 +164,34 @@
         }
       }
     ],
+    "bee": [
+      {
+        "id": "strike",
+        "delivery": "melee",
+        "weight": 0.3,
+        "youngWeight": 1
+      },
+      {
+        "id": "stinger",
+        "delivery": "ranged",
+        "weight": 0.45,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "call",
+        "delivery": "effect",
+        "weight": 0.25,
+        "youngWeight": 0.6,
+        "cooldown": 8,
+        "effect": "call",
+        "parameters": {
+          "range": 24,
+          "time": 2,
+          "cooldown": 8,
+          "tint": "white"
+        }
+      }
+    ],
     "beetle": [
       {
         "id": "strike",

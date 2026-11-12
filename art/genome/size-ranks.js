@@ -5,7 +5,8 @@ export const SIZE_CLASSES = [
   ["woodlouse", "snail", "moth", "dragonfly", "beetle", "scorpion"],
   ["newt", "salamander", "dormouse", "toad", "crab", "spider"],
   ["mole", "stoat", "squirrel", "flyingsquirrel"],
-  ["hedgehog", "meerkat", "fennec", "marten", "owl", "raven", "heron", "rattlesnake", "bat"],
+  // (the bee: a giant one, the size of the marten whose place on home it took: Ed, 2026-11-12, a design placement)
+  ["hedgehog", "meerkat", "fennec", "marten", "bee", "owl", "raven", "heron", "rattlesnake", "bat"],
   ["cat", "arcticfox", "hare", "armadillo"],
   ["fox", "badger", "otter", "raccoon", "redpanda"],
   ["lynx", "beaver", "roe", "penguin", "snake"],
@@ -15,7 +16,7 @@ export const SIZE_CLASSES = [
   ["rhino", "frosttroll", "hydra", "frostwyrm"],
   ["elephant", "stegosaurus"],
 ];
-export const DESIGN_SIZE_RANKS = new Set(["sphinx", "griffin", "unicorn", "featheredserpent", "frosttroll", "hydra", "frostwyrm", "stegosaurus"]);
+export const DESIGN_SIZE_RANKS = new Set(["bee", "sphinx", "griffin", "unicorn", "featheredserpent", "frosttroll", "hydra", "frostwyrm", "stegosaurus"]);
 export const SIZE_CLASS_BY_ID = Object.fromEntries(SIZE_CLASSES.flatMap((ids,rank)=>ids.map(id=>[id,rank])));
 export function sizeMultiplier(id, level) {
   const rank=SIZE_CLASS_BY_ID[id];

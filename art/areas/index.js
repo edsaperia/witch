@@ -72,7 +72,7 @@ export const AREA_FOLDER_KINDS = [
   {"kind":"squirrel","slot":1,"phase":0,"bearing":285,"dir":"WNW","biome":"temperate"},
   {"kind":"hare","slot":2,"phase":0,"bearing":0,"dir":"N","biome":"temperate"},
   {"kind":"fox","slot":3,"phase":0,"bearing":40,"dir":"NE","biome":"temperate"},
-  {"kind":"marten","slot":4,"phase":0,"bearing":345,"dir":"NNW","biome":"temperate"},
+  {"kind":"bee","slot":4,"phase":0,"bearing":345,"dir":"NNW","biome":"temperate"},
   {"kind":"stoat","slot":5,"phase":0,"bearing":250,"dir":"WSW","biome":"temperate"},
   {"kind":"mole","slot":6,"phase":0,"bearing":80,"dir":"E","biome":"temperate"},
   {"kind":"snail","slot":7,"phase":0,"bearing":215,"dir":"SW","biome":"temperate"},

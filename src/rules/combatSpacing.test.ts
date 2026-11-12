@@ -89,8 +89,8 @@ describe("combat waiting spacing", () => {
     expect(waitingDrive({ ...c, hopNext: 0.8 }, 0.8, data).airborne).toBe(true);
     expect(waitingProfile(creature(1, 0, 0, "boar"), data).turn).toBeLessThan(waitingProfile(c, data).turn);
     const signatures = Object.keys(SPACING.body.radii).map(species => JSON.stringify(waitingProfile({ species }, data)));
-    expect(signatures).toHaveLength(64);
-    expect(new Set(signatures).size).toBe(64);
+    expect(signatures).toHaveLength(65); // (the 64 kinds, and the marten on the bench: rules/kinds.ts BENCH)
+    expect(new Set(signatures).size).toBe(65);
   });
   it("moves a waiting goal clear of large drawn bodies without moving the bodies", () => {
     const c = creature(1, 15, 0), attacker = creature(2, 0, 0, "elephant"), before = { ...attacker };
