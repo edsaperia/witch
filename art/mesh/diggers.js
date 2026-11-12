@@ -143,5 +143,6 @@ const hedgehog = {
   },
 };
 
-// (asleep, the mole's great hands stay flat on the ground beside it: art/mesh/gear.js `napping` reads gait.lie)
-export const BADGER_PLANS = badger, HEDGEHOG_PLANS = hedgehog, MOLE_PLANS = Object.fromEntries(Object.entries(mole).map(([level, make]) => [level, () => { const p = make(); p.gait.lie = { fore: [-0.3, 0.1, 0.1] }; return p; }]));
+// (asleep, the mole lies on its belly at every level, its great hands flat on the ground beside it: art/mesh/gear.js `napping`
+// reads gait.lie and gait.sleep)
+export const BADGER_PLANS = badger, HEDGEHOG_PLANS = hedgehog, MOLE_PLANS = Object.fromEntries(Object.entries(mole).map(([level, make]) => [level, () => { const p = make(); p.gait.lie = { fore: [-0.3, 0.1, 0.1] }; p.gait.sleep = "sphinx"; return p; }]));

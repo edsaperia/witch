@@ -9,7 +9,7 @@ import { dome, plan, plate, quad, tail, walk } from "./kit.js";
 const OLIVE = "#7d8f6a", T = { coat: OLIVE, belly: "#e6d79a", nose: "#3a4226", upper: "#6a7c58", mid: "#5b6c4a", sock: "#4c5c3e", eye: "#17140f" };
 const build = (C, o) => quad({ C, hind: { len: 0.27, thick: 2.0, paw: 1.5, spread: 2.1, ...o.hind }, fore: { len: 0.27, thick: 1.9, paw: 1.6, spread: 2.2, ...o.fore }, body: { len: 0.8, girth: 1.2, deep: 0.72, tuck: 1.05, neck: [0.07, 0.2], neckThick: 0.62, white: 0.6, ...o.body },
   head: { size: 0.84, muzzle: 0.42, muzzleWide: 1.45, muzzleDeep: 1.3, wide: 0.95, dome: 0.95, cheek: 0, eye: 1.35, eyeAt: [0, 0.006, -0.01], nose: 0.01, ...o.head, ear: { shape: "round", tall: 0.05, wide: 0.4, back: C.coat, inner: C.coat } } });
-const paddle = (o = {}) => ({ seconds: 0.9, duty: 0.7, bob: 0.004, sway: 0.07, tailSwing: 0.12, legs: walk(0.9), ...o });
+const paddle = (o = {}) => ({ seconds: 0.9, duty: 0.7, bob: 0.004, sway: 0.07, tailSwing: 0.12, legs: walk(0.9), sleep: "shell", ...o }); // (it sleeps drawn into its shell: Ed, 2026-11-12)
 /** Its shell over the torso: wide, long and high as given; plates patterned light and dark. */
 const carapace = (q, o) => { const R = q.R, c = [0, R[1].at[1] + 0.005, (R[1].at[2] + R[4].at[2]) / 2 - 0.01], L = (R[4].at[2] - R[1].at[2]);
   return dome("loin", c, { rx: R[3].rx * (o.wide ?? 1.5), rz: L * (o.long ?? 0.72), high: o.high, sides: o.sides ?? 10, rows: o.rows ?? 5, colour: o.colour, rim: o.rim, seams: o.seams, glow: o.glow }); };

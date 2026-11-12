@@ -39,25 +39,50 @@ export function dress(plan, gear) {
   return { ...plan, lofts, cones };
 }
 
-/** `plan` asleep: a still pose (shape.js reads `still`: each bone's turn and shift, and what breathes), its eyes shut. */
-export function napping(plan) {
-  const at = Object.fromEntries(plan.bones.map(([name, p]) => [name, p])), G = plan.gait ?? {}, rots = {}, poss = {};
-  const legs = G.legs ?? [];
-  if (legs.length) {
-    // sphinx-wise: forelegs out in front along the ground, hind legs folded under, the body let down onto them
-    for (const l of legs) { const [upper, lower, foot] = l.bones, fore = at[upper][2] > 0;
-      const [u, lo, f] = (fore ? G.lie?.fore : G.lie?.hind) ?? (fore ? [-1.3, 0.15, 0.25] : [-0.95, 2.2, -1.25]); // (a plan may say how its own legs fold: gait.lie)
-      rots[upper] = [u, 0, 0]; rots[lower] = [lo, 0, 0]; rots[foot] = [f, 0, 0]; }
-    poss[G.root] = [0, -0.8 * Math.min(...legs.map(l => at[l.bones[0]][1])), 0];
+/** `plan` asleep: a still pose (shape.js reads `still`: each bone's turn and shift, and what breathes), its eyes shut. how:
+ *  "sphinx" (on its belly, forelegs out, hind legs folded under: the young and the grown), "curl" (on its side, nose to tail, its
+ *  legs drawn up and its tails round it: Ed, 2026-11-12, "Most sleeping legends should curl up on their sides") or "shell" (drawn
+ *  into its shell, nothing showing: "Snail and turtle sleep in their shells"; a plan says so with gait.sleep). */
+export function napping(plan, how = "sphinx") {
+  const at = Object.fromEntries(plan.bones.map(([name, p]) => [name, p])), G = plan.gait ?? {}, rots = {}, poss = {}, legs = G.legs ?? [], skin = plan.lofts[0]?.rings ?? [];
+  const tails = G.tails ?? (G.tail ? [G.tail] : []), pitch = chain => { const a = at[chain[0]], b = at[chain[chain.length - 1]]; return chain.length > 1 ? Math.atan2(b[1] - a[1], Math.max(1e-6, a[2] - b[2])) : 0; };
+  if (how === "shell") {
+    // everything soft drawn back under the shell: its head and neck pulled in, its legs folded flat and drawn to its middle, its
+    // tail tucked, the shell let down onto the ground; a snail's foot shortened under it and its stalks drawn in
+    const mid = at[G.root] ?? [0, 0, 0];
+    for (const l of legs) { const [upper, lower, foot] = l.bones, fore = at[upper][2] > mid[2]; rots[upper] = [fore ? 1.2 : -1.2, 0, 0]; rots[lower] = [fore ? -2.3 : 2.3, 0, 0]; rots[foot] = [0, 0, 0]; poss[upper] = [-at[upper][0] * 0.5, 0.02, (mid[2] - at[upper][2]) * 0.45]; }
+    if (legs.length) poss[G.root] = [0, -0.92 * Math.min(...legs.map(l => at[l.bones[0]][1])), 0];
+    for (const name of [G.neck, G.head, "front", "head"]) if (name && at[name] && !poss[name]) { const parent = plan.bones.find(b => b[0] === name)[2]; if (parent) poss[name] = [0, (at[parent][1] - at[name][1]) * 0.8, (at[parent][2] - at[name][2]) * 0.92]; }
+    if (at.tailb) poss.tailb = [0, 0, (mid[2] - at.tailb[2]) * 0.7];
+    for (const chain of tails) chain.forEach((bone, i) => { rots[bone] = [i ? 0 : -pitch(chain) - 0.9, 0.5, 0]; });
+  } else if (how === "curl" && legs.length) {
+    // rolled onto its side, its back bent round so its nose comes to its tail, its legs drawn up to its belly, its tails wrapped
+    // forward round it; let down so its flank lies on the ground
+    const wide = Math.max(...skin.slice(0, plan.anchors?.skull ?? skin.length).map(r => r.rx));
+    rots[G.root] = [0, 0, -1.42]; poss[G.root] = [0, wide * 0.95 - at[G.root][1], 0];
+    // (every bone from its hips to its head takes a share of the bend)
+    const parent = Object.fromEntries(plan.bones.map(([name, , p]) => [name, p])), spine = []; for (let b = G.head; b && b !== G.root; b = parent[b]) spine.push(b);
+    for (const name of spine) rots[name] = [1.9 / Math.max(1, spine.length), 0, 0];
+    for (const l of legs) { const [upper, lower, foot] = l.bones, fore = at[upper][2] > at[G.root][2]; rots[upper] = [fore ? 0.75 : -1.0, 0, 0]; rots[lower] = [fore ? -1.5 : 1.7, 0, 0]; rots[foot] = [fore ? 0.6 : -0.6, 0, 0]; }
+    for (const chain of tails) chain.forEach((bone, i) => { rots[bone] = [i ? -0.42 : -pitch(chain) - 0.55, 0, 0]; });
+  } else {
+    if (legs.length) {
+      // sphinx-wise: forelegs out in front along the ground, hind legs folded under, the body let down onto them
+      for (const l of legs) { const [upper, lower, foot] = l.bones, fore = at[upper][2] > 0;
+        const [u, lo, f] = (fore ? G.lie?.fore : G.lie?.hind) ?? (fore ? [-1.3, 0.15, 0.25] : [-0.95, 2.2, -1.25]); // (a plan may say how its own legs fold: gait.lie)
+        rots[upper] = [u, 0, 0]; rots[lower] = [lo, 0, 0]; rots[foot] = [f, 0, 0]; }
+      poss[G.root] = [0, -0.8 * Math.min(...legs.map(l => at[l.bones[0]][1])), 0];
+    }
+    if (G.neck) rots[G.neck] = [0.5, 0, 0];
+    if (G.head) rots[G.head] = [0.3, 0.15, 0];
+    // each tail brought down from where it's carried and laid round its flank
+    for (const chain of tails) chain.forEach((bone, i) => { rots[bone] = [i ? -0.05 : -pitch(chain) * 0.85, i ? 0.4 : 0.5, 0]; });
   }
-  if (G.neck) rots[G.neck] = [0.5, 0, 0];
-  if (G.head) rots[G.head] = [0.3, 0.15, 0];
-  // each tail brought down from where it's carried and laid round its flank
-  for (const chain of G.tails ?? (G.tail ? [G.tail] : [])) { const a = at[chain[0]], b = at[chain[chain.length - 1]], pitch = chain.length > 1 ? Math.atan2(b[1] - a[1], Math.max(1e-6, a[2] - b[2])) : 0;
-    chain.forEach((bone, i) => { rots[bone] = [i ? -0.05 : -pitch * 0.85, i ? 0.4 : 0.5, 0]; }); }
   for (const e of G.ears ?? []) rots[e] = [0.35, 0, 0];
   // (a snail's eye stalks drawn in)
-  for (const [name] of plan.bones) if (/^stalk.*1$/.test(name)) rots[name] = [-1.1, 0, 0];
-  const cones = plan.cones.map(c => (c.tag === "eye" ? { ...c, ry: c.ry * 0.22, colour: "#16110f", tipColour: "#16110f", glow: false, tip: c.at.map((v, i) => v + (c.tip[i] - v) * 0.5) } : c));
-  return { ...plan, cones, still: { rots, poss, root: G.root, chest: G.chest } };
+  for (const [name] of plan.bones) if (/^stalk.*1$/.test(name)) rots[name] = [how === "shell" ? -2.2 : -1.1, 0, 0];
+  // (in its shell, what stands off its head and its eye stalks is drawn in with them: not there to see)
+  const hidden = b => how === "shell" && (/^stalk/.test(b) || b === G.head || b === "head"), lofts = how === "shell" ? plan.lofts.filter((l, i) => !i || !l.rings.every(r => hidden(r.bone))) : plan.lofts;
+  const cones = plan.cones.filter(c => !hidden(c.bone)).map(c => (c.tag === "eye" ? { ...c, ry: c.ry * 0.22, colour: "#16110f", tipColour: "#16110f", glow: false, tip: c.at.map((v, i) => v + (c.tip[i] - v) * 0.5) } : c));
+  return { ...plan, lofts, cones, still: { rots, poss, root: G.root, chest: G.chest } };
 }

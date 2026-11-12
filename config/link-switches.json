@@ -520,9 +520,10 @@
   {
    "name": "meshCreatures",
    "values": [
+    "0",
     "1"
    ],
-   "does": "Draws fox, stoat, marten, hare, squirrel, dormouse, badger, mole, hedgehog and snail as low-poly meshes on skeletons (art/mesh), an eight-frame walk each, with their own party gear, enraged look, naps and sleeping legends; off by default until Ed has passed them in play.",
+   "does": "Creatures that have one are drawn as low-poly meshes on skeletons (art/mesh), on by default: fox, stoat, marten, hare, squirrel, dormouse, badger, mole, hedgehog and snail so far; 0 compares the generated creatures.",
    "group": "compare",
    "since": "2026-11-12",
    "readIn": [

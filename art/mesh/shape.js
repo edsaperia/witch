@@ -33,12 +33,12 @@ class Faces {
 /** A loft: rings { at, rx, ry, bone, colour } along a path, `sides` corners each, joined ring to ring and closed at both ends.
  *  A ring's plane is square to the path there; `up` picks its ry direction (rx is across). colour may be (angle 0..1 from the
  *  top, going round) => colour, so a ring can be one colour above and another below. */
-function loft(faces, rings, sides, up = [0, 1, 0], core = true) {
+function loft(faces, rings, sides, up = [0, 1, 0], core = true, fine = 1) {
   const made = rings.map((r, i) => {
     const here = V(r.at), prev = V(rings[Math.max(0, i - 1)].at), next = V(rings[Math.min(rings.length - 1, i + 1)].at);
     const t = next.sub(prev).normalize(), u0 = V(r.up ?? up), s = new V3().crossVectors(u0, t).normalize(), u = new V3().crossVectors(t, s).normalize();
     return Array.from({ length: sides }, (_, k) => {
-      const a = (k + (r.turn ?? 0.5)) / sides * Math.PI * 2, frac = k / sides; // (turn 0.5: a flat on top, a corner each side)
+      const a = (k + (r.turn ?? 0.5) * fine) / sides * Math.PI * 2, frac = k / sides; // (turn 0.5: a flat on top, a corner each side; `fine` times the sides, the corners it had before keep their places)
       return { p: here.clone().addScaledVector(s, Math.sin(a) * r.rx).addScaledVector(u, Math.cos(a) * r.ry), c: typeof r.colour === "function" ? r.colour(Math.cos(a), Math.sin(a), frac) : r.colour, bone: r.bone, glow: !!r.glow, tag: r.tag, core: core && !FRILL.test(r.bone), skin: core && !r.plain && !BARE.test(r.bone) };
     });
   });
@@ -76,41 +76,47 @@ const RUNES = [
  *  a line of light and not a plate),
  *  runes { colour, round (which facets carry them), size (of the facet, 0..1), every, seed, w (a stroke's width), max (to a plate) }: a lit mark
  *  on each plate's facets, drawn unlit like fox-fire. */
-function armour(faces, made, o) {
-  const sides = made[0].length, N = made.length - 1, { from = 0, to = N, round = [0, 1.7], side = 0, thick = 0.014, step = 0.006, lames = 1, colour, rim = colour, runes, inset = 0, gap = 0, flare = 0, glow = false } = o;
-  const mids = made.map(r => r.reduce((m, v) => m.add(v.p), new V3()).multiplyScalar(1 / sides));
-  // (a facet's angle from the top, and which side it's on: facet k lies between corners k and k + 1)
+function armour(faces, made, o, m = 1) {
+  // (m: how many of the loft's corners stand where one did before its sides were multiplied, shape's `fine`: a plate, a stripe
+  // and a rune keep the facets they were drawn for, each now a run of m narrower ones)
+  const fineSides = made[0].length, sides = fineSides / m, N = made.length - 1, { from = 0, to = N, round = [0, 1.7], side = 0, thick = 0.014, step = 0.006, lames = 1, colour, rim = colour, runes, inset = 0, gap = 0, flare = 0, glow = false } = o;
+  const mids = made.map(r => r.reduce((mid, v) => mid.add(v.p), new V3()).multiplyScalar(1 / fineSides));
+  // (a facet's angle from the top, and which side it's on: facet k lies between the corners k and k + 1 of the unmultiplied ring)
   const ang = k => { const a = ((k + 1) % sides) / sides * Math.PI * 2; return a > Math.PI + 1e-6 ? [Math.PI * 2 - a, -1] : [a, a < 1e-6 || Math.abs(a - Math.PI) < 1e-6 ? 0 : 1]; };
   const within = (k, r) => { const [a, s] = ang((k + sides) % sides); return a >= r[0] - 1e-6 && a <= r[1] + 1e-6 && (!side || !s || s === side); }, on = k => within(k, round);
   // (how far down the plate a corner lies, 0 at its upper edge to 1 at its lower: what `flare` lifts)
-  const low = k => { const a = (k + 0.5) / sides * Math.PI * 2, f = a > Math.PI ? Math.PI * 2 - a : a; return Math.min(1, Math.max(0, (f - round[0]) / Math.max(1e-6, round[1] - round[0]))); };
+  const low = j => { const a = ((j + 0.5 * m) / fineSides * Math.PI * 2) % (Math.PI * 2), f = a > Math.PI ? Math.PI * 2 - a : a; return Math.min(1, Math.max(0, (f - round[0]) / Math.max(1e-6, round[1] - round[0]))); };
   const at = (t, h) => { const i = Math.min(N - 1, Math.max(0, Math.floor(t + 1e-9))), u = t - i, mid = mids[i].clone().lerp(mids[i + 1], u), skin = made[i].map((v, k) => v.p.clone().lerp(made[i + 1][k].p, u));
     return { mid, bone: (u < 0.5 ? made[i] : made[i + 1])[0].bone, skin, out: skin.map((p, k) => p.clone().add(p.clone().sub(mid).normalize().multiplyScalar(h * (1 + flare * low(k))))) }; };
-  const vert = (p, c, bone, glow = false) => ({ p, c, bone, glow });
+  // (a point across facet K of a ring of corners, v 0..1 from its one edge to its other, along its m narrow facets; and the facet's
+  // edge as a run of points, drawn in by `inset` at each end)
+  const across = (ring, K, v) => { const x = Math.min(m - 1e-9, Math.max(0, v * m)), i = Math.floor(x); return ring[(K * m + i) % fineSides].clone().lerp(ring[(K * m + i + 1) % fineSides], x - i); };
+  const run = (ring, K) => { const pts = [across(ring, K, inset)]; for (let i = 1; i < m; i++) if (i / m > inset + 1e-6 && i / m < 1 - inset - 1e-6) pts.push(ring[(K * m + i) % fineSides].clone()); pts.push(across(ring, K, 1 - inset)); return pts; };
+  const vert = (p, c, bone, lit = false) => ({ p, c, bone, glow: lit });
   // (a quad wound to face away from `ref`)
-  const away = (a, b, c, d, ref) => { const n = b.p.clone().sub(a.p).cross(d.p.clone().sub(a.p)), m = a.p.clone().add(b.p).add(c.p).add(d.p).multiplyScalar(0.25); n.dot(m.sub(ref)) >= 0 ? faces.quad(a, b, c, d) : faces.quad(a, d, c, b); };
+  const away = (a, b, c, d, ref) => { const n = b.p.clone().sub(a.p).cross(d.p.clone().sub(a.p)), mid = a.p.clone().add(b.p).add(c.p).add(d.p).multiplyScalar(0.25); n.dot(mid.sub(ref)) >= 0 ? faces.quad(a, b, c, d) : faces.quad(a, d, c, b); };
   for (let j = 0; j < lames; j++) {
     const a0 = from + (to - from) * j / lames, b0 = from + (to - from) * (j + 1) / lames, a = a0 + (b0 - a0) * gap, b = b0 - (b0 - a0) * gap, ts = [a]; for (let i = Math.floor(a) + 1; i < b - 1e-6; i++) ts.push(i); ts.push(b);
     const h = t => thick + step * (1 - (t - a) / (b - a)), st = ts.map(t => at(t, h(t)));
-    for (let n = 0; n + 1 < st.length; n++) for (let k = 0; k < sides; k++) if (on(k)) {
-      // (the facet's four corners, outside and on the skin; `inset` draws each facet in from its neighbours, a stripe and not a sheet)
-      const r = st[n], f = st[n + 1], k1 = (k + 1) % sides, core = r.mid.clone().lerp(f.mid, 0.5), e = (ring, w) => ring[k].clone().lerp(ring[k1], w);
-      const ro = [e(r.out, inset), e(r.out, 1 - inset)], fo = [e(f.out, inset), e(f.out, 1 - inset)], rs = [e(r.skin, inset), e(r.skin, 1 - inset)], fs = [e(f.skin, inset), e(f.skin, 1 - inset)];
-      const cell = [...ro, ...fo, ...rs, ...fs].reduce((m, v) => m.add(v), new V3()).multiplyScalar(1 / 8);
-      away(vert(ro[0], colour, r.bone, glow), vert(ro[1], colour, r.bone, glow), vert(fo[1], colour, f.bone, glow), vert(fo[0], colour, f.bone, glow), core);
-      const wall = (p, q, pb, ps, qs, qb) => away(vert(p, rim, pb, glow), vert(q, rim, qb, glow), vert(qs, rim, qb, glow), vert(ps, rim, pb, glow), cell);
-      if (inset || !on(k - 1)) wall(ro[0], fo[0], r.bone, rs[0], fs[0], f.bone);
-      if (inset || !on(k + 1)) wall(ro[1], fo[1], r.bone, rs[1], fs[1], f.bone);
-      if (n === 0) wall(ro[0], ro[1], r.bone, rs[0], rs[1], r.bone);
-      if (n === st.length - 2) wall(fo[0], fo[1], f.bone, fs[0], fs[1], f.bone);
+    for (let n = 0; n + 1 < st.length; n++) for (let K = 0; K < sides; K++) if (on(K)) {
+      const r = st[n], f = st[n + 1], core = r.mid.clone().lerp(f.mid, 0.5), ro = run(r.out, K), fo = run(f.out, K), rs = run(r.skin, K), fs = run(f.skin, K), last = ro.length - 1;
+      const cell = [...ro, ...fo, ...rs, ...fs].reduce((mid, v) => mid.add(v), new V3()).multiplyScalar(1 / (4 * ro.length));
+      const wall = (p, q, ps, qs, pb, qb) => away(vert(p, rim, pb, glow), vert(q, rim, qb, glow), vert(qs, rim, qb, glow), vert(ps, rim, pb, glow), cell);
+      for (let i = 0; i < last; i++) {
+        away(vert(ro[i], colour, r.bone, glow), vert(ro[i + 1], colour, r.bone, glow), vert(fo[i + 1], colour, f.bone, glow), vert(fo[i], colour, f.bone, glow), core);
+        if (n === 0) wall(ro[i], ro[i + 1], rs[i], rs[i + 1], r.bone, r.bone);
+        if (n === st.length - 2) wall(fo[i], fo[i + 1], fs[i], fs[i + 1], f.bone, f.bone);
+      }
+      if (inset || !on(K - 1)) wall(ro[0], fo[0], rs[0], fs[0], r.bone, f.bone);
+      if (inset || !on(K + 1)) wall(ro[last], fo[last], rs[last], fs[last], r.bone, f.bone);
     }
     if (!runes) continue;
-    for (let k = 0; k < sides; k++) if (on(k) && within(k, runes.round ?? round) && (j * 3 + k) % (runes.every ?? 1) === 0) {
-      const k1 = (k + 1) % sides, S = (t, v) => { const s = at(Math.min(b, Math.max(a, t)), h(t) + 0.004); return { p: s.out[k].clone().lerp(s.out[k1], v), mid: s.mid, bone: s.bone }; };
+    for (let K = 0; K < sides; K++) if (on(K) && within(K, runes.round ?? round) && (j * 3 + K) % (runes.every ?? 1) === 0) {
+      const S = (t, v) => { const s = at(Math.min(b, Math.max(a, t)), h(t) + 0.004); return { p: across(s.out, K, v), mid: s.mid, bone: s.bone }; };
       const wide = S((a + b) / 2, 0).p.distanceTo(S((a + b) / 2, 1).p), long = S(a, 0.5).p.distanceTo(S(b, 0.5).p), s = (runes.size ?? 0.62) * Math.min(wide, long), dt = s / long * (b - a), dv = s / wide, w = runes.w ?? Math.max(0.006, s * 0.13);
-      const count = Math.max(1, Math.min(runes.max ?? 2, Math.floor(long / (s * 1.7)))), flip = ((k + 1) % sides) / sides > 0.5 ? 1 : -1;
+      const count = Math.max(1, Math.min(runes.max ?? 2, Math.floor(long / (s * 1.7)))), flip = ((K + 1) % sides) / sides > 0.5 ? 1 : -1;
       for (let c = 0; c < count; c++) {
-        const tc = a + (b - a) * (c + 0.5) / count, G = RUNES[(j * 5 + k * 3 + c * 2 + (runes.seed ?? 0)) % RUNES.length], pt = (gx, gy) => S(tc + (gx - 0.5) * dt, 0.5 + flip * (gy - 0.5) * dv);
+        const tc = a + (b - a) * (c + 0.5) / count, G = RUNES[(j * 5 + K * 3 + c * 2 + (runes.seed ?? 0)) % RUNES.length], pt = (gx, gy) => S(tc + (gx - 0.5) * dt, 0.5 + flip * (gy - 0.5) * dv);
         for (const [x0, y0, x1, y1] of G) for (let q = 0; q < 2; q++) {
           const P0 = pt(x0 + (x1 - x0) * q / 2, y0 + (y1 - y0) * q / 2), P1 = pt(x0 + (x1 - x0) * (q + 1) / 2, y0 + (y1 - y0) * (q + 1) / 2), d = P1.p.clone().sub(P0.p), out = P0.p.clone().add(P1.p).multiplyScalar(0.5).sub(P0.mid).normalize();
           const sv = d.clone().cross(out).normalize().multiplyScalar(w / 2), e = d.clone().normalize().multiplyScalar(w * 0.3), v = (p, sgn, end) => vert(p.clone().addScaledVector(sv, sgn).addScaledVector(e, end), runes.colour, P0.bone, true);
@@ -178,10 +184,11 @@ export function shape(plan) {
   const index = Object.fromEntries(plan.bones.map(([name], i) => [name, i])), faces = new Faces(index);
   const bones = plan.bones.map(([name, at, parent]) => ({ name, parent: parent ? index[parent] : -1, at: [...at] }));
   bones.forEach((b, i) => { if (b.parent >= i) throw Error(`${plan.name}: bone ${b.name} comes before its parent`); });
-  const made = plan.lofts.map(l => loft(faces, l.rings, l.sides ?? 6, l.up));
+  // (plan.fine: every tube of six sides or more is given that many times as many, so it's rounder: Ed, 2026-11-12, "texture, twice the sides")
+  const fines = plan.lofts.map(l => ((l.sides ?? 6) >= 6 ? plan.fine ?? 1 : 1)), made = plan.lofts.map((l, i) => loft(faces, l.rings, (l.sides ?? 6) * fines[i], l.up, true, fines[i]));
   for (const c of plan.cones ?? []) cone(faces, c);
   // (armour lies on a loft's own corners: `on` names the loft, or counts to it; the first is a four-legged plan's skin)
-  for (const a of plan.armour ?? []) { const i = typeof a.on === "string" ? plan.lofts.findIndex(l => l.name === a.on) : a.on ?? 0; if (i < 0) throw Error(`${plan.name}: no loft "${a.on}" for armour`); armour(faces, made[i], a); }
+  for (const a of plan.armour ?? []) { const i = typeof a.on === "string" ? plan.lofts.findIndex(l => l.name === a.on) : a.on ?? 0; if (i < 0) throw Error(`${plan.name}: no loft "${a.on}" for armour`); armour(faces, made[i], a, fines[i]); }
   return { name: plan.name, bones, lit: faces.lit, glow: faces.glow, motion: plan.still ? still(plan.still) : plan.gait ? motion(plan) : null, gait: plan.gait ?? null };
 }
 

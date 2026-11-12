@@ -1,0 +1,6 @@
+{
+  "reason": "Mesh creatures on by default (Ed, 2026-11-12: \"meshes are great, we should aim to transition to them for all the creatures\"; docs/plans/creature-meshes.md): fox, stoat, marten, hare, squirrel, dormouse, badger, mole, hedgehog and snail are drawn from low-poly meshes on skeletons (art/mesh), at the sizes Ed passed, on eight-frame walks, and the live rig no longer draws them. The rules are untouched.",
+  "frames": {
+    "*": "wherever one of those ten species is in view: its new drawing, its size, and its walk's frames"
+  }
+}

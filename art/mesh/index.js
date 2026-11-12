@@ -19,18 +19,25 @@ export const MESH_HEIGHTS = { fox: [53, 81, 137, 387], stoat: [41, 63, 88, 229],
 /** Whether this species is drawn as a mesh under this style. */
 export const hasMesh = (species, st) => st?.meshCreatures === 1 && Object.hasOwn(MESH_HEIGHTS, species);
 
-const plan = (species, level, gear) => dress(MESH_PLANS[species][level](), gear), colours = level => (level === 3 ? 24 : 12);
+// (Ed, 2026-11-12, of the trial: "texture, twice the sides": every tube twice as many-sided, and the grown and the legends, whose
+// faces are large enough to look bare, with a coat texture)
+const plan = (species, level, gear) => ({ ...dress(MESH_PLANS[species][level](), gear), fine: 2 }), colours = level => (level === 3 ? 24 : 12);
+const texture = level => (level >= 2 ? { size: 3.2, long: 2.6, tilt: 0.32, tone: 0.07 } : null);
+/** How it sleeps: as its plan says if it does (gait.sleep: the snail's and the turtle's "shell", the mole's "sphinx"), else a legend
+ *  curled on its side and the rest on their bellies (art/mesh/gear.js). */
+const sleeps = (p, level) => p.gait?.sleep ?? (level === 3 ? "curl" : "sphinx");
 
 /** A species' walk at a level (0 baby to 3 legend), drawn: art/mesh/raster.js bakeMesh's { w, h, step, towards, away }. gear: a
  *  party animal's (art/mesh/gear.js `dress`). Not kept: a legend's frames are tens of megabytes. */
-export const meshWalk = (species, level, gear = null) => bakeMesh(shape(plan(species, level, gear)), { ppu: scale(species, level), frames: MESH_FRAMES, colours: colours(level) });
+export const meshWalk = (species, level, gear = null) => bakeMesh(shape(plan(species, level, gear)), { ppu: scale(species, level), frames: MESH_FRAMES, colours: colours(level), texture: texture(level) });
 /** The scale a species is drawn at, art pixels a metre: its bare self standing MESH_HEIGHTS tall, so a hat doesn't shrink it. */
 const scale = (species, level) => meshPpu(shape(plan(species, level, null)), MESH_HEIGHTS[species][level]);
 
 /** The same animal asleep (art/mesh/gear.js `napping`), at the size it walks at: its two breaths, { w, h, towards } (the game
  *  mirrors a sleeper for the other way). gear: what it wears, kept on asleep (Ed, 2026-10-06). */
 export function meshNap(species, level, gear = null) {
-  return bakeMesh(shape(napping(plan(species, level, gear))), { ppu: scale(species, level), frames: 2, colours: colours(level) });
+  const p = plan(species, level, gear);
+  return bakeMesh(shape(napping(p, sleeps(p, level))), { ppu: scale(species, level), frames: 2, colours: colours(level), texture: texture(level) });
 }
 
 /** A species' legend as it sleeps through the centuries (docs/notes/creatures.md, **Sleeping legend**): asleep, its glow gone
