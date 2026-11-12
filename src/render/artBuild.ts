@@ -3,7 +3,7 @@ import { pixels, packPixels } from "./artPacking";
 export { groundOf, witchLookOf } from "./artLook";
 import { witchLookOf } from "./artLook";
 export { creatureSprites, bakeOverride, headPoint, creatureFrame, walkGait, partyGearOf } from "./creatureArt";
-import { creatureSprites, headPoint, partyGearOf } from "./creatureArt";
+import { creatureSprites, headPoint, meshNapSprites, meshSleepSprites, meshSpecies, partyGearOf } from "./creatureArt";
 export { typeSprites } from "./areaArt";
 import { typeSprites } from "./areaArt";
 import { sceneSprites, speakerSprites, beachSprites, relicSprites, pathPieceSprites, beachEdgeSprites, lakeShoreSprites, decorSprites, partyObjectSprites, partyWitchSprites } from "./worldArt";
@@ -210,6 +210,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "lakeShore") { const { sprites, shore } = lakeShoreSprites(job.style, job.K, mk, job.style.biome ?? job.biome); return { px: packPixels(sprites, 2048), lakeShore: shore }; }
   // (enraged: red eyes, and the angry face; dressed up: the happy face; the faces only while tuning looks.expressions is on; art/genome/expressions.js)
   if (job.kind === "sleep") {
+    if (meshSpecies(job.species, job.style)) { const m = meshSleepSprites(job.species, mk); return { px: packPixels(m.sprites, 2048), ground: m.ground, centre: m.centre }; } // (drawn as a mesh: art/mesh)
     const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];
     for (let f = 0; f < 2; f++) {
       const { sp, colours } = Art.legendForm(job.species, job.style, { frame: f }) as { sp: { origin?: number[]; h: number; w: number }; colours: unknown };
@@ -223,6 +224,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
     const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];
     // (dressed: in its party gear, Ed 2026-10-06: sleepers keep their party gear on)
     const gear = (job.idle ? { idle: true } : { ...(job.dressed ? partyGearOf(job.dressed.seed, job.dressed.colour) : {}), nap: true }) as unknown as null;
+    if (!job.idle && meshSpecies(job.species, job.style)) { const m = meshNapSprites(job.species, mk, gear); return { px: packPixels(m.sprites, 2048), ground: m.ground, centre: m.centre }; } // (drawn as a mesh: art/mesh)
     for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
       const sp = Art.critter(job.species, level, f, job.style, "towards", gear) as { origin?: number[]; h: number; w: number; m: ArrayLike<number> };
       const b = Art.bake(sp, Art.speciesColours(job.species, job.style, gear), job.style, job.style.cOutline, mk) as Baked; b.head = headPoint(sp.m, b.w, b.h); sprites.push(b);

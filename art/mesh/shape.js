@@ -15,8 +15,8 @@ const V = p => new V3(...p);
 // anything riding these bones, and every cone (ears, tufts, spines, claws) and armour plate. The rest is its `core`.
 const FRILL = /^(tail|wing|ant|ear|orbit|stalk)/;
 
-/** A hex colour as [r, g, b], 0 to 255. */
-const rgb = c => { const h = c.replace("#", ""), f = h.length === 3 ? [...h].map(x => x + x).join("") : h; return [parseInt(f.slice(0, 2), 16), parseInt(f.slice(2, 4), 16), parseInt(f.slice(4, 6), 16)]; };
+/** A colour, hex or already [r, g, b], as [r, g, b], 0 to 255. */
+const rgb = c => { if (Array.isArray(c)) return c; const h = c.replace("#", ""), f = h.length === 3 ? [...h].map(x => x + x).join("") : h; return [parseInt(f.slice(0, 2), 16), parseInt(f.slice(2, 4), 16), parseInt(f.slice(4, 6), 16)]; };
 
 /** Collects flat-shaded triangles: each corner its own point, with its colour and the one bone it rides. `tag` marks what a
  *  face is where the game needs to know (an eye). */
@@ -155,6 +155,17 @@ function motion(plan) {
   return { seconds: G.seconds, rots, poss };
 }
 
+/** A still pose that breathes (art/mesh/gear.js `napping`): each bone's turn and shift held, its chest and its root rising and
+ *  falling once a cycle (u 0 out, 0.5 in). */
+function still(S) {
+  const rots = new Map(), poss = new Map(), breath = u => (1 - Math.cos(Math.PI * 2 * u)) / 2;
+  for (const [bone, r] of Object.entries(S.rots)) rots.set(bone, bone === S.chest ? u => [r[0] - 0.03 * breath(u), r[1], r[2]] : () => r);
+  if (S.chest && !rots.has(S.chest)) rots.set(S.chest, u => [-0.03 * breath(u), 0, 0]);
+  for (const [bone, p] of Object.entries(S.poss)) poss.set(bone, bone === S.root ? u => [p[0], p[1] + 0.006 * breath(u), p[2]] : () => p);
+  if (S.root && !poss.has(S.root)) poss.set(S.root, u => [0, 0.006 * breath(u), 0]);
+  return { seconds: 3, rots, poss };
+}
+
 /** The plan built: { name, bones: [{ name, parent (its place in the list, -1 for the root), at }], lit and glow (each { pos, col,
  *  bone, core, tag }: a triangle's three corners in turn, their colours 0..255, the bone each rides, whether each is part of its
  *  body proper (what its size is measured by), and a tag a triangle), and motion:
@@ -168,7 +179,7 @@ export function shape(plan) {
   for (const c of plan.cones ?? []) cone(faces, c);
   // (armour lies on a loft's own corners: `on` names the loft, or counts to it; the first is a four-legged plan's skin)
   for (const a of plan.armour ?? []) { const i = typeof a.on === "string" ? plan.lofts.findIndex(l => l.name === a.on) : a.on ?? 0; if (i < 0) throw Error(`${plan.name}: no loft "${a.on}" for armour`); armour(faces, made[i], a); }
-  return { name: plan.name, bones, lit: faces.lit, glow: faces.glow, motion: plan.gait ? motion(plan) : null, gait: plan.gait ?? null };
+  return { name: plan.name, bones, lit: faces.lit, glow: faces.glow, motion: plan.still ? still(plan.still) : plan.gait ? motion(plan) : null, gait: plan.gait ?? null };
 }
 
 /** Every bone's place in the world at `u` of the walk: for each, nine numbers of its turn (rows) and three of where its joint is. */

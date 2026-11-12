@@ -24,7 +24,8 @@ function palette(samples, k) {
 const nearest = (cs, r, g, b) => { let best = 0, bd = Infinity; for (let i = 0; i < cs.length; i++) { const c = cs[i], d = (r - c[0]) ** 2 + (g - c[1]) ** 2 + (b - c[2]) ** 2; if (d < bd) { bd = d; best = i; } } return best; };
 
 /** Draws `sh`. o: height (art pixels its first frame stands, turned towards us: its whole silhouette) or body (the same, of its
- *  body proper alone: no tail, ears, tufts or armour, as the game sizes its animals), frames (in its walk's
+ *  body proper alone: no tail, ears, tufts or armour, as the game sizes its animals) or ppu (art pixels a metre, outright: an
+ *  animal lying down drawn at the scale it walks at), frames (in its walk's
  *  cycle), colours (the palette's size), ss, cover. Returns { w, h, ppu (art pixels a metre), step (how far it walks between
  *  frames, a share of w), palette, towards, away }: each a list of frames { albedo, normal, flipped (the normals for drawing it
  *  mirrored), eyes (1 where a pixel is an eye, or undefined if none show), head ([x, y], where its head's joint is) }, every
@@ -46,7 +47,7 @@ export function bakeMesh(sh, o = {}) {
   const turn = yaw => { const th = Math.PI / 2 - yaw, c = Math.cos(th), s = Math.sin(th); return (x, y, z) => { const dx = x - centre[0], dy = y - centre[1], dz = z - centre[2], rx = dx * c + dz * s, rz = -dx * s + dz * c; return [rx, dy * cp - rz * sp, dy * sp + rz * cp]; }; };
   // the scale: its first frame, towards us, stands `height` art pixels
   let top = -Infinity, bottom = Infinity, bodyTop = -Infinity, bodyBottom = Infinity; { const view = turn(MESH_YAW.towards), w = world[0].out; for (let v = 0; v < nv; v++) { const u = view(w[v * 3], w[v * 3 + 1], w[v * 3 + 2])[1]; if (u > top) top = u; if (u < bottom) bottom = u; if (core[v]) { if (u > bodyTop) bodyTop = u; if (u < bodyBottom) bodyBottom = u; } } }
-  const ppu = o.body ? o.body / (bodyTop - bodyBottom) : height / (top - bottom), S = Math.ceil(radius * 2 * ppu) + 6, big = S * ss, k = ppu * ss, far = radius * 6 - 0.01;
+  const ppu = o.ppu ?? (o.body ? o.body / (bodyTop - bodyBottom) : height / (top - bottom)), S = Math.ceil(radius * 2 * ppu) + 6, big = S * ss, k = ppu * ss, far = radius * 6 - 0.01;
   // (the part of that S by S picture the animal ever reaches, over the whole walk and both headings: only that much is drawn)
   let ux0 = S, ux1 = -1, uy0 = S, uy1 = -1;
   for (const facing of ["towards", "away"]) { const th = Math.PI / 2 - MESH_YAW[facing], c = Math.cos(th), sn = Math.sin(th);
@@ -146,4 +147,14 @@ export function meshStep(sh, frames = 8) {
     for (let v = 0; v < bone.length; v++) { const b = bone[v], a = sh.bones[b].at, x = all[v * 3] - a[0], y = all[v * 3 + 1] - a[1], z = all[v * 3 + 2] - a[2], wx = R[b * 9] * x + R[b * 9 + 1] * y + R[b * 9 + 2] * z + T[b * 3], wz = R[b * 9 + 6] * x + R[b * 9 + 7] * y + R[b * 9 + 8] * z + T[b * 3 + 2];
       for (const yaw of [MESH_YAW.towards, MESH_YAW.away]) { const th = Math.PI / 2 - yaw, rx = wx * Math.cos(th) + wz * Math.sin(th); if (rx < lo) lo = rx; if (rx > hi) hi = rx; } } }
   return stride(sh) / frames / (hi - lo);
+}
+
+/** The scale a shape is drawn at to stand `height` art pixels (its whole silhouette, first frame, towards us), in art pixels a
+ *  metre: what bakeMesh works out for itself, for drawing the same animal in another pose at the same size. */
+export function meshPpu(sh, height) {
+  const { R, T } = pose(sh, 0), all = [...sh.lit.pos, ...sh.glow.pos], bone = [...sh.lit.bone, ...sh.glow.bone], th = Math.PI / 2 - MESH_YAW.towards, c = Math.cos(th), s = Math.sin(th), cp = Math.cos(MESH_PITCH), sp = Math.sin(MESH_PITCH); let lo = Infinity, hi = -Infinity;
+  for (let v = 0; v < bone.length; v++) { const b = bone[v], a = sh.bones[b].at, x = all[v * 3] - a[0], y = all[v * 3 + 1] - a[1], z = all[v * 3 + 2] - a[2];
+    const wx = R[b * 9] * x + R[b * 9 + 1] * y + R[b * 9 + 2] * z + T[b * 3], wy = R[b * 9 + 3] * x + R[b * 9 + 4] * y + R[b * 9 + 5] * z + T[b * 3 + 1], wz = R[b * 9 + 6] * x + R[b * 9 + 7] * y + R[b * 9 + 8] * z + T[b * 3 + 2], u = wy * cp - (-wx * s + wz * c) * sp;
+    if (u < lo) lo = u; if (u > hi) hi = u; }
+  return height / (hi - lo);
 }

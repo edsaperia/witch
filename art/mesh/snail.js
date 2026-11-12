@@ -48,7 +48,7 @@ function snail(name, o) {
   }
   const S = shell({ at: [0, (0.1 + sh.lift) * fat, z(-0.04)], ...sh });
   const sway = (o.sway ?? 0.12), T = Math.PI * 2;
-  return { name, bones, lofts: [...lofts, ...S.lofts, ...(o.lofts ?? [])], cones: [...cones, ...S.cones, ...(o.cones ?? [])], armour: o.armour ?? [],
+  return { name, bones, lofts: [...lofts, ...S.lofts, ...(o.lofts ?? [])], cones: [...cones, ...S.cones, ...(o.cones ?? [])], armour: o.armour ?? [], anchors: { neck: 4, skull: 5 }, // (its collar round its neck, a hat on its head: art/mesh/gear.js)
     // it glides: a ripple runs up its foot, its shell rocks behind it, its stalks feel about
     gait: { seconds: 1.6, root: "root", bob: 0, legs: [], ...gait, extra: [
       { bone: "tailb", pos: u => [0, 0.004 * Math.sin(T * 2 * u), 0.012 * len * Math.sin(T * 2 * u)] }, { bone: "mid", pos: u => [0, 0.004 * Math.sin(T * 2 * u + 1.5), 0.01 * len * Math.sin(T * 2 * u + 1.5)] }, { bone: "front", pos: u => [0, 0.004 * Math.sin(T * 2 * u + 3), 0.012 * len * Math.sin(T * 2 * u + 3)] },

@@ -1,7 +1,7 @@
 // Creatures drawn as meshes (art/mesh; Ed, 2026-11-12: "I'm happy with these models, let's do the real build"): every plan builds,
 // the software rasteriser's frames are the shape the game's sprites need, and nothing changes unless the style asks for them.
 import { describe, expect, it } from "vitest";
-import { MESH_FRAMES, MESH_HEIGHTS, hasMesh, meshGait } from "../../art/mesh/index.js";
+import { MESH_FRAMES, MESH_HEIGHTS, hasMesh, meshGait, meshNap, meshSleep, meshWalk } from "../../art/mesh/index.js";
 import { MESH_PLANS } from "../../art/mesh/plans.js";
 import { pose, shape } from "../../art/mesh/shape.js";
 import { bakeMesh } from "../../art/mesh/raster.js";
@@ -55,6 +55,26 @@ describe("mesh creatures", () => {
     expect(b.step).toBeGreaterThan(0.005); expect(b.step).toBeLessThan(0.3);
     const again = bakeMesh(sh, o) as typeof b;
     expect(again.towards[2].albedo).toEqual(b.towards[2].albedo);
+  });
+
+  it("wears party gear: a lit collar in the leash's colour, a hat, glasses and shoes change the picture", () => {
+    const bare = meshWalk("fox", 0) as unknown as { w: number; h: number; towards: Frame[] }, collar = [60, 255, 200];
+    const dressed = meshWalk("fox", 0, { collar, hat: 1, glasses: "bar", shoes: "sneakers" } as unknown as null) as unknown as typeof bare;
+    const lit = (b: typeof bare) => { let n = 0; const a = b.towards[0].albedo; for (let i = 0; i < a.length; i += 4) if (a[i + 3] === 254 && a[i + 1] > 200 && a[i] < 120) n++; return n; };
+    expect(lit(bare)).toBe(0);
+    expect(lit(dressed)).toBeGreaterThan(3); // (the collar: lit, in its colour)
+    expect((dressed as unknown as { ppu: number }).ppu).toBeCloseTo((bare as unknown as { ppu: number }).ppu, 6); // (dressed, it is the same size: a hat doesn't shrink it)
+    expect(dressed.h).toBeGreaterThanOrEqual(bare.h);
+  });
+
+  it("lies down to sleep at the size it walks at, and a sleeping legend is stone: nothing lit, and lower than the nap it is made from", () => {
+    const walk = meshWalk("fox", 1) as unknown as { w: number; h: number; towards: Frame[] }, nap = meshNap("fox", 1) as unknown as typeof walk;
+    expect(nap.towards).toHaveLength(2);
+    expect(nap.h).toBeLessThan(walk.h); // (lying down)
+    expect(nap.w).toBeGreaterThan(walk.w * 0.6); // (and not shrunk)
+    const legend = meshNap("snail", 3) as unknown as typeof walk, asleep = meshSleep("snail") as unknown as typeof walk;
+    expect(asleep.h).toBeLessThan(legend.h); // (part sunk)
+    for (const f of asleep.towards) { expect(f.albedo).toHaveLength(asleep.w * asleep.h * 4); for (let i = 3; i < f.albedo.length; i += 4) expect(f.albedo[i] === 0 || f.albedo[i] === 255).toBe(true); }
   });
 
   it("gives the view its walk without drawing it", () => {

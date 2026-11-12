@@ -4,7 +4,8 @@
 // their own naps and sleeping legends, a view from above.
 import { MESH_PLANS } from "./plans.js";
 import { shape } from "./shape.js";
-import { bakeMesh, meshStep } from "./raster.js";
+import { bakeMesh, meshPpu, meshStep } from "./raster.js";
+import { dress, napping } from "./gear.js";
 
 /** A walk's frames, each heading. */
 export const MESH_FRAMES = 8;
@@ -18,9 +19,36 @@ export const MESH_HEIGHTS = { fox: [53, 81, 137, 387], stoat: [41, 63, 88, 229],
 /** Whether this species is drawn as a mesh under this style. */
 export const hasMesh = (species, st) => st?.meshCreatures === 1 && Object.hasOwn(MESH_HEIGHTS, species);
 
-/** A species' walk at a level (0 baby to 3 legend), drawn: art/mesh/raster.js bakeMesh's { w, h, step, towards, away }. Not kept:
- *  a legend's frames are tens of megabytes. */
-export const meshWalk = (species, level) => bakeMesh(shape(MESH_PLANS[species][level]()), { height: MESH_HEIGHTS[species][level], frames: MESH_FRAMES, colours: level === 3 ? 24 : 12 });
+const plan = (species, level, gear) => dress(MESH_PLANS[species][level](), gear), colours = level => (level === 3 ? 24 : 12);
+
+/** A species' walk at a level (0 baby to 3 legend), drawn: art/mesh/raster.js bakeMesh's { w, h, step, towards, away }. gear: a
+ *  party animal's (art/mesh/gear.js `dress`). Not kept: a legend's frames are tens of megabytes. */
+export const meshWalk = (species, level, gear = null) => bakeMesh(shape(plan(species, level, gear)), { ppu: scale(species, level), frames: MESH_FRAMES, colours: colours(level) });
+/** The scale a species is drawn at, art pixels a metre: its bare self standing MESH_HEIGHTS tall, so a hat doesn't shrink it. */
+const scale = (species, level) => meshPpu(shape(plan(species, level, null)), MESH_HEIGHTS[species][level]);
+
+/** The same animal asleep (art/mesh/gear.js `napping`), at the size it walks at: its two breaths, { w, h, towards } (the game
+ *  mirrors a sleeper for the other way). gear: what it wears, kept on asleep (Ed, 2026-10-06). */
+export function meshNap(species, level, gear = null) {
+  return bakeMesh(shape(napping(plan(species, level, gear))), { ppu: scale(species, level), frames: 2, colours: colours(level) });
+}
+
+/** A species' legend as it sleeps through the centuries (docs/notes/creatures.md, **Sleeping legend**): asleep, its glow gone
+ *  out, gone to stone and moss so it passes for a boulder or a mound, and sunk a fifth into the earth. { w, h, towards }: its two
+ *  slow breaths, the ground on the bottom row. */
+export function meshSleep(species) {
+  const b = meshNap(species, 3), sunk = Math.round(b.h * 0.2), h = b.h - sunk, cut = px => px.slice(0, b.w * h * 4);
+  for (const f of b.towards) {
+    for (let i = 0; i < b.w * h; i++) { const q = i * 4; if (!f.albedo[q + 3]) continue;
+      // (stone by its lightness, and moss where it faces the sky: the normal's green is its up, 128 level, less is up)
+      const l = f.albedo[q] * 0.3 + f.albedo[q + 1] * 0.59 + f.albedo[q + 2] * 0.11, up = (128 - f.normal[q + 1]) / 127, x = i % b.w, y = (i - x) / b.w, patch = ((Math.imul(x >> 1, 374761393) ^ Math.imul(y >> 1, 668265263)) >>> 0) % 7 < 5 ? 1 : 0.45, moss = Math.max(0, Math.min(1, (up - 0.25) * 2.2)) * patch; // (moss in two-pixel patches, thinner in some)
+      const stone = [l * 0.62 + 34, l * 0.64 + 36, l * 0.6 + 38], green = [l * 0.3 + 38, l * 0.42 + 62, l * 0.24 + 30];
+      for (let c = 0; c < 3; c++) { const base = stone[c] * 0.78 + f.albedo[q + c] * 0.22; f.albedo[q + c] = base + (green[c] - base) * moss * 0.8; }
+      f.albedo[q + 3] = 255; }
+    f.albedo = cut(f.albedo); f.normal = cut(f.normal); f.flipped = cut(f.flipped); if (f.eyes) f.eyes = undefined; if (f.head) f.head = [f.head[0], Math.min(h - 1, f.head[1])];
+  }
+  return { w: b.w, h, towards: b.towards };
+}
 
 /** Its walk for the view: frames in its cycle, and step, how far it goes between them as a share of its sprite's width (its
  *  adult's: the view keeps one walk a species). Worked out without drawing anything, once. */

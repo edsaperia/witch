@@ -1,6 +1,6 @@
 // Whole helpers moved from artBuild; drawing bodies are unchanged.
 import * as Art from "./creatureArt.primitives";
-import { hasMesh, meshGait, meshWalk } from "../../art/mesh/index.js";
+import { hasMesh, meshGait, meshNap, meshSleep, meshWalk } from "../../art/mesh/index.js";
 import type { Style } from "./style";
 import { type RigGear } from "./rig/rigBuild";
 import { overrideFor, poseName, type Override } from "./overrides";
@@ -26,22 +26,45 @@ export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear
 interface MeshFrame { albedo: Uint8ClampedArray; normal: Uint8ClampedArray; flipped: Uint8ClampedArray; eyes?: Uint8Array; head?: [number, number] }
 interface MeshWalk { w: number; h: number; towards: MeshFrame[]; away: MeshFrame[] }
 
+/** One frame art/mesh/raster.js drew, as a baked sprite: its colours (a glowing pixel's alpha 254) and the camera's normals, so
+ *  the game's own light falls on it. woken: an enraged creature's look, as the generated ones have it (art/creatures.js
+ *  speciesColours): its coat darker and a little red, its eyes red and lit. */
+function meshFrame(f: MeshFrame, w: number, h: number, mk: MakeCanvas, woken = false, eyes = false): Baked {
+  const A = mk(w, h), N = mk(w, h), NF = mk(w, h), a = new Uint8ClampedArray(f.albedo);
+  if (woken) for (let i = 0; i < w * h; i++) { const q = i * 4;
+    if (f.eyes?.[i]) a.set(WOKEN_EYE, q); else if (a[q + 3] === 255) { a[q] = a[q] * 0.72 + 3; a[q + 1] = a[q + 1] * 0.72 + 0.8; a[q + 2] = a[q + 2] * 0.72 + 1.2; } }
+  for (const [c, px] of [[A, a], [N, f.normal], [NF, f.flipped]] as const) { const g = c.getContext("2d") as CanvasRenderingContext2D, d = g.createImageData(w, h); d.data.set(px); g.putImageData(d, 0, 0); }
+  return { A, N, NF, w, h, eyes: eyes ? f.eyes : undefined, head: f.head } as Baked;
+}
+const WOKEN_EYE = [255, 40, 36, 254]; // (a woken creature's eyes: red, and lit in the dark)
+/** What of a creature's gear a mesh wears (art/mesh/gear.js): its party gear. Faces are not drawn (Ed, 2026-11-05: "Scrap animal
+ *  expressions for now."). */
+const worn = (gear: unknown): object | null => { const g = gear as { collar?: unknown; hat?: unknown; glasses?: unknown; shoes?: unknown } | null; return g && (g.collar || g.hat != null || g.glasses || g.shoes) ? g : null; };
+
 /** A mesh creature's walk as baked sprites (art/mesh/index.js; Ed, 2026-11-12: "let's do the real build"), in creatureSprites'
- *  order: towards then away, each level, each frame of its cycle. Its colours and the camera's normals as art/mesh/raster.js
- *  drew them (a glowing pixel's alpha 254), so the game's own light falls on it. Enraged (gear.woken), its eyes burn red. No
- *  party gear or faces yet: a dressed or leashed one is drawn bare. */
+ *  order: towards then away, each level, each frame of its cycle; in its party gear if it has any, enraged if gear.woken. */
 function meshSprites(species: string, mk: MakeCanvas, gear: unknown, onlyLevel?: number): Baked[] {
-  const levels = onlyLevel === undefined ? [0, 1, 2, 3] : [onlyLevel], walks = levels.map(l => meshWalk(species, l) as MeshWalk), out: Baked[] = [];
+  const levels = onlyLevel === undefined ? [0, 1, 2, 3] : [onlyLevel], walks = levels.map(l => meshWalk(species, l, worn(gear) as null) as MeshWalk), out: Baked[] = [];
   const woken = !!(gear as { woken?: boolean } | null)?.woken, plain = !gear || Object.keys(gear as object).every(k => k === "face");
-  for (const facing of ["towards", "away"] as const) for (const walk of walks) for (const f of walk[facing]) {
-    const { w, h } = walk, A = mk(w, h), N = mk(w, h), NF = mk(w, h), a = new Uint8ClampedArray(f.albedo);
-    if (woken && f.eyes) for (let i = 0; i < w * h; i++) if (f.eyes[i]) a.set(WOKEN_EYE, i * 4);
-    for (const [c, px] of [[A, a], [N, f.normal], [NF, f.flipped]] as const) { const g = c.getContext("2d") as CanvasRenderingContext2D, d = g.createImageData(w, h); d.data.set(px); g.putImageData(d, 0, 0); }
-    out.push({ A, N, NF, w, h, eyes: plain ? f.eyes : undefined, head: f.head } as Baked);
-  }
+  for (const facing of ["towards", "away"] as const) for (const walk of walks) for (const f of walk[facing]) out.push(meshFrame(f, walk.w, walk.h, mk, woken, plain));
   return out;
 }
-const WOKEN_EYE = [255, 64, 40, 254]; // (a woken creature's eyes: red, and lit in the dark)
+
+/** A mesh creature asleep, as the nap job wants it (render/artBuild.ts): each level's two breaths, towards, with each frame's
+ *  ground line (its bottom row) and its middle (the sprite's own). gear: what it wears, kept on asleep. */
+export function meshNapSprites(species: string, mk: MakeCanvas, gear: unknown): { sprites: Baked[]; ground: number[]; centre: number[] } {
+  const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];
+  for (let level = 0; level < 4; level++) { const nap = meshNap(species, level, worn(gear) as null) as unknown as MeshWalk; for (const f of nap.towards) { sprites.push(meshFrame(f, nap.w, nap.h, mk)); ground.push(nap.h); centre.push(0); } }
+  return { sprites, ground, centre };
+}
+
+/** A mesh species' sleeping legend, as the sleep job wants it: its two slow breaths, gone to stone and moss and part sunk. */
+export function meshSleepSprites(species: string, mk: MakeCanvas): { sprites: Baked[]; ground: number[]; centre: number[] } {
+  const s = meshSleep(species) as unknown as MeshWalk;
+  return { sprites: s.towards.map(f => meshFrame(f, s.w, s.h, mk)), ground: s.towards.map(() => s.h), centre: s.towards.map(() => 0) };
+}
+/** Whether this species is drawn as a mesh under this style (art/mesh/index.js). */
+export const meshSpecies = (species: string, st: Style): boolean => hasMesh(species, st);
 
 /** A hand-drawn frame (art/overrides/README.md) as a baked sprite: its pixels as drawn (alpha 254 glows, under 128 is empty,
  *  the rest solid) and a flat normal facing us, so the light falls on it evenly. */

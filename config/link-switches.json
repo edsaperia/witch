@@ -522,7 +522,7 @@
    "values": [
     "1"
    ],
-   "does": "Draws fox, stoat, marten, hare, squirrel, dormouse, badger, mole, hedgehog and snail as low-poly meshes on skeletons (art/mesh), an eight-frame walk each; off by default until they have party gear, faces and their own naps.",
+   "does": "Draws fox, stoat, marten, hare, squirrel, dormouse, badger, mole, hedgehog and snail as low-poly meshes on skeletons (art/mesh), an eight-frame walk each, with their own party gear, enraged look, naps and sleeping legends; off by default until Ed has passed them in play.",
    "group": "compare",
    "since": "2026-11-12",
    "readIn": [

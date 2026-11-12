@@ -167,7 +167,9 @@ export function plan(name, body, skull, parts, gait, extra = {}) {
     bones: [...body.bones, ...skull.bones, ...parts.flatMap(p => p.bones)],
     lofts: [{ sides: 8, up: [0, 1, 0], rings: [...body.rings, ...skull.rings] }, ...(skull.lofts ?? []), ...parts.flatMap(p => p.lofts)],
     cones: [...skull.cones, ...parts.flatMap(p => p.cones), ...(extra.cones ?? [])], armour: extra.armour ?? [],
-    gait: { root: "pelvis", hips: "pelvis", chest: "chest", neck: "neck", head: "head", ears: skull.ears, ...gait } };
+    gait: { root: "pelvis", hips: "pelvis", chest: "chest", neck: "neck", head: "head", ears: skull.ears, ...gait },
+    // (where party gear goes, art/mesh/gear.js: the skin's neck ring, and where the head's rings begin)
+    anchors: { neck: 5, skull: body.rings.length } };
 }
 
 /** The four legs on a torso: hind and fore each { len, thick, ... } (leg's own options), the hips and shoulders set at the
