@@ -41,8 +41,10 @@ glossary; these are the prototype's), by note.
 
 ### [Art checks](art-checks.md)
 
+- Art on pull requests
 - Style bible
 - Bold sigils
+- The witch's poses
 
 ### [Balance baselines — v5655 rules](balance-baselines.md)
 
@@ -441,6 +443,7 @@ glossary; these are the prototype's), by note.
 - Trail colours
 - Tree normal maps switch
 - Tree normal directions
+- Tree normal directions: never waited for
 
 ### [The witch's art](witch-art.md)
 

@@ -1,0 +1,192 @@
+{
+  "pr": 1988,
+  "group": "Wild look",
+  "decisions": [
+    {
+      "id": "wildLookReach",
+      "pr": 1988,
+      "group": "Wild look",
+      "label": "Her light's reach in the wild",
+      "note": "How far her light reaches exploring an area the party hasn't reached, times its reach on party ground (combatLight.wildReach) (Ed, 2026-11-12: \"Can you make a new pause menu group that has each of these applied in the wild only so I can tweak them?\"): 1 as far as on party ground, 0.65 as built. A fight near her lifts it back up. Eased in and out as she crosses. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0.2,
+        "max": 1.5,
+        "step": 0.05
+      },
+      "default": 0.65,
+      "apply": {
+        "knob": "combatLight.wildReach"
+      }
+    },
+    {
+      "id": "wildLookGlow",
+      "pr": 1988,
+      "group": "Wild look",
+      "label": "Her light's strength in the wild",
+      "note": "How bright her light is in the wild, times its strength on party ground (combatLight.wildGlow): 1 as bright, 0.6 as built. A fight near her lifts it back up. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0.1,
+        "max": 1.5,
+        "step": 0.05
+      },
+      "default": 0.6,
+      "apply": {
+        "knob": "combatLight.wildGlow"
+      }
+    },
+    {
+      "id": "wildLookCool",
+      "pr": 1988,
+      "group": "Wild look",
+      "label": "Her glow cooled in the wild",
+      "note": "How far her glow's colour is cooled toward the colour below in the wild (light.spooky.wildGlow.mix; Ed, 2026-10-29: \"an eerie blue/green\"): 0 her own colour everywhere, 0.7 as built, 1 all that colour. The same slider as Wild light's. Eased in and out as she crosses. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.7,
+      "apply": {
+        "knob": "light.spooky.wildGlow.mix"
+      }
+    },
+    {
+      "id": "wildLookCoolHue",
+      "pr": 1988,
+      "group": "Wild look",
+      "label": "Her glow in the wild: colour (hue)",
+      "note": "The colour her glow cools toward in the wild, round the colour wheel (0.51 the teal as built); the swatch is the colour. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "swatch": {
+          "hue": "light.spooky.wildGlow.hue",
+          "sat": "light.spooky.wildGlow.sat"
+        }
+      },
+      "default": 0.506667,
+      "apply": {
+        "knob": "light.spooky.wildGlow.hue"
+      }
+    },
+    {
+      "id": "wildLookCoolSat",
+      "pr": 1988,
+      "group": "Wild look",
+      "label": "Her glow in the wild: colour (saturation)",
+      "note": "0 white, 1 the hue at its deepest (0.61 as built). Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05,
+        "swatch": {
+          "hue": "light.spooky.wildGlow.hue",
+          "sat": "light.spooky.wildGlow.sat"
+        }
+      },
+      "default": 0.609756,
+      "apply": {
+        "knob": "light.spooky.wildGlow.sat"
+      }
+    },
+    {
+      "id": "wildLookGrade",
+      "pr": 1988,
+      "group": "Wild look",
+      "label": "Wild grade: strength",
+      "note": "A colour grade over the picture in the wild only (Ed, 2026-11-12: \"Can you make a new pause menu group that has each of these applied in the wild only so I can tweak them?\"): never on party ground or home, eased in and out as she crosses at the area moods' pace. Laid after the Spooky colour grade, which applies everywhere: in the wild both apply, one then the other. 0 off (as built). Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0,
+      "apply": {
+        "knob": "light.spooky.wildGrade.strength"
+      }
+    },
+    {
+      "id": "wildLookDesat",
+      "pr": 1988,
+      "group": "Wild look",
+      "label": "Wild grade: drain colour",
+      "note": "How much colour the wild grade drains from the dark and middle tones before tinting them: 0 none, 1 grey. Shows only with the wild grade's strength above 0. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.6,
+      "apply": {
+        "knob": "light.spooky.wildGrade.desat"
+      }
+    },
+    {
+      "id": "wildLookPivot",
+      "pr": 1988,
+      "group": "Wild look",
+      "label": "Wild grade: brightness it stops at",
+      "note": "The brightness above which the wild grade leaves the picture alone, so her light and bright things keep their colour: lower grades only the darkest. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0.05,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.7,
+      "apply": {
+        "knob": "light.spooky.wildGrade.pivot"
+      }
+    },
+    {
+      "id": "wildLookHue",
+      "pr": 1988,
+      "group": "Wild look",
+      "label": "Wild grade: tint (hue)",
+      "note": "The colour the wild grade tints toward, round the colour wheel (0.5 teal, 0.62 blue, 0.75 violet); the swatch is the colour. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "swatch": {
+          "hue": "light.spooky.wildGrade.hue",
+          "sat": "light.spooky.wildGrade.sat"
+        }
+      },
+      "default": 0.5,
+      "apply": {
+        "knob": "light.spooky.wildGrade.hue"
+      }
+    },
+    {
+      "id": "wildLookSat",
+      "pr": 1988,
+      "group": "Wild look",
+      "label": "Wild grade: tint (saturation)",
+      "note": "How deep the wild grade's tint is: 0 none (only drained), 1 the hue at its deepest. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05,
+        "swatch": {
+          "hue": "light.spooky.wildGrade.hue",
+          "sat": "light.spooky.wildGrade.sat"
+        }
+      },
+      "default": 0.5,
+      "apply": {
+        "knob": "light.spooky.wildGrade.sat"
+      }
+    }
+  ]
+}

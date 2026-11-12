@@ -7,13 +7,13 @@ import * as THREE from "three";
 // Ed, 2026-11-07: "Make the normal maps switch.", then "Normal maps do improve things, can we try a low number (16? 32? 64?)". The
 // pause choice and its link reach the tuning, the tuning the trees' shader uniform and their palette's size (render/treeNormalDirs.ts).
 it("wires the pause choice and its link to the tree-normals uniform and directions", () => {
-  expect(TUNING.treeNormals).toBe("full"); // the default look: the normal maps as drawn
+  expect(TUNING.treeNormals).toBe("32"); // the default look since Ed, 2026-11-12: "we can see 32 tree normal maps as the default"
   const d = DECISION_LIST.find(x => x.id === "treeNormals")!;
   expect(d.apply).toEqual({ knob: "treeNormals" });
   expect(d.control).toEqual({ type: "choice", options: [{ value: "full", label: "Full" }, { value: "64", label: "64" }, { value: "32", label: "32" }, { value: "16", label: "16" }, { value: "0", label: "Off" }] });
-  expect(d.default).toBe("full");
+  expect(d.default).toBe("32");
   const t = withTuning({});
-  expect([treeNormalsUniform(t), treeNormalDirections(t)]).toEqual([1, 0]);
+  expect([treeNormalsUniform(t), treeNormalDirections(t)]).toEqual([1, 32]);
   for (const [v, dirs, u] of [["64", 64, 1], ["32", 32, 1], ["16", 16, 1], ["0", -1, 0], ["full", 0, 1]] as const) {
     setKnob(t, d.apply.knob!, v);
     expect(currentValue(d, t, new URLSearchParams())).toBe(v);
@@ -25,8 +25,8 @@ it("wires the pause choice and its link to the tree-normals uniform and directio
   applyKnobParams(t, new URLSearchParams("d_treeNormals=32"));
   expect(treeNormalDirections(t)).toBe(32);
   applyKnobParams(t, new URLSearchParams("d_treeNormals=1")); // (the old link's on: not a choice, so the default)
-  expect(t.treeNormals).toBe("full");
-  expect([treeNormalDirections(t), treeNormalsUniform(t)]).toEqual([0, 1]);
+  expect(t.treeNormals).toBe("32");
+  expect([treeNormalDirections(t), treeNormalsUniform(t)]).toEqual([32, 1]);
   expect([treeNormalDirections({}), treeNormalsUniform({})]).toEqual([0, 1]); // absent: full, as ever
   expect(treeNormalDirections({ treeNormals: false as never })).toBe(-1); // (the switch's old value)
 });

@@ -626,8 +626,8 @@
     "statues": {
       "on": true,
       "bars": 4,
-      "first": 3.5,
-      "gap": 19,
+      "first": 10,
+      "gap": 10,
       "walkBack": 1.5,
       "keepOut": 2,
       "grey": [0.6, 0.6, 0.63],
@@ -655,7 +655,7 @@
     "value": 0.15,
     "hue": 0
   },
-  "treeNormals": "full",
+  "treeNormals": "32",
   "wind": {
     "on": true,
     "strength": 0.25,
@@ -2935,8 +2935,17 @@
       "unlit": 0.65,
       "wildGlow": {
         "mix": 0.7,
-        "colour": [80, 200, 205],
+        "hue": 0.506667,
+        "sat": 0.609756,
+        "value": 0.803922,
         "ease": 1.5
+      },
+      "wildGrade": {
+        "strength": 0,
+        "desat": 0.6,
+        "pivot": 0.7,
+        "hue": 0.5,
+        "sat": 0.5
       },
       "moonHue": 0.6,
       "moonSat": 0.4,
