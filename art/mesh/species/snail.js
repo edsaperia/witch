@@ -4,7 +4,7 @@
 // stars, a gold spiral inlaid along its whorls, old grey skin, huge slow eye stalks with glowing tips. On his word for the fox
 // (2026-11-11) the adult wears its signature loud and the legend is stranger and older, with "magical armour pieces": plate
 // raised from its own skin over its neck, a lit rune on each. Metres; y up; its head along +z.
-import { ball } from "./kit.js";
+import { ball } from "../kit/ball.js";
 
 /** The shell: a tube coiled `turns` times about an axis from its mouth (where the body leaves it) to its apex, the coil and the
  *  tube both shrinking towards the apex. tower 0 lies the coil flat on its side (a garden snail's); 1 stands it up as a spire.
@@ -57,7 +57,7 @@ function snail(name, o) {
 }
 
 const SKIN = { skin: "#9c8a78", sole: "#c9b9a4", eye: "#17120f" }, band2 = (a, b, every = 2) => (t, i) => (Math.floor(i / every) % 2 ? a : b);
-export const SNAIL_PLANS = {
+const snails = {
   // a tiny pale shell of one turn you can almost see through, a soft body, big stalk eyes for its size
   baby: () => snail("snail-baby", { len: 0.8, fat: 1.15, C: { skin: "#c9bba8", sole: "#e3d8c6", eye: "#17120f" }, stalk: 1.1, eye: 1.7, shell: { lift: 0.0, turns: 1.1, r: 0.075, coil: 0.06, high: 0.03, colour: () => "#ece4cf" } }),
   // an amber banded shell of two turns, the body grey-brown
@@ -73,3 +73,8 @@ export const SNAIL_PLANS = {
     return snail("snail-legend", { len: 1.15, fat: 1.25, C, stalk: 3.4, eye: 1.1, frill: 7, sway: 0.09, shell: { lift: 0.09, turns: 4.2, r: 0.17, coil: 0.2, high: 0.5, tower: 0.85, steps: 10, colour: band2(NIGHT, NIGHT2, 4), inlay: GOLD, stars: { n: 4, colour: STAR } }, armour, gait: { seconds: 2.4 } });
   },
 };
+
+/** This kind's mesh (art/mesh/species/index.js lists them, made by tools/creature-mesh/index.mjs): heights, how tall it stands, baby
+ *  to legend, in art pixels (its whole silhouette, standing still, turned towards us: the sizes Ed passed, 2026-11-12, "keep the
+ *  sizes"); plans, each level's build. */
+export const MESH = { id: "snail", heights: [35, 54, 73, 222], plans: snails };

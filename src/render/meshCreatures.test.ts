@@ -7,6 +7,9 @@ import { GAIT_TYPES, pose, shape } from "../../art/mesh/shape.js";
 import { napping } from "../../art/mesh/gear.js";
 import { bakeMesh } from "../../art/mesh/raster.js";
 import { GENOME_BY_ID } from "../../art/genome/index.js";
+import { MESH_SPECIES } from "../../art/mesh/species/index.js";
+import { indexText, meshIds } from "../../tools/creature-mesh/index.mjs";
+import { readFileSync } from "node:fs";
 
 interface Frame { albedo: Uint8ClampedArray; normal: Uint8ClampedArray; flipped: Uint8ClampedArray; eyes?: Uint8Array; head?: [number, number] }
 
@@ -25,6 +28,16 @@ describe("mesh creatures", () => {
       expect((GENOME_BY_ID as Record<string, unknown>)[species], species).toBeTruthy();
       expect(heights, species).toHaveLength(4);
       expect((MESH_PLANS as Record<string, unknown[]>)[species], species).toHaveLength(4);
+    }
+  });
+
+  it("a kind's mesh is its own file, and the list of them is made from the folder (tools/creature-mesh/index.mjs)", () => {
+    expect(readFileSync("art/mesh/species/index.js", "utf8"), "run node tools/creature-mesh/index.mjs").toBe(indexText());
+    expect(Object.keys(MESH_SPECIES)).toEqual(meshIds());
+    for (const [id, m] of Object.entries(MESH_SPECIES as Record<string, { id: string; heights: number[]; plans: Record<string, unknown> }>)) {
+      expect(m.id, id).toBe(id);
+      expect(m.heights, id).toEqual((MESH_HEIGHTS as Record<string, number[]>)[id]);
+      expect(Object.keys(m.plans), id).toEqual(["baby", "young", "adult", "legend"]);
     }
   });
 
@@ -140,11 +153,11 @@ describe("mesh creatures", () => {
       const walk = meshWalk(species, 0) as unknown as { w: number; h: number; towards: Frame[]; away: Frame[] }, nap = meshNap(species, 0) as unknown as typeof walk, flies = !!PLANS[species][0]().hover;
       for (const facing of ["towards", "away"] as const) {
         const gaps = walk[facing].map(f => gap(f, walk.w, walk.h)), name = `${species} ${facing}: ${gaps.join(",")}`;
-        if (flies) { expect(Math.min(...gaps), name).toBeGreaterThan(0); continue; } // (it hangs in the air)
+        expect(Math.min(...nap[facing].map(f => gap(f, nap.w, nap.h))), `${species} asleep ${facing}`).toBe(0);
+        if (flies) continue; // (awake it hangs in the air, over the ground its sprite keeps under it: art/mesh/raster.js, sh.hover)
         expect(Math.min(...gaps.slice(0, MESH_CYCLE)), name).toBe(0); // (its walk's lowest foot is on the bottom row)
         expect(gaps[MESH_STAND], name).toBeLessThanOrEqual(Math.max(2, Math.ceil(walk.h * 0.05))); // (standing: a nearer foot reaches a row or two lower mid-stride)
         expect(Math.max(...gaps), name).toBeLessThanOrEqual(Math.ceil(walk.h * 0.15)); // (a lifted near foot, or a bound's moment in the air)
-        expect(Math.min(...nap[facing].map(f => gap(f, nap.w, nap.h))), `${species} asleep ${facing}`).toBe(0);
       }
       expect(Math.max(...nap.towards.map(f => gap(f, nap.w, nap.h))), `${species} asleep`).toBeLessThanOrEqual(1); // (lying on the ground, breathing)
     }

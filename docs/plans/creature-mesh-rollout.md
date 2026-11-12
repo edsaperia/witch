@@ -30,6 +30,8 @@ Ed, 2026-11-12: "meshes are great, we should aim to transition to them for all t
 
 ## Step 0: one preparing session, before any batch (after #1962 is in)
 
+**Done** (2026-11-12, `claude/mesh-fix-step0`, with the fixes from Ed's first playtest: feet on the ground, a real stride, a gait a kind). What it made, and the how-to and checklist a batch follows, are in `docs/notes/creatures.md`, **Writing a mesh creature**: `art/mesh/species/<id>.js`, `art/mesh/kit/<part>.js`, and `tools/creature-mesh/` `sizes.mjs`, `sheet.mjs`, `index.mjs`, `frames.mjs`. As it was proposed:
+
 So that batches can run side by side without touching the same lines, and each takes few steps:
 
 1. **A kind's mesh in its own file.** Today `art/mesh/plans.js` (the table of plans, the curl's options) and `art/mesh/index.js`
@@ -67,7 +69,9 @@ By body, not by island: kinds that share a skeleton share the code and the check
 ## What one batch does
 
 1. For each kind: its plan at four levels from the kit (the fox's is 81 lines), its legend's armour and runes in a colour of its
-   own, its sleeping pose. Heights from today's drawing.
+   own, its sleeping pose, its gait (`gait.type`: Ed, 2026-11-12, "many small creatures bound rather than trot"). Heights from
+   today's drawing. The checklist in `docs/notes/creatures.md` (**Writing a mesh creature**): ground contact, stride, gait, armour,
+   asleep, sizes.
 2. Draws the batch's sheet and posts it. **Stops there for Ed** (through the coordinator): a `QUESTION:` with the picture.
 3. On Ed's yes, or with his changes made: switches the kinds on (their heights listed), adds a What's new fragment and the branch's
    bench declaration (`frames` only: the rules don't change, since no kind changes its id, its island or its numbers).
@@ -97,5 +101,5 @@ the rest was commands and looking at pictures.
    bench and the art checks pin. Removing them is a later, separate piece of work.
 3. **Balance:** the bee (a flier on home) and the turtle (slower, armoured, in the Fen) are first guesses and have not been through
    the balance tools.
-4. **Still rough from #1962:** the hare's and the badger's curls; no idle or glide pose of a mesh's own; motion never judged at
-   speed (the cloud renderer gives about a frame a second).
+4. **Still rough from #1962:** the hare's and the badger's curls; no idle fidget or glide pose of a mesh's own (it has a standing
+   frame since step 0); motion judged only from stepped frames (the cloud renderer gives about a frame a second).

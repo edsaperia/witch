@@ -1,19 +1,14 @@
-// Every creature drawn as a mesh, by species and level: MESH_PLANS[species][level]() is its plan (art/mesh/shape.js builds it).
-// The species' files hold their four levels, baby to legend. The bee and the turtle are not in the game's roster yet (Ed,
-// 2026-11-12: "The bee can live in the marten's pinewood. It flies."; the turtle and the marten are kept for other islands).
-import { FOX } from "./fox.js";
-import { MARTEN_PLANS, STOAT_PLANS } from "./mustelids.js";
-import { DORMOUSE_PLANS, HARE_PLANS, SQUIRREL_PLANS } from "./rodents.js";
-import { BADGER_PLANS, HEDGEHOG_PLANS, MOLE_PLANS } from "./diggers.js";
-import { SNAIL_PLANS } from "./snail.js";
-import { TURTLE_PLANS } from "./turtle.js";
-import { BEE_PLANS } from "./bee.js";
+// Every creature drawn as a mesh, by species and level: MESH_PLANS[species][level]() is its plan (art/mesh/shape.js builds it) and
+// MESH_HEIGHTS[species][level] how tall it stands. A kind's own file holds both, and how it sleeps (art/mesh/species/<id>.js; the
+// list of them, species/index.js, is made from the folder by tools/creature-mesh/index.mjs), so kinds are added side by side
+// without touching a shared table (docs/plans/creature-mesh-rollout.md, step 0).
+import { MESH_SPECIES } from "./species/index.js";
 
 export const MESH_LEVELS = ["baby", "young", "adult", "legend"];
-const BY = { fox: FOX, stoat: STOAT_PLANS, marten: MARTEN_PLANS, hare: HARE_PLANS, squirrel: SQUIRREL_PLANS, dormouse: DORMOUSE_PLANS, badger: BADGER_PLANS, mole: MOLE_PLANS, hedgehog: HEDGEHOG_PLANS, snail: SNAIL_PLANS, turtle: TURTLE_PLANS, bee: BEE_PLANS };
-/** How a species curls up to sleep where it differs from the rest (art/mesh/gear.js `napping` reads gait.curl): the long ones turn
- *  further, so their ring closes with their head on their haunch; the hare's ears, longer than its ring is wide, lie back and
- *  swung in across its own back; the badger curls the other way round, so its striped face is on the side she sees it from and
- *  not behind its plates. */
-const CURL = { stoat: { turn: 4.5 }, marten: { turn: 4.3 }, hare: { ears: 1.4, earsIn: 1.6 }, badger: { side: -1 } };
-export const MESH_PLANS = Object.fromEntries(Object.entries(BY).map(([species, plans]) => [species, MESH_LEVELS.map(l => (CURL[species] ? () => { const p = plans[l](); p.gait.curl = CURL[species]; return p; } : plans[l]))]));
+/** A kind's four plans, baby to legend. One that curls up to sleep its own way says so with `curl` (art/mesh/gear.js `napping` reads
+ *  gait.curl), given to each of its plans here. */
+export const MESH_PLANS = Object.fromEntries(Object.entries(MESH_SPECIES).map(([species, m]) => [species, MESH_LEVELS.map(l => (m.curl ? () => { const p = m.plans[l](); p.gait.curl = m.curl; return p; } : m.plans[l]))]));
+/** How tall each stands, baby to legend, in art pixels: its whole silhouette, standing still, turned towards us (Ed, 2026-11-12:
+ *  "keep the sizes": today's drawn height of the kind at each level, which `node tools/creature-mesh/sizes.mjs <kind>` measures).
+ *  Home's are the sizes Ed looked at the ladders at and passed ("Ok these are good", 2026-11-12). */
+export const MESH_HEIGHTS = Object.fromEntries(Object.entries(MESH_SPECIES).map(([species, m]) => [species, m.heights]));

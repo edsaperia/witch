@@ -4,7 +4,12 @@
 // ladder is a proposal: a hatchling still wearing half its egg; a quick smooth-shelled young; an adult under a high keeled
 // dome with moss at its rim; and the oracle, the old one whose shell is read: its shell become plate armour, a mark lit on
 // every plate and its joins lit like the cracks a fire reads a shell by, a beard and long brows. Kept for another island (Ed, 2026-11-11: "keep both, but swap the marten for the bee").
-import { dome, plan, plate, quad, tail, walk } from "./kit.js";
+import { dome } from "../kit/dome.js";
+import { walk } from "../kit/gaits.js";
+import { plan } from "../kit/plan.js";
+import { plate } from "../kit/plate.js";
+import { quad } from "../kit/quad.js";
+import { tail } from "../kit/tail.js";
 
 const OLIVE = "#7d8f6a", T = { coat: OLIVE, belly: "#e6d79a", nose: "#3a4226", upper: "#6a7c58", mid: "#5b6c4a", sock: "#4c5c3e", eye: "#17140f" };
 const build = (C, o) => quad({ C, hind: { len: 0.27, thick: 2.0, paw: 1.5, spread: 2.1, ...o.hind }, fore: { len: 0.27, thick: 1.9, paw: 1.6, spread: 2.2, ...o.fore }, body: { len: 0.8, girth: 1.2, deep: 0.72, tuck: 1.05, neck: [0.07, 0.2], neckThick: 0.62, white: 0.6, ...o.body },
@@ -56,4 +61,8 @@ const turtle = {
     return plan("turtle-legend", q.body, q.skull, [...q.legs, sh, t], paddle({ seconds: 1.5, sway: 0.05, tailSwing: 0.06, tails: [t.chain], legs: walk(1.1) }), { cones: beard, armour });
   },
 };
-export const TURTLE_PLANS = turtle;
+
+/** This kind's mesh (art/mesh/species/index.js lists them, made by tools/creature-mesh/index.mjs): heights, how tall it stands, baby
+ *  to legend, in art pixels (its whole silhouette, standing still, turned towards us: the sizes Ed passed, 2026-11-12, "keep the
+ *  sizes") (in the newt's place in the Fen since 2026-11-12: the marten's order of size, not yet looked at in play); plans, each level's build. */
+export const MESH = { id: "turtle", heights: [45, 69, 97, 280], plans: turtle };

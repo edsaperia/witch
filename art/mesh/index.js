@@ -1,11 +1,13 @@
-// Creatures drawn as meshes, for the game (Ed, 2026-11-12: "I'm happy with these models, let's do the real build"): which species
-// have one, at what size, and their walks as sprites (art/mesh/raster.js draws a plan's shape, art/mesh/shape.js). Off unless the
-// style's `meshCreatures` is 1 (the link's ?meshCreatures=1) while they lack what the generated creatures have: party gear, faces,
-// their own naps and sleeping legends, a view from above.
-import { MESH_PLANS } from "./plans.js";
+// Creatures drawn as meshes, for the game (Ed, 2026-11-12: "I'm happy with these models, let's do the real build"; "meshes are great,
+// we should aim to transition to them for all the creatures"): which species have one (a file in art/mesh/species/), at what size,
+// and their walks, naps and sleeping legends as sprites (art/mesh/raster.js draws a plan's shape, art/mesh/shape.js). On unless the
+// style's `meshCreatures` is 0 (the link's ?meshCreatures=0: the generated creatures, to compare).
+import { MESH_HEIGHTS, MESH_PLANS } from "./plans.js";
 import { shape } from "./shape.js";
 import { bakeMesh, bodyLength, meshPpu, meshStep, stride } from "./raster.js";
 import { dress, napping } from "./gear.js";
+
+export { MESH_HEIGHTS };
 
 /** A walk's cycle, in frames (the generated creatures have two: art/creatures.js walkGait), and how many frames a level has each
  *  heading: the cycle and one more, standing still on all its feet, which the view shows when it stops (MESH_STAND). */
@@ -13,15 +15,6 @@ export const MESH_CYCLE = 8, MESH_FRAMES = MESH_CYCLE + 1, MESH_STAND = MESH_CYC
 /** The most frames of its walk the view shows in a second (two and a half cycles): past that pace its feet slide rather than its
  *  legs blur (Ed's playtest, 2026-11-12: "they appear to vibrate along instead of walk"). */
 export const MESH_RATE = 20;
-
-/** How tall each stands, baby to legend, in art pixels: its whole silhouette, first frame, turned towards us. These are the sizes
- *  Ed looked at the ladders at and passed ("Ok these are good", 2026-11-12); they are not yet squared with the game's own body
- *  sizes (art/genome/size-candidate.js), which measure the body without tails, ears or ornament (Ed, 2026-11-12: "keep the
- *  sizes"). Only species in the game's roster are here. */
-export const MESH_HEIGHTS = { fox: [53, 81, 137, 387], stoat: [41, 63, 88, 229], marten: [45, 69, 97, 237], hare: [74, 114, 164, 491], squirrel: [42, 71, 122, 403], dormouse: [38, 65, 86, 246], badger: [54, 82, 113, 256], mole: [45, 67, 95, 323], hedgehog: [47, 74, 103, 347], snail: [35, 54, 73, 222],
-  // (the bee, in the marten's place on home, and the turtle, in the newt's in the Fen, since 2026-11-12: their neighbours' order of
-  // size, not yet looked at in play)
-  bee: [45, 69, 97, 280], turtle: [45, 69, 97, 280] };
 
 /** Whether this species is drawn as a mesh under this style. */
 export const hasMesh = (species, st) => st?.meshCreatures === 1 && Object.hasOwn(MESH_HEIGHTS, species);

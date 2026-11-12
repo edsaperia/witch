@@ -5,7 +5,14 @@
 // tipped silver-white, a grizzled muzzle and a bitten ear, a red rope at its throat with a bell, rings in its ears, stone prayer
 // beads on its legs), made stranger and older still on Ed's word (below). The red fox's own proportions underneath: long in the leg, a deep narrow chest tucked up to
 // the loin, a wedge of a head. Metres; y up; its head along +z.
-import { band, fourLegs, head, plan, tail, torso, tufts, trot } from "./kit.js";
+import { band } from "../kit/band.js";
+import { trot } from "../kit/gaits.js";
+import { head } from "../kit/head.js";
+import { fourLegs } from "../kit/leg.js";
+import { plan } from "../kit/plan.js";
+import { tail } from "../kit/tail.js";
+import { torso } from "../kit/torso.js";
+import { tufts } from "../kit/tufts.js";
 
 const WHITE = "#f4efe6", SOCK = "#2a1a16", NOSE = "#16100e", EAR = "#1f1512";
 
@@ -78,4 +85,7 @@ function legend() {
   return plan("fox-legend", body, skull, [...four, ...tails, rope], { seconds: 1.15, type: "trot", duty: 0.5, bob: 0.006, sway: 0.03, tailSwing: 0.07, tails: tails.map(t => t.chain), legs: trot(0.9) }, { cones: [...mane, ...face, ...hang, ...bell, ...rings, ...feather], armour });
 }
 
-export const FOX = { baby, young, adult, legend };
+/** This kind's mesh (art/mesh/species/index.js lists them, made by tools/creature-mesh/index.mjs): heights, how tall it stands, baby
+ *  to legend, in art pixels (its whole silhouette, standing still, turned towards us: the sizes Ed passed, 2026-11-12, "keep the
+ *  sizes"); plans, each level's build. */
+export const MESH = { id: "fox", heights: [53, 81, 137, 387], plans: { baby, young, adult, legend } };

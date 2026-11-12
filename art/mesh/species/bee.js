@@ -6,7 +6,8 @@
 // long in the body, plated in purple enamel cut with honey-lit marks, crowned in comb, her wings ragged fans of dark blades set with light. On home
 // island in the marten's place (Ed, 2026-11-11: "keep both, but swap the marten for the bee"). Metres; y up; its head along
 // +z; it hangs `fly` off the ground.
-import { ball, tufts } from "./kit.js";
+import { ball } from "../kit/ball.js";
+import { tufts } from "../kit/tufts.js";
 
 const BLACK = "#1d1612", AMBER = "#f2b21f", FUZZ = "#e0a019", WING = "#e3f4ff";
 
@@ -66,8 +67,7 @@ function bee(name, o) {
     { bone: "antL", rot: u => [0.1 * Math.sin(T * 2 * u), 0, 0] }, { bone: "antR", rot: u => [0.1 * Math.sin(T * 2 * u + 1), 0, 0] }, ...(gait.more ?? [])] }, P, R };
 }
 const done = b => { const { P, R, ...plan } = b; return plan; };
-
-export const BEE_PLANS = {
+const bees = {
   // a bee-let: a ball of pale fluff with a stub of an abdomen, wings too small to lift it far, great dark eyes
   baby: () => done(bee("bee-baby", { fly: 0.14, chest: 1.25, C: { fuzz: "#f6d76a", band: "#f6d76a", dark: "#4a3a22" }, wing: 0.5, eye: 1.3, sting: 0, antennae: 0.6, abdomen: { len: 0.45, fat: 0.85, rings: 5, colour: i => (i % 2 ? "#6a5230" : "#f6d76a") }, fuzz: { n: 4, long: 0.06, tip: "#fffbe0" }, gait: { seconds: 0.6, beats: 5 } })),
   // a worker: slim, neatly banded, proper wings
@@ -87,3 +87,8 @@ export const BEE_PLANS = {
     return { ...done(b), cones: [...b.cones, ...crown] };
   },
 };
+
+/** This kind's mesh (art/mesh/species/index.js lists them, made by tools/creature-mesh/index.mjs): heights, how tall it stands, baby
+ *  to legend, in art pixels (its whole silhouette, standing still, turned towards us: the sizes Ed passed, 2026-11-12, "keep the
+ *  sizes") (in the marten's place on home since 2026-11-12: the marten's order of size, not yet looked at in play); plans, each level's build. */
+export const MESH = { id: "bee", heights: [45, 69, 97, 280], plans: bees };

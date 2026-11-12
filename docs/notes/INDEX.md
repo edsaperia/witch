@@ -116,6 +116,14 @@ glossary; these are the prototype's), by note.
 - Open jaw
 - Silhouette check
 - Live rig
+- Ground contact
+- Stride
+- Gait
+- Armour
+- Asleep
+- Sizes
+- Nothing else
+- Checks
 
 ### [Deploys](deploys.md)
 
