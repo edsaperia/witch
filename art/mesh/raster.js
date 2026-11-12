@@ -56,6 +56,8 @@ export function bakeMesh(sh, o = {}) {
   for (const facing of ["towards", "away"]) { const th = Math.PI / 2 - MESH_YAW[facing], c = Math.cos(th), sn = Math.sin(th);
     for (const { out: w } of world) for (let v = 0; v < nv; v++) { const dx = w[v * 3] - centre[0], dy = w[v * 3 + 1] - centre[1], dz = w[v * 3 + 2] - centre[2], rx = dx * c + dz * sn, rz = -dx * sn + dz * c, x = S / 2 + rx * ppu, y = S / 2 - (dy * cp - rz * sp) * ppu;
       if (x < ux0) ux0 = x; if (x > ux1) ux1 = x; if (y < uy0) uy0 = y; if (y > uy1) uy1 = y; } }
+  // (a flyer, sh.hover: the ground under its middle is part of its picture, so the air it hangs in is kept below it)
+  const groundY = sh.hover ? S / 2 + centre[1] * cp * ppu + Math.abs(Math.hypot(centre[0], centre[2]) * sp * ppu) : -1; if (sh.hover && groundY > uy1) uy1 = groundY;
   ux0 = Math.max(0, Math.floor(ux0) - 1); uy0 = Math.max(0, Math.floor(uy0) - 1); ux1 = Math.min(S - 1, Math.ceil(ux1) + 1); uy1 = Math.min(S - 1, Math.ceil(uy1) + 1);
   const W = ux1 - ux0 + 1, H = uy1 - uy0 + 1, bw = W * ss, bh = H * ss;
   const zb = new Float32Array(bw * bh), id = new Int32Array(bw * bh), cr = new Uint8Array(bw * bh), cg = new Uint8Array(bw * bh), cb = new Uint8Array(bw * bh), sx = new Float32Array(nv), sy = new Float32Array(nv), sz = new Float32Array(nv), tn = new Float32Array(nt * 3);
@@ -121,6 +123,7 @@ export function bakeMesh(sh, o = {}) {
   const pal = palette(samples, colours), lum = c => c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11, dark = pal.reduce((a, c) => (lum(c) < lum(a) ? c : a), pal[0]).map(v => v * 0.38);
   let x0 = W, x1 = -1, y0 = H, y1 = -1;
   for (const f of raw) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (f.on[y * W + x]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (sh.hover) y1 = Math.max(y1, Math.min(H - 1, Math.round(groundY - uy0)));
   const w = x1 - x0 + 1, h = y1 - y0 + 1, out = { towards: [], away: [] };
   for (const f of raw) {
     const albedo = new Uint8ClampedArray(w * h * 4), normal = new Uint8ClampedArray(w * h * 4), flipped = new Uint8ClampedArray(w * h * 4), eyes = new Uint8Array(w * h); let anyEye = false;

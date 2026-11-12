@@ -14,7 +14,8 @@ describe("mesh creatures", () => {
     expect(hasMesh("fox", {})).toBe(false);
     expect(hasMesh("fox", { meshCreatures: 1 })).toBe(true);
     expect(hasMesh("wolf", { meshCreatures: 1 })).toBe(false); // (no mesh yet)
-    expect(hasMesh("bee", { meshCreatures: 1 })).toBe(false); // (a plan, but not in the game's roster yet)
+    expect(hasMesh("bee", { meshCreatures: 1 })).toBe(false); // (a plan, and its records written, but not a kind yet: art/creatures-pending)
+    expect(hasMesh("fox", { meshCreatures: 0 })).toBe(false); // (the link's meshCreatures=0: the generated ones, to compare)
   });
 
   it("have a size at every level only for species the game has", () => {

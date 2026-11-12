@@ -189,7 +189,7 @@ export function shape(plan) {
   for (const c of plan.cones ?? []) cone(faces, c);
   // (armour lies on a loft's own corners: `on` names the loft, or counts to it; the first is a four-legged plan's skin)
   for (const a of plan.armour ?? []) { const i = typeof a.on === "string" ? plan.lofts.findIndex(l => l.name === a.on) : a.on ?? 0; if (i < 0) throw Error(`${plan.name}: no loft "${a.on}" for armour`); armour(faces, made[i], a, fines[i]); }
-  return { name: plan.name, bones, lit: faces.lit, glow: faces.glow, motion: plan.still ? still(plan.still) : plan.gait ? motion(plan) : null, gait: plan.gait ?? null };
+  return { name: plan.name, bones, lit: faces.lit, glow: faces.glow, motion: plan.still ? still(plan.still) : plan.gait ? motion(plan) : null, gait: plan.gait ?? null, hover: plan.hover ?? 0 };
 }
 
 /** Every bone's place in the world at `u` of the walk: for each, nine numbers of its turn (rows) and three of where its joint is. */

@@ -1,0 +1,1 @@
+export const LEGEND_BEE = { ground: .4, droop: 0, drop: [0, 10, 11, 12, 13], cloak: { c: [-.1, .42, 0], r: [.6, .3, .45] }, over: { moss: .3, lichen: .1, ferns: 1, grass: 3, mushrooms: 0, roots: 1, stones: 1, flowers: 5 } }; // the old pinewood's queen: settled among the needles, her wings folded flat, flowers grown up round her

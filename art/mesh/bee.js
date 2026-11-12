@@ -59,7 +59,7 @@ function bee(name, o) {
     ...tufts({ at: P(0, 0.06, 0.07), rx: 0.07 * k, ry: 0.07 * k }, "thorax", { n: fuzz.n ?? 4, a0: 0.3, a1: 2.8, long: (fuzz.long ?? 0.05) * k * 0.8, sweep: 0.2, droop: 0, r: 0.028 * k, lock: true, colour: () => fuzz.collar ?? coat, tip: () => fuzz.tip ?? "#fff0b8" }));
   // it hovers: the wings beat (three beats to its bob, so each frame catches them somewhere else), the body rocks, the legs trail
   const beats = gait.beats ?? 3, flap = (s, ph) => u => [0, 0, s * (0.15 + 0.75 * Math.sin(T * beats * u + ph))];
-  return { name, bones, lofts: [...lofts, ...(o.lofts ?? [])], cones: [...cones, ...(o.cones ?? [])], armour: o.armour ?? [], gait: { seconds: 0.8, root: "thorax", bob: 0.02 * k, bobs: 1, legs: [], ...gait, extra: [
+  return { name, bones, lofts: [...lofts, ...(o.lofts ?? [])], cones: [...cones, ...(o.cones ?? [])], armour: o.armour ?? [], hover: fly * k, /* (how far off the ground it hangs: its sprites keep that much air under it, art/mesh/raster.js) */ gait: { seconds: 0.8, root: "thorax", bob: 0.02 * k, bobs: 1, legs: [], ...gait, extra: [
     { bone: "wingfL", rot: flap(1, 0) }, { bone: "wingfR", rot: flap(-1, 0) }, { bone: "winghL", rot: flap(1, -0.5) }, { bone: "winghR", rot: flap(-1, -0.5) },
     { bone: "abd1", rot: u => [0.08 * Math.sin(T * u), 0, 0] }, { bone: "abd2", rot: u => [0.1 * Math.sin(T * u - 0.8), 0, 0] }, { bone: "head", rot: u => [0.05 * Math.sin(T * u + 1), 0.06 * Math.sin(T * u), 0] },
     ...[0, 1, 2].flatMap(i => ["L", "R"].map((tag, n) => ({ bone: `leg${i}${tag}`, rot: u => [0.12 * Math.sin(T * u + i + n), 0, 0.06 * Math.sin(T * u * 2 + i)] }))),

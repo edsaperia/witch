@@ -12,9 +12,12 @@ export const MESH_FRAMES = 8;
 
 /** How tall each stands, baby to legend, in art pixels: its whole silhouette, first frame, turned towards us. These are the sizes
  *  Ed looked at the ladders at and passed ("Ok these are good", 2026-11-12); they are not yet squared with the game's own body
- *  sizes (art/genome/size-candidate.js), which measure the body without tails, ears or ornament. Only species in the game's
- *  roster are here: the bee has no genome yet, the turtle no island. */
+ *  sizes (art/genome/size-candidate.js), which measure the body without tails, ears or ornament (Ed, 2026-11-12: "keep the
+ *  sizes"). Only species in the game's roster are here. */
 export const MESH_HEIGHTS = { fox: [53, 81, 137, 387], stoat: [41, 63, 88, 229], marten: [45, 69, 97, 237], hare: [74, 114, 164, 491], squirrel: [42, 71, 122, 403], dormouse: [38, 65, 86, 246], badger: [54, 82, 113, 256], mole: [45, 67, 95, 323], hedgehog: [47, 74, 103, 347], snail: [35, 54, 73, 222] };
+/** The bee's and the turtle's, for when they are kinds (art/creatures-pending/README.md says what they wait on): sizes of the
+ *  same order as their neighbours', not yet looked at in play. */
+export const MESH_HEIGHTS_PENDING = { bee: [45, 69, 97, 280], turtle: [45, 69, 97, 280] };
 
 /** Whether this species is drawn as a mesh under this style. */
 export const hasMesh = (species, st) => st?.meshCreatures === 1 && Object.hasOwn(MESH_HEIGHTS, species);
@@ -31,7 +34,7 @@ const sleeps = (p, level) => p.gait?.sleep ?? (level === 3 ? "curl" : "sphinx");
  *  party animal's (art/mesh/gear.js `dress`). Not kept: a legend's frames are tens of megabytes. */
 export const meshWalk = (species, level, gear = null) => bakeMesh(shape(plan(species, level, gear)), { ppu: scale(species, level), frames: MESH_FRAMES, colours: colours(level), texture: texture(level) });
 /** The scale a species is drawn at, art pixels a metre: its bare self standing MESH_HEIGHTS tall, so a hat doesn't shrink it. */
-const scale = (species, level) => meshPpu(shape(plan(species, level, null)), MESH_HEIGHTS[species][level]);
+const scale = (species, level) => meshPpu(shape(plan(species, level, null)), (MESH_HEIGHTS[species] ?? MESH_HEIGHTS_PENDING[species])[level]);
 
 /** The same animal asleep (art/mesh/gear.js `napping`), at the size it walks at: its two breaths, { w, h, towards } (the game
  *  mirrors a sleeper for the other way). gear: what it wears, kept on asleep (Ed, 2026-10-06). */

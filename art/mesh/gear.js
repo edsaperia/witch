@@ -78,11 +78,13 @@ export function napping(plan, how = "sphinx") {
     // each tail brought down from where it's carried and laid round its flank
     for (const chain of tails) chain.forEach((bone, i) => { rots[bone] = [i ? -0.05 : -pitch(chain) * 0.85, i ? 0.4 : 0.5, 0]; });
   }
+  // (a flyer comes down to the ground and folds its wings back along itself)
+  if (plan.hover) { poss[G.root] = [0, -plan.hover, 0]; for (const [name] of plan.bones) if (/^wing/.test(name)) rots[name] = [0, /L$/.test(name) ? -1.15 : 1.15, /L$/.test(name) ? -0.25 : 0.25]; }
   for (const e of G.ears ?? []) rots[e] = [0.35, 0, 0];
   // (a snail's eye stalks drawn in)
   for (const [name] of plan.bones) if (/^stalk.*1$/.test(name)) rots[name] = [how === "shell" ? -2.2 : -1.1, 0, 0];
   // (in its shell, what stands off its head and its eye stalks is drawn in with them: not there to see)
   const hidden = b => how === "shell" && (/^stalk/.test(b) || b === G.head || b === "head"), lofts = how === "shell" ? plan.lofts.filter((l, i) => !i || !l.rings.every(r => hidden(r.bone))) : plan.lofts;
   const cones = plan.cones.filter(c => !hidden(c.bone)).map(c => (c.tag === "eye" ? { ...c, ry: c.ry * 0.22, colour: "#16110f", tipColour: "#16110f", glow: false, tip: c.at.map((v, i) => v + (c.tip[i] - v) * 0.5) } : c));
-  return { ...plan, lofts, cones, still: { rots, poss, root: G.root, chest: G.chest } };
+  return { ...plan, lofts, cones, hover: 0, still: { rots, poss, root: G.root, chest: G.chest } };
 }

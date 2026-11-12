@@ -46,27 +46,28 @@ describe("shared party sheets", () => {
 
 // Ed, 2026-11-05: "Scrap animal expressions for now." (tuning looks.expressions, off): no face set asked for by anyone (the view's
 // creatures, an island's asks ahead), rig pages without expression heads, party sheets with their plain face; on, as before.
+// (asked of the wolf: the fox is drawn as a mesh now, art/mesh, and has no rig page to ask for; Ed, 2026-11-12)
 describe("creatures' faces off (looks.expressions)", () => {
   it("asks for no face set, no rig expression heads and no smiling party sheet while off", () => {
     const a = new AssetLibrary(loadStyle(), 11, 4);
     expect(a.expressions).toBe(false);
-    for (const face of ["angry", "happy", "dazed", "bite", "yawn"]) expect(a.faceArt("fox", face)).toBeUndefined();
+    for (const face of ["angry", "happy", "dazed", "bite", "yawn"]) expect(a.faceArt("wolf", face)).toBeUndefined();
     expect(inner(a).queue.some(j => j.kind === "face")).toBe(false);
-    a.rigArt("fox", 2); a.partyArt("fox", 7, [1, 0, 1], 2); a.happyArt("fox", 7, 2); a.wokenArt("fox");
+    a.rigArt("wolf", 2); a.partyArt("wolf", 7, [1, 0, 1], 2); a.happyArt("wolf", 7, 2); a.wokenArt("wolf");
     const rig = inner(a).queue.find(j => j.kind === "rig"), party = inner(a).queue.filter(j => j.kind === "party"), woken = inner(a).queue.find(j => j.kind === "woken");
     expect(rig && "faces" in rig).toBe(false);
-    expect(woken?.id).toBe("woken-fox"); expect(woken && "faces" in woken).toBe(false);
+    expect(woken?.id).toBe("woken-wolf"); expect(woken && "faces" in woken).toBe(false);
     expect(party).toHaveLength(2); expect(party.some(j => "faces" in j)).toBe(false);
   });
   it("asks for them, under keys of their own, while on", () => {
     const a = new AssetLibrary(loadStyle(), 11, 4); a.expressions = true;
-    expect(a.faceArt("fox", "dazed")).toBeUndefined();
-    expect(inner(a).queue.filter(j => j.kind === "face").map(j => j.id)).toEqual(["face-dazed-fox"]);
-    a.rigArt("fox", 2); a.partyArt("fox", 7, [1, 0, 1], 2); a.wokenArt("fox");
+    expect(a.faceArt("wolf", "dazed")).toBeUndefined();
+    expect(inner(a).queue.filter(j => j.kind === "face").map(j => j.id)).toEqual(["face-dazed-wolf"]);
+    a.rigArt("wolf", 2); a.partyArt("wolf", 7, [1, 0, 1], 2); a.wokenArt("wolf");
     const rig = inner(a).queue.find(j => j.kind === "rig")!, party = inner(a).queue.find(j => j.kind === "party")!, woken = inner(a).queue.find(j => j.kind === "woken")!;
-    expect(woken.id).toBe("woken-fox-faces"); expect(woken.kind === "woken" && woken.faces).toBe(true);
+    expect(woken.id).toBe("woken-wolf-faces"); expect(woken.kind === "woken" && woken.faces).toBe(true);
     expect(rig.kind === "rig" && rig.faces).toBe(true); expect(rig.id.endsWith("-faces")).toBe(true);
-    expect(party.kind === "party" && party.faces).toBe(true); expect(party.id).toBe(partySheetKey("fox", 2, partyGearOf(7, [1, 0, 1]), true));
+    expect(party.kind === "party" && party.faces).toBe(true); expect(party.id).toBe(partySheetKey("wolf", 2, partyGearOf(7, [1, 0, 1]), true));
   });
 });
 
