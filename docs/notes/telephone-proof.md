@@ -1,5 +1,7 @@
 # Two-client telephone proof
 
+<!-- summary: The explicit two-client telephone proof, default-off switches, allocation and evidence requirements. -->
+
 PR1609 guest furniture: Ed's direct ruling6557564092 supersedes coordinator6557413558's guest-only dressing assumption. Bedroom2/3 beds retain assigned-bed holds; each room has a wardrobe and dressing table using the home shelves, clothing/appearance and wake/mirror paths. Any witch may use any occupied bedroom's dressing furniture, home or guest; the cloak stand and hat mirror stay shared. Both witches' movement views open occupied guest bedrooms for this, without mutating the canonical shared floor. Unoccupied rooms/solo guest rooms remain locked. Guest dressing tables replace the unused chest at its selected placement; existing furniture generators are reused, with no room-outline or palette change. Hat and broom-module claims are host-ordered and exclusive until release; a rejected conflicting choice shows "Your friend is using that hat." or "Your friend is using that broom part." The all-in-bed verdict reaches both pages, regardless of which witch finishes last; ordinary menu events remain local. Browser evidence remains separately gated; source and CPU checks do not establish visual acceptance.
 
 Arrival now refreshes the existing seed label when adopting a host night and when restoring a failed join. The gated proof hook reports canonical and rendered seed, map identity and rendered witch positions/room assignments; this does not retroactively measure T3's in-call world. Calls remain default OFF.

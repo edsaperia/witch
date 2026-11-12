@@ -41,6 +41,10 @@ const squash = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^
 const floor2Uniforms = 'uniformvec4uFloor2;uniformsampler2DuDiscoTiles2;uniformvec4uChallengeCarve;uniformvec4uChallengeLook;uniformsampler2DuChallengeCarveMap;';
 // (and its sigil carved into its floor, under GROUND_LEGENDS: Ed, "it should look like it's carved into the circle")
 const carveBlock = (() => { const m = current.match(/\/\/ The challenge circle's carving \(uChallengeCarve\)[^\n]*\n(?:\s*\/\/[^\n]*\n)*#if[^\n]*\n([\s\S]*?)\n#endif/); if (!m) throw Error('challenge carving marker changed'); return squash(m[1]); })();
+// (the challenge circle hidden till the party, Ed 2026-11-12: "fades into existence and the trees fade away when the party starts":
+// each legend-circle slot's floor mixed in by uLegendShow, the challenge circle's the last slot's, and its carving by uChallengeShow)
+const showUniforms = 'uniformfloatuLegendShow[6];uniformfloatuChallengeShow;';
+const showStart = ['if(d>L.z+1.0)continue;vec3c0=c;', 'if(d>L.z+1.0)continue;'] as const, showEnd = ['c=mix(c0,c,uLegendShow[i]);}', '}'] as const;
 const floor2Block = (() => { const m = current.match(/\/\/ The challenge circle's dancefloor \(uFloor2\)[^\n]*\n#if[^\n]*\n([\s\S]*?)\n#endif/); if (!m) throw Error('challenge floor marker changed'); return squash(m[1]); })();
 
 it('retains exact active fragment tokens when all extras are present, plain/beach and every lake kind', () => {
@@ -56,7 +60,9 @@ it('retains exact active fragment tokens when all extras are present, plain/beac
     expect(tokens).toContain(floor2Uniforms);
     expect(tokens).toContain(floor2Block);
     expect(tokens).toContain(carveBlock);
-    const soberTokens = tokens.replace(relief + lighting, lighting).replace(floor2Uniforms, '').replace(floor2Block, '').replace(carveBlock, '');
+    const legends = tokens.includes('uLegendRings[i]');
+    if (legends) { expect(tokens).toContain(showUniforms); expect(tokens).toContain(showStart[0]); expect(tokens).toContain(showEnd[0]); }
+    const soberTokens = tokens.replace(relief + lighting, lighting).replace(floor2Uniforms, '').replace(floor2Block, '').replace(carveBlock, '').replace(showUniforms, '').replace(showStart[0], showStart[1]).replace(showEnd[0], showEnd[1]);
     expect(createHash('sha256').update(soberTokens).digest('hex')).toBe(baselineHashes[row][Number(beach)]);
   }
 });

@@ -82,7 +82,7 @@ import { newWitch, seaward, stepWitch, witchHeight, type Intent, type WitchState
 import { deckOf, onTreehouse } from "./treehouse";
 import { homeDown, startPartyOver, stepPartyOver, stepWorldAsleep, worldAsleep, type PartyOver } from "./partyOver";
 import { stepWin, winFlare, won, type WinState } from "./win";
-import { newChallenge, spawnPack, stepChallenge, type ChallengeState } from "./challenge";
+import { newChallenge, spawnPack, stepChallenge, stepReveal, type ChallengeState } from "./challenge";
 import { stepStatues, stepStatueWalk } from "./challengeStatues";
 import { stepWonAway } from "./wonKeepAway";
 import { hasBroom, hasInvites, type Kit } from "./kit";
@@ -755,6 +755,7 @@ function fixedStep(g: Game, controls: readonly Controls[], guestCatchUp: readonl
     motion.LV = LV;
   }
   g.lod = newLodCounts();
+  stepReveal(g); // (the challenge circle hidden before the party and after a lost one, fading in and out: rules/challenge.ts)
   stepStatues(g); // (the challenge circle's statues waking as she sets foot on its floor, stone again once it's left: rules/challengeStatues.ts)
   if (!still) stepWildWatch(g, t); // (before the fights: those just watching her hold off this very step)
   if (!still) stepHunts(g, t); // (then the woken areas' own hunt her: rules/hunt.ts)

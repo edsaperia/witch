@@ -447,6 +447,10 @@ export type SchemaTuning = {
     "clear": number;
   };
   "challenge": {
+    "hide": {
+      "on": boolean;
+      "fade": number;
+    };
     "on": boolean;
     "radius": number;
     "margin": number;
@@ -2621,8 +2625,17 @@ export type SchemaTuning = {
       "unlit": number;
       "wildGlow": {
         "mix": number;
-        "colour": Array<number>;
+        "hue": number;
+        "sat": number;
+        "value": number;
         "ease": number;
+      };
+      "wildGrade": {
+        "strength": number;
+        "desat": number;
+        "pivot": number;
+        "hue": number;
+        "sat": number;
       };
       "moonHue": number;
       "moonSat": number;

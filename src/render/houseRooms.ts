@@ -177,7 +177,7 @@ class Part {
  *  (View.compileAll), as the beach's (render/ground.ts): the floors and the furniture take their textured materials only as their
  *  pictures come back from the art workers, often after the start, and a program's first draw waits for its link there (the
  *  coordinator, 2026-10-26: 2 to 10 s held at the start in some cold starts). Each the same material as its own, with a texel for a map:
- *  the floor's, the Terrace's and the furniture's (the Workshop's pictures and last night's clothes share the furniture's). */
+ *  the floor's, the Terrace's and the furniture's (the Workshop's pictures and last night's clothes share the furniture's), and the walls' as seen from the air (no map). */
 function programTwins(): THREE.Mesh[] {
   const tex = new THREE.DataTexture(new Uint8Array(4), 1, 1, THREE.RGBAFormat);
   tex.colorSpace = THREE.NoColorSpace; tex.needsUpdate = true;
@@ -189,6 +189,9 @@ function programTwins(): THREE.Mesh[] {
     { map: tex, transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }, // (the floor's)
     { map: tex, alphaTest: 0.5, side: THREE.DoubleSide }, // (the Terrace's)
     { map: tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false, depthTest: false }, // (a piece of furniture's)
+    // (the walls' and roofs' as seen from the air, opaque and depth-tested: setApproachDepth, render/treehouseLook.ts, on her first rise
+    // off the house; made there, on the page's thread, before. Ed, 2026-11-12: "a very long freeze when taking off from the treehouse")
+    { vertexColors: true, side: THREE.DoubleSide },
   ].map(o => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial(o)); m.visible = false; m.frustumCulled = false; return m; });
 }
 

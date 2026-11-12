@@ -233,3 +233,30 @@ export function setReadiness(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a
     r.stage = stage; r.done = done; r.total = Math.max(1, total);
     r.share = stage === "ready" ? 1 : Math.min(0.999, (i + Math.min(1, done / r.total)) / (order.length - 1));
   }
+
+/** After a sail's dive path (compileAll's `underDive`) has built the house, its forest and the tufts: everything they added compiled,
+ *  the hidden too, in the background where the GL can (KHR_parallel_shader_compile), each new program's uniforms read once it's
+ *  linked and every texture uploaded, a step at a time, while she sleeps; so nothing compiles on the page's thread later in play.
+ *  The dive's compile ran before the house and forest were made, and skipped the boot's later stages (Ed, 2026-11-12, live v7872:
+ *  "Just had a very long freeze when taking off from the treehouse after a sail": 5.4 s of one frame's draw on his first rise to
+ *  the treetops; tools/stall/SAIL-TAKEOFF.md). No warm draws here: the view draws every frame by now, and those want its targets. */
+export async function warmAfterHouse(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, epoch: number): Promise<void> {
+    const v = a4ViewHost, live = () => epoch === a4PrivateHost.shaderEpoch;
+    while (live() && v.shaderDrawStatus.active) await nextFrame(); // (the dive's own compiles first: compileAll's background)
+    if (!live()) return;
+    const R = v.renderer, fx = v.post.fxScene, hidden: THREE.Object3D[] = [], before = new Set(a4PrivateHost.readyPrograms());
+    for (const sc of fx ? [v.scene, fx] : [v.scene]) sc.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
+    let compiled: Promise<unknown>;
+    try { compiled = Promise.all([R.compileAsync(v.scene, v.camera), fx && R.compileAsync(fx, v.camera), v.post.compile()]).catch(() => { /* readiness is still checked per program below */ }); }
+    finally { for (const o of hidden) o.visible = false; } // (shown only for the call: three makes the programs as it's called)
+    const added = () => a4PrivateHost.readyPrograms().filter(p => !before.has(p));
+    await waitForPrograms(added, compiled, () => {}, () => {}, undefined, undefined, () => live() ? Infinity : -Infinity);
+    if (!live()) return;
+    const programs = added();
+    await runSliced((function* () { for (const p of programs) { if (!live()) return; if (p.isReady()) (p as unknown as THREE.WebGLProgram).getUniforms(); yield; } })(), "after-house-programs");
+    const textures = new Set<THREE.Texture>();
+    v.scene.traverse(o => { for (const m of ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? [])) for (const u of Object.values((m as THREE.ShaderMaterial).uniforms ?? {})) for (const t of ([] as unknown[]).concat(u?.value)) if ((t as THREE.Texture)?.isTexture && !(t as THREE.Texture).isRenderTargetTexture) textures.add(t as THREE.Texture); });
+    v.scene.traverse(o => { for (const m of ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? [])) { const t = (m as THREE.MeshBasicMaterial).map; if (t?.isTexture && !t.isRenderTargetTexture) textures.add(t); } });
+    await runSliced((function* () { for (const t of textures) { if (!live()) return; if ((t as THREE.Texture & { image?: unknown }).image) R.initTexture(t); yield; } })(), "after-house-textures");
+    if (live()) performance.mark("witch:prep-after-house", { detail: { programs: programs.length, textures: textures.size } });
+  }

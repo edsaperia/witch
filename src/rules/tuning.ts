@@ -18,8 +18,10 @@ export interface Mood {
    *  trees, bushes and creatures times this, the lights (her glow, the party's, fires, lava, runestones, sigils), glowing pixels and her
    *  own shading as they were (1 as before; render/lighting.ts nightLightShaded) */
   unlit?: number;
-  /** In the wild (an area the party hasn't reached), her glow cooled toward this colour (0-255) by mix, eased over ease s (render/view/frameUniforms.ts; Ed, 2026-10-29: "an eerie blue/green"). */
-  wildGlow?: { mix: number; colour: number[]; ease: number };
+  /** In the wild (an area the party hasn't reached), her glow cooled toward this colour (hue, saturation and brightness, 0 to 1) by mix, eased over ease s (render/view/frameUniforms.ts; Ed, 2026-10-29: "an eerie blue/green"). */
+  wildGlow?: { mix: number; hue: number; sat: number; value: number; ease: number };
+  /** A grade over the finished picture in the wild only (render/mood.ts wildGradeInto; Ed, 2026-11-12: "each of these applied in the wild only so I can tweak them"): its strength (0 off), the share of colour drained from the dark and middle tones, the brightness above which nothing is graded, the tint's hue and saturation; laid after the global grade, eased in and out with the area moods (areaEase). */
+  wildGrade?: { strength: number; desat: number; pivot: number; hue: number; sat: number };
   /** The moonlight's hue, saturation and brightness (times the tuning's). */
   moonHue: number; moonSat: number; moon: number;
   /** The fog's colour (hue, saturation, brightness 0 to 1) and where it starts and is whole (m from the witch). */
@@ -337,7 +339,7 @@ export interface Tuning {
    *  the fighters, invites.wonAway); every witch knocked down or up in the treetops outside its area, the un-won walk back (`walkBack` times their pace) and are stone again, whole; drawn `tint` of the way to the stone colour `grey`, `red` the red at the wake's end. `analyser`: the music spell's
    *  analyser cast on it, `bars` bars from its middle out to `fill` of its radius in `steps` dots (render/challenge.ts).
    *  Off: the find's area as before (an empty clearing, the find to pick up). */
-  challenge?: { on: boolean; radius: number; margin: number; spacing: number; /** its columns' sigils this far (m) over their tops (render/challenge.ts columnSigilsAt) */ sigilGap: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks?: { on: boolean; height: number; burst: number }; statues?: { on: boolean; bars: number; first: number; gap: number; walkBack: number; keepOut: number; grey: number[]; tint: number; red: number }; analyser?: { bars: number; steps: number; fill: number }; /** Its floor (render/challenge.ts carvingLook; Ed, 2026-11-04, on #1804): its carved sigil's glow while the statues are stone, waking (red), awake (cold), won (warm), fading over `fade` s as they go back to stone; `floor` the moonlight on its stone floor. */ carving?: { stone: number; red: number; wild: number; warm: number; fade: number; floor: number } };
+  challenge?: { on: boolean; radius: number; margin: number; spacing: number; /** its columns' sigils this far (m) over their tops (render/challenge.ts columnSigilsAt) */ sigilGap: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks?: { on: boolean; height: number; burst: number }; statues?: { on: boolean; bars: number; first: number; gap: number; walkBack: number; keepOut: number; grey: number[]; tint: number; red: number }; analyser?: { bars: number; steps: number; fill: number }; /** Its floor (render/challenge.ts carvingLook; Ed, 2026-11-04, on #1804): its carved sigil's glow while the statues are stone, waking (red), awake (cold), won (warm), fading over `fade` s as they go back to stone; `floor` the moonlight on its stone floor. */ carving?: { stone: number; red: number; wild: number; warm: number; fade: number; floor: number }; /** Hidden in the forest before the party starts and after a lost one, fading in or out over `fade` s (rules/challenge.ts stepReveal; Ed, 2026-11-12). */ hide?: { on: boolean; fade: number } };
   treeMarginFromSoundsystem: number;
   bushDensity: number;
   /** How much bushes gather in clumps with open floor between (0 even, 1 strongly clumped). */

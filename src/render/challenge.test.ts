@@ -118,6 +118,7 @@ describe("the challenge circle's light", () => {
 
   it("is dark once closed", () => {
     const g = game(), ch = g.challenge!;
+    stepGame(g, still, 1 / 60); // (the party under way, the circle there: it fades out after a lost night, rules/challenge.ts stepReveal)
     startPartyOver(g, g.clock.time); // (the night lost: Ed, on #1725, only then or once it's won)
     stepGame(g, still, 1 / 60);
     expect(ch.closedAt).not.toBeNull();
@@ -204,7 +205,7 @@ describe("the floor's carved sigil follows the fight (Ed, 2026-11-04, on #1804; 
     expect(won.state).toBe("won"); expect(near(won.rgb, rankColour(T, 2, true))).toBe(true);
     expect(won.glow).toBeGreaterThan(C.wild * 0.9);
     const h = game(), hc = h.challenge!;
-    startPartyOver(h, h.clock.time); stepGame(h, still, STEP);
+    stepGame(h, still, STEP); startPartyOver(h, h.clock.time); stepGame(h, still, STEP); // (there as the party ends: dark while it fades out)
     expect(carvingLook(h).state).toBe("dark"); expect(challengeCarving(h, hc.x, hc.z)!.glow).toBe(0);
   }, 60000);
   it("with the statues off, the carving as before: moonlit, brighter with her in it, no extra floor light", () => {

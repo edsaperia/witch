@@ -1,5 +1,7 @@
 # Balance study follow-up
 
+<!-- summary: The follow-up on the real rules after the report tool (#1475): the matched-tempo preflight and the study's limits. -->
+
 Ed, 2026-10-30: "continue" the balance work after the reporting tool and initial baselines in PR #1463.
 
 Work stays on the real rules, with no tuning or edits to `src/rules`. The first step is a bounded preflight against prototype `3c13498d7`: seed 1000, world 0, home and Tiger, sloppy/crude/skilled, Satchel/no hat/bare broom, a 4200-player-second cap. The first six cases use 200 bpm; six matching 100-bpm cases give a same-source tempo comparison. Tiger is a diagnostic target because the initial slice recorded 29/27 knockdowns for sloppy/crude but reached the 1200-second cutoff. These are fresh experiments on newer rules; changes from the v5655 baseline cannot be attributed solely to tempo.
