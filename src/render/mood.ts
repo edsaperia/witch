@@ -5,6 +5,8 @@
 // warmer glow round the witch, so the party is the warm light in the dark wood. light.mood "plain"
 // (or ?light=plain) is the light as it was. Drawing only: the rules never see it.
 import type { Mood, Tuning } from "../rules/tuning";
+import type { Game } from "../rules/game";
+import { cellKey, partifiedKey } from "../rules/party";
 export type { Mood };
 
 
@@ -29,6 +31,12 @@ export function gradeInto(out: { set(x: number, y: number, z: number, w: number)
 export function wildGradeInto(out: { set(x: number, y: number, z: number, w: number): unknown }, M: Mood | null, wild: number): void {
   const W = M?.wildGrade, k = Math.max(0, Math.min(1, wild)), s = W ? W.strength * k * k * (3 - 2 * k) : 0;
   if (W && s > 0) out.set(s, W.desat, W.pivot, 0); else out.set(0, 0, 1, 0);
+}
+
+/** Whether (x, z) is the wild for the wild-only grade: as her light reckons it (render/combatLight.ts), an area the party hasn't
+ *  reached; never home (`area` "home", the moods' own name for within the home radius) or party ground. */
+export function wildAt(g: Pick<Game, "party" | "map">, x: number, z: number, area: string): boolean {
+  return area !== "home" && !partifiedKey(g.party, g.map, cellKey(g.map.areaAt(x, z).cell));
 }
 
 /** A grade's tint from its hue and saturation, at the brightness it leaves: a colour of luma 1, so it shifts hue, not level. */

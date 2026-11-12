@@ -4687,6 +4687,7 @@ Code: `render/mood.ts`
   1. Ed, 2026-11-12: "Can you make a new pause menu group that has each of these applied in the wild only so I can tweak them?" (the colour was rgb [80, 200, 205]; now hue, saturation and brightness so the pause page's Wild look group can slide it, the same colour exactly)
 - **`light.spooky.wildGlow.sat`**: How deep the colour her glow cools toward in the wild is (0 white, 1 the hue at its deepest).
 - **`light.spooky.wildGlow.value`**: How bright the colour her glow cools toward in the wild is (0 black, 1 full).
+- **`light.spooky.wildGlow.ease`**: How long (s) her glow takes to cool or warm as she crosses into or out of the party's ground.
 - **`light.spooky.wildGrade`**: A colour grade over the picture in the wild only (an area the party hasn't reached; never on party ground or home), eased in and out as she crosses at the area moods' pace (light.spooky.areaEase); laid after the spooky grade (light.spooky.grade), so in the wild both apply, one after the other.
   1. Ed, 2026-11-12: "Can you make a new pause menu group that has each of these applied in the wild only so I can tweak them?" (added at 0, so the look is unchanged till he turns it up)
   Code: `src/render/mood.ts`, `src/render/post.ts`
@@ -4695,7 +4696,6 @@ Code: `render/mood.ts`
 - **`light.spooky.wildGrade.pivot`**: The brightness above which the wild-only grade leaves the picture alone, so bright lights keep their colour.
 - **`light.spooky.wildGrade.hue`**: The hue (0 to 1 round the colour wheel) the wild-only grade tints toward.
 - **`light.spooky.wildGrade.sat`**: How deep the wild-only grade's tint is (0 none, only drained).
-- **`light.spooky.wildGlow.ease`**: How long (s) her glow takes to cool or warm as she crosses into or out of the party's ground.
 
 | knob | type | range |
 |---|---|---|

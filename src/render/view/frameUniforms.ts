@@ -15,7 +15,7 @@ const smoothstep01 = (x: number) => x * x * (3 - 2 * x);
 import { groundHeight, placed } from "../height";
 import { focusOf } from "./culling";
 import { LIGHT_UNIFORMS } from "../lighting";
-import { hsvInto, moodOf } from "../mood";
+import { hsvInto, moodOf, wildAt } from "../mood";
 import { cellKey, partifiedKey } from "../../rules/party";
 import { biomeJitter } from "../../../art/flora/biomes.js";
 import { FADE_MATERIALS, FADE_MESHES, SPRITE_UNIFORMS, treeNormalsUniform } from "../sprites";
@@ -166,7 +166,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
       const d = g.map.dancefloor;
       v.moodArea = Math.hypot(w.x - d.x, w.z - d.z) < g.map.homeRadius ? "home" : AREA_TYPES[g.map.typeOf(...g.map.cellSafe(w.x, w.z).cell)]?.id ?? "";
       // (wild as her light reckons it, render/combatLight.ts: an area the party hasn't reached; home never)
-      v.moodWild = v.moodArea !== "home" && !partifiedKey(g.party, g.map, cellKey(g.map.areaAt(w.x, w.z).cell));
+      v.moodWild = wildAt(g, w.x, w.z, v.moodArea);
     }
     v.areaMoods.update(v.moodArea, Number.isNaN(v.moodTime) ? 0 : time - v.moodTime, LIGHT_UNIFORMS.uHazeColour.value, v.post.gradeTint, v.mist && { setStrength: (k: number) => v.mist!.setStrength(k * (t.mist.gain ?? 1)) }, v.moodWild ? 1 : 0); // (mist.gain: the pause page's Low mist slider, Ed 2026-10-14)
     v.post.wild = v.areaMoods.wild; // (the wild-only grade's share: render/post.ts)
