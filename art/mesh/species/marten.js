@@ -19,13 +19,13 @@ const marten = {
   baby() {
     const w = weasel({ C: MARTEN, body: { len: 0.78, girth: 0.78, arch: 0.4, neck: [0.07, 0.09], neckThick: 1.15, white: 0.45 }, legs: { len: 0.4, thick: 1.7 }, head: { ...martenHead, size: 1.22, muzzle: 0.5, eye: 1.7, ear: { ...martenHead.ear, tall: 1.05, wide: 1.6 } } });
     const t = tail("tail", "pelvis", w.root, { len: 0.2, r: 0.045, pitch: 0.05, blunt: 0.3, tip: 0, colours: { coat: MARTEN.coat, tip: MARTEN.coat } });
-    return plan("marten-baby", w.body, w.skull, [...w.legs, t], lope({ seconds: 0.44, tails: [t.chain], rock: 0.15 }));
+    return plan("marten-baby", w.body, w.skull, [...w.legs, t], lope({ lively: 1.3, tails: [t.chain] }));
   },
   // stretching out, a bushy tail, big paws
   young() {
     const w = weasel({ C: MARTEN, body: { len: 1.08, girth: 0.66, arch: 0.8, neck: [0.13, 0.14], white: 0.36 }, legs: { len: 0.55, thick: 1.3, paw: 1.3 }, head: martenHead });
     const t = tail("tail", "pelvis", w.root, { len: 0.44, r: 0.085, pitch: -0.1, blunt: 0.3, tip: 0, colours: { coat: MARTEN.coat, under: "#3d261a", tip: MARTEN.coat } });
-    return plan("marten-young", w.body, w.skull, [...w.legs, t], lope({ tails: [t.chain] }));
+    return plan("marten-young", w.body, w.skull, [...w.legs, t], lope({ lively: 1.1, tails: [t.chain] }));
   },
   // long and arched, the bib grown into a ruff, a tail as long as its body carried high, hooked claws, tufted ears
   adult() {
@@ -33,7 +33,7 @@ const marten = {
     const t = tail("tail", "pelvis", w.root, { len: 0.7, r: 0.125, pitch: 0.55, curl: -0.8, wave: 0.15, bones: 5, blunt: 0.3, tip: 0, colours: { coat: MARTEN.coat, under: "#3d261a", tip: MARTEN.coat }, spikes: { n: 4, colour: "#3d261a", len: 0.9 } });
     const ruff = tufts(w.body.rings[5], "neck", { n: 4, a0: 1.3, a1: 2.95, long: 0.12, sweep: 0.5, droop: 0.4, r: 0.05, lock: true, colour: () => MARTEN.belly });
     const eartufts = [1, -1].map(s => ({ at: w.skull.P(0.075 * s, 0.14, 0.01), rx: 0.012, ry: 0.01, tip: w.skull.P(0.1 * s, 0.2, -0.005), bone: s > 0 ? "earL" : "earR", colour: "#3d261a", up: [0, 0, 1] }));
-    return plan("marten-adult", w.body, w.skull, [...w.legs, t], lope({ seconds: 0.56, tails: [t.chain] }), { cones: [...ruff, ...eartufts] });
+    return plan("marten-adult", w.body, w.skull, [...w.legs, t], lope({ tails: [t.chain] }), { cones: [...ruff, ...eartufts] });
   },
   // the pinewood's old hunter, longer than seems right: plates of dark resin down its spine with amber lit in them, pine
   // needles along their edges, the feathers of a hundred catches braided at its neck, a tail like a pine bough
@@ -48,7 +48,7 @@ const marten = {
     // feathers at its neck: jay blue, owl barred, crow black
     const FEATHERS = ["#3f7fc4", "#d9c9a8", "#1c1a1c", "#8a5a34", "#e9e2d2"], feathers = tufts(R[5], "neck", { n: 5, a0: 0.15, a1: 2.1, long: 0.26, sweep: 0.8, droop: 0.2, r: 0.045, flat: 0.4, jitter: 0.2, colour: i => FEATHERS[i % 5], tip: i => FEATHERS[(i + 2) % 5] });
     const whiskers = [1, -1].map(s => ({ at: P(0.03 * s, -0.005, 0.2), rx: 0.006, ry: 0.006, tip: P(0.18 * s, -0.04, 0.14), bone: "head", colour: "#efe6d2", up: [0, 1, 0], sides: 3 }));
-    return plan("marten-legend", w.body, w.skull, [...w.legs, t], lope({ seconds: 0.8, bob: 0.01, rock: 0.13, tailSwing: 0.08, tails: [t.chain] }), { cones: [...needles, ...feathers, ...whiskers], armour });
+    return plan("marten-legend", w.body, w.skull, [...w.legs, t], lope({ lively: 0.75, tails: [t.chain] }), { cones: [...needles, ...feathers, ...whiskers], armour });
   },
 };
 

@@ -21,13 +21,13 @@ const stoat = {
     const w = weasel({ C, body: { len: 0.78, girth: 0.72, arch: 0.5, neck: [0.07, 0.09], neckThick: 1.15, white: 0.7 }, legs: { len: 0.34, thick: 1.7 }, head: { size: 1.18, muzzle: 0.42, eye: 1.6 } });
     const t = tail("tail", "pelvis", w.root, { len: 0.13, r: 0.03, pitch: 0.1, tip: 0.3, blunt: 0.3, colours: { coat: C.coat, tip: "#5a4234" } });
     const mane = tufts(w.body.rings[5], "neck", { n: 3, a0: 0.3, a1: 2.0, long: 0.07, sweep: 0.5, r: 0.04, lock: true, colour: () => "#efe3cf" });
-    return plan("stoat-baby", w.body, w.skull, [...w.legs, t], lope({ seconds: 0.42, tails: [t.chain], rock: 0.15 }), { cones: mane });
+    return plan("stoat-baby", w.body, w.skull, [...w.legs, t], lope({ lively: 1.3, tails: [t.chain] }), { cones: mane });
   },
   // a slim tube of an animal, the black tip just showing
   young() {
     const w = weasel({ C: STOAT, body: { len: 1.12, girth: 0.56, arch: 0.9, neck: [0.14, 0.14], neckThick: 0.95, white: 0.72 }, legs: { len: 0.4, thick: 1.35 }, head: { size: 0.94, eye: 1.4 } });
     const t = tail("tail", "pelvis", w.root, { len: 0.26, r: 0.034, pitch: -0.1, tip: 0.3, blunt: 0.3, colours: { coat: STOAT.coat, tip: BLACK } });
-    return plan("stoat-young", w.body, w.skull, [...w.legs, t], lope({ tails: [t.chain] }));
+    return plan("stoat-young", w.body, w.skull, [...w.legs, t], lope({ lively: 1.1, tails: [t.chain] }));
   },
   // the neck held high as a periscope, a white belly, the tail's black brush flared, a crest raised down its neck for the dance
   adult() {
@@ -52,7 +52,7 @@ const stoat = {
     const crown = [{ at: P(0, 0.085, 0.085), rx: 0.04, ry: 0.016, tip: P(0, 0.23, 0.07), bone: "head", colour: GOLD, split: 0.6, up: [0, 0, 1] }, ...[1, -1].map(s => ({ at: P(0.05 * s, 0.075, 0.07), rx: 0.028, ry: 0.014, tip: P(0.075 * s, 0.18, 0.05), bone: "head", colour: GOLD, split: 0.6, up: [0, 0, 1] })),
       { at: P(0, 0.085, 0.1), rx: 0.016, ry: 0.016, tip: P(0, 0.1, 0.125), bone: "head", colour: GEM, glow: true, up: [0, 1, 0] }];
     const whiskers = [1, -1].map(s => ({ at: P(0.03 * s, -0.005, 0.2), rx: 0.006, ry: 0.006, tip: P(0.17 * s, -0.03, 0.15), bone: "head", colour: "#ffffff", up: [0, 1, 0], sides: 3 }));
-    return plan("stoat-legend", w.body, w.skull, [...w.legs, ...tails], lope({ seconds: 0.75, bob: 0.01, rock: 0.13, tailSwing: 0.07, tails: tails.map(t => t.chain) }), { cones: [...robe, ...crown, ...whiskers], armour });
+    return plan("stoat-legend", w.body, w.skull, [...w.legs, ...tails], lope({ lively: 0.75, tails: tails.map(t => t.chain) }), { cones: [...robe, ...crown, ...whiskers], armour });
   },
 };
 

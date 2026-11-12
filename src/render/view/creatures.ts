@@ -32,6 +32,7 @@ import { legendRings } from "../../rules/slowTime";
 import { flightHeight } from "../../rules/movement";
 import { focusOf, inView } from "./culling";
 import { mark } from "./pops";
+import { newStride, stepStride } from "../../../art/mesh/stride.js";
 import { attackFeel, newFeel } from "../attackFeel";
 import { impactOf } from "../impact";
 import { creatureHeat } from '../thermalVision';
@@ -50,20 +51,37 @@ const SLEEP: SleepPose = { sleep: 0, droop: 0 }; // (likewise)
 const FWD = new THREE.Vector3(), CAM_UP = new THREE.Vector3(); // (the camera's look and up, a frame's working)
 
 /** The baked walk's frame by how far it has gone as drawn (Ed's playtest: feet walking in place, or not walking while it moves): a
- *  step every `step` metres, standing once it has stopped for a quarter of a second (frame 0, or the walk's own standing frame:
- *  gait.stand, a mesh creature's). One small record per creature. A walk with a `rate` (a mesh creature's: art/mesh/index.js
- *  MESH_RATE) shows no more than that many frames a second, so at a sprint its feet slide a little rather than its legs blur
- *  (Ed's playtest, 2026-11-12: "they appear to vibrate along instead of walk"); a flyer's ("fly": the bee) beats by the clock,
- *  moving or not. */
-function strideFrame(v: View, c: { id: number; x: number; z: number }, time: number, step: number, frames = 2, gait?: { cycle?: number; stand?: number; rate?: number; type?: string }): number {
+ *  step every `step` metres, standing once it has stopped for a quarter of a second (frame 0). One small record per creature.
+ *  A mesh creature's walk (gait.cycle) is stepped by art/mesh/stride.js, so its planted feet stay put (Ed, 2026-11-12: "the feet
+ *  don't plant"): its sprite goes forward in whole steps with its frames, STRIDE.shift along STRIDE.dx, dz from where it is; a
+ *  slow clip or a fast one by its pace (runStep: the fast one's step); stopping, it stands on a frame of its walk with every
+ *  foot down, or its standing frame (gait.stand) from a run, with a little squash as it lands (STRIDE.land, 1 fading to 0). A
+ *  flyer's ("fly": the bee) beats by the clock, moving or not. */
+const STRIDE = { shift: 0, dx: 0, dz: 0, land: 0 }, STEP = { cycle: 8, step: 0.3, rests: undefined as number[] | undefined, run: undefined as { step: number } | undefined }, RUN = { step: 0.3 };
+function strideFrame(v: View, c: { id: number; x: number; z: number }, time: number, step: number, frames = 2, gait?: { cycle?: number; stand?: number; rate?: number; type?: string; rests?: number[]; run?: { from: number } }, runStep = 0): number {
   let o = v.strides.get(c.id);
   if (!o) v.strides.set(c.id, (o = { x: c.x, z: c.z, d: 0, at: -1, t: time }));
   const d = Math.hypot(c.x - o.x, c.z - o.z), s = Math.max(0.05, step), n = gait?.cycle ?? frames;
   if (gait?.type === "fly" && gait.rate) { o.x = c.x; o.z = c.z; return Math.floor(time * gait.rate + c.id * 0.37) % n; }
-  if (d > 1e-3 && d < 3) { o.d += gait?.rate ? Math.min(d, s * gait.rate * Math.max(0, time - (o.t ?? time))) : d; o.at = time; } // (a jump of metres is a teleport, not a step)
+  if (gait?.cycle) {
+    const m = (o.m ??= newStride()), went = d > 1e-3 && d < 3 ? d : 0, dt = Math.max(0, time - (o.t ?? time)); // (a jump of metres is a teleport, not a step)
+    if (went) { m.dx = (c.x - o.x) / d; m.dz = (c.z - o.z) / d; }
+    STEP.cycle = n; STEP.step = s; STEP.rests = gait.rests; STEP.run = gait.run && runStep > 0 ? ((RUN.step = Math.max(0.05, runStep)), RUN) : undefined;
+    const r = stepStride(m, STEP, went, dt);
+    if (r.settled) o.landed = time;
+    o.x = c.x; o.z = c.z; o.t = time;
+    STRIDE.shift = r.shift; STRIDE.dx = m.dx; STRIDE.dz = m.dz; STRIDE.land = o.landed !== undefined && time - o.landed < 0.2 ? 1 - (time - o.landed) / 0.2 : 0;
+    return r.stand ? gait.stand ?? 0 : r.run ? gait.run!.from + r.frame : r.frame;
+  }
+  if (d > 1e-3 && d < 3) { o.d += d; o.at = time; } // (a jump of metres is a teleport, not a step)
   o.x = c.x; o.z = c.z; o.t = time;
-  return time - o.at < 0.25 ? Math.floor(o.d / s) % n : gait?.stand ?? 0;
+  return time - o.at < 0.25 ? Math.floor(o.d / s) % n : 0;
 }
+
+/** How tall a creature's frame is as the game sizes it, art pixels: what is drawn of it standing (a mesh creature's `tall`: its
+ *  sprite is taller, with room for its leap), else its sprite less the empty rows under it (Ed, 2026-11-12: sizes "come from the
+ *  height actually drawn, not the canvas size"). */
+const tallOf = (f: { h: number; pad?: number; tall?: number }): number => f.tall ?? f.h - (f.pad ?? 0);
 
 const WOKEN_GEAR: RigGear = { woken: true };
 
@@ -211,13 +229,14 @@ export function drawCreatures(v: View, time = 0): void {
     const lk = hide ? keyOf("shadow", key) : stone ? keyOf("statue", key) : c.boss && !c.leashed && g.tuning.wildLegends.seen ? keyOf("legend", key) : key; // (a wild legend in a batch of its own: its rim and its light in steps; one hiding, in a shadow batch)
     if (lk !== key && !stone) legendKeys.set(lk, c.species);
     arts.set(lk, art);
-    const gait = art.walk, fi = glided ? art.frame(c.level, Math.floor(time * 3 + c.id * 0.37) % 2) : slept || napped ? art.frame(c.level, Math.floor(time / (slept ? 2.5 : 1.8) + c.id * 0.37) % 2) : art.frame(c.level, strideFrame(v, c, time, art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * (gait?.steps?.[c.level] ?? gait?.step ?? 0.3), gait?.frames ?? 2, gait), c.away), frame = art.atlas.frames[fi]; // (walking: its cycle by the distance it's gone, a planted foot staying put) // (asleep: a slow breath, in and out)
+    STRIDE.shift = 0; STRIDE.land = 0;
+    const gait = art.walk, wide = art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * (c.boss && !c.leashed ? g.tuning.wildLegends.scale : 1), fi = glided ? art.frame(c.level, Math.floor(time * 3 + c.id * 0.37) % 2) : slept || napped ? art.frame(c.level, Math.floor(time / (slept ? 2.5 : 1.8) + c.id * 0.37) % 2) : art.frame(c.level, strideFrame(v, c, time, wide * (gait?.steps?.[c.level] ?? gait?.step ?? 0.3), gait?.frames ?? 2, gait, wide * (gait?.run?.steps[c.level] ?? 0)), c.away), frame = art.atlas.frames[fi]; // (walking: its cycle by the distance it's gone, a planted foot staying put) // (asleep: a slow breath, in and out)
     // A wild legend (Ed, 2026-10-04): bigger and imposing, swelling slowly as it breathes (slower asleep).
     const boss = c.boss && !c.leashed ? g.tuning.wildLegends : null;
     // (its size a constant, so its pixels stay the scene's: its breath a squash in whole art pixels, sy, not a swelling; Ed's round 14 playtest)
     const breath = boss ? 1 + boss.breathe * bossBreath(time, c.id, boss.breathEvery * (dormant(g, c) ? 1.5 : 1)) : 1, bossScale = boss ? boss.scale * (boss.seen ? 1 : breath) : 1, breathY = boss?.seen ? breath : 1;
     if (!inView(v, c.x, c.z, frame.w * v.mpp * bossScale, frame.h * v.mpp * bossScale * stilts.length, 4)) continue;
-    const fresh = mark(v, "creature", c.x, c.z, frame.h * v.mpp * (boss ? boss.scale : 1), c.id);
+    const fresh = mark(v, "creature", c.x, c.z, tallOf(frame) * v.mpp * (boss ? boss.scale : 1), c.id);
     let l = per.get(lk);
     if (!l) per.set(lk, (l = []));
     // Party animals never stand still: a bounce and a sway on the beat when idle, a little
@@ -236,9 +255,10 @@ export function drawCreatures(v: View, time = 0): void {
     }
     // The win's conga (rules/win.ts: c.finale its place in the line, going anticlockwise round the dancefloor): its body's step on the
     // beat instead of its dance (render/conga.ts), leaning forward along the line onto the back of the one ahead, swaying across it.
-    let cx = 0, cz = 0, csx = 1, csy = 1;
+    // (a mesh creature's sprite goes in whole steps with its walk's frames, so its planted feet stay put: strideFrame; a breath of squash as it comes to a stand)
+    let cx = STRIDE.dx * STRIDE.shift, cz = STRIDE.dz * STRIDE.shift, csx = 1 + 0.04 * STRIDE.land, csy = 1 - 0.06 * STRIDE.land;
     if (c.finale !== undefined && c.finale >= 0 && g.win?.phase === "won" && lying <= 0) {
-      const P = congaPose(congaBody(c.species), bt / beat, c.finale, CP), hM = (frame.h - (frame.pad ?? 0)) * v.mpp, wM = frame.w * v.mpp;
+      const P = congaPose(congaBody(c.species), bt / beat, c.finale, CP), hM = tallOf(frame) * v.mpp, wM = frame.w * v.mpp;
       const d0 = g.map.dancefloor, a = Math.atan2(c.z - d0.z, c.x - d0.x), fx = -Math.sin(a), fz = Math.cos(a); // (along the line, and across it: out from the floor)
       dance = P.y * hM; sway = 0; tap = P.tap; csx = P.sx; csy = P.sy;
       cx = fx * P.lean * wM + Math.cos(a) * P.sway * hM; cz = fz * P.lean * wM + Math.sin(a) * P.sway * hM;
@@ -280,7 +300,7 @@ export function drawCreatures(v: View, time = 0): void {
     hop += flightHeight(c, time); // (a wild flyer swooping: up out of reach over its shadow, rules/movement.ts stepSwoop)
     // Won over just now: it celebrates by its body, a jump-spin, a roll-over, a loop or a wiggle (render/cheer.ts; rules/affection.ts).
     if (c.cheerUntil !== undefined && time < c.cheerUntil) {
-      const P2 = cheerPose(cheerKind(c.species), 1 - (c.cheerUntil - time) / (g.tuning.invites.cheer?.secs ?? 1), CHEER), hM2 = (frame.h - (frame.pad ?? 0)) * v.mpp * scale, R2 = SPRITE_UNIFORMS.uRight.value;
+      const P2 = cheerPose(cheerKind(c.species), 1 - (c.cheerUntil - time) / (g.tuning.invites.cheer?.secs ?? 1), CHEER), hM2 = tallOf(frame) * v.mpp * scale, R2 = SPRITE_UNIFORMS.uRight.value;
       hop += P2.y * hM2; cx += R2.x * P2.x * hM2; cz += R2.z * P2.x * hM2;
       feel.sx *= P2.sx; feel.sy *= P2.sy; if (P2.flip) feel.flip = !feel.flip;
     }
@@ -291,7 +311,7 @@ export function drawCreatures(v: View, time = 0): void {
     // Fully asleep with its own sleeping form baked (#224, art/legends.js): that, dressed and grown over, its ground line on the
     // ground and no moss tint over its own. Getting up or lying down (render/legendSleep.ts) the rig draws it, sunk a little and
     // mossed by how far asleep it is; so does the baked frame, sunk, until the rig's parts are ready.
-    const form = (!!slept && lying >= 0.999) || (!!napped && lying >= 0.999), fh = (frame.h - (frame.pad ?? 0)) * v.mpp * scale;
+    const form = (!!slept && lying >= 0.999) || (!!napped && lying >= 0.999), fh = tallOf(frame) * v.mpp * scale;
     // Its own sleeping form stands on its lowest drawn pixel, the rows below its ground line on the ground nearer the camera (Ed,
     // 2026-10-08: legends "tend to be halfway in the floor": slid down the billboard instead, those rows went under the ground and
     // were cut off, as the soundsystems' were, #564); its frame's empty rows (pad) taken off. Lying down without one, sunk by sink.
@@ -317,7 +337,7 @@ export function drawCreatures(v: View, time = 0): void {
       const L = LOOK;
       L.heat = heat;
       L.stiltLength = stilts.length; L.stiltTip = stilts.tip; L.stiltStrength = stilts.strength;
-      L.y = dance + hop + (st ? rigSunk : stilts.length > 1 ? 0 : sunk); L.tap = tap; L.scale = scale; L.glow = glow; L.fresh = fresh; L.h = frame.h - (frame.pad ?? 0); L.face = lying > 0.5 ? "asleep" : face; L.sleep = lying; L.droop = droop; L.twitch = toss;
+      L.y = dance + hop + (st ? rigSunk : stilts.length > 1 ? 0 : sunk); L.tap = tap; L.scale = scale; L.glow = glow; L.fresh = fresh; L.h = tallOf(frame); L.face = lying > 0.5 ? "asleep" : face; L.sleep = lying; L.droop = droop; L.twitch = toss;
       L.sx = feel.sx * csx; L.sy = feel.sy * breathY * csy; L.dx = cx; L.dz = cz; L.crouch = feel.crouch; L.lunging = feel.lunging; L.gear = party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined; L.posture = ch.rig; L.quirk = ch.quirk; L.quirkK = quirkK; L.lookAt = watching ? g.witch : undefined;
       rigged = v.rig.add(c, L);
     }
@@ -328,7 +348,7 @@ export function drawCreatures(v: View, time = 0): void {
       l.push(inst(INST_POOL, ni++, c.x + cx + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + RT.x * k + nx, dance + hop + sunk + SQ.hop * fh, c.z + cz + RT.z * k + near, frame, turned, fresh, glow, scale, feel.sx * SQ.sx * csx, feel.sy * breathY * SQ.sy * csy));
       l[l.length - 1].heat = heat;
     }
-    v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk + (rigged ? v.rig!.stiltRises.get(c.id) ?? 0 : 0)); // its health bar goes over it
+    v.leashView.tops.set(c.id, tallOf(frame) * v.mpp * scale + dance + hop + sunk + (rigged ? v.rig!.stiltRises.get(c.id) ?? 0 : 0)); // its health bar goes over it
     v.leashView.halfW.set(c.id, frame.w * v.mpp * scale * 0.5);
     // Where its head is (Ed, 2026-10-12: bubbles' tails "point at creatures' heads"): its frame's head point (render/artBuild.ts
     // headPoint), mirrored with it, along the camera's right from where it's drawn; bubbles stand over it.

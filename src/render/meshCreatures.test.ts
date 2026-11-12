@@ -5,6 +5,7 @@ import { MESH_CYCLE, MESH_FRAMES, MESH_HEIGHTS, MESH_RATE, MESH_STAND, hasMesh, 
 import { MESH_PLANS } from "../../art/mesh/plans.js";
 import { GAIT_TYPES, pose, shape } from "../../art/mesh/shape.js";
 import { napping } from "../../art/mesh/gear.js";
+import { newStride, stepStride } from "../../art/mesh/stride.js";
 import { bakeMesh } from "../../art/mesh/raster.js";
 import { GENOME_BY_ID } from "../../art/genome/index.js";
 import { MESH_SPECIES } from "../../art/mesh/species/index.js";
@@ -80,7 +81,7 @@ describe("mesh creatures", () => {
     expect(lit(bare)).toBe(0);
     expect(lit(dressed)).toBeGreaterThan(3); // (the collar: lit, in its colour)
     expect((dressed as unknown as { ppu: number }).ppu).toBeCloseTo((bare as unknown as { ppu: number }).ppu, 6); // (dressed, it is the same size: a hat doesn't shrink it)
-    expect(dressed.h).toBeGreaterThanOrEqual(bare.h);
+    expect(dressed.h).toBeGreaterThanOrEqual(bare.h - 1); // (its sprite's height is its run's leap now, not its hat's: within a row, shod)
   });
 
   it("lies down to sleep at the size it walks at, and a sleeping legend is stone: nothing lit, and lower than the nap it is made from", () => {
@@ -95,13 +96,17 @@ describe("mesh creatures", () => {
 
   it("gives the view its walk without drawing it: its cycle, the frame it stands still in, a step for each level", () => {
     const g = meshGait("fox") as { frames: number; cycle: number; stand: number; rate: number; type: string; step: number; steps: number[] };
-    expect(g.frames).toBe(MESH_FRAMES); expect(g.cycle).toBe(MESH_CYCLE); expect(g.stand).toBe(MESH_STAND); expect(g.rate).toBe(MESH_RATE);
+    expect(g.frames).toBe(MESH_FRAMES + MESH_CYCLE); expect(g.cycle).toBe(MESH_CYCLE); // (a legged kind: its slow cycle, standing, its fast cycle)
+    expect((meshGait("snail") as { frames: number; run?: unknown }).frames).toBe(MESH_FRAMES); expect((meshGait("snail") as { run?: unknown }).run).toBeUndefined(); // (a legless one goes the one way)
+    const fast = (g as unknown as { run: { from: number; steps: number[] }; rests: number[] }); expect(fast.run.from).toBe(MESH_FRAMES); expect(fast.run.steps).toHaveLength(4);
+    fast.run.steps.forEach((s, l) => expect(s, `fox ${l}: its run's step is the longer`).toBeGreaterThan(g.steps[l] * 1.5));
+    expect(fast.rests.length, "its walk has frames with every foot down, to stop on").toBeGreaterThan(0); expect(g.stand).toBe(MESH_STAND); expect(g.rate).toBe(MESH_RATE);
     expect(MESH_FRAMES).toBe(MESH_CYCLE + 1); // (the walk's cycle, then standing still)
     expect(g.steps).toHaveLength(4); expect(g.step).toBe(g.steps[2]);
-    for (const step of g.steps) { expect(step).toBeGreaterThan(0.02); expect(step).toBeLessThan(0.3); }
+    for (const step of g.steps) { expect(step).toBeGreaterThan(0.005); expect(step).toBeLessThan(0.3); }
     expect(meshGait("fox")).toBe(g);
     const walk = meshWalk("fox", 0) as unknown as { towards: Frame[]; away: Frame[] };
-    expect(walk.towards).toHaveLength(MESH_FRAMES); expect(walk.away).toHaveLength(MESH_FRAMES);
+    expect(walk.towards).toHaveLength(MESH_FRAMES + MESH_CYCLE); expect(walk.away).toHaveLength(MESH_FRAMES + MESH_CYCLE);
   });
 
   // Ed's playtest of the meshes in the running game, 2026-11-12: "1/ animals appear to float above the ground (I guess bottom point
@@ -128,8 +133,8 @@ describe("mesh creatures", () => {
       // (how far it goes in one cycle of its legs, in its own body's lengths: the first meshes went a twentieth to a third)
       const least = { bound: 0.5, trot: 0.2, walk: 0.15 }[F.type];
       if (least) expect(F.stride / F.body, name).toBeGreaterThan(least);
-      if (F.type === "bound") expect([0, 1, 2, 3, 4, 5, 6, 7].some(i => shape(make()).motion.lift(i / MESH_CYCLE) > 0.005), name).toBe(true); // (a moment in the air)
-      expect(F.step, name).toBeGreaterThan(0.015);
+      if (F.type === "bound") expect([0, 1, 2, 3, 4, 5, 6, 7].some(i => shape(make(), "run").motion.lift(i / MESH_CYCLE) > 0.005), name).toBe(true); // (a moment in the air)
+      expect(F.step, name).toBeGreaterThan(0.005); // (its slow pace's: short steps, most feet down)
     });
   });
 
@@ -147,6 +152,57 @@ describe("mesh creatures", () => {
     });
   });
 
+  // Ed, 2026-11-12, of the walk clip: "the feet don't plant, and the bodies seem rigid"; its legs "still slide or skate, mostly
+  // short-legged animals at speed". tools/creature-mesh/slip.mjs measures the same at every level, in art pixels.
+  type Strider = Shape & { stride: number; feet: { paw: number; phase: number; duty: number }[] };
+  it("plants its feet: a paw that is down stays where it is on the ground for its whole stance, at both paces", () => {
+    for (const [species, levels] of Object.entries(PLANS)) for (const level of [0, 2]) for (const pace of ["walk", "run"]) {
+      const p = levels[level](); if (!p.gait.legs?.length) continue;
+      const sh = shape(p, pace) as unknown as Strider, name = `${species} ${level} ${pace}`;
+      expect(sh.feet.length, name).toBe(4); expect(sh.stride, name).toBeGreaterThan(0);
+      for (const f of sh.feet) { let x0 = 0, y0 = 0, z0 = 0;
+        for (let i = 0; i <= 24; i++) { const c = f.duty * 0.999 * i / 24, T = (pose(sh, (((c - f.phase) % 1) + 1) % 1) as { T: Float64Array }).T, x = T[f.paw * 3], y = T[f.paw * 3 + 1], z = T[f.paw * 3 + 2] + sh.stride * c; // (the body has gone that far since it came down)
+          if (!i) { x0 = x; y0 = y; z0 = z; continue; }
+          expect(Math.hypot(x - x0, y - y0, z - z0) / sh.stride, `${name}: paw ${f.paw} at ${i}/24 of its stance`).toBeLessThan(0.005); } }
+    }
+  });
+
+  it("is stepped by the view in whole steps: a planted foot never slides, at a crawl or a sprint, and it stops on a frame with every foot down", () => {
+    const G = { cycle: 8, step: 0.4, rests: [0, 2, 4, 6], run: { step: 1.6 } };
+    for (const speed of [0.3, 2, 9, 40]) { // (the game's metres a second)
+      const o = newStride(); let x = 0, ran = false, was: { run: boolean; frame: number; at: number } | null = null;
+      for (let i = 0; i < 600; i++) { x += speed / 60; const r = stepStride(o, G, speed / 60, 1 / 60), step = r.run ? G.run.step : G.step, at = x + r.shift; ran ||= r.run;
+        // (where it is drawn moves only as its frame does, a step a frame: so a foot the frames have planted stays on its ground;
+        // going to its other clip it stays where it was drawn)
+        if (was) expect(at - was.at, `at ${speed}, picture ${i}`).toBeCloseTo(was.run === r.run ? ((r.frame - was.frame + 8) % 8) * step : 0, 6);
+        was = { run: r.run, frame: r.frame, at }; expect(r.shift).toBeLessThanOrEqual(1e-9); expect(r.shift).toBeGreaterThan(-step - 1e-9); }
+      expect(ran, `at ${speed}`).toBe(speed > 4); // (its fast clip past a cycle and a half a second of its slow one)
+      if (ran) continue;
+      let last = stepStride(o, G, 0, 1 / 60); for (let i = 0; i < 60; i++) last = stepStride(o, G, 0, 1 / 60);
+      expect(G.rests, `stopped from ${speed}`).toContain(last.frame); expect(last.stand).toBe(false); expect(last.shift).toBeLessThanOrEqual(G.step + 1e-9);
+    }
+    const o = newStride(); for (let i = 0; i < 120; i++) stepStride(o, G, 40 / 60, 1 / 60);
+    let r = stepStride(o, G, 0, 1 / 60), landed = 0; for (let i = 0; i < 30; i++) { r = stepStride(o, G, 0, 1 / 60); if (r.settled) landed++; }
+    expect(r.stand).toBe(true); expect(landed).toBe(1); // (from a run: its standing frame, once)
+  });
+
+  it("moves its body with its gait: it bobs, its head is steadier than its chest, and its tail follows late", () => {
+    const at = (sh: Shape, bone: string, u: number): number[] => { const i = (sh.bones as unknown as { name: string }[]).findIndex(b => b.name === bone), T = (pose(sh, u) as { T: Float64Array }).T; return [T[i * 3], T[i * 3 + 1], T[i * 3 + 2]]; };
+    const turn = (sh: Shape, bone: string, u: number): number => { const i = (sh.bones as unknown as { name: string }[]).findIndex(b => b.name === bone), R = (pose(sh, u) as { R: Float64Array }).R; return Math.asin(-R[i * 9 + 5]); }; // (its pitch)
+    const range = (f: (u: number) => number): number => { let lo = Infinity, hi = -Infinity; for (let i = 0; i < 48; i++) { const v = f(i / 48); lo = Math.min(lo, v); hi = Math.max(hi, v); } return hi - lo; };
+    for (const [species, pace, bobs] of [["fox", "run", 2], ["badger", "walk", 2], ["hare", "run", 1], ["stoat", "run", 1]] as const) {
+      const sh = shape(PLANS[species][2](), pace) as unknown as Shape, hips = (u: number): number => at(sh, "pelvis", u)[1], rise = range(hips), name = `${species} ${pace}`;
+      expect(rise, `${name} bobs`).toBeGreaterThan(0.004);
+      let ups = 0; for (let i = 0; i < 96; i++) { const a = hips((i - 1) / 96), b = hips(i / 96), c = hips((i + 1) / 96); if (b > a + 1e-9 && b >= c) ups++; }
+      if (bobs === 2) expect(ups, `${name}: rises twice a cycle`).toBe(2);
+      else expect(rise, `${name}: a bound's big rise and fall`).toBeGreaterThan(0.03); // (off its hind feet, and a lower one off its fore)
+      expect(range(u => turn(sh, "head", u)), `${name}: its head pitches less than its chest`).toBeLessThan(range(u => turn(sh, "chest", u)) * 0.6);
+    }
+    // (a bound's back gathers and stretches: its hips and its chest come nearer and go further apart)
+    const hare = shape(PLANS.hare[2](), "run") as unknown as Shape;
+    expect(range(u => turn(hare, "chest", u) - turn(hare, "pelvis", u)), "the hare's back flexes").toBeGreaterThan(0.3);
+  });
+
   it("is drawn with its feet on its sprite's bottom row, towards and away (each heading stood on its own ground)", () => {
     // (babies: the smallest sprites, so every kind can be drawn here; the crop is the same code at every level)
     for (const species of Object.keys(PLANS)) {
@@ -155,7 +211,8 @@ describe("mesh creatures", () => {
         const gaps = walk[facing].map(f => gap(f, walk.w, walk.h)), name = `${species} ${facing}: ${gaps.join(",")}`;
         expect(Math.min(...nap[facing].map(f => gap(f, nap.w, nap.h))), `${species} asleep ${facing}`).toBe(0);
         if (flies) continue; // (awake it hangs in the air, over the ground its sprite keeps under it: art/mesh/raster.js, sh.hover)
-        expect(Math.min(...gaps.slice(0, MESH_CYCLE)), name).toBe(0); // (its walk's lowest foot is on the bottom row)
+        expect(Math.min(...gaps.filter((_, i) => i !== MESH_STAND)), name).toBe(0); // (its lowest foot of all, at either pace, is on the bottom row)
+        expect(Math.min(...gaps.slice(0, MESH_CYCLE)), name).toBeLessThanOrEqual(Math.max(2, Math.ceil(walk.h * 0.05))); // (and its slow walk's within a row or two: its run reaches a near foot further towards us)
         expect(gaps[MESH_STAND], name).toBeLessThanOrEqual(Math.max(2, Math.ceil(walk.h * 0.05))); // (standing: a nearer foot reaches a row or two lower mid-stride)
         expect(Math.max(...gaps), name).toBeLessThanOrEqual(Math.ceil(walk.h * 0.15)); // (a lifted near foot, or a bound's moment in the air)
       }

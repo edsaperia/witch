@@ -6,7 +6,7 @@
 // already wears its signature loud, the legend is another, older, stranger creature, "I like magical armour pieces on
 // legends", and that armour is plate raised from the torso's own polygons, a lit rune on each.
 import { band } from "../kit/band.js";
-import { trot, trundle } from "../kit/gaits.js";
+import { trundle } from "../kit/gaits.js";
 import { plan } from "../kit/plan.js";
 import { quad } from "../kit/quad.js";
 import { tail } from "../kit/tail.js";
@@ -26,13 +26,13 @@ const badger = {
   baby() {
     const C = { ...BADGER, coat: "#a3a39d" }, q = brock(C, { hind: { len: 0.3, thick: 2.0 }, fore: { len: 0.3, thick: 2.0 }, body: { len: 0.58, girth: 1.3, neck: [0.02, 0.09] }, head: { size: 1.5, muzzle: 0.6, eye: 1.3 }, bands: 0.75 });
     const t = tail("tail", "pelvis", q.root, { len: 0.1, r: 0.034, pitch: -0.3, blunt: 0.08, tip: 0, colours: { coat: C.coat, tip: C.coat } });
-    return plan("badger-baby", q.body, q.skull, [...q.legs, t], trundle({ seconds: 0.46, tails: [t.chain] }));
+    return plan("badger-baby", q.body, q.skull, [...q.legs, t], trundle({ lively: 1.3, tails: [t.chain] }));
   },
   // a longer, flatter wedge: the blaze nose to crown between two black bands
   young() {
     const q = brock(BADGER, { body: { len: 0.9, girth: 1.1, tuck: 0.95 }, head: { size: 1.02 } });
     const t = tail("tail", "pelvis", q.root, { len: 0.17, r: 0.04, pitch: -0.35, blunt: 0.08, tip: 0, colours: { coat: "#a3a39d", tip: "#a3a39d" } });
-    return plan("badger-young", q.body, q.skull, [...q.legs, t], trundle({ tails: [t.chain] }));
+    return plan("badger-young", q.body, q.skull, [...q.legs, t], trundle({ lively: 1.1, tails: [t.chain] }));
   },
   // a broad armoured-looking back in layered shaggy plates, heavy forelegs with big pale claws, the bands pushed wider, a bristled tail
   adult() {
@@ -57,7 +57,7 @@ const badger = {
     // side of the stones as raised chalk, from its neck to its rump, the barrow's marks lit along them
     const armour = [{ from: 0.7, to: 4.85, round: [0.5, 1.0], inset: 0.14, lames: 6, thick: 0.016, step: 0.006, colour: CHALK, rim: "#c9c6b8", runes: { colour: MARK, size: 0.55, max: 1 } }];
     const scars = [{ at: P(0.03, 0.06, 0.15), rx: 0.006, ry: 0.004, tip: P(0.05, -0.02, 0.2), bone: "head", colour: "#c98a80", up: [0, 0, 1], sides: 3 }];
-    return plan("badger-legend", q.body, q.skull, [...q.legs, t, torc], trundle({ seconds: 0.95, sway: 0.07, tails: [t.chain], legs: trot(0.9) }), { cones: [...shag, ...stones, ...scars], armour });
+    return plan("badger-legend", q.body, q.skull, [...q.legs, t, torc], trundle({ lively: 0.75, tails: [t.chain] }), { cones: [...shag, ...stones, ...scars], armour });
   },
 };
 

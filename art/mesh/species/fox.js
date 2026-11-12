@@ -6,7 +6,7 @@
 // beads on its legs), made stranger and older still on Ed's word (below). The red fox's own proportions underneath: long in the leg, a deep narrow chest tucked up to
 // the loin, a wedge of a head. Metres; y up; its head along +z.
 import { band } from "../kit/band.js";
-import { trot } from "../kit/gaits.js";
+import { trots } from "../kit/gaits.js";
 import { head } from "../kit/head.js";
 import { fourLegs } from "../kit/leg.js";
 import { plan } from "../kit/plan.js";
@@ -23,7 +23,7 @@ function baby() {
   const body = torso({ back: 0.37 * L + 0.012, len: 0.54, girth: 1.02, deep: 0.92, tuck: 1.08, neck: [0.075, 0.07], neckThick: 1.15, white: 0.45, colours: C });
   const skull = head(body.pivot, { size: 1.38, muzzle: 0.45, ear: { tall: 1.05, wide: 1.45, back: EAR }, cheek: 0.5, eye: 1.6, white: 0.55, colours: C });
   const brush = tail("tail", "pelvis", [0, 0.37 * L + 0.02, -0.19], { len: 0.19, r: 0.062, pitch: 0.15, tip: 0.4, blunt: 0.4, colours: { coat: C.coat, tip: WHITE } });
-  return plan("fox-baby", body, skull, [...legs(body, { len: L, thick: 1.6, colours: C }), brush], { seconds: 0.46, type: "trot", duty: 0.5, bob: 0.011, sway: 0.07, tailSwing: 0.3, tails: [brush.chain], legs: trot(1.1) });
+  return plan("fox-baby", body, skull, [...legs(body, { len: L, thick: 1.6, colours: C }), brush], trots({ lively: 1.3, tails: [brush.chain] }));
 }
 
 function young() {
@@ -31,7 +31,7 @@ function young() {
   const body = torso({ back: 0.37 * L + 0.01, len: 0.96, girth: 0.84, deep: 0.95, tuck: 0.72, neck: [0.17, 0.15], neckThick: 0.92, white: 0.4, colours: C });
   const skull = head(body.pivot, { size: 0.93, muzzle: 1.08, ear: { tall: 1.25, wide: 1.05, back: EAR }, cheek: 0.35, eye: 1.15, colours: C });
   const brush = tail("tail", "pelvis", [0, 0.37 * L + 0.015, -0.33], { len: 0.54, r: 0.088, pitch: -0.3, colours: { coat: C.coat, under: "#b85c1b", tip: WHITE } });
-  return plan("fox-young", body, skull, [...legs(body, { len: L, thick: 0.86, colours: C }), brush], { seconds: 0.62, type: "trot", duty: 0.5, bob: 0.008, sway: 0.05, tailSwing: 0.16, tails: [brush.chain], legs: trot(1) });
+  return plan("fox-young", body, skull, [...legs(body, { len: L, thick: 0.86, colours: C }), brush], trots({ lively: 1.1, tails: [brush.chain] }));
 }
 
 // (Ed, 2026-11-11: "I think the adult should be more like the legend (all the tails and spikes)": the first pass's legend, without
@@ -44,7 +44,7 @@ function adult() {
     return tail(`tail${"abcde"[i]}`, "pelvis", [0.045 * f, body.rings[1].at[1] + 0.05 - 0.03 * a, body.rings[1].at[2] - 0.03 + 0.03 * a], { len: 0.66 - 0.12 * a, r: 0.108 - 0.012 * a, yaw: f * 0.85, pitch: 0.6 - 0.5 * a, curl: -0.35, wave: 0.12, phase: i, tip: 0.2, blunt: 0.22, colours: { coat: C.coat, under: "#a44f18", tip: WHITE } }); });
   const ruff = tufts(body.rings[5], "neck", { n: 5, a0: 0.9, a1: 2.9, long: 0.17, sweep: 0.6, droop: 0.35, r: 0.062, lock: true, colour: () => WHITE });
   const crest = tufts(body.rings[4], "chest", { n: 1, a0: 0.12, long: 0.12, sweep: 0.9, r: 0.045, lock: true, colour: () => C.coat, tip: () => "#a44f18" }).concat(tufts(body.rings[3], "chest", { n: 1, a0: 0.12, long: 0.1, sweep: 0.9, r: 0.04, lock: true, colour: () => C.coat, tip: () => "#a44f18" }));
-  return plan("fox-adult", body, skull, [...legs(body, { len: L, thick: 1, colours: C }), ...tails], { seconds: 0.74, type: "trot", duty: 0.5, bob: 0.007, sway: 0.045, tailSwing: 0.1, tails: tails.map(t => t.chain), legs: trot(1) }, { cones: [...ruff, ...crest] });
+  return plan("fox-adult", body, skull, [...legs(body, { len: L, thick: 1, colours: C }), ...tails], trots({ tails: tails.map(t => t.chain) }), { cones: [...ruff, ...crest] });
 }
 
 // (Ed, 2026-11-11: "the legend should be even more epic, gnarly, ancient, magical, fantastic (not just \"big\"!)". The old shrine
@@ -82,7 +82,7 @@ function legend() {
   const feather = four.flatMap(l => { const r = l.lofts[0].rings[1]; return [{ at: [r.at[0], r.at[1] - 0.02, r.at[2] - r.ry * 0.7], rx: 0.04, ry: 0.04, tip: [r.at[0], r.at[1] - 0.15, r.at[2] - r.ry - 0.08], bone: r.bone, colour: C.coat, tipColour: GREY, split: 0.5, up: [1, 0, 0] }]; });
   // its armour (Ed, 2026-11-11: "Armour should just be thickened polygons on their torso with a different colour and glowing runes"): black shrine lacquer edged in gold over its loin and ribs, a fox-fire mark lit on every plate
   const armour = [{ from: 1.15, to: 3.3, round: [0, 1.7], lames: 3, thick: 0.02, step: 0.012, colour: LACQUER, rim: GOLD, runes: { colour: FIRE } }];
-  return plan("fox-legend", body, skull, [...four, ...tails, rope], { seconds: 1.15, type: "trot", duty: 0.5, bob: 0.006, sway: 0.03, tailSwing: 0.07, tails: tails.map(t => t.chain), legs: trot(0.9) }, { cones: [...mane, ...face, ...hang, ...bell, ...rings, ...feather], armour });
+  return plan("fox-legend", body, skull, [...four, ...tails, rope], trots({ lively: 0.75, tails: tails.map(t => t.chain) }), { cones: [...mane, ...face, ...hang, ...bell, ...rings, ...feather], armour });
 }
 
 /** This kind's mesh (art/mesh/species/index.js lists them, made by tools/creature-mesh/index.mjs): heights, how tall it stands, baby

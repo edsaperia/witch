@@ -9,11 +9,14 @@ import { dress, napping } from "./gear.js";
 
 export { MESH_HEIGHTS };
 
-/** A walk's cycle, in frames (the generated creatures have two: art/creatures.js walkGait), and how many frames a level has each
- *  heading: the cycle and one more, standing still on all its feet, which the view shows when it stops (MESH_STAND). */
-export const MESH_CYCLE = 8, MESH_FRAMES = MESH_CYCLE + 1, MESH_STAND = MESH_CYCLE;
-/** The most frames of its walk the view shows in a second (two and a half cycles): past that pace its feet slide rather than its
- *  legs blur (Ed's playtest, 2026-11-12: "they appear to vibrate along instead of walk"). */
+/** A walk's cycle, in frames (the generated creatures have two: art/creatures.js walkGait), and the frames a level has each
+ *  heading: its slow pace's cycle; one more, standing still on all its feet (MESH_STAND); and, if it has legs, its fast pace's
+ *  cycle from MESH_RUN on (Ed, 2026-11-12: its legs "still slide or skate, mostly short-legged animals at speed": one clip can't
+ *  be both a walk whose feet plant at a crawl and a run whose stride covers a sprint; art/mesh/stride.js picks between them).
+ *  MESH_FRAMES: a legless kind's (the cycle and the standing frame); a legged one has MESH_FRAMES + MESH_CYCLE. */
+export const MESH_CYCLE = 8, MESH_FRAMES = MESH_CYCLE + 1, MESH_STAND = MESH_CYCLE, MESH_RUN = MESH_FRAMES;
+/** How many frames of a flyer's wingbeat the view shows in a second (it beats by the clock, moving or not). A walker's frames
+ *  go by the ground it covers, with no cap (art/mesh/stride.js): the cap the first meshes had was their feet sliding. */
 export const MESH_RATE = 20;
 
 /** Whether this species is drawn as a mesh under this style. */
@@ -28,9 +31,11 @@ const texture = level => (level >= 2 ? { size: 3.2, long: 2.6, tilt: 0.32, tone:
 const sleeps = (p, level) => p.gait?.sleep ?? (level === 3 ? "curl" : "sphinx");
 
 /** A species' walk at a level (0 baby to 3 legend), drawn: art/mesh/raster.js bakeMesh's { w, h, step, towards, away }, each
- *  heading its cycle's MESH_CYCLE frames and then it standing still (MESH_STAND). gear: a party animal's (art/mesh/gear.js
+ *  heading its slow cycle's MESH_CYCLE frames, then it standing still (MESH_STAND), then its fast cycle's (from MESH_RUN). gear: a party animal's (art/mesh/gear.js
  *  `dress`). Not kept: a legend's frames are tens of megabytes. */
-export const meshWalk = (species, level, gear = null) => bakeMesh(shape(plan(species, level, gear)), { ppu: scale(species, level), frames: MESH_CYCLE, stand: true, colours: colours(level), texture: texture(level) });
+export const meshWalk = (species, level, gear = null) => { const p = () => plan(species, level, gear); return bakeMesh(shape(p()), { ppu: scale(species, level), frames: MESH_CYCLE, stand: true, run: runs(p()) ? shape(p(), "run") : null, colours: colours(level), texture: texture(level) }); };
+/** Whether a plan has a fast pace of its own (a legged kind's: art/mesh/kit/gaits.js). */
+const runs = p => !!p.gait?.paces?.run;
 /** The scale a species is drawn at, art pixels a metre: its bare self standing MESH_HEIGHTS tall, so a hat doesn't shrink it. */
 const scale = (species, level) => meshPpu(shape(plan(species, level, null)), MESH_HEIGHTS[species][level]);
 
@@ -58,22 +63,30 @@ export function meshSleep(species) {
   return { w: b.w, h, towards: b.towards };
 }
 
-/** Its walk for the view: frames a level has each heading, cycle (how many of them are its walk), stand (the one it stands still
- *  in), rate (the most of them shown a second), type (how it goes: art/mesh/shape.js GAIT_TYPES) and steps: how far it goes between
- *  frames at each level, as a share of that level's sprite's width, so its planted feet stay put on the ground (step: its
- *  adult's). Worked out without drawing anything, once. */
+/** Its walk for the view (art/mesh/stride.js steps it): frames a level has each heading, cycle (how many of them are a pace's
+ *  cycle), stand (the one it stands still in), rate (a flyer's: frames of its wingbeat a second), type (how it goes:
+ *  art/mesh/shape.js GAIT_TYPES), steps: how far it goes between frames of its slow pace at each level, as a share of that
+ *  level's sprite's width, so its planted feet stay put on the ground (step: its adult's), rests (the slow pace's frames that
+ *  have every foot down: what it stops on) and, if it has a fast pace, run: { from (its first frame), steps }. Worked out
+ *  without drawing anything, once. */
 const gaits = new Map();
 export function meshGait(species) {
   let g = gaits.get(species);
-  if (!g) { const steps = MESH_PLANS[species].map(make => meshStep(shape({ ...make(), fine: 2 }), MESH_CYCLE)); gaits.set(species, (g = { frames: MESH_FRAMES, cycle: MESH_CYCLE, stand: MESH_STAND, rate: MESH_RATE, type: gaitType(MESH_PLANS[species][2]()), step: steps[2], steps })); }
+  if (!g) {
+    const shapes = MESH_PLANS[species].map(make => { const p = () => ({ ...make(), fine: 2 }); return { walk: shape(p()), run: runs(p()) ? shape(p(), "run") : null }; }), adult = shapes[2];
+    const steps = shapes.map(s => meshStep(s.walk, MESH_CYCLE, s.run)), feet = adult.walk.feet ?? [];
+    const rests = feet.length ? Array.from({ length: MESH_CYCLE }, (_, i) => i).filter(i => feet.every(f => (((i / MESH_CYCLE + f.phase) % 1) + 1) % 1 < f.duty - 1e-9)) : [];
+    gaits.set(species, (g = { frames: MESH_FRAMES + (adult.run ? MESH_CYCLE : 0), cycle: MESH_CYCLE, stand: MESH_STAND, rate: MESH_RATE, type: gaitType(MESH_PLANS[species][2]()), step: steps[2], steps, rests, ...(adult.run ? { run: { from: MESH_RUN, steps: shapes.map(s => meshStep(s.walk, MESH_CYCLE, s.run, s.run)) } } : {}) }));
+  }
   return g;
 }
-/** What a level's walk comes to, for judging it (tools/creature-mesh/sheet.mjs, the tests): type (how it goes), stride (how far
- *  it goes in one cycle, metres), body (its body's length, metres: a stride under about a quarter of it reads as a shuffle), ppu
- *  (art pixels a metre) and step (what the view moves it between frames, a share of its sprite's width). Nothing is drawn. */
+/** What a level's going comes to, for judging it (tools/creature-mesh/sheet.mjs, the tests): type (how it goes), stride (how far
+ *  it goes in one cycle at its fast pace, or its only one, metres), walk (the same at its slow pace), body (its body's length,
+ *  metres: a stride under about a quarter of it reads as a shuffle), ppu (art pixels a metre) and step (what the view moves it
+ *  between frames of its slow pace, a share of its sprite's width). Nothing is drawn. */
 export function meshFacts(species, level) {
-  const p = { ...MESH_PLANS[species][level](), fine: 2 }, sh = shape(p);
-  return { type: gaitType(p), stride: stride(sh), body: bodyLength(sh), ppu: scale(species, level), step: meshGait(species).steps[level] };
+  const p = () => ({ ...MESH_PLANS[species][level](), fine: 2 }), sh = shape(p()), fast = runs(p()) ? shape(p(), "run") : sh;
+  return { type: gaitType(p()), stride: stride(fast), walk: stride(sh), body: bodyLength(sh), ppu: scale(species, level), step: meshGait(species).steps[level] };
 }
 /** How a plan gets about (art/mesh/shape.js GAIT_TYPES): what it says, else a flyer flies, a legless one glides and the rest walk. */
 export const gaitType = p => p.gait?.type ?? (p.hover ? "fly" : p.gait?.legs?.length ? "walk" : "glide");

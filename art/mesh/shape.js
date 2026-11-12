@@ -141,51 +141,148 @@ function cone(faces, o) {
  *  gathering and stretching, and a moment in the air after each push), "glide" (no legs: a snail) or "fly" (off the ground: a bee). */
 export const GAIT_TYPES = ["walk", "trot", "bound", "glide", "fly"];
 
-/** The gait as a looping clip: each leg's joints swing by its phase (stance back, swing forward with the joints folding), the
- *  body bobs and sways, the head counters, the tail trails. plan.gait: { type (GAIT_TYPES), seconds, duty, legs: [{ bones:
- *  [upper, lower, foot], phase, swing, fold: [lower, foot] }], bob, sway, tails: [[...bones], ...], tailSwing, rock (a bound's: how
- *  far its back gathers and stretches), leap (how high it leaves the ground when no foot is down, metres: a bound's default is a
- *  quarter of its hips' height; `lift` is that through the cycle, which shape() stands it by) }. */
+/** A legless creature's going as a looping clip (a snail's glide, a bee's hover): the body bobs and sways, the head counters, the
+ *  tail trails. plan.gait: { type (GAIT_TYPES), seconds, bob, bobs, sway, tails: [[...bones], ...], tailSwing, extra }. One with
+ *  legs goes by `strides`, below. */
 function motion(plan) {
   const G = plan.gait, rots = new Map(), poss = new Map();
   const rot = (bone, f) => rots.set(bone, f);
-  const ease = s => s * s * (3 - 2 * s), TAU = Math.PI * 2, bounds = G.type === "bound";
-  for (const leg of G.legs ?? []) {
-    const [upper, lower, foot] = leg.bones, [foldLower, foldFoot] = leg.fold, d = G.duty;
-    const cyc = u => (u + leg.phase) % 1, sw = u => { const c = cyc(u); return c < d ? null : (c - d) / (1 - d); };
-    // (a leg hangs down: turning it about x by +a carries the foot back, so forward is negative)
-    rot(upper, u => { const c = cyc(u), s = sw(u); return [s === null ? -leg.swing + 2 * leg.swing * (c / d) : leg.swing - 2 * leg.swing * ease(s) + (leg.lift ?? 0) * Math.sin(Math.PI * s)]; });
-    rot(lower, u => { const s = sw(u); return [s === null ? 0 : foldLower * Math.sin(Math.PI * s)]; });
-    rot(foot, u => { const s = sw(u), c = cyc(u); return [s === null ? (leg.push ?? 0) * Math.max(0, (c / d - 0.6) / 0.4) : foldFoot * Math.sin(Math.PI * Math.min(1, s * 1.15))]; });
-  }
-  // when no foot is down it is in the air: each such stretch of the cycle an arc, the longest `leap` high and a shorter one lower
-  const legs = G.legs ?? [], down = u => legs.some(l => (((u + l.phase) % 1) + 1) % 1 < G.duty), N = 240, airs = [];
-  if (legs.length && (G.leap ?? (bounds ? 1 : 0)) > 0) { let start = -1; for (let i = 0; i < N; i++) if (down(i / N)) { start = i; break; }
-    if (start >= 0) for (let i = 0, from = -1; i <= N; i++) { const u = (start + i) / N, on = i === N || down(u % 1); if (!on && from < 0) from = u; if (on && from >= 0) { airs.push([from, u]); from = -1; } } }
-  const hipsUp = legs.length ? Math.min(...legs.map(l => plan.bones.find(b => b[0] === l.bones[0])?.[1][1] ?? 0)) : 0, leap = G.leap ?? (bounds ? hipsUp * 0.25 : 0), longest = Math.max(1e-6, ...airs.map(([a, b]) => b - a));
-  const lift = u => { for (const [a, b] of airs) for (const v of [u, u + 1]) if (v > a && v < b) return leap * ((b - a) / longest) * Math.sin(Math.PI * (v - a) / (b - a)); return 0; };
-  const S = G.sway ?? 0.05, B = G.bob ?? 0.008, K = G.rock ?? 0; // (rock: the whole back pitching once a stride, a bound's)
-  if (bounds) {
-    // a bound: its back gathered (hips tucked under, shoulders down: an arch) as its hind feet come forward to land, and stretched
-    // out long in the air after they push; G.gather is where in the cycle it is most gathered (the hind feet land at 0)
-    const at = G.gather ?? 0.92, g = u => Math.cos(TAU * (u - at));
-    if (G.hips) rot(G.hips, u => [-K * g(u), S * Math.sin(TAU * u), 0]);
-    if (G.chest) rot(G.chest, u => [K * 1.9 * g(u), -S * 1.6 * Math.sin(TAU * u), 0]);
-    if (G.neck) rot(G.neck, u => [-K * 0.8 * g(u) + 0.03 * Math.sin(TAU * 2 * u + 2.2), S * 0.5 * Math.sin(TAU * u), 0]);
-  } else {
-    if (G.hips) rot(G.hips, u => [K * Math.sin(TAU * u + (G.rockAt ?? 0)), S * Math.sin(TAU * u), (G.roll ?? 0.03) * Math.sin(TAU * u + 1)]);
-    if (G.chest) rot(G.chest, u => [0.02 * Math.sin(TAU * 2 * u + 1) - K * 1.6 * Math.sin(TAU * u + (G.rockAt ?? 0) + 0.5), -S * 1.6 * Math.sin(TAU * u), -(G.roll ?? 0.03) * Math.sin(TAU * u + 1.4)]);
-    if (G.neck) rot(G.neck, u => [K * 0.6 * Math.sin(TAU * u + (G.rockAt ?? 0) + 0.5) + 0.035 * Math.sin(TAU * 2 * u + 2.2), S * 0.5 * Math.sin(TAU * u), 0]);
-  }
+  const TAU = Math.PI * 2, S = G.sway ?? 0.05, B = G.bob ?? 0.008;
+  if (G.hips) rot(G.hips, u => [0, S * Math.sin(TAU * u), (G.roll ?? 0.03) * Math.sin(TAU * u + 1)]);
+  if (G.chest) rot(G.chest, u => [0.02 * Math.sin(TAU * 2 * u + 1), -S * 1.6 * Math.sin(TAU * u), -(G.roll ?? 0.03) * Math.sin(TAU * u + 1.4)]);
+  if (G.neck) rot(G.neck, u => [0.035 * Math.sin(TAU * 2 * u + 2.2), S * 0.5 * Math.sin(TAU * u), 0]);
   if (G.head) rot(G.head, u => [-0.03 * Math.sin(TAU * 2 * u + 2.2), S * 0.4 * Math.sin(TAU * u), 0]);
   (G.tails ?? (G.tail ? [G.tail] : [])).forEach((chain, n) => chain.forEach((b, i) => rot(b, u => [0.05 * Math.sin(TAU * 2 * u - i * 0.9 + n * 1.3), (G.tailSwing ?? 0.14) * Math.sin(TAU * u - 0.8 - i * 0.7 + n * 0.8), 0]))); // (each tail a little out of step with the last)
-  // (a bound's tails ride level: what its hips pitch is taken back out of each tail's root, or a low tail would dip through the ground)
-  if (bounds && K) for (const chain of G.tails ?? (G.tail ? [G.tail] : [])) { const was = rots.get(chain[0]), at = G.gather ?? 0.92; rot(chain[0], u => { const r = was(u); return [r[0] + K * Math.cos(TAU * (u - at)), r[1], r[2]]; }); }
   for (const e of G.ears ?? []) rot(e, u => [0.05 * Math.sin(TAU * 2 * u + 3), 0, 0]);
   // (anything else that moves: { bone, rot: u => [x, y, z] } or { bone, pos: u => [dx, dy, dz] } from where it rests)
   for (const e of G.extra ?? []) { if (e.rot) rot(e.bone, e.rot); if (e.pos) poss.set(e.bone, e.pos); }
   const bobs = G.bobs ?? 2; poss.set(G.root, u => [0, B * Math.sin(TAU * bobs * u + 0.6), 0]);
-  return { seconds: G.seconds, rots, poss, lift };
+  return { seconds: G.seconds, rots, poss };
+}
+
+// ---- Turns as nine numbers (rows), the way `pose` holds them: what a leg's joints are worked out with.
+const turnOf = (x, y, z) => { const cx = Math.cos(x), sx = Math.sin(x), cy = Math.cos(y), sy = Math.sin(y), cz = Math.cos(z), sz = Math.sin(z); return [cy * cz + sy * sx * sz, sy * sx * cz - cy * sz, sy * cx, cx * sz, cx * cz, -sx, cy * sx * sz - sy * cz, sy * sz + cy * sx * cz, cy * cx]; }; // (y, then x, then z)
+const anglesOf = L => [Math.asin(Math.max(-1, Math.min(1, -L[5]))), Math.atan2(L[2], L[8]), Math.atan2(L[3], L[4])];
+const times = (A, B) => { const o = new Array(9); for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) o[r * 3 + c] = A[r * 3] * B[c] + A[r * 3 + 1] * B[3 + c] + A[r * 3 + 2] * B[6 + c]; return o; };
+const flipped = A => [A[0], A[3], A[6], A[1], A[4], A[7], A[2], A[5], A[8]];
+const turned = (A, v) => [A[0] * v[0] + A[1] * v[1] + A[2] * v[2], A[3] * v[0] + A[4] * v[1] + A[5] * v[2], A[6] * v[0] + A[7] * v[1] + A[8] * v[2]];
+const minus = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], long = v => Math.hypot(v[0], v[1], v[2]), unit = v => { const l = long(v) || 1; return [v[0] / l, v[1] / l, v[2] / l]; }, dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+/** A frame whose y lies along `v`, its x kept as near the animal's own side-to-side as it can be (columns x, y, z). */
+const frameOf = v => { const y = unit(v), k = y[0], x = unit([1 - k * y[0], -k * y[1], -k * y[2]]), z = cross(x, y); return [x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2]]; };
+/** The turn that carries a bone drawn along `from` to lie along `to`, without twisting it about itself. */
+const aim = (from, to) => times(frameOf(to), flipped(frameOf(from)));
+
+/** What a pace's body does where its gait doesn't say (a gait's `body`; kit/gaits.js gives each way of going its own). Lengths
+ *  are shares of its hips' height, turns radians. */
+const BODY = { bob: 0.04, pitch: 0.02, roll: 0.03, sway: 0.02, yaw: 0.04, flex: 0, head: 0.7, tail: 1, lag: 0.09, wag: 0.1, crouch: 0.03 };
+
+/** A legged creature's going as a looping clip, its feet planted (Ed, 2026-11-12, of the walk clip: "the feet don't plant, and the
+ *  bodies seem rigid"). The clip is the animal seen from beside it as it goes: the ground passes back under it one `stride` a
+ *  cycle. A paw on the ground is a point of that ground: it comes down ahead, stays where it is on the ground for its stance (so
+ *  it goes back under the body at exactly the body's pace, in a straight line, whatever the body does above it), then lifts and
+ *  swings forward. The leg's joints are found from the paw's place, not turned by a clock: hip (or shoulder) to hock by the two
+ *  bones between, the bone below the hock leaning as the heel rises, the toes flat on the ground; where that isn't reach enough the hip
+ *  or shoulder itself gives towards the paw (`give`, a share of the leg's height: a shoulder blade's slide).
+ *  G (the plan's gait, with the pace's own numbers over it: `paced`): { type (GAIT_TYPES), seconds, duty (the share of the cycle a
+ *  foot is down), legs: [{ bones: [upper, lower, foot], phase }], reach (a stance's length on the ground, a share of the hips'
+ *  height), step (how high a swinging paw lifts, the same share), heel [as it lands, as it leaves, folded mid-swing] (how far the
+ *  bone above the paw leans, radians), toe (how far a swinging paw droops), leap (how high it goes when no foot is down, the
+ *  same share), gather (a bound's: where in the cycle its back is most gathered), tails, body: BODY's numbers }.
+ *  The body, by its gait: a walk and a trot bob twice a cycle (a walk vaults over each forefoot, a trot sinks onto each pair),
+ *  pitch a little, and roll and sway over the feet that are down; a bound rises and falls once, pitching nose up off its hind
+ *  feet and down onto its fore, its back gathering as its hind feet land and stretching as they push. The head turns back most
+ *  of what the body under it turns (`head`), so it stays steadier; each joint of a tail does what the hips did a moment before
+ *  (`lag` of the cycle a joint), so it follows. */
+function strides(plan, G, ctx) {
+  const rots = new Map(), poss = new Map(), TAU = Math.PI * 2, B = { ...BODY, ...G.body }, wrap = v => ((v % 1) + 1) % 1;
+  const at = Object.fromEntries(plan.bones.map(([n, p]) => [n, p])), parent = Object.fromEntries(plan.bones.map(([n, , p]) => [n, p]));
+  const legs = G.legs.map(l => { const [a, b, c] = l.bones, paw = plan.bones.find(x => x[2] === c)?.[0]; if (!paw) throw Error(`${plan.name}: leg ${a} has no paw below ${c}`);
+    const r1 = minus(at[b], at[a]), r2 = minus(at[c], at[b]), r3 = minus(at[paw], at[c]), whole = minus(at[c], at[a]), w = unit(whole), k = dot(r1, w);
+    return { ...l, names: [a, b, c, paw], on: parent[a], duty: l.duty ?? G.duty ?? 0.5, r1, r2, r3, l1: long(r1), l2: long(r2), l3: long(r3), bend: unit(minus(r1, [w[0] * k, w[1] * k, w[2] * k])), high: at[a][1] - at[paw][1], give: (l.give ?? G.give ?? 0.3) * (at[a][1] - at[paw][1]), u: NaN, got: null }; });
+  for (const k of ["bob", "pitch", "roll", "sway", "yaw", "flex", "wag"]) B[k] *= G.lively ?? 1; // (a baby's body moves more, a legend's less)
+  // (H: its shorter legs' height, what its body's own movements are shares of; mean: its legs' height taken together, what its
+  // stance is a share of; a bound leaps by its hind legs' height, and each paw lifts by its own leg's: a hare's are not its forelegs')
+  const H = Math.min(...legs.map(l => l.high)), mean = legs.reduce((s, l) => s + l.high, 0) / legs.length, d = legs[0].duty, bounds = G.type === "bound";
+  // how far a paw goes along the ground in its stance: what the gait asks, or as far as its shortest leg can reach from both ends
+  const reach = Math.min((G.reach ?? 0.6) * mean, ...legs.map(l => { const far = (l.l1 + l.l2 + l.l3 * 0.8) * 0.97 + l.give * 0.8, up = l.high - (B.crouch + (bounds ? 0 : Math.abs(B.bob) * 0.5)) * H, half = Math.sqrt(Math.max(0, far * far - up * up)); return 2 * (half - Math.abs(at[l.names[3]][2] + (l.fwd ?? 0) * H - at[l.names[0]][2])) * 0.8; }));
+  const stride = reach / d, heel = G.heel ?? [-0.12, 0.5, 0.55], toe = G.toe ?? 0.5, step = G.step ?? 0.16;
+  // when no foot is down it is in the air: each such stretch of the cycle an arc, the longest `leap` high and a shorter one lower
+  const down = u => legs.some(l => wrap(u + l.phase) < l.duty), N = 240, airs = [], leap = (G.leap ?? 0) * legs[0].high;
+  if (leap > 0) { let start = -1; for (let i = 0; i < N; i++) if (down(i / N)) { start = i; break; }
+    if (start >= 0) for (let i = 0, from = -1; i <= N; i++) { const u = (start + i) / N, on = i === N || down(u % 1); if (!on && from < 0) from = u; if (on && from >= 0) { airs.push([from, u]); from = -1; } } }
+  const longest = Math.max(1e-6, ...airs.map(([a, b]) => b - a));
+  const lift = u0 => { const u = wrap(u0); for (const [a, b] of airs) for (const v of [u, u + 1]) if (v > a && v < b) return leap * ((b - a) / longest) * Math.sin(Math.PI * (v - a) / (b - a)); return 0; };
+
+  // ---- the body
+  const hindL = legs[0], foreL = legs.find(l => l.on !== hindL.on) ?? hindL, um = d / 2 - hindL.phase, uf = d / 2 - foreL.phase, land = -hindL.phase, gatherAt = G.gather ?? land - 0.06;
+  // (how far down each foot's stance is, summed: a body sinks onto the feet that carry it)
+  const sink = u => legs.reduce((s, l) => { const c = wrap(u + l.phase); return s + (c < l.duty ? Math.sin(Math.PI * c / l.duty) : 0); }, 0) / legs.length;
+  const low = B.crouch * H; // (how much lower it carries itself going than standing)
+  const height = bounds ? u => lift(u) - B.bob * H * sink(u) * 2 - low
+    : G.type === "walk" ? u => B.bob * H * (Math.cos(2 * TAU * (u - uf)) - 1) / 2 - low // (a walk: highest as it vaults over each forefoot)
+    : u => lift(u) - B.bob * H * (1 - Math.cos(2 * TAU * (u - land))) / 2 - low; // (a trot: lowest in the middle of each pair's stance)
+  const g = u => Math.cos(TAU * (u - gatherAt)); // (a bound's back: 1 gathered, -1 stretched)
+  const pitch = bounds ? u => -B.pitch * Math.sin(TAU * (u - land) - 0.3) : u => B.pitch * Math.sin(2 * TAU * (u - um));
+  const side = u => Math.cos(TAU * (u - um)); // (1: over its left hind foot, in the middle of that foot's stance)
+  const hipsTurn = u => [pitch(u) - B.flex * g(u), B.yaw * Math.sin(TAU * (u - um)), B.roll * side(u)];
+  const loinTurn = u => [B.flex * 0.7 * g(u), -B.yaw * 0.5 * Math.sin(TAU * (u - um)), 0];
+  const chestTurn = u => [B.flex * 1.1 * g(u) - pitch(u) * 0.6, -B.yaw * Math.sin(TAU * (u - um)), -B.roll * 1.3 * side(u)];
+  const spine = [G.hips, parent[G.chest] !== G.hips && parent[G.chest] ? parent[G.chest] : null, G.chest];
+  if (G.hips) rots.set(G.hips, hipsTurn);
+  if (spine[1]) rots.set(spine[1], loinTurn);
+  if (G.chest) rots.set(G.chest, chestTurn);
+  // the head: most of what the body under it turns, turned back, half at the neck and half at the skull
+  const under = u => { const a = G.hips ? hipsTurn(u) : [0, 0, 0], b = spine[1] ? loinTurn(u) : [0, 0, 0], c = G.chest ? chestTurn(u) : [0, 0, 0]; return [a[0] + b[0] + c[0], a[1] + b[1] + c[1], a[2] + b[2] + c[2]]; };
+  const counter = k => u => { const t = under(u); return [-t[0] * B.head * k, -t[1] * B.head * k, -t[2] * B.head * k]; };
+  if (G.neck) rots.set(G.neck, counter(0.5));
+  if (G.head) rots.set(G.head, counter(G.neck ? 0.5 : 1));
+  // its tails: each joint where the hips were a moment before (`lag` a joint), so a turn or a rise runs down it late; a slow wag on top
+  const hipsUp = u => height(u) / H;
+  (G.tails ?? (G.tail ? [G.tail] : [])).forEach((chain, n) => chain.forEach((b, i) => rots.set(b, u => { const a = hipsTurn(u - B.lag * (i + 1)), was = hipsTurn(u - B.lag * i), up = hipsUp(u - B.lag * i) - hipsUp(u - B.lag * (i + 1));
+    return [B.tail * (a[0] - was[0]) - B.tail * (i ? 0.25 : 0.6) * up, B.tail * (a[1] - was[1]) + B.wag * Math.sin(TAU * (u - um) - 0.8 - i * TAU * B.lag + n * 0.8), 0]; })));
+  for (const e of G.ears ?? []) rots.set(e, u => [0.06 * Math.sin(TAU * (bounds ? 1 : 2) * (u - land) + 2.4), 0, 0]); // (ears: a flop behind each landing)
+  for (const e of G.extra ?? []) { if (e.rot) rots.set(e.bone, e.rot); if (e.pos) poss.set(e.bone, e.pos); }
+  for (const [name, , p] of plan.bones) if (!p) poss.set(name, () => [0, ctx.rest, 0]); // (stood on the ground: `grounded` says how high)
+  const rootWas = poss.get(G.root); poss.set(G.root, u => { const p = rootWas?.(u) ?? [0, 0, 0]; return [p[0] + B.sway * H * side(u), p[1] + height(u), p[2]]; });
+
+  // ---- the legs
+  /** A body bone's place at `u` (a leg hangs from it): its turn, and where its joint is. Legs' own bones are never asked. */
+  const memo = new Map(), world = (name, u) => { let m = memo.get(name); if (m && m.u === u) return m; const p = parent[name], r = rots.get(name)?.(u) ?? [0, 0, 0], L = turnOf(r[0], r[1], r[2]), dp = poss.get(name)?.(u) ?? [0, 0, 0];
+    if (!p) m = { u, R: L, T: [at[name][0] + dp[0], at[name][1] + dp[1], at[name][2] + dp[2]] };
+    else { const P = world(p, u), o = turned(P.R, [at[name][0] - at[p][0] + dp[0], at[name][1] - at[p][1] + dp[1], at[name][2] - at[p][2] + dp[2]]); m = { u, R: times(P.R, L), T: [P.T[0] + o[0], P.T[1] + o[1], P.T[2] + o[2]] }; }
+    memo.set(name, m); return m; };
+  const lean = (v, a) => { const c = Math.cos(a), s = Math.sin(a); return [v[0], v[1] * c - v[2] * s, v[1] * s + v[2] * c]; };
+  /** A leg's four turns at `u` (hip, knee, hock, paw: each [x, y, z] from its parent), from where its paw is then. */
+  const solve = (leg, u) => {
+    if (leg.u === u) return leg.got;
+    const c = wrap(u + leg.phase), [, , , pawName] = leg.names, rest = at[pawName], mid = rest[2] + (leg.fwd ?? 0) * H, ground = rest[1] + ctx.rest; let p, phi, droop = 0;
+    if (c < leg.duty) { const t = c / leg.duty; p = [rest[0], ground, mid + reach * (0.5 - t)]; phi = heel[0] + (heel[1] - heel[0]) * t * t; }
+    else { const s = (c - leg.duty) / (1 - leg.duty), e = s * s * (3 - 2 * s), arc = Math.sin(Math.PI * s); p = [rest[0], ground + step * leg.high * arc + lift(u) * 0.9, mid - reach / 2 + reach * e]; phi = heel[1] + (heel[0] - heel[1]) * s + heel[2] * arc; droop = toe * arc; }
+    const W = world(leg.on, u), o = turned(W.R, minus(at[leg.names[0]], at[leg.on])), most = (leg.l1 + leg.l2) * 0.995, least = Math.abs(leg.l1 - leg.l2) + 1e-4;
+    let hip = [W.T[0] + o[0], W.T[1] + o[1], W.T[2] + o[2]];
+    // the hock, above the paw: leant further towards the hip while the two bones above can't reach it
+    let hock, D, far;
+    for (let n = 0; ; n++) { const up = lean([-leg.r3[0], -leg.r3[1], -leg.r3[2]], phi); hock = [p[0] + up[0], p[1] + up[1], p[2] + up[2]]; D = minus(hock, hip); far = long(D); if (far <= most || n >= 14) break; phi += 0.07 * Math.sign(hip[2] - p[2] || 1); }
+    // further than they reach still: the hip or the shoulder itself gives towards the paw (a shoulder blade slides on the ribs; a
+    // leg drawn standing straight, as a foreleg is, has no other slack), by no more than the leg's `give`
+    let slid = [0, 0, 0];
+    if (far > most) { const k = Math.min(far - most, leg.give) / far; slid = [D[0] * k, D[1] * k, D[2] * k]; hip = [hip[0] + slid[0], hip[1] + slid[1], hip[2] + slid[2]]; D = minus(hock, hip); far = long(D); }
+    if (far > most + 1e-9 || far < least) { const k = Math.min(most, Math.max(least, far)) / far; D = [D[0] * k, D[1] * k, D[2] * k]; far *= k; const was = hock; hock = [hip[0] + D[0], hip[1] + D[1], hip[2] + D[2]]; p = [p[0] + hock[0] - was[0], p[1] + hock[1] - was[1], p[2] + hock[2] - was[2]]; } // (out of reach all the same: the paw is dragged, and tools/creature-mesh/slip.mjs says by how much)
+    const dir = [D[0] / far, D[1] / far, D[2] / far], bk = dot(leg.bend, dir), b = unit([leg.bend[0] - dir[0] * bk, leg.bend[1] - dir[1] * bk, leg.bend[2] - dir[2] * bk]), a = (leg.l1 * leg.l1 - leg.l2 * leg.l2 + far * far) / (2 * far), h = Math.sqrt(Math.max(0, leg.l1 * leg.l1 - a * a));
+    const knee = [hip[0] + dir[0] * a + b[0] * h, hip[1] + dir[1] * a + b[1] * h, hip[2] + dir[2] * a + b[2] * h];
+    const R1 = aim(leg.r1, minus(knee, hip)), R2 = aim(leg.r2, minus(hock, knee)), R3 = aim(leg.r3, minus(p, hock)), R4 = turnOf(droop, 0, 0);
+    leg.u = u; leg.slid = turned(flipped(W.R), slid); leg.got = [anglesOf(times(flipped(W.R), R1)), anglesOf(times(flipped(R1), R2)), anglesOf(times(flipped(R2), R3)), anglesOf(times(flipped(R3), R4))];
+    return leg.got;
+  };
+  for (const leg of legs) { leg.names.forEach((name, i) => rots.set(name, u => solve(leg, u)[i])); poss.set(leg.names[0], u => (solve(leg, u), leg.slid)); }
+  return { seconds: G.seconds, rots, poss, lift, planted: true, stride, reach, feet: legs.map(l => ({ paw: l.names[3], phase: l.phase, duty: l.duty })) };
+}
+
+/** A plan's gait at a pace: "walk" (going slowly) or "run" (going fast). A gait with `paces` has each pace's own numbers, laid
+ *  over what the paces share (a pace's `body` over the shared `body`); one without goes the one way at any pace. */
+export function paced(G, pace = "walk") {
+  const P = G?.paces?.[pace]; if (!P) return G;
+  return { ...G, ...P, body: { ...G.body, ...P.body } };
 }
 
 /** A still pose that breathes (art/mesh/gear.js `napping`): each bone's turn and shift held, its chest and its root rising and
@@ -204,7 +301,7 @@ function still(S) {
  *  body proper (what its size is measured by), and a tag and whether it is coat a triangle), and motion:
  *  { seconds, rots, poss }: for a bone's name, (u) => [x, y, z], its turn (radians, applied y then x then z) or its shift from
  *  where it rests, u the walk's cycle 0..1; null if the plan has no gait }. */
-export function shape(plan) {
+export function shape(plan, pace = "walk") {
   const index = Object.fromEntries(plan.bones.map(([name], i) => [name, i])), faces = new Faces(index);
   const bones = plan.bones.map(([name, at, parent]) => ({ name, parent: parent ? index[parent] : -1, at: [...at] }));
   bones.forEach((b, i) => { if (b.parent >= i) throw Error(`${plan.name}: bone ${b.name} comes before its parent`); });
@@ -213,14 +310,18 @@ export function shape(plan) {
   for (const c of plan.cones ?? []) cone(faces, c);
   // (armour lies on a loft's own corners: `on` names the loft, or counts to it; the first is a four-legged plan's skin)
   for (const a of plan.armour ?? []) { const i = typeof a.on === "string" ? plan.lofts.findIndex(l => l.name === a.on) : a.on ?? 0; if (i < 0) throw Error(`${plan.name}: no loft "${a.on}" for armour`); armour(faces, made[i], a, fines[i]); }
-  return grounded({ name: plan.name, bones, lit: faces.lit, glow: faces.glow, motion: plan.still ? still(plan.still) : plan.gait ? motion(plan) : null, gait: plan.gait ?? null, hover: plan.hover ?? 0, still: !!plan.still });
+  const G = plan.gait ? paced(plan.gait, pace) : null, ctx = { rest: 0 }, legged = !plan.still && !!G?.legs?.length;
+  const sh = grounded({ name: plan.name, bones, lit: faces.lit, glow: faces.glow, motion: plan.still ? still(plan.still) : legged ? strides(plan, G, ctx) : G ? motion({ ...plan, gait: G }) : null, gait: G, pace, hover: plan.hover ?? 0, still: !!plan.still }, ctx);
+  // (its planted feet, for whoever checks them: the paw's bone, and when in the cycle it is down)
+  if (legged) { sh.stride = sh.motion.stride; sh.feet = sh.motion.feet.map(f => ({ ...f, paw: index[f.paw] })); }
+  return sh;
 }
 
 /** Stands a shape on the ground through its whole clip (Ed's playtest, 2026-11-12: "animals appear to float above the ground"):
  *  wherever it is in its walk or its sleep, the lowest point of its legs (of all of it, if it has none or is lying down) is on the
  *  ground, y 0, or as far above it as its gait's leap has it then. Its root is shifted up or down to make that so, whatever its
  *  bones are doing. A flyer (hover) is left hanging where its plan put it. `sh.rest`: the same for it standing still, no clip. */
-function grounded(sh) {
+function grounded(sh, ctx = {}) {
   if (sh.hover) return sh;
   const legs = sh.still ? [] : sh.gait?.legs ?? [], on = new Set();
   if (legs.length) sh.bones.forEach((b, i) => { if (on.has(b.parent) || legs.some(l => l.bones[0] === b.name)) on.add(i); });
@@ -231,8 +332,8 @@ function grounded(sh) {
   // (what of it hangs lower than its feet as it stands, a hedgehog's skirt of spines, a fat dormouse's belly, a mole's spades: that
   // is what rests on the ground, and its feet stay that much above it, as its plan drew them)
   const bare = { ...sh, motion: null }, sag = Math.min(0, lowest(bare, 0, true) - lowest(bare, 0)), roots = sh.bones.filter(b => b.parent < 0).map(b => b.name);
-  sh.rest = -lowest(bare, 0) - sag;
-  if (!sh.motion) return sh;
+  sh.rest = ctx.rest = -lowest(bare, 0) - sag;
+  if (!sh.motion || sh.motion.planted) return sh; // (a strider's feet are put on the ground one by one: `strides`)
   const free = { ...sh, motion: { ...sh.motion, poss: new Map(sh.motion.poss) } }, memo = new Map(), lift = sh.motion.lift ?? (() => 0);
   const shift = u => { let d = memo.get(u); if (d === undefined) { if (memo.size > 512) memo.clear(); memo.set(u, (d = lift(u) - lowest(free, u) - sag)); } return d; };
   for (const name of roots) { const was = free.motion.poss.get(name); sh.motion.poss.set(name, u => { const p = was?.(u) ?? [0, 0, 0]; return [p[0], p[1] + shift(u), p[2]]; }); }

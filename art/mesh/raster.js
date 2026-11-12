@@ -29,8 +29,9 @@ const nearest = (cs, r, g, b) => { let best = 0, bd = Infinity; for (let i = 0; 
  *  body proper alone: no tail, ears, tufts or armour, as the game sizes its animals) or ppu (art pixels a metre, outright: an
  *  animal lying down drawn at the scale it walks at), texture (its coat's: { size (art pixels across a tuft), long (how many
  *  times longer along its body), tilt (how far a tuft tips the light, 0..1), tone (how much lighter or darker one is) }), frames (in its walk's
- *  cycle), colours (the palette's size), ss, cover. Returns { w, h, ppu (art pixels a metre), step (how far it walks between
- *  frames, a share of w), palette, towards, away }: each a list of frames { albedo, normal, flipped (the normals for drawing it
+ *  cycle), stand (one more frame after them, standing still), run (the same animal's shape at its fast pace: its cycle's frames
+ *  go on after those, in the same picture, palette and scale), colours (the palette's size), ss, cover. Returns { w, h, ppu (art
+ *  pixels a metre), step (how far it walks between frames, a share of w; runStep: its fast pace's), palette, towards, away }: each a list of frames { albedo, normal, flipped (the normals for drawing it
  *  mirrored), eyes (1 where a pixel is an eye, or undefined if none show), head ([x, y], where its head's joint is) }, every
  *  frame w by h, its feet's lowest pixel on the bottom row. */
 export function bakeMesh(sh, o = {}) {
@@ -39,7 +40,8 @@ export function bakeMesh(sh, o = {}) {
   const nv = bone.length, nt = nv / 3, lit = sh.lit.bone.length / 3, eye = Uint8Array.from([...sh.lit.tag, ...sh.glow.tag], t => (t === "eye" ? 1 : 0)), skin = Uint8Array.from([...sh.lit.skin, ...sh.glow.skin]), headBone = sh.bones.findIndex(b => b.name === "head");
   // every frame's corners, in the model's own space
   // (o.stand: one more frame after the walk's, standing still on all its feet: what the view shows when it stops)
-  const world = Array.from({ length: frames + (o.stand ? 1 : 0) }, (_, i) => { const { R, T } = pose(sh, i < frames ? i / frames : null), out = new Float32Array(nv * 3);
+  const clip = frames + (o.stand ? 1 : 0);
+  const world = Array.from({ length: clip + (o.run ? frames : 0) }, (_, i) => { const { R, T } = i < clip ? pose(sh, i < frames ? i / frames : null) : pose(o.run, (i - clip) / frames), out = new Float32Array(nv * 3);
     for (let v = 0; v < nv; v++) { const b = bone[v], a = sh.bones[b].at, x = pos0[v * 3] - a[0], y = pos0[v * 3 + 1] - a[1], z = pos0[v * 3 + 2] - a[2];
       out[v * 3] = R[b * 9] * x + R[b * 9 + 1] * y + R[b * 9 + 2] * z + T[b * 3]; out[v * 3 + 1] = R[b * 9 + 3] * x + R[b * 9 + 4] * y + R[b * 9 + 5] * z + T[b * 3 + 1]; out[v * 3 + 2] = R[b * 9 + 6] * x + R[b * 9 + 7] * y + R[b * 9 + 8] * z + T[b * 3 + 2]; }
     return { out, head: headBone < 0 ? null : [T[headBone * 3], T[headBone * 3 + 1], T[headBone * 3 + 2]] }; });
@@ -116,7 +118,7 @@ export function bakeMesh(sh, o = {}) {
         if (lamp[j] || (x + ux0 + (y + uy0) * 7 + i * 3) % 5 === 0) samples.push([rgb[j * 3], rgb[j * 3 + 1], rgb[j * 3 + 2]]); // (every glowing pixel: small, and its colour must reach the palette)
       }
       const h = world[i].head && view(...world[i].head);
-      raw.push({ facing, rgb, nrm, dep, on, lamp, eyes, tone, head: h ? [S / 2 + h[0] * ppu - ux0, S / 2 - h[1] * ppu - uy0] : null });
+      raw.push({ facing, index: i, rgb, nrm, dep, on, lamp, eyes, tone, head: h ? [S / 2 + h[0] * ppu - ux0, S / 2 - h[1] * ppu - uy0] : null });
     }
   }
 
@@ -147,17 +149,18 @@ export function bakeMesh(sh, o = {}) {
     }
     out[f.facing].push({ albedo, normal, flipped, eyes: anyEye ? eyes : undefined, head: f.head ? [f.head[0] - x0, f.head[1] - y0] : undefined });
   }
-  return { w, h, ppu, bodyHeight: (bodyTop - bodyBottom) * ppu, height: (top - bottom) * ppu, step: (stride(sh) / frames) * ppu / w, palette: pal.map(c => c.map(Math.round)), towards: out.towards, away: out.away };
+  // how tall it is as drawn: the rows its standing frame (its first, if it has none) fills, towards us. The sprite itself is taller
+  // (room for a leap, a raised tail, the other heading), and the game sizes a creature by this, not by its sprite (Ed, 2026-11-12:
+  // sizes "come from the height actually drawn, not the canvas size")
+  let tall = h; { const f = raw.find(r => r.facing === "towards" && r.index === (o.stand ? frames : 0)); if (f) { let t = H, b = -1; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (f.on[y * W + x]) { if (y < t) t = y; b = y; } if (b >= 0) tall = b - t + 1; } }
+  return { w, h, tall, ppu, bodyHeight: (bodyTop - bodyBottom) * ppu, height: (top - bottom) * ppu, step: (stride(sh) / frames) * ppu / w, runStep: o.run ? (stride(o.run) / frames) * ppu / w : undefined, palette: pal.map(c => c.map(Math.round)), towards: out.towards, away: out.away };
 }
 
-/** How far a creature goes in one cycle of its walk, metres: how fast a planted paw slides back under its body through its
- *  stance, kept up for the whole cycle, so the ground passes at that pace and its feet don't slide (a legless one's is its gait's
- *  own `stride`). The paw is the joint below the leg's last named bone (its ankle, on the ground), not that bone's own joint (its
- *  hock, half way up the leg, which moves half as far: the stride the first meshes walked by, 2026-11-12). */
+/** How far a creature goes in one cycle of its walk, metres: what its shape says (art/mesh/shape.js `strides`: a planted paw
+ *  goes back under its body at exactly that pace, so the ground passes at it and its feet don't slide; a legless one's is its
+ *  gait's own `stride`). */
 export function stride(sh) {
-  const leg = sh.gait?.legs?.[0]; if (!leg || sh.still) return sh.gait?.stride ?? 0.3;
-  const last = sh.bones.findIndex(b => b.name === leg.bones[2]), paw = sh.bones.findIndex(b => b.parent === last), foot = paw < 0 ? last : paw, d = sh.gait.duty ?? 0.6, z = c => pose(sh, (((c - leg.phase) % 1) + 1) % 1).T[foot * 3 + 2];
-  return Math.abs(z(0.2 * d) - z(0.8 * d)) / (0.6 * d);
+  return sh.still ? sh.gait?.stride ?? 0.3 : sh.stride ?? sh.gait?.stride ?? 0.3;
 }
 
 /** How long its body is, metres: its body proper (no tail, ears or ornament), nose to rump, standing. A stride is judged by it. */
@@ -168,13 +171,14 @@ export function bodyLength(sh) {
 }
 
 /** A walk's step without drawing it: how far it goes between frames as a share of its sprite's width (what bakeMesh's `step`
- *  comes to, within a pixel or two of width): its corners' reach across the picture over the whole walk, both headings. */
-export function meshStep(sh, frames = 8) {
+ *  comes to, within a pixel or two of width): its corners' reach across the picture over the whole walk, both headings. run: its
+ *  shape at its fast pace, whose frames share the sprite (bakeMesh's `run`); `of`: the shape whose step is wanted (sh, or run). */
+export function meshStep(sh, frames = 8, run = null, of = sh) {
   const all = [...sh.lit.pos, ...sh.glow.pos], bone = [...sh.lit.bone, ...sh.glow.bone]; let lo = Infinity, hi = -Infinity;
-  for (let i = 0; i <= frames; i++) { const { R, T } = pose(sh, i < frames ? i / frames : null); // (and standing still: the frame after its walk's)
-    for (let v = 0; v < bone.length; v++) { const b = bone[v], a = sh.bones[b].at, x = all[v * 3] - a[0], y = all[v * 3 + 1] - a[1], z = all[v * 3 + 2] - a[2], wx = R[b * 9] * x + R[b * 9 + 1] * y + R[b * 9 + 2] * z + T[b * 3], wz = R[b * 9 + 6] * x + R[b * 9 + 7] * y + R[b * 9 + 8] * z + T[b * 3 + 2];
+  for (const [s, n] of run ? [[sh, frames + 1], [run, frames]] : [[sh, frames + 1]]) for (let i = 0; i < n; i++) { const { R, T } = pose(s, i < frames ? i / frames : null); // (and standing still: the frame after its walk's)
+    for (let v = 0; v < bone.length; v++) { const b = bone[v], a = s.bones[b].at, x = all[v * 3] - a[0], y = all[v * 3 + 1] - a[1], z = all[v * 3 + 2] - a[2], wx = R[b * 9] * x + R[b * 9 + 1] * y + R[b * 9 + 2] * z + T[b * 3], wz = R[b * 9 + 6] * x + R[b * 9 + 7] * y + R[b * 9 + 8] * z + T[b * 3 + 2];
       for (const yaw of [MESH_YAW.towards, MESH_YAW.away]) { const th = Math.PI / 2 - yaw, rx = wx * Math.cos(th) + wz * Math.sin(th); if (rx < lo) lo = rx; if (rx > hi) hi = rx; } } }
-  return stride(sh) / frames / (hi - lo);
+  return stride(of) / frames / (hi - lo);
 }
 
 /** The scale a shape is drawn at to stand `height` art pixels (its whole silhouette, standing still, turned towards us), in art

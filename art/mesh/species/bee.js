@@ -69,7 +69,8 @@ function bee(name, o) {
 const done = b => { const { P, R, ...plan } = b; return plan; };
 const bees = {
   // a bee-let: a ball of pale fluff with a stub of an abdomen, wings too small to lift it far, great dark eyes
-  baby: () => done(bee("bee-baby", { fly: 0.14, chest: 1.25, C: { fuzz: "#f6d76a", band: "#f6d76a", dark: "#4a3a22" }, wing: 0.5, eye: 1.3, sting: 0, antennae: 0.6, abdomen: { len: 0.45, fat: 0.85, rings: 5, colour: i => (i % 2 ? "#6a5230" : "#f6d76a") }, fuzz: { n: 4, long: 0.06, tip: "#fffbe0" }, gait: { seconds: 0.6, beats: 5 } })),
+  // (it hangs clear of the ground: at 0.14 its legs' tips touched it at the bottom of every bob, and it looked to dip and stand)
+  baby: () => done(bee("bee-baby", { fly: 0.24, chest: 1.25, C: { fuzz: "#f6d76a", band: "#f6d76a", dark: "#4a3a22" }, wing: 0.5, eye: 1.3, sting: 0, antennae: 0.6, abdomen: { len: 0.45, fat: 0.85, rings: 5, colour: i => (i % 2 ? "#6a5230" : "#f6d76a") }, fuzz: { n: 4, long: 0.06, tip: "#fffbe0" }, gait: { seconds: 0.6, beats: 5, bob: 0.012 } })),
   // a worker: slim, neatly banded, proper wings
   young: () => done(bee("bee-young", { fly: 0.26, chest: 0.9, wing: 0.95, abdomen: { len: 0.9, fat: 0.8 }, antennae: 0.9 })),
   // a great bumble: a deep furred thorax, bold bands, wide wings, pollen heaped on its hind legs, a long sting

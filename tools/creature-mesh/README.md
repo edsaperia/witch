@@ -2,6 +2,18 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
+## `clip.mjs`
+
+One clip of mesh creatures going as the game's view shows them, before a change and after it, to judge their walks by.
+
+```
+node tools/creature-mesh/clip.mjs --before ../before --out previews/creature-mesh/walks.mp4 [kind...]
+```
+
+## `draw.mjs`
+
+A picture to draw mesh creatures on, for the tools here that show them: RGBA, with sprites lit simply from their normals, lines and small letters.
+
 ## `frames.mjs`
 
 A digest of every frame a mesh kind is drawn as, to prove a change left the pictures alone.
@@ -53,4 +65,12 @@ Today's drawn height of a kind at each level, with meshes off: what its mesh is 
 node tools/creature-mesh/sizes.mjs wolf lynx      one line a kind, and the `heights` line for its art/mesh/species/<id>.js
 node tools/creature-mesh/sizes.mjs --all          every kind in the roster
 node tools/creature-mesh/sizes.mjs --json wolf    as JSON: { wolf: { drawn: [..4], sprite: [[w, h] x 4] } }
+```
+
+## `slip.mjs`
+
+How far a mesh creature's planted feet slide.
+
+```
+node tools/creature-mesh/slip.mjs [kind...]        one line a kind and level and pace; every kind with legs, or those named
 ```

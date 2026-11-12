@@ -24,17 +24,17 @@ export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear
 }
 
 interface MeshFrame { albedo: Uint8ClampedArray; normal: Uint8ClampedArray; flipped: Uint8ClampedArray; eyes?: Uint8Array; head?: [number, number] }
-interface MeshWalk { w: number; h: number; towards: MeshFrame[]; away: MeshFrame[] }
+interface MeshWalk { w: number; h: number; tall?: number; towards: MeshFrame[]; away: MeshFrame[] }
 
 /** One frame art/mesh/raster.js drew, as a baked sprite: its colours (a glowing pixel's alpha 254) and the camera's normals, so
  *  the game's own light falls on it. woken: an enraged creature's look, as the generated ones have it (art/creatures.js
  *  speciesColours): its coat darker and a little red, its eyes red and lit. */
-function meshFrame(f: MeshFrame, w: number, h: number, mk: MakeCanvas, woken = false, eyes = false): Baked {
+function meshFrame(f: MeshFrame, w: number, h: number, mk: MakeCanvas, woken = false, eyes = false, tall?: number): Baked {
   const A = mk(w, h), N = mk(w, h), NF = mk(w, h), a = new Uint8ClampedArray(f.albedo);
   if (woken) for (let i = 0; i < w * h; i++) { const q = i * 4;
     if (f.eyes?.[i]) a.set(WOKEN_EYE, q); else if (a[q + 3] === 255) { a[q] = a[q] * 0.72 + 3; a[q + 1] = a[q + 1] * 0.72 + 0.8; a[q + 2] = a[q + 2] * 0.72 + 1.2; } }
   for (const [c, px] of [[A, a], [N, f.normal], [NF, f.flipped]] as const) { const g = c.getContext("2d") as CanvasRenderingContext2D, d = g.createImageData(w, h); d.data.set(px); g.putImageData(d, 0, 0); }
-  return { A, N, NF, w, h, eyes: eyes ? f.eyes : undefined, head: f.head } as Baked;
+  return { A, N, NF, w, h, tall, eyes: eyes ? f.eyes : undefined, head: f.head } as Baked;
 }
 const WOKEN_EYE = [255, 40, 36, 254]; // (a woken creature's eyes: red, and lit in the dark)
 /** What of a creature's gear a mesh wears (art/mesh/gear.js): its party gear. Faces are not drawn (Ed, 2026-11-05: "Scrap animal
@@ -42,11 +42,11 @@ const WOKEN_EYE = [255, 40, 36, 254]; // (a woken creature's eyes: red, and lit 
 const worn = (gear: unknown): object | null => { const g = gear as { collar?: unknown; hat?: unknown; glasses?: unknown; shoes?: unknown } | null; return g && (g.collar || g.hat != null || g.glasses || g.shoes) ? g : null; };
 
 /** A mesh creature's walk as baked sprites (art/mesh/index.js; Ed, 2026-11-12: "let's do the real build"), in creatureSprites'
- *  order: towards then away, each level, each frame of its cycle and then it standing still; in its party gear if it has any, enraged if gear.woken. */
+ *  order: towards then away, each level, each frame of its slow cycle, then it standing still, then its fast cycle (a legged one's); in its party gear if it has any, enraged if gear.woken. */
 function meshSprites(species: string, mk: MakeCanvas, gear: unknown, onlyLevel?: number): Baked[] {
   const levels = onlyLevel === undefined ? [0, 1, 2, 3] : [onlyLevel], walks = levels.map(l => meshWalk(species, l, worn(gear) as null) as MeshWalk), out: Baked[] = [];
   const woken = !!(gear as { woken?: boolean } | null)?.woken, plain = !gear || Object.keys(gear as object).every(k => k === "face");
-  for (const facing of ["towards", "away"] as const) for (const walk of walks) for (const f of walk[facing]) out.push(meshFrame(f, walk.w, walk.h, mk, woken, plain));
+  for (const facing of ["towards", "away"] as const) for (const walk of walks) for (const f of walk[facing]) out.push(meshFrame(f, walk.w, walk.h, mk, woken, plain, walk.tall));
   return out;
 }
 
@@ -114,7 +114,7 @@ export const creatureFrame = (level: number, f: number, away = false, n = 2) => 
 
 /** A species' walk: its frames, and how far it moves between them (a share of its sprite's width); a mesh creature's says more
  *  (art/mesh/index.js meshGait: its cycle, its standing frame, each level's step, how it goes). */
-export interface WalkGait { frames: number; step: number; steps?: number[]; cycle?: number; stand?: number; rate?: number; type?: string }
+export interface WalkGait { frames: number; step: number; steps?: number[]; cycle?: number; stand?: number; rate?: number; type?: string; /** The slow pace's frames with every foot down (what it stops on), and its fast pace: its first frame and each level's step. */ rests?: number[]; run?: { from: number; steps: number[] } }
 export const walkGait = (species: string, st?: Style): WalkGait => (st && hasMesh(species, st) ? meshGait(species) : Art.walkGait(species)) as WalkGait;
 
 /** A party animal's gear (seeded by its id). Leashed: its seeded gear and the glowing collar in

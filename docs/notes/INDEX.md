@@ -119,9 +119,8 @@ glossary; these are the prototype's), by note.
 - Silhouette check
 - Live rig
 - Ground contact
-- Stride
+- Stride and planted feet
 - Gait
-- Armour
 - Asleep
 - Sizes
 - Nothing else

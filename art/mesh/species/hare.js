@@ -3,7 +3,7 @@
 // their shoulders, a rounded back, a blunt head with the eyes set high on its sides. On Ed's word for the fox (2026-11-11): the
 // adult already wears its signature loud, the legend is another, older, stranger creature, "I like magical armour pieces
 // on legends", and that armour is plate raised from the torso's own polygons, a lit rune on each.
-import { bound, hop } from "../kit/gaits.js";
+import { hop } from "../kit/gaits.js";
 import { plan } from "../kit/plan.js";
 import { quad } from "../kit/quad.js";
 import { tail } from "../kit/tail.js";
@@ -22,13 +22,13 @@ const hare = {
   baby() {
     const C = { ...HARE, coat: "#a8845c", upper: "#a8845c", mid: "#a8845c" }, q = hareBuild(C, { hind: { len: 0.4, thick: 1.7, foot: 1.5 }, fore: { len: 0.32, thick: 1.5 }, body: { len: 0.6, girth: 1.05, arch: 0.6, rump: 1.15, neck: [0.06, 0.07], neckThick: 1.2 }, head: { size: 1.22, eye: 2.1 }, ear: { tall: 0.8, lean: 0.75, wide: 1.1, inner: C.coat, tip: "#5a4630" } });
     const t = scut(q.root, { len: 0.06, r: 0.028 });
-    return plan("hare-baby", q.body, q.skull, [...q.legs, t], hop({ seconds: 0.4, bob: 0.018, rock: 0.09, tails: [t.chain] }));
+    return plan("hare-baby", q.body, q.skull, [...q.legs, t], hop({ lively: 1.3, tails: [t.chain] }));
   },
   // ears up and already too long for it, gangly back legs
   young() {
     const q = hareBuild(HARE, { hind: { len: 0.82, thick: 1.0 }, fore: { len: 0.6, thick: 0.85 }, body: { len: 0.82, girth: 0.82, tuck: 0.8, rump: 1.2 }, head: { size: 0.95 }, ear: { tall: 1.9, lean: 0.1, wide: 0.9 } });
     const t = scut(q.root);
-    return plan("hare-young", q.body, q.skull, [...q.legs, t], hop({ tails: [t.chain] }));
+    return plan("hare-young", q.body, q.skull, [...q.legs, t], hop({ lively: 1.1, tails: [t.chain] }));
   },
   // tall black-tipped ears like blades, a deep chest with a ruff, hind legs like springs, whiskers out wide
   adult() {
@@ -36,7 +36,7 @@ const hare = {
     const t = scut(q.root, { len: 0.13, r: 0.042 });
     const ruff = tufts(q.R[5], "neck", { n: 4, a0: 1.2, a1: 2.95, long: 0.11, sweep: 0.5, droop: 0.45, r: 0.05, lock: true, colour: () => HARE.belly });
     const crest = tufts(q.R[4], "chest", { n: 1, a0: 0.1, long: 0.1, sweep: 0.8, r: 0.035, colour: () => HARE.coat, tip: () => "#6e5334" });
-    return plan("hare-adult", q.body, q.skull, [...q.legs, t], hop({ seconds: 0.52, tails: [t.chain] }), { cones: [...ruff, ...crest, ...whiskers(q.P, "#f0e7d6", 1.1)] });
+    return plan("hare-adult", q.body, q.skull, [...q.legs, t], hop({ tails: [t.chain] }), { cones: [...ruff, ...crest, ...whiskers(q.P, "#f0e7d6", 1.1)] });
   },
   // the moon's hare: silvered and lean and very tall in the leg, its ears twice its own height, notched and ringed; a crescent
   // lit on its brow; moon-steel plate over its haunches and shoulders, a pale mark lit on each
@@ -52,7 +52,7 @@ const hare = {
     // haunches and its shoulders, each plate with its lit mark
     const armour = [{ from: 0.75, to: 2.15, round: [0, 1.7], lames: 2, thick: 0.02, step: 0.012, colour: STEEL, rim: SILVER, runes: { colour: GLOW } }, { from: 3.2, to: 4.75, round: [0, 1.7], lames: 2, thick: 0.02, step: 0.012, colour: STEEL, rim: SILVER, runes: { colour: GLOW, seed: 3 } }];
     const mane = tufts(R[5], "neck", { n: 4, a0: 0.9, a1: 2.95, long: 0.16, sweep: 0.55, droop: 0.5, r: 0.06, lock: true, colour: () => "#f3f5f8", tip: () => "#aab0ba" });
-    return plan("hare-legend", q.body, q.skull, [...q.legs, t], hop({ seconds: 0.85, bob: 0.02, rock: 0.09, tails: [t.chain], legs: bound(0.9) }), { cones: [...crescent, ...rings, ...mane, ...whiskers(P, "#f3f5f8", 1.6)], armour });
+    return plan("hare-legend", q.body, q.skull, [...q.legs, t], hop({ lively: 0.75, tails: [t.chain] }), { cones: [...crescent, ...rings, ...mane, ...whiskers(P, "#f3f5f8", 1.6)], armour });
   },
 };
 
