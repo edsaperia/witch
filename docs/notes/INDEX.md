@@ -442,6 +442,7 @@ glossary; these are the prototype's), by note.
 - Trail colours
 - Tree normal maps switch
 - Tree normal directions
+- Tree normal directions: never waited for
 
 ### [The witch's art](witch-art.md)
 

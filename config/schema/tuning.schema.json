@@ -2579,7 +2579,7 @@
         "16",
         "0"
       ],
-      "description": "The trees' normal maps: \"full\" (the default) as ever; \"64\", \"32\" or \"16\" their directions cut to a k-means palette of that many per tree atlas; \"0\" off, every tree pixel lit flat, as if it faced the camera (the normal 128, 128, 255)."
+      "description": "The trees' normal maps: \"32\" (the default) their directions cut to a k-means palette of 32 per tree atlas; \"64\" or \"16\" that many; \"full\" as ever; \"0\" off, every tree pixel lit flat, as if it faced the camera (the normal 128, 128, 255)"
     },
     "wind": {
       "type": "object",

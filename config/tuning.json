@@ -626,8 +626,8 @@
     "statues": {
       "on": true,
       "bars": 4,
-      "first": 3.5,
-      "gap": 19,
+      "first": 10,
+      "gap": 10,
       "walkBack": 1.5,
       "keepOut": 2,
       "grey": [0.6, 0.6, 0.63],
@@ -655,7 +655,7 @@
     "value": 0.15,
     "hue": 0
   },
-  "treeNormals": "full",
+  "treeNormals": "32",
   "wind": {
     "on": true,
     "strength": 0.25,
