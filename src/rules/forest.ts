@@ -430,8 +430,10 @@ export class Forest {
   private relics = new Map<string, Relic[]>();
   /** Milliseconds spent making chunks since the view last read (and reset) it. */
   buildMs = 0;
-  /** Chunks kept per kind before the farthest are dropped: well over a treetop view's ~700. */
-  static readonly KEEP = 2500;
+  /** Chunks kept per kind before the farthest are dropped: well over a treetop view's ~700, and (a fifth let go at a time) the
+   *  telescope's whole circle after (its 900 m reach: some 3,600, render/view/scenery.ts telescopeWarmSteps). At 2,500 each of its
+   *  listings made 1,400 of them again, the far forest missing for seconds after each pan (Ed, 2026-11-12). */
+  static readonly KEEP = 5000;
   private centre = { x: 0, z: 0 };
   // The one whole-map pass (which finds go where) runs with the map, not on the first frame that needs it.
   constructor(readonly map: ForestMap) { uniques(map); }

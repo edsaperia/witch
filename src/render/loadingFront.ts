@@ -60,3 +60,15 @@ export function mistLeft(reach: TypeReach | undefined, since: number | undefined
 
 /** Whether the front has passed all of a type (its mist gone for the night). */
 export const cleared = (front: number): boolean => front >= FRONT_CLEAR;
+
+/** The telescope's mist's edge (render/loadingMist.ts scope; Ed, 2026-11-12: what it shows that isn't built yet "covered in mist"):
+ *  `at` metres round her a frame ago (NaN: the telescope just up), now `dt` seconds on with its scenery drawn out to `cover` metres.
+ *  It rolls back out toward `cover` at the loading front's `speed` (as the loading mist rolls off the island: never gone in one
+ *  frame), a frame counting at most a tenth of a second, and comes in at once to where the trees end (never a hole); never nearer
+ *  than `from` metres (round the crow's nest, below its view). */
+export function scopeEdge(at: number, cover: number, dt: number, speed: number, from = 30): number {
+  const c = Math.max(from, cover);
+  if (!Number.isFinite(at)) return from;
+  if (at >= c) return c;
+  return Math.min(c, Math.max(from, at) + Math.max(0, speed) * Math.min(0.1, Math.max(0, dt)));
+}

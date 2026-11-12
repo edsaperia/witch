@@ -36,7 +36,7 @@ import { routeSeen } from "../../rules/hatSpells";
 import { bootLineAt, bootPath, bootPulseAt } from "../../rules/bootRing";
 import { leyKey } from "../../rules/leylines";
 import { SPRITE_UNIFORMS, treeNormalDirections } from "../sprites";
-import { inView } from "./culling";
+import { focusOf, inView, telescopeHalfWidth } from "./culling";
 import { checkPops, drawGhosts } from "./pops";
 import { refresh } from "./scenery";
 import { drawBerries, drawCreatures } from "./creatures";
@@ -57,6 +57,9 @@ import { MasterplanView } from "../masterplan";
 import { potionStrength } from "../potionEffects";
 import { drawPointers } from "./hud";
 import { workAhead } from "./ahead";
+import { scopeCover } from "./scenery";
+import { scopeEdge } from "../loadingFront";
+import type { LoadingMist } from "../loadingMist";
 import { setGentleLanternPattern, PATTERN_LOOK } from "../lightPatternState";
 import { comfort } from "../comfort";
 import { winLit, winPulse, winPulseOut } from "../../rules/win";
@@ -295,6 +298,7 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     if (a4ViewHost.loadingMist && draw) { // (on the page's own clock, a frame counting at most a tenth of a second: not the house's slowed time)
       a4PrivateHost.updateLoadingMist(time);
     }
+    if (a4ViewHost.loadingMist) scopeMist(a4ViewHost, a4ViewHost.loadingMist, a4ViewHost.renderEaseDt);
     a4ViewHost.lightRings?.update(a4ViewHost.camera, w.x, witchHeight(w, t) + a4ViewHost.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(a4ViewHost, time, ht, onTreehouse, repaintHeld);
     a4ViewHost.partyStart.update(g.tuning, a4ViewHost.magic, ht, time);
@@ -395,3 +399,23 @@ export function replayPartyStart(a4ViewHost: View, _a4PrivateHost: ViewInternals
     a4ViewHost.houseRooms?.sayAtDecks(MAKE_SOME_NOISE, P.now);
     return true;
   }
+
+/** The telescope's mist's edge now, by view (m round her; NaN with the telescope down). */
+const scopeEdges = new WeakMap<View, number>();
+/** Through the telescope, the loading mist over what its picture has no trees for yet (Ed, 2026-11-12, v7872: "Just after waking, I
+ *  look through the telescope and I see missing trees - I think these should be loaded during the loading screen, or if not, be
+ *  covered in mist"): past how far the scenery drawn now reaches round her and outside the wedge it was listed in
+ *  (render/view/scenery.ts scopeCover; none listed for the telescope yet, everything past a few metres). Its edge rolls back out as
+ *  the trees arrive (render/loadingFront.ts scopeEdge), on her clock (`dt`: the house's tenth isn't hers), at the loading front's
+ *  speed or faster, so it has reached the trees' end within the loading mist's `fade` seconds; then, with the whole picture listed,
+ *  it's off (nothing drawn for it), back only where a look turns past what's listed. */
+function scopeMist(v: View, M: LoadingMist, dt: number): void {
+  const T = v.telescope, L = v.game.tuning.loadingMist;
+  if (!T || !L) { scopeEdges.delete(v); M.scope(null); return; }
+  const c = scopeCover(v), f = focusOf(v), to = c ? c.reach + 2 * L.soft : 0;
+  const edge = scopeEdge(scopeEdges.get(v) ?? NaN, to, dt, Math.max(L.speed, to / Math.max(0.5, L.fade)));
+  scopeEdges.set(v, edge);
+  const done = !!c && edge >= to, off = c ? Math.abs(((T.heading - c.heading + 540) % 360) - 180) + telescopeHalfWidth(T.fov, v.width / v.height) : 360;
+  if (done && off <= c.half) { M.scope(null); return; }
+  M.scope({ x: c?.x ?? f.x, z: c?.z ?? f.z, reach: done ? 1e5 : edge, heading: c?.heading ?? T.heading, half: c?.half ?? 180 });
+}

@@ -45,6 +45,8 @@ uniform vec4 uMist; // density, soft edge (m), noise size (m), the treehouse's x
 uniform vec4 uRoll; // the front's speed (m/s), its cap (s), the fade (s), gone after (s)
 uniform vec4 uSea; // the sea's seconds since it began to go (under 0: not yet), its nearest (m), the island's reach (m), how far out to sea it lies (m)
 uniform float uHouseZ, uGlow;
+uniform vec4 uScope;    // through the telescope (scope): where its scenery was listed round (x, z), how far out it's drawn (m), on (1)
+uniform vec3 uScopeWedge; // and the wedge it was listed in: its bearing's direction (x, z) and the cosine of its half width (-2: all round)
 varying vec3 vWorld;
 varying float vLayer;
 ${LIGHT_GLSL}
@@ -68,24 +70,31 @@ void main() {
   float since, near, thin = 1.0;
   if (area.a < 0.5) { since = uSea.x; near = uSea.y; thin = 1.0 - smoothstep(uSea.z, uSea.z + uSea.w, home); }
   else { int t = int(area.r * 255.0 + 0.5); since = uSince[t]; near = uNear[t]; }
-  if (since >= uRoll.w || thin <= 0.0) discard;
+  // Through the telescope, over what its picture has no trees for yet (render/view/scenery.ts scopeCover): past how far its scenery
+  // is drawn round her, or outside the wedge it was listed in (Ed, 2026-11-12: "be covered in mist").
+  vec2 se = p - uScope.xy;
+  float sd = length(se), sOut = uScope.w > 0.5 && sd > 30.0 && dot(se / max(sd, 1e-3), uScopeWedge.xy) < uScopeWedge.z ? 1.0 : 0.0;
+  if ((since >= uRoll.w || thin <= 0.0) && uScope.w < 0.5) discard;
   // Going (render/loadingFront.ts mistLeft): rolling back from the house (noise on the distance from it, drifting), and where the
   // front has passed, thinning away over the fade's seconds.
   float drift = uRealTime * 0.6;
   float n = vnoise((p + vec2(drift, drift * 0.4)) / uMist.z);
-  float beyond = 1.0;
-  if (since >= 0.0) {
+  float beyond = since >= uRoll.w || thin <= 0.0 ? 0.0 : 1.0;
+  if (since >= 0.0 && beyond > 0.0) {
     float wait = min(uRoll.y, max(0.0, (home + (n - 0.5) * 2.0 * uMist.y - (near - 2.0 * uMist.y)) / max(uRoll.x, 1e-3)));
     beyond = uRoll.z > 0.0 ? clamp(1.0 - (since - wait) / uRoll.z, 0.0, 1.0) : step(since, wait);
   }
-  if (beyond <= 0.01) discard;
+  // (the scope's own edge soft and broken up by the same noise, as the loading front's)
+  float cover = beyond * thin;
+  if (uScope.w > 0.5) cover = max(cover, max(sOut, smoothstep(uScope.z - uMist.y, uScope.z + uMist.y, sd + (n - 0.5) * 2.0 * uMist.y)));
+  if (beyond <= 0.01 && cover <= 0.01) discard;
   // Each sheet's own billows (thicker low down), so the stack reads as a volume and its top as rolling cloud; their field slowly
   // warped by a larger noise, so they curl and turn as they drift rather than slide.
   float w = vnoise(p / (uMist.z * 2.2) + vec2(uRealTime * 0.03, 0.0)) * 6.2832;
   vec2 q = p + vec2(cos(w), sin(w)) * uMist.z * 0.35 + vec2(0.0, drift * 0.3);
   float b = vnoise(q / (uMist.z * 0.7) + vLayer * 17.0);
-  float a = uMist.x * beyond * thin * mix(1.0, 0.55, vLayer) * mix(0.45, 1.0, smoothstep(0.25, 0.75, b));
-  a = floor(a * 6.0 + (beyond < 1.0 ? bayer4(gl_FragCoord.xy) : 0.5)) / 6.0; // (in hard steps: the pixel look; thinning, dithered between them, so it fades smoothly)
+  float a = uMist.x * cover * mix(1.0, 0.55, vLayer) * mix(0.45, 1.0, smoothstep(0.25, 0.75, b));
+  a = floor(a * 6.0 + ((uScope.w > 0.5 ? cover : beyond) < 1.0 ? bayer4(gl_FragCoord.xy) : 0.5)) / 6.0; // (in hard steps: the pixel look; thinning, dithered between them, so it fades smoothly)
   if (a <= 0.01) discard;
   // The low sheets the night's blue, a faint glow in them; the top's billows catching the moon.
   float lit = vLayer * smoothstep(0.45, 0.9, b);
@@ -147,7 +156,8 @@ export class LoadingMist {
       vertexShader: VERT, fragmentShader: frag(slots),
       uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...areas, uDepth: { value: depth }, uLow: { value: low },
         uNoise: { value: noiseTexture() }, uSince: { value: this.sinces }, uNear: { value: this.nears }, uRoll: { value: new THREE.Vector4() },
-        uSea: { value: new THREE.Vector4(this.seaGone ? 1e6 : -1, this.seaReach.near, this.islandR, Math.max(1, T.sea)) }, uMist: { value: new THREE.Vector4(T.density, T.soft, T.size, house.x) }, uHouseZ: { value: house.z }, uTop: { value: T.height }, uGlow: { value: T.glow } },
+        uSea: { value: new THREE.Vector4(this.seaGone ? 1e6 : -1, this.seaReach.near, this.islandR, Math.max(1, T.sea)) }, uMist: { value: new THREE.Vector4(T.density, T.soft, T.size, house.x) }, uHouseZ: { value: house.z }, uTop: { value: T.height }, uGlow: { value: T.glow },
+        uScope: { value: new THREE.Vector4() }, uScopeWedge: { value: new THREE.Vector3(0, -1, -2) } },
       depthWrite: false, depthTest: false, transparent: true,
       blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneMinusSrcAlphaFactor,
     });
@@ -194,6 +204,19 @@ export class LoadingMist {
     this.mat.uniforms.uTop.value = T.height; this.mat.uniforms.uGlow.value = T.glow;
     if (!left) { this.done = true; this.mesh.visible = false; }
     return left;
+  }
+
+  /** Through the telescope (Ed, 2026-11-12: missing trees "should be loaded during the loading screen, or if not, be covered in
+   *  mist"): the mist over what its picture has no trees for yet, round (x, z) past `reach` metres and outside the wedge `heading`
+   *  ± `half` degrees (half 180 or more: all round); null, none (the telescope down). Drawn whether or not the loading's is done. */
+  scope(s: { x: number; z: number; reach: number; heading: number; half: number } | null): void {
+    const u = this.mat.uniforms, S = u.uScope.value as THREE.Vector4, W = u.uScopeWedge.value as THREE.Vector3;
+    if (!s) S.w = 0;
+    else {
+      const h = (s.heading * Math.PI) / 180;
+      S.set(s.x, s.z, s.reach, 1); W.set(Math.sin(h), -Math.cos(h), s.half >= 180 ? -2 : Math.cos((s.half * Math.PI) / 180));
+    }
+    this.mesh.visible = !this.done || !!s;
   }
 
   /** When type `t`'s mist began to go (the page's clock, s; -1e9 clear from the start), or undefined: not yet. For the log. */
