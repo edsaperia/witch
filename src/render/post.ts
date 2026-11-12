@@ -6,7 +6,7 @@
 // runs either "before" the pixels are scaled up (blurring whole art pixels, at low resolution)
 // or "after" (on the scaled-up image, at full resolution, so the pixel edges themselves blur).
 import * as THREE from "three";
-import { gradeInto, moodOf } from "./mood";
+import { gradeInto, moodOf, tintInto, wildGradeInto } from "./mood";
 import { runSync, type Steps } from "./slices";
 import { hsv2rgb } from "../../art/generator.js";
 import { potionBloom, potionLevels, miniatureTilt, hueRotation, nightVisionLevels } from "./potionEffects";
@@ -67,7 +67,7 @@ uniform float uPotionBackground, uPotionTime, uNightVision;
 uniform vec4 uPrintFold; // print amount, hatch spacing, folded view amount, wedge count
 uniform vec4 uPotionHue; // cyclic RGB rotation coefficients, blend strength
 uniform vec4 uPotionWobble; // amplitude in art pixels, speed, wave size, edge reach
-uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn, uKoDim, uBroken, uPotionFade; uniform vec4 uGrade, uPool, uIris, uIris2; uniform vec3 uGradeTint; varying vec2 vUv;
+uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn, uKoDim, uBroken, uPotionFade; uniform vec4 uGrade, uWildGrade, uPool, uIris, uIris2; uniform vec3 uGradeTint, uWildTint; varying vec2 vUv;
 ${REFRACTION_GLSL}
 float edgeLuma(vec2 p) { return dot(texture2D(uScene, p).rgb, vec3(0.3, 0.55, 0.15)); }
 float potionEdge(vec2 p) {
@@ -120,12 +120,18 @@ void main() {
   // the grade's tint (deep blue-green, violet), the bright left as they are, so the party's lights and
   // her glow stay warm in a cold wood. x: amount, y: how much colour goes, z: the brightness above
   // which nothing is graded.
+  // Her light's pool spared (uPool: its centre and half-widths on screen; render/view.ts), so her warm light still shows
+  // on a dark floor (the art director's round 3: in the fern forest "her light doesn't show").
+  float pool = uPool.z > 0.0 && (uGrade.x > 0.0 || uWildGrade.x > 0.0) ? 1.0 - smoothstep(0.35, 1.0, length((sampleUv - uPool.xy) / uPool.zw)) : 0.0;
   if (uGrade.x > 0.0) {
     float l = dot(c, vec3(0.3, 0.55, 0.15));
-    // Her light's pool spared (uPool: its centre and half-widths on screen; render/view.ts), so her warm light still shows
-    // on a dark floor (the art director's round 3: in the fern forest "her light doesn't show").
-    float pool = uPool.z > 0.0 ? 1.0 - smoothstep(0.35, 1.0, length((sampleUv - uPool.xy) / uPool.zw)) : 0.0;
     c = mix(c, mix(c, vec3(l), uGrade.y) * uGradeTint, uGrade.x * (1.0 - smoothstep(0.0, uGrade.z, l)) * (1.0 - ${POOL_SPARE.toFixed(2)} * pool));
+  }
+  // The wild-only grade (render/mood.ts wildGradeInto; Ed, 2026-11-12), the same sum on what the grade above left, its strength
+  // eased to 0 on party ground and home.
+  if (uWildGrade.x > 0.0) {
+    float l = dot(c, vec3(0.3, 0.55, 0.15));
+    c = mix(c, mix(c, vec3(l), uWildGrade.y) * uWildTint, uWildGrade.x * (1.0 - smoothstep(0.0, uWildGrade.z, l)) * (1.0 - ${POOL_SPARE.toFixed(2)} * pool));
   }
   c += texture2D(uBloom, uPotionWobble.x > 0.0 ? p : sampleUv).rgb * uBloomStrength;
   if (uPotionStyle.x != 0.0) c = max(vec3(0.0), mix(vec3(dot(c, vec3(0.3, 0.55, 0.15))), c, 1.0 + uPotionStyle.x));
@@ -251,7 +257,7 @@ export class Post {
       blur: m(BLUR, { uSrc: { value: null }, uStep: { value: new THREE.Vector2() } }),
       copy: m(COPY, { uSrc: { value: null } }),
       veil: Object.assign(m(VEIL, { uSrc: { value: null }, uAt: { value: new THREE.Vector2(0.5, 0.5) }, uR: { value: 0 }, uSoft: { value: 0.15 }, uAspect: { value: 1 }, uAll: { value: 0 }, uK: { value: 0 } }), { transparent: true, blending: THREE.NormalBlending }),
-      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uKoDim: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uBroken: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uPool: { value: new THREE.Vector4() }, uIris: { value: new THREE.Vector4() }, uIris2: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) } }),
+      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uKoDim: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uBroken: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uPool: { value: new THREE.Vector4() }, uIris: { value: new THREE.Vector4() }, uIris2: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) }, uWildGrade: { value: new THREE.Vector4(0, 0, 1, 0) }, uWildTint: { value: new THREE.Vector3(1, 1, 1) } }),
       tilt: m(TILT, { uSrc: { value: null }, uDepth: { value: null }, uTexel: { value: new THREE.Vector2() }, uDir: { value: new THREE.Vector2() }, uStrength: { value: 0 }, uBand: { value: 0.4 }, uCentre: { value: 0.5 }, uSkyBlur: { value: 1 }, uSharp: { value: null }, uSharpOn: { value: 0 } }),
     };
     this.mats.composite.uniforms.uPotionFade = { value: 0 };
@@ -446,6 +452,7 @@ export class Post {
       if (this.potionNightVision > 0) {
         const night = nightVisionLevels(u.uBlack.value, u.uGamma.value, u.uGrade.value.x, this.potionNightVision);
         u.uBlack.value = night.black; u.uGamma.value = night.gamma; u.uGrade.value.x = night.grade;
+        u.uWildGrade.value.x = nightVisionLevels(0, 1, u.uWildGrade.value.x, this.potionNightVision).grade; // (the wild-only grade eased off the same)
       }
     });
     if (!tilt) return;
@@ -483,12 +490,17 @@ export class Post {
   /** The grade's tint (a colour of luma 1), for the area moods to ease (render/mood.ts AreaMoods). */
   get gradeTint(): THREE.Vector3 { return this.mats.composite.uniforms.uGradeTint.value; }
 
+  /** How wild it is where she is, eased (render/mood.ts AreaMoods.wild; 0 party ground and home): the wild-only grade's share. */
+  wild = 0;
+
   /** The mood's grade (render/mood.ts) into the composite's uniforms: its strength and the rest every frame (the pause page's
    *  Spooky grade slider sets it in place), its tint worked out when the mood changes, not every frame. */
   private gradeOf: object | null | undefined;
   private setGrade(u: Record<string, THREE.IUniform>): void {
     const M = moodOf(this.tuning);
     gradeInto(u.uGrade.value, M);
+    wildGradeInto(u.uWildGrade.value, M, this.wild);
+    if (M?.wildGrade && u.uWildGrade.value.x > 0) tintInto(u.uWildTint.value, M.wildGrade.hue, M.wildGrade.sat); // (every frame: its sliders live)
     if (M === this.gradeOf) return;
     this.gradeOf = M;
     if (M) {

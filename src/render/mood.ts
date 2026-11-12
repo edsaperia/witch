@@ -21,6 +21,23 @@ export function gradeInto(out: { set(x: number, y: number, z: number, w: number)
   if (M?.grade) out.set(M.grade, M.gradeDesat, M.gradePivot, 0); else out.set(0, 0, 1, 0);
 }
 
+/** The wild-only grade (light.spooky.wildGrade; Ed, 2026-11-12: "Can you make a new pause menu group that has each of these applied in
+ *  the wild only so I can tweak them?") into the composite's uWildGrade: its strength times `wild` (how wild it is where she is, 0 on
+ *  party ground and home, 1 in the wild, eased: AreaMoods.wild) shaped smooth, how far it drains colour, the luma it fades out at;
+ *  none (0, 0, 1) for the plain light, a strength of 0 or party ground. Read every frame, so its sliders are live. It's laid after the
+ *  global grade (light.spooky.grade, everywhere), on what that left: in the wild both apply, one then the other. */
+export function wildGradeInto(out: { set(x: number, y: number, z: number, w: number): unknown }, M: Mood | null, wild: number): void {
+  const W = M?.wildGrade, k = Math.max(0, Math.min(1, wild)), s = W ? W.strength * k * k * (3 - 2 * k) : 0;
+  if (W && s > 0) out.set(s, W.desat, W.pivot, 0); else out.set(0, 0, 1, 0);
+}
+
+/** A grade's tint from its hue and saturation, at the brightness it leaves: a colour of luma 1, so it shifts hue, not level. */
+export function tintInto(out: { set(r: number, g: number, b: number): unknown; x: number; y: number; z: number }, hue: number, sat: number): void {
+  hsvInto(out, hue, sat, 1);
+  const l = 0.3 * out.x + 0.55 * out.y + 0.15 * out.z;
+  if (l > 0) out.set(out.x / l, out.y / l, out.z / l);
+}
+
 /** h, s, v (0 to 1) into rgb 0 to 1, as art/core.js hsv2rgb (its rounding to whole 255ths), times k, with no allocation. */
 export function hsvInto(out: { set(r: number, g: number, b: number): unknown }, h: number, s: number, v: number, k = 1): void {
   h = ((h % 1) + 1) % 1; s = Math.max(0, Math.min(1, s)); v = Math.max(0, Math.min(1, v));
@@ -45,6 +62,8 @@ const AREA_KEYS = ["hazeHue", "hazeSat", "haze", "gradeHue", "gradeSat", "mist"]
  *  the bog is misty and teal and the dead wood violet, and nothing jumps. */
 export class AreaMoods {
   private cur: AreaMood;
+  /** How wild it is where she is (0 party ground and home, 1 the wild), eased at the same pace as the rest (areaEase): the wild-only grade's share. */
+  wild = 0;
   private targets = new Map<string, AreaMood>();
   constructor(private M: Mood) { this.cur = this.target(""); }
 
@@ -61,18 +80,15 @@ export class AreaMoods {
 
   /** Ease toward `area`'s mood over dt seconds and write it into the fog colour, the grade's tint (a
    *  colour of luma 1) and the mist's strength. */
-  update(area: string, dt: number, haze: { set(r: number, g: number, b: number): unknown }, tint: { set(r: number, g: number, b: number): unknown; x: number; y: number; z: number } | null, mist: { setStrength(s: number): void } | null): void {
+  update(area: string, dt: number, haze: { set(r: number, g: number, b: number): unknown }, tint: { set(r: number, g: number, b: number): unknown; x: number; y: number; z: number } | null, mist: { setStrength(s: number): void } | null, wild = 0): void {
     const T = this.target(area), k = 1 - Math.exp(-Math.max(0, dt) * (this.M.areaEase ?? 0.5)), C = this.cur;
+    this.wild += ((wild ? 1 : 0) - this.wild) * k;
     for (const key of AREA_KEYS) {
       if (key === "hazeHue" || key === "gradeHue") { const d = ((T[key] - C[key] + 1.5) % 1) - 0.5; C[key] = (C[key] + d * k + 1) % 1; } // round the hue circle the short way
       else C[key] += (T[key] - C[key]) * k;
     }
     hsvInto(haze, C.hazeHue, C.hazeSat, 1, C.haze);
-    if (tint) {
-      hsvInto(tint, C.gradeHue, C.gradeSat, 1);
-      const l = 0.3 * tint.x + 0.55 * tint.y + 0.15 * tint.z;
-      if (l > 0) tint.set(tint.x / l, tint.y / l, tint.z / l);
-    }
+    if (tint) tintInto(tint, C.gradeHue, C.gradeSat);
     mist?.setStrength(C.mist);
   }
 }
