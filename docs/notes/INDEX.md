@@ -188,6 +188,7 @@ glossary; these are the prototype's), by note.
 - The house one room
 - Telephone
 - Landing cooldown
+- The current layout
 - Current brewing authority (Ed, 2026-10-31):
 - Mushrooms and brewing
 - Mushroom kitchen artwork

@@ -31,10 +31,24 @@ describe("explicit opt-in house placement", () => {
     expect(hatSlots({ x: 10, z: 20 }, H)[0]).toEqual({ x: H.layout!.hatPoints[0].x + 10, z: H.layout!.hatPoints[0].z + 20 });
     for (const room of ["bedroom2", "bedroom3"]) {
       const table = H.objects.find(o => o.id === `${room}DressingTable`)!;
-      const chest = proposal.objects.find(o => o.id === `${room}Chest`)!;
-      expect([table.x, table.z, table.placement?.rotation]).toEqual([chest.x, chest.z, chest.rotation]);
+      // (Ed's 2026-11-12 export names the dressing tables by their own ids, no longer the chests')
+      const placed = proposal.objects.find(o => o.id === `${room}DressingTable`)!;
+      expect([table.x, table.z, table.placement?.rotation]).toEqual([placed.x, placed.z, placed.rotation]);
       expect(table.placement?.foot.h).toBe(table.h);
       expect(table.use.kind).toBe("creator");
+    }
+  });
+  it("stands every object Ed's export places where he put it, its use point his, the objects new since the baseline too", () => {
+    // (Ed, 2026-11-12, "New treehouse layout": the basins, the guests' shoe racks, the broom rack and the hydraulic lift among them)
+    const H = applyEdLayout(source, true);
+    for (const p of proposal.objects.filter(p => !p.id.includes(":"))) {
+      const o = H.objects.find(o => o.id === p.id)!;
+      expect([o.id, o.x, o.z, o.placement?.rotation]).toEqual([p.id, p.x, p.z, p.rotation]);
+      if (p.id !== "cauldron") expect(objectFront(o, { x: 0, z: 0 }, .5, H)).toEqual(p.useAnchor);
+    }
+    for (const id of ["basin", "bedroom2Basin", "bedroom3Basin", "bedroom2ShoeRack", "bedroom3ShoeRack", "broomRack", "broomLift"]) {
+      const o = H.objects.find(o => o.id === id)!, from = source.objects.find(o => o.id === id)!;
+      expect(o.placement?.sourceRoom).toBe(from.room); expect(o.use).toEqual(from.use);
     }
   });
   it("provides a potion-owner position hook without changing colour identity, state or default kitchen geometry", () => {

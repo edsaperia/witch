@@ -3,6 +3,7 @@
 // out ZOOM steps (default 1), a shot each (`<room>.png`).
 // BROOM: her broom's save (localStorage witch.broom, as app/broomSave.ts keeps it: {"v":1,"found":[...],"fitted":{...}}).
 // KIT: what her night's kit holds (rules/kit.ts): KIT=none, KIT=invites, KIT=invites,broom (the desk's pile and the lathe's brooms as taken).
+// SCALE: the page's device scale factor (SCALE=2: each shot twice as many pixels each way, for a before/after Ed looks at).
 // QUERY adds to the link (QUERY=furniture=0: the plain boxes, to compare). ONLY=bedroom,boudoir shoots only those. Fails on a page
 // error.
 //   npm run build && node tools/house/furniture-shots.cjs <out dir> [seed]
@@ -23,7 +24,7 @@ const A = ((H.turn || 0) * Math.PI) / 180, plan = (x, z) => [x * Math.cos(A) + z
   const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   const errors = [];
   try {
-    const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+    const page = await browser.newPage({ viewport: { width: 1600, height: 900 }, deviceScaleFactor: Number(process.env.SCALE ?? 1) });
     await session.install(page);
     page.on("pageerror", e => errors.push(e.message));
     if (process.env.BROOM) await page.addInitScript(b => { try { localStorage.setItem("witch.broom", b); } catch { /* */ } }, process.env.BROOM); // (her broom's save: the Workshop's parts found and fitted)
