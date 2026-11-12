@@ -174,6 +174,7 @@ says what each note covers.
 - Bag design
 - Use prompt
 - Wake-up keys
+- Sleep eyelids
 - The Studio's instruments
 - Finds / travel trunk
 - Find area
