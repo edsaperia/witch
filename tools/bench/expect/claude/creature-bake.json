@@ -1,9 +1,0 @@
-{
-  "reason": "Mesh creatures on by default (Ed, 2026-11-12: \"meshes are great, we should aim to transition to them for all the creatures\"; docs/plans/creature-meshes.md): home's kinds are drawn from low-poly meshes on skeletons (art/mesh), at the sizes Ed passed, on eight-frame walks, and the live rig no longer draws them. And the bee takes the marten's place on home with an id of its own (Ed, 2026-11-11: \"swap the marten for the bee\"; 2026-11-12: \"make a new ID, keep the marten distinct\", \"marten is on the bench\", \"It flies.\"): wherever the rosters dealt a marten they deal a bee, a flier that moves as the moth does and fights as the marten did. And the turtle takes the newt's place in the Fen the same way (Ed, 2026-11-12: \"newt for turtle\"): slower, armoured, fighting as the newt did.",
-  "frames": {
-    "*": "wherever one of home's kinds is in view: its new drawing, its size, and its walk's frames; a bee wherever a marten was, a turtle wherever a newt was"
-  },
-  "rules": {
-    "*": "every night whose roster held the marten or the newt: bees in the marten's place (the flier trait, the moth's steering, a smaller body radius, its own waiting pattern) and turtles in the newt's (slower, armoured, another body radius and waiting pattern), and whatever follows from where they go"
-  }
-}
