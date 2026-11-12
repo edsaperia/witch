@@ -1,0 +1,9 @@
+{
+  "reason": "Release 35: #1990 (claude/challenge-hidden): the challenge circle is hidden in the forest until the party starts (Ed, 2026-11-12): the challenge state gains its reveal (shown, since when), its statues can't wake before it's there, and the forest grows trees and bushes on its floor drawn only while it's hidden",
+  "rules": {
+    "challenge": "its new reveal record (shown, and when it last changed)"
+  },
+  "frames": {
+    "*": "where the challenge circle's area is in view before the party, forest stands on its floor in place of the circle"
+  }
+}
