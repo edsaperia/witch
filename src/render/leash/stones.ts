@@ -99,8 +99,10 @@ export function analyserLevels(lv: LeashView, time: number): (i: number, m: numb
 /** The flat analyser's sizes (a great stump's, runeMarkers.stump.ring; the decks', render/leash/decksRing.ts): its first dot `inner` m
  *  from the middle, a dot every `cell` m, out to `fill` of the edge; `glow`, how bright each blooms in its own colour (0: none). */
 export interface FlatRing { inner: number; cell: number; fill: number; glow?: number }
+/** A layer the dots go to (an Instances, or one standing in for it: render/leash/decksRing.ts noDeeper). */
+export type DotLayer = Pick<Instances, "add">;
 /** Where it's drawn: its dots painted on in `ink`, glowing over them as light in `glow`, `y` m over the ground. */
-export interface RingLayers { ink: Instances; glow: Instances; y: number }
+export interface RingLayers { ink: DotLayer; glow: DotLayer; y: number }
 
 /** One bar of the flat analyser lying on the ground (a great stump's: Ed, 2026-10-29, "the audio analyser effect should be the same
  *  orientation as the stump rings"): at angle `a` from its middle (x0, z0), `reach` (0 to 1) of the way out to `edge` m, in colour c. */

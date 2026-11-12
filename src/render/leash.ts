@@ -49,7 +49,6 @@ import { drawRainbow } from "./leash/rainbow";
 import type { LeyLines } from "./leylines";
 import { drawStones, newStoneView, resetStoneView, type StoneSpot } from "./leash/stones";
 import { drawDecksRing, type DecksRing } from "./leash/decksRing";
-import { PARTY_START_ORDER } from "./partyStart";
 import { drawChallenge } from "./challenge";
 import { drawProjection } from "./leash/projection";
 import { RUNE_SCALE, runeOffset, sigilSize } from "../rules/runeOffset";
@@ -65,6 +64,10 @@ const WHITE_COL = new THREE.Color(1, 1, 1);
 /** How far from her (m) happy creatures' runes are drawn. */
 const RUNE_VIEW = 70;
 /** The party legend's giant hat's stripes (the Easter egg): the party neons, in pairs of rows. */
+/** The decks' ring's draw order (render/leash/decksRing.ts): on the house's floor, so after its floors, walls and furniture (19.925 to
+ *  19.944: render/houseRooms.ts ROOMS_ORDER, drawn with no depth over what came before, the Terrace's floor among them) and before
+ *  what stands on it drawn over them (her room pass, 19.95: render/houseWitchPass.ts; the crown indoors, 19.96). */
+export const DECKS_RING_ORDER = 19.946;
 const PARTY_HAT = [[1, 0.35, 0.72], [0.35, 0.95, 1], [1, 0.85, 0.3], [0.7, 0.45, 1]];
 
 export class LeashView {
@@ -99,8 +102,8 @@ export class LeashView {
    *  both painted (not added) just before the additive glyph (groundSigil). */
   backing: Instances;
   ink: Instances;
-  /** The decks' ring's dots painted on and their glow as light: over the house, as the party start's pieces were (render/partyStart.ts
-   *  PARTY_START_ORDER), still depth-tested so the decks in front of them cover them. */
+  /** The decks' ring's dots painted on and their glow as light (render/leash/decksRing.ts): over the house's floor (DECKS_RING_ORDER),
+   *  depth-tested, so the DJ table in front of them covers them. */
   decksInk: Instances;
   decksGlow: Instances;
   /** Each glyph's reach from its slot's middle, a share of its half-width (measured from the atlas when drawn), by its rect. */
@@ -227,8 +230,8 @@ export class LeashView {
     this.blood = new Instances(mat(1, true, true, BLOOD_PULL)); // (over the grass tufts: Ed's pick, 2026-10-09)
     this.backing = new Instances(mat(1, true, true)); this.backing.mesh.renderOrder = 2.9;
     this.ink = new Instances(mat(1, true, true)); this.ink.mesh.renderOrder = 2.95;
-    this.decksInk = new Instances(mat(1, true, true)); this.decksInk.mesh.renderOrder = PARTY_START_ORDER;
-    this.decksGlow = new Instances(mat(1)); this.decksGlow.mesh.renderOrder = PARTY_START_ORDER + 0.001;
+    this.decksInk = new Instances(mat(1, true, true)); this.decksInk.mesh.renderOrder = DECKS_RING_ORDER;
+    this.decksGlow = new Instances(mat(1)); this.decksGlow.mesh.renderOrder = DECKS_RING_ORDER + 0.0005;
     scene.add(this.decksInk.mesh, this.decksGlow.mesh);
     scene.add(this.standing.mesh, this.flat.mesh, this.through.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh, this.backing.mesh, this.ink.mesh, this.stackBack.mesh, this.stackGlyphs.mesh);
     this.look = new AttackLook(scene, game);
@@ -822,7 +825,7 @@ export class LeashView {
     drawStones(this, time, dot); // (the rune stones' sigils, the spell's spot, its cast and the conversion: render/leash/stones.ts)
     drawChallenge(this, time, dot); // (the challenge circle's notes, fill, columns' lights and little dancefloor: render/challenge.ts)
     drawRainbow(this, time, dot, camera); // (an early clear's rainbow wave along the ley line, and the analyser behind the spark: render/leash/rainbow.ts)
-    drawDecksRing(this, time, dot); // (the decks' analyser ring at the party start, after the stones whose analyser it shares: render/leash/decksRing.ts)
+    drawDecksRing(this, time, dot, camera); // (the decks' analyser ring at the party start, after the stones whose analyser it shares: render/leash/decksRing.ts)
     drawBond(this, time, slotPos, dot); // (the bond: render/leash/stack.ts)
     this.look.end();
     this.standing.end(); this.flat.end(); this.through.end(); this.over.end(); this.solid.end(); this.blood.end(); this.backing.end(); this.ink.end(); this.stackBack.end(); this.stackGlyphs.end(); this.decksInk.end(); this.decksGlow.end();

@@ -8,7 +8,7 @@ import * as THREE from "three";
 import { MagicFx } from "../fx/system";
 import { PartyStartFx } from "../partyStart";
 import { View } from "../view";
-import { DECKS_FX, DECKS_RING, DECKS_RING_FADE, DECKS_RING_HOLD_BEATS, DECKS_RING_REPLAY_BEATS, decksMiddle, decksRingAt, decksRingPhase, drawDecksRing, replayRing, type DecksRing } from "./decksRing";
+import { DECKS_FX, DECKS_RING, DECKS_RING_FADE, DECKS_RING_HOLD_BEATS, DECKS_RING_REPLAY_BEATS, decksMiddle, decksRingAt, decksRingPhase, drawDecksRing, noDeeper, replayRing, type DecksRing } from "./decksRing";
 import { newStoneView } from "./stones";
 import { TUNING } from "../../rules/tuning";
 import { PARTY_CAST } from "../../rules/party";
@@ -76,7 +76,7 @@ describe("its place and size: the decks", () => {
     expect(M).toEqual({ x: 10 + desk.x - D.seat.x, y: 22, z: 20 + desk.z - D.seat.z, width: desk.w });
     expect(M.z).toBeGreaterThan(feet.z); // (in front of her, toward the camera)
   });
-  it("its dots lie on the floor round the decks, from past the desk's ends out to its width, louder music reaching farther", () => {
+  it("its dots lie on the floor round the decks, from past the desk's ends out to about its width, louder music reaching farther", () => {
     const g = night(), R = decksRingAt(g, { x: 0, y: 22, z: 0 }, 5, false), W = R.width;
     g.clock.time = 8;
     const quiet = leash(g, R, new Uint8Array(64)), loud = leash(g, R, new Uint8Array(64).fill(255));
@@ -91,7 +91,7 @@ describe("its place and size: the decks", () => {
       expect(Math.max(...r)).toBeLessThanOrEqual(DECKS_RING.edge * W * DECKS_RING.fill + 1e-6);
       expect(S.glow.dots.length).toBe(S.ink.dots.length); // (each glowing in its colour)
     }
-    expect(Math.max(...radii(loud.ink.dots))).toBeGreaterThan(Math.max(...radii(quiet.ink.dots)) + 1);
+    expect(Math.max(...radii(loud.ink.dots))).toBeGreaterThan(Math.max(...radii(quiet.ink.dots)) + 2 * DECKS_RING.cell - 1e-6);
     expect(loud.ink.dots.length).toBeGreaterThan(quiet.ink.dots.length);
   });
   it("nothing before the cast, after its fade, without a ring, or with ?decksfx=old", () => {
@@ -102,6 +102,24 @@ describe("its place and size: the decks", () => {
     }
     DECKS_FX.old = true; g.clock.time = 8;
     const S = leash(g, R); drawDecksRing(S.lv, 8, [0, 0, 1, 1]); expect(S.ink.dots).toHaveLength(0);
+  });
+});
+
+describe("drawn on the Terrace's floor, in front of the oak's near half (noDeeper)", () => {
+  it("a dot deeper than the near half's depth moves along its own ray to it, on the same pixel, the same size on screen; a nearer one stays", () => {
+    const cam = new THREE.PerspectiveCamera(30, 16 / 9, 1, 900);
+    cam.position.set(0, 40, 40); cam.lookAt(0, 0, 0); cam.updateMatrixWorld(); cam.updateProjectionMatrix();
+    const got: number[][] = [], into = { add: (x: number, y: number, z: number, size: number) => { got.push([x, y, z, size]); } };
+    const depthOf = (x: number, y: number, z: number) => -new THREE.Vector3(x, y, z).applyMatrix4(cam.matrixWorldInverse).z;
+    const D = depthOf(0, 0, 0), L = noDeeper(into, cam, D);
+    L.add(0, 0, -6, 0.4, [0, 0, 1, 1], 1, 1, 1, 1); // (behind: moved)
+    L.add(0, 0, 6, 0.4, [0, 0, 1, 1], 1, 1, 1, 1); // (in front: kept)
+    const [x, y, z, size] = got[0];
+    expect(depthOf(x, y, z)).toBeCloseTo(D, 6);
+    const was = new THREE.Vector3(0, 0, -6).project(cam), now = new THREE.Vector3(x, y, z).project(cam);
+    expect(now.x).toBeCloseTo(was.x, 6); expect(now.y).toBeCloseTo(was.y, 6);
+    expect(size / 0.4).toBeCloseTo(Math.hypot(x - 0, y - 40, z - 40) / Math.hypot(0, 40, 46), 6);
+    expect(got[1]).toEqual([0, 0, 6, 0.4]);
   });
 });
 

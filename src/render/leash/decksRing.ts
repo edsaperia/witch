@@ -12,8 +12,11 @@ import { djIntroEnd } from "../../rules/djSet";
 import { beatAt, timeAt } from "../../rules/beat";
 import type { Game } from "../../rules/game";
 import { deckOf } from "../../rules/treehouse";
+import type * as THREE from "three";
 import type { LeashView } from "../leash";
-import { analyserBloom, analyserLevels, type FlatRing, type RingLayers } from "./stones";
+import { groundHeight } from "../height";
+import { entDepth } from "../view/home";
+import { analyserBloom, analyserLevels, type DotLayer, type FlatRing, type RingLayers } from "./stones";
 
 /** ?decksfx=old: the party start's pieces as they were and no ring, to compare (the tests set `old` themselves). Read once, from the link. */
 export const DECKS_FX = { old: new URLSearchParams(globalThis.location?.search ?? "").get("decksfx") === "old" };
@@ -22,10 +25,15 @@ export const DECKS_FX = { old: new URLSearchParams(globalThis.location?.search ?
  *  world's clock (the beat's and the music's) when it starts, when it's fully grown and when it starts to fade. */
 export interface DecksRing { x: number; y: number; z: number; width: number; at: number; grown: number; until: number }
 
-/** Its sizes, to the decks' desk (config/house/base.json terrace.decks: 5 m wide), in desk widths: its first dot just past the desk's
- *  ends (`inner`), its bars reaching out to `edge` all round; the dots, their spacing and their glow a great stump's
+/** Its sizes, to the decks' desk (config/house/base.json terrace.decks: 5 m wide, its art about 3 m as drawn), in desk widths: its
+ *  first dot just past the desk's ends as drawn (`inner`), its bars reaching out to `edge` all round (about two and a half desks
+ *  across); its dots a little smaller than a great stump's (0.45 m) so a bar still has a few, their glow a stump's
  *  (runeMarkers.stump.ring), as many bars round as a stump's dial (twice cast.bars). */
-export const DECKS_RING = { inner: 0.56, edge: 1.2, cell: 0.45, fill: 0.94, glow: 1.2, bars: 72 } as const;
+export const DECKS_RING = { inner: 0.36, edge: 0.8, cell: 0.36, fill: 0.94, glow: 1.2, bars: 72 } as const;
+/** How far in front of the Terrace's near half (render/view/home.ts entDepth: its art stood past the desk's front, in front of her)
+ *  a dot is drawn, at most (m along its ray): over the floor that half draws, still behind the DJ table drawn over it (DJ_DEPTH.fore,
+ *  0.25 m nearer). */
+export const DECKS_RING_LIFT = 0.1;
 /** The desk's width when the house has none to give (the old studio): the Terrace's. */
 export const DECKS_WIDTH = 5;
 /** Bars held a bar into the music (4 beats) after the drop, then a fade of 2 s (a wave's soundsystem's, runeMarkers.stump.ring.wave). */
@@ -61,13 +69,43 @@ export function replayRing(was: DecksRing | null, next: DecksRing, now: number):
   return was && now >= was.at && now < was.until ? { ...was, until: Math.max(was.until, next.until) } : next;
 }
 
+/** A layer that draws each dot no deeper than `depth` (the camera's view depth, m): one farther is moved along its own ray to it,
+ *  shrunk to cover the same pixels (render/view/home.ts alongRay, in the world's heights). The Terrace is drawn as the oak's art in
+ *  two halves stood at depths either side of her (entDepth), not as a floor, so a dot lying behind the near half's depth was hidden
+ *  by that half's floor: the ring's whole back half (seen in the game, 2026-11-12). */
+export function noDeeper(into: DotLayer, camera: THREE.Camera, depth: number): DotLayer {
+  const m = camera.matrixWorldInverse.elements, c = camera.position;
+  return { add(x, y, z, size, uv, r, g, b, a, draw, glow) {
+    const wy = y + groundHeight(x, z), d = -(m[2] * x + m[6] * wy + m[10] * z + m[14]);
+    if (d > depth && d > 0) {
+      const k = depth / d; x = c.x + (x - c.x) * k; z = c.z + (z - c.z) * k;
+      y = c.y + (wy - c.y) * k - groundHeight(x, z); size *= k;
+    }
+    into.add(x, y, z, size, uv, r, g, b, a, draw, glow);
+  } };
+}
+
+/** The view depth of the Terrace's near half (render/view/home.ts placeTreehouse: the deck's middle on its floor, moved along its
+ *  ray by entDepth's near, slid with the house's drawing as the decks are, LeashView.seatSlide); null without the house's Terrace. */
+export function nearHalfDepth(lv: LeashView, camera: THREE.Camera): number | null {
+  const D = deckOf(lv.game.map, lv.game.tuning);
+  if (!D?.house) return null;
+  const c = camera.position, sl = lv.seatSlide, x = D.x, y = D.h + groundHeight(D.x, D.z), z = D.z, near = entDepth(D).near;
+  const l = Math.hypot(x - c.x, y - c.y, z - c.z) || 1, k = (l - near) / l, m = camera.matrixWorldInverse.elements;
+  const px = c.x + (x - c.x) * k + sl.x, py = c.y + (y - c.y) * k + sl.y, pz = c.z + (z - c.z) * k + sl.z;
+  return -(m[2] * px + m[6] * py + m[10] * pz + m[14]);
+}
+
 /** A frame (render/leash.ts, after the stones, whose analyser it shares: the music's spectrum and the bars' eased levels): the ring
- *  over the house at the decks, if it's showing; `time` her clock (the rainbow's drift). */
-export function drawDecksRing(lv: LeashView, time: number, dot: number[]): void {
+ *  on the Terrace's floor round the decks, if it's showing; `time` her clock (the rainbow's drift). Drawn over the house's floors
+ *  (render/leash.ts DECKS_RING_ORDER), depth-tested, each dot no deeper than just in front of the Terrace's near half (noDeeper), so
+ *  the whole ring shows round the decks and the DJ table in front of it still covers it (tried in the game, 2026-11-12). */
+export function drawDecksRing(lv: LeashView, time: number, dot: number[], camera?: THREE.Camera): void {
   const R = DECKS_FX.old ? null : lv.decksRing, P = R ? decksRingPhase(R, lv.game.clock.time) : null;
   if (!R || !P || P.alpha <= 0.002) return;
   lv.stoneView.wantsSpectrum = true; // (the mix's spectrum for the bars, from the next frame: main.ts)
   const S: FlatRing = { inner: DECKS_RING.inner * R.width, cell: DECKS_RING.cell, fill: DECKS_RING.fill, glow: DECKS_RING.glow };
-  const L: RingLayers = { ink: lv.decksInk, glow: lv.decksGlow, y: R.y + 0.06 };
+  const near = camera ? nearHalfDepth(lv, camera) : null;
+  const L: RingLayers = near === null ? { ink: lv.decksInk, glow: lv.decksGlow, y: R.y + 0.06 } : { ink: noDeeper(lv.decksInk, camera!, near - DECKS_RING_LIFT), glow: noDeeper(lv.decksGlow, camera!, near - DECKS_RING_LIFT), y: R.y + 0.06 };
   analyserBloom(L, dot, S, R.x, R.z, DECKS_RING.edge * R.width, DECKS_RING.bars, P.fill, P.alpha, analyserLevels(lv, time), time);
 }
