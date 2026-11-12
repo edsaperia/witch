@@ -203,6 +203,27 @@ The waves' gaps with the ley pulse at a constant speed: on each seed's map, the 
 node tools/balance/pulsegaps.mjs [--seeds 10] [--speed 4] [--interval 60] [--boot 30]
 ```
 
+## `rangedhit-core.mjs`
+
+How often a creature's ranged attack hits her, by how she moves.
+
+## `rangedhit.mjs`
+
+Do creatures' ranged attacks hit her?
+
+```
+node tools/balance/rangedhit.mjs [--kinds home|all|fox,dormouse] [--levels 1,2,3] [--paths solo,team,pack] [--n 300] [--seed 1] [--drift 0 (the caster's m/s through its windup)] [--lo m --hi m]
+```
+
+## `rangedreal.mjs`
+
+Do creatures' ranged attacks hit her in the real game?
+
+```
+node tools/balance/rangedreal.mjs [--kinds fox,dormouse] [--levels 1,2] [--ns 1,3] [--bots still,across,away,zigzag] [--seeds 2] [--time 60] [--ranged old]
+node tools/balance/rangedreal.mjs --all [--jobs 4] [--seeds 3] [--time 60]   (or --table: rebuild real.md from the saved files)
+```
+
 ## `report-core.mjs`
 
 Observation and presentation only: no combat, progression or wave model lives here.
@@ -305,6 +326,8 @@ node tools/balance/waves.mjs --report a.json,b.json,...   (merge several runs' J
 - `expert-progress.test.mjs`
 - `expert-search-core.test.mjs`
 - `expert-space.test.mjs`
+- `ranged-real`
+- `rangedhit.test.mjs`
 - `report-fixture-split.test.mjs`
 - `report.test.mjs`
 - `survey.test.mjs`

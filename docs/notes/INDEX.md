@@ -165,6 +165,7 @@ glossary; these are the prototype's), by note.
 - Party animal
 - Combat
 - Attack grammar
+- Ranged aim
 - Siege
 - Wild watch / chase
 - Enraged

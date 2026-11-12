@@ -1249,6 +1249,19 @@ export type SchemaTuning = {
       "sprint": number;
     };
   };
+  "ranged": {
+    "on": boolean;
+    "lead": number;
+    "commit": number;
+    "lock": {
+      "young": number;
+      "adult": number;
+      "legend": number;
+    };
+    "speedFloor": number;
+    "areaLock": number;
+    "rollerLead": number;
+  };
   "stoneIdle": {
     "on": boolean;
     "radius": number;

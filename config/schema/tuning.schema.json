@@ -6446,6 +6446,75 @@
       "additionalProperties": false,
       "description": "Dodging matters: creatures commit to their strikes, so she can dodge them by moving or blinking away."
     },
+    "ranged": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean",
+          "description": "on: shots aim where she's going (the ranged rule); off, as ?ranged=old: each aims at her place as its wind-up starts, the old pack bolts leading her as they let go, no speed floor, fans and walls as before."
+        },
+        "lead": {
+          "type": "number",
+          "minimum": 0,
+          "description": "times the way to where she'll be when the shot arrives that the aim takes (1: all of it, 0: where she is), a wall of rollers rollerLead of it."
+        },
+        "commit": {
+          "type": "number",
+          "minimum": 0,
+          "description": "seconds before its release that a shot's aim locks at the latest (the caster holds still from then)."
+        },
+        "lock": {
+          "type": "object",
+          "properties": {
+            "young": {
+              "type": "number",
+              "minimum": 0
+            },
+            "adult": {
+              "type": "number",
+              "minimum": 0
+            },
+            "legend": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "young",
+            "adult",
+            "legend"
+          ],
+          "additionalProperties": false,
+          "description": "seconds before a shot can reach her that its aim locks at the latest, by the caster's level: a youth's longer, so a change of direction dodges it more often."
+        },
+        "speedFloor": {
+          "type": "number",
+          "minimum": 0,
+          "description": "a straight bolt or roller at her flies at least this many times her ground speed (2: 38.5 m/s at her 19.25)."
+        },
+        "areaLock": {
+          "type": "number",
+          "minimum": 0,
+          "description": "seconds before an area put down where she stands strikes (or a mine is laid there) that its aim locks, at every level: with no flight to see, the lock is all the warning she gets."
+        },
+        "rollerLead": {
+          "type": "number",
+          "minimum": 0,
+          "description": "times the lead a wall of rollers takes (the rhino's and beaver's logs): a wall is wider than her change of direction, so at full lead it was the harshest attack."
+        }
+      },
+      "required": [
+        "on",
+        "lead",
+        "commit",
+        "lock",
+        "speedFloor",
+        "areaLock",
+        "rollerLead"
+      ],
+      "additionalProperties": false,
+      "description": "Creatures' shots aim where she's going: each follows her through its wind-up and locks a moment before it can reach her, so a steady walk gets hit and a change of direction dodges."
+    },
     "stoneIdle": {
       "type": "object",
       "properties": {
@@ -15197,6 +15266,7 @@
     "combat",
     "notice",
     "dodge",
+    "ranged",
     "stoneIdle",
     "sigilAvoid",
     "wildWatch",
