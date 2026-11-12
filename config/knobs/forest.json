@@ -51,13 +51,19 @@
       "notes": "its lit leaf colour's hue turned either way by up to hue degrees times the first seed [1]. Ed's v3893 playtest found the hue turn had no visible effect: it was turned on the albedo and the night's coloured moonlight squeezed it to a third on screen (20 degrees moved the crowns 4.9 on average, less than the value's 0.12 alone); it and the autumn drift are applied to the lit colour now, so its degrees are the screen's. All three change live (the pause page's Leaf jitter sliders: autumn 0 to 1, hue 0 to 180, value 0 to 0.6, well past sense: Ed, \"bigger range\"); no rebake. 0 and 0: every tree of a variant the same colour, as before. Ed's tuned values from the pause page [2]: autumn 0.2, value 0.15, hue 0 (no hue turn; the autumn drift carries the variety)."
     },
     "treeNormals": {
-      "what": "The trees' normal maps: \"full\" (the default) as ever; \"64\", \"32\" or \"16\" their directions cut to a k-means palette of that many per tree atlas; \"0\" off, every tree pixel lit flat, as if it faced the camera (the normal 128, 128, 255).",
+      "what": "The trees' normal maps: \"32\" (the default) their directions cut to a k-means palette of 32 per tree atlas; \"64\" or \"16\" that many; \"full\" as ever; \"0\" off, every tree pixel lit flat, as if it faced the camera (the normal 128, 128, 255)",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-11-07",
           "quote": "Make the normal maps switch.",
           "rest": "to judge in play whether trees still look right without normal maps: dropping them would make the pre-baked tree art about 3 times smaller (PR #1884's measurement)"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-12",
+          "quote": "we can see 32 tree normal maps as the default",
+          "rest": "32 directions a tree atlas is the default (full before)"
         },
         {
           "by": "Ed",

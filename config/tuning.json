@@ -655,7 +655,7 @@
     "value": 0.15,
     "hue": 0
   },
-  "treeNormals": "full",
+  "treeNormals": "32",
   "wind": {
     "on": true,
     "strength": 0.25,
