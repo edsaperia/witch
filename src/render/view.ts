@@ -269,7 +269,7 @@ function nightState(t: Tuning) {
     trailAt: -1,
     /** The crowns' reach now (metres; 0 on the ground): eased toward the tuning's scenery.canopyReach in the air (render/view/scenery.ts). */
     canopyNow: 0,
-    lastBuild: { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1, relics: -1 } as { x: number; y: number; z: number; version: number; radius: number; canopy?: number; relics: number; cap?: number },
+    lastBuild: { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1, relics: -1 } as { x: number; y: number; z: number; version: number; radius: number; canopy?: number; relics: number; cap?: number; veil?: number },
     /** The loading mist's log (render/view/mistReady.ts): each area type's (the sea's, -1) parts first ready and its mist's going. */
     mistLog: new Map<number, MistLogEntry>(),
     /** The scenery budget: how far round the witch scenery is drawn (rules/budget.ts). */
@@ -405,7 +405,7 @@ import { render as a4_render, replayPartyStart as a4_replayPartyStart } from "./
 import { houseTilt as a4_houseTilt, behindHouse as a4_behindHouse, occluders as a4_occluders, ensureCrown as a4_ensureCrown, buildHome as a4_buildHome, swapHomeArt as a4_swapHomeArt } from "./view/houseFrame";
 import { legendRings as a4_legendRings, pin as a4_pin, inviteStart as a4_inviteStart } from "./view/markers";
 import { updateMoon as a4_updateMoon, updateSteam as a4_updateSteam, updateSmoke as a4_updateSmoke } from "./view/atmosphere";
-import { stumpsOf as a4_stumpsOf, updateLoadingMist as a4_updateLoadingMist, readyPrograms as a4_readyPrograms, landingWakeReady as a4_landingWakeReady, beginLandingShaders as a4_beginLandingShaders, armLimitedLanding as a4_armLimitedLanding, limitedLandingReady as a4_limitedLandingReady, waitForLandingWitch as a4_waitForLandingWitch, startLandingShaderGrace as a4_startLandingShaderGrace, compileAll as a4_compileAll, gpuCaughtUp as a4_gpuCaughtUp, warmDraws as a4_warmDraws, warmSteps as a4_warmSteps, setReadiness as a4_setReadiness } from "./view/readiness";
+import { stumpsOf as a4_stumpsOf, updateLoadingMist as a4_updateLoadingMist, readyPrograms as a4_readyPrograms, landingWakeReady as a4_landingWakeReady, beginLandingShaders as a4_beginLandingShaders, armLimitedLanding as a4_armLimitedLanding, limitedLandingReady as a4_limitedLandingReady, waitForLandingWitch as a4_waitForLandingWitch, startLandingShaderGrace as a4_startLandingShaderGrace, compileAll as a4_compileAll, gpuCaughtUp as a4_gpuCaughtUp, warmDraws as a4_warmDraws, warmSteps as a4_warmSteps, setReadiness as a4_setReadiness, warmAfterHouse as a4_warmAfterHouse } from "./view/readiness";
 import { build as a4_build, prepare as a4_prepare, bakeTufts as a4_bakeTufts, stumpSpecs as a4_stumpSpecs, islandAhead as a4_islandAhead, islandFaces as a4_islandFaces, coastAhead as a4_coastAhead, askIsland as a4_askIsland, setGameSteps as a4_setGameSteps, retype as a4_retype } from "./view/lifecycle";
 import { landingShot as a4_landingShot, scenePixelSize as a4_scenePixelSize, resize as a4_resize, screenOf as a4_screenOf, aimAt as a4_aimAt } from "./view/viewport";
 
@@ -557,6 +557,7 @@ export class View {
       get updateSmoke(): View["updateSmoke"] { return owner.updateSmoke.bind(owner); },
       get updateSteam(): View["updateSteam"] { return owner.updateSteam.bind(owner); },
       get warmDraws(): View["warmDraws"] { return owner.warmDraws.bind(owner); },
+      get warmAfterHouse(): View["warmAfterHouse"] { return owner.warmAfterHouse.bind(owner); },
       get warmSteps(): View["warmSteps"] { return owner.warmSteps.bind(owner); },
       get wisps(): View["wisps"] { return owner.wisps; },
       set wisps(value: View["wisps"]) { owner.wisps = value; },
@@ -1101,6 +1102,10 @@ export class View {
    *  Its last pass goes into a target, not the canvas; the targets are their own size again after. */
   private warmDraws(): Promise<void> { return a4_warmDraws(this, this.a4Internals, a4Shared); }
 
+  /** After a sail's dive path has built the house, its forest and the tufts, what they added compiled in the background (render/view/
+   *  readiness.ts warmAfterHouse; Ed, 2026-11-12: "a very long freeze when taking off from the treehouse after a sail"). */
+  private warmAfterHouse(epoch: number): Promise<void> { return a4_warmAfterHouse(this, this.a4Internals, a4Shared, epoch); }
+
   /** The island's own asked for ahead of need (prepare: each island's): its legends' carvings, its area types by `near` (the
    *  nearest her first) and its creatures. */
   private askIsland(near: Map<number, number>): void { return a4_askIsland(this, this.a4Internals, a4Shared, near); }
@@ -1143,6 +1148,8 @@ export class View {
     if (b) { this.scene.remove(...b.meshes); b.release(); this.typeBatches.delete(t); }
     const sh = this.trunkShadowBatches.get(t);
     if (sh) { this.scene.remove(...sh.meshes); sh.dispose(); this.trunkShadowBatches.delete(t); } // (its own buffers: the atlas is the type's)
+    const vb = this.decorBatches.get(`veil:${t}`);
+    if (vb) { this.scene.remove(...vb.meshes); vb.release(); this.decorBatches.delete(`veil:${t}`); } // (the hidden challenge circle's trees of it: render/challenge.ts veilBatch)
     this.typeUsed.delete(t);
     this.assets.forgetType(t); // (its atlas off the GPU; asked for again, from the art cache, when she comes back)
   }
@@ -1291,7 +1298,7 @@ export class View {
 
   /** The legends' clearings nearest her this frame (reused: no garbage a frame). */
   private nearRings: LegendClearing[] = [];
-  private ringItems: { x: number; z: number; r: number; edge: number; glow: number }[] = Array.from({ length: 6 }, () => ({ x: 0, z: 0, r: 0, edge: 0, glow: 0 }));
+  private ringItems: { x: number; z: number; r: number; edge: number; glow: number; show: number }[] = Array.from({ length: 6 }, () => ({ x: 0, z: 0, r: 0, edge: 0, glow: 0, show: 1 }));
   /** The legends' clearings nearest her, each with its ring's brightening (Ed, 2026-10-06: quest sigils and relics count
    *  only in the circle): up while she stands on the ground inside it, and a flash (dying over a second and a half) when a
    *  sigil or a relic meant for its legend was put down outside it. No garbage a frame. */
@@ -1392,6 +1399,7 @@ export type ViewInternals = {
   updateSmoke: View["updateSmoke"];
   updateSteam: View["updateSteam"];
   warmDraws: View["warmDraws"];
+  warmAfterHouse: View["warmAfterHouse"];
   warmSteps: View["warmSteps"];
   wisps: View["wisps"];
 };

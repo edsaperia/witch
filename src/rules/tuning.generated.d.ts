@@ -447,6 +447,10 @@ export type SchemaTuning = {
     "clear": number;
   };
   "challenge": {
+    "hide": {
+      "on": boolean;
+      "fade": number;
+    };
     "on": boolean;
     "radius": number;
     "margin": number;
