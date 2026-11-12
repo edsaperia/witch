@@ -564,11 +564,13 @@ export class AssetLibrary {
    *  undefined (and asked for). Baked as a nap is (its ground line and middle). */
   /** A glider spread out in the air (Profile.glide: its legs out, its membrane taut; each level in 2 frames), or undefined (and asked for). */
   glideArt(species: string): CreatureArt | undefined {
+    if (hasMesh(species, this.style)) return undefined; // (drawn as a mesh, art/mesh: it has no such pose of its own yet, so its walk's frames stand in, not the generated animal's)
     const k = `glide-${species}`, a = this.creatures.get(k);
     if (!a) this.ask({ kind: "glide", id: k, species, style: this.style });
     return a;
   }
   idleArt(species: string): CreatureArt | undefined {
+    if (hasMesh(species, this.style)) return undefined; // (drawn as a mesh, art/mesh: it has no such pose of its own yet, so its walk's frames stand in, not the generated animal's)
     const k = `idle-${species}`, a = this.creatures.get(k);
     if (!a) this.ask({ kind: "nap", id: k, species, style: this.style, idle: true });
     return a;
