@@ -158,17 +158,17 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   // (LeashState.feedHold): let go before berries.feed.hold seconds, it queues one more berry; held that long, the sigil goes down
   // (placeOnly), and, held on, a run starts as after any put-down. A press with nothing holding it (a bot's, a test's) is a tap.
   const F = feedKnobs(t);
-  let placeOnly = false;
+  let placeOnly = false, heldSince: number | undefined;
   if (W.leash.feedHold !== undefined) {
     if (!onFoot || stone || ring || run) delete W.leash.feedHold;
     else if (!held) { delete W.leash.feedHold; feedBottom(g, W, t, ht, relicEvents); }
-    else if (ht - W.leash.feedHold >= F.hold - 1e-9) { delete W.leash.feedHold; placeOnly = true; }
+    else if (ht - W.leash.feedHold >= F.hold - 1e-9) { heldSince = W.leash.feedHold; delete W.leash.feedHold; placeOnly = true; } // (a run's leash.runAfter counts from the press)
     if (!placeOnly) { sigil = false; place = false; } else { sigil = false; place = true; }
   } else if ((sigil || place) && onFoot && !run && feedOffer(g, W, t)) {
     if (held && F.hold > 0) W.leash.feedHold = ht; else feedBottom(g, W, t, ht, relicEvents);
     sigil = false; place = false;
   }
-  stepLeash(W.leash, g.creatures, { sigil, place, held, placeOnly, ...pickControls(g, W, t), cycle: !!c.cycle && !W.ko, cycleBack: !!c.cycleBack && !W.ko, dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest,
+  stepLeash(W.leash, g.creatures, { sigil, place, held, placeOnly, heldSince, ...pickControls(g, W, t), cycle: !!c.cycle && !W.ko, cycleBack: !!c.cycleBack && !W.ko, dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest,
     takeLoose: id => { g.loose = g.loose.filter(p => p.id !== id); g.creatures[id].loose = undefined; },
     dropTether: (id, x, z) => { g.loose.push({ id, x, z, at: g.clock.time, legend: true }); g.creatures[id].loose = true; }, land: (x, z) => isInside(g.map.bounds, x, z, BABY_COAST), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, W.body, W.body.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling, guards, homeArea(g.map));
   W.leash.events.push(...relicEvents);

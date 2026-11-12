@@ -65,8 +65,10 @@ export interface LeashState {
   /** A run of the sigil button (Ed, 2026-10-15: "Pick up and place in runs"): the button held on since a press that picked a sigil
    *  up (`pick`: she keeps picking up any she runs over) or put one down (`place`: moving into an empty hex puts down the next);
    *  `cell`, the hex cell she last put one down in or stood in (so one goes down only as she enters another), `x`,`z` where the
-   *  last went down off the grid. Let go, it's over (undefined). */
-  run?: { kind: "pick" | "place"; cell?: string; x: number; z: number };
+   *  last went down off the grid. Let go, it's over (undefined). `from`: when on her clock the press began; the run does nothing more
+   *  till the button's been held leash.runAfter seconds since then (Ed, 2026-11-12: "make holds feel more deliberate"), so a tap
+   *  does exactly one thing. */
+  run?: { kind: "pick" | "place"; cell?: string; x: number; z: number; from: number };
   /** A press of the sigil button while it would feed the bottom of her stack (rules/sigilButton.ts; Ed, 2026-11-03), held since this
    *  time on her clock: let go before berries.feed.hold seconds, it was a tap and feeds; held that long, it puts the sigil down. */
   feedHold?: number;
@@ -161,6 +163,9 @@ export interface LeashControls {
   /** The sigil button is held on this frame (E, the pad's square, touch): since a press that picked up or put down, a run
    *  (LeashState.run, Ed 2026-10-15): picking up any sigil she runs over, or putting one down in each empty hex she enters. */
   held?: boolean;
+  /** When on her clock the button went down for this press, if before this step (a feed's tap-or-hold that became a put-down:
+   *  rules/sigilButton.ts); a run's leash.runAfter counts from it. Absent: this step. */
+  heldSince?: number;
   /** The happy creature whose sigil rune is ready within r of (x, z), nearest first (states.leash "pickup"), or null. */
   rune?: (x: number, z: number, r: number) => Creature | null;
   /** The loose sigil (rules/stoneStacks.ts: scattered at a stone's conversion, anyone's) nearest (x, z) within r: its creature, where it
@@ -311,15 +316,18 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   // A run (Ed, 2026-10-15; leash.runs): the button held on since a press that picked up ("pick": she keeps picking up any sigil she
   // runs over) or put down ("place": each empty hex she moves into takes the next; off the grid, every leash.spacing metres). A press
   // that did nothing starts none (so holding with nothing to do still puts her hat down: rules/hat.ts putHat). Let go, it's over.
-  const runs = L.runs !== false;
+  // A run begins only once the button's been held leash.runAfter seconds since the press (Ed, 2026-11-12: "It can be easy to put down or
+  // pick up more than one sigil when you tap the button, can we do something to make holds feel more deliberate?"): a tap lasts a few
+  // frames, and walking at her ground speed she crossed into the next hex inside one, or a second sigil lay within reach.
+  const runs = L.runs !== false, runAfter = Math.max(0, L.runAfter ?? 0);
   if (!c.held || !onGround || !runs) s.run = undefined;
   const pressed = (c.sigil || c.place) && onGround;
   const H = L.hex && L.hex.size > 0 ? L.hex : null;
   const cellOf = (x: number, z: number) => { const h = hexCell(x, z, H!.size); return `${h.q},${h.r}`; };
   if (pressed) {
     const did = sigilPress(s, creatures, c, witch, time, t, c.placeOnly ? "place" : undefined);
-    if (did && runs && c.held) s.run = { kind: did, cell: H ? cellOf(witch.x, witch.z) : undefined, x: witch.x, z: witch.z };
-  } else if (s.run && onGround) {
+    if (did && runs && c.held) s.run = { kind: did, cell: H ? cellOf(witch.x, witch.z) : undefined, x: witch.x, z: witch.z, from: c.heldSince ?? time };
+  } else if (s.run && onGround && time - s.run.from >= runAfter - 1e-9) {
     const r = s.run;
     if (r.kind === "pick") sigilPress(s, creatures, c, witch, time, t, "pick");
     else {

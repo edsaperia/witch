@@ -1101,6 +1101,16 @@
       "speaker": 1.5
     },
     "runs": true,
+    "runAfter": 0.35,
+    "sigilFeel": {
+      "on": true,
+      "fly": 0.4,
+      "arc": 2.5,
+      "flash": 1,
+      "burn": 1.2,
+      "sparkles": 18,
+      "trail": 6
+    },
     "runePull": {
       "radius": 8,
       "speed": 1.5,

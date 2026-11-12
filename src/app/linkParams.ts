@@ -260,6 +260,10 @@ export function tuningFromLink(params: URLSearchParams) {
     if (R && v === "bold") tuning.leash = { ...tuning.leash, ranks: { ...R, on: true, bold: true } }; // (the bold sigils, where a species has one: art/sigils.js BOLD)
     if (R && v === "thin") tuning.leash = { ...tuning.leash, ranks: { ...R, on: true, bold: false } };
     if (R && tuning.leash.hex) tuning.leash = { ...tuning.leash, hex: { ...tuning.leash.hex, size: tuning.leash.ranks!.on ? R.hex : OLD_HEX } }; }
+  // ?sigilfeel=old: the sigil button and its sigils as before Ed's 2026-11-12 asks ("make holds feel more deliberate"; "make the
+  // floor<=>head transition more 'magical'"): a run starting on the press itself (leash.runAfter 0) and the sigil snapping between the
+  // ground and her stack (leash.sigilFeel off), to A/B; ?sigilfeel=new, the default.
+  if (params.get("sigilfeel") === "old") tuning.leash = { ...tuning.leash, runAfter: 0, ...(tuning.leash.sigilFeel ? { sigilFeel: { ...tuning.leash.sigilFeel, on: false } } : {}) };
   applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
   // The sea chart's save (app/chartSave.ts): the islands she's found, so the night's legends favour the others (rules/rosters.ts).
   // and the campaign's world seed (every island's shape), unless ?world= names one for this load

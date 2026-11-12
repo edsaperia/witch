@@ -1867,6 +1867,14 @@ Code: `render/colourGrammar.ts`, `render/leash/ranks.ts`, `render/leash/rainbow.
 - **`leash.runs`**: Holding the sigil button picks up, or puts down, sigils one after another as she runs.
   1. Ed, 2026-10-15: "Pick up and place in runs"
   with the sigil button held on since a press that picked a sigil up, she keeps picking up any sigil she runs over (her placed ones, happy creatures' runes, a relic's); held since a press that put one down, moving into each empty hex puts down the next (a press that did nothing starts no run, so holding E with nothing to do still puts her hat down). On the pad her hat is triangle's (placed or picked up), circle cycles the stack, L3 casts the broom's spell.
+- **`leash.runAfter`**: seconds the sigil button must be held since the press before a run starts, so a tap puts down or picks up exactly one sigil [1].
+  1. Ed, 2026-11-12: "It can be easy to put down or pick up more than one sigil when you tap the button, can we do something to make holds feel more deliberate?" (before, a run started on the press itself: a tap of about 0.1 s while walking (about 19 m/s) crossed into the next 6 m hex and put a second sigil down, or took a second sigil lying within reach. 0 is that old behaviour (?sigilfeel=old).)
+  Code: `rules/leash.ts`, `rules/sigilButton.ts`
+- **`leash.sigilFeel`**: how a sigil travels between the ground and her stack, with a flash in its colour at each end, burning into the ground or sparkling round her stack [1][2].
+  1. Ed, 2026-11-12: "Also make the floor<=>head transition more 'magical'."
+  2. Ed, 2026-11-12: "have a distinct flash with each transition in the sigil colour, and it burns into the ground with a glow and sparkles above the head" (off (?sigilfeel=old): the sigil snaps into the stack and is written on the ground with the amber ring, as before. Only the drawing changes: the rules put the sigil down or pick it up at the same moment either way.)
+  on: the transition (off: the snap and the amber ring as before, ?sigilfeel=old). fly: seconds it takes, eased in and out. arc: metres its path lifts in the middle. trail: sparkles trailing it. flash: the flashes' brightness. burn: seconds a put-down sigil glows as it burns in, settling to its resting look. sparkles: how many sparkle round her stack as one arrives. Only the drawing: the rules put it down or pick it up at once.
+  Code: `render/leash/sigilFeel.ts`, `render/leash/stack.ts`, `render/leash.ts`
 - **`leash.runePull`**: on the ground, the nearest happy creature with its rune within radius (m) trots toward her at speed (m/s), stopping stop (m) from her, so its rune comes to her.
 - **`leash.chain`**: Every creature on her leash is on a chain this long; taut and moving away, she drags it, slowed by the heaviest taut chain's drag by level (a legend's stops her).
   1. Ed, 2026-11-03: "adults are slow and heavy; you should be able to move within a reasonable distance from them (the size of a typical fight), but when the chain gets to its max length you can't move further until they move." … "fine to start with" (30 m to start, an anchor round each adult (replaced the same day by the 80 m chains, below); she can't take off while an adult is leashed (docs/plans/follower-buffs-and-challenge-areas.md))
@@ -1924,6 +1932,14 @@ Code: `render/colourGrammar.ts`, `render/leash/ranks.ts`, `render/leash/rainbow.
 | `leash.hex.stone` | number | 0 to … |
 | `leash.hex.speaker` | number | 0 to … |
 | `leash.runs` | boolean |  |
+| `leash.runAfter` | number | 0 to … |
+| `leash.sigilFeel.on` | boolean |  |
+| `leash.sigilFeel.fly` | number | 0 to … |
+| `leash.sigilFeel.arc` | number | 0 to … |
+| `leash.sigilFeel.flash` | number | 0 to … |
+| `leash.sigilFeel.burn` | number | 0 to … |
+| `leash.sigilFeel.sparkles` | number | 0 to … |
+| `leash.sigilFeel.trail` | number | 0 to … |
 | `leash.runePull.radius` | number | 0 to … |
 | `leash.runePull.speed` | number | 0 to … |
 | `leash.runePull.stop` | number | 0 to … |
