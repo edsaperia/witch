@@ -1,10 +1,12 @@
 // What the art check should run for a change (.github/workflows/art-check.yml): node tools/art-check/scope.mjs <changed path>...
 // (or --file <list>, a path a line)
 // prints one line, the flags for node art/check.mjs: an empty line for the full run; `--only a,b --no-lab` when the change
-// touches only creature and area folders (art/creatures/<id>/, art/areas/<id>/: their own checks, about a minute); or `skip`
-// when nothing of the art changed. Shared art code (anything else under art/, the Art Lab, config/style.json, the check
-// itself) means the full run: a builder's species draws through it. The workflow runs the full check on every push to
-// claude/prototype regardless. scope(paths) is the rule, for src/artCheckScope.test.ts.
+// touches only creature and area folders (art/creatures/<id>/, art/areas/<id>/: their own checks, 8 minutes in CI on
+// 2026-11-12); or `skip` when nothing of the art changed. Shared art code (anything else under art/, the Art Lab,
+// config/style.json, the check itself) means the full run: a builder's species draws through it. art-check.yml runs these
+// flags on pull requests (Ed, 2026-11-12: "(b) also run a narrowed art check on PRs that touch art"; with config/checks.json's
+// paths, through tools/checks/which.mjs) and the full check nightly on claude/prototype or by hand, never on a push.
+// scope(paths) is the rule, for src/artCheckScope.test.ts.
 export function scope(paths) {
   const ids = new Set();
   let full = false, any = false;
