@@ -41,6 +41,7 @@ glossary; these are the prototype's), by note.
 
 ### [Art checks](art-checks.md)
 
+- Art on pull requests
 - Style bible
 - Bold sigils
 
