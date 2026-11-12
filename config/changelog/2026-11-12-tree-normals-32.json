@@ -1,1 +1,1 @@
-{ "version": null, "items": ["Trees are shaded from a smaller set of light directions (32), close to before but lighter to draw."] }
+{ "version": null, "items": ["Trees are shaded from a smaller set of light directions (32), close to before but lighter to draw.", "The game no longer waits for the trees' shading to be worked out: trees start with their full shading and switch a moment after load."] }
