@@ -35,9 +35,14 @@
 //     wave's fireworks (render/fireworks.ts, one shell: a rising spark bursting in the party's neons, its flash lighting the ground),
 //     scheduled by challengeShot from the beat clock and the map's seed alone, so every player sees the same column fire.
 //   - closed (the night won or lost, uncleared): dark.
+//   - hidden (Ed, 2026-11-12: "the challenge circle should be hidden before the party starts; there are just normal trees, no sign of it
+//     - fades into existence and the trees fade away when the party starts. The same happens in reverse when the party is over if the
+//     challenge circle has not been won yet."; rules/challenge.ts revealK): its floor, carving, columns, lights and statues drawn by its
+//     reveal, the forest's own trees and bushes on its floor (rules/forest.ts Plant.veil) by 1 minus it, in batches of their own
+//     (veilBatch), each a scenery batch's own fade (its appear uniform) so they fade whole as any set coming in does.
 import type { Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
-import { challengeColumns, challengeOf, challengeReady, columnKinds, columnSpots, rewardFall } from "../rules/challenge";
+import { challengeColumns, challengeOf, challengeReady, columnKinds, columnSpots, revealK, rewardFall } from "../rules/challenge";
 import * as THREE from "three";
 import { castProgress } from "../rules/stoneStacks";
 import { beatAt, timeAt } from "../rules/beat";
@@ -83,13 +88,15 @@ const beatNo = (g: Game): number => Math.floor(beatAt(g.beat, g.clock.time));
 
 /** The circle's floor for the ground (view.ts legendRings): its middle, radius and ring width, its band's brightening, and no carving
  *  of the legend slot's own (its sigil is carved by its own pass: challengeCarving); null with none, cleared, or far off. */
-export function challengeRing(g: Game, x: number, z: number): { x: number; z: number; r: number; edge: number; glow: number; species: string; glint: number } | null {
+export function challengeRing(g: Game, x: number, z: number): { x: number; z: number; r: number; edge: number; glow: number; species: string; glint: number; /** how far it's there (rules/challenge.ts revealK): the ground mixes its floor in by it */ show: number } | null {
   const ch = g.challenge;
   if (!ch || ch.clearedAt !== null || Math.hypot(ch.x - x, ch.z - z) > NEAR + ch.radius) return null; // (cleared: its dancefloor instead, challengeFloor)
+  const show = revealK(g);
+  if (show <= 0) return null; // (hidden: the forest's floor there, rules/challenge.ts)
   const p = beatPulse(g), inside = g.witch.mode === "ground" && Math.hypot(g.witch.x - ch.x, g.witch.z - ch.z) <= ch.radius;
   const lit = ch.clearedAt !== null, dark = ch.closedAt !== null;
   const glow = dark ? 0 : lit ? 0.35 + 0.65 * p : inside ? 0.55 : 0.2;
-  return { x: ch.x, z: ch.z, r: ch.radius, edge: g.tuning.legendClearing.edge, glow, species: NO_CARVING, glint: 0 };
+  return { x: ch.x, z: ch.z, r: ch.radius, edge: g.tuning.legendClearing.edge, glow: glow * show, species: NO_CARVING, glint: 0, show };
 }
 
 /** The moonlit glow in its grooves (the carving's own, before the statues). */
@@ -126,11 +133,13 @@ export function carvingLook(g: Game): { glow: number; rgb: [number, number, numb
 /** The island's sigil carved into the circle's floor (render/ground.ts setChallengeCarving): its middle, radius, whose sigil, the glow
  *  in its grooves and its colour (carvingLook), and the moonlight on its stone floor (challenge.carving.floor: so the circle reads as
  *  a circle before she steps in); null with none, cleared (its dancefloor covers it), or far off. */
-export function challengeCarving(g: Game, x: number, z: number): { x: number; z: number; r: number; glow: number; rgb: [number, number, number]; floor: number; species: string } | null {
+export function challengeCarving(g: Game, x: number, z: number): { x: number; z: number; r: number; glow: number; rgb: [number, number, number]; floor: number; species: string; show: number } | null {
   const ch = g.challenge;
   if (!ch || ch.clearedAt !== null || Math.hypot(ch.x - x, ch.z - z) > NEAR + ch.radius) return null;
+  const show = revealK(g);
+  if (show <= 0) return null; // (hidden)
   const L = carvingLook(g), floor = ch.closedAt !== null || !ch.statues ? 0 : Math.max(0, challengeOf(g.tuning).carving.floor);
-  return { x: ch.x, z: ch.z, r: ch.radius, glow: L.glow, rgb: L.rgb, floor, species: islandSigilOf(g.map) };
+  return { x: ch.x, z: ch.z, r: ch.radius, glow: L.glow, rgb: L.rgb, floor, species: islandSigilOf(g.map), show };
 }
 
 /** A waiting column's top light (Ed, 2026-11-03: a column with no sigils left is that kind finished): lit, steady and warm (the
@@ -141,18 +150,54 @@ export function columnTop(col: { sigils: readonly unknown[] }, t: Tuning): { lit
 
 /** Its columns (the view's decor batches, as tonight's find is drawn: render/view/finds.ts). */
 export function drawChallengeColumns(v: View): void {
-  const g = v.game, ch = g.challenge, key = "challenge:columns", batch = v.decorBatches.get(key);
-  const w = g.witch, d = ch ? Math.hypot(w.x - ch.x, w.z - ch.z) : Infinity;
-  if (!ch || d > ASK) { batch?.set([]); return; }
+  const g = v.game, ch = g.challenge, key = "challenge:columns", batch = v.decorBatches.get(key), fading = v.decorBatches.get(COLUMNS_FADING);
+  const w = g.witch, d = ch ? Math.hypot(w.x - ch.x, w.z - ch.z) : Infinity, show = ch ? revealK(g) : 0;
+  VEIL_K = ch ? 1 - show : 0; v.decorBatches.forEach(fadeVeil); // (the hidden circle's own trees by 1 minus its reveal: veilBatch)
+  if (!ch || d > ASK || show <= 0) { batch?.set([]); fading?.set([]); return; }
   const fa = v.assets.findArt(COLUMN, d <= NEAR), a = fa?.pieces[COLUMN];
-  if (d > NEAR || !fa || !a) { batch?.set([]); return; }
+  if (d > NEAR || !fa || !a) { batch?.set([]); fading?.set([]); return; }
   const frame = fa.atlas.frames[a.frame], m = v.mpp, items: SpriteInstance[] = columnSpots(ch, columnKinds(g).length).map((s, i) => {
     const flip = hash2(i, ch.cell[0], ch.cell[1] + 71) < 0.5;
     return { x: s.x - (a.originX - frame.w / 2) * m * (flip ? -1 : 1), y: 0, z: s.z, frame, flip, scale: 1 };
   });
   items.sort((p, q) => q.z - p.z); // (nearest the camera first, as the scenery's)
+  // (fading in or out, Ed 2026-11-12: in a scenery batch of their own, by its fade; else solid, as they always were)
+  if (show < 1) { batch?.set([]); fadeBatch(v, COLUMNS_FADING, () => new SpriteBatch(fa.atlas, v.mpp, { scenery: true, fade: true }), show)?.set(items); return; }
+  fading?.set([]);
   v.batchFor(v.decorBatches, key, () => new SpriteBatch(fa.atlas, v.mpp, { solid: true }))?.set(items);
 }
+
+/** The columns' batch while the circle fades in or out (a scenery batch, faded whole by its appear uniform). */
+const COLUMNS_FADING = "challenge:columns:fading";
+/** The key of the hidden circle's trees' batch of an area type (in View.decorBatches, on that type's atlas). */
+export const VEIL_KEY = "veil:";
+
+/** A scenery batch in the view's decor batches faded by `k` (0 gone, 1 whole) through its own appear uniform, not the view's 0.8 s
+ *  fade-in of a new set (taken off that). */
+export function fadeBatch(v: View, key: string, make: () => SpriteBatch | undefined, k: number): SpriteBatch | undefined {
+  const b = v.batchFor(v.decorBatches, key, make);
+  if (b) { v.appearing.delete(b); b.appearU.value = Math.max(0, Math.min(1, k)); }
+  return b;
+}
+
+/** The hidden challenge circle's own trees and bushes of area type `type` (rules/forest.ts Plant.veil; Ed, 2026-11-12): a scenery
+ *  batch on its type's atlas, faded by 1 minus the circle's reveal (fadeVeil, each frame). */
+export function veilBatch(v: View, type: number): SpriteBatch | undefined {
+  const a = v.assets.typeArt(type);
+  return a ? fadeBatch(v, VEIL_KEY + type, () => new SpriteBatch(a.atlas, v.mpp, { scenery: true, fade: true }), 1 - revealK(v.game)) : undefined;
+}
+
+/** What the hidden forest is doing, for the scenery's rebuild (render/view/scenery.ts: listed again as it changes): 0 gone (the circle
+ *  wholly there), 1 fading (the circle mostly there: no shadows of its own), 2 mostly there (shadows too). */
+export function veilState(g: Game): number {
+  const k = revealK(g);
+  return !g.map.challengeVeil || k >= 1 ? 0 : k > 0.5 ? 1 : 2;
+}
+
+/** Each frame (drawChallengeColumns): each of the hidden forest's batches faded by 1 minus the reveal (VEIL_K, set on the module, so
+ *  no closure a frame). */
+let VEIL_K = 1;
+function fadeVeil(b: SpriteBatch, key: string): void { if (key.startsWith(VEIL_KEY)) b.appearU.value = VEIL_K; }
 
 /** The clear each night's eruption was set off for (once a clear). */
 const BURST = new WeakMap<Game, number>();
@@ -177,8 +222,8 @@ export function challengeFloor(g: Game, x: number, z: number): { x: number; z: n
 export function drawChallenge(lv: LeashView, time: number, dot: number[]): void {
   const g = lv.game, ch = g.challenge, w = g.witch, t = g.tuning;
   if (!ch || Math.hypot(ch.x - w.x, ch.z - w.z) > NEAR + ch.radius) return;
-  const p = beatPulse(g), W = g.witches?.[0];
-  if (ch.closedAt !== null) return; // (dark: nothing lit)
+  const p = beatPulse(g), W = g.witches?.[0], show = revealK(g);
+  if (ch.closedAt !== null || show <= 0) return; // (dark: nothing lit; hidden, Ed 2026-11-12: nothing there)
   const cols = columnSpots(ch, columnKinds(g).length);
   if (ch.clearedAt === null) {
     // Waiting: each column's top a faint cold glow, or, its kind all won over, lit steadily in the party's warm colour; on it, within
@@ -186,9 +231,9 @@ export function drawChallenge(lv: LeashView, time: number, dot: number[]): void 
     const K = stoneKnobs(t), sigils = !!t.leash.ranks?.on;
     for (const col of challengeColumns(g)) {
       const top = columnTop(col, t), lit = top.lit;
-      lv.standing.add(col.x, COLUMN_TOP, col.z, top.size, dot, top.rgb[0], top.rgb[1], top.rgb[2], top.alpha, 1, true);
-      if (lit) lv.flat.add(col.x, 0.03, col.z, 2.6, dot, top.rgb[0], top.rgb[1], top.rgb[2], 0.18, 1, true); // (and a little warm light at its foot)
-      const vis = smooth((K.range - Math.hypot(col.x - w.x, col.z - w.z)) / Math.max(1, K.fade));
+      lv.standing.add(col.x, COLUMN_TOP, col.z, top.size, dot, top.rgb[0], top.rgb[1], top.rgb[2], top.alpha * show, 1, true);
+      if (lit) lv.flat.add(col.x, 0.03, col.z, 2.6, dot, top.rgb[0], top.rgb[1], top.rgb[2], 0.18 * show, 1, true); // (and a little warm light at its foot)
+      const vis = smooth((K.range - Math.hypot(col.x - w.x, col.z - w.z)) / Math.max(1, K.fade)) * show; // (and as it fades in or out)
       if (lit || !sigils || vis <= 0.01) continue;
       const P = columnSigilsAt(col.sigils, t);
       col.sigils.forEach((it, i) => { const h = P[i].y; columnSigil(lv, time, dot, it.id, it.level, col.x, upY(col.x, col.z, h), upZ(col.z, h), P[i].size, vis, statueSigilColour(g, sigilRankColour(t, it.level, false, false))); }); // (grey while its pack's stone, glowing as they wake: render/statues.ts)
@@ -211,7 +256,7 @@ export function drawChallenge(lv: LeashView, time: number, dot: number[]): void 
   // its dancefloor comes in (the ground's: challengeFloor).
   const e = g.clock.time - ch.clearedAt;
   cols.forEach((s, i) => {
-    const c = rainbow(i / Math.max(1, cols.length) + time * 0.05), a = 0.35 + 0.65 * p;
+    const c = rainbow(i / Math.max(1, cols.length) + time * 0.05), a = (0.35 + 0.65 * p) * show;
     lv.standing.add(s.x, COLUMN_TOP, s.z, 1.2 + 1.2 * p, dot, c[0], c[1], c[2], a, 1, true);
     lv.flat.add(s.x, 0.03, s.z, 3.2, dot, c[0], c[1], c[2], 0.25 * a, 1, true);
   });

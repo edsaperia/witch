@@ -2321,6 +2321,25 @@
     "challenge": {
       "type": "object",
       "properties": {
+        "hide": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "fade": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20
+            }
+          },
+          "required": [
+            "on",
+            "fade"
+          ],
+          "additionalProperties": false,
+          "description": "the challenge circle hidden before the party starts, normal forest on its floor and nothing of it there to step onto, fading in over `fade` s as the party starts (the trees on its floor fading away), and out again, the trees back, once a lost night's party is over if it wasn't won."
+        },
         "on": {
           "type": "boolean"
         },
@@ -2514,6 +2533,7 @@
         }
       },
       "required": [
+        "hide",
         "on",
         "radius",
         "margin",

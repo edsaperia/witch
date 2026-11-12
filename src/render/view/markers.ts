@@ -9,7 +9,7 @@ import { HAND, letterAt } from "../invites";
 import { Pin, type PinLook, type PinTarget } from "../pins";
 import { challengeRing } from "../challenge";
 
-export function legendRings(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, g: Game, time: number): { x: number; z: number; r: number; edge: number; glow: number }[] {
+export function legendRings(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, g: Game, time: number): { x: number; z: number; r: number; edge: number; glow: number; show: number }[] {
     // (the zoo's plaza, Ed 2026-10-26: "Home appears as a stone plaza with the ent's sigil on it (drawn like the floor of a legend
     // circle)": a floor of its own round the dancefloor, the World Tree carved in, drawn after the legends' nearest five)
     const plaza = null as { x: number; z: number } | null; // (the zoo's plaza draws its own sigil now: render/ground.ts uZooPlaza)
@@ -26,10 +26,10 @@ export function legendRings(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4S
       s.k += (inside - s.k) * Math.min(1, dt * 4);
       if (!a4ViewHost.ringGlow.has(c)) a4ViewHost.ringGlow.set(c, s);
       const f = time - s.flash, flash = f >= 0 && f < 1.5 ? (1 - f / 1.5) * (0.6 + 0.4 * Math.cos(f * 12)) : 0;
-      Object.assign(out[i], { x: c.x, z: c.z, r: c.r, edge: c.edge, glow: Math.min(1, Math.max(s.k, flash)) });
+      Object.assign(out[i], { x: c.x, z: c.z, r: c.r, edge: c.edge, glow: Math.min(1, Math.max(s.k, flash)), show: 1 });
     }
     a4ViewHost.ringCount = near.length;
-    if (plaza) { Object.assign(out[near.length], { x: plaza.x, z: plaza.z, r: ZOO_CONFIG.plaza ?? 60, edge: g.tuning.legendClearing.edge, glow: 0.7 }); a4ViewHost.ringCount++; } // (lit always: the coordinator, 2026-10-26, "as clear as a legend circle's floor")
+    if (plaza) { Object.assign(out[near.length], { x: plaza.x, z: plaza.z, r: ZOO_CONFIG.plaza ?? 60, edge: g.tuning.legendClearing.edge, glow: 0.7, show: 1 }); a4ViewHost.ringCount++; } // (lit always: the coordinator, 2026-10-26, "as clear as a legend circle's floor")
     // Their floors (render/ground.ts): each carving its legend's kind; its grooves' glint (the tuning's knob, 0 off) while it sleeps.
     const glint = g.tuning.legendClearing.floor?.glint ?? 0;
     for (let i = 0; i < near.length; i++) {
@@ -46,7 +46,7 @@ export function legendRings(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4S
     // carved into it": the last slot, its area's floor, the island's sigil, glowing; render/challenge.ts)
     if (ch && a4ViewHost.ringCount < 6) {
       const i = a4ViewHost.ringCount++, f = a4PrivateHost.floorItems[i];
-      Object.assign(out[i], { x: ch.x, z: ch.z, r: ch.r, edge: ch.edge, glow: ch.glow });
+      Object.assign(out[i], { x: ch.x, z: ch.z, r: ch.r, edge: ch.edge, glow: ch.glow, show: ch.show }); // (fading in or out with it: Ed, 2026-11-12)
       f.species = ch.species; f.look = floorLook(AREA_TYPES[g.map.typeOf(g.challenge!.cell[0], g.challenge!.cell[1])].id); f.glint = ch.glint;
     }
     return out;

@@ -67,9 +67,14 @@ export interface StatueTuning { on: boolean; bars: number; first: number; gap: n
 export interface CarvingTuning { stone: number; red: number; wild: number; warm: number; fade: number; floor: number }
 /** `sigilGap`: how far (m) its columns' sigils float over their tops (render/challenge.ts columnSigilsAt; Ed, 2026-11-04, on #1827:
  *  "Statue sigils should sit comfortably above the top of their columns"). */
-export interface ChallengeTuning { carving: CarvingTuning; on: boolean; radius: number; margin: number; spacing: number; sigilGap: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks: { on: boolean; height: number; burst: number }; statues: StatueTuning; analyser: { bars: number; steps: number; fill: number } }
-export const CHALLENGE_DEFAULT: ChallengeTuning = { on: false, radius: 50, margin: 3, spacing: 7.5, sigilGap: 1.5, adults: 1, youths: 1, castReach: 5, findSets: false, fireworks: { on: true, height: 24, burst: 8 }, statues: { on: false, bars: 4, first: 3.5, gap: 19, walkBack: 1.5, keepOut: 2, grey: [0.6, 0.6, 0.63], tint: 0.9, red: 1 }, analyser: { bars: 72, steps: 36, fill: 0.94 }, carving: { stone: 0.35, red: 2.2, wild: 1.2, warm: 1.8, fade: 2, floor: 0.3 } };
-export const challengeOf = (t: Tuning): ChallengeTuning => ({ ...CHALLENGE_DEFAULT, ...t.challenge, fireworks: { ...CHALLENGE_DEFAULT.fireworks, ...t.challenge?.fireworks }, statues: { ...CHALLENGE_DEFAULT.statues, ...t.challenge?.statues }, analyser: { ...CHALLENGE_DEFAULT.analyser, ...t.challenge?.analyser }, carving: { ...CHALLENGE_DEFAULT.carving, ...t.challenge?.carving } });
+/** Its hiding (Ed, 2026-11-12: "the challenge circle should be hidden before the party starts; there are just normal trees, no sign of
+ *  it - fades into existence and the trees fade away when the party starts. The same happens in reverse when the party is over if the
+ *  challenge circle has not been won yet."): on; how long (s) it takes to fade in or out (the drawing's; the rules count it whole only
+ *  once that's done: challengeRevealed). */
+export interface HideTuning { on: boolean; fade: number }
+export interface ChallengeTuning { hide: HideTuning; carving: CarvingTuning; on: boolean; radius: number; margin: number; spacing: number; sigilGap: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks: { on: boolean; height: number; burst: number }; statues: StatueTuning; analyser: { bars: number; steps: number; fill: number } }
+export const CHALLENGE_DEFAULT: ChallengeTuning = { hide: { on: false, fade: 3 }, on: false, radius: 50, margin: 3, spacing: 7.5, sigilGap: 1.5, adults: 1, youths: 1, castReach: 5, findSets: false, fireworks: { on: true, height: 24, burst: 8 }, statues: { on: false, bars: 4, first: 3.5, gap: 19, walkBack: 1.5, keepOut: 2, grey: [0.6, 0.6, 0.63], tint: 0.9, red: 1 }, analyser: { bars: 72, steps: 36, fill: 0.94 }, carving: { stone: 0.35, red: 2.2, wild: 1.2, warm: 1.8, fade: 2, floor: 0.3 } };
+export const challengeOf = (t: Tuning): ChallengeTuning => ({ ...CHALLENGE_DEFAULT, ...t.challenge, fireworks: { ...CHALLENGE_DEFAULT.fireworks, ...t.challenge?.fireworks }, statues: { ...CHALLENGE_DEFAULT.statues, ...t.challenge?.statues }, analyser: { ...CHALLENGE_DEFAULT.analyser, ...t.challenge?.analyser }, carving: { ...CHALLENGE_DEFAULT.carving, ...t.challenge?.carving }, hide: { ...CHALLENGE_DEFAULT.hide, ...t.challenge?.hide } });
 
 /** What the page says of it (under the clock: main.ts): the pack all won over or gone (ready to cast), cleared (and its reward),
  *  closed (the final wave coming, or the night over). This frame's, emptied each frame as the waves' are. */
@@ -88,6 +93,11 @@ export interface ChallengeState {
    *  waking from beat `wake` (a bar line) for the tuning's `statues.bars` bars, then awake (a wild pack) till every witch is off its
    *  floor; null `wake` unless waking. Unset: the statues off, or a night saved before them (its pack wild from the start). */
   statues?: { phase: "stone" | "waking" | "awake"; wake: number | null; /** when it woke, or last went back to stone (game time), and whether that was from a fight (`back`): for the floor's sigil fading (render/challenge.ts carvingLook) */ at?: number; back?: boolean };
+  /** Whether it's there (Ed, 2026-11-12; challenge.hide): `shown`, and when that last changed (game time; null: so from the start, no
+   *  fade). Hidden before the party starts and again once a lost night's party is over, uncleared: normal forest on its floor, nothing
+   *  of it drawn, nothing of it triggered (challengeRevealed). `fresh` till the night's first step sets it (at once, no fade). Unset:
+   *  the hiding off, or a night saved before it (always there). */
+  reveal?: { shown: boolean; at: number | null; fresh?: boolean };
   /** When its reward lands on its dancefloor (game time: clearedAt + FIND_DESCENT), and the flask laid then (its relic's id). */
   landsAt?: number | null;
   flask?: number | null;
@@ -192,7 +202,34 @@ export function newChallenge(map: ForestMap, creatures: readonly Creature[]): Ch
   if (!S) return null;
   const key = cellKey(S.cell);
   const kinds = packKinds(map);
-  return { key, cell: [S.cell[0], S.cell[1]], x: S.x, z: S.z, radius: S.radius ?? challengeCircle(kinds.length, map.tuning).radius, kinds, pack: creatures.filter(c => cellKey(c.cell) === key).map(c => c.id), readyAt: null, clearedAt: null, closedAt: null, reward: null, events: [], ...(challengeOf(map.tuning).statues.on ? { statues: { phase: "stone" as const, wake: null } } : {}) };
+  return { key, cell: [S.cell[0], S.cell[1]], x: S.x, z: S.z, radius: S.radius ?? challengeCircle(kinds.length, map.tuning).radius, kinds, pack: creatures.filter(c => cellKey(c.cell) === key).map(c => c.id), readyAt: null, clearedAt: null, closedAt: null, reward: null, events: [], ...(challengeOf(map.tuning).hide.on ? { reveal: { shown: false, at: null, fresh: true } } : {}), ...(challengeOf(map.tuning).statues.on ? { statues: { phase: "stone" as const, wake: null } } : {}) };
+}
+
+/** Whether it should be there now (Ed, 2026-11-12): once the party's started, and after it's over only if it was won (cleared); before
+ *  the party (the world asleep, waiting for her spell) and after a lost night's party, not. A night that never waited: from the start. */
+export const challengeWanted = (g: Pick<Game, "challenge" | "partyOver" | "party" | "map">): boolean => !worldAsleep(g) || (!!g.challenge && g.challenge.clearedAt !== null);
+
+/** How far it's there (0 hidden, 1 whole), fading over hide.fade seconds from its last change: for the drawing (the circle's floor,
+ *  columns, lights and statues by it, the trees on its floor by 1 minus it). 1 with the hiding off. */
+export function revealK(g: Pick<Game, "challenge" | "clock" | "tuning">): number {
+  const R = g.challenge?.reveal;
+  if (!R) return 1;
+  const e = R.at === null ? 1 : Math.max(0, Math.min(1, (g.clock.time - R.at) / Math.max(1e-3, challengeOf(g.tuning).hide.fade)));
+  return R.shown ? e : 1 - e;
+}
+
+/** Whether it's there for the rules: shown and wholly faded in (it can't be entered, woken or cast at while hidden or fading in). */
+export const challengeRevealed = (g: Pick<Game, "challenge" | "clock" | "tuning">): boolean => !g.challenge?.reveal || (g.challenge.reveal.shown && revealK(g) >= 1);
+
+/** Each step, before its statues (rules/game.ts): shown or hidden as challengeWanted says, fading from now; the first step from a night's
+ *  start sets it at once (no fade: a night that never waited has it there, one waiting for her spell hidden). */
+export function stepReveal(g: Game): void {
+  const R = g.challenge?.reveal;
+  if (!R) return;
+  const want = challengeWanted(g);
+  if (R.fresh) { R.shown = want; R.at = null; delete R.fresh; return; }
+  if (want === R.shown) return;
+  R.shown = want; R.at = g.clock.time;
 }
 
 /** Its pack still holding it (rules/clear.ts holdsArea: wild or enraged, not invited, not run off). */
@@ -206,7 +243,7 @@ export const challengeOpen = (g: Pick<Game, "challenge">): boolean => !!g.challe
 export const challengeLate = (g: Game): boolean => won(g) || !!g.partyOver;
 
 /** Whether the spell can be cast on it now: open, the party on, and every one of its pack invited or run off. */
-export const challengeReady = (g: Game): boolean => challengeOpen(g) && !worldAsleep(g) && !challengeLate(g) && packLeft(g).length === 0;
+export const challengeReady = (g: Game): boolean => challengeOpen(g) && challengeRevealed(g) && !worldAsleep(g) && !challengeLate(g) && packLeft(g).length === 0;
 
 /** The circle as a cast's target, where witch W stands: on foot, within castReach of its middle, ready; else null. */
 export function challengeCastAt(g: Game, W: Witch): { key: string; cell: Cell; x: number; z: number } | null {

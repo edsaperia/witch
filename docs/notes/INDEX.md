@@ -182,6 +182,7 @@ glossary; these are the prototype's), by note.
 - Wild / happy / leashed / enraged
 - Runaway
 - Restless / angry legend, relic
+- The challenge circle hidden till the party
 
 ### [The treehouse and its house](house.md)
 

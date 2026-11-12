@@ -30,7 +30,7 @@ import type { Game, Witch } from "./game";
 import type { Creature } from "./creatures";
 import { beatAt } from "./beat";
 import { holdsArea } from "./clear";
-import { challengeOf, challengeOpen, columnKinds, faceMiddle, statuePosts, type ChallengeState } from "./challenge";
+import { challengeOf, challengeOpen, challengeRevealed, columnKinds, faceMiddle, statuePosts, type ChallengeState } from "./challenge";
 import { creatureValue } from "./power";
 import { areaCellAt } from "./map";
 import { cellKey } from "./party";
@@ -88,7 +88,7 @@ export function wakeAggro(g: Game, i = 0): { k: number; danger: number } | null 
 export function stepStatues(g: Game): void {
   const ch = g.challenge, st = ch?.statues;
   if (!ch || !st) return;
-  if (!challengeOpen(g)) { if (st.phase === "waking") { st.phase = "stone"; st.wake = null; } return; }
+  if (!challengeOpen(g) || !challengeRevealed(g)) { if (st.phase === "waking") { st.phase = "stone"; st.wake = null; } return; } // (hidden or fading in, Ed 2026-11-12: nothing to step onto)
   const on = floorTaken(g, ch), beat = beatAt(g.beat, g.clock.time);
   if (st.phase === "stone") {
     if (on) { st.phase = "waking"; st.wake = Math.ceil(beat / BAR - 1e-9) * BAR; } // (from the next bar line: now, if it's on one)
