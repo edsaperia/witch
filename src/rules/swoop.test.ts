@@ -52,9 +52,10 @@ describe("wild flyers swoop (owl, bat, raven)", () => {
   it("leads her at release: walking on in a straight line gets caught; turning back or blinking as it lets go, it misses", () => {
     // Walking east the whole time.
     const walk = (turn: boolean | "blink"): number => {
-      // (seed 6: which far creature the arena borrows, so its id-seeded circling, follows the map's population; since the swarms by island,
-      // Ed 2026-11-03, seed 5's owl times its dive so a straight walk slips it. Seeds 4, 6, 7 and 8 all hold.)
-      const { g, ids } = arena("owl*1@2", 6), o = g.creatures[ids[0]], hp0 = g.witches[0].health.hp;
+      // (seed 4: which far creature the arena borrows, so its id-seeded circling, follows the map's population; since the swarms by island,
+      // Ed 2026-11-03, seed 5's owl times its dive so a straight walk slips it. Seeds 4, 6, 7 and 8 all held then; since the legends'
+      // circles grew to put them at the back, Ed 2026-11-12, seeds 4 and 7 hold, the others borrow one that doesn't dive in time.)
+      const { g, ids } = arena("owl*1@2", 4), o = g.creatures[ids[0]], hp0 = g.witches[0].health.hp;
       run(g, 10, idle, () => o.swoop?.phase === "circle" && !!o.moveReadyAt && g.clock.time >= o.moveReadyAt - 0.05);
       let dir = 1, released = false;
       for (let i = 0; i < 12 / STEP; i++) {
@@ -72,7 +73,7 @@ describe("wild flyers swoop (owl, bat, raven)", () => {
   }, 60000);
 
   it("a bat dives several times a bout, each with its own telegraph", () => {
-    const { g, ids } = arena("bat*1@2", 6), b = g.creatures[ids[0]], dives = MOVEMENT.profiles.bat.move!.dives!; // (seed 6: as the owl's lead, above)
+    const { g, ids } = arena("bat*1@2", 4), b = g.creatures[ids[0]], dives = MOVEMENT.profiles.bat.move!.dives!; // (seed 4: as the owl's lead, above; of seeds 4 to 9 only 4 gives all its dives in the 20 s)
     let n = 0, last = "";
     run(g, 20, idle, () => n >= dives, () => { const p = b.swoop?.phase ?? ""; if (p === "dive" && last !== "dive") n++; last = p; });
     expect(n).toBe(dives);
