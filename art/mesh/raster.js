@@ -149,10 +149,10 @@ export function bakeMesh(sh, o = {}) {
     }
     out[f.facing].push({ albedo, normal, flipped, eyes: anyEye ? eyes : undefined, head: f.head ? [f.head[0] - x0, f.head[1] - y0] : undefined });
   }
-  // how tall it is as drawn: the rows its standing frame (its first, if it has none) fills, towards us. The sprite itself is taller
+  // how tall it is as drawn: from the ground to the top of its standing frame (its first, if it has none), towards us. The sprite itself is taller
   // (room for a leap, a raised tail, the other heading), and the game sizes a creature by this, not by its sprite (Ed, 2026-11-12:
   // sizes "come from the height actually drawn, not the canvas size")
-  let tall = h; { const f = raw.find(r => r.facing === "towards" && r.index === (o.stand ? frames : 0)); if (f) { let t = H, b = -1; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (f.on[y * W + x]) { if (y < t) t = y; b = y; } if (b >= 0) tall = b - t + 1; } }
+  let tall = h; { const f = raw.find(r => r.facing === "towards" && r.index === (o.stand ? frames : 0)); if (f) { let t = H, b = -1; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (f.on[y * W + x]) { if (y < t) t = y; b = y; } if (b >= 0) tall = feet.towards - t + 1; } } // (from the ground: a flyer's height is to its top, the air under it too)
   return { w, h, tall, ppu, bodyHeight: (bodyTop - bodyBottom) * ppu, height: (top - bottom) * ppu, step: (stride(sh) / frames) * ppu / w, runStep: o.run ? (stride(o.run) / frames) * ppu / w : undefined, palette: pal.map(c => c.map(Math.round)), towards: out.towards, away: out.away };
 }
 
