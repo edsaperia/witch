@@ -186,6 +186,7 @@ glossary; these are the prototype's), by note.
 ### [The treehouse and its house](house.md)
 
 - The house one room
+- No edge at the Terrace
 - Telephone
 - Landing cooldown
 - Current brewing authority (Ed, 2026-10-31):

@@ -15,6 +15,19 @@
    ]
   },
   {
+   "name": "terracecut",
+   "values": [
+    "old"
+   ],
+   "does": "The Terrace's edge as it was, to compare: walking between the Terrace and the house's rooms, the camera swings some 10 m along the ground and 2 m up and down over 3 m past the Terrace's ring as the house's slide eases in or out, and the mood eases between home's and the forest's under the room.",
+   "group": "compare",
+   "since": "2026-11-12",
+   "decision": "Ed, 2026-11-12: \"there is a camera transition (I think) when going onto the terrace of the treehouse; this isn't required anymore since the treehouse is treated as one area\"",
+   "readIn": [
+    "src/render/terraceCut.ts"
+   ]
+  },
+  {
    "name": "patternlight",
    "values": [
     "off",
