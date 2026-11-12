@@ -42,6 +42,12 @@ export const KINDS_TABLE: Record<string, KindInfo> = assembleKinds(AREA_FOLDER_K
  *  a kind the table doesn't know (app/chartSave.ts loadSave), so whoever had found the marten's island finds the bee's afresh.
  *  kinds.test.ts holds this list to the truth. */
 export const BENCH: readonly string[] = ["marten"];
+/** A kind that took another's place stands where the other stood whenever kinds are set in order by name (the deal of an island's
+ *  legend areas, rules/map.ts; a legend's quest, rules/quest.ts), so the swap changes who lives there and nothing of the land or
+ *  the deals: every seed's map is the map it was. The bee stands where the marten did (it sorts as "marten"). */
+export const PLACE_OF: Readonly<Record<string, string>> = { bee: "marten" };
+/** Kinds in order by name, each in its place (PLACE_OF): for `.sort(byPlace)` where a plain sort stood. */
+export const byPlace = (a: string, b: string): number => { const x = PLACE_OF[a] ?? a, y = PLACE_OF[b] ?? b; return x < y ? -1 : x > y ? 1 : 0; };
 /** Each kind's slot (the table is assembled in slot order). */
 export const KIND_SLOTS: Record<string, number> = Object.fromEntries(Object.keys(KINDS_TABLE).map((k, i) => [k, i]));
 /** The classic map's kinds: the first 32 slots, today's 32 when the journey began (all introduced before phase 3 then). By slot,
