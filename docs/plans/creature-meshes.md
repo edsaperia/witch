@@ -2,6 +2,8 @@
 
 Ed, 2026-11-11: "I'm not really happy how the creatures are looking and moving. Many don't look much like their real life counterparts, they end up looking a grotesque, and are wooden in the way they move. The designer is also not great at exaggerating the special features of creatures for the adults and legends; they mostly just look scaled up. Perhaps there's a better way to approach it?" Then: "Okay, how do we set this pipeline up? I think we should try it on all the home island creatures."
 
+(Since 2026-11-12 each kind's mesh is its own file, `art/mesh/species/<id>.js`, and the kit one part a file, `art/mesh/kit/`: where this history names `art/mesh/fox.js`, `mustelids.js`, `rodents.js`, `diggers.js` or `kit.js`, read those. How to write one: `docs/notes/creatures.md`, **Writing a mesh creature**.)
+
 This is a plan and a set of proposals. Nothing in it is ruled by Ed except his words quoted here and the briefs it copies from `docs/art-guide/EVOLUTIONS.md` and `docs/ART-GUIDE.md` 0c.
 
 ## Why

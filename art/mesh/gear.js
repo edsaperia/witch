@@ -4,7 +4,7 @@
 //   feet in the shoe's colour.
 // - napping(plan): the same animal asleep: its legs folded under it, its body on the ground, its head down, its tails laid round,
 //   its eyes shut, breathing (a still pose: shape.js `plan.still`).
-// A plan says where these go by `anchors` (kit.js `plan` sets them for the four-legged: the skin's neck ring and where its head's
+// A plan says where these go by `anchors` (kit/plan.js `plan` sets them for the four-legged: the skin's neck ring and where its head's
 // rings begin); a plan without them is left bare.
 import { HAT_COLOURWAYS, SHOE_STYLES } from "../creatures.js";
 
