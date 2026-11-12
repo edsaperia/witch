@@ -1,31 +1,66 @@
-# The glossary's index
+# The notes and the glossary's index
 
-Made from the notes by `node tools/docs/glossary.mjs --write` (never edit it by hand): each note's entries, the bold names that
-open its lines. Add an entry to its note, then run that; `tools/docs/glossary.test.ts` fails while this is out of date. CLAUDE.md
-says what each note covers.
+Made from the notes by `node tools/docs/glossary.mjs --write` (never edit it by hand): what each note covers (its
+`<!-- summary: ... -->` line), then each note's entries, the bold names that open its lines. Add a note or an entry, then run
+that; `tools/docs/glossary.test.ts` fails while this is out of date. Read an area's note before working on it.
 
-## [Art checks](art-checks.md)
+## The notes
+
+- [Art checks](art-checks.md): The art generator's check, the style bible, the genome compare, the lab and export commands.
+- [Balance baselines — v5655 rules](balance-baselines.md): The matched-seed, matched-bag tables from the real-rules report (v5655; one seed, no tuning).
+- [Real-rules reports and legacy coverage](balance-report-coverage.md): The report tool, how to rerun it, and what the old balance sims still cover.
+- [Balance study follow-up](balance-study.md): The follow-up on the real rules after the report tool (#1475): the matched-tempo preflight and the study's limits.
+- [Wide, shallow balance survey — design v1](balance-survey-design.md): The frozen five-study cloud design, first-wave limits and expert feedback gates.
+- [Balance](balance.md): The balance simulators and bots, fighting value, populations and costs, the playtest log.
+- [Cauldron collection and brewing preview](cauldron.md): The gated mushroom collection, shared kitchen and Mirror Floor preview; capturing possible mushroom trips and their sound; checks and remaining scope.
+- [Config files](config.md): The tuning file (values only) and its schema, the knobs' words in `config/knobs/<section>.json` (what each does, Ed's decisions), the style file, the link switches registry, the checks registry, the changelog's fragments.
+- [Creatures' art](creatures.md): Genomes and templates, textures and palettes, evolution kits, faces, the live rig, the sleeping legends' art.
+- [Deploys](deploys.md): GitHub Pages and publishing: the gh-pages snapshot and its publisher, PR previews, garbage collection, version.json and the newer-build notice, and when a release counts as live.
+- [Expert search: implementation and fairness audit](expert-search.md): Observation limits, deterministic training, protected seeds and the survey adapter.
+- [Creatures in play](gameplay.md): Inviting, the leash and sigils, combat and sieges, creature states, the legends and their quests.
+- [The treehouse and its house](house.md): The treehouse and its deck, arriving, the house's rooms, the station menus, the Studio, finds, the Workshop and broom parts, hats and brooms, the telescope.
+- [Islands and the journey](island.md): Island growth and shape, the land, lakes, biomes and beaches, the archipelago and the sea chart, sailing in place, kinds, the zoo.
+- [Light-pool readability experiment](light-pool-readability.md): Default-off creature readability inside the witch's light pool, investigation and review evidence requirements.
+- [The Making Of](making-of.md): The static site about how the game was made.
+- [The music](music.md): The music engine, its style, sections and arc, the singer, the labs and studio, samples.
+- [Two-browser prototype](online-prototype.md): The separate two-browser prototype: local relay, host authority, joining, checks and current limits.
+- [Performance](performance.md): The View's build in slices, the start's shaders, the stall hunt.
+- [The run](run.md): The phases of a run, the opening and the party spell, the clock, her controls and the camera, waves, knockouts and the party's end.
+- [Save slots](save-slots.md): Independent progress and settings storage, legacy migration and save-format guards.
+- [Sound effects](sound.md): The synthesised sound effects, babble and whale song, the mix.
+- [Two-client telephone proof](telephone-proof.md): The explicit two-client telephone proof, default-off switches, allocation and evidence requirements.
+- [Testing tools](testing.md): The full smoke test, proof shots, CI, the quick smoke, music and pause checks, and which check to run when (`config/checks.json`).
+- [The view](view.md): What the renderer draws over the world: tilt-shift, the ground and its hills, ley lines, the sky and moon, smoke, pops, the debug overlay and test sliders.
+- [The witch's art](witch-art.md): The witch generator, the party witches and their pair poses, her lean cycle.
+- [The world's art](world-art.md): Area types and recipes, layouts, flora and trees, props and scenes, party objects, the dancefloor and soundsystems, paths, the art style, the pixel wind.
+
+## The glossary
+
+Literal, stable names for the parts of the game, as Ed and the builders agree them (the game's own terms are in `DESIGN.md`'s
+glossary; these are the prototype's), by note.
+
+### [Art checks](art-checks.md)
 
 - Style bible
 - Bold sigils
 
-## [Balance baselines — v5655 rules](balance-baselines.md)
+### [Balance baselines — v5655 rules](balance-baselines.md)
 
 (no entries: its tools and checks only)
 
-## [Real-rules reports and legacy coverage](balance-report-coverage.md)
+### [Real-rules reports and legacy coverage](balance-report-coverage.md)
 
 (no entries: its tools and checks only)
 
-## [Balance study follow-up](balance-study.md)
+### [Balance study follow-up](balance-study.md)
 
 (no entries: its tools and checks only)
 
-## [Wide, shallow balance survey — design v1](balance-survey-design.md)
+### [Wide, shallow balance survey — design v1](balance-survey-design.md)
 
 - First dispatch is the 24-shard wave 1 below, not the 190-shard full envelope.
 
-## [Balance](balance.md)
+### [Balance](balance.md)
 
 - Written report retention
 - Compressed log bundles
@@ -50,18 +85,20 @@ says what each note covers.
 - Changed on 2026-10-29, live:
 - Ed's direction:
 
-## [Cauldron collection and brewing preview](cauldron.md)
+### [Cauldron collection and brewing preview](cauldron.md)
 
 - Where mushrooms grow
 
-## [Config files](config.md)
+### [Config files](config.md)
 
 - Tuning file
 - Style file
 - Link switches
 - Knob docs
+- Checks registry
+- Changelog fragments
 
-## [Creatures' art](creatures.md)
+### [Creatures' art](creatures.md)
 
 - Stiltwalkers
 - Sleeping legend
@@ -79,11 +116,15 @@ says what each note covers.
 - Silhouette check
 - Live rig
 
-## [Expert search: implementation and fairness audit](expert-search.md)
+### [Deploys](deploys.md)
 
 (no entries: its tools and checks only)
 
-## [Creatures in play](gameplay.md)
+### [Expert search: implementation and fairness audit](expert-search.md)
+
+(no entries: its tools and checks only)
+
+### [Creatures in play](gameplay.md)
 
 - Combat waiting movement
 - Waiting under her
@@ -142,7 +183,7 @@ says what each note covers.
 - Runaway
 - Restless / angry legend, relic
 
-## [The treehouse and its house](house.md)
+### [The treehouse and its house](house.md)
 
 - The house one room
 - Telephone
@@ -195,7 +236,7 @@ says what each note covers.
 - Hats and brooms
 - Guidance pins
 
-## [Islands and the journey](island.md)
+### [Islands and the journey](island.md)
 
 - Island growth / island shape
 - Land map
@@ -214,15 +255,15 @@ says what each note covers.
 - Sail in place
 - Zoo
 
-## [Light-pool readability experiment](light-pool-readability.md)
+### [Light-pool readability experiment](light-pool-readability.md)
 
 (no entries: its tools and checks only)
 
-## [The Making Of](making-of.md)
+### [The Making Of](making-of.md)
 
 (no entries: its tools and checks only)
 
-## [The music](music.md)
+### [The music](music.md)
 
 - Potion isolation
 - Music style
@@ -253,11 +294,11 @@ says what each note covers.
 - The Chimera set
 - A/B renders
 
-## [Two-browser prototype](online-prototype.md)
+### [Two-browser prototype](online-prototype.md)
 
 (no entries: its tools and checks only)
 
-## [Performance](performance.md)
+### [Performance](performance.md)
 
 - Smoke veil readback (PR1558, pending hardware proof)
 - The whole island at load
@@ -287,7 +328,7 @@ says what each note covers.
 - Quality ladder
 - Palette-indexed art
 
-## [The run](run.md)
+### [The run](run.md)
 
 - Fresh game link
 - Cold load link
@@ -329,7 +370,7 @@ says what each note covers.
 - Aim reticle
 - Action bar
 
-## [Save slots](save-slots.md)
+### [Save slots](save-slots.md)
 
 - Save slot storage
 - Single-save migration
@@ -341,7 +382,7 @@ says what each note covers.
 - Deleting saves and Reset everything
 - Fresh game
 
-## [Sound effects](sound.md)
+### [Sound effects](sound.md)
 
 - Night Vision and Heat Vision audio
 - Cauldron plop
@@ -349,18 +390,18 @@ says what each note covers.
 - Babble
 - Audio capacity test
 
-## [Two-client telephone proof](telephone-proof.md)
+### [Two-client telephone proof](telephone-proof.md)
 
 (no entries: its tools and checks only)
 
-## [Testing tools](testing.md)
+### [Testing tools](testing.md)
 
 - Identical-tree release validation reuse
 - Shared still capture harness
 - A quick proof shot
 - Publishing previews
 
-## [The view](view.md)
+### [The view](view.md)
 
 - Elapsed-time view easing
 - Heat/refraction preview
@@ -400,14 +441,14 @@ says what each note covers.
 - Tree normal maps switch
 - Tree normal directions
 
-## [The witch's art](witch-art.md)
+### [The witch's art](witch-art.md)
 
 - Party witches
 - Pair poses
 - Witch genome / witch generator
 - Lean cycle
 
-## [The world's art](world-art.md)
+### [The world's art](world-art.md)
 
 - Collectible mushroom art generator
 - Area type

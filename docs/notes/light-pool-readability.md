@@ -1,5 +1,7 @@
 # Light-pool readability experiment
 
+<!-- summary: Default-off creature readability inside the witch's light pool, investigation and review evidence requirements. -->
+
 Assigned by coordinator6523304196, from release base2ecbbe19. Ed's ruling (2026-10-30): dark creatures may keep their camouflage in the dark forest, but should read when illuminated near the witch.
 
 Review only, default OFF. Add a hue-preserving creature lift or edge using her actual light radius, falloff, power and dim factors. The added contribution must be zero outside the radius and when her light is off. Preserve the existing find-light rim, ground, sprite paint and sizes.
