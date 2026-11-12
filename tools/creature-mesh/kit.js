@@ -205,12 +205,13 @@ export function ball(bone, c, o) {
 
 /** A dome on `bone`, its rim at `c`: rx across, rz along the animal, high; a turtle's shell. colour(row, cz, sx) each facet's (row
  *  0 at the rim; cz 1 at its front, sx -1..1 across); rim: { colour, r } a lip round its edge; seams: { colour, glow, n } thin
- *  lines up it from the rim to the crown and one round it, lit if glow (the joins between its plates). Returns its pieces and
+ *  lines up it from the rim to the crown and one round it, lit if glow (the joins between its plates); glow: the whole of it lit
+ *  (the light under plates laid on it as armour: its loft is named `name`, "dome"). Returns its pieces and
  *  `on(up, round)`: the point on it `up` (0 rim .. 1 crown) and `round` (radians, 0 its front), with the way out from there. */
 export function dome(bone, c, o) {
   const { rx = 0.16, rz = 0.2, high = 0.12, colour, rim, seams, sides = 10, rows = 5 } = o, lat = i => (i / rows) * (Math.PI / 2) * 0.97;
   const on = (up, round) => { const f = up * (Math.PI / 2) * 0.97, x = Math.sin(round) * Math.cos(f), z = Math.cos(round) * Math.cos(f), y = Math.sin(f), n = [x / rx, y / high, z / rz], l = Math.hypot(...n) || 1; return { at: [c[0] + x * rx, c[1] + y * high, c[2] + z * rz], out: n.map(v => v / l) }; };
-  const rings = Array.from({ length: rows + 1 }, (_, i) => ({ at: [c[0], c[1] + Math.sin(lat(i)) * high, c[2]], rx: rx * Math.cos(lat(i)), ry: rz * Math.cos(lat(i)), bone, up: [0, 0, 1], colour: (cz, sx) => colour(i, cz, sx) }));
+  const rings = Array.from({ length: rows + 1 }, (_, i) => ({ at: [c[0], c[1] + Math.sin(lat(i)) * high, c[2]], rx: rx * Math.cos(lat(i)), ry: rz * Math.cos(lat(i)), bone, up: [0, 0, 1], glow: !!o.glow, colour: (cz, sx) => colour(i, cz, sx) }));
   const lofts = [{ name: o.name ?? "dome", sides, up: [0, 0, 1], rings: [{ ...rings[0], at: [c[0], c[1] - 0.012, c[2]], rx: rx * 0.9, ry: rz * 0.9 }, ...rings] }];
   if (rim) lofts.push({ sides, up: [0, 0, 1], rings: [[-0.02, 0.96], [-0.006, 1.06], [0.01, 1.06], [0.022, 0.98]].map(([dy, f]) => ({ at: [c[0], c[1] + dy, c[2]], rx: rx * f + (rim.r ?? 0), ry: rz * f + (rim.r ?? 0), bone, up: [0, 0, 1], colour: rim.colour })) });
   if (seams) {

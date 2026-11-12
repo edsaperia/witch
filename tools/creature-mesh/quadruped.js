@@ -81,22 +81,26 @@ const RUNES = [
  *  rings it runs between, counted along the loft; fractions fall between rings), round [a0, a1] (the facets it covers by their
  *  angle from the top, radians, both sides; side 1 or -1 for one flank only), thick, lames (it's cut into that many plates along
  *  its length, each one's rear edge standing `step` proud of the next, as a lobster's tail), colour, rim (its edges' colour),
- *  inset (each facet drawn in that share from its edges: a stripe), glow (drawn unlit: a line of light and not a plate),
+ *  inset (each facet drawn in that share from its edges: a stripe, or with `gap`, the same along it, every facet its own plate with
+ *  the skin showing between), flare (its lower edge stands that much further off the body: a pauldron's lip), glow (drawn unlit:
+ *  a line of light and not a plate),
  *  runes { colour, round (which facets carry them), size (of the facet, 0..1), every, seed, w (a stroke's width), max (to a plate) }: a lit mark
  *  on each plate's facets, drawn unlit like fox-fire. */
 function armour(faces, made, o) {
-  const sides = made[0].length, N = made.length - 1, { from = 0, to = N, round = [0, 1.7], side = 0, thick = 0.014, step = 0.006, lames = 1, colour, rim = colour, runes, inset = 0, glow = false } = o;
+  const sides = made[0].length, N = made.length - 1, { from = 0, to = N, round = [0, 1.7], side = 0, thick = 0.014, step = 0.006, lames = 1, colour, rim = colour, runes, inset = 0, gap = 0, flare = 0, glow = false } = o;
   const mids = made.map(r => r.reduce((m, v) => m.add(v.p), new THREE.Vector3()).multiplyScalar(1 / sides));
   // (a facet's angle from the top, and which side it's on: facet k lies between corners k and k + 1)
   const ang = k => { const a = ((k + 1) % sides) / sides * Math.PI * 2; return a > Math.PI + 1e-6 ? [Math.PI * 2 - a, -1] : [a, a < 1e-6 || Math.abs(a - Math.PI) < 1e-6 ? 0 : 1]; };
   const within = (k, r) => { const [a, s] = ang((k + sides) % sides); return a >= r[0] - 1e-6 && a <= r[1] + 1e-6 && (!side || !s || s === side); }, on = k => within(k, round);
+  // (how far down the plate a corner lies, 0 at its upper edge to 1 at its lower: what `flare` lifts)
+  const low = k => { const a = (k + 0.5) / sides * Math.PI * 2, f = a > Math.PI ? Math.PI * 2 - a : a; return Math.min(1, Math.max(0, (f - round[0]) / Math.max(1e-6, round[1] - round[0]))); };
   const at = (t, h) => { const i = Math.min(N - 1, Math.max(0, Math.floor(t + 1e-9))), u = t - i, mid = mids[i].clone().lerp(mids[i + 1], u), skin = made[i].map((v, k) => v.p.clone().lerp(made[i + 1][k].p, u));
-    return { mid, bone: (u < 0.5 ? made[i] : made[i + 1])[0].bone, skin, out: skin.map(p => p.clone().add(p.clone().sub(mid).normalize().multiplyScalar(h))) }; };
+    return { mid, bone: (u < 0.5 ? made[i] : made[i + 1])[0].bone, skin, out: skin.map((p, k) => p.clone().add(p.clone().sub(mid).normalize().multiplyScalar(h * (1 + flare * low(k))))) }; };
   const vert = (p, c, bone, glow = false) => ({ p, c, bone, glow });
   // (a quad wound to face away from `ref`)
   const away = (a, b, c, d, ref) => { const n = b.p.clone().sub(a.p).cross(d.p.clone().sub(a.p)), m = a.p.clone().add(b.p).add(c.p).add(d.p).multiplyScalar(0.25); n.dot(m.sub(ref)) >= 0 ? faces.quad(a, b, c, d) : faces.quad(a, d, c, b); };
   for (let j = 0; j < lames; j++) {
-    const a = from + (to - from) * j / lames, b = from + (to - from) * (j + 1) / lames, ts = [a]; for (let i = Math.floor(a) + 1; i < b - 1e-6; i++) ts.push(i); ts.push(b);
+    const a0 = from + (to - from) * j / lames, b0 = from + (to - from) * (j + 1) / lames, a = a0 + (b0 - a0) * gap, b = b0 - (b0 - a0) * gap, ts = [a]; for (let i = Math.floor(a) + 1; i < b - 1e-6; i++) ts.push(i); ts.push(b);
     const h = t => thick + step * (1 - (t - a) / (b - a)), st = ts.map(t => at(t, h(t)));
     for (let n = 0; n + 1 < st.length; n++) for (let k = 0; k < sides; k++) if (on(k)) {
       // (the facet's four corners, outside and on the skin; `inset` draws each facet in from its neighbours, a stripe and not a sheet)

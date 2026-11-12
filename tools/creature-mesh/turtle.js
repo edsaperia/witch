@@ -2,9 +2,8 @@
 // (Ed, 2026-11-11: "Martens and Stoats are pretty similar, maybe we should have a different animal. Bees? Turtles?"). A pond
 // turtle's build: a flat body slung between four splayed legs, a long neck with a blunt beaked head, its shell over all. Its
 // ladder is a proposal: a hatchling still wearing half its egg; a quick smooth-shelled young; an adult under a high keeled
-// dome with moss at its rim; and the oracle, the old one whose shell is read: its plates' joins lit like the cracks a fire
-// reads a shell by, a band of bronze plate round it, a beard and long brows, and the long green tail of weed that only the
-// very oldest turtles grow. Kept for another island (Ed, 2026-11-11: "keep both, but swap the marten for the bee").
+// dome with moss at its rim; and the oracle, the old one whose shell is read: its shell become plate armour, a mark lit on
+// every plate and its joins lit like the cracks a fire reads a shell by, a beard and long brows. Kept for another island (Ed, 2026-11-11: "keep both, but swap the marten for the bee").
 import { dome, plan, plate, quad, tail, walk } from "./kit.js";
 
 const OLIVE = "#7d8f6a", T = { coat: OLIVE, belly: "#e6d79a", nose: "#3a4226", upper: "#6a7c58", mid: "#5b6c4a", sock: "#4c5c3e", eye: "#17140f" };
@@ -13,7 +12,7 @@ const build = (C, o) => quad({ C, hind: { len: 0.27, thick: 2.0, paw: 1.5, sprea
 const paddle = (o = {}) => ({ seconds: 0.9, duty: 0.7, bob: 0.004, sway: 0.07, tailSwing: 0.12, legs: walk(0.9), ...o });
 /** Its shell over the torso: wide, long and high as given; plates patterned light and dark. */
 const carapace = (q, o) => { const R = q.R, c = [0, R[1].at[1] + 0.005, (R[1].at[2] + R[4].at[2]) / 2 - 0.01], L = (R[4].at[2] - R[1].at[2]);
-  return dome("loin", c, { rx: R[3].rx * (o.wide ?? 1.5), rz: L * (o.long ?? 0.72), high: o.high, sides: 10, rows: o.rows ?? 5, colour: o.colour, rim: o.rim, seams: o.seams }); };
+  return dome("loin", c, { rx: R[3].rx * (o.wide ?? 1.5), rz: L * (o.long ?? 0.72), high: o.high, sides: o.sides ?? 10, rows: o.rows ?? 5, colour: o.colour, rim: o.rim, seams: o.seams, glow: o.glow }); };
 const plates = (a, b) => (row, cz, sx) => ((row + Math.round((Math.atan2(sx, cz) / Math.PI + 1) * 3)) % 2 ? a : b);
 const turtle = {
   // a hatchling, big-headed and soft, still wearing half its egg
@@ -39,15 +38,19 @@ const turtle = {
     const moss = Array.from({ length: 8 }, (_, i) => { const p = sh.on(0.0, i / 8 * Math.PI * 2 + 0.2); return { at: p.at, rx: 0.03, ry: 0.016, tip: [p.at[0] + p.out[0] * 0.02, p.at[1] - 0.07 - 0.02 * (i % 3), p.at[2] + p.out[2] * 0.02], bone: "loin", colour: "#4f7a3a", tipColour: "#7ba24c", bulge: 0.8, split: 0.5, up: [0, 0, 1], sides: 4 }; });
     return plan("turtle-adult", q.body, q.skull, [...q.legs, sh, ...keel, t], paddle({ tails: [t.chain] }), { cones: moss });
   },
-  // the oracle: its shell a high dome of dark horn, every join between its plates lit; a band of bronze plate round its foot
-  // cut with lit marks; a white beard and long brows, one eye lit and one gone; and the tail of green weed, longer than itself
+  // the oracle: its whole shell its armour: plates of dark horn edged in bronze, a mark lit on each and every join between
+  // them lit; a white beard and long brows, one eye lit and one gone; a short tail like any turtle's
   legend() {
-    const HORN = "#2f3a34", HORN2 = "#3d4a40", LINE = "#a8f0d0", BRONZE = "#b9722e", BRONZE2 = "#e0a04a", WEED = "#3f7a4a", C = { ...T, coat: "#5b6a48", belly: "#c9ba80", muzzle: "#8a9470", upper: "#4c5a3a", mid: "#3f4c30", sock: "#333f28", eyes: [{ colour: LINE, glow: true }, { colour: "#dfe6e2" }] };
+    const HORN = "#2f3a34", HORN2 = "#3d4a40", LINE = "#a8f0d0", BRONZE = "#b9722e", C = { ...T, coat: "#5b6a48", belly: "#c9ba80", muzzle: "#8a9470", upper: "#4c5a3a", mid: "#3f4c30", sock: "#333f28", eyes: [{ colour: LINE, glow: true }, { colour: "#dfe6e2" }] };
     const q = build(C, { hind: { len: 0.36, thick: 2.3, paw: 1.7, spread: 2.2, knob: 1.2, claws: { colour: "#d9d2b8", len: 1.8, thick: 1.6, wide: 1.6 } }, fore: { len: 0.36, thick: 2.3, paw: 1.8, spread: 2.3, knob: 1.2, claws: { colour: "#d9d2b8", len: 2.0, thick: 1.6, wide: 1.7 } }, body: { len: 0.95, girth: 1.4, neck: [0.14, 0.26], neckThick: 0.78 }, head: { size: 1.05, muzzle: 0.55, muzzleDeep: 1.5, eye: 1.4 } }), P = q.P;
-    const sh = carapace(q, { high: 0.3, wide: 1.7, long: 0.78, rows: 6, colour: plates(HORN, HORN2), rim: { colour: BRONZE, r: 0.012 }, seams: { colour: LINE, glow: true, n: 7, w: 0.009 } });
-    const t = tail("tail", "pelvis", q.root, { len: 1.15, r: 0.1, pitch: 0.25, curl: -0.5, wave: 0.45, waves: 1.6, bones: 7, plume: true, tip: 0.25, colours: { coat: WEED, under: "#2f5c3a", tip: "#8fc46a" }, spikes: { n: 7, colour: "#8fc46a", len: 0.8 } });
-    // its armour (Ed, 2026-11-11: "Armour should just be thickened polygons on their torso with a different colour and glowing runes"): a band of bronze plate round the foot of its shell, a mark lit on every plate
-    const armour = [{ on: "dome", from: 1.05, to: 2.0, round: [0, 3.2], thick: 0.014, colour: BRONZE, rim: BRONZE2, runes: { colour: LINE, size: 0.7, max: 1 } }];
+    // (the shell under its plates is light itself, so every join between them is lit)
+    const sh = carapace(q, { high: 0.3, wide: 1.7, long: 0.78, rows: 6, sides: 8, colour: () => LINE, glow: true, rim: { colour: BRONZE, r: 0.012 } });
+    // (Ed, 2026-11-12: "I don't think turtles should get long tails")
+    const t = tail("tail", "pelvis", q.root, { len: 0.2, r: 0.036, pitch: -0.25, tip: 0, colours: { coat: C.coat, tip: C.coat } });
+    // its armour (Ed, 2026-11-12: "the turtle's armour can be its whole shell"): the shell is plate from rim to crown, three
+    // rows of eight dark horn plates edged in bronze and a cap, each standing apart from the next, a mark lit on every plate
+    const armour = [{ on: "dome", from: 1, to: 5.9, round: [0, 3.2], lames: 3, inset: 0.07, gap: 0.05, thick: 0.02, step: 0, colour: HORN, rim: BRONZE, runes: { colour: LINE, size: 0.5, max: 1 } },
+      { on: "dome", from: 6, to: 7, round: [0, 3.2], thick: 0.02, step: 0, colour: HORN2, rim: BRONZE }];
     const beard = [{ at: P(0, -0.035, 0.17), rx: 0.03, ry: 0.025, tip: P(0, -0.24, 0.12), bone: "head", colour: "#f1eee4", tipColour: "#c9c6ba", bulge: 0.8, split: 0.45, up: [0, 0, 1], sides: 5 },
       ...[1, -1].flatMap(s => [{ at: P(0.05 * s, 0.085, 0.11), rx: 0.016, ry: 0.012, tip: P(0.2 * s, 0.16, -0.06), bone: "head", colour: "#f1eee4", bulge: 0.7, split: 0.5, up: [0, 1, 0], sides: 4 }, { at: P(0.04 * s, -0.01, 0.2), rx: 0.008, ry: 0.008, tip: P(0.2 * s, -0.12, 0.14), bone: "head", colour: "#f1eee4", up: [0, 1, 0], sides: 3 }])];
     return plan("turtle-legend", q.body, q.skull, [...q.legs, sh, t], paddle({ seconds: 1.5, sway: 0.05, tailSwing: 0.06, tails: [t.chain], legs: walk(0.8) }), { cones: beard, armour });
