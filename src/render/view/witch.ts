@@ -10,6 +10,7 @@ import { depthWhereDrawn, houseWitchOverlay, setHouseWitchPass } from "../houseW
 import { broomWhere, stationOf } from "../../rules/stations";
 import type { View } from "../view";
 import { captureRefractionCast } from "./refraction";
+import { DECKS_FX, decksMiddle, decksRingAt } from "../leash/decksRing";
 import { captureDodgeEchoes } from "./dodgeEchoes";
 import { PARTY_CAST } from "../../rules/party";
 import { STEP } from "../../rules/game";
@@ -217,9 +218,15 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
         wf = Dj.full[j]; djUpper = Dj.upper[j];
       }
       // The party start (render/partyStart.ts, its pieces' knobs partyStart; Ed, 2026-11-03): at the cast, at her feet as drawn here;
-      // kept as she's drawn seated, so the decks' replay (View.replayPartyStart) plays it there again.
+      // kept as she's drawn seated, so the decks' replay (View.replayPartyStart) plays it there again. Since Ed, 2026-11-12 ("I want to
+      // remove this ... Instead I want something like the soundsystem spell (audio analyser ring)"), the decks' analyser ring in place
+      // of its pieces (render/leash/decksRing.ts), kept on the decks as she's drawn there; ?decksfx=old the pieces as before.
       const A = (v.partyStart.anchor ??= { x: 0, y: 0, z: 0 }); A.x = wx; A.y = wyy; A.z = wz;
-      if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.partyStart.start(g.tuning, wx, wyy, wz, sp + (ht - time)); captureRefractionCast(v, sp, wx, wyy, wz); }
+      if (typeof sp === "number" && sp !== v.castSeen) {
+        v.castSeen = sp; v.partyStart.start(g.tuning, wx, wyy, wz, sp + (ht - time));
+        if (DECKS_FX.old) captureRefractionCast(v, sp, wx, wyy, wz); else v.leashView.decksRing = decksRingAt(g, A, sp, false);
+      }
+      const DR = v.leashView.decksRing; if (DR) Object.assign(DR, decksMiddle(g, A));
     }
   }
   { const H = (v.partyStart.here ??= { x: 0, y: 0, z: 0 }); H.x = wx; H.y = wyy; H.z = wz; } // (where she's drawn: the replay's place on a night resumed after its cast)

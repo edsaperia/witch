@@ -24,6 +24,7 @@ import { groundHeight } from "../height";
 import { LIGHT_UNIFORMS } from "../lighting";
 import { updateRefraction, captureRefractionCast } from "./refraction";
 import { MAKE_SOME_NOISE, partyStartOf, replayReady } from "../../rules/partyStart";
+import { DECKS_FX, decksRingAt, replayRing } from "../leash/decksRing";
 import { partyOff, partyOverEase, updatePartyOver } from "../partyOver";
 import { partyZones } from "../../rules/party";
 import { hasRune } from "../../rules/creatureStates";
@@ -391,7 +392,10 @@ export function replayPartyStart(a4ViewHost: View, _a4PrivateHost: ViewInternals
     const P = a4ViewHost.partyStart, A = P.anchor ?? P.here, g = a4ViewHost.game;
     if (!A || !replayReady(partyStartOf(g.tuning), P.showAt, P.now)) return false;
     P.start(g.tuning, A.x, A.y, A.z, P.now);
-    captureRefractionCast(a4ViewHost, P.worldNow, A.x, A.y, A.z, true);
+    // (the decks' analyser ring again since Ed, 2026-11-12, render/leash/decksRing.ts; ?decksfx=old the pieces' heat ripple as before)
+    const L = a4ViewHost.leashView;
+    if (DECKS_FX.old) captureRefractionCast(a4ViewHost, P.worldNow, A.x, A.y, A.z, true);
+    else if (L) L.decksRing = replayRing(L.decksRing, decksRingAt(g, A, g.clock.time, true), g.clock.time);
     a4ViewHost.houseRooms?.sayAtDecks(MAKE_SOME_NOISE, P.now);
     return true;
   }

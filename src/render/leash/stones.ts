@@ -21,7 +21,7 @@ import type { LeashView } from "../leash";
 import { SPRITE_UNIFORMS } from "../sprites";
 import type { Tuning } from "../../rules/tuning";
 import { groundHeight } from "../height";
-import { SLOT, SLOTS } from "./glyphs";
+import { SLOT, SLOTS, type Instances } from "./glyphs";
 import { asleepLegend, drawEmbers, legendShine, rankColour, rankKnobs, rankSize, sigilRankColour, standScale, stoneKnobs } from "./ranks";
 
 /** Each stacked sigil's side as last drawn, and when it last turned (won over: Ed, 2026-10-29); its size times a pop as it flips to
@@ -83,6 +83,46 @@ export function barLevel(bins: ArrayLike<number>, i: number, n: number): number 
   const f = i / n, m = f < 0.5 ? f * 2 : (1 - f) * 2, used = Math.max(1, Math.floor(bins.length * 0.7));
   const b = Math.min(used - 1, Math.floor(Math.pow(m, 1.6) * used));
   return Math.max(0, Math.min(1, (bins[b] ?? 0) / 255));
+}
+
+/** The bars' levels this frame (the soundsystem spell's analyser: a stump's dial, a wave's bloom, the decks' ring at the party start,
+ *  render/leash/decksRing.ts): bar i of m from the music's spectrum (StoneView.spectrum), rising at once and falling slowly, as an
+ *  analyser's do (eased in StoneView.bars); with no audio running, a gentle idle. */
+export function analyserLevels(lv: LeashView, time: number): (i: number, m: number) => number {
+  const V = lv.stoneView, spec = V.spectrum, dt = Math.min(0.1, lv.frameDt);
+  return (i: number, m: number) => {
+    const live = spec ? barLevel(spec, i, m) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
+    return (V.bars[i] = Math.max(live, V.bars[i] - dt * 1.8));
+  };
+}
+
+/** The flat analyser's sizes (a great stump's, runeMarkers.stump.ring; the decks', render/leash/decksRing.ts): its first dot `inner` m
+ *  from the middle, a dot every `cell` m, out to `fill` of the edge; `glow`, how bright each blooms in its own colour (0: none). */
+export interface FlatRing { inner: number; cell: number; fill: number; glow?: number }
+/** Where it's drawn: its dots painted on in `ink`, glowing over them as light in `glow`, `y` m over the ground. */
+export interface RingLayers { ink: Instances; glow: Instances; y: number }
+
+/** One bar of the flat analyser lying on the ground (a great stump's: Ed, 2026-10-29, "the audio analyser effect should be the same
+ *  orientation as the stump rings"): at angle `a` from its middle (x0, z0), `reach` (0 to 1) of the way out to `edge` m, in colour c. */
+export function analyserBar(L: RingLayers, dot: number[], S: FlatRing, x0: number, z0: number, a: number, edge: number, reach: number, c: number[], alpha: number): void {
+  const ux = Math.cos(a), uz = Math.sin(a), steps = Math.max(1, Math.floor((edge * S.fill - S.inner) / S.cell)), top = Math.round(reach * steps);
+  for (let j = 0; j <= top; j++) {
+    const r = S.inner + j * S.cell, tip = j === top, x = x0 + ux * r, z = z0 + uz * r;
+    // (painted on, not added: added light vanishes on the cut lit by its sigils)
+    L.ink.add(x, L.y, z, S.cell, dot, c[0], c[1], c[2], alpha * (tip ? 1 : 0.9));
+    // (and glowing bright over it, as light, in its own colour: Ed, 2026-10-29, "music spell filled bars can glow brightly", "don't
+    // wash out to white light, it should bloom in the colour of the dot": its hue alone added, the grey in it taken out, so on the
+    // lit wood and where the glows overlap it saturates rather than whitening)
+    const gk = S.glow ?? 0, lo = Math.min(c[0], c[1], c[2]) * 0.9;
+    if (gk > 0) L.glow.add(x, L.y + 0.02, z, S.cell * 1.8, dot, (c[0] - lo) * gk, (c[1] - lo) * gk, (c[2] - lo) * gk, alpha * (tip ? 0.6 : 0.45), 1, true);
+  }
+}
+
+/** The whole ring at once (a wave's soundsystem appearing, Ed, 2026-10-29: "all the stacks in the soundwave filling out from the centre
+ *  simultaneously"; and the decks' at the party start): `n` bars round (x0, z0), the first due south, each reaching out `fill` (0 to
+ *  1) of the way times the music's level (`level`: analyserLevels), in the rainbow drifting round, at `alpha`. */
+export function analyserBloom(L: RingLayers, dot: number[], S: FlatRing, x0: number, z0: number, edge: number, n: number, fill: number, alpha: number, level: (i: number, m: number) => number, time: number): void {
+  for (let i = 0; i < n; i++) { const f = i / n; analyserBar(L, dot, S, x0, z0, Math.PI / 2 + f * Math.PI * 2, edge, fill * (0.55 + 0.45 * level(i, n)), rainbow(f + time * 0.15), alpha); }
 }
 
 /** A rainbow hue, 0 to 1 round (the wave pointer cycles the same: render/indicator.ts). */
@@ -196,12 +236,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
   for (const k of [...V.last.keys()]) if (!shown.has(k) && !V.converted.some(C => C.col === V.last.get(k))) V.last.delete(k);
   // The cast: the ring round the stone's foot, its bars the music's analyser, and the motes.
   const W = g.witches?.[0], cs = W ? castShown(g, W) : null, show = !!cs && (cs.casting || cs.k > 0 || cs.lostFrom !== undefined);
-  const n = Math.max(8, Math.min(V.bars.length, Math.round(K.bars))), spec = V.spectrum, dt = Math.min(0.1, lv.frameDt);
-  // (the music's level at bar i of m, rising at once and falling slowly, as an analyser's do; with no audio running, a gentle idle)
-  const level = (i: number, m: number) => {
-    const live = spec ? barLevel(spec, i, m) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
-    return (V.bars[i] = Math.max(live, V.bars[i] - dt * 1.8));
-  };
+  const n = Math.max(8, Math.min(V.bars.length, Math.round(K.bars))), level = analyserLevels(lv, time);
   // On a great stump (Ed, 2026-10-29: "the audio analyser effect should be the same orientation as the stump rings and fill the whole
   // treestump area"; "The audio bars should be long enough that they fill the whole root area, not just the cut trunk circle"): it lies
   // on the ground with the stump, its bars running out from the rings' middle (where she casts) over the roots all round, following
@@ -211,20 +246,9 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
   // circle longer at the bottom than at the top?" (the drawn roots lie farther south, the picture laid on the ground by its cut); the
   // even circle chosen over following them)
   const edgeOf = (st: StoneSpot) => { const R = st.roots!, mean = R.reduce((p, q) => p + q, 0) / Math.max(1, R.length); return (_a: number) => mean; };
-  // (one bar, at angle a from the rings' middle (x, z), `reach` of the way out to the roots' edge, in colour c)
-  const rootBar = (S: NonNullable<typeof SR>, edge: (a: number) => number, x0: number, z0: number, a: number, reach: number, c: number[], alpha: number) => {
-    const ux = Math.cos(a), uz = Math.sin(a), steps = Math.max(1, Math.floor((edge(a) * S.fill - S.inner) / S.cell)), top = Math.round(reach * steps);
-    for (let j = 0; j <= top; j++) {
-      const r = S.inner + j * S.cell, tip = j === top, x = x0 + ux * r, z = z0 + uz * r;
-      // (painted on, not added: added light vanishes on the cut lit by its sigils)
-      lv.ink.add(x, 0.06, z, S.cell, dot, c[0], c[1], c[2], alpha * (tip ? 1 : 0.9));
-      // (and glowing bright over it, as light, in its own colour: Ed, 2026-10-29, "music spell filled bars can glow brightly", "don't
-      // wash out to white light, it should bloom in the colour of the dot": its hue alone added, the grey in it taken out, so on the
-      // lit wood and where the glows overlap it saturates rather than whitening)
-      const gk = S.glow ?? 0, lo = Math.min(c[0], c[1], c[2]) * 0.9;
-      if (gk > 0) lv.flat.add(x, 0.08, z, S.cell * 1.8, dot, (c[0] - lo) * gk, (c[1] - lo) * gk, (c[2] - lo) * gk, alpha * (tip ? 0.6 : 0.45), 1, true);
-    }
-  };
+  // (one bar, at angle a from the rings' middle (x, z), `reach` of the way out to the roots' edge, in colour c: analyserBar, below)
+  const ground: RingLayers = { ink: lv.ink, glow: lv.flat, y: 0.06 };
+  const rootBar = (S: NonNullable<typeof SR>, edge: (a: number) => number, x0: number, z0: number, a: number, reach: number, c: number[], alpha: number) => analyserBar(ground, dot, S, x0, z0, a, edge(a), reach, c, alpha);
   V.castLight = null;
   // A wave's cast (Ed, 2026-10-29: "when the wave causes the soundsystem spell to be cast, it does it instantly, and the visual effect is
   // all the stacks in the soundwave filling out from the centre simultaneously as the soundsystem appears, instead of filling up
@@ -238,7 +262,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     if (e < 0 || e > T + WV.hold + WV.fade) continue;
     const fill = smooth(e / T), fade = 1 - smooth((e - T - WV.hold) / Math.max(0.05, WV.fade)), edge = edgeOf(st);
     waving = true;
-    for (let i = 0; i < nb; i++) { const f = i / nb; rootBar(SR, edge, st.x, st.z, Math.PI / 2 + f * Math.PI * 2, fill * (0.55 + 0.45 * level(i, nb)), hue(f + time * 0.15), fade); }
+    analyserBloom(ground, dot, SR, st.x, st.z, edge(0), nb, fill, fade, level, time);
     if (!V.castLight) V.castLight = { x: st.x, z: st.z, rgb: hue(time * 0.3) as [number, number, number], k: fill * fade };
     lv.look.magic.draw("party", "vortex", st.x, st.top+2, st.z, 2, 0.8, fill*fade*0.6, fill, 700001);
     lv.look.magic.draw("party", "dome", st.x, st.top+1, st.z, 2, 0.65, fill*fade*0.35, fill, 700002);
