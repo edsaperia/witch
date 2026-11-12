@@ -330,6 +330,7 @@ glossary; these are the prototype's), by note.
 - The GPU memory budget
 - Quality ladder
 - Palette-indexed art
+- Sail take-off freeze
 
 ### [The run](run.md)
 

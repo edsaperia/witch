@@ -405,7 +405,7 @@ import { render as a4_render, replayPartyStart as a4_replayPartyStart } from "./
 import { houseTilt as a4_houseTilt, behindHouse as a4_behindHouse, occluders as a4_occluders, ensureCrown as a4_ensureCrown, buildHome as a4_buildHome, swapHomeArt as a4_swapHomeArt } from "./view/houseFrame";
 import { legendRings as a4_legendRings, pin as a4_pin, inviteStart as a4_inviteStart } from "./view/markers";
 import { updateMoon as a4_updateMoon, updateSteam as a4_updateSteam, updateSmoke as a4_updateSmoke } from "./view/atmosphere";
-import { stumpsOf as a4_stumpsOf, updateLoadingMist as a4_updateLoadingMist, readyPrograms as a4_readyPrograms, landingWakeReady as a4_landingWakeReady, beginLandingShaders as a4_beginLandingShaders, armLimitedLanding as a4_armLimitedLanding, limitedLandingReady as a4_limitedLandingReady, waitForLandingWitch as a4_waitForLandingWitch, startLandingShaderGrace as a4_startLandingShaderGrace, compileAll as a4_compileAll, gpuCaughtUp as a4_gpuCaughtUp, warmDraws as a4_warmDraws, warmSteps as a4_warmSteps, setReadiness as a4_setReadiness } from "./view/readiness";
+import { stumpsOf as a4_stumpsOf, updateLoadingMist as a4_updateLoadingMist, readyPrograms as a4_readyPrograms, landingWakeReady as a4_landingWakeReady, beginLandingShaders as a4_beginLandingShaders, armLimitedLanding as a4_armLimitedLanding, limitedLandingReady as a4_limitedLandingReady, waitForLandingWitch as a4_waitForLandingWitch, startLandingShaderGrace as a4_startLandingShaderGrace, compileAll as a4_compileAll, gpuCaughtUp as a4_gpuCaughtUp, warmDraws as a4_warmDraws, warmSteps as a4_warmSteps, setReadiness as a4_setReadiness, warmAfterHouse as a4_warmAfterHouse } from "./view/readiness";
 import { build as a4_build, prepare as a4_prepare, bakeTufts as a4_bakeTufts, stumpSpecs as a4_stumpSpecs, islandAhead as a4_islandAhead, islandFaces as a4_islandFaces, coastAhead as a4_coastAhead, askIsland as a4_askIsland, setGameSteps as a4_setGameSteps, retype as a4_retype } from "./view/lifecycle";
 import { landingShot as a4_landingShot, scenePixelSize as a4_scenePixelSize, resize as a4_resize, screenOf as a4_screenOf, aimAt as a4_aimAt } from "./view/viewport";
 
@@ -557,6 +557,7 @@ export class View {
       get updateSmoke(): View["updateSmoke"] { return owner.updateSmoke.bind(owner); },
       get updateSteam(): View["updateSteam"] { return owner.updateSteam.bind(owner); },
       get warmDraws(): View["warmDraws"] { return owner.warmDraws.bind(owner); },
+      get warmAfterHouse(): View["warmAfterHouse"] { return owner.warmAfterHouse.bind(owner); },
       get warmSteps(): View["warmSteps"] { return owner.warmSteps.bind(owner); },
       get wisps(): View["wisps"] { return owner.wisps; },
       set wisps(value: View["wisps"]) { owner.wisps = value; },
@@ -1101,6 +1102,10 @@ export class View {
    *  Its last pass goes into a target, not the canvas; the targets are their own size again after. */
   private warmDraws(): Promise<void> { return a4_warmDraws(this, this.a4Internals, a4Shared); }
 
+  /** After a sail's dive path has built the house, its forest and the tufts, what they added compiled in the background (render/view/
+   *  readiness.ts warmAfterHouse; Ed, 2026-11-12: "a very long freeze when taking off from the treehouse after a sail"). */
+  private warmAfterHouse(epoch: number): Promise<void> { return a4_warmAfterHouse(this, this.a4Internals, a4Shared, epoch); }
+
   /** The island's own asked for ahead of need (prepare: each island's): its legends' carvings, its area types by `near` (the
    *  nearest her first) and its creatures. */
   private askIsland(near: Map<number, number>): void { return a4_askIsland(this, this.a4Internals, a4Shared, near); }
@@ -1394,6 +1399,7 @@ export type ViewInternals = {
   updateSmoke: View["updateSmoke"];
   updateSteam: View["updateSteam"];
   warmDraws: View["warmDraws"];
+  warmAfterHouse: View["warmAfterHouse"];
   warmSteps: View["warmSteps"];
   wisps: View["wisps"];
 };
