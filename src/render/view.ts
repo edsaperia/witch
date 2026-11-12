@@ -75,6 +75,7 @@ import { AreaMoods, hsvInto, moodOf } from "./mood";
 import { hsv2rgb } from "../../art/generator.js";
 import { Post } from "./post";
 import { GrassView } from "./grass";
+import { useWorldOrder } from "./drawOrder";
 import { SpellFx } from "./spellfx";
 
 import { PartyStartFx } from "./partyStart";
@@ -904,6 +905,7 @@ export class View {
     this.ledger = new GpuLedger(this.renderer.getContext(), () => canvas.width * canvas.height * 12); // (the canvas's back and front buffers and its depth: preserveDrawingBuffer)
     canvas.addEventListener("webglcontextlost", () => { this.ledger.reset(); this.onGpuEvent?.("context lost"); });
     this.renderer.setPixelRatio(1);
+    useWorldOrder(this.renderer); // (what's on top of what by the world, never the camera: render/drawOrder.ts; ?crawl=old as before)
     installShaderDrawGate(this.renderer, this.shaderDrawStatus, object => object === this.island?.ground.mesh ? this.ground.loadingFallback : null, (object, material, geometry) => {
       // (what's been drawn with its own program: the loading mist waits for it, render/view/mistReady.ts)
       if (instancesOf(object, geometry) <= 0) return;
