@@ -12,11 +12,11 @@
 const SLEEP_DIAL = typeof location !== "undefined" && new URLSearchParams(location.search).get("sleepdial") === "1";
 export const sleepDial = (): boolean => SLEEP_DIAL;
 
-/** How shut the eyes are (0 open, 1 shut) when the bed's hold is `fill` full (0 to 1): half straight, half eased in and out,
- *  so the first moment of the hold shows at once and the last moment shuts them softly. */
+/** How shut the eyes are (0 open, 1 shut) when the bed's hold is `fill` full (0 to 1): half straight, half eased out, so the
+ *  lids droop as soon as the hold begins (heavy eyes) and the last of it shuts them gently. */
 export function lidClosure(fill: number): number {
   const f = Math.min(1, Math.max(0, fill));
-  return 0.5 * f + 0.5 * f * f * (3 - 2 * f);
+  return 0.5 * f + 0.5 * Math.sin(f * Math.PI / 2);
 }
 
 /** How fast (a second) the eyes open again once the hold is let go: what's left of the closure falls by this share a second. */
@@ -44,7 +44,7 @@ const STEPS = 256; // (the closure in 1/256ths: each step's transforms made once
 const INK = "rgba(3,2,9,1)";
 /** Each lid as tall as the screen; at full closure its edge passes the middle by REACH (a share of the screen's height) so the
  *  curve's centre, which sits that far back from the lid's edge, is covered too. */
-const REACH = 0.4;
+const REACH = 0.22;
 
 export class EyeLids {
   private readonly box: HTMLDivElement;
@@ -66,7 +66,7 @@ export class EyeLids {
     const lid = (edge: "top" | "bottom") =>
       `position:absolute;left:-10vw;width:120vw;height:100vh;${edge}:0;will-change:transform;` +
       // (dark everywhere but a soft half-ellipse at its inner edge: the lid's curve, its corners reaching further in than its middle)
-      `background:radial-gradient(ellipse 75% ${REACH * 100}% at 50% ${edge === "top" ? 100 : 0}%, rgba(3,2,9,0) 0%, rgba(3,2,9,0) 55%, rgba(3,2,9,.85) 88%, ${INK} 100%)`;
+      `background:radial-gradient(ellipse 58% ${REACH * 100}% at 50% ${edge === "top" ? 100 : 0}%, rgba(3,2,9,0) 0%, rgba(3,2,9,0) 40%, rgba(3,2,9,.9) 82%, ${INK} 100%)`;
     this.top = document.createElement("div"); this.top.style.cssText = lid("top");
     this.bottom = document.createElement("div"); this.bottom.style.cssText = lid("bottom");
     this.vignette = document.createElement("div");
@@ -77,7 +77,7 @@ export class EyeLids {
       const c = i / STEPS, edge = c * (50 + REACH * 100); // (the lid's edge, in hundredths of the screen's height from its side)
       this.topAt.push(`translate3d(0,${(edge - 100).toFixed(2)}%,0)`);
       this.bottomAt.push(`translate3d(0,${(100 - edge).toFixed(2)}%,0)`);
-      this.fade.push(Math.min(1, c * 1.6).toFixed(3));
+      this.fade.push(Math.min(1, c * 2).toFixed(3));
     }
   }
 
