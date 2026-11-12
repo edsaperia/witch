@@ -157,6 +157,7 @@ Each brings back how something was before a change, to compare against what repl
 
 | switch | does | since | read in |
 |---|---|---|---|
+| `crawl=old` | The crawl as it was, to compare: overlapping see-through things of one layer drawn in the order of their distance from the camera (not the world's fixed far-to-near order), and the camera's pixel snap taken up the screen (not along the ground), so things off the focus's depth slide to and fro as she walks north or south. | 2026-11-11 | render/drawOrder.ts |
 | `patternlight=off` / `patternlight=auto` / `patternlight=spokes` / `patternlight=stripes` / `patternlight=bands` / `patternlight=colour-spokes` | Colour spokes by default; auto cycles, other named looks hold their pattern, off keeps original lighting, and unknown values stay off. Reduced flashing disables every pattern. | 2026-10-31 | render/lightPatternState.ts |
 | `area=off` | Scenery isn't averaged where it shrinks (a performance suspect, to compare). | 2026-10-14 | app/linkParams.ts |
 | `attacks=old` | Every species fights with its old attacks from config/combat.json, not its own in the attack grammar. *Decision: Each species' own attack is the default (Ed, 2026-10-27, #1326).* | 2026-10-27 | app/linkParams.ts |
