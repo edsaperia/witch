@@ -109,6 +109,8 @@ says what each note covers.
 - Won ones out of the way
 - Follower buffs
 - Sigil stack
+- Deliberate hold
+- Sigil transition
 - Rank sigils
 - Sides and sizes
 - Colour grammar

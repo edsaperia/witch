@@ -37,6 +37,7 @@ import { LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS } from "./height";
 import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, DISC, writeOn, LEGEND_LEVEL, LEGEND_ROW, Instances, VERT, FRAG, legendarySigil, maskOf } from "./leash/glyphs";
 import { drawCombat } from "./leash/combat";
+import { drawFalling, feelBurn, newSigilFeel, resetSigilFeel, sigilFeelOn } from "./leash/sigilFeel";
 import { AttackLook } from "./leash/attackLook";
 import { BLOOD_PULL, BloodPool, bloodKnobs } from "./leash/blood";
 import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubbles";
@@ -52,7 +53,7 @@ import { drawProjection } from "./leash/projection";
 import { RUNE_SCALE, runeOffset, sigilSize } from "../rules/runeOffset";
 import { relicsOut } from "../rules/partyOver";
 import { berryColour } from "./colourGrammar";
-import { crowned, drawEmbers, glyphPoints, legendShine, rankColour, rankKnobs, rankOf, rankSize, ranksOn, youthDots } from "./leash/ranks";
+import { crowned, drawEmbers, glyphPoints, legendShine, rankColour, rankKnobs, rankOf, rankSize, ranksOn, standScale, youthDots } from "./leash/ranks";
 export { BUBBLE_PX, bubblePx } from "./leash/bubbles";
 export { legendarySigil } from "./leash/glyphs";
 
@@ -148,6 +149,8 @@ export class LeashView {
   v = new THREE.Vector3();
   /** Where each stacked sigil was last frame (a knockout's release splashes from there). */
   lastSlots = new Map<number, THREE.Vector3>();
+  /** Sigils on their way between the floor and her stack (Ed, 2026-11-12: "make the floor<=>head transition more 'magical'"; render/leash/sigilFeel.ts). */
+  readonly feel = newSigilFeel();
   /** Short-lived effects: hit sparks, puffs, splashes, released leashes, teleport sparkles, quake rings. */
   /** Each traveller's drawn route, eased between the rules' re-plans (render/routeEase.ts). */
   routes = new Map<number, RouteShape>();
@@ -227,7 +230,7 @@ export class LeashView {
     this.game = game;
     this.seatAt = null; this.bloodPool = null;
     for (const m of [this.ruts, this.evolved, this.cycledAt, this.joined, this.stackY, this.lastSlots, this.routes, this.tops, this.halfW, this.heads, this.dreamStones, this.chains]) m.clear();
-    this.look.reset(); this.stones.length = 0; resetStoneView(this.stoneView);
+    this.look.reset(); this.stones.length = 0; resetStoneView(this.stoneView); resetSigilFeel(this.feel);
     this.bursts = []; this.chain = []; this.fx = []; this.ringGlows = []; this.dreams = []; this.snoreNear = []; this.projected = [];
     this.lastTime = 0; this.tugAt = -9;
     this.shakeAt = -Infinity; this.shakeAmp = 0; this.boingAt = -Infinity; this.partyOverEase = 0; this.lettersSeen = -Infinity;
@@ -587,6 +590,18 @@ export class LeashView {
     return { uv: this.uv(this.slotOf(c.species, c.level)), scale: 1 };
   }
 
+  /** A creature's placed sigil's size on the ground (by rank with rank sigils, Ed 2026-10-28; else by level). */
+  groundSize(c: Creature): number {
+    const t = this.game.tuning;
+    return ranksOn(t) ? rankKnobs(t).glyph * rankSize(t, rankOf(c)) : (3 + c.level * 0.8) * this.sigilOf(c).scale;
+  }
+
+  /** A creature's sigil's size in her stack (render/leash/stack.ts). */
+  stackSize(c: Creature): number {
+    const t = this.game.tuning, S = t.stack, sg = this.sigilOf(c);
+    return (ranksOn(t) ? (2 + 2 * 0.4) * rankSize(t, rankOf(c)) * standScale(t) : 2 + c.level * 0.4) * S.scale * sg.scale;
+  }
+
   /** hatTop: the height of the tip of her hat this frame (the stack floats above it); bodyY, her body's middle, feetY her feet and frameH her frame's height in art pixels (the slashes, sized to her). */
   update(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number, bodyY = hatTop * 0.5, feetY = 0, frameH = 0): void {
     this.bodyY = bodyY; this.hatTop = hatTop; this.feetY = feetY; this.frameH = frameH;
@@ -611,6 +626,7 @@ export class LeashView {
     this.drawLetters(time);
     drawCombat(this, time, camera, width, height, hatTop);
     const PM = { count: 16, size: 0.7, bright: 1, rise: 1, life: 1, ...t.leash.placeMotes }; // (a sigil put down or picked up: its burst of motes)
+    const feelOn = sigilFeelOn(t); // (?sigilfeel=old: the transition as before)
     for (const e of g.leashEvents) { // (the whole frame's, not only its last step's)
       if (e.kind === "invited" || e.kind === "befriended") {
         // its own colour for the burst: its sigil's neon, calmed toward the night (as the HUD's, #188)
@@ -622,7 +638,22 @@ export class LeashView {
       // ground and motes of its creature's neon rising; picked up, its motes rising back to her; cycled (E in the treetops),
       // the new bottom sigil of the stack flares (drawn with the stack).
       const sc = (e.kind === "placed" || e.kind === "picked") && e.id !== undefined ? g.creatures[e.id] : undefined;
-      if (sc) {
+      if (sc && feelOn) {
+        // The floor ⇄ head transition (Ed, 2026-11-12: "have a distinct flash with each transition in the sigil colour, and it burns into
+        // the ground with a glow and sparkles above the head"; render/leash/sigilFeel.ts): put down, it falls from where it was in her
+        // stack and burns in (its ring and motes sent as it lands); picked up, its motes rise where it lay as it flies up to her stack.
+        const seed = hash2(e.id, Math.floor(e.at * 60), 17);
+        if (e.kind === "placed") {
+          const from = this.lastSlots.get(e.id), size0 = this.stackSize(sc);
+          this.feel.down.set(e.id, { at: time, fx: from?.x ?? w.x, fy: from?.y ?? this.hatTop + 1, fz: from?.z ?? w.z, x: e.x, z: e.z, size0, seed, landed: false });
+          this.feel.up.delete(e.id);
+        } else {
+          this.feel.up.set(e.id, { at: time, fx: e.x, fz: e.z, seed });
+          this.feel.down.delete(e.id);
+          const col = this.colOf(sc), R = 3 + sc.level * 0.8;
+          this.fx.push({ kind: "motes", x: e.x, y: 0.2, z: e.z, at: time, life: 0.7 * PM.life, r: col.r * PM.bright, g: col.g * PM.bright, b: col.b * PM.bright, seed: e.at * 53 + e.id, size: R * 0.25, tx: 4.5 * PM.rise, n: PM.count, dot: PM.size });
+        }
+      } else if (sc) {
         const col = this.colOf(sc), R = 3 + sc.level * 0.8;
         if (e.kind === "placed") this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.6, r: 0.62, g: 0.4, b: 0.2, seed: 0, size: R * 0.8, n: 20, dot: 0.8 }); // (a deep amber: its dots overlap and add up, and it mustn't reach white)
         this.fx.push({ kind: "motes", x: e.x, y: 0.2, z: e.z, at: time, life: (e.kind === "placed" ? 0.9 : 0.7) * PM.life, r: col.r * PM.bright, g: col.g * PM.bright, b: col.b * PM.bright, seed: e.at * 53 + e.id!, size: e.kind === "placed" ? R * 0.35 : R * 0.25, tx: (e.kind === "placed" ? 3 : 4.5) * PM.rise, n: PM.count, dot: PM.size });
@@ -662,6 +693,16 @@ export class LeashView {
     for (const [id, p] of s.progress) if (s.talk?.id !== id) ring(id, Math.min(1, p / talkTime(g.creatures[id], t)), false);
 
     const slotPos = drawStack(this, time, hatTop, dot); // (the stack above her hat: render/leash/stack.ts)
+    // Sigils falling from her stack to the ground and burning in (render/leash/sigilFeel.ts); landed, a ring in its colour and its motes.
+    if (this.feel.down.size) drawFalling(this, time, id => {
+      const c = g.creatures[id];
+      if (!c || !s.placed.some(p => p.id === id)) return null;
+      const col = this.colOf(c);
+      return { uv: this.sigilOf(c).uv, r: col.r, g: col.g, b: col.b, size: this.groundSize(c) };
+    }, (id, f, r, gg, b, size) => {
+      this.fx.push({ kind: "ring", x: f.x, y: 0, z: f.z, at: time, life: 0.55, r: r * 0.8, g: gg * 0.8, b: b * 0.8, seed: 0, size: size * 1.1, n: 22, dot: 0.8 });
+      this.fx.push({ kind: "motes", x: f.x, y: 0.2, z: f.z, at: time, life: 0.9 * PM.life, r: r * PM.bright, g: gg * PM.bright, b: b * PM.bright, seed: f.at * 53 + id, size: size * 0.35, tx: 3 * PM.rise, n: PM.count, dot: PM.size });
+    });
 
     // Placed sigils, written on the ground, a little brighter than they were so they read in the
     // grass (Ed, v233; the grass is trampled clear round them, grass.ts).
@@ -671,9 +712,19 @@ export class LeashView {
       const c = g.creatures[p.id], sg = this.sigilOf(c);
       let col = this.colOf(c);
       const pulse = ranks ? 0.8 + 0.1 * Math.sin(time * 2 + p.id) : 1.05 + 0.25 * Math.sin(time * 2 + p.id); // (a rank sigil's colour kept: brightened, its purple went pink, toward an adult's red)
-      const drawn = writeOn(g.herTime, p.at); // (on her clock, as its stamp is: Bravo's dark-circle diagnosis, 2026-10-12)
-      const size = ranks ? RK.glyph * rankSize(t, rankOf(c)) : (3 + c.level * 0.8) * sg.scale; // (by rank, Ed 2026-10-28)
+      // (falling to the ground, it isn't there yet; landed, it burns in: white-hot in its colour, written in fast, a glow round it,
+      // settling to its resting look: render/leash/sigilFeel.ts)
+      const burn = this.feel.down.size ? feelBurn(this, p.id, time) : null;
+      if (burn?.hidden) continue;
+      const drawn = burn ? burn.drawn : writeOn(g.herTime, p.at); // (on her clock, as its stamp is: Bravo's dark-circle diagnosis, 2026-10-12)
+      const size = this.groundSize(c); // (by rank, Ed 2026-10-28)
       if (ranks) col = this.rankMoment(c, p.x, p.z, size, col, time, dot);
+      if (burn && burn.heat > 0) {
+        const h = burn.heat, hot = (v: number) => (v * pulse + (1 - v) * 0.55 * h) * (1 + 1.6 * h);
+        this.groundSigil(p.x, 0.02, p.z, size, sg.uv, hot(col.r), hot(col.g), hot(col.b), 1, drawn, 0);
+        this.flat.add(p.x, 0.012, p.z, size * 1.9, dot, col.r, col.g, col.b, 0.75 * h, 1, true); // (its glow on the ground)
+        continue;
+      }
       this.groundSigil(p.x, 0.02, p.z, size, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, 1, drawn, ranks ? legendShine(rankOf(c), time, p.id) : 0);
       if (seeThrough > 0) this.through.add(p.x, 0.02, p.z, size, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, seeThrough, drawn);
       if (ranks && drawn >= 1) drawEmbers(this.standing, dot, this.glyphPts.get(`${sg.uv[0]},${sg.uv[1]}`) ?? [], p.x, 0.02, p.z, size, true, rankOf(c), [col.r, col.g, col.b], time, p.id, RK.embers, crowd);
