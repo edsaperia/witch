@@ -31,9 +31,13 @@ describe("the grass under the dive", () => {
   });
 
   it("holds back the held types' tufts (none drawn) till their art is in, then writes them all at once", () => {
+    // No time budget for working out cells (groundCover.budgetMs, 2 ms a frame in play): with it, how many cells a frame got
+    // depended on the machine's speed, and on a loaded CI runner 40 frames didn't reach them all, so `before` came up short
+    // (4513, 4570 of 4608). Unbudgeted, every update works out every cell in reach, whatever the runner's load.
     const g = newGame(123, TUNING), made = runSync(GrassView.tufts({ grassTest: 2 }));
-    const grass = new GrassView(g.map, g.tuning, 0.05, { grassTest: 2 }, g.forest, undefined, made), h = g.map.treehouse;
-    const at = (x: number, z: number) => { for (let i = 0; i < 40; i++) grass.update(x, z, 1, [], Infinity); return drawn(grass); };
+    const t = { ...g.tuning, groundCover: { ...g.tuning.groundCover, budgetMs: Infinity } };
+    const grass = new GrassView(g.map, t, 0.05, { grassTest: 2 }, g.forest, undefined, made), h = g.map.treehouse;
+    const at = (x: number, z: number, frames = 40) => { for (let i = 0; i < frames; i++) grass.update(x, z, 1, [], Infinity); return drawn(grass); };
     const before = at(h.x + 30, h.z + 30);
     expect(before).toBeGreaterThan(0);
     const all = new Set(LOOKS.map((_, t) => t));
@@ -43,7 +47,8 @@ describe("the grass under the dive", () => {
     expect(at(h.x + 60, h.z + 30)).toBe(0); // (nor as she moves)
     grass.setArt(runSync(GrassView.tufts({ grassTest: 2, biome: "north" }, all))); // (the dive's bake in: render/view.ts bakeTufts)
     expect(grass.holds(0)).toBe(false);
+    expect(at(h.x + 30, h.z + 30, 1)).toBe(before); // (all at once: the same tufts where she was, all of them, on the next frame)
     expect(at(h.x + 60, h.z + 30)).toBeGreaterThan(0);
-    expect(at(h.x + 30, h.z + 30)).toBe(before); // (the same tufts where she was, all of them)
+    expect(at(h.x + 30, h.z + 30)).toBe(before); // (and still all of them as she comes back)
   });
 });
