@@ -21,19 +21,22 @@ function palette(samples, k) {
   }
   return cs;
 }
+/** A tuft's number from its place in the grid of them: the same wherever it's asked. */
+const cell = (x, y, z) => { let h = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263) ^ Math.imul(z | 0, 2147483647); h = Math.imul(h ^ (h >>> 13), 1274126177); return (h ^ (h >>> 16)) >>> 0; };
 const nearest = (cs, r, g, b) => { let best = 0, bd = Infinity; for (let i = 0; i < cs.length; i++) { const c = cs[i], d = (r - c[0]) ** 2 + (g - c[1]) ** 2 + (b - c[2]) ** 2; if (d < bd) { bd = d; best = i; } } return best; };
 
 /** Draws `sh`. o: height (art pixels its first frame stands, turned towards us: its whole silhouette) or body (the same, of its
  *  body proper alone: no tail, ears, tufts or armour, as the game sizes its animals) or ppu (art pixels a metre, outright: an
- *  animal lying down drawn at the scale it walks at), frames (in its walk's
+ *  animal lying down drawn at the scale it walks at), texture (its coat's: { size (art pixels across a tuft), long (how many
+ *  times longer along its body), tilt (how far a tuft tips the light, 0..1), tone (how much lighter or darker one is) }), frames (in its walk's
  *  cycle), colours (the palette's size), ss, cover. Returns { w, h, ppu (art pixels a metre), step (how far it walks between
  *  frames, a share of w), palette, towards, away }: each a list of frames { albedo, normal, flipped (the normals for drawing it
  *  mirrored), eyes (1 where a pixel is an eye, or undefined if none show), head ([x, y], where its head's joint is) }, every
  *  frame w by h, its feet's lowest pixel on the bottom row. */
 export function bakeMesh(sh, o = {}) {
-  const { height = 137, frames = 8, ss = 4, colours = 12, cover = 0.4 } = o;
+  const { height = 137, frames = 8, ss = 4, colours = 12, cover = 0.4, texture = null } = o;
   const pos0 = Float32Array.from([...sh.lit.pos, ...sh.glow.pos]), col = Uint8Array.from([...sh.lit.col, ...sh.glow.col]), bone = Uint16Array.from([...sh.lit.bone, ...sh.glow.bone]), core = Uint8Array.from([...sh.lit.core, ...sh.glow.core]);
-  const nv = bone.length, nt = nv / 3, lit = sh.lit.bone.length / 3, eye = Uint8Array.from([...sh.lit.tag, ...sh.glow.tag], t => (t === "eye" ? 1 : 0)), headBone = sh.bones.findIndex(b => b.name === "head");
+  const nv = bone.length, nt = nv / 3, lit = sh.lit.bone.length / 3, eye = Uint8Array.from([...sh.lit.tag, ...sh.glow.tag], t => (t === "eye" ? 1 : 0)), skin = Uint8Array.from([...sh.lit.skin, ...sh.glow.skin]), headBone = sh.bones.findIndex(b => b.name === "head");
   // every frame's corners, in the model's own space
   const world = Array.from({ length: frames }, (_, i) => { const { R, T } = pose(sh, i / frames), out = new Float32Array(nv * 3);
     for (let v = 0; v < nv; v++) { const b = bone[v], a = sh.bones[b].at, x = pos0[v * 3] - a[0], y = pos0[v * 3 + 1] - a[1], z = pos0[v * 3 + 2] - a[2];
@@ -86,22 +89,31 @@ export function bakeMesh(sh, o = {}) {
         }
       }
       // brought down to art pixels: colour (the mean of the covered samples), normal, depth, solid or not, glowing or not
-      const rgb = new Float32Array(W * H * 3), nrm = new Float32Array(W * H * 3), dep = new Float32Array(W * H), on = new Uint8Array(W * H), lamp = new Uint8Array(W * H), eyes = new Uint8Array(W * H);
+      const rgb = new Float32Array(W * H * 3), nrm = new Float32Array(W * H * 3), dep = new Float32Array(W * H), on = new Uint8Array(W * H), lamp = new Uint8Array(W * H), eyes = new Uint8Array(W * H), tone = texture ? new Float32Array(W * H) : null;
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-        let n = 0, r = 0, g = 0, b = 0, nx = 0, ny = 0, nz = 0, d = 0, glows = 0, eyed = 0;
+        let n = 0, r = 0, g = 0, b = 0, nx = 0, ny = 0, nz = 0, d = 0, glows = 0, eyed = 0, at = -1;
         for (let v = 0; v < ss; v++) for (let u = 0; u < ss; u++) {
           const q = (y * ss + v) * bw + x * ss + u, t = id[q];
           if (t < 0) continue;
-          n++; if (t >= lit) glows++; if (eye[t]) eyed++; r += cr[q]; g += cg[q]; b += cb[q]; nx += tn[t * 3]; ny += tn[t * 3 + 1]; nz += tn[t * 3 + 2];
+          n++; if (at < 0 || (v === ss >> 1 && u === ss >> 1)) at = q; if (t >= lit) glows++; if (eye[t]) eyed++; r += cr[q]; g += cg[q]; b += cb[q]; nx += tn[t * 3]; ny += tn[t * 3 + 1]; nz += tn[t * 3 + 2];
           d += 1 - ((1 - (radius * 3 - zb[q] - 0.01) / far) * 255 + 0.5 | 0) / 255; // (how far from the camera, 0 to 1 over its range, in the 256 steps the browser bake's depth picture has)
         }
         if (n < cover * ss * ss) continue;
-        const j = y * W + x, l = Math.hypot(nx, ny, nz) || 1;
+        // its coat's texture (o.texture): the pixel's place on the animal as it stands at rest decides its tuft, so the pattern rides
+        // the body through the walk; a tuft tips the light its own way and is a shade lighter or darker
+        const j = y * W + x, face = id[at];
+        if (texture && skin[face] && face < lit) { const a = face * 3, px = (at % bw) + 0.5, py = Math.floor(at / bw) + 0.5, x0 = sx[a], y0 = sy[a], x1 = sx[a + 1], y1 = sy[a + 1], x2 = sx[a + 2], y2 = sy[a + 2], area = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0) || 1e-9;
+          const w0 = ((x1 - px) * (y2 - py) - (x2 - px) * (y1 - py)) / area, w1 = ((x2 - px) * (y0 - py) - (x0 - px) * (y2 - py)) / area, w2 = 1 - w0 - w1, cs = texture.size / ppu;
+          const X = w0 * pos0[a * 3] + w1 * pos0[a * 3 + 3] + w2 * pos0[a * 3 + 6], Y = w0 * pos0[a * 3 + 1] + w1 * pos0[a * 3 + 4] + w2 * pos0[a * 3 + 7], Z = w0 * pos0[a * 3 + 2] + w1 * pos0[a * 3 + 5] + w2 * pos0[a * 3 + 8];
+          const cx = Math.floor(X / cs), cy = Math.floor(Y / cs), cz = Math.floor(Z / (cs * texture.long) + (cell(cx, cy, 7) % 97) / 97), h = cell(cx, cy, cz);
+          nx += ((h & 255) / 127.5 - 1) * texture.tilt * n; ny += (((h >> 8) & 255) / 127.5 - 1) * texture.tilt * 0.7 * n;
+          const k = (h >> 16) & 255; tone[j] = k < 64 ? -texture.tone : k > 208 ? texture.tone * 0.7 : 0; }
+        const l = Math.hypot(nx, ny, nz) || 1;
         on[j] = 1; lamp[j] = glows * 2 > n ? 1 : 0; eyes[j] = eyed * 2 > n ? 1 : 0; rgb[j * 3] = r / n; rgb[j * 3 + 1] = g / n; rgb[j * 3 + 2] = b / n; nrm[j * 3] = nx / l; nrm[j * 3 + 1] = ny / l; nrm[j * 3 + 2] = nz / l; dep[j] = d / n;
         if (lamp[j] || (x + ux0 + (y + uy0) * 7 + i * 3) % 5 === 0) samples.push([rgb[j * 3], rgb[j * 3 + 1], rgb[j * 3 + 2]]); // (every glowing pixel: small, and its colour must reach the palette)
       }
       const h = world[i].head && view(...world[i].head);
-      raw.push({ facing, rgb, nrm, dep, on, lamp, eyes, head: h ? [S / 2 + h[0] * ppu - ux0, S / 2 - h[1] * ppu - uy0] : null });
+      raw.push({ facing, rgb, nrm, dep, on, lamp, eyes, tone, head: h ? [S / 2 + h[0] * ppu - ux0, S / 2 - h[1] * ppu - uy0] : null });
     }
   }
 
@@ -119,7 +131,7 @@ export function bakeMesh(sh, o = {}) {
       const c = pal[nearest(pal, f.rgb[j * 3], f.rgb[j * 3 + 1], f.rgb[j * 3 + 2])], nx = f.nrm[j * 3], ny = f.nrm[j * 3 + 1], nz = f.nrm[j * 3 + 2];
       // a dark line round it and wherever a nearer part stands in front of it
       const edge = !at(x - 1, y) || !at(x + 1, y) || !at(x, y - 1) || !at(x, y + 1), d = f.dep[j], behind = !edge && (nearer(x + 1, y, d) || nearer(x - 1, y, d) || nearer(x, y + 1, d) || nearer(x, y - 1, d));
-      const s = f.lamp[j] ? c : edge ? dark : behind ? c.map(v => v * 0.5) : c;
+      const k = f.tone ? 1 + f.tone[j] : 1, s = f.lamp[j] ? c : edge ? dark : behind ? c.map(v => v * 0.5) : k === 1 ? c : c.map(v => v * k);
       albedo[q] = s[0]; albedo[q + 1] = s[1]; albedo[q + 2] = s[2]; albedo[q + 3] = f.lamp[j] ? 254 : 255;
       // (the game's normals: x right, y down, z towards us: art/core.js `bake`)
       normal[q] = nx * 127 + 128; normal[q + 1] = -ny * 127 + 128; normal[q + 2] = nz * 255; normal[q + 3] = 255;

@@ -14,6 +14,9 @@ const V = p => new V3(...p);
 // What a creature's size is not measured by (the game sizes an animal by its body: docs/notes/creatures.md, the size candidate):
 // anything riding these bones, and every cone (ears, tufts, spines, claws) and armour plate. The rest is its `core`.
 const FRILL = /^(tail|wing|ant|ear|orbit|stalk)/;
+// What has no coat to texture (art/mesh/raster.js `texture`): wings, feelers and eye stalks; and every cone and armour plate, and
+// any ring marked `plain`. The rest of its lofts, tails too, are its `skin`.
+const BARE = /^(wing|ant|orbit|stalk)/;
 
 /** A colour, hex or already [r, g, b], as [r, g, b], 0 to 255. */
 const rgb = c => { if (Array.isArray(c)) return c; const h = c.replace("#", ""), f = h.length === 3 ? [...h].map(x => x + x).join("") : h; return [parseInt(f.slice(0, 2), 16), parseInt(f.slice(2, 4), 16), parseInt(f.slice(4, 6), 16)]; };
@@ -21,9 +24,9 @@ const rgb = c => { if (Array.isArray(c)) return c; const h = c.replace("#", ""),
 /** Collects flat-shaded triangles: each corner its own point, with its colour and the one bone it rides. `tag` marks what a
  *  face is where the game needs to know (an eye). */
 class Faces {
-  constructor(index) { this.index = index; this.lit = { pos: [], col: [], bone: [], core: [], tag: [] }; this.glow = { pos: [], col: [], bone: [], core: [], tag: [] }; }
+  constructor(index) { this.index = index; this.lit = { pos: [], col: [], bone: [], core: [], tag: [], skin: [] }; this.glow = { pos: [], col: [], bone: [], core: [], tag: [], skin: [] }; }
   // (a face glows if its first corner does: fox-fire, an eye; drawn unlit, in its own group)
-  tri(a, b, c) { const to = a.glow ? this.glow : this.lit; for (const v of [a, b, c]) { to.pos.push(v.p.x, v.p.y, v.p.z); to.col.push(...rgb(v.c)); to.bone.push(this.index[v.bone]); to.core.push(v.core ? 1 : 0); } to.tag.push(a.tag ?? ""); }
+  tri(a, b, c) { const to = a.glow ? this.glow : this.lit; for (const v of [a, b, c]) { to.pos.push(v.p.x, v.p.y, v.p.z); to.col.push(...rgb(v.c)); to.bone.push(this.index[v.bone]); to.core.push(v.core ? 1 : 0); } to.tag.push(a.tag ?? ""); to.skin.push(a.skin ? 1 : 0); }
   quad(a, b, c, d) { this.tri(a, b, c); this.tri(a, c, d); }
 }
 
@@ -36,7 +39,7 @@ function loft(faces, rings, sides, up = [0, 1, 0], core = true) {
     const t = next.sub(prev).normalize(), u0 = V(r.up ?? up), s = new V3().crossVectors(u0, t).normalize(), u = new V3().crossVectors(t, s).normalize();
     return Array.from({ length: sides }, (_, k) => {
       const a = (k + (r.turn ?? 0.5)) / sides * Math.PI * 2, frac = k / sides; // (turn 0.5: a flat on top, a corner each side)
-      return { p: here.clone().addScaledVector(s, Math.sin(a) * r.rx).addScaledVector(u, Math.cos(a) * r.ry), c: typeof r.colour === "function" ? r.colour(Math.cos(a), Math.sin(a), frac) : r.colour, bone: r.bone, glow: !!r.glow, tag: r.tag, core: core && !FRILL.test(r.bone) };
+      return { p: here.clone().addScaledVector(s, Math.sin(a) * r.rx).addScaledVector(u, Math.cos(a) * r.ry), c: typeof r.colour === "function" ? r.colour(Math.cos(a), Math.sin(a), frac) : r.colour, bone: r.bone, glow: !!r.glow, tag: r.tag, core: core && !FRILL.test(r.bone), skin: core && !r.plain && !BARE.test(r.bone) };
     });
   });
   // (faces wound to look outward, whichever way the path and its frame happen to turn)
@@ -45,7 +48,7 @@ function loft(faces, rings, sides, up = [0, 1, 0], core = true) {
   const n0 = new V3().crossVectors(made[j + 1][0].p.clone().sub(made[j][0].p), made[j][1].p.clone().sub(made[j][0].p)), out = n0.dot(made[j][0].p.clone().add(made[j][1].p).multiplyScalar(0.5).sub(mids[j])) >= 0;
   for (let i = 0; i + 1 < made.length; i++) for (let k = 0; k < sides; k++) { const a = made[i][k], b = made[i][(k + 1) % sides], c = made[i + 1][(k + 1) % sides], d = made[i + 1][k]; out ? faces.quad(a, d, c, b) : faces.quad(a, b, c, d); }
   for (const [ring, last] of [[made[0], false], [made[made.length - 1], true]]) { // the ends, as fans
-    const mid = { p: ring.reduce((m, v) => m.add(v.p), new V3()).multiplyScalar(1 / sides), c: ring[0].c, bone: ring[0].bone, glow: ring[0].glow, tag: ring[0].tag, core: ring[0].core };
+    const mid = { p: ring.reduce((m, v) => m.add(v.p), new V3()).multiplyScalar(1 / sides), c: ring[0].c, bone: ring[0].bone, glow: ring[0].glow, tag: ring[0].tag, core: ring[0].core, skin: ring[0].skin };
     for (let k = 0; k < sides; k++) last === out ? faces.tri(mid, ring[(k + 1) % sides], ring[k]) : faces.tri(mid, ring[k], ring[(k + 1) % sides]);
   }
   return made;
@@ -168,7 +171,7 @@ function still(S) {
 
 /** The plan built: { name, bones: [{ name, parent (its place in the list, -1 for the root), at }], lit and glow (each { pos, col,
  *  bone, core, tag }: a triangle's three corners in turn, their colours 0..255, the bone each rides, whether each is part of its
- *  body proper (what its size is measured by), and a tag a triangle), and motion:
+ *  body proper (what its size is measured by), and a tag and whether it is coat a triangle), and motion:
  *  { seconds, rots, poss }: for a bone's name, (u) => [x, y, z], its turn (radians, applied y then x then z) or its shift from
  *  where it rests, u the walk's cycle 0..1; null if the plan has no gait }. */
 export function shape(plan) {

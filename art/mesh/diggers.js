@@ -70,7 +70,7 @@ const spades = (q, size, claw, clawLen = 1, skin = MOLE.belly) => { const lofts 
     // five claws fanned off its front edge, each a flat blade curving down and in towards its nose like a scythe (Ed, 2026-11-12:
     // "Give the mole curved claws")
     for (let i = 0; i < 5; i++) { const a = -0.35 + i * 0.42, d = [Math.sin(a) * s, 0, Math.cos(a)], hook = [-Math.cos(a) * s, 0, Math.sin(a)], L = 0.1 * size * clawLen, root = [c[0] + d[0] * rad * 0.82, c[1], c[2] + d[2] * rad * 0.82];
-      lofts.push({ sides: 4, up: [0, 1, 0], rings: [0, 0.25, 0.5, 0.75, 1].map(t => ({ at: [root[0] + (d[0] * t + hook[0] * 0.55 * t * t) * L, root[1] - 0.45 * t * t * L, root[2] + (d[2] * t + hook[2] * 0.55 * t * t) * L], rx: Math.max(0.0008, 0.02 * size * (1 - t) ** 0.7), ry: Math.max(0.0008, 0.011 * size * (1 - t) ** 0.7), bone, colour: claw })) }); } }
+      lofts.push({ sides: 4, up: [0, 1, 0], rings: [0, 0.25, 0.5, 0.75, 1].map(t => ({ at: [root[0] + (d[0] * t + hook[0] * 0.55 * t * t) * L, root[1] - 0.45 * t * t * L, root[2] + (d[2] * t + hook[2] * 0.55 * t * t) * L], rx: Math.max(0.0008, 0.02 * size * (1 - t) ** 0.7), ry: Math.max(0.0008, 0.011 * size * (1 - t) ** 0.7), bone, colour: claw, plain: true })) }); } }
   return { bones: [], lofts, cones }; };
 const star = (P, n, r, colour, glow = false) => Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2; return { at: P(Math.cos(a) * 0.012, -0.013 + Math.sin(a) * 0.012, 0.265), rx: 0.007, ry: 0.007, tip: P(Math.cos(a) * r, -0.013 + Math.sin(a) * r, 0.285), bone: "head", colour, glow, up: [0, 0, 1], sides: 3 }; });
 const mole = {
