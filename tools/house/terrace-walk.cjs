@@ -34,7 +34,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     });
     const SHOTS = process.env.SHOTS, EVERY = Number(process.env.EVERY || 3);
     if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
-    for (let n = 0; ; n++) { const done = await page.evaluate(k => window.__walk.step(k), SHOTS ? EVERY : 600); if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `f${String(n).padStart(4, "0")}.png`) }); if (done) break; }
+    for (let n = 0; ; n++) { const done = await page.evaluate(k => window.__walk.step(k), SHOTS ? EVERY : 600); if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `f${String(n).padStart(4, "0")}.png`), timeout: 0 }); if (done) break; }
     rows = await page.evaluate(() => window.__walk.rows);
   } finally { await browser.close(); server.close(); }
   if (process.env.OUT) fs.writeFileSync(process.env.OUT, JSON.stringify(rows));
