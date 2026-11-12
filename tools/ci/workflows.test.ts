@@ -157,7 +157,7 @@ describe("shared CI game build", () => {
     expect(jobs.check.steps.some((s: any) => /run-unit/.test(s.run ?? ""))).toBe(false);
   });
   it("uses the shared privileged-cleanup installer on the pinned supported image without masking failures", () => {
-    const expected = { ci: ["smoke", "proofs", "large-world", "game-unchanged"], "art-check": ["shards"], "proofs-nightly": ["pixels"] };
+    const expected = { ci: ["smoke", "proofs", "large-world", "game-unchanged"], "art-check": ["narrowed", "shards"], "proofs-nightly": ["pixels"] };
     const found: string[] = [];
     // Every workflow that provisions Chromium goes through the one installer: no raw `playwright install` anywhere.
     for (const file of fs.readdirSync(".github/workflows").filter(f => f.endsWith(".yml"))) {
@@ -210,12 +210,15 @@ describe("shared CI game build", () => {
   });
   it("does not make the independent art generator consume a nonexistent game build", () => {
     const art = workflow("art-check");
-    expect(Object.keys(art.jobs)).toEqual(["plan", "shards", "art"]);
+    expect(Object.keys(art.jobs)).toEqual(["plan", "narrowed", "shards", "art"]);
     expect(art.jobs.plan.needs).toBeUndefined();
+    expect(art.jobs.narrowed.needs).toBe("plan");
+    expect(art.jobs.narrowed.if).toBe("${{ needs.plan.outputs.mode == 'only' }}");
     expect(art.jobs.shards.needs).toBe("plan");
     expect(art.jobs.art.needs).toEqual(["plan", "shards"]);
     expect(art.jobs.shards.strategy).toMatchObject({ "fail-fast": false, matrix: { shard: "${{ fromJSON(needs.plan.outputs.shards) }}" } });
-    expect(art.jobs.art.if).toBe("${{ always() }}");
+    // (a pull request that skips or runs only the narrowed job has no full-path coverage to prove; a failed plan still fails here)
+    expect(art.jobs.art.if).toBe("${{ always() && needs.plan.outputs.mode != 'skip' && needs.plan.outputs.mode != 'only' }}");
     const requireCoverage = art.jobs.art.steps.find((s: any) => s.name === "Require successful planning and every needed shard");
     expect(requireCoverage.env).toEqual({ PLAN_RESULT: "${{ needs.plan.result }}", MODE: "${{ needs.plan.outputs.mode }}", SHARDS_RESULT: "${{ needs.shards.result }}" });
     expect(requireCoverage.run).toContain('test "$PLAN_RESULT" = success');
@@ -235,18 +238,33 @@ describe("shared CI game build", () => {
       }
     }
   });
-  it("runs advisory art only nightly on prototype or manually on the selected exact ref", async () => {
+  it("runs the full art nightly on prototype or manually on the selected exact ref, and a pull request's own art narrowed", async () => {
     const art = workflow("art-check"), steps = art.jobs.plan.steps;
-    expect(Object.keys(art.on).sort()).toEqual(["schedule", "workflow_dispatch"]);
+    // Ed, 2026-11-12 (#1975 question 5): "(b) also run a narrowed art check on PRs that touch art".
+    expect(Object.keys(art.on).sort()).toEqual(["pull_request", "schedule", "workflow_dispatch"]);
+    expect(art.on.pull_request).toEqual({ types: ["opened", "synchronize", "reopened"] });
     expect(art.on.schedule).toEqual([{ cron: "17 3 * * *" }]);
     expect(steps.find((s: any) => s.id === "source").with.script).toContain("context.eventName === 'schedule' ? 'claude/prototype' : context.sha");
-    expect(steps.find((s: any) => s.uses === "actions/checkout@v4").with.ref).toBe("${{ steps.source.outputs.sha }}");
-    expect(steps.find((s: any) => s.id === "checked").if).toBeUndefined();
+    expect(steps.find((s: any) => s.uses === "actions/checkout@v4").with).toEqual({ ref: "${{ steps.source.outputs.sha }}", "fetch-depth": 2 });
+    // The narrowing reads the registry's paths (which.mjs) and scope.mjs's flags; schedule and dispatch stay full.
+    const narrow = steps.find((s: any) => s.id === "narrow");
+    expect(steps.indexOf(narrow)).toBeLessThan(steps.findIndex((s: any) => s.id === "checked"));
+    expect(narrow.run).toContain('if [ "$EVENT" != pull_request ]; then out full ""; exit 0; fi');
+    expect(narrow.run).toContain("node tools/checks/which.mjs --base HEAD^1 --json");
+    expect(narrow.run).toContain('select(.id == "art-check")');
+    expect(narrow.run).toContain("claude/publish-snapshot");
+    expect(narrow.run).not.toMatch(/art\/\*\*|tools\/art-lab/); // (the art's paths live in config/checks.json alone)
+    for (const step of steps.slice(steps.indexOf(narrow) + 1)) expect(step.if, step.name ?? step.uses).toContain("steps.narrow.outputs.scope == 'full'");
+    expect(art.jobs.plan.outputs.mode).toBe("${{ steps.narrow.outputs.scope != 'full' && steps.narrow.outputs.scope || steps.scope.outputs.mode }}");
+    const run = art.jobs.narrowed.steps.find((s: any) => s.name === "Run the art check on the changed creatures and areas");
+    expect(run.env.FLAGS).toBe("${{ needs.plan.outputs.flags }}");
+    expect(run.run).toContain("report-command.cjs --kind art -- node art/check.mjs $FLAGS --times");
+    expect(art.jobs.narrowed.steps.find((s: any) => s.uses === "actions/upload-artifact@v4")).toMatchObject({ if: "always()", with: { name: "art-check-narrowed" } });
     expect(art.jobs.plan.outputs.sha).toBe("${{ steps.source.outputs.sha }}");
     for (const job of [art.jobs.shards, art.jobs.art])
       expect(job.steps.find((s: any) => s.uses === "actions/checkout@v4").with.ref).toBe("${{ needs.plan.outputs.sha }}");
     const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-    for (const eventName of ["schedule", "workflow_dispatch"]) {
+    for (const eventName of ["schedule", "workflow_dispatch", "pull_request"]) {
       const refs: string[] = [], outputs: any = {}, sha = "c".repeat(40);
       await new AsyncFunction("context", "github", "core", steps.find((s: any) => s.id === "source").with.script)(
         { eventName, sha, repo: { owner: "edsaperia", repo: "witch" } },
