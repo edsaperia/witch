@@ -1055,7 +1055,7 @@ label.check input { accent-color: var(--accent); }
   // art/creatures/bee/sigil.js
   var SIGIL_BEE = { neon: "lemon", strokes: [
     C(0.5, 0.15, 0.055),
-    ...pair(L([0.47, 0.1], [0.4, 0.03]), D(0.4, 0.03)),
+    ...pair(L([0.47, 0.1], [0.39, 0.06]), D(0.39, 0.06)),
     C(0.5, 0.3, 0.085),
     E(0.5, 0.6, 0.12, 0.2),
     L([0.39, 0.52], [0.61, 0.52]),
@@ -1239,7 +1239,7 @@ label.check input { accent-color: var(--accent); }
     ...pair(L([0.37, 0.5], [0.25, 0.44]), L([0.37, 0.62], [0.25, 0.7])),
     C(0.5, 0.16, 0.07),
     ...pair(L([0.3, 0.34], [0.14, 0.24], [0.1, 0.32], [0.26, 0.4]), L([0.3, 0.8], [0.16, 0.9], [0.22, 0.96], [0.34, 0.84])),
-    L([0.5, 0.86], [0.5, 0.97])
+    L([0.5, 0.86], [0.5, 0.95])
   ] };
 
   // art/creatures/unicorn/sigil.js
@@ -15135,8 +15135,17 @@ registerProcessor("witch-fof", WitchFof);
         unlit: 0.65,
         wildGlow: {
           mix: 0.7,
-          colour: [80, 200, 205],
+          hue: 0.506667,
+          sat: 0.609756,
+          value: 0.803922,
           ease: 1.5
+        },
+        wildGrade: {
+          strength: 0,
+          desat: 0.6,
+          pivot: 0.7,
+          hue: 0.5,
+          sat: 0.5
         },
         moonHue: 0.6,
         moonSat: 0.4,

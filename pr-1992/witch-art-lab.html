@@ -5554,7 +5554,7 @@ const SIGIL_BEAVER = { neon: "acid", strokes: [E(.5, .5, .32, .34), ...pair(A(.2
 
 // the bee from above: a round head with its feelers, a furred thorax, a banded abdomen coming to its sting, and two pairs of wings
 // swept back
-const SIGIL_BEE = { neon: "lemon", strokes: [C(.5, .15, .055), ...pair(L([.47, .1], [.4, .03]), D(.4, .03)), C(.5, .3, .085), E(.5, .6, .12, .2), L([.39, .52], [.61, .52]), L([.385, .63], [.615, .63]), L([.43, .73], [.57, .73]), L([.5, .8], [.5, .95]),
+const SIGIL_BEE = { neon: "lemon", strokes: [C(.5, .15, .055), ...pair(L([.47, .1], [.39, .06]), D(.39, .06)), C(.5, .3, .085), E(.5, .6, .12, .2), L([.39, .52], [.61, .52]), L([.385, .63], [.615, .63]), L([.43, .73], [.57, .73]), L([.5, .8], [.5, .95]),
   ...pair(L([.43, .26], [.2, .17], [.05, .27], [.14, .4], [.43, .34]), L([.42, .37], [.22, .44], [.19, .56], [.4, .46]))] };
 
 
@@ -5896,7 +5896,7 @@ const SIGIL_TOAD = { neon: "lemon", strokes: [E(.5, .62, .42, .25, -12, 192), ..
 
 // the turtle from above: the oval of its shell with its plates' joins, its head out in front, four splayed feet and a short tail
 const SIGIL_TURTLE = { neon: "mint", strokes: [E(.5, .56, .26, .3), E(.5, .56, .13, .16), L([.5, .26], [.5, .4]), L([.5, .72], [.5, .86]), ...pair(L([.37, .5], [.25, .44]), L([.37, .62], [.25, .7])), C(.5, .16, .07),
-  ...pair(L([.3, .34], [.14, .24], [.1, .32], [.26, .4]), L([.3, .8], [.16, .9], [.22, .96], [.34, .84])), L([.5, .86], [.5, .97])] };
+  ...pair(L([.3, .34], [.14, .24], [.1, .32], [.26, .4]), L([.3, .8], [.16, .9], [.22, .96], [.34, .84])), L([.5, .86], [.5, .95])] };
 
 
 // ---- inlined from art/creatures/unicorn/sigil.js ----
@@ -16013,6 +16013,8 @@ const LEGEND_DETAIL = {
   snake: [D(.53, .46), ...[.5, .62, .74, .86].map(t => D(...at(.5, .54, .07 + .24 * t, t * 468)))],
   moth: [...pair(C(.34, .7, .045), L([.45, .4], [.14, .24]))],
   marten: [...pair(A(.24, .24, .045, 110, 340), L([.42, .7], [.28, .72]))],
+  bee: [...pair(L([.4, .3], [.2, .26], [.11, .29]), L([.4, .41], [.26, .48])), L([.45, .44], [.55, .44])], // a vein down each wing, one more band on its abdomen
+  turtle: [...pair(L([.41, .44], [.34, .35]), L([.41, .68], [.34, .77]), D(.47, .14)), L([.5, .48], [.5, .64])], // the rim plates' slanting joins, its eyes, the middle plate's ridge
   salamander: [...pair(D(.46, .38), D(.46, .5), L([.2, .7], [.16, .76]))],
   roe: [...pair(L([.41, .74], [.36, .9]), L([.3, .4], [.36, .44]))],
   redpanda: [...pair(L([.27, .78], [.2, .9]), L([.33, .82], [.3, .94])), L([.5, .82], [.5, .9])],
