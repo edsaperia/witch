@@ -49,9 +49,9 @@ Each species' attack, made from `config/species-attacks.json` and its kind's `ar
 | 1 | temperate | beaver | three logs rolled at her side by side |
 | 1 | temperate | boar | a goring sweep in an arc in front |
 | 1 | temperate | moth | a fluttering puff of dust that slows |
-| 1 | temperate | newt | a slime streak that passes through and slows |
 | 1 | temperate | stag | stamps marching out in a line toward her |
 | 1 | temperate | toad | a hop-splash lob that bounces once |
+| 1 | temperate | turtle | a jet of pond water that passes through and slows |
 | 2 | badlands | meerkat | three pebbles arcing in quick succession |
 | 2 | badlands | spider | a web shot that roots, leaving a web patch |
 | 2 | cold | elk | a frost stamp: a ring spreading out that knocks back |

@@ -1585,6 +1585,32 @@
         }
       }
     ],
+    "turtle": [
+      {
+        "id": "jet",
+        "delivery": "ranged",
+        "weight": 0.3,
+        "youngWeight": 1.15
+      },
+      {
+        "id": "wall",
+        "delivery": "effect",
+        "weight": 0.12,
+        "youngWeight": 0.6,
+        "cooldown": 9,
+        "effect": "wall",
+        "parameters": {
+          "range": 24,
+          "length": 10,
+          "ahead": 4,
+          "radius": 1.5,
+          "time": 4,
+          "slow": 0.5,
+          "cooldown": 9,
+          "tint": "blue"
+        }
+      }
+    ],
     "unicorn": [
       {
         "id": "charge",

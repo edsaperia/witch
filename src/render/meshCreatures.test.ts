@@ -15,7 +15,7 @@ describe("mesh creatures", () => {
     expect(hasMesh("fox", { meshCreatures: 1 })).toBe(true);
     expect(hasMesh("wolf", { meshCreatures: 1 })).toBe(false); // (no mesh yet)
     expect(hasMesh("bee", { meshCreatures: 1 })).toBe(true); // (a kind since 2026-11-12, in the marten's place on home)
-    expect(hasMesh("turtle", { meshCreatures: 1 })).toBe(false); // (a plan, and its records written, but not a kind yet: art/creatures-pending)
+    expect(hasMesh("turtle", { meshCreatures: 1 })).toBe(true); // (a kind since 2026-11-12, in the newt's place in the Fen)
     expect(hasMesh("fox", { meshCreatures: 0 })).toBe(false); // (the link's meshCreatures=0: the generated ones, to compare)
   });
 

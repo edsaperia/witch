@@ -7,7 +7,7 @@ export const SIZE_CLASSES = [
   ["mole", "stoat", "squirrel", "flyingsquirrel"],
   // (the bee: a giant one, the size of the marten whose place on home it took: Ed, 2026-11-12, a design placement)
   ["hedgehog", "meerkat", "fennec", "marten", "bee", "owl", "raven", "heron", "rattlesnake", "bat"],
-  ["cat", "arcticfox", "hare", "armadillo"],
+  ["cat", "arcticfox", "hare", "armadillo", "turtle"],
   ["fox", "badger", "otter", "raccoon", "redpanda"],
   ["lynx", "beaver", "roe", "penguin", "snake"],
   ["wolf", "cheetah", "snowleopard", "jaguar", "ibex", "ram", "boar", "komodo"],
