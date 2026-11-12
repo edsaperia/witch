@@ -646,6 +646,10 @@ Each sleeping legend lies in a small round clearing of its own, sized to fit it.
 1. Ed, 2026-10-06
 Each area's sleeping legend lies in a small circular clearing of its own [1], where no tree or decor stands: radius metres across from its middle (species: a radius for that legend, sized to fit it: half its sleeping width plus 4 m), a soft ring edge metres wide marking it on the ground, and the legend lying top x radius north of the middle (the circle's far side from the camera), the open floor in front. Quest sigils and relics take effect inside it.
 
+- **`legendClearing.back`**: How far back in its circle a sleeping legend lies: its middle this share of the radius north of the circle's middle (the side furthest from the camera), so the front of the circle is open for her to stand in, facing it [1].
+  1. Ed, 2026-11-12: "Legends should sleep at the back of their circles, so you can stand in the circle before them."
+  Circles are sized (legendClearing.fit) so the legend's sleeping width fits there with fit.margin to spare, which keeps it inside the ring of trodden earth (edge metres inside the radius). Where a circle is capped or squeezed smaller than that, the legend lies as far back as it fits, never further forward than top x radius (where it lay before 2026-11-12; the link switch ?legendspot=old puts it back there, its circle sized as before). 0.7 at first (circles sized for it about a quarter bigger than for top, up to fit.max); top (0.45) is the old place, and a value at or under top means the old place.
+  Code: `rules/legendFit.ts`
 - **`legendClearing.minFromStone`**: its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot grows to hold one (logged).
   1. Ed, 2026-10-06: "The legend circle shouldn't spawn near its runestone"
   2. Ed, 2026-11-04: "make the last-resort placement grow the area instead of breaking the gap"
@@ -673,6 +677,7 @@ Each area's sleeping legend lies in a small circular clearing of its own [1], wh
 | `legendClearing.radius` | number | 0 to … |
 | `legendClearing.edge` | number | 0 to … |
 | `legendClearing.top` | number | 0 to … |
+| `legendClearing.back` | number | 0 to … |
 | `legendClearing.minFromStone` | number | 0 to … |
 | `legendClearing.minFromOtherStones` | number | 0 to … |
 | `legendClearing.floor.on` | boolean |  |

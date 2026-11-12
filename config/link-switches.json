@@ -1209,6 +1209,19 @@
    "decision": "Faster, longer letters (Ed, 2026-11-09: \"it feels like animals move faster than invitations so it's hard to land a hit. And ranges feel small\"); the old flight kept to A/B"
   },
   {
+   "name": "legendspot",
+   "values": [
+    "old"
+   ],
+   "does": "Sleeping legends where they lay before, 0.45 of the radius north of their circle's middle, the circles sized for that, in place of the back of their circles (legendClearing.back). Sets tuning legendClearing.back to legendClearing.top.",
+   "group": "compare",
+   "since": "2026-11-12",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Legends sleep at the back of their circles (Ed, 2026-11-12: \"Legends should sleep at the back of their circles, so you can stand in the circle before them\"); the old place kept one switch away to compare"
+  },
+  {
    "name": "music",
    "values": [
     "off",

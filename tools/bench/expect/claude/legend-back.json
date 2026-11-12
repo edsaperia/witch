@@ -1,0 +1,9 @@
+{
+  "reason": "Sleeping legends lie at the back of their circles (Ed, 2026-11-12: \"Legends should sleep at the back of their circles, so you can stand in the circle before them\"): legendClearing.back 0.7 of the radius north of the middle (0.45 before), each circle sized so the legend's sleeping width still fits there with its margin, so legend circles are up to about a quarter bigger (never past fit.max or fit.areaMax). Challenge circles unchanged.",
+  "rules": {
+    "*": "legend circles' sizes and so their places, the sleeping legends' spots (and lair) in them, their wild babies' spots, and what the map places round them (grove, rim kit, trees, decor, other sites kept their gaps from the bigger circles); what follows in creatures' states and positions near them"
+  },
+  "frames": {
+    "*": "where a legend circle or the forest round one is in view: the circle bigger, its legend further back (north) in it, the trees, rim and grove round it moved with it"
+  }
+}
