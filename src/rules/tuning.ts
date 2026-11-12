@@ -194,14 +194,20 @@ export interface Tuning {
   notice: { radius: number; curious: number; skittish: number };
   /** Dodging matters (Ed, 2026-10-08: "almost all animals are easily evaded simply by walking backwards ... good play should
    *  require effective use of dodge"): against the witch, a: committed strikes (closing while winding up, a lead at release,
-   *  a longer lunge, a longer untouchable blink, at most `tokens` winding up on her at once); b: predictive aim (shots, lobs and
-   *  charges aimed at release where she'll be, shots living longer, ranged windups shorter); c: packs cutting off her retreat
+   *  a longer lunge, a longer untouchable blink, at most `tokens` winding up on her at once); b: predictive aim (charges aimed at
+   *  release where she'll be, lobs `lobLead`, shots reaching `range` times as far and living longer; `speed` and `windup` are the
+   *  old pack bolts' own, never a species' shot's, and since `ranged` their lead is that rule's); c: packs cutting off her retreat
    *  (rules/combat.ts, rules/movement.ts). ?dodge=a,b,c picks which. */
   dodge?: {
     a: { on: boolean; lead: number; commit: number; chase: number; lunge: number; surge: number; width: number; gone: number; tokens: number; swarm: number; swarmTokens: number; gap: number; heavy: { species: string[]; speed: number; accel: number; home: number } };
     b: { on: boolean; lead: number; lobLead: number; chargeLead: number; life: number; windup: number; range: number; speed: number };
     c: { on: boolean; species: string[]; moving: number; share: number; angle: number; reach: number; ahead: number; sprint: number };
   };
+  /** Creatures' ranged attacks aim where she's going (Ed, 2026-11-12; rules/attacks/aim.ts): followed through the wind-up, `lead` of
+   *  the way to where she'll be on arrival, locked `commit` s before the release and `lock` s (by level) before it can reach her, an
+   *  area put down where she stands `areaLock` ahead, a wall of rollers `rollerLead` as far; straight bolts and rollers at her at least
+   *  `speedFloor` times her ground speed; `on` false (?ranged=old) the old aim. */
+  ranged?: import("./attacks/aim").RangedTuning;
   /** Hostile wild creatures idle round their area's runestone (rules/creatures.ts idlesAtStone): within radius metres of it, clear metres off it. */
   stoneIdle?: { on: boolean; radius: number; clear: number };
   /** Idling and dancing creatures keep off the sigils on the floor (rules/sigilAvoid.ts). */

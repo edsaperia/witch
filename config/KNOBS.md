@@ -2311,7 +2311,7 @@ Dodging matters [1]: against the witch only (fights between creatures as before)
 - **`dodge.a.heavy`**: Heavy kinds chasing her build up speed and swing their charges toward her, so a burst or a blink gets clear.
   1. Ed, 2026-10-09: "Maybe heavies can have a higher top speed, but slow acceleration?"
   2. Ed, 2026-10-09: "shooters should have longer range"
-  chasing her, those species run at up to speed m/s (above her walk) built up at accel m/s each second, their charges swinging toward her at home degrees a second as they run, so a burst or a blink gets clear and a long retreat is run down (the snail, hedgehog and woodlouse left slow, the last two with their rolling charges; the mole with its own burrow); her blink keeps her untouchable for gone seconds (dash.gone otherwise); and at most tokens creatures wind up or strike at her at once (swarmTokens when swarm or more are on her), the rest keep their places. b, predictive aim: shots aim at release where she'll be when they arrive (times lead), lobs where she'll be when they land (times lobLead), charges down the lane to where she'll be when they reach her (times chargeLead); a shot lives life times its range over its speed (1.3 before); a shot at her flies speed times as fast (chasing her at her walk it closes at only its speed less hers); a shot or lob at her reaches range times as far, the shooter keeping its usual distance, [2] and winds up at most windup seconds (a beam as before: a sweep a blink can't outrun keeps its long warning). c, packs cut off her retreat: while she moves faster than moving times her walk, share of a pack of species (wolves, foxes, martens, bats) take places ahead of her (ahead seconds of her run on, angle radians either side of her heading, reach times their attack's reach out), sprinting at up to sprint m/s to get there. ?dodge=a,b,c turns on those named and off the rest (?dodge=0 none).
+  chasing her, those species run at up to speed m/s (above her walk) built up at accel m/s each second, their charges swinging toward her at home degrees a second as they run, so a burst or a blink gets clear and a long retreat is run down (the snail, hedgehog and woodlouse left slow, the last two with their rolling charges; the mole with its own burrow); her blink keeps her untouchable for gone seconds (dash.gone otherwise); and at most tokens creatures wind up or strike at her at once (swarmTokens when swarm or more are on her), the rest keep their places. b, predictive aim: with ranged off (?ranged=old) the old pack bolts aim at release where she'll be when they arrive (times lead), their lobs where she'll be when they land (times lobLead); charges down the lane to where she'll be when they reach her (times chargeLead); a shot lives life times its range over its speed (1.3 before); the old pack bolt at her (a close kind's shot in a shooter's role, not a species' own) flies speed times as fast (chasing her at her walk it closes at only its speed less hers) and winds up at most windup seconds, lifted where ranged's lock needs it; a shot or lob at her reaches range times as far, the shooter keeping its usual distance [2]. A species' own shot takes neither speed nor windup: its speed is ranged.speedFloor's and its wind-up its own (Ed, 2026-11-12, option C: wind-ups as they were); With ranged on, every shot's and lob's lead is that rule's, followed through the wind-up, not taken at release. c, packs cut off her retreat: while she moves faster than moving times her walk, share of a pack of species (wolves, foxes, martens, bats) take places ahead of her (ahead seconds of her run on, angle radians either side of her heading, reach times their attack's reach out), sprinting at up to sprint m/s to get there. ?dodge=a,b,c turns on those named and off the rest (?dodge=0 none).
 
 | knob | type | range |
 |---|---|---|
@@ -2347,6 +2347,37 @@ Dodging matters [1]: against the witch only (fights between creatures as before)
 | `dodge.c.reach` | number | 0 to … |
 | `dodge.c.ahead` | number | 0 to … |
 | `dodge.c.sprint` | number | 0 to … |
+
+### `ranged`
+
+Creatures' shots aim where she's going: each follows her through its wind-up and locks a moment before it can reach her, so a steady walk gets hit and a change of direction dodges [1][2][3].
+
+1. Ed, 2026-11-12: "creature ranged attacks (home island, mostly youths): the preparation time seems long, projectile speed is low, if you're moving at all they basically never hit you" (measured first (the ranged-hit harness, tools/balance/rangedhit.mjs): every species' shot aimed at where she stood as its wind-up started, so any steady movement took her out of its path)
+2. Ed, 2026-11-12: "when the changes are decided, apply them to all creatures, not just home ones"
+3. Ed, 2026-11-12: "Option C with the sub-rules" … "(a)" … "(a)" (lead plus a speed floor, with the report's sub-rules (bursts keep the first shot's lock, areas lock 0.7 s, homing, spirals, boomerangs and beams left out, walls half lead, the caster holding still from the lock, the old pack bolts taking the same lock); the three wrong things fixed in the same build (an adult's even fan with a hole in the middle, the young rhino's logs straddling her, dodge.b's speed and wind-up reaching only the old pack bolts); and the treetops kept untouchable)
+Every ranged attack at her, every kind and level: its aim (the telegraph's lane or landing ring too) follows her through the wind-up at where she'll be when the shot arrives (lead times the way, her velocity as she goes), solving a curving or swaying path so it passes there; it locks at least commit s before the release and at least lock s (by level) before the shot can reach her; from the lock to the release the caster holds still, so the shot leaves from where it aimed. An area put down where she stands (and a mine or seed laid there) locks areaLock s ahead at every level; a wall of rollers leads rollerLead as far; a burst's, spray's or volley's later shots keep the first's locked aim. Straight bolts and rollers at her fly at least speedFloor times her ground speed (groundSpeed: 38.5 m/s at 19.25), an accelerating roller's profile scaled with it. Wind-ups as they were, lifted only where the lock couldn't otherwise hold (the old pack bolts' 0.35 s, dodge.b.windup). Left out of the lead and the floor: homing (owl, hydra), spirals, boomerangs, orbits, beams, melee, a pulse round itself, and pack interplay that goes by way of packmates (relay, tether, triangulate). Fans and walls always keep one body on the aim (an adult's even fan shifted half a step, a wall slid so the gap is beside her). The old pack bolts (a close kind's shot or lob in a shooter's role, rules/combat.ts) take the same lock and floor. The treetops unchanged: a witch off the ground can't be hit. ?ranged=old the old aim throughout.
+Code: `src/rules/attacks/aim.ts`, `src/rules/attacks/engine.ts`, `src/rules/combat.ts`, `src/rules/combat/legend.ts`, `tools/balance/rangedhit.mjs`
+
+- **`ranged.on`**: on: shots aim where she's going (the ranged rule); off, as ?ranged=old: each aims at her place as its wind-up starts, the old pack bolts leading her as they let go, no speed floor, fans and walls as before.
+- **`ranged.lead`**: times the way to where she'll be when the shot arrives that the aim takes (1: all of it, 0: where she is), a wall of rollers rollerLead of it.
+- **`ranged.commit`**: seconds before its release that a shot's aim locks at the latest (the caster holds still from then).
+- **`ranged.lock`**: seconds before a shot can reach her that its aim locks at the latest, by the caster's level: a youth's longer, so a change of direction dodges it more often.
+  A per-level lead factor (babies lead less) measured as a cliff: at 0.85 every youth's shot fell to 0 to 8% across, so the level difference is made by when the aim locks instead (the measurement report, 2026-11-12).
+- **`ranged.speedFloor`**: a straight bolt or roller at her flies at least this many times her ground speed (2: 38.5 m/s at her 19.25).
+- **`ranged.areaLock`**: seconds before an area put down where she stands strikes (or a mine is laid there) that its aim locks, at every level: with no flight to see, the lock is all the warning she gets.
+- **`ranged.rollerLead`**: times the lead a wall of rollers takes (the rhino's and beaver's logs): a wall is wider than her change of direction, so at full lead it was the harshest attack.
+
+| knob | type | range |
+|---|---|---|
+| `ranged.on` | boolean |  |
+| `ranged.lead` | number | 0 to … |
+| `ranged.commit` | number | 0 to … |
+| `ranged.lock.young` | number | 0 to … |
+| `ranged.lock.adult` | number | 0 to … |
+| `ranged.lock.legend` | number | 0 to … |
+| `ranged.speedFloor` | number | 0 to … |
+| `ranged.areaLock` | number | 0 to … |
+| `ranged.rollerLead` | number | 0 to … |
 
 ### `stoneIdle`
 

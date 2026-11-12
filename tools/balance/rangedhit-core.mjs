@@ -6,8 +6,10 @@
 // kind fires in a shooter's role (packAttack at her: dodge.b's windup cap, speed, reach and lead), every one reaching as far as
 // the fight lets it reach at her (reachingFurther: dodge.b.range and difficulty.rangedRange). The caster stands still; she is a
 // point of radius 0.3 on the ground (the engine's witch), moving as a pattern says at her ground speed and acceleration
-// (rules/witch.ts's ground step). A cast counts as a hit if anything of it harms her. In memory only: the variants (lead, speed,
-// windup) change the spec or the aim for this run, never the game.
+// (rules/witch.ts's ground step). A cast counts as a hit if anything of it harms her. Its aim is the game's own rule (Ed, 2026-11-12;
+// tuning ranged, rules/attacks/aim.ts: followed through the wind-up and locked, the speed floor, fans and walls kept on the aim), or
+// with ranged.on false (rangedhit.mjs --ranged old) the old aim. In memory only: the variants (the ranged knobs, speed, windup)
+// change the tuning, the spec or the aim for this run, never the game.
 //   (used by node tools/balance/rangedhit.mjs; tested by rangedhit.test.mjs)
 
 /** A seeded random (mulberry32). */
@@ -27,11 +29,11 @@ export const PATTERNS = {
 
 /** The modules the harness needs, loaded through `load` (Vite SSR, tools/balance/lib.mjs openRules). */
 export async function loadRules(load) {
-  const [tuning, species, engine, world, packs, attacks, timeline, combatData, legends] = await Promise.all([
+  const [tuning, species, engine, world, packs, attacks, timeline, combatData, legends, aim] = await Promise.all([
     load("/src/rules/tuning.ts"), load("/src/rules/attacks/species.ts"), load("/src/rules/attacks/engine.ts"), load("/src/rules/attacks/combatWorld.ts"),
-    load("/src/rules/combat/packs.ts"), load("/src/rules/attacks/index.ts"), load("/src/rules/attacks/timeline.ts"), load("/src/rules/combat/data.ts"), load("/config/legends.json"),
+    load("/src/rules/combat/packs.ts"), load("/src/rules/attacks/index.ts"), load("/src/rules/attacks/timeline.ts"), load("/src/rules/combat/data.ts"), load("/config/legends.json"), load("/src/rules/attacks/aim.ts"),
   ]);
-  return { TUNING: tuning.TUNING, speciesAttack: species.speciesAttack, legendAttack: species.legendAttack, SPECIES_ATTACKS: species.SPECIES_ATTACKS, engine, world, packs, LIB: attacks.ATTACK_LIB, liftToFloor: timeline.liftToFloor, COMBAT: combatData.COMBAT, LEGENDS: legends.default ?? legends };
+  return { aim, TUNING: tuning.TUNING, speciesAttack: species.speciesAttack, legendAttack: species.legendAttack, SPECIES_ATTACKS: species.SPECIES_ATTACKS, engine, world, packs, LIB: attacks.ATTACK_LIB, liftToFloor: timeline.liftToFloor, COMBAT: combatData.COMBAT, LEGENDS: legends.default ?? legends };
 }
 
 const close = d => d === "melee" || d === "pulse";
@@ -40,24 +42,28 @@ const RAD = Math.PI / 180;
 /** The attack a kind throws at her at a level by a path, as the fight builds it, or null if it has none that way:
  *  path "solo" its own; "team" a pack or team shooter's (its own, at its pack's range and at least its pack bolt's windup);
  *  "pack" the old pack bolt a close kind (or a kind with a designed pack shot) fires as a shooter; level 3 a legend's (solo only).
- *  Returns { spec, fire (how far it fires from at most), stand (where it keeps to: the fight's `want`), aim: "cast"|"release",
- *  lead (release aim's lead factor), commit }. */
+ *  Returns { spec, fire (how far it fires from at most), stand (where it keeps to: the fight's `want`), aim: "cast" (its aim as the
+ *  wind-up starts), "release" (the old pack bolt's, led at its release) or "track" (followed and locked: the ranged rule), track (the
+ *  engine's AimTrack template), centre (fans and walls kept on the aim), windup, cooldown }. */
 export function attackFor(R, sp, level, path = "solo") {
-  const t = R.TUNING, DB = t.dodge.b, RR = t.difficulty?.rangedRange ?? 1, floor = t.attacks?.reactionFloor;
+  const t = R.TUNING, DB = t.dodge.b, RR = t.difficulty?.rangedRange ?? 1, floor = t.attacks?.reactionFloor, RG = R.aim.rangedOf(t);
   const kStr = deliv => (deliv === "shot" ? DB.range : 1) * (deliv === "shot" || deliv === "lob" || deliv === "beam" ? RR : 1);
   if (level === 3) {
     if (path !== "solo") return null;
     const A = R.LEGENDS.attack, spec = R.legendAttack(sp, { range: A.range, windup: A.windup, interval: A.interval, flight: A.lobFlight, radius: A.lobRadius }, floor);
-    return spec ? { spec, fire: A.range, stand: A.range, aim: "cast", windup: spec.cast?.windup, cooldown: A.interval } : null;
+    const track = spec ? R.aim.trackFor(spec, 3, RG) : undefined;
+    return spec ? { spec, fire: A.range, stand: A.range, aim: track ? "track" : "cast", track, centre: RG.on, windup: spec.cast?.windup, cooldown: A.interval } : null;
   }
   const own = R.speciesAttack(sp, level, floor);
   const kind = R.packs.packKindOf(sp), P = R.packs.packAttack(sp, level, "ranged");
   const ownA = own ? R.world.asFightAttack(own) : null;
   const designed = !!kind?.ranged && !!(kind.ranged.patch || kind.ranged.attacks || kind.ranged.delivery === "lob");
   const finish = (spec, base, deliv) => {
-    const k = kStr(deliv), far = R.world.reachingFurther(spec, k), reach = R.world.bodyReach(far), fire = Math.min(base.range * k, reach);
+    // (rules/combat.ts thrown at her: reaching further, then the speed floor; its aim tracked as startSpell asks the engine to)
+    const k = kStr(deliv), far = R.aim.withSpeedFloor(R.world.reachingFurther(spec, k), RG, t.groundSpeed), reach = R.world.bodyReach(far), fire = Math.min(base.range * k, reach);
     const kites = deliv === "shot" && R.COMBAT.kite.species.includes(sp), stand = Math.min(base.range * (kites ? R.COMBAT.kite.far : 0.8), fire * 0.9);
-    return { spec: far, fire, stand, aim: "cast", windup: far.cast?.windup ?? 0.6, cooldown: far.cast?.cooldown ?? base.cooldown };
+    const track = R.aim.trackFor(far, level, RG, t.creatureMomentum?.strikeLead ?? 1);
+    return { spec: far, fire, stand, aim: track ? "track" : "cast", track, centre: RG.on, windup: far.cast?.windup ?? 0.6, cooldown: far.cast?.cooldown ?? base.cooldown };
   };
   if (path === "solo") return own && !close(ownA.delivery) ? finish(own, ownA, ownA.delivery) : null;
   if (path === "team") {
@@ -68,13 +74,16 @@ export function attackFor(R, sp, level, path = "solo") {
     return finish(spec, { ...P.attack, windup }, P.attack.delivery);
   }
   if (path === "pack") {
-    // (rules/combat.ts's old shot or lob at her: dodge.b's windup cap, its speed times dodge.b.speed, its reach, and its lead)
+    // (rules/combat.ts's old shot or lob at her: dodge.b's windup cap, its speed times dodge.b.speed, its reach; with the ranged rule its
+    // aim followed and locked (packTrack), at least the speed floor, its windup lifted where the lock needs it; else its lead at release)
     if (!P || !(close(ownA?.delivery ?? "melee") || designed) || (P.attack.delivery !== "shot" && P.attack.delivery !== "lob")) return null;
-    const A = P.attack, range = A.range * kStr(A.delivery), windup = Math.min(A.windup, DB.windup), shots = Math.max(1, P.shots);
-    const emit = shots > 1 ? { pattern: "fan", n: shots, angle: P.spread / RAD } : undefined;
-    if (A.delivery === "lob") return { spec: { cast: { range, windup, cooldown: A.cooldown }, body: { kind: "lob", radius: A.radius ?? 1.8, flight: A.flight ?? 1.2 }, telegraph: { kind: "none" } }, fire: range, stand: Math.min(A.range * 0.8, range * 0.9), aim: "release", lead: DB.lobLead, commit: 0, windup, cooldown: A.cooldown };
-    const v = (A.speed ?? 9) * DB.speed;
-    return { spec: { cast: { range, windup, cooldown: A.cooldown }, body: { kind: "bolt", radius: A.radius ?? 0.6 }, speed: { v }, life: { range: range * DB.life }, ...(emit ? { emit } : {}), telegraph: { kind: "none" } }, fire: range, stand: Math.min(A.range * 0.8, range * 0.9), aim: "release", lead: DB.lead * (t.creatureMomentum?.strikeLead ?? 1), commit: 0, windup, cooldown: A.cooldown };
+    const A = P.attack, range = A.range * kStr(A.delivery), windup = Math.min(A.windup, DB.windup), shots = Math.max(1, P.shots), sl = t.creatureMomentum?.strikeLead ?? 1;
+    const emit = shots > 1 ? { pattern: "fan", n: shots, angle: P.spread / RAD } : undefined, track = R.aim.packTrack(A.delivery, level, RG, sl);
+    const old = { lead: (A.delivery === "lob" ? DB.lobLead : DB.lead) * sl, commit: 0, ahead: 0 }; // (led as it lets go: locked at its release)
+    const how = { aim: track ? "track" : "release", track: track ?? old, centre: RG.on, windup, cooldown: A.cooldown, fire: range, stand: Math.min(A.range * 0.8, range * 0.9) };
+    if (A.delivery === "lob") return { spec: { cast: { range, windup, cooldown: A.cooldown }, body: { kind: "lob", radius: A.radius ?? 1.8, flight: A.flight ?? 1.2 }, telegraph: { kind: "none" } }, ...how };
+    const v = Math.max((A.speed ?? 9) * DB.speed, RG.on ? RG.speedFloor * t.groundSpeed : 0);
+    return { spec: { cast: { range, windup, cooldown: A.cooldown }, body: { kind: "bolt", radius: A.radius ?? 0.6 }, speed: { v }, life: { range: range * DB.life }, ...(emit ? { emit } : {}), telegraph: { kind: "none" } }, ...how };
   }
   return null;
 }
@@ -85,10 +94,8 @@ export function isRanged(R, spec) {
   return d === "shot" || d === "lob" || d === "beam" || (d === "pulse" && spec.area?.shape === "line");
 }
 
-/** A variant, in memory: { lead: per-level factor (or a number), commit (s its aim locks before release, or by level), impact (s it
- *  locks at least before it can reach her, by level; never under the reaction floor), leadOld (the
- *  old pack bolts too), speed (times), minSpeed
- *  (times her ground speed, a floor), windup (times), windupFloor (s) }. Returns the attack changed. */
+/** A variant, in memory, on top of the game's rule (the ranged knobs: rangedhit.mjs sets those on the tuning before attackFor): {
+ *  speed (times), minSpeed (times her ground speed, a floor), windup (times), windupFloor (s) }. Returns the attack changed. */
 export function applyVariant(R, atk, level, V = {}) {
   if (!atk || !V || !Object.keys(V).length) return atk;
   let spec = atk.spec, out = { ...atk };
@@ -108,39 +115,8 @@ export function applyVariant(R, atk, level, V = {}) {
     spec = R.liftToFloor({ ...spec, cast: { ...spec.cast, windup: Math.round(w * 1000) / 1000 } }, R.LIB, R.TUNING.attacks?.reactionFloor);
     out.windup = spec.cast.windup;
   }
-  if (V.lead !== undefined) {
-    const L = typeof V.lead === "number" ? V.lead : V.lead[level] ?? 0;
-    const commit = V.commit === undefined ? 0.2 : typeof V.commit === "number" ? V.commit : V.commit[level] ?? 0.2;
-    const impact = V.impact === undefined ? undefined : typeof V.impact === "number" ? V.impact : V.impact[level];
-    if (atk.aim === "cast") { out.aim = "release"; out.lead = L; out.commit = commit; out.floorLock = true; out.impact = impact; }
-    else if (V.leadOld) { out.lead = L; out.commit = commit; out.floorLock = true; out.impact = impact; } // (the old pack bolt leads fully at its release now; only changed if asked)
-  }
   out.spec = spec;
   return out;
-}
-
-/** Where to aim a body so its path (curves and all, unhomed) passes through (qx, qz) from (x, z): the heading and the time it takes. */
-function solveAim(R, spec, x, z, qx, qz, W) {
-  const kind = spec.body?.kind ?? "bolt", dq = Math.hypot(qx - x, qz - z);
-  let h = Math.atan2(qz - z, qx - x);
-  if (kind === "lob") return { heading: h, time: spec.body?.flight ?? 1.2 };
-  if (kind !== "bolt" && kind !== "runner") return { heading: h, time: 0 };
-  let time = dq / Math.max(1, R.engine.speedAt(spec, 0));
-  for (let it = 0; it < 3; it++) {
-    const p = R.engine.predictPath(spec, x, z, h, -1, W);
-    // (where the path crosses her distance from the caster)
-    let hit = -1;
-    for (let i = 2; i < p.length; i += 2) { if (Math.hypot(p[i] - x, p[i + 1] - z) >= dq) { hit = i; break; } }
-    if (hit < 0) break;
-    const d0 = Math.hypot(p[hit - 2] - x, p[hit - 1] - z), d1 = Math.hypot(p[hit] - x, p[hit + 1] - z), f = d1 > d0 ? (dq - d0) / (d1 - d0) : 0;
-    const px = p[hit - 2] + (p[hit] - p[hit - 2]) * f, pz = p[hit - 1] + (p[hit + 1] - p[hit - 1]) * f;
-    time = ((hit / 2 - 1) + f) * 0.1;
-    let off = Math.atan2(qz - z, qx - x) - Math.atan2(pz - z, px - x);
-    off = Math.atan2(Math.sin(off), Math.cos(off));
-    if (Math.abs(off) < 1e-3) break;
-    h += off;
-  }
-  return { heading: h, time };
 }
 
 /** One cast at her from `d` m, her moving by `pattern` (sign: which way across; phase: the zig-zag's), her mode "ground" or
@@ -172,35 +148,25 @@ export function trial(R, atk, { d, pattern = "still", sign = 1, phase = 0, mode 
     beat: 60 / (t.beat?.bpm ?? 120),
   };
   let now = 0;
-  const windup = atk.spec.cast?.windup ?? 0.6, id = engine.cast(S, W, atk.spec, "trial", { id: 1, x: 0, z: 0, side: "wild", species: "trial", heading: 0 }, witch(), 0, 1, windup);
-  // (its aim locks `commit` before it lets go, and never less than the reaction floor before it can reach her: an area put down where
-  // she stands has no flight to warn her by, so it locks the whole floor ahead)
-  const kind = atk.spec.body?.kind ?? "bolt", flight0 = kind === "lob" ? atk.spec.body?.flight ?? 1.2 : kind === "bolt" || kind === "runner" ? d / Math.max(1, engine.speedAt(atk.spec, 0)) : 0;
-  const lockAt = atk.aim === "release" ? Math.max(0, windup - Math.max(atk.commit ?? 0, (atk.floorLock ? Math.max(t.attacks?.reactionFloor ?? 0.45, atk.impact ?? 0) : 0) - flight0)) : null;
-  let locked = false;
+  // (its aim: followed and locked by the engine as the fight asks (rules/combat.ts startSpell, rules/attacks/aim.ts), its wind-up lifted
+  // only where that lock couldn't hold; the old pack bolt's the same, or led at its release under the old rule)
+  const track = atk.track ? { ...atk.track, locked: false } : undefined;
+  let windup = atk.windup ?? atk.spec.cast?.windup ?? 0.6;
+  if (track && atk.aim === "track") windup = R.aim.liftedWindup(windup, R.aim.intercept(witch(), windup, track.lead, (qx, qz) => engine.solveAim(atk.spec, 0, 0, qx, qz, 1, W).time).flight, track);
+  const id = engine.cast(S, W, atk.spec, "trial", { id: 1, x: 0, z: 0, side: "wild", species: "trial", heading: 0 }, witch(), 0, 1, windup, { track, centre: atk.centre });
   const end = maxTime ?? windup + 9;
   for (now = dt; now <= end + 1e-9; now += dt) {
     const [mx, mz] = want(now);
     her.vx += (mx * speed - her.vx) * kg; her.vz += (mz * speed - her.vz) * kg;
     her.x += her.vx * dt; her.z += her.vz * dt;
-    if (now <= windup + 1e-9) { me.x += Math.cos(driftAngle) * drift * dt; me.z += Math.sin(driftAngle) * drift * dt; }
-    if (lockAt !== null && !locked && now >= lockAt - 1e-9) {
-      // (the proposed aim: locked `commit` before it lets go, at where she'll be when it gets there, `lead` of it)
-      locked = true;
-      for (const p of S.pending) if (p.cast === id && p.depth === 0) {
-        let qx = her.x, qz = her.z;
-        for (let k = 0; k < 16; k++) { const s = solveAim(R, atk.spec, me.x, me.z, qx, qz, W), tt = (windup - lockAt) + s.time; qx = her.x + her.vx * tt * atk.lead; qz = her.z + her.vz * tt * atk.lead; }
-        p.heading = solveAim(R, atk.spec, me.x, me.z, qx, qz, W).heading;
-        p.aimAt = { x: qx, z: qz };
-        if (atk.spec.emit?.pattern === "burst" || atk.spec.emit?.pattern === "volley") p.attack = { ...p.attack, emit: { ...p.attack.emit, aim: "lead" } };
-      }
-    }
+    // (the caster drifting through its windup as it glides about; with the ranged rule it holds still from its lock, as the fight's does)
+    if (now <= windup + 1e-9 && !(atk.aim === "track" && track?.locked)) { me.x += Math.cos(driftAngle) * drift * dt; me.z += Math.sin(driftAngle) * drift * dt; }
     engine.stepSpells(S, W, R.LIB, now, dt);
     if (!released && S.events.some(e => e.kind === "release")) released = true;
     if (hit) break;
     if (now > windup + 0.05 && !S.pending.length && !S.bodies.some(b => b.alive) && !S.zones.some(z => z.alive) && !S.beams.some(b => b.alive)) break;
   }
-  return { hit, at, released, bodies: S.stats.bodies[0] };
+  return { hit, at, released, bodies: S.stats.bodies[0], windup, lockedAt: track?.at };
 }
 
 /** The share of `n` casts that hit her, from distances drawn evenly over [lo, hi], each pattern's way across, zig-zag phase and

@@ -1447,6 +1447,19 @@
    ]
   },
   {
+   "name": "ranged",
+   "values": [
+    "old"
+   ],
+   "does": "Creatures' ranged attacks aimed as before (at her place as the wind-up starts, no speed floor, fans and walls as before), not where she's going.",
+   "group": "compare",
+   "since": "2026-11-12",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Shots aim where she's going by default (Ed, 2026-11-12: option C with its sub-rules)"
+  },
+  {
    "name": "relief",
    "values": [
     "<strength>"

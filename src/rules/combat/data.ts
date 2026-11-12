@@ -130,6 +130,8 @@ export interface Fight {
   spellCast?: number;
   /** a legend's casts at once, one an aim (rules/combat/legend.ts) */
   spellCasts?: number[];
+  /** Its aim at her this wind-up (the one that started at `at`), followed till it locks (rules/attacks/aim.ts): it holds still from then. */
+  aim?: { at: number; track: import("../attacks/aim").AimTrack };
 }
 
 /** A projectile in flight: dodgeable (it flies at a point, not after its target). */
