@@ -44,6 +44,7 @@ glossary; these are the prototype's), by note.
 - Art on pull requests
 - Style bible
 - Bold sigils
+- The witch's poses
 
 ### [Balance baselines — v5655 rules](balance-baselines.md)
 
