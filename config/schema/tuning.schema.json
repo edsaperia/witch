@@ -11159,7 +11159,7 @@
             "reopen"
           ],
           "additionalProperties": false,
-          "description": "Her eyelids' speeds (render/eyelids.ts): shut, the seconds her eyes stay shut after her alarm first rings in the morning; open, the seconds they then take to open; reopen, how fast they open again when E is let go early at the bed (what's left of the closure falls by this share a second: 8 is about 0.4 seconds)."
+          "description": "Her eyelids' speeds: the seconds her eyes stay shut after her alarm first rings (shut), the seconds they then take to open (open), and how fast they open again when E is let go early at the bed (reopen)."
         }
       },
       "required": [
