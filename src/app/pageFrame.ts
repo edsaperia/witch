@@ -10,7 +10,7 @@ import { currentSettings } from "./playerSettings";
 import { chartOpen, putChartDown } from "../ui/chartOverlay";
 import { endDream } from "../rules/wakeUp";
 import { replayWanted } from "../rules/partyStart";
-import { STATION_SLOT } from "../rules/clothesPile";
+import { awaitingShelves } from "../rules/clothesPile";
 import { WakeCard } from "../render/wakeUp";
 import { clearCarried, mark } from "./timing";
 import { musicCue } from "../rules/musicPlan";
@@ -199,7 +199,7 @@ export function frameBody(pageHost: PageHost, now: number): void {
   const station = pageHost.bot || pageHost.creator.open || charting ? null : stationOf(houseGame, pageHost.stations.station), shelves = station ? shelvesAt(station.id) : null;
   pageHost.stations.setLoaned(pageHost.loan?.id ?? null); // (its card sparkles: ui/stationPanel.ts)
   if (pageHost.stations.station && station?.id !== pageHost.stations.station) pageHost.shutStation(`off it (${station?.id ?? "none"}${charting ? ", charting" : ""}${pageHost.creator.open ? ", creator" : ""})`); // (she's somehow off it: a knockout, a new night; E closes it above)
-  if (station && shelves && station.id !== pageHost.stations.station && pageHost.usedAt(game) === station.id) { const g = (pageHost.page.look() ?? pageHost.creator.genome()) as Record<string, unknown>; pageHost.stations.open(station.id, shelves, g as never, pageHost.menuWardrobe(), houseGame.wake && pageHost.firstEver && !houseGame.wake.yesterday && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? pageHost.workshopNow() : null, !!houseGame.wake?.pile?.includes(STATION_SLOT[station.id])); }
+  if (station && shelves && station.id !== pageHost.stations.station && pageHost.usedAt(game) === station.id) { const g = (pageHost.page.look() ?? pageHost.creator.genome()) as Record<string, unknown>; pageHost.stations.open(station.id, shelves, g as never, pageHost.menuWardrobe(), houseGame.wake && pageHost.firstEver && !houseGame.wake.yesterday && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? pageHost.workshopNow() : null, awaitingShelves(houseGame.wake?.pile, station.id, shelves.map(q => q.id))); }
   else if (!shelves && pageHost.stations.station) pageHost.shutStation("no shelves");
   pageHost.stations.update(performance.now() / 1000); pageHost.booth.update(performance.now() / 1000);
   { const up = pageHost.stations.station === "broomLift"; if (up !== pageHost.liftUp) { pageHost.liftUp = up; pageHost.sound.sfx?.hiss(up); } } // (the lift up while its panel's open, down after: render/houseFurniture.ts; Ed, 2026-11-07, "It can hiss up and down when she uses it")

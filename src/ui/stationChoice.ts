@@ -34,10 +34,24 @@ export class PanelChoice {
   /** Her trail's colour preset now (the Broom station's Trail row: render/trailColours.ts). */
   trail = TRAIL_PRESET_DEFAULT;
 
-  constructor(public shelves: Shelf[], public g: Genome, public owned: ReadonlySet<string>, public found: ReadonlySet<string>, public fitted: Fitted | null, private ctx: ChoiceCtx, public awaitingDress = false) {}
+  /** Her saved outfit may still be in the morning pile, rather than on her: true, the whole station's; or the shelves whose piece is
+   *  still in it, each with its piece (rules/clothesPile.ts awaitingShelves: the shoe rack's Trousers and Shoes each their own; Ed,
+   *  2026-11-11). False: all on her. */
+  constructor(public shelves: Shelf[], public g: Genome, public owned: ReadonlySet<string>, public found: ReadonlySet<string>, public fitted: Fitted | null, private ctx: ChoiceCtx, public awaitingDress: boolean | Readonly<Record<string, string>> = false) {}
 
-  /** Her saved outfit may still be in the morning pile, rather than on her. */
-  wears(item: Parameters<typeof wears>[1]): boolean { return !this.awaitingDress && wears(this.g, item); }
+  /** A choice made on shelf `shelf` (its id; none known, the whole station's): its piece on her now (every shelf waiting for that
+   *  piece dressed with it), or the whole station's. */
+  dressed(shelf?: string): void {
+    const a = this.awaitingDress;
+    if (typeof a !== "object") { this.awaitingDress = false; return; }
+    if (shelf && !Object.hasOwn(a, shelf)) return; // (nothing of that shelf's waiting)
+    const rest = shelf ? Object.fromEntries(Object.entries(a).filter(([, piece]) => piece !== a[shelf])) : {};
+    this.awaitingDress = Object.keys(rest).length ? rest : false;
+  }
+  /** Shelf `s`'s piece is still in the morning pile. */
+  awaits(s: Shelf | undefined): boolean { const a = this.awaitingDress; return a === true || (typeof a === "object" && !!s && Object.hasOwn(a, s.id)); }
+  /** She wears `item` (on shelf `s`): not while its piece is still in the pile. */
+  wears(item: Parameters<typeof wears>[1], s?: Shelf): boolean { return !this.awaits(s ?? this.shelves.find(q => q.items.includes(item as never))) && wears(this.g, item); }
 
   /** The panel's lines, top to bottom (ui/stationLines.ts). */
   lines(): Line[] { return stationLines(this.shelves, { owned: new Set(this.owned), fitOn: a => this.ctx.fitOn(a, this.g), grid: s => this.ctx.grid(s) }); }
@@ -120,9 +134,9 @@ export class PanelChoice {
       const it = itemAt(s, l, col);
       if (!this.owned.has(it.id)) { this.nope = { ...this.at }; return { unfound: true }; }
       this.nope = null;
-      if (s.toggle) return this.set((this.wears(it) ? unwear(this.g, it) : wear(this.g, it)) as Genome); // (on, or off again)
-      if (this.wears(it)) return { unfound: false };
-      return this.set(wear(this.g, it) as Genome);
+      if (s.toggle) return this.set((this.wears(it, s) ? unwear(this.g, it) : wear(this.g, it)) as Genome, s); // (on, or off again)
+      if (this.wears(it, s)) return { unfound: false };
+      return this.set(wear(this.g, it) as Genome, s);
     }
     this.nope = null;
     if (l.kind === "action") return { action: s.action, unfound: false };
@@ -131,7 +145,7 @@ export class PanelChoice {
     if (l.kind === "grid") {
       const part = this.partOf(s), g = { ...this.g, palette: { ...this.ctx.palette(this.g), [part]: this.ctx.swatch(s, col, l.row!) } } as Genome;
       const on = s.toggle ? s.items.find(it => it.colour === part && this.owned.has(it.id) && !wears(g, it)) : undefined; // (a colour for her lips puts her lipstick on)
-      return this.set(on ? wear(g, on) as Genome : g);
+      return this.set(on ? wear(g, on) as Genome : g, s);
     }
     if (l.kind === "cards" && s.slot && this.fitted) {
       if (!canChoose(s, l, col, this.found)) { this.nope = { ...this.at }; return { unfound: true }; }
@@ -143,9 +157,10 @@ export class PanelChoice {
     return { unfound: false };
   }
 
-  private set(g: Genome): Chosen {
-    if (!this.awaitingDress && JSON.stringify(g) === JSON.stringify(this.g)) return { unfound: false };
-    this.awaitingDress = false;
+  private set(g: Genome, s: Shelf): Chosen {
+    const waiting = this.awaits(s);
+    if (!waiting && JSON.stringify(g) === JSON.stringify(this.g)) return { unfound: false };
+    this.dressed(s.id);
     this.g = g;
     return { look: g, unfound: false };
   }

@@ -11,6 +11,9 @@ import { usesEdLayout } from "../app/houseLayout";
 import { wakeInBedroom } from "./opening";
 import { startWake, WAKE_DEFAULT } from "./wakeUp";
 import { wearFromStation } from "./clothesPile";
+
+/** Every dressing station's piece put on (the shoe rack's trousers and shoes each on their shelf). */
+const DRESS_ALL: readonly [string, string?][] = [["wardrobe"], ["shoeRack", "trousers"], ["shoeRack", "shoes"], ["cloakPegs"], ["bags"]];
 import { deckOf } from "./treehouse";
 import { atGuide, emptyGuide, guidanceOf, seeGuide, GUIDANCE_HOOKS, type GuideSave } from "./guidance";
 import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
@@ -49,7 +52,11 @@ describe("guidance pins", () => {
     expect(at()).toBe("wardrobe");
     wearFromStation(g.wake!, "wardrobe");
     expect(at()).toBe("shoeRack");
-    wearFromStation(g.wake!, "shoeRack");
+    // (her trousers and her shoes each their own piece at the shoe rack: its pin stays till both are on; Ed, 2026-11-11, "When I go
+    // to the wardrobe and put top/jacket on, trousers are put on too")
+    wearFromStation(g.wake!, "shoeRack", "shoes");
+    expect(at()).toBe("shoeRack");
+    wearFromStation(g.wake!, "shoeRack", "trousers");
     expect(at()).toBe("bags");
     wearFromStation(g.wake!, "bags");
     expect(at()).toBe("invitations");
@@ -95,7 +102,7 @@ describe("guidance pins", () => {
     expect(of(g)).toEqual({ kind: "dress", target: { object: "basin" } });
     g.wake!.washed = true; g.wake!.styled = true;
     expect(of(g)).toEqual({ kind: "dress", target: { object: "wardrobe" } });
-    for (const st of ["wardrobe", "shoeRack", "cloakPegs", "bags"]) wearFromStation(g.wake!, st);
+    for (const [st, shelf] of DRESS_ALL) wearFromStation(g.wake!, st, shelf);
     expect(of(g)).toEqual({ kind: "dress", target: { object: "hats" } });
   });
 
@@ -114,7 +121,7 @@ describe("guidance pins", () => {
       expect(down).toMatchObject({ x: first.x, z: first.z });
       expect(HOUSE_ROOMS.objects.some(o => o.use.kind === "hats")).toBe(false); // (the old hats' area is gone: Ed, 2026-11-02)
       g.wake!.washed = true; g.wake!.styled = true;
-      for (const st of ["wardrobe", "shoeRack", "bags", "cloakPegs"]) wearFromStation(g.wake!, st);
+      for (const [st, shelf] of DRESS_ALL) wearFromStation(g.wake!, st, shelf);
       const G = of(g)!;
       expect(G).toEqual({ kind: "dress", target: { x: down.x, z: down.z } });
       expect(atGuide(g, 0, G)).toBe(false);
@@ -133,7 +140,7 @@ describe("guidance pins", () => {
       g.party.spellAt = null; g.clock.paused = false; wakeInBedroom(g); startWake(g, g.herTime);
       run(g, 0.1, { moveX: 1 }); run(g, WAKE_DEFAULT.stretch + 0.1);
       g.wake!.washed = true; g.wake!.styled = true;
-      for (const st of ["wardrobe", "shoeRack", "bags", "cloakPegs"]) wearFromStation(g.wake!, st);
+      for (const [st, shelf] of DRESS_ALL) wearFromStation(g.wake!, st, shelf);
       W.hat.down = null; // (nowhere: the hat step has nothing to point at)
       const G = of(g);
       expect(G?.kind).not.toBe("dress");

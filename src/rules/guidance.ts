@@ -55,11 +55,11 @@ export const GUIDANCE_HOOKS = {
 /** A game's first morning, in Ed's order (2026-10-29: "The first station you go to after waking up should be skin/hair, then
  *  jacket/top/trousers, then shoes, then bag, then invitations, then cloak, then hat, then broom"; and 2026-11-07, "first morning
  *  should have the basin as the first thing in the path"): the basin till she's used it (wake.washed), the dressing table till she's
- *  used it (wake.styled), each dressing station till its piece is on (rules/clothesPile.ts STATION_SLOT; her hat off the hats'
- *  floor), the invitations desk and the broom rack till her night's kit has them (Ed, 2026-11-07: "The guidance pins point only to the
+ *  used it (wake.styled), each dressing station till its piece is on (rules/clothesPile.ts STATION_SLOT; the shoe rack till both her
+ *  trousers and her shoes are, each its own piece since Ed's report of 2026-11-11; her hat off the hats' floor), the invitations desk and the broom rack till her night's kit has them (Ed, 2026-11-07: "The guidance pins point only to the
  *  rack: there are no mods on the first night, so the modding stations aren't in the pointer sequence"). */
 export const FIRST_MORNING: readonly ({ dress: PileSlot | "washed" | "styled"; at: string } | { kit: "desk" | "rack" })[] = [
-  { dress: "washed", at: "basin" }, { dress: "styled", at: "dressingTable" }, { dress: "top", at: "wardrobe" }, { dress: "shoes", at: "shoeRack" }, { dress: "bits", at: "bags" },
+  { dress: "washed", at: "basin" }, { dress: "styled", at: "dressingTable" }, { dress: "top", at: "wardrobe" }, { dress: "trousers", at: "shoeRack" }, { dress: "shoes", at: "shoeRack" }, { dress: "bits", at: "bags" },
   { kit: "desk" }, { dress: "cloak", at: "cloakPegs" }, { dress: "hat", at: "hats" }, { kit: "rack" },
 ];
 

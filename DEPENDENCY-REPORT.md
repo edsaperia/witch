@@ -1,5 +1,7 @@
 # Dependency audit, 4 November 2026
 
+**Status, 11 November 2026: superseded.** Both remediations below have since been applied: `package.json` and the lockfile are on Vitest 4.1.12 and Vite 7.3.7. The relay's audit was held back because the project was taken to be private; the repository is public, so nothing stands in its way, but it has still not been run. The rest is the report as written.
+
 Scope: the game and multiplayer relay at prototype commit `483801b44`. This is a report for review. Manifests and lockfiles are unchanged.
 
 | Tool | Locked | npm remediation | Exposure |

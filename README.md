@@ -1,8 +1,10 @@
 # Witch
 
+*Witch* is the codename; **Coven Rush**, on the title screen, is the top candidate for the release name (Ed, 2026-11-11).
+
 A videogame by Ed Saperia: a witch throws a rave in a magical forest. **How the game works today, in plain words: [`docs/HOW-THE-GAME-WORKS.md`](docs/HOW-THE-GAME-WORKS.md).** The design is in `DESIGN.md`; how the project is run is in `CLAUDE.md`.
 
-## The fly-around prototype
+## Play it
 
 **A fresh game on the latest version: https://edsaperia.github.io/witch/?fresh=1** — a brand-new player's very first morning, every time, on the newest deploy; your own saves are neither read nor touched, and the plain link plays them as ever (`docs/notes/run.md`, **Fresh game link**).
 

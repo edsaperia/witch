@@ -3,6 +3,18 @@
  "intro": "Every `?name=value` the game reads from its link, and where it reads it. Most are read once as the page loads (`src/app/linkParams.ts` for the tuning, `src/app/gameParams.ts` for the game, `src/app/viewParams.ts` for the view, `src/main.ts` for the page); a few are read where they're used. Several can be combined: `?seed=123&wave=30&creator=0`. This page is written from `config/link-switches.json`, and a test checks that file against the code.",
  "switches": [
   {
+   "name": "crawl",
+   "values": [
+    "old"
+   ],
+   "does": "The crawl as it was, to compare: overlapping see-through things of one layer drawn in the order of their distance from the camera (not the world's fixed far-to-near order), and the camera's pixel snap taken up the screen (not along the ground), so things off the focus's depth slide to and fro as she walks north or south.",
+   "group": "compare",
+   "since": "2026-11-11",
+   "readIn": [
+    "src/render/drawOrder.ts"
+   ]
+  },
+  {
    "name": "patternlight",
    "values": [
     "off",
