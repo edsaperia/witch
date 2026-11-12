@@ -164,11 +164,13 @@ One area type per creature, each a small definition in Ed's columns: **floor** t
 | Beaver pond | birch leaves | a pond | stumps | birch and aspen | a beaver dam | Beaver | draft |
 | Log pile | rotting leaves | | fungi | rotting logs | a fallen giant | Stag beetle | draft |
 | Heath | heather | | gorse | wind-bent birches | | Moth | draft |
-| Old pinewood | pine needles | | pine cones | tall old pines with knotholes | | Pine marten | draft |
+| Old pinewood | pine needles | | pine cones | tall old pines with knotholes | | Pine marten (on home: the bee, Ed 2026-11-12; see below) | draft |
 | Ravine | wet moss and rock | rock walls | ferns | mossy boulders | a waterfall | Salamander | draft |
 | Bluebell glade | bluebells | | ferns | beeches | | Hare | draft |
 | Holly thicket | dead leaves | holly hedges | cobwebs | hollies | a web-hung dead tree | Spider | draft |
 | Honeysuckle tangle | grass and clover | bramble | honeysuckle | hazel coppice | | Dormouse | draft |
+
+**Home's bee** (Ed, 2026-11-12): on home the **bee** takes the pine marten's place and lives in the **old pinewood**; it **flies**. The marten and a turtle are kept for other islands. The bee isn't a kind in the game yet (no genome, rules, sounds or sigil): its first model is in the low-poly creature meshes (#1962, behind `?meshCreatures=1`), whose models for home's creatures Ed approved the same day ("I'm happy with these models, let's do the real build").
 
 ### Area types from recipes (#119)
 

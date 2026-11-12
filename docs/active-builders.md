@@ -12,21 +12,19 @@ The register of who is building what (Ed, 2026-10-31: "Maybe we should have a re
 
 States: **ACTIVE** (working now), **WAITING** (blocked on the named condition), **PAUSED** (stopped by Ed's decision; nothing runs).
 
-## Register (2026-11-11 21:08 UTC)
+## Register (2026-11-12 11:20 UTC)
 
 | Builder | Task / PR | Branch | State | Waiting on | Owns |
 |---|---|---|---|---|---|
-| no-crawl (Claude) | Stop shimmer and popping in grass and decor as the camera moves; camera-independent draw order only (Ed: no grow-in-place) | `claude/no-crawl` (no PR yet) | ACTIVE | its own audit, then a pan video for Ed | grass and decor draw ordering under `src/render/` |
-| music load (Claude) | Music crunches and cuts out on Ed's laptop since #1951: measure the audio load, make it cheaper without changing the sound, add a budget check | `claude/music-load` (no PR yet) | ACTIVE | its own measurements, then before/after clips for Ed | the music's audio graph (banger mode's voices, buses and effects), the new load check |
-| coordinator | Release 26, #1956 (#1954 loading stars, #1955 wardrobe trousers) | `claude/release-26` | ACTIVE | the public site showing the new build | release and publish branches |
+| creature meshes ("Witch Fable 5.2", Claude app, directed by Ed) | Creatures as low-poly meshes on skeletons, #1962 (draft; off by default, `?meshCreatures=1`). Ed approved home's models, 2026-11-12: "I'm happy with these models, let's do the real build" | `claude/creature-bake` | ACTIVE | still to come: party gear, faces, naps, the view from above; then full CI, smoke, art check and a look in the running game before the coordinator combines it | `art/mesh/` (the kit, species plans, shape code, software rasteriser) and the mesh path in `src/render/creatureArt.ts`; `tools/creature-mesh/`, `tools/creature-bake/` |
 | tree pre-bake (Claude) | Pre-drawing the art at build time, phase A, #1884 | `claude/prebake-art` | WAITING | Ed's pick of a compression option (stopped: over the size limit) | `tools/` bake scripts on that branch only |
 | art worker retry (Claude) | Retry a failed drawing import, #1886 | `claude/peaceful-albattani-01fh7x` | WAITING | review and Ed's go | `src/render/artWorker.ts` |
 | paused-work ledger (coordinator) | Plans: ledger of paused work, #1916 | `claude/paused-ledger` | WAITING | Ed's go | `docs/plans/` ledger |
-| body graph (Codex) | Body-graph acceptance, bear to hydra, default off, #1866; reference note `claude/creature-research` | `codex/body-graph-acceptance` | PAUSED | cost estimate, then Ed's OK in Codex chat | body-graph creature code, default off |
+| body graph (Codex) | Body-graph acceptance, bear to hydra, default off, #1866; reference note `claude/creature-research` | `codex/body-graph-acceptance` | PAUSED | cost estimate, then Ed's OK in Codex chat. Stays paused for home's fox, stoat, marten, hare, squirrel, dormouse, badger, mole, hedgehog and snail: the meshes (#1962) take those (Ed, 2026-11-12) | body-graph creature code, default off |
 | creature shapes (Codex) | Five creature shape candidates, default off, #1865 | `codex/creature-shapes-stage1` | PAUSED | as above | shape candidates, default off |
 | art lanes L1–L9 (Codex) | Anatomy and skeleton reference targets for the body graph, #1898–#1906 (several marked do-not-merge) | `codex/art-pass-l1` … `codex/art-pass-l9` | PAUSED | as above | reference targets only |
 
-Not builders of the coordinator's: Ed's repo-review session's #1957 (`claude/review-doc-fixes`) and #1958 (`claude/review-hygiene`).
+The creature-mesh builder runs in the Claude app, not as one of the coordinator's sessions: it reports on its pull request and reads the coordinator's `COORDINATOR:` comments there, as a Codex builder did. Its #1957 and #1958 shipped in release 27.
 
 ## Shared checks
 
