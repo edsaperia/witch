@@ -95,7 +95,7 @@ node tools/inventory.mjs [--check]
 - [`ground/`](ground/README.md): 2 scripts — area-frames.cjs, ground-sheet.mjs
 - [`hats/`](hats/README.md): 4 scripts — art-shots.cjs, edge-seer-shots.cjs, hats-out-shots.cjs, wardrobe-shots.cjs
 - [`hologram/`](hologram/README.md): 1 script — bend.cjs
-- [`house/`](house/README.md): 16 scripts — audit-layout.mjs, bedrooms-shots.cjs, dark-shots.cjs, draw-census.cjs, editor-check.cjs, forest-fade.cjs, furniture-sheet.mjs, furniture-shots.cjs, hiz-walk.cjs, oak-shots.cjs, organic.mjs, positions.cjs, rooms-shots.cjs, shot-session.cjs, takeoff.cjs, terrace-lock.cjs
+- [`house/`](house/README.md): 17 scripts — audit-layout.mjs, bedrooms-shots.cjs, dark-shots.cjs, draw-census.cjs, editor-check.cjs, forest-fade.cjs, furniture-sheet.mjs, furniture-shots.cjs, hiz-walk.cjs, oak-shots.cjs, organic.mjs, positions.cjs, rooms-shots.cjs, shot-session.cjs, takeoff.cjs, terrace-lock.cjs, terrace-walk.cjs
 - [`islands/`](islands/README.md): 3 scripts — chart.mjs, map.mjs, sheet.mjs
 - [`labs/`](labs/README.md): 1 script — publish.mjs
 - [`lakes/`](lakes/README.md): 4 scripts — leylines.mjs, looks-map.mjs, looks.cjs, shots.cjs
