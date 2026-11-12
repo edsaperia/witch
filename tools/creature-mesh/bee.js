@@ -3,7 +3,7 @@
 // have a different animal. Bees? Turtles?"). It hovers: a furred thorax between a round head with great dark eyes and a banded
 // abdomen ending in its sting, two pairs of wings beating, six legs hanging. Its ladder is a proposal: a bee-let, all fluff,
 // its wings too small to lift it far; a slim worker; a great bumble of an adult with pollen on its legs; and the old queen,
-// long in the body, plated in purple enamel cut with honey-lit marks, crowned in comb, her wings veined with light. On home
+// long in the body, plated in purple enamel cut with honey-lit marks, crowned in comb, her wings ragged fans of dark blades set with light. On home
 // island in the marten's place (Ed, 2026-11-11: "keep both, but swap the marten for the bee"). Metres; y up; its head along
 // +z; it hangs `fly` off the ground.
 import { ball, tufts } from "./kit.js";
@@ -33,6 +33,17 @@ function bee(name, o) {
   for (const [s, tag] of [[1, "L"], [-1, "R"]]) for (const [pair, len, wide, back] of [["f", 0.3, 0.075, 0.25], ["h", 0.2, 0.06, 0.75]]) {
     const b = `wing${pair}${tag}`, root = P(0.035 * s, 0.13, 0.02 - (pair === "h" ? 0.035 : 0)); bones.push([b, root, "thorax"]);
     const d = [s * Math.cos(back) * 0.92, 0.38, -Math.sin(back)], at = t => root.map((v, j) => v + d[j] * len * wing * k * t);
+    // (an old queen's wings, o.ornate: { frame, cells: [colours] }; Ed, 2026-11-12, of a drawing of a ragged fairy wing: "the bee
+    // legend can have wings more like this": each wing a fan of long pointed blades, the fore pair swept up and out, the hind
+    // pair trailing in tails that curl, every blade a dark frame with a lit cell set in it, like leaded glass)
+    if (o.ornate) { const c = [0, -0.12, -1], n = [d[1] * c[2] - d[2] * c[1], d[2] * c[0] - d[0] * c[2], d[0] * c[1] - d[1] * c[0]], nl = Math.hypot(...n) * (n[1] < 0 ? -1 : 1), up = n.map(v => v / nl);
+      const fan = pair === "f" ? [[-0.3, 0.85, 1], [0.05, 1.15, 1.15], [0.4, 0.95, 1.05], [0.75, 0.7, 0.9]] : [[0.35, 0.8, 0.9], [0.7, 1.2, 0.8], [1.05, 1.75, 0.6], [1.35, 1.25, 0.55]];
+      fan.forEach(([th, long, fat], i) => { const dir = d.map((v, j) => v * Math.cos(th) + c[j] * Math.sin(th)), L = len * wing * k * long, W = wide * wing * k * fat * 0.62, curl = pair === "h" ? 0.5 : 0.22;
+        const along = t => root.map((v, j) => v + dir[j] * L * t + c[j] * curl * L * t * t + up[j] * (i % 2 ? 0.006 : 0) * k), blade = (pts, w, colour, lift, glow) => ({ sides: 4, up, rings: pts.map(([t, f]) => ({ at: along(t).map((v, j) => v + up[j] * lift), rx: Math.max(0.0008, w * f), ry: 0.004 * k, bone: b, colour, glow, up })) });
+        lofts.push(blade([[0, 0.3], [0.22, 1], [0.5, 0.85], [0.75, 0.42], [0.9, 0.16], [1, 0.01]], W, o.ornate.frame, 0, false));
+        const cell = o.ornate.cells[i % o.ornate.cells.length], pts = [[0.14, 0.2], [0.26, 1], [0.48, 0.8], [0.66, 0.2]];
+        lofts.push(blade(pts, W * 0.6, cell, 0.005 * k, true), blade(pts, W * 0.6, cell, -0.005 * k, true)); });
+      continue; }
     lofts.push({ sides: 4, up: [0, 1, 0], rings: [[0, 0.35], [0.3, 1], [0.65, 1.05], [0.9, 0.7], [1, 0.15]].map(([t, f]) => ({ at: at(t), rx: wide * wing * k * f, ry: 0.004 * k, bone: b, colour: C.wing ?? WING, up: [0, 1, 0] })) });
     if (C.vein) lofts.push({ sides: 3, up: [0, 1, 0], rings: [0.05, 0.4, 0.75, 0.97].map(t => ({ at: at(t).map((v, j) => v + (j === 1 ? 0.006 * k : 0)), rx: 0.006 * k, ry: 0.006 * k, bone: b, colour: C.vein, glow: true, up: [0, 1, 0] })) });
   }
@@ -64,12 +75,13 @@ export const BEE_PLANS = {
   // a great bumble: a deep furred thorax, bold bands, wide wings, pollen heaped on its hind legs, a long sting
   adult: () => done(bee("bee-adult", { fly: 0.3, chest: 1.2, wing: 1.2, eye: 1.1, sting: 1.5, antennae: 1.2, pollen: 1.3, abdomen: { len: 1.05, fat: 1.2, rings: 7 }, fuzz: { n: 5, long: 0.07, tip: "#fff0b8", collar: "#fff0b8" } })),
   // the old queen: long in the body, banded black and gold; over each black band a plate of royal purple enamel edged in gold, a
-  // honey-lit mark on every plate; a crown of comb; her wings veined with light; a ruff of white fur
+  // honey-lit mark on every plate; a crown of comb; her wings ragged fans of long dark blades with lit cells set in them, the
+  // hind pair trailing in tails; a ruff of white fur
   legend() {
     const GOLD = "#e9b949", HONEY = "#ffc83a", LIT = "#fff2b0", PURPLE = "#4b2a6e", C = { fuzz: "#c98a14", band: GOLD, dark: "#241a12", eye: "#6a1626", vein: LIT, sting: GOLD, wing: "#cfe9ff" };
     // her armour (Ed, 2026-11-11: "Armour should just be thickened polygons on their torso with a different colour and glowing runes"): each black band i lies between the abdomen's rings 2i and 2i + 1
     const armour = [1, 3, 5, 7].map(i => ({ on: "abdomen", from: 2 * i - 0.25, to: 2 * i + 1.25, round: [0, 1.7], thick: 0.016, colour: PURPLE, rim: GOLD, runes: { colour: HONEY, size: 0.7, max: 1, seed: i } }));
-    const b = bee("bee-legend", { fly: 0.36, chest: 1.15, C, wing: 1.75, eye: 1.05, sting: 2.6, antennae: 1.8, abdomen: { len: 1.9, fat: 1.05, rings: 10, colour: i => (i % 2 ? "#241a12" : GOLD) }, fuzz: { n: 6, long: 0.1, tip: "#ffffff", collar: "#ffffff" }, armour, gait: { seconds: 1.2, beats: 5 } }), { P } = b;
+    const b = bee("bee-legend", { fly: 0.36, chest: 1.15, C, wing: 1.75, eye: 1.05, sting: 2.6, antennae: 1.8, abdomen: { len: 1.9, fat: 1.05, rings: 10, colour: i => (i % 2 ? "#241a12" : GOLD) }, fuzz: { n: 6, long: 0.1, tip: "#ffffff", collar: "#ffffff" }, armour, ornate: { frame: "#2b1840", cells: [LIT, HONEY, "#cfe9ff"] }, gait: { seconds: 1.2, beats: 5 } }), { P } = b;
     // the crown: five cells of comb standing on her head, the middle one lit
     const crown = [-2, -1, 0, 1, 2].map(i => ({ at: P(0.03 * i, 0.105, 0.125), rx: 0.022, ry: 0.02, tip: P(0.04 * i, 0.105 + 0.15 - 0.02 * Math.abs(i), 0.115), bone: "head", colour: GOLD, tipColour: i ? GOLD : HONEY, glow: !i, split: 0.8, bulge: 0.9, up: [0, 0, 1], sides: 6 }));
     return { ...done(b), cones: [...b.cones, ...crown] };
