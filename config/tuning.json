@@ -2476,6 +2476,11 @@
       "snooze": 5,
       "stretch": 3,
       "alarmMin": 0.4
+    },
+    "eyes": {
+      "shut": 0.5,
+      "open": 2.5,
+      "reopen": 8
     }
   },
   "arrive": {

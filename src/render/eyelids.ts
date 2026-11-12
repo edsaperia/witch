@@ -19,24 +19,25 @@ export function lidClosure(fill: number): number {
   return 0.5 * f + 0.5 * Math.sin(f * Math.PI / 2);
 }
 
-/** How fast (a second) the eyes open again once the hold is let go: what's left of the closure falls by this share a second. */
-export const OPEN_RATE = 8;
+/** The eyes' speeds (tuning's `opening.eyes`, these when it has none): `shut`, the seconds they stay shut after her alarm first
+ *  rings; `open`, the seconds they then take to open (Ed, 2026-11-12, of 0.25 s then 1.5 s or 0.5 s then 2.5 s: "Slower waking");
+ *  `reopen`, how fast they open again once the bed's hold is let go: what's left of the closure falls by this share a second
+ *  (8: about 0.4 s). */
+export interface EyesTuning { shut: number; open: number; reopen: number }
+export const EYES_DEFAULT: EyesTuning = { shut: 0.5, open: 2.5, reopen: 8 };
 
 /** A frame of the closure shown: up with the hold exactly (the timer as it is), down again (opening) smoothly over `dt` s. */
-export function stepLids(shown: number, target: number, dt: number, rate = OPEN_RATE): number {
+export function stepLids(shown: number, target: number, dt: number, rate = EYES_DEFAULT.reopen): number {
   if (target >= shown) return target;
   const next = shown + (target - shown) * Math.min(1, Math.max(0, dt) * rate);
   return next - target < 0.002 ? target : next;
 }
 
-/** Waking: shut this long (s, her clock) after her alarm first rings, then opening over WAKE_OPEN seconds, eased. */
-export const WAKE_SHUT = 0.25, WAKE_OPEN = 1.5;
-
 /** How shut her eyes are as she wakes (0 open, 1 shut): from the first ring of the morning's alarm (beat "alarm", not yet
- *  snoozed), shut WAKE_SHUT s then opening over WAKE_OPEN s; open otherwise (asleep dreaming, snoozing, stretching, up). */
-export function wakeClosure(wake: { beat: string; at: number; snoozes: number; open: boolean } | null | undefined, ht: number): number {
+ *  snoozed), shut `K.shut` s then opening over `K.open` s, eased; open otherwise (asleep dreaming, snoozing, stretching, up). */
+export function wakeClosure(wake: { beat: string; at: number; snoozes: number; open: boolean } | null | undefined, ht: number, K: EyesTuning = EYES_DEFAULT): number {
   if (!wake || wake.open || wake.beat !== "alarm" || wake.snoozes > 0) return 0;
-  const t = Math.min(1, Math.max(0, (ht - wake.at - WAKE_SHUT) / WAKE_OPEN));
+  const t = Math.min(1, Math.max(0, (ht - wake.at - K.shut) / Math.max(1e-6, K.open)));
   return 1 - t * t * (3 - 2 * t);
 }
 
@@ -61,8 +62,10 @@ export class EyeLids {
   constructor() {
     this.box = document.createElement("div");
     this.box.id = "sleep-eyelids";
-    // (z 8, the wake-up veil's: under her dream's cloud (9) and the house's keycaps (11), so the alarm's keys and the bed's E stay readable)
-    this.box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:8;overflow:hidden;display:none";
+    // (z 30: over the house's keycaps (11: the bed's E, the alarm's keys) and the "press any key for sound" note (29), so shut eyes
+    // are fully dark and those show again as they open (Ed, 2026-11-12: "Lids cover them"); under the wake-up's card and the pause
+    // page (31 and up). It was the wake-up veil's 8, the keycaps left readable over the lids.)
+    this.box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:30;overflow:hidden;display:none";
     const lid = (edge: "top" | "bottom") =>
       `position:absolute;left:-10vw;width:120vw;height:100vh;${edge}:0;will-change:transform;` +
       // (dark everywhere but a soft half-ellipse at its inner edge: the lid's curve, its corners reaching further in than its middle)
@@ -82,11 +85,12 @@ export class EyeLids {
   }
 
   /** A frame: `fill` the bed's hold (0 to 1; 0 when she isn't holding it), `waking` her eyes' closure as she wakes (wakeClosure),
-   *  `ht` her clock (their opening runs on it, as the hold does: still while paused). */
-  update(fill: number, waking: number, ht: number): void {
+   *  `ht` her clock (their opening runs on it, as the hold does: still while paused), `reopen` how fast they open again once
+   *  the hold is let go (EyesTuning). */
+  update(fill: number, waking: number, ht: number, reopen = EYES_DEFAULT.reopen): void {
     const dt = Math.min(0.1, Math.max(0, ht - this.last));
     this.last = ht;
-    this.shown = stepLids(this.shown, Math.max(lidClosure(fill), waking), dt);
+    this.shown = stepLids(this.shown, Math.max(lidClosure(fill), waking), dt, reopen);
     const i = Math.round(this.shown * STEPS);
     if (i === this.step) return;
     this.step = i;

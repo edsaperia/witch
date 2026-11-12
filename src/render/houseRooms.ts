@@ -40,7 +40,7 @@ import { witchLookOf } from "./artBuild";
 import { pileOut } from "../rules/clothesPile";
 import { placedDecorRooms } from "./houseDecor";
 import { Spotlight } from "./spotlight";
-import { EyeLids, sleepDial, wakeClosure } from "./eyelids";
+import { EYES_DEFAULT, EyeLids, sleepDial, wakeClosure } from "./eyelids";
 import { LoanSparkle } from "./loanSparkle";
 import { UseGlow } from "./useGlow";
 import { glyphOf, keycapCanvas, wasdCanvas, type KeycapGlyph } from "../ui/keyHint";
@@ -353,8 +353,8 @@ export class HouseRoomsView {
    *  under ?sleepdial=1, the old dial). */
   private eyes(g: View["game"], ht: number, fill: number): void {
     if (sleepDial()) return;
-    const waking = wakeClosure(g.wake, ht);
-    if (fill > 0 || waking > 0 || this.lids) (this.lids ??= new EyeLids()).update(fill, waking, ht);
+    const K = g.tuning.opening?.eyes ?? EYES_DEFAULT, waking = wakeClosure(g.wake, ht, K);
+    if (fill > 0 || waking > 0 || this.lids) (this.lids ??= new EyeLids()).update(fill, waking, ht, K.reopen);
   }
   /** The actual floor and bed, not optional props/ground/detail programs. */
   landingReady(renderer: THREE.WebGLRenderer): boolean {

@@ -2169,6 +2169,11 @@ export type SchemaTuning = {
       "stretch": number;
       "alarmMin": number;
     };
+    "eyes": {
+      "shut": number;
+      "open": number;
+      "reopen": number;
+    };
   };
   "arrive": {
     "zoom": number;

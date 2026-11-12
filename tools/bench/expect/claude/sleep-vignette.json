@@ -1,4 +1,4 @@
 {
   "reason": "The bed's sleep timer drawn as eyes closing, and her eyes opening as her alarm first wakes her (Ed, 2026-11-12: \"going to sleep zzz timer should be an eye closing vignette instead of a dial\"; \"we can also use this animation for waking up (in reverse)\"). Drawing only: no rules change.",
-  "frames": { "bedroom": "the quick bedroom scene is held at the first moment of her alarm, when her eyes are still shut (render/eyelids.ts wakeClosure): the eyelids cover the dark room, the alarm's keycaps over them" }
+  "frames": { "bedroom": "the quick bedroom scene is held at the first moment of her alarm, when her eyes are still shut (render/eyelids.ts wakeClosure): the eyelids cover the dark room and the alarm's keycaps (Ed, 2026-11-12: \"Lids cover them\")" }
 }

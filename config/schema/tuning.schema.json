@@ -11136,11 +11136,36 @@
           ],
           "additionalProperties": false,
           "description": "the wake-up in her bedroom (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it."
+        },
+        "eyes": {
+          "type": "object",
+          "properties": {
+            "shut": {
+              "type": "number",
+              "minimum": 0
+            },
+            "open": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reopen": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "shut",
+            "open",
+            "reopen"
+          ],
+          "additionalProperties": false,
+          "description": "Her eyelids' speeds (render/eyelids.ts): shut, the seconds her eyes stay shut after her alarm first rings in the morning; open, the seconds they then take to open; reopen, how fast they open again when E is let go early at the bed (what's left of the closure falls by this share a second: 8 is about 0.4 seconds)."
         }
       },
       "required": [
         "bedroom",
-        "wake"
+        "wake",
+        "eyes"
       ],
       "additionalProperties": false,
       "description": "A plain first load wakes her in her bedroom on the home island while the night is made."

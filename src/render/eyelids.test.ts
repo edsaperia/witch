@@ -1,7 +1,7 @@
 // Her eyes closing as she goes to sleep (Ed, 2026-11-12: "going to sleep zzz timer should be an eye closing vignette instead of
 // a dial"): render/eyelids.ts, by the bed's hold (rules/houseRooms.ts stepBed).
 import { describe, expect, it } from "vitest";
-import { lidClosure, stepLids, wakeClosure, OPEN_RATE, WAKE_SHUT, WAKE_OPEN } from "./eyelids";
+import { lidClosure, stepLids, wakeClosure, EYES_DEFAULT } from "./eyelids";
 
 describe("her eyes closing at the bed", () => {
   it("open with no hold, shut at a full one, closing all the way through it", () => {
@@ -23,7 +23,7 @@ describe("her eyes closing at the bed", () => {
     for (let i = 1; i < seen.length; i++) expect(seen[i]).toBeLessThanOrEqual(seen[i - 1]);
     expect(c).toBe(0); // (open, exactly, at the end)
     expect(frames / 60).toBeGreaterThan(0.3); expect(frames / 60).toBeLessThan(1.2);
-    expect(OPEN_RATE).toBeGreaterThan(0);
+    expect(EYES_DEFAULT.reopen).toBeGreaterThan(0);
   });
   it("a stalled frame (no time) leaves them where they are", () => {
     expect(stepLids(0.5, 0, 0)).toBe(0.5);
@@ -32,14 +32,22 @@ describe("her eyes closing at the bed", () => {
 
 describe("her eyes opening as she wakes (Ed, 2026-11-12: \"we can also use this animation for waking up (in reverse)\")", () => {
   const alarm = { beat: "alarm", at: 10, snoozes: 0, open: false };
-  it("shut as her alarm first rings, then opening, open once WAKE_SHUT + WAKE_OPEN s have passed", () => {
+  it("Ed's slower waking (2026-11-12): shut 0.5 s, then open over 2.5 s; tuning's own speeds when given", () => {
+    expect(EYES_DEFAULT.shut).toBe(0.5); expect(EYES_DEFAULT.open).toBe(2.5);
+    expect(wakeClosure(alarm, 10.5)).toBe(1);
+    expect(wakeClosure(alarm, 12.9)).toBeGreaterThan(0);
+    expect(wakeClosure(alarm, 13)).toBe(0);
+    expect(wakeClosure(alarm, 10.25, { shut: 0.25, open: 1.5, reopen: 8 })).toBe(1);
+    expect(wakeClosure(alarm, 11.75, { shut: 0.25, open: 1.5, reopen: 8 })).toBe(0);
+  });
+  it("shut as her alarm first rings, then opening, open once shut + open s have passed", () => {
     expect(wakeClosure(alarm, 10)).toBe(1);
-    expect(wakeClosure(alarm, 10 + WAKE_SHUT)).toBe(1);
-    const mid = wakeClosure(alarm, 10 + WAKE_SHUT + WAKE_OPEN / 2);
+    expect(wakeClosure(alarm, 10 + EYES_DEFAULT.shut)).toBe(1);
+    const mid = wakeClosure(alarm, 10 + EYES_DEFAULT.shut + EYES_DEFAULT.open / 2);
     expect(mid).toBeGreaterThan(0.2); expect(mid).toBeLessThan(0.8);
-    expect(wakeClosure(alarm, 10 + WAKE_SHUT + WAKE_OPEN)).toBe(0);
+    expect(wakeClosure(alarm, 10 + EYES_DEFAULT.shut + EYES_DEFAULT.open)).toBe(0);
     let last = 1;
-    for (let t = 10; t < 12; t += 0.05) { const c = wakeClosure(alarm, t); expect(c).toBeLessThanOrEqual(last); last = c; }
+    for (let t = 10; t < 14; t += 0.05) { const c = wakeClosure(alarm, t); expect(c).toBeLessThanOrEqual(last); last = c; }
   });
   it("open while she dreams (still seen in the dark), after a snooze, stretching, up, or with no wake-up", () => {
     expect(wakeClosure({ ...alarm, beat: "dream" }, 10)).toBe(0);
