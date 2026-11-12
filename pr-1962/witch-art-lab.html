@@ -22724,7 +22724,7 @@ const KNOBS = [
   { k: "phonesHue", g: "Witch", label: "Headphones hue", min: 0, max: 1, step: 0.01, v: 0.92, hue: true },
 ];
 const GROUPS = ["Night light", "Shading", "Colour", "Trees", "Tree mix", "Undergrowth", "Map", "Creatures", "Witch"];
-function defaultStyle() { const s = {creatureSizeCandidate:1}; KNOBS.forEach(k => s[k.k] = k.v); return s; } // Ed adopted revised sizes, 2026-10-31; link =0 compares old sizes
+function defaultStyle() { const s = {creatureSizeCandidate:1, meshCreatures:1}; /* (mesh creatures on: Ed, 2026-11-12, "meshes are great, we should aim to transition to them for all the creatures"; the link's meshCreatures=0 compares the generated ones) */ KNOBS.forEach(k => s[k.k] = k.v); return s; } // Ed adopted revised sizes, 2026-10-31; link =0 compares old sizes
 function mutate(style, strength, groups, seed) {
   const r = rng(seed), s = { ...style };
   for (const k of KNOBS) {
