@@ -96,7 +96,7 @@ export function head(pivot, o) {
     }
     if (cheek) cones.push({ at: P(0.06 * wide * s, -0.005, 0.065), rx: 0.04 * k, ry: 0.03 * k, tip: P((0.06 * wide + 0.075 * cheek) * s, -0.005 - 0.035 * cheek, 0.065 - 0.065 * cheek), bone: "head", colour: C.cheek ?? C.belly, split: 0.5, up: [0, 1, 0] });
     const E = C.eyes?.[s > 0 ? 0 : 1], ew2 = 0.058 * wide + eyeAt[0];
-    cones.push({ at: P(ew2 * s, 0.055 * dome + eyeAt[1], 0.117 + eyeAt[2]), rx: 0.019 * k * eye, ry: 0.016 * k * eye, tip: P((ew2 + 0.016 * eye) * s, 0.063 * dome + eyeAt[1], 0.125 + eyeAt[2]), bone: "head", colour: E?.colour ?? C.eye ?? C.nose, glow: !!E?.glow, split: 0.5, up: [0, 1, 0], sides: 4 });
+    cones.push({ at: P(ew2 * s, 0.055 * dome + eyeAt[1], 0.117 + eyeAt[2]), rx: 0.019 * k * eye, ry: 0.016 * k * eye, tip: P((ew2 + 0.016 * eye) * s, 0.063 * dome + eyeAt[1], 0.125 + eyeAt[2]), bone: "head", colour: E?.colour ?? C.eye ?? C.nose, glow: !!E?.glow, tag: "eye", split: 0.5, up: [0, 1, 0], sides: 4 });
   }
   return { bones, rings, cones, lofts, P, ears: ["earL", "earR"] };
 }

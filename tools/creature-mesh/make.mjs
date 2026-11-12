@@ -1,5 +1,5 @@
-// Writes a creature drawn in code (tools/creature-mesh/quadruped.js and its species' plan) as a rigged, animated .glb, for
-// tools/creature-bake/bake.mjs or any 3D tool: the trial of low-poly creatures on real skeletons (docs/plans/creature-meshes.md).
+// Writes a creature drawn in code (art/mesh/shape.js and its species' plan) as a rigged, animated .glb, for
+// tools/creature-bake/bake.mjs or any 3D tool (docs/plans/creature-meshes.md). The plans and the shape code are the game's own (art/mesh/).
 //   node tools/creature-mesh/make.mjs fox-adult out/fox-adult.glb
 // A plan is <species>-<baby|young|adult|legend>, for home's ten: fox, badger, snail, hedgehog, hare, squirrel, bee, stoat, mole,
 // dormouse; and two kept for other islands, marten and turtle (Ed, 2026-11-11: "keep both, but swap the marten for the bee";

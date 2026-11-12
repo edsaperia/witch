@@ -64,6 +64,7 @@ says what each note covers.
 ## [Creatures' art](creatures.md)
 
 - Stiltwalkers
+- Mesh creature
 - Sleeping legend
 - Asleep / nap
 - Genome

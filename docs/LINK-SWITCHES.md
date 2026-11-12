@@ -162,6 +162,7 @@ Each brings back how something was before a change, to compare against what repl
 | `area=off` | Scenery isn't averaged where it shrinks (a performance suspect, to compare). | 2026-10-14 | app/linkParams.ts |
 | `attacks=old` | Every species fights with its old attacks from config/combat.json, not its own in the attack grammar. *Decision: Each species' own attack is the default (Ed, 2026-10-27, #1326).* | 2026-10-27 | app/linkParams.ts |
 | `snap=0` | The picture's pixels as the pixel size has them, not snapped to whole device pixels (pixels.snap), to compare. | 2026-10-29 | app/linkParams.ts |
+| `meshCreatures=1` | Draws fox, stoat, marten, hare, squirrel, dormouse, badger, mole, hedgehog and snail as low-poly meshes on skeletons (art/mesh), an eight-frame walk each; off by default until they have party gear, faces and their own naps. | 2026-11-12 | app/viewParams.ts |
 | `creatureSizeCandidate=0` / `creatureSizeCandidate=1` | Revised creature sizes are on by default; 0 compares the previous sizes. | 2026-10-31 | app/viewParams.ts |
 | `creatureModels=<species>:<variant>,...` | Selects available experimental creature records per species; omitted, current or unavailable variants keep the current art. | 2026-10-30 | app/viewParams.ts |
 | `cullpass=0` | Each see-through pass isn't culled by the kind of pixel it keeps, as before the performance pass. | 2026-10-24 | render/sprites.ts |

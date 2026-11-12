@@ -1,5 +1,6 @@
 // Whole helpers moved from artBuild; drawing bodies are unchanged.
 import * as Art from "./creatureArt.primitives";
+import { hasMesh, meshGait, meshWalk } from "../../art/mesh/index.js";
 import type { Style } from "./style";
 import { type RigGear } from "./rig/rigBuild";
 import { overrideFor, poseName, type Override } from "./overrides";
@@ -7,6 +8,7 @@ import type { Baked, MakeCanvas } from "./artBuild";
 
 /** A kind of creature at each level (baby, young, adult, legend), two walking frames each. */
 export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear: unknown = null, onlyLevel?: number): Baked[] {
+  if (hasMesh(species, st)) return meshSprites(species, mk, gear, onlyLevel); // (drawn as a mesh: art/mesh, ?meshCreatures=1)
   const out: Baked[] = [];
   const n = (Art.walkGait(species) as { frames: number }).frames; // (its walk's frames: 2, or its own cycle's)
   for (const facing of ["towards", "away"]) for (let level = onlyLevel ?? 0; level < (onlyLevel === undefined ? 4 : onlyLevel + 1); level++) for (let f = 0; f < n; f++) {
@@ -20,6 +22,26 @@ export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear
   }
   return out;
 }
+
+interface MeshFrame { albedo: Uint8ClampedArray; normal: Uint8ClampedArray; flipped: Uint8ClampedArray; eyes?: Uint8Array; head?: [number, number] }
+interface MeshWalk { w: number; h: number; towards: MeshFrame[]; away: MeshFrame[] }
+
+/** A mesh creature's walk as baked sprites (art/mesh/index.js; Ed, 2026-11-12: "let's do the real build"), in creatureSprites'
+ *  order: towards then away, each level, each frame of its cycle. Its colours and the camera's normals as art/mesh/raster.js
+ *  drew them (a glowing pixel's alpha 254), so the game's own light falls on it. Enraged (gear.woken), its eyes burn red. No
+ *  party gear or faces yet: a dressed or leashed one is drawn bare. */
+function meshSprites(species: string, mk: MakeCanvas, gear: unknown, onlyLevel?: number): Baked[] {
+  const levels = onlyLevel === undefined ? [0, 1, 2, 3] : [onlyLevel], walks = levels.map(l => meshWalk(species, l) as MeshWalk), out: Baked[] = [];
+  const woken = !!(gear as { woken?: boolean } | null)?.woken, plain = !gear || Object.keys(gear as object).every(k => k === "face");
+  for (const facing of ["towards", "away"] as const) for (const walk of walks) for (const f of walk[facing]) {
+    const { w, h } = walk, A = mk(w, h), N = mk(w, h), NF = mk(w, h), a = new Uint8ClampedArray(f.albedo);
+    if (woken && f.eyes) for (let i = 0; i < w * h; i++) if (f.eyes[i]) a.set(WOKEN_EYE, i * 4);
+    for (const [c, px] of [[A, a], [N, f.normal], [NF, f.flipped]] as const) { const g = c.getContext("2d") as CanvasRenderingContext2D, d = g.createImageData(w, h); d.data.set(px); g.putImageData(d, 0, 0); }
+    out.push({ A, N, NF, w, h, eyes: plain ? f.eyes : undefined, head: f.head } as Baked);
+  }
+  return out;
+}
+const WOKEN_EYE = [255, 64, 40, 254]; // (a woken creature's eyes: red, and lit in the dark)
 
 /** A hand-drawn frame (art/overrides/README.md) as a baked sprite: its pixels as drawn (alpha 254 glows, under 128 is empty,
  *  the rest solid) and a flat normal facing us, so the light falls on it evenly. */
@@ -68,7 +90,7 @@ export function headPoint(m: ArrayLike<number>, w: number, h: number): [number, 
 export const creatureFrame = (level: number, f: number, away = false, n = 2) => (away ? 4 * n : 0) + level * n + (((f % n) + n) % n);
 
 /** A species' walk: its frames, and how far it moves between them (a share of its sprite's width). */
-export const walkGait = (species: string): { frames: number; step: number } => Art.walkGait(species) as { frames: number; step: number };
+export const walkGait = (species: string, st?: Style): { frames: number; step: number } => (st && hasMesh(species, st) ? meshGait(species) : Art.walkGait(species)) as { frames: number; step: number };
 
 /** A party animal's gear (seeded by its id). Leashed: its seeded gear and the glowing collar in
  *  `colour`. Happy (colour null): the gear without the collar, always at least a hat so it reads as

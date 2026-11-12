@@ -2,33 +2,13 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
-## `bee.js`
-
-The bee, four levels, as plans for tools/creature-mesh/quadruped.js: a candidate to stand in for the marten or the stoat.
-
-## `diggers.js`
-
-The badger, the mole and the hedgehog, four levels each, as plans for tools/creature-mesh/quadruped.js.
-
-## `fox.js`
-
-The fox's four levels as plans for tools/creature-mesh/quadruped.js, each its own build and not the last one enlarged.
-
-## `kit.js`
-
-Parts a four-legged plan is put together from: a torso, legs, a head, tails and bands, each from a few proportions, so a species' levels can differ in build and not only in size.
-
 ## `make.mjs`
 
-Writes a creature drawn in code as a rigged, animated.glb, for tools/creature-bake/bake.mjs or any 3D tool: the trial of low-poly creatures on real skeletons.
+Writes a creature drawn in code as a rigged, animated.glb, for tools/creature-bake/bake.mjs or any 3D tool.
 
 ```
 node tools/creature-mesh/make.mjs fox-adult out/fox-adult.glb
 ```
-
-## `mustelids.js`
-
-The stoat and the marten, four levels each, as plans for tools/creature-mesh/quadruped.js.
 
 ## `page.js`
 
@@ -36,16 +16,4 @@ The creature mesh's page: builds a plan and hands back its.glb, base64.
 
 ## `quadruped.js`
 
-A four-legged animal as a low-poly mesh on a real skeleton, built from a species' plan: a trial of creatures drawn in code as hard-edged polygons on bones, rather than as the generator's melted ellipsoids.
-
-## `rodents.js`
-
-The hare, the squirrel and the dormouse, four levels each, as plans for tools/creature-mesh/quadruped.js.
-
-## `snail.js`
-
-The snail, four levels, as plans for tools/creature-mesh/quadruped.js.
-
-## `turtle.js`
-
-The turtle, four levels, as plans for tools/creature-mesh/quadruped.js: a candidate to stand in for the marten or the stoat.
+A mesh creature's shape as three.js objects, for writing it out as a.glb: a skinned mesh on its skeleton, lit faces in a material named "body" and glowing ones in one named "glow", and its walk as a clip sampled from the shape's motion.
