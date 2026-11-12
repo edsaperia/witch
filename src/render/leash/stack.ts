@@ -15,6 +15,7 @@ import { DISC } from "./glyphs";
 import { chainKnobs, dotAt, drawEmbers, legendShine, queuedDot, rankKnobs, rankOf, rankSize, ranksOn, standScale, shownDots, youthDots } from "./ranks";
 import { queuedFor } from "../../rules/berries";
 import { meterHits } from "../../rules/game";
+import { riseInStack, sigilFeelOn } from "./sigilFeel";
 
 /** A 💧's blue, for its dots in her stack. */
 const DROP_RGB: [number, number, number] = [0.42, 0.68, 1];
@@ -40,7 +41,7 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
   // Its sigils more visible (Ed, 2026-10-15: "more opacity, and never obscured by scenery"): drawn over the scenery (stack.over: no
   // depth test, after the see-through pass), brighter (stack.bright, in the batch's gain), each over a near-black disc (stack.backing).
   const batch = S.over ?? true ? lv.stackGlyphs : lv.standing, back = S.backing ?? 0, backUv = back > 0 ? lv.uv(DISC) : null;
-  const ranks = ranksOn(t), RK = rankKnobs(t);
+  const ranks = ranksOn(t), RK = rankKnobs(t), feelOn = sigilFeelOn(t) && lv.feel.up.size > 0;
   const buffs = buffsOf(s.stack, g.creatures, g.berries, t); // (her follower buffs: rules/buffs.ts; an adult's pips and each kind's icon, below)
   while (lv.chain.length < order.length) lv.chain.push({ x: 0, z: 0, vx: 0, vz: 0 });
   let below = { x: 0, z: 0 }, y = hatTop;
@@ -62,16 +63,20 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
     const pos = new THREE.Vector3(w.x + link.x, hatTop + sy, w.z + link.z);
     y += size / 2;
     let col: { r: number; g: number; b: number };
+    // Just picked up, it flies up from where it lay to here (Ed, 2026-11-12: "sparkles above the head"; render/leash/sigilFeel.ts):
+    // pos moved to where it is on the way, and drawn at its size there; arrived, its flash and sparkles round the stack.
+    let drawSize = size, flying = false;
+    if (c && feelOn) { const fc = lv.colOf(c), R = riseInStack(lv, it.id, time, pos, size, lv.groundSize(c), fc.r, fc.g, fc.b); flying = R.flying; drawSize = R.size; }
     const shade = ranks && c ? lv.shadeOf(sg!.uv) : null;
-    if (shade) lv.stackBack.add(pos.x, pos.y, pos.z, size, shade, 0.02, 0.02, 0.035, back); // (a rank sigil's: the dark in its own shape, no disc)
-    else if (backUv) lv.stackBack.add(pos.x, pos.y, pos.z, size * (S.backSize ?? 1.3), backUv, 0.02, 0.02, 0.035, back); // (the dark disc behind it)
+    if (shade) lv.stackBack.add(pos.x, pos.y, pos.z, drawSize, shade, 0.02, 0.02, 0.035, back); // (a rank sigil's: the dark in its own shape, no disc)
+    else if (backUv) lv.stackBack.add(pos.x, pos.y, pos.z, drawSize * (S.backSize ?? 1.3), backUv, 0.02, 0.02, 0.035, back); // (the dark disc behind it)
     if (c) {
       slotPos.set(it.id, pos);
       col = lv.colOf(c);
       // (No flicker when she's hurt: Ed, 2026-10-08, "When you're hurt, your leashes sigils flash - please turn this off"; her
       // claw slashes say how hurt she is.)
-      batch.add(pos.x, pos.y, pos.z, size, sg!.uv, col.r, col.g, col.b, 1, 1, false, ranks ? legendShine(rankOf(c), time, it.id) : 0); // (a legend's shiny: ranks.ts)
-      if (ranks) {
+      batch.add(pos.x, pos.y, pos.z, drawSize, sg!.uv, col.r, col.g, col.b, 1, 1, false, ranks ? legendShine(rankOf(c), time, it.id) : 0); // (a legend's shiny: ranks.ts)
+      if (ranks && !flying) {
         // Rank sigils (render/leash/ranks.ts): embers off its glyph, fewer and lower than on the ground; and a youth's dots off to
         // the right of it, two rows, one a berry it eats on the move: bright eaten, dim not, all of them pulsing when it's ready.
         drawEmbers(batch, dot, lv.glyphPts.get(`${sg!.uv[0]},${sg!.uv[1]}`) ?? [], pos.x, pos.y, pos.z, size, false, rankOf(c), [col.r, col.g, col.b], time, it.id * 3 + 1, RK.embers, RK.embers.stack);
