@@ -66,7 +66,7 @@ import { View } from "./render/view";
 import { prewarmArtWorkers } from "./render/assets";
 import { AimHud } from "./render/aimhud";
 import { StallLog } from "./platform/stallLog";
-import { renderProgramCounts } from "./platform/renderProgramCounts";
+import { frameGpuCounts, renderProgramCounts } from "./platform/renderProgramCounts";
 import { Freeze } from "./platform/freeze";
 import { StudioPlayer } from "./app/studio";
 import { StudioPanel } from "./ui/studioPanel";
@@ -322,6 +322,7 @@ const pageHost = {
   get sharedNightChanging(): typeof sharedNightChanging { return sharedNightChanging; }, set sharedNightChanging(value: typeof sharedNightChanging) { sharedNightChanging = value; },
   get sharedNightFrom(): typeof sharedNightFrom { return sharedNightFrom; }, set sharedNightFrom(value: typeof sharedNightFrom) { sharedNightFrom = value; },
   get shotProgramCounts(): typeof shotProgramCounts { return shotProgramCounts; },
+  get frameGpu(): typeof frameGpu { return frameGpu; },
   get showLook(): typeof showLook { return showLook; },
   get shutButton(): typeof shutButton { return shutButton; },
   get shutStation(): typeof shutStation { return shutStation; },
@@ -1131,6 +1132,7 @@ const stallLog = new StallLog(summary => {
 });
 // (the playtest log's hooks read the night on now, so they carry to the next night's run as they are: app/night.ts)
 a4_installDebug2(pageHost);
+const frameGpu = frameGpuCounts(() => view.renderer.info.programs, () => view.renderer.info.memory.textures); // (each frame's programs and textures made, for the stall log)
 const shotProgramCounts = params.has("shot") ? renderProgramCounts(() => view.renderer.info.programs, view.renderer.extensions.has("KHR_parallel_shader_compile")) : null;
 // What a builder needs from a screenshot of the overlay (Ed, 2026-10-14; app/repro.ts): the link that rebuilds what she saw, the
 // machine, and every setting changed from the build's; the same in the playtest log (the pause page's Download log).

@@ -62,7 +62,7 @@ export function drawFrame(pageHost: PageHost, time: number, repaintHeld: NonNull
 
 export function frame(pageHost: PageHost, now: number): void {
   const start = performance.now(), gap = pageHost.lastObservedFrame && !document.hidden ? now - pageHost.lastObservedFrame : 0;
-  const programsBefore = pageHost.shotProgramCounts?.begin();
+  const programsBefore = pageHost.shotProgramCounts?.begin(), gpuBefore = pageHost.frameGpu?.begin();
   pageHost.lastObservedFrame = now; pageHost.measuredStep = pageHost.measuredDraw = undefined; pageHost.measuredParts = {};
   const n = pageHost.N(), phase = pageHost.sailing ? "sailing" : pageHost.landingSleep.holds(n.game) ? "landing-sleep" : !n.flags.ready ? "building" : n.arrival && !n.flags.landed ? "arrival" : "play";
   try { pageHost.frameBody(now); }
@@ -77,7 +77,7 @@ export function frame(pageHost: PageHost, now: number): void {
           loading: { phase, ready: n.flags.ready, ...pageHost.view.readiness }, mode: n.game.witch.mode, perched: !!n.game.witch.perch,
         } }));
       }
-      if (!pageHost.loop.manual) pageHost.stallLog.frame({ t: n.game.clock.time, gap, work: performance.now() - start, step: pageHost.measuredStep ?? 0, draw: pageHost.measuredDraw, measured: { step: pageHost.measuredStep !== undefined, draw: pageHost.measuredDraw !== undefined }, parts: pageHost.measuredParts, source: "raf", loading: { phase, ready: n.flags.ready, ...pageHost.view.readiness }, mode: n.game.witch.mode, x: n.game.witch.x, z: n.game.witch.z, wave: n.game.party.wave, creatures: n.game.creatures.length });
+      if (!pageHost.loop.manual) pageHost.stallLog.frame({ t: n.game.clock.time, gap, work: performance.now() - start, step: pageHost.measuredStep ?? 0, draw: pageHost.measuredDraw, measured: { step: pageHost.measuredStep !== undefined, draw: pageHost.measuredDraw !== undefined }, parts: pageHost.measuredParts, source: "raf", ...(gpuBefore ? { gpu: pageHost.frameGpu.end(gpuBefore) } : {}), loading: { phase, ready: n.flags.ready, ...pageHost.view.readiness }, mode: n.game.witch.mode, x: n.game.witch.x, z: n.game.witch.z, wave: n.game.party.wave, creatures: n.game.creatures.length });
     } catch (error) { logCaughtError(error, "slow-frame observation"); }
   }
 }

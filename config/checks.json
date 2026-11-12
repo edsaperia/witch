@@ -47,6 +47,16 @@
       "note": "docs/notes/art-checks.md"
     },
     {
+      "id": "sail-takeoff",
+      "command": "npm run build && CHECK=1 node tools/stall/sail-takeoff.cjs dist",
+      "what": "A sail by the map table's chart (the dive path), woken and taken off from the treehouse: fails if the take-off makes any shader program (a compile on the page's thread).",
+      "paths": ["src/render/view/readiness.ts", "src/render/view/lifecycle.ts", "src/render/post.ts", "src/render/houseRooms.ts", "src/render/treehouseLook.ts", "tools/stall/**"],
+      "runner": "coordinator",
+      "ci": "nightly only (stall-nightly.yml: 15 to 20 minutes on the software renderer), never on a PR",
+      "from": "Ed, 2026-11-12",
+      "note": "docs/notes/performance.md"
+    },
+    {
       "id": "server-tests",
       "command": "npm --prefix server ci && npm --prefix server test",
       "what": "The relay's protocol and admission tests.",

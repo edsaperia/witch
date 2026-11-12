@@ -157,7 +157,7 @@ describe("shared CI game build", () => {
     expect(jobs.check.steps.some((s: any) => /run-unit/.test(s.run ?? ""))).toBe(false);
   });
   it("uses the shared privileged-cleanup installer on the pinned supported image without masking failures", () => {
-    const expected = { ci: ["smoke", "proofs", "large-world", "game-unchanged"], "art-check": ["shards"], "proofs-nightly": ["pixels"] };
+    const expected = { ci: ["smoke", "proofs", "large-world", "game-unchanged"], "art-check": ["shards"], "proofs-nightly": ["pixels"], "stall-nightly": ["sail-takeoff"] };
     const found: string[] = [];
     // Every workflow that provisions Chromium goes through the one installer: no raw `playwright install` anywhere.
     for (const file of fs.readdirSync(".github/workflows").filter(f => f.endsWith(".yml"))) {

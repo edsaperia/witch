@@ -377,7 +377,16 @@ export class Post {
   compile(): Promise<unknown> {
     const s = new THREE.Scene();
     for (const m of Object.values(this.mats)) { const q = new THREE.Mesh(this.quad.geometry, m); q.frustumCulled = false; s.add(q); }
-    return this.renderer.compileAsync(s, this.cam);
+    // And the sharp mask's coverage materials (drawn only in drawSharp, never in the scene): a sail's dive path, which draws nothing
+    // ahead, left the night's to compile when her stack was first shown, on the rise to the treetops (Ed, 2026-11-12: "Just had a
+    // very long freeze when taking off from the treehouse after a sail"; tools/stall/SAIL-TAKEOFF.md). Each on its own mesh's
+    // geometry, into the mask's target, as drawSharp draws it (the mesh as the scene: no fog, no lights; the target's colour space),
+    // so it's the same program (three makes the programs as compileAsync is called, then waits for them).
+    const masks = new THREE.Scene(), r = this.renderer, was = r.getRenderTarget();
+    for (const { mesh, mask } of this.sharp) { const q = new THREE.Mesh(mesh.geometry, mask); q.frustumCulled = false; masks.add(q); }
+    let sharp: Promise<unknown> = Promise.resolve();
+    if (masks.children.length) { r.setRenderTarget(this.sharpMask); try { sharp = r.compileAsync(masks, this.cam); } finally { r.setRenderTarget(was); } }
+    return Promise.all([this.renderer.compileAsync(s, this.cam), sharp]);
   }
 
   /** The last frame's scene render on the CPU (ms): three.js walking the scene, its uploads and GL calls; the rest of the
