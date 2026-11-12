@@ -1642,6 +1642,20 @@
    "decision": "Rank sigils are the default (Ed, 2026-10-27: \"go ahead and push all the new sigil work\")"
   },
   {
+   "name": "sigilfeel",
+   "values": [
+    "new",
+    "old"
+   ],
+   "does": "The sigil button and its sigils as before (old): a run starting on the press itself, so a quick tap could put down or pick up two, and a sigil snapping between the ground and her stack with the amber ring; or (new, the default) a run only after leash.runAfter seconds held, and the sigil flying between the ground and her stack with a flash in its colour at each end, burning into the ground and sparkling above her head. Sets tuning leash.runAfter and leash.sigilFeel.on.",
+   "group": "compare",
+   "since": "2026-11-12",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Holds made deliberate and the transition made magical (Ed, 2026-11-12: \"make holds feel more deliberate\"; \"have a distinct flash with each transition in the sigil colour, and it burns into the ground with a glow and sparkles above the head\"); the old kept one switch away to A/B"
+  },
+  {
    "name": "sky",
    "values": [
     "off"

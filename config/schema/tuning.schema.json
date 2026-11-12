@@ -4822,6 +4822,54 @@
           "type": "boolean",
           "description": "Holding the sigil button picks up, or puts down, sigils one after another as she runs."
         },
+        "runAfter": {
+          "type": "number",
+          "minimum": 0,
+          "description": "seconds the sigil button must be held since the press before a run starts, so a tap puts down or picks up exactly one sigil."
+        },
+        "sigilFeel": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "fly": {
+              "type": "number",
+              "minimum": 0
+            },
+            "arc": {
+              "type": "number",
+              "minimum": 0
+            },
+            "flash": {
+              "type": "number",
+              "minimum": 0
+            },
+            "burn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sparkles": {
+              "type": "number",
+              "minimum": 0
+            },
+            "trail": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "fly",
+            "arc",
+            "flash",
+            "burn",
+            "sparkles",
+            "trail"
+          ],
+          "additionalProperties": false,
+          "description": "how a sigil travels between the ground and her stack, with a flash in its colour at each end, burning into the ground or sparkling round her stack."
+        },
         "runePull": {
           "type": "object",
           "properties": {
@@ -5231,6 +5279,8 @@
         "runeGap",
         "hex",
         "runs",
+        "runAfter",
+        "sigilFeel",
         "runePull",
         "chain",
         "babies",

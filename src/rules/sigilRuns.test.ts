@@ -37,6 +37,8 @@ const step = (g: Game, c: Partial<Parameters<typeof stepGame>[1]> = {}) => stepG
 /** The middle of the hex cell `dq` cells east of hers. */
 const cellEast = (g: Game, dq: number) => { const h = hexCell(g.witch.x, g.witch.z, H.size); return hexCentre(h.q + dq, h.r, H.size); };
 const kinds = (g: Game) => g.leash.events.map(e => e.kind);
+/** Held on where she stands till the run starts (leash.runAfter since the press; Ed, 2026-11-12: "make holds feel more deliberate"). */
+const charge = (g: Game) => { for (let i = 0; i < Math.ceil(TUNING.leash.runAfter! * 60) + 1; i++) step(g, { sigilHeld: true }); };
 
 describe("placing in a run", () => {
   it("holding Use at every morning dressing station and the booth never drops her hat", () => {
@@ -60,8 +62,8 @@ describe("placing in a run", () => {
     step(g, { place: true, sigilHeld: true });
     expect(g.leash.placed.map(p => p.id)).toEqual([ids[2]]);
     expect(g.leash.run?.kind).toBe("place");
-    // Standing in the same cell: nothing more.
-    for (let i = 0; i < 10; i++) step(g, { sigilHeld: true });
+    // Standing in the same cell, held till the run starts: nothing more.
+    charge(g);
     expect(g.leash.placed).toHaveLength(1);
     // Into the next cell east, still holding: the next goes down in its middle.
     const c1 = cellEast(g, 1);
@@ -85,7 +87,7 @@ describe("placing in a run", () => {
 
   it("the pad's one button (sigil) runs too", () => {
     const g = game(); stack(g, 3);
-    step(g, { sigil: true, sigilHeld: true });
+    step(g, { sigil: true, sigilHeld: true }); charge(g);
     const c1 = cellEast(g, 1); at(g, c1.x, c1.z); step(g, { sigilHeld: true });
     const c2 = cellEast(g, 1); at(g, c2.x, c2.z); step(g, { sigilHeld: true });
     expect(g.leash.placed).toHaveLength(3);
@@ -100,13 +102,13 @@ describe("picking up in a run", () => {
   it("a press that picks up starts a run: every placed sigil she runs over comes up while she holds", () => {
     const g = game(), ids = stack(g, 3);
     // Three down in a row of cells.
-    step(g, { place: true, sigilHeld: true });
+    step(g, { place: true, sigilHeld: true }); charge(g);
     const c1 = cellEast(g, 1); at(g, c1.x, c1.z); step(g, { sigilHeld: true });
     const c2 = cellEast(g, 1); at(g, c2.x, c2.z); step(g, { sigilHeld: true });
     step(g, {});
     expect(g.leash.placed).toHaveLength(3);
     // Press on the last: picked up, a pick run starts; walking back over the others picks each up.
-    step(g, { place: true, sigilHeld: true });
+    step(g, { place: true, sigilHeld: true }); charge(g);
     expect(g.leash.placed).toHaveLength(2); expect(g.leash.run?.kind).toBe("pick");
     at(g, c1.x, c1.z); step(g, { sigilHeld: true });
     expect(g.leash.placed).toHaveLength(1);

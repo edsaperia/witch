@@ -939,6 +939,16 @@ export type SchemaTuning = {
       "speaker": number;
     };
     "runs": boolean;
+    "runAfter": number;
+    "sigilFeel": {
+      "on": boolean;
+      "fly": number;
+      "arc": number;
+      "flash": number;
+      "burn": number;
+      "sparkles": number;
+      "trail": number;
+    };
     "runePull": {
       "radius": number;
       "speed": number;

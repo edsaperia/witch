@@ -541,6 +541,43 @@
       ],
       "notes": "with the sigil button held on since a press that picked a sigil up, she keeps picking up any sigil she runs over (her placed ones, happy creatures' runes, a relic's); held since a press that put one down, moving into each empty hex puts down the next (a press that did nothing starts no run, so holding E with nothing to do still puts her hat down). On the pad her hat is triangle's (placed or picked up), circle cycles the stack, L3 casts the broom's spell."
     },
+    "leash.runAfter": {
+      "what": "seconds the sigil button must be held since the press before a run starts, so a tap puts down or picks up exactly one sigil [1].",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-12",
+          "quote": "It can be easy to put down or pick up more than one sigil when you tap the button, can we do something to make holds feel more deliberate?",
+          "rest": "before, a run started on the press itself: a tap of about 0.1 s while walking (about 19 m/s) crossed into the next 6 m hex and put a second sigil down, or took a second sigil lying within reach. 0 is that old behaviour (?sigilfeel=old)."
+        }
+      ],
+      "links": [
+        "rules/leash.ts",
+        "rules/sigilButton.ts"
+      ]
+    },
+    "leash.sigilFeel": {
+      "what": "how a sigil travels between the ground and her stack, with a flash in its colour at each end, burning into the ground or sparkling round her stack [1][2].",
+      "notes": "on: the transition (off: the snap and the amber ring as before, ?sigilfeel=old). fly: seconds it takes, eased in and out. arc: metres its path lifts in the middle. trail: sparkles trailing it. flash: the flashes' brightness. burn: seconds a put-down sigil glows as it burns in, settling to its resting look. sparkles: how many sparkle round her stack as one arrives. Only the drawing: the rules put it down or pick it up at once.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-12",
+          "quote": "Also make the floor<=>head transition more 'magical'."
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-12",
+          "quote": "have a distinct flash with each transition in the sigil colour, and it burns into the ground with a glow and sparkles above the head",
+          "rest": "off (?sigilfeel=old): the sigil snaps into the stack and is written on the ground with the amber ring, as before. Only the drawing changes: the rules put the sigil down or pick it up at the same moment either way."
+        }
+      ],
+      "links": [
+        "render/leash/sigilFeel.ts",
+        "render/leash/stack.ts",
+        "render/leash.ts"
+      ]
+    },
     "leash.runePull": {
       "what": "on the ground, the nearest happy creature with its rune within radius (m) trots toward her at speed (m/s), stopping stop (m) from her, so its rune comes to her."
     },
