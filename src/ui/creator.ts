@@ -391,7 +391,7 @@ export class Creator {
     const box = (id: string, name: string) => this.makeBox(id, name);
     const get = (axis: string) => { const [part, key] = slot(axis); return part ? (g[part] as Record<string, unknown>)[key] : g[key]; };
     const set = (axis: string, v: unknown) => { const [part, key] = slot(axis); if (part) (g[part] as Record<string, unknown>)[key] = v; else g[key] = v; this.dirty = true; };
-    const accs = Object.keys({ ...CLASSIC.accessories, ...g.accessories }).filter(k => !(k in AXES)); // (a choice is an axis)
+    const accs = Object.keys({ ...CLASSIC.accessories, ...g.accessories }).filter(k => !(k in AXES) && k !== "blush"); // (a choice is an axis; blush gone, Ed 2026-11-12: "Drop blush")
     const pal = () => ({ ...classicPalette(this.style), ...g.palette }), cur = (part: string) => pal()[part] ?? [.07, .5, .45];
     for (const B of BOXES) {
       // (no broom shapes: brooms are the Workshop's parts, Ed 2026-10-23; the Classic look the bare broom's)

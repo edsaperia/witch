@@ -47,7 +47,7 @@ export function stationLines(shelves: readonly Shelf[], ctx: LineCtx): Line[] {
       for (let k = 0; k < items.length; k += ITEMS_PER_LINE) out.push({ shelf: i, kind: "items", n: Math.min(ITEMS_PER_LINE, items.length - k), ...(k ? { from: k } : {}), ...(s.readOnly ? { readOnly: true } : {}) });
     }
     if (s.colour) {
-      if (s.colour.length > 1) out.push({ shelf: i, kind: "parts", n: s.colour.length });
+      if (s.colour.length > 1 && !s.oneColour) out.push({ shelf: i, kind: "parts", n: s.colour.length });
       const { cols, rows } = ctx.grid(s);
       for (let r = 0; r < rows; r++) out.push({ shelf: i, kind: "grid", n: cols, row: r });
     }
