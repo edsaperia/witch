@@ -157,7 +157,8 @@ function motion(plan) {
   // (anything else that moves: { bone, rot: u => [x, y, z] } or { bone, pos: u => [dx, dy, dz] } from where it rests)
   for (const e of G.extra ?? []) { if (e.rot) rot(e.bone, e.rot); if (e.pos) poss.set(e.bone, e.pos); }
   const bobs = G.bobs ?? 2; poss.set(G.root, u => [0, B * Math.sin(TAU * bobs * u + 0.6), 0]);
-  return { seconds: G.seconds, rots, poss };
+  // (aloft: a legless pace that flies, a bird's fast one, kit/bird.js: `grounded` carries it that much higher than it stands; lift: it is in the air, about that far, for whoever asks)
+  return { seconds: G.seconds, rots, poss, ...(G.aloft !== undefined ? { aloft: G.aloft, lift: () => G.air ?? 0.05 } : {}) };
 }
 
 // ---- Turns as nine numbers (rows), the way `pose` holds them: what a leg's joints are worked out with.
@@ -334,6 +335,8 @@ function grounded(sh, ctx = {}) {
   const bare = { ...sh, motion: null }, sag = Math.min(0, lowest(bare, 0, true) - lowest(bare, 0)), roots = sh.bones.filter(b => b.parent < 0).map(b => b.name);
   sh.rest = ctx.rest = -lowest(bare, 0) - sag;
   if (!sh.motion || sh.motion.planted) return sh; // (a strider's feet are put on the ground one by one: `strides`)
+  // (a walker's flying pace: where it stands, and `aloft` higher (or lower: long legs trailed behind it), its wings free to beat below it)
+  if (sh.motion.aloft !== undefined) { for (const name of roots) { const was = sh.motion.poss.get(name); sh.motion.poss.set(name, u => { const p = was?.(u) ?? [0, 0, 0]; return [p[0], p[1] + sh.rest + sh.motion.aloft, p[2]]; }); } return sh; }
   const free = { ...sh, motion: { ...sh.motion, poss: new Map(sh.motion.poss) } }, memo = new Map(), lift = sh.motion.lift ?? (() => 0);
   const shift = u => { let d = memo.get(u); if (d === undefined) { if (memo.size > 512) memo.clear(); memo.set(u, (d = lift(u) - lowest(free, u) - sag)); } return d; };
   for (const name of roots) { const was = free.motion.poss.get(name); sh.motion.poss.set(name, u => { const p = was?.(u) ?? [0, 0, 0]; return [p[0], p[1] + shift(u), p[2]]; }); }

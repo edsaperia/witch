@@ -21,6 +21,7 @@ describe("mesh creatures", () => {
     expect(hasMesh("hydra", { meshCreatures: 1 })).toBe(false); // (no mesh yet: the last batch's)
     expect(hasMesh("wolf", { meshCreatures: 1 })).toBe(true); // (batch A, 2026-11-13)
     expect(hasMesh("snake", { meshCreatures: 1 })).toBe(true); // (batch E, 2026-11-13: a legless one)
+    expect(hasMesh("heron", { meshCreatures: 1 })).toBe(true); // (batch F, 2026-11-13: two legs and wings)
     expect(hasMesh("bee", { meshCreatures: 1 })).toBe(true); // (a kind since 2026-11-12, in the marten's place on home)
     expect(hasMesh("turtle", { meshCreatures: 1 })).toBe(true); // (a kind since 2026-11-12, in the newt's place in the Fen)
     expect(hasMesh("fox", { meshCreatures: 0 })).toBe(false); // (the link's meshCreatures=0: the generated ones, to compare)
@@ -129,6 +130,7 @@ describe("mesh creatures", () => {
   Object.assign(GAITS, { cat: "bound", lynx: "bound", cheetah: "bound", snowleopard: "bound", lion: "trot", tiger: "trot", jaguar: "trot" }); // (batch B, the cats: kit/feline.js)
   Object.assign(GAITS, { bear: "trot", polarbear: "trot", rhino: "trot", elephant: "walk", beaver: "trot", flyingsquirrel: "bound" }); // (batch D, the heavy and the gnawing)
   Object.assign(GAITS, { salamander: "trot", komodo: "trot", crocodile: "trot", armadillo: "trot", toad: "bound", snake: "glide", rattlesnake: "glide" }); // (batch E, the cold-blooded: kit/sprawl.js, kit/serpent.js)
+  Object.assign(GAITS, { heron: "walk", raven: "walk", owl: "bound", penguin: "walk", moth: "fly", bat: "fly", dragonfly: "fly" }); // (batch F, wings: kit/bird.js, on the ground; a bird's fast pace flies, and the insects and the bat fly at any)
 
   it("every kind says how it goes, and its stride is long enough to read as one (not a shuffle on the spot)", () => {
     for (const [species, levels] of Object.entries(PLANS)) levels.forEach((make, level) => {
