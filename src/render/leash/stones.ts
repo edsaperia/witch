@@ -89,6 +89,18 @@ export function barLevel(bins: ArrayLike<number>, i: number, n: number): number 
   return Math.max(0, Math.min(1, (bins[b] ?? 0) / 255));
 }
 
+/** ?stumpfx=old: the creature-magic vortex and dome over a great stump as a wave's soundsystem appears, as they were, to compare (as
+ *  the decks' `?decksfx=old`, ./decksRing.ts). Read once, from the link. */
+export const STUMP_FX = { old: new URLSearchParams(globalThis.location?.search ?? "").get("stumpfx") === "old" };
+
+/** The two as they were (only under `?stumpfx=old`): the party element's vortex 2 m over the stump's top and its dome 1 m over it,
+ *  growing with the bloom (`fill`) and fading with it (`fade`). */
+export function stumpMagicOld(magic: { draw: (element: string, form: "vortex" | "dome", x: number, y: number, z: number, level: number, size: number, alpha: number, phase: number, seed: number) => void }, x: number, top: number, z: number, fill: number, fade: number): void {
+  if (!STUMP_FX.old) return;
+  magic.draw("party", "vortex", x, top + 2, z, 2, 0.8, fill * fade * 0.6, fill, 700001);
+  magic.draw("party", "dome", x, top + 1, z, 2, 0.65, fill * fade * 0.35, fill, 700002);
+}
+
 /** Which of the analyser's bars (barLevel's: 0 its front, the bass; n/2 its back, the treble) the soundsystem spell's bar i of n
  *  round a stone or a great stump shows (bar 0 due south, n/2 due north): the analyser's ring wrapped twice round, the bass due south
  *  and due north, the treble due west and due east. Ed, 2026-11-13, of the ring at a great stump: "Why so little of the north half of
@@ -283,8 +295,12 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     waving = true;
     analyserBloom(ground, dot, SR, st.x, st.z, edge(0), nb, fill, fade, level, time);
     if (!V.castLight) V.castLight = { x: st.x, z: st.z, rgb: hue(time * 0.3) as [number, number, number], k: fill * fade };
-    lv.look.magic.draw("party", "vortex", st.x, st.top+2, st.z, 2, 0.8, fill*fade*0.6, fill, 700001);
-    lv.look.magic.draw("party", "dome", st.x, st.top+1, st.z, 2, 0.65, fill*fade*0.35, fill, 700002);
+    // (No creature-magic effect over the stump: Ed, 2026-11-13, "remove this purple effect above the stump which happens during the
+    // soundsystem spell - I think it was part of the creature magic pass - this is not the audio analyser effect". It was two of
+    // #1468's magic effects in the party element's pink, a vortex 2 m over the stump's top and a dome 1 m over it, added with the
+    // challenge columns (2026-11-03); the analyser's bloom, its light, the sigil and the soundsystem's rise are the spell.
+    // `?stumpfx=old` draws the two again, to compare. Not to come back with #1928's spell glow either.)
+    stumpMagicOld(lv.look.magic, st.x, st.top, st.z, fill, fade);
   }
   V.wantsSpectrum = show || waving;
   if (!cs || !show) return;
