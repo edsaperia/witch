@@ -33,6 +33,7 @@ import { checkPops, mark } from "./pops";
 import { BarkFaces } from "../barkFaces";
 import { relicsOut } from "../../rules/partyOver";
 import { advanceScenery, type SceneryJob } from "./scenerySchedule";
+import { veilBatch, veilState, VEIL_KEY } from "../challenge";
 
 /** The scenery's own trunk-shadow batches, by the key they're kept under in View.trunkShadowBatches (the area types' by number). */
 const SCENERY_CASTS = new Set(["decor", "relics", "scenes"]);
@@ -122,8 +123,9 @@ function due(v: View, force = false) {
   const turned = Math.abs(pose.distance - lp.distance) > 2 || Math.abs(pose.angle - lp.angle) > 0.5 || g.camera.zoomStep !== lp.zoomStep || lift !== lp.lift || tele !== (lp.tele ?? 0);
   const relics = lyingRelics(g); // (one picked up or put back: its bottle goes or comes at once)
   const cap = treeCapKey(t); // (the tallest trees' squeeze changed on the pause page's sliders: drawn again at once, on the frozen frame too)
-  if (!force && !moved && !turned && !regrown && v.assets.version === v.lastBuild.version && relics === v.lastBuild.relics && cap === v.lastBuild.cap) return null;
-  const art = !force && !moved && !turned && !regrown && relics === v.lastBuild.relics && cap === v.lastBuild.cap; // (only new art in)
+  const veil = veilState(g); // (the hidden challenge circle's trees showing, fading or gone: listed again as that changes, render/challenge.ts)
+  if (!force && !moved && !turned && !regrown && v.assets.version === v.lastBuild.version && relics === v.lastBuild.relics && cap === v.lastBuild.cap && veil === (v.lastBuild.veil ?? 0)) return null;
+  const art = !force && !moved && !turned && !regrown && relics === v.lastBuild.relics && cap === v.lastBuild.cap && veil === (v.lastBuild.veil ?? 0); // (only new art in)
   return { margin, pose, key, lift, radius, reach, canopy, tele, art };
 }
 
@@ -132,7 +134,8 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   const sliceDone = () => performance.now() - t0 > SLICE_MS, resume = () => { t0 = performance.now(); };
   const g = v.game, t = g.tuning;
   potionBuild.set(v, bendPotionKey(v));
-  v.lastBuild = { ...key, version: v.assets.version, radius, canopy, relics: lyingRelics(v.game), cap: treeCapKey(t) };
+  const veil = veilState(g);
+  v.lastBuild = { ...key, version: v.assets.version, radius, canopy, relics: lyingRelics(v.game), cap: treeCapKey(t), veil };
   v.lastPose = { distance: pose.distance, angle: pose.angle, zoomStep: g.camera.zoomStep, lift, tele };
   // Through the telescope, the whole circle round her at once (it pans with nothing listed again; inView passes all within reach).
   const round = (far: number) => { const f = focusOf(v); return { minX: f.x - far - margin, maxX: f.x + far + margin, minZ: f.z - far - margin, maxZ: f.z + far + margin }; };
@@ -152,7 +155,11 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
     if (frame.h * m < castMin) return;
     let l = casts.get(key); if (!l) casts.set(key, (l = [])); l.push({ x, z, w: frame.w * m, h: frame.h * m, frame, flip, scenery: true });
   };
-  const add = (type: number, inst: SpriteInstance) => { let l = per.get(type); if (!l) per.set(type, (l = [])); l.push(inst); };
+  const add = (type: number, inst: SpriteInstance) => { let l = per.get(type); if (!l) per.set(type, (l = [])); l.push(inst); }, addPlain = add;
+  // The hidden challenge circle's own trees and bushes (rules/forest.ts Plant.veil; Ed, 2026-11-12): in batches of their own a type,
+  // faded by 1 minus its reveal (render/challenge.ts veilBatch); none once it's wholly there, their shadows only while they're mostly there.
+  const veiled = new Map<number, SpriteInstance[]>();
+  const addVeil = (type: number, inst: SpriteInstance) => { let l = veiled.get(type); if (!l) veiled.set(type, (l = [])); l.push(inst); };
   const mpp = v.mpp;
   // How far up the screen a step up a sprite goes, for each step of ground toward the camera.
   const pitch = (pose.angle * Math.PI) / 180, upOnScreen = SPRITE_UNIFORMS.uUp.value.dot(v.v3.set(0, Math.cos(pitch), -Math.sin(pitch)));
@@ -177,6 +184,8 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
     // Rejected/off-screen trees count towards the slice too: checking only after an accepted
     // sprite lets a whole forest with missing art run straight through without yielding.
     if (sliceDone()) { yield; resume(); }
+    if (p.veil && veil === 0) continue; // (the challenge circle there: its hidden forest gone)
+    const add = p.veil ? addVeil : addPlain, shade = !p.veil || veil === 2;
     // (its area type's art asked for only if the tree may be on screen, by the biggest a tree is drawn: the first frame's art
     // first, not every type in the canopy's square; the island's others come ahead of need, view.ts askIsland)
     if (!v.assets.hasType(p.type) && !inView(v, p.x, p.z, TREE_MAX.w, TREE_MAX.h, margin, Math.max(reach, canopy))) continue;
@@ -204,16 +213,18 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
     // A tree's two halves share one box and sway alike (from its foot), so crown and trunk stay together.
     const sway = big.top !== null ? 1 : 0;
     add(p.type, { ...at, frame: f[big.bot], flip: p.flip, fresh, scale, cut: big.top !== null ? art.cut.get(big.bot) : undefined, sway, jitter });
-    if (big.top !== null || f[big.bot].h > f[big.bot].w * 1.5) { let l = trunks.get(p.type); if (!l) trunks.set(p.type, (l = [])); l.push({ x: p.x, z: p.z, w: f[big.bot].w * mpp * scale, h: f[big.bot].h * mpp * scale, frame: f[big.bot], flip: p.flip }); }
+    if (shade && (big.top !== null || f[big.bot].h > f[big.bot].w * 1.5)) { let l = trunks.get(p.type); if (!l) trunks.set(p.type, (l = [])); l.push({ x: p.x, z: p.z, w: f[big.bot].w * mpp * scale, h: f[big.bot].h * mpp * scale, frame: f[big.bot], flip: p.flip }); }
     if (big.top !== null) add(p.type, { ...at, frame: f[big.top], flip: p.flip, top: true, fresh, scale, sway, jitter, foot: f[big.bot].foot });
     const w = whole.w * mpp, h = whole.h * mpp * (big.top === null ? 0.2 : 0.6);
-    if (t.shadows.trees) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45, scenery: true });
+    if (t.shadows.trees && shade) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45, scenery: true });
     nt++;
     if (sliceDone()) { yield; resume(); }
   }
   const scatter = function* (kind: string, list: Plant[], pick: (l: TypeArt["layout"]) => Piece[]): Generator<void, void, void> {
     for (const p of list) {
       if (sliceDone()) { yield; resume(); }
+      if (p.veil && veil === 0) continue; // (the challenge circle there: its hidden undergrowth gone)
+      const add = p.veil ? addVeil : addPlain;
       if (!v.assets.hasType(p.type) && !inView(v, p.x, p.z, TREE_MAX.w, TREE_MAX.h, margin, reach)) continue; // (as the trees: asked for only if it may be on screen)
       const art = v.assets.typeArt(p.type);
       if (!art) continue;
@@ -243,7 +254,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
       // drawn in perspective, anchored by its middle (its origin), round that middle, as relics are.
       const sd = frame.w * m * 0.3;
       if (kind === "setpiece" && frame.h * m >= castMin) { let l = trunks.get(p.type); if (!l) trunks.set(p.type, (l = [])); l.push({ x: p.x, z: p.z, w: frame.w * m, h: frame.h * m, frame, flip: p.flip, scenery: true }); }
-      if (kind !== "setpiece") shadows.push({ x: p.x, z: piece.origin ? p.z : p.z - sd * 0.4, w: frame.w * m * 0.8, d: sd, scenery: true });
+      if (kind !== "setpiece" && (!p.veil || veil === 2)) shadows.push({ x: p.x, z: piece.origin ? p.z : p.z - sd * 0.4, w: frame.w * m * 0.8, d: sd, scenery: true });
       nb++;
       if (sliceDone()) { yield; resume(); }
     }
@@ -364,6 +375,8 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   dl.sort((a, b) => b.z - a.z); // nearest first, as the trees below
   if (decor) v.batchFor(v.decorBatches, dk, () => new SpriteBatch(decor.atlas, mpp, { scenery: true, fade: true }))?.set(dl);
   for (const [type, b] of v.typeBatches) if (!per.has(type)) b.set([]);
+  for (const [k, b] of v.decorBatches) if (k.startsWith(VEIL_KEY) && !veiled.has(Number(k.slice(VEIL_KEY.length)))) b.set([]);
+  for (const [type, list] of veiled) { list.sort((a, b) => b.z - a.z); veilBatch(v, type)?.set(list); v.typeUsed.set(type, performance.now()); }
   { const now = performance.now(); for (const t of per.keys()) v.typeUsed.set(t, now); } // (listed: kept by the GPU budget, view/gpuBudget.ts)
   if (t.shadows.trunks) { // (always set, so ?trunks or the pause page's switch can turn them on live; hidden while off: render/view.ts)
     for (const [type, b] of v.trunkShadowBatches) if (typeof type === "number" ? !trunks.has(type) : SCENERY_CASTS.has(type) && !casts.has(type)) b.set([]);

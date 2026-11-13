@@ -3,8 +3,8 @@
 // whatever canvas `mk` makes. No three.js and no page here, so the art workers draw them (render/artBuild.ts, the "workshopPic" job),
 // not the page's thread: baked there as she came into the house, a frame each, they held it seconds under the cloud's software
 // renderer, and the house's furniture tens to hundreds of milliseconds each on Ed's laptop (his playtest of v4515).
-import { partSprite, restingBroomSprite } from "../../art/workshop.js";
-import type { Fitted } from "../rules/broomParts";
+import { bareSlotSprite, partSprite, restingBroomSprite } from "../../art/workshop.js";
+import type { Fitted, Slot } from "../rules/broomParts";
 import { litCanvas, type Drawn, type MakeCanvas, type PiecePixels } from "./housePieces";
 import type { Style } from "./style";
 
@@ -19,6 +19,11 @@ export type WorkshopPic =
 /** A part's picture, lit in the Workshop's light in her broom's colours (render/workshopArt.ts broomColours). */
 export function partPicture(st: Style, colours: Record<string, number[]>, id: string, mk: MakeCanvas, o: { fit?: number; pitch?: number; yaw?: number; hung?: boolean } = {}): { c: AnyCanvas; ox: number; oy: number } {
   const d = partSprite(id, o) as Drawn;
+  return { c: litCanvas(d, st, mk, 1, "", colours), ox: d.origin.x, oy: d.origin.y };
+}
+/** An empty slot's picture (the bay's empty-slot card: the bare broom's own piece there, art/workshop.js bareSlotSprite), lit as a part's. */
+export function bareSlotPicture(st: Style, colours: Record<string, number[]>, slot: Slot, mk: MakeCanvas, o: { fit?: number; pitch?: number; yaw?: number } = {}): { c: AnyCanvas; ox: number; oy: number } {
+  const d = bareSlotSprite(slot, o) as Drawn;
   return { c: litCanvas(d, st, mk, 1, "", colours), ox: d.origin.x, oy: d.origin.y };
 }
 /** A picture as a dark outline (a part not found yet: the pegboard's empty pegs), its edge `edge` and its inside a faint dark. */

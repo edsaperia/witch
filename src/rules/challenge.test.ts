@@ -70,7 +70,7 @@ describe("where it is (Ed, 2026-11-03: \"The challenge area shouldn't be adjacen
   it("keeps its whole circle clear, the woods right up to a narrow margin past its edge (Ed, on #1725)", () => {
     const t = islandOf("fox"), m = sharedMap(2, t), sp = challengeSite(m)!, f = new Forest(m), C = TUNING.challenge!;
     expect(sp.r).toBeCloseTo(C.radius + C.margin, 6);
-    const near = f.treesNear(sp.x, sp.z, sp.r + 10).map(q => Math.hypot(q.x - sp.x, q.z - sp.z));
+    const near = f.treesNear(sp.x, sp.z, sp.r + 10).filter(q => !q.veil).map(q => Math.hypot(q.x - sp.x, q.z - sp.z)); // (but the forest hiding it before the party, Plant.veil: challengeHide.test.ts)
     expect(near.filter(d => d < sp.r)).toEqual([]); // (none in it, whichever area a tree's in)
     expect(near.filter(d => d >= sp.r && d < sp.r + 10).length).toBeGreaterThan(5); // (the woods close round it)
   }, 60000);

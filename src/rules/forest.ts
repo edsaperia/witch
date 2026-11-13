@@ -20,6 +20,10 @@ export interface Plant {
   /** Which of that type's drawn variants. */
   variant: number;
   flip: boolean;
+  /** On the challenge circle's floor (or its crown over it), there only while it's hidden (Ed, 2026-11-12: "there are just normal
+   *  trees, no sign of it - fades into existence and the trees fade away when the party starts"; map.challengeVeil): drawn by 1 minus
+   *  its reveal (render/view/scenery.ts). */
+  veil?: true;
   /** How strongly a legend's grove grows here (legendGrove, jittered a tree): 0 to 1, the view's share of the tallest kinds and their size. */
   grove?: number;
 }
@@ -71,15 +75,15 @@ const homeGround = (map: ForestMap, x: number, z: number, look: number) => {
  *  low-frequency patch field (dense patches, sparse patches, open glades), times the type's
  *  pattern (groves, stands, rings, rows, thicket, edges only...), times the clearings; with a few
  *  lone trees almost everywhere, so open ground is never empty. */
-export function treeChance(map: ForestMap, x: number, z: number, type: number): number {
+export function treeChance(map: ForestMap, x: number, z: number, type: number, under = false): number {
   if (homeGround(map, x, z, type)) return 0;
   const t = map.tuning, D = t.density, L = AREA_TYPES[type].layout, s = map.seed;
-  if (map.hardClear(x, z)) return 0;
+  if (map.hardClear(x, z, under)) return 0;
   const along = map.paths.clearance(x, z).trees;
   if (along === 0) return 0;
   const n = vnoise(x / D.patchScale, z / D.patchScale, s + 91);
   const patch = D.patchMin + (D.patchMax - D.patchMin) * smoothstep((n - 0.25) / 0.5);
-  const w = map.treeWeight(x, z) * L.density * patch * patternMask(map, x, z, L) * t.treeDensity * lowlandDensity(map, x, z); // (thicker in the hollows: rules/terrain.ts)
+  const w = map.treeWeight(x, z, under) * L.density * patch * patternMask(map, x, z, L) * t.treeDensity * lowlandDensity(map, x, z); // (thicker in the hollows: rules/terrain.ts)
   return (w >= D.lone ? w : Math.max(w, D.lone * map.arenaOpen(x, z))) * along; // (no lone trees in an area's arena)
 }
 
@@ -190,7 +194,7 @@ function legendRim(map: ForestMap): Plant[] {
 
 function treesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
   const { treeSpacingX: sx, treeSpacingZ: sz } = map.tuning, s = map.seed;
-  const out: Plant[] = [], lift = crownReach(map), half = map.tuning.crownHalfWidth;
+  const out: Plant[] = [], lift = crownReach(map), half = map.tuning.crownHalfWidth, V = map.challengeVeil;
   const j0 = Math.ceil((cj * CHUNK) / sz), j1 = Math.ceil(((cj + 1) * CHUNK) / sz);
   for (let j = j0; j < j1; j++) {
     const shift = j & 1 ? 0.5 : 0;
@@ -202,22 +206,27 @@ function treesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
       const type = plantType(map, x, z, i, j, s + 106), G = map.tuning.legendClearing.grove, g0 = legendGrove(map, x, z);
       // (in a legend's grove, thicker as it's stronger, whatever the area's own density, but never on a path, home's ground or a
       // clearing; each tree's strength jittered, so no ring shows)
-      const grove = g0 > 0 ? Math.max(0, Math.min(1, g0 * (1 + G.jitter * (2 * hash2(i, j, s + 107) - 1)))) : 0;
-      const own = treeChance(map, x, z, type);
-      const chance = !grove ? own : map.hardClear(x, z) || homeGround(map, x, z, type) || map.paths.clearance(x, z).trees === 0 ? 0 : own + (Math.max(own, G.density) - own) * grove;
-      if (hash2(i, j, s + 103) >= chance) continue;
-      // Crowns don't hang over the dancefloor's or a set piece's clearing.
-      if (map.hardClear(x, z - lift) || map.hardClear(x - half, z - lift) || map.hardClear(x + half, z - lift)) continue;
-      // (nor a grove's, twice as tall and wider: their crowns frame the clearing from the treetops, never roof it over)
-      if (grove > 0.2 && [1.5, 2, 2.5].some(k => map.hardClear(x, z - lift * k) || map.hardClear(x - half * k, z - lift * k) || map.hardClear(x + half * k, z - lift * k))) continue;
-      out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 104) * 1000003) /* the view picks a variant by weight */, flip: hash2(i, j, s + 105) < 0.5, ...(grove > 0.02 ? { grove: Math.round(grove * 100) / 100 } : {}) });
+      const grove = g0 > 0 ? Math.max(0, Math.min(1, g0 * (1 + G.jitter * (2 * hash2(i, j, s + 107) - 1)))) : 0, roll = hash2(i, j, s + 103);
+      const grows = (under: boolean): boolean => {
+        const own = treeChance(map, x, z, type, under), hc = (px: number, pz: number) => map.hardClear(px, pz, under);
+        const chance = !grove ? own : hc(x, z) || homeGround(map, x, z, type) || map.paths.clearance(x, z).trees === 0 ? 0 : own + (Math.max(own, G.density) - own) * grove;
+        if (roll >= chance) return false;
+        // Crowns don't hang over the dancefloor's or a set piece's clearing.
+        if (hc(x, z - lift) || hc(x - half, z - lift) || hc(x + half, z - lift)) return false;
+        // (nor a grove's, twice as tall and wider: their crowns frame the clearing from the treetops, never roof it over)
+        return !(grove > 0.2 && [1.5, 2, 2.5].some(k => hc(x, z - lift * k) || hc(x - half * k, z - lift * k) || hc(x + half * k, z - lift * k)));
+      };
+      // (the hidden challenge circle's own, on its floor or roofing it: the woods round it carried on, Ed 2026-11-12; map.challengeVeil)
+      let veil = false;
+      if (!grows(false)) { if (!V || Math.hypot(x - V.x, z - V.z) > V.r + lift + half || !grows(true)) continue; veil = true; }
+      out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 104) * 1000003) /* the view picks a variant by weight */, flip: hash2(i, j, s + 105) < 0.5, ...(grove > 0.02 ? { grove: Math.round(grove * 100) / 100 } : {}), ...(veil ? { veil: true as const } : {}) });
     }
   }
   return out;
 }
 
 function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
-  const sp = map.tuning.bushSpacing, s = map.seed, out: Plant[] = [];
+  const sp = map.tuning.bushSpacing, s = map.seed, out: Plant[] = [], V = map.challengeVeil;
   const j0 = Math.ceil((cj * CHUNK) / sp), j1 = Math.ceil(((cj + 1) * CHUNK) / sp);
   const i0 = Math.ceil((ci * CHUNK) / sp), i1 = Math.ceil(((ci + 1) * CHUNK) / sp);
   for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
@@ -232,15 +241,21 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
     const type = plantType(map, x, z, i, j, s + 206);
     if (homeGround(map, x, z, type)) continue;
     if (bedsInRows(map, type)) continue; // a formal garden's beds are laid in rows along its walls
-    const sparse = 1 - Math.min(1, treeChance(map, x, z, type) / 0.8);
-    const roll = hash2(i, j, s + 203), odds = (0.15 + 0.85 * sparse) * AREA_TYPES[type].layout.undergrowth * map.tuning.bushDensity * clump * along;
-    if (roll > odds) continue;
-    // An area's arena stays mostly open (asked only of the bushes that would grow).
-    const A = map.tuning.arena;
-    if (A && roll > odds * (A.bushes + (1 - A.bushes) * map.arenaOpen(x, z))) continue;
-    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning)) continue; // the dancefloor and its speakers stay clear
-    if (map.hardClear(x, z)) continue; // and the treehouse's foot, the grounds, the set pieces' clearings
-    out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
+    const roll = hash2(i, j, s + 203);
+    const grows = (under: boolean): boolean => {
+      const sparse = 1 - Math.min(1, treeChance(map, x, z, type, under) / 0.8);
+      const odds = (0.15 + 0.85 * sparse) * AREA_TYPES[type].layout.undergrowth * map.tuning.bushDensity * clump * along;
+      if (roll > odds) return false;
+      // An area's arena stays mostly open (asked only of the bushes that would grow).
+      const A = map.tuning.arena;
+      if (A && roll > odds * (A.bushes + (1 - A.bushes) * map.arenaOpen(x, z))) return false;
+      if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning)) return false; // the dancefloor and its speakers stay clear
+      return !map.hardClear(x, z, under); // and the treehouse's foot, the grounds, the set pieces' clearings
+    };
+    // (the hidden challenge circle's undergrowth, on its floor: Ed, 2026-11-12; map.challengeVeil)
+    let veil = false;
+    if (!grows(false)) { if (!V || Math.hypot(x - V.x, z - V.z) > V.r || !grows(true)) continue; veil = true; }
+    out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5, ...(veil ? { veil: true as const } : {}) });
   }
   return out;
 }

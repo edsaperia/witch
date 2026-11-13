@@ -29,6 +29,9 @@ export interface Stall {
   measured?: { step: boolean; draw: boolean };
   source?: "raf" | "warm-draw";
   loading?: { phase: string; ready: boolean; stage: string; done: number; total: number };
+  /** The shader programs made and the textures allocated in this frame (renderer.info; platform/renderProgramCounts.ts frameGpuCounts):
+   *  a program made in play is a compile on the main thread (Ed's sail take-off, 2026-11-12: 5.4 s of one frame's draw). */
+  gpu?: { programs: number; textures: number };
 }
 
 export const STALL_MS = 100;
@@ -96,6 +99,7 @@ export class StallLog {
     if (!l) return `stalls none over ${STALL_MS} ms`;
     const why = [`step ${l.step}`, ...l.parts.slice(0, 3).map(([k, v]) => `${k} ${v}`)].join(", ");
     const b = l.browser[0]?.scripts?.[0];
-    return `stalls ${this.count} over ${STALL_MS} ms; last ${l.gap} ms at ${l.t} s (${why}${b ? `; ${b}` : ""})`;
+    const gpu = l.gpu && (l.gpu.programs || l.gpu.textures) ? `; ${l.gpu.programs} programs, ${l.gpu.textures} textures made` : "";
+    return `stalls ${this.count} over ${STALL_MS} ms; last ${l.gap} ms at ${l.t} s (${why}${gpu}${b ? `; ${b}` : ""})`;
   }
 }

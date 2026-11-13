@@ -3,6 +3,18 @@
  "intro": "Every `?name=value` the game reads from its link, and where it reads it. Most are read once as the page loads (`src/app/linkParams.ts` for the tuning, `src/app/gameParams.ts` for the game, `src/app/viewParams.ts` for the view, `src/main.ts` for the page); a few are read where they're used. Several can be combined: `?seed=123&wave=30&creator=0`. This page is written from `config/link-switches.json`, and a test checks that file against the code.",
  "switches": [
   {
+   "name": "challengehide",
+   "values": [
+    "0"
+   ],
+   "does": "The challenge circle there from the start, as before: not hidden in the forest before the party starts, nor after a lost party (Ed, 2026-11-12).",
+   "group": "compare",
+   "since": "2026-11-12",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
    "name": "crawl",
    "values": [
     "old"
@@ -12,6 +24,19 @@
    "since": "2026-11-11",
    "readIn": [
     "src/render/drawOrder.ts"
+   ]
+  },
+  {
+   "name": "terracecut",
+   "values": [
+    "old"
+   ],
+   "does": "The Terrace's edge as it was, to compare: walking between the Terrace and the house's rooms, the camera swings some 10 m along the ground and 2 m up and down over 3 m past the Terrace's ring as the house's slide eases in or out, and the mood eases between home's and the forest's under the room.",
+   "group": "compare",
+   "since": "2026-11-12",
+   "decision": "Ed, 2026-11-12: \"there is a camera transition (I think) when going onto the terrace of the treehouse; this isn't required anymore since the treehouse is treated as one area\"",
+   "readIn": [
+    "src/render/terraceCut.ts"
    ]
   },
   {
@@ -1460,6 +1485,19 @@
    ]
   },
   {
+   "name": "ranged",
+   "values": [
+    "old"
+   ],
+   "does": "Creatures' ranged attacks aimed as before (at her place as the wind-up starts, no speed floor, fans and walls as before), not where she's going.",
+   "group": "compare",
+   "since": "2026-11-12",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Shots aim where she's going by default (Ed, 2026-11-12: option C with its sub-rules)"
+  },
+  {
    "name": "relief",
    "values": [
     "<strength>"
@@ -1667,6 +1705,20 @@
     "src/app/linkParams.ts"
    ],
    "decision": "Holds made deliberate and the transition made magical (Ed, 2026-11-12: \"make holds feel more deliberate\"; \"have a distinct flash with each transition in the sigil colour, and it burns into the ground with a glow and sparkles above the head\"); the old kept one switch away to A/B"
+  },
+  {
+   "name": "tautchain",
+   "values": [
+    "1",
+    "0"
+   ],
+   "does": "The taut chain (1, the default): on the ground a lighter drag and a taut creature pulled along at her pace and hurrying after her; up in the treetops pulling past a chain dips her and, kept up, brings her down; on foot, pulling on slides that sigil out of her stack and puts it down; a legend's chain yanks her back; links bigger by rank; every chain one magic-chain colour with its sigil's colour as a flash. 0: the chains as before. Sets tuning leash.chain.taut.on.",
+   "group": "compare",
+   "since": "2026-11-12",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Ed, 2026-11-12: \"as you pull outside of the length you are progressively pulled down; if you stop pulling, you rise up again, only if you keep pulling do you actually fully switch back to ground mode\"; \"pop-out should also be gradual\"; \"legend chains yank you back instead of popping out\"; \"adult chains should look larger, and legend chains should look larger still\"; \"more generally 'magic chain' coloured, with the sigil colour as a occasional flash along it\"; the old kept one switch away to A/B"
   },
   {
    "name": "sky",

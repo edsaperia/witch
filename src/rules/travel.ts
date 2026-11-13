@@ -14,6 +14,7 @@ import type { Creature } from "./creatures";
 import type { ForestMap } from "./map";
 import { FIGHT } from "./movement";
 import { gaitRate, leashSpeed } from "./leash";
+import { hurryOf } from "./chains";
 import { babiesOf, isBaby } from "./babies";
 import type { Tuning } from "./tuning";
 
@@ -125,7 +126,8 @@ export function stepTraveller(c: Creature, tx: number, tz: number, map: ForestMa
   if (!r || Math.hypot(r.tx - tx, r.tz - tz) > data.replan * FIGHT.scale) c.route = { points: planRoute(map, c.x, c.z, tx, tz, data), next: 1, tx, tz };
   // (a baby far from her, about off the screen, hurries at leash.babies.farSpeed: it's always with her in seconds; Ed, 2026-10-11)
   const B = babiesOf(t), hurry = isBaby(c) && c.leashed && Math.hypot(c.x - tx, c.z - tz) > B.farAt;
-  const R = c.route!, speed = hurry ? Math.max(B.farSpeed, leashSpeed(c, t) * data.speed * pace) : leashSpeed(c, t) * data.speed * pace;
+  const run = leashSpeed(c, t) * data.speed * pace * hurryOf(c); // (its chain taut, it hurries: rules/chains.ts hurryOf)
+  const R = c.route!, speed = hurry ? Math.max(B.farSpeed, run) : run;
   if (R.next >= R.points.length) { c.moving = false; c.vx = 0; c.vz = 0; return; } // (there: it waits for its target to move on)
   let left = speed * dt;
   const end = map.bounds.lakes ? ashore(map.bounds, tx, tz, lakeKnobs(map.tuning).shore + 4) : { x: tx, z: tz }; // (never out onto a lake to her)

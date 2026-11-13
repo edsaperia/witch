@@ -17,6 +17,7 @@ import { beatTime } from "../../rules/beat";
 import { congaBody, congaPose, newCongaPose } from "../conga";
 import { bossBreath, legendNeon } from "../leash";
 import { dormant } from "../../rules/game";
+import { revealK } from "../../rules/challenge";
 import { hash2 } from "../../rules/random";
 import { restlessness } from "../../rules/dream";
 import { glideOf } from "../../rules/movement";
@@ -164,6 +165,7 @@ export function drawCreatures(v: View, time = 0): void {
   if (v.rig && !v.rig.legendLook) v.rig.legendLook = sp => legendLook(sp, g.tuning, v.style);
   const WW = g.tuning.wildWatch?.on ? g.tuning.wildWatch : null; // (the wild watch's rising aggro)
   setStatueTint(g.tuning); // (the challenge circle's statues' stone: render/statues.ts)
+  const shown = revealK(g); // (the challenge circle hidden or fading, Ed 2026-11-12: its statues with it, rules/challenge.ts)
   const ringOf = RING_OF, rings = legendRings(g); // (each legend's circle: its outline shows only with her in it)
   for (let i = 0; i < rings.length; i++) ringOf.set(rings[i].id, rings[i]);
   // How far towards the camera a sprite's rows below its ground line land, a metre of rows (as soundsystemGen.ts stands them, #564).
@@ -178,6 +180,7 @@ export function drawCreatures(v: View, time = 0): void {
     const hide = c.packHide, SH = g.tuning.combat.packs?.shadow;
     if (hide && !SH) continue;
     // One of the challenge circle's statues (render/statues.ts): stone, drawn still and grey in a batch of its own; red as they wake.
+    if (c.statue && shown <= 0) continue; // (its circle hidden: nothing of it there)
     const SL = c.statue ? statueLook(g, c) : null, stone = !!SL?.stone;
     const shadowK = hide && SH ? Math.max(0, Math.min(1, (g.clock.time - (hide.at ?? -Infinity)) / Math.max(1e-3, SH.fade), (hide.until - g.clock.time) / Math.max(1e-3, SH.fade))) : 0;
     // (its species' art asked for only once it may be on screen, by the biggest a creature is drawn, a legend's: the first
@@ -226,7 +229,7 @@ export function drawCreatures(v: View, time = 0): void {
     const glided = !napped && !st && !!c.leap && time >= c.leap.at && !!glideOf(c.species) ? v.assets.glideArt(c.species) : undefined;
     const art = glided ?? napped ?? party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = glided ? keyOf("glide", c.species) : idlePose && !asleepArt ? keyOf("idle", c.species) : napped ? (party ? keyOf(keyOf(look === "happy" ? "nap-happy" : "nap-party", c.species), c.id) : keyOf("nap", c.species)) : party ? party.key! : slept ? keyOf("sleep", c.species) : sleeping ? keyOf("sunk", c.species) : woken ? keyOf("woken", c.species) : faced ? keyOf((FACE_KEY[face] ??= `face-${face}`), c.species) : c.species;
     if (!art) continue;
-    const lk = hide ? keyOf("shadow", key) : stone ? keyOf("statue", key) : c.boss && !c.leashed && g.tuning.wildLegends.seen ? keyOf("legend", key) : key; // (a wild legend in a batch of its own: its rim and its light in steps; one hiding, in a shadow batch)
+    const lk = hide ? keyOf("shadow", key) : stone ? keyOf(shown < 1 ? "statuefade" : "statue", key) : c.boss && !c.leashed && g.tuning.wildLegends.seen ? keyOf("legend", key) : key; // (a wild legend in a batch of its own: its rim and its light in steps; one hiding, in a shadow batch)
     if (lk !== key && !stone) legendKeys.set(lk, c.species);
     arts.set(lk, art);
     STRIDE.shift = 0; STRIDE.land = 0;
@@ -370,6 +373,11 @@ export function drawCreatures(v: View, time = 0): void {
     if (!list.length) return;
     v.creatureUsed.set(s, now); // (drawn: kept by the GPU budget, view/gpuBudget.ts)
     let b = v.creatureBatches.get(s);
+    if (s.startsWith("statuefade-")) { // (its circle fading in or out: a scenery batch faded whole by it, stone grey as the others)
+      b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { scenery: true, fade: true, rim: true, tint: STATUE_TINT }); });
+      if (b) { v.appearing.delete(b); b.appearU.value = shown; b.set(list); }
+      return;
+    }
     if (!b) {
       if (s.startsWith("statue-")) { b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, tint: STATUE_TINT }); }); b?.set(list); return; } // (the challenge's statues: stone grey, no eyeshine, render/statues.ts)
       if (s.startsWith("shadow-")) { b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, shadow: true }); }); b?.set(list); return; } // (pack members hiding: render/sprites.ts SHADOW_LOOK)

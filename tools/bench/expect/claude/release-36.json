@@ -1,0 +1,11 @@
+{
+  "reason": "Release 36: #1994 (claude/terrace-no-transition): the treehouse is one area (Ed, 2026-11-12): the house's slide and the camera's following of where she's drawn are whole on the Terrace as in the rooms, and the mood in the house is home's; the rules are untouched; #1995 (claude/ranged-lead): creatures' ranged attacks aim where she's going (Ed, 2026-11-12: \"the preparation time seems long, projectile speed is low, if you're moving at all they basically never hit you\"; option C with its sub-rules, tuning ranged, rules/attacks/aim.ts): every shot, lob and area at her follows her through its wind-up and locks before it can reach her, the caster holding still from the lock; straight bolts and rollers at her fly at least twice her ground speed; fans and walls keep one body on the aim; the old pack bolts lock the same way, their 0.35 s wind-up lifted where needed; ?ranged=old the old aim",
+  "frames": {
+    "boot": "on foot in the treehouse the house is slid and the camera follows as in its rooms, and the light is home's",
+    "bedroom": "in her bedroom the fog, tint and mist are home's, not the forest area's under the room",
+    "wave-fight": "shooters hold still before they let go, their telegraphs follow her, and their shots fly faster and land differently"
+  },
+  "rules": {
+    "*": "the fights play out differently: where shots at her go and which hit, how fast they fly, when shooters stand still, the old pack bolts' wind-ups; creatures' health, the witch's, the combat state and its spells"
+  }
+}

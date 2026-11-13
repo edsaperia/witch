@@ -192,10 +192,14 @@ export interface ForestMap {
   remoteness(cx: number, cy: number): number;
   /** An area's centre (its layer-0 site), in metres. */
   siteOf(cx: number, cy: number): { x: number; z: number };
-  /** The chance a tree grows at a point: 0 in a clearing, rising smoothly to treeDensity. */
-  treeWeight(x: number, z: number): number;
-  /** Ground that must stay clear of every tree: the dancefloor's clearing and set pieces'. */
-  hardClear(x: number, z: number): boolean;
+  /** The chance a tree grows at a point: 0 in a clearing, rising smoothly to treeDensity. `under`: as if the challenge circle weren't
+   *  there (its hidden forest, challengeVeil: the woods round it carried on over its floor). */
+  treeWeight(x: number, z: number, under?: boolean): number;
+  /** Ground that must stay clear of every tree: the dancefloor's clearing and set pieces'. `under`: as if the challenge circle weren't there. */
+  hardClear(x: number, z: number, under?: boolean): boolean;
+  /** The challenge circle's clearing while it's hidden (Ed, 2026-11-12; challenge.hide, rules/challenge.ts): where the forest grows
+   *  trees and bushes of its own over it (rules/forest.ts Plant.veil), drawn only while it's hidden; null with none or the hiding off. */
+  challengeVeil?: { x: number; z: number; r: number } | null;
   /** How far (x, z) is out of its area's fighting arena: 0 in its open middle, rising smoothly over its band to 1 (tuning arena); `cell` if known. */
   arenaOpen(x: number, z: number, cell?: Cell): number;
   /** Whether an area has a sleeping legend (Ed, 2026-10-06: "only in about half of areas"): legends.share of them, seeded, spread out; never home. */
@@ -1083,7 +1087,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     ? { ...land.box, land, lakes, seed: shapeSeed, ...(zooAt ? { fence: zooFence(zooAt, A) } : {}) }
     : { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad, ...(lakes ? { lakes, seed: shapeSeed } : {}), ...(zooAt ? { fence: zooFence(zooAt, A) } : {}) };
   const beach = beachOf(bounds, tuning);
-  const hardCell = (x: number, z: number, cell: Cell) => {
+  const hardCell = (x: number, z: number, cell: Cell, under = false) => {
     if (beach && beach.intoSand(x, z) > 0) return true;
     if (zooAt && cell[0] === centreCell[0] && cell[1] === centreCell[1]) return true; // (the zoo's plaza and streets: bare stone)
     if (lakes && lakeAt(x, z) > -lakeShore) return true; // (a lake and its bare shore: rules/lakes.ts)
@@ -1093,8 +1097,8 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     const lc = held && held.cell[0] === cell[0] && held.cell[1] === cell[1] ? held : undefined;
     if (lc && Math.hypot(x - lc.x, z - lc.z) < lc.r + (vnoise(x / 4, z / 4, seed + 93) - 0.5) * 3) return true; // a sleeping legend's clearing (its edge ragged by a metre and a half either way: the art director on #235)
     const sp = specials.size ? specials.get(key) : undefined;
-    if (sp && Math.hypot(x - sp.x, z - sp.z) < sp.r) return true; // (a special site's clearing: tonight's find on its clear patch)
-    if (challengeAt && Math.hypot(x - challengeAt.x, z - challengeAt.z) < challengeAt.r) return true; // (the challenge circle's, whole, whichever area it reaches into)
+    if (sp && Math.hypot(x - sp.x, z - sp.z) < sp.r && !(under && sp.kind === "challenge")) return true; // (a special site's clearing: tonight's find on its clear patch)
+    if (challengeAt && !under && Math.hypot(x - challengeAt.x, z - challengeAt.z) < challengeAt.r) return true; // (the challenge circle's, whole, whichever area it reaches into)
     if (Math.hypot(x - treehouse.x, z - treehouse.z) < TH.clear) return true;
     for (const g of grounds) if (Math.abs(x - g.x) < g.r && Math.abs(z - g.z) < g.r && Math.hypot(x - g.x, z - g.z) < g.r) return true;
     for (const c of scenes) if (Math.abs(x - c.x) < c.r && Math.abs(z - c.z) < c.r && Math.hypot(x - c.x, z - c.z) < c.r * 0.85) return true; // a scene's ground is clear of trees
@@ -1108,7 +1112,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     const S = tuning.runeMarkers?.stump;
     return Math.hypot(x - q.x, z - q.z) < Math.max(tuning.soundsystemFootprint + tuning.treeMarginFromSoundsystem, S?.on ? S.clear : 0);
   };
-  const hardClear = (x: number, z: number) => { const [u, v] = toPart(x, z); return hardCell(x, z, partition.partition(u, v)); };
+  const hardClear = (x: number, z: number, under = false) => { const [u, v] = toPart(x, z); return hardCell(x, z, partition.partition(u, v), under); };
   // Every area's fighting arena (Ed, 2026-10-05: "each is effectively a fighting arena... not much
   // room to fight in each area"; then "softer edges, the falloff between dense forest and clearing
   // smoother"): mostly open within arena.radius metres of its centre and its soundsystem, the woods
@@ -1126,14 +1130,15 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     return R.curve === "smooth" ? smoothstep(f) : f; // (linear: the woods start thinning in right past the open middle, Ed at v473)
   };
   const arenaOpen = (x: number, z: number, cell?: Cell) => arenaIn(x, z, cell ?? areaAt(x, z).cell);
-  const treeWeight = (x: number, z: number) => {
+  const treeWeight = (x: number, z: number, under = false) => {
     const [u, v] = toPart(x, z), cell = partition.partition(u, v);
-    if (hardCell(x, z, cell)) return 0;
+    if (hardCell(x, z, cell, under)) return 0;
     // Clearings round area centres and random glades, each with a soft edge (Ed: no hard rings).
     const glade = 1 - smoothstep((vnoise(x / tuning.gladeScale, z / tuning.gladeScale, seed + 61) - (1 - tuning.gladeAmount)) / 0.12);
     // (the challenge area: no open middle of its own, the woods right up to its clearing's edge, Ed 2026-11-03: "trees should come
     // close to the circle's edge, with only a narrow clear margin outside it")
-    if (challengeAt && cell[0] === challengeAt.cell[0] && cell[1] === challengeAt.cell[1]) return smoothstep((Math.hypot(x - challengeAt.x, z - challengeAt.z) - challengeAt.r) / 2) * glade;
+    // (hidden, `under`: the woods carried on over its floor, as thick as at its edge: Ed, 2026-11-12, "there are just normal trees")
+    if (challengeAt && cell[0] === challengeAt.cell[0] && cell[1] === challengeAt.cell[1]) return under ? glade : smoothstep((Math.hypot(x - challengeAt.x, z - challengeAt.z) - challengeAt.r) / 2) * glade;
     return smoothstep((partition.openness(u, v) - tuning.clearingSize) / Math.max(0.01, tuning.clearingFalloff)) * glade * arenaIn(x, z, cell);
   };
 
@@ -1155,6 +1160,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     legendClearing: (cx: number, cy: number) => clearings.get(cellKey(cx, cy)) ?? (legendAreas.size ? clearings.get(legendAreas.get(cellKey(cx, cy)) ?? "") ?? null : null), legendClearings: [] as LegendClearing[], // (by its legend's area: a legend area's by its pair)
     paths: null as unknown as PathNetwork,
     specialSites: [...specials.values()], special: (cx: number, cy: number) => (specials.size ? specials.get(cellKey(cx, cy)) ?? null : null),
+    challengeVeil: challengeAt && tuning.challenge?.hide?.on ? challengeAt : null, // (its clearing, hidden before the party: rules/forest.ts Plant.veil)
   };
   if (prep?.route) rememberRoute(map as unknown as ForestMap, prep.route); // (its route, already worked out: rules/leyroute.ts)
   // The paths first (their lines need only the areas), so soundsystems, set pieces and the
