@@ -38,7 +38,11 @@ function hydra(name, o) {
         for (const [k, d] of [["a", 0.28], ["b", -0.3]]) necks.push({ ...neck(`${tag}${k}`, at.bone, from, { ...base, yaw: s * (sd.yaw + d), len: base.len * (k === "a" ? 1 : 0.86), r: nr * 0.74, ring: null }), s });
       } else necks.push({ ...neck(tag, at.bone, from, base), s }); } });
   for (const k of necks) { p.bones.push(...k.bones); p.lofts.push(...k.lofts); p.cones.push(...k.cones); }
-  necks.forEach((k, i) => p.gait.extra.push(...k.sways(1.1 + i * 1.7, k.stump ? 0.015 : 0.05)));
+  // (each sways as it goes; and its root turns back most of what the trunk under it turns with the slither, so the necks ride
+  // the wave and don't swing wide with it)
+  necks.forEach((k, i) => { const sw = k.sways(1.1 + i * 1.7, k.stump ? 0.015 : 0.05), under = p.gait.extra.find(e => e.bone === k.bones[0][2])?.rot, own = sw[0].rot;
+    if (under) sw[0].rot = u => { const r = own(u); return [r[0], r[1] - 0.75 * under(u)[1], r[2]]; };
+    p.gait.extra.push(...sw); });
   // asleep: coiled (kit/serpent.js), its other necks let down forward over the coil
   if (many) p.gait.nap = pose => { coil(pose); for (const k of necks) k.chain.forEach((bone, i) => { pose.rots[bone] = [i ? 0.32 : 0.75, 0, i ? 0 : k.s * 0.25]; }); };
   // ---- its strike (see the top of this file): the heads that spit, and a still pose for each one's turn

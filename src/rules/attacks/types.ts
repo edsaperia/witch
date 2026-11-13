@@ -70,6 +70,9 @@ export interface AttackSpec {
     /** ring: its first one's angle off the aim. */
     offset?: number;
     aim?: Aim;
+    /** burst: its shots come from the caster's `n` heads in turn, the first from its left: each sets off `apart` m (0.6) from the
+     *  next across the aim and `ahead` m in front of it (Ed, 2026-11-13: "it would be cool if the hydra did attacks with alternating heads"). */
+    heads?: { n: number; apart?: number; ahead?: number };
   };
   body?: {
     kind?: BodyKind;
