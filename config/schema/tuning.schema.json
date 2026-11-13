@@ -5018,16 +5018,21 @@
                       "type": "number",
                       "minimum": 0
                     },
-                    "commit": {
+                    "hold": {
                       "type": "number",
                       "minimum": 0,
                       "maximum": 1
+                    },
+                    "ease": {
+                      "type": "number",
+                      "minimum": 0
                     }
                   },
                   "required": [
                     "perMetre",
                     "rise",
-                    "commit"
+                    "hold",
+                    "ease"
                   ],
                   "additionalProperties": false
                 },
@@ -11370,11 +11375,36 @@
           ],
           "additionalProperties": false,
           "description": "the wake-up in her bedroom (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it."
+        },
+        "eyes": {
+          "type": "object",
+          "properties": {
+            "shut": {
+              "type": "number",
+              "minimum": 0
+            },
+            "open": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reopen": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "shut",
+            "open",
+            "reopen"
+          ],
+          "additionalProperties": false,
+          "description": "Her eyelids' speeds: the seconds her eyes stay shut after her alarm first rings (shut), the seconds they then take to open (open), and how fast they open again when E is let go early at the bed (reopen)."
         }
       },
       "required": [
         "bedroom",
-        "wake"
+        "wake",
+        "eyes"
       ],
       "additionalProperties": false,
       "description": "A plain first load wakes her in her bedroom on the home island while the night is made."

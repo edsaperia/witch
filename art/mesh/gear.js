@@ -109,6 +109,9 @@ export function napping(plan, how = "sphinx") {
   }
   // (a flyer comes down to the ground and folds its wings back along itself)
   if (plan.hover) { poss[G.root] = [0, -plan.hover, 0]; for (const [name] of plan.bones) if (/^wing/.test(name)) rots[name] = [0, /L$/.test(name) ? -1.15 : 1.15, /L$/.test(name) ? -0.25 : 0.25]; }
+  // (a kind's own way of lying, where the three above don't fit its body: its gait's `nap` is handed the pose made so far and
+  // changes it; after a flyer's wings are folded, so a flyer may fold its own, a bat's round itself. A snake coils, kit/serpent.js; a sprawler lays its legs back along its sides, kit/sprawl.js)
+  G.nap?.({ plan, how, rots, poss });
   for (const e of G.ears ?? []) rots[e] ??= [0.35, 0, 0];
   // (a snail's eye stalks drawn in)
   for (const [name] of plan.bones) if (/^stalk.*1$/.test(name)) rots[name] = [how === "shell" ? -2.2 : -1.1, 0, 0];

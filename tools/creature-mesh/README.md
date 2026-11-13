@@ -74,3 +74,11 @@ How far a mesh creature's planted feet slide.
 ```
 node tools/creature-mesh/slip.mjs [kind...]        one line a kind and level and pace; every kind with legs, or those named
 ```
+
+## `slither.mjs`
+
+How far a legless mesh creature slides sideways as it slithers.
+
+```
+node tools/creature-mesh/slither.mjs [kind...]     every kind built by kit/serpent.js, or those named
+```

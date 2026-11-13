@@ -1,0 +1,5 @@
+{
+  "reason": "Ed, 2026-11-13: \"the transition from treetop to ground isn't smooth; she is pulled down some of the way, and then falls to the ground.\" In the treetops, pulling past a chain's end now carries her all the way to the ground in one eased curve (tug.commit gone; tug.hold, tug.ease; tug.perMetre 0.022 to 0.05), so wherever a bench witch pulls a taut chain from the treetops her height, speed and landing time differ. Nothing else changes.",
+  "frames": { "*": "only where a witch is pulling a taut chain from the treetops: she is at a different height, so the picture and its camera differ" },
+  "rules": { "*": "only where a witch pulls a taut chain from the treetops: her lift, speed and landing time differ, and what follows from where she is (creatures, camera, floor)" }
+}
