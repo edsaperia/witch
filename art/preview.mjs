@@ -44,7 +44,7 @@
 //   node art/preview.mjs partyrelics all|<ids> art/previews/party-relics.png [scale]   (the party relics, half-buried, with the witch; their glint's frames, ground then treetop; their one sigil, bare and in each level's frame)
 //   node art/preview.mjs wind <species> art/previews/wind.png [scale]   (each species' mature tree in the pixel wind: 6 moments of a strong gust, each region (a blob) moving whole, by whole pixels; then the same with the smooth sway; CHANGES=1 colours each pixel by how far it moved)
 //   node art/preview.mjs props all|standingStone,cairn,pool,brokenTrunk art/previews/props.png [scale]   (the prop generator: a row of seeded variants per kind, the witch for scale; PER=n, AREA=<id> its grass, BOG=1 bog pools)
-//   node art/preview.mjs areaprops moor,muddy-forest art/previews/area-props.png [scale]   (each area's props as hand-made, then from the prop generator (?props=gen), a row each, the witch for scale)
+//   node art/preview.mjs areaprops moor,muddy-forest art/previews/area-props.png [scale]   (each area's props as hand-made, then from the prop generator (style.propGen), a row each, the witch for scale)
 //   node art/preview.mjs witch band art/previews/band.png [scale]   (her hats' band and plume in three colours; the cloaks' lengths each side of the knee)
 //   node art/preview.mjs witch nightie art/previews/nightie.png [scale]   (her nightie: standing, walking, talking and sat, facing us and away)
 //   node art/preview.mjs witchgen 15|<seeds> art/previews/witches.png [scale]   (ours, then generated witches from their genomes: each hovering, leaning and standing; PER to a row)
@@ -516,7 +516,7 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "setgen") { // the set-piece generator (art/props/sets.js): each kind (all, or listed), a row of variants (PER, default 4) from seeds 0.., the witch closing each row; AREA=fen for its ground
     const kinds = list === "all" ? G.SET_PROP_KINDS : list.split(","), per = window.PER || 4, wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), def = G.AREA_BY_ID[window.AREA || "muddy-forest"];
     for (const kind of kinds) rows.push([...[...Array(per).keys()].map(seed => { const p = G.genSetPiece(kind, { seed }, def, st); return G.bake(p.sp, p.colours, st, "none"); }), wit]);
-  } else if (what === "areaprops") { // each listed area's props (walls, small, big but trees) as hand-made, then under ?props=gen (the prop generator's shapes), the witch closing each row
+  } else if (what === "areaprops") { // each listed area's props (walls, small, big but trees) as hand-made, then under style.propGen (the prop generator's shapes), the witch closing each row
     const wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     for (const id of list.split(",")) for (const g of [0, 1]) { const a = G.areaAssets(id, { ...st, propGen: g }); rows.push([...a.walls, ...a.small, ...a.big.filter(b => b.kind !== "tree" && b.kind !== "mound")].map(b => b.sp).concat([wit])); }
   } else if (what === "partyrelics") { // the party relics (all or listed ids), the witch closing the row; then their glint's frames at the ground and treetop zooms; then their sigils (bare, then as a legend's)

@@ -95,8 +95,8 @@ export function startFight(game: Game, params: URLSearchParams): () => void {
     shortest: () => ({ lead: watch.shortest, of: watch.shortestOf, count: watch.count, floor: REACTION_FLOOR }),
     link: () => fightLink(seed, spec, attack),
     attacks: () => parseArena(spec).map(g => { const o = own(g.species, g.level); return { species: g.species, level: g.level, name: o.name, attack: o.attack }; }),
-    // (the composable attacks, rules/attacks: read, checked, held to the reaction floor and written out by the grammar's own code; the
-    // pack fights with its own attacks till the grammar's engine is in, docs/plans/attack-grammar.md step 2)
+    // (the composable attacks, rules/attacks: read, checked, held to the reaction floor and written out by the grammar's own code; set,
+    // the pack fights with it through the grammar's engine, rules/arena.ts arenaAttack; docs/plans/attack-grammar.md)
     attackSchema: () => formSchema(),
     get attack() { return attack; },
     attackNote: "Set: the wild pack fights with this attack (the grammar's engine) in place of its own; Own: each kind's own again. ⏱ shows each telegraph's timing.",

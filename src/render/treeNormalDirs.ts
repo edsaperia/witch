@@ -4,7 +4,7 @@
 // would ship them), its alpha (the wind's sway code) kept, and its normal texture uploaded again in place, so every batch drawing
 // it changes at once. The original plane is kept beside it, so "full" puts the very bytes back; each atlas's palettes are kept by
 // their count, so flipping between settings once they're made is an upload. Nothing happens, and nothing is held, until a reduced
-// setting is first picked: the default ("full") costs a look at the tuning a frame.
+// setting is first picked: "full" costs a look at the tuning a frame (the tuning's default is "32" now: below).
 //
 // Where the original comes from: the atlas's own pixels if it has them still (it's not yet on the GPU, or ?pixels=keep), else
 // read back from its texture (render/atlas.ts lets each plane's pixels go once uploaded), a band of rows at a time within the

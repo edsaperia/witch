@@ -16,6 +16,10 @@ export const carvingKey = (c?: Carving) => (c?.sigil ? `s:${c.sigil}` : c?.rune 
 /** A ring stone's frame key in SpeakerArt.stones: its drawn angle and its carving. */
 export const ringStoneKey = (i: number, angle: number): string => `${angle}|${carvingKey(RING_STONE_CARVINGS[i])}`;
 
+/** A ring stone's frame key when the ring's stones are the low rounded ones (art/danceStones.js; Ed, 2026-11-13: "They should be
+ *  more knee height"): one of `forms` different stones, by its place in the ring. */
+export const danceStoneKey = (i: number, forms: number): string => `dance:${i % forms}`;
+
 /** A baked stump: the ground under its middle and its cut's middle on the sprite (art pixels from its top-left), the cut's height
  *  and the trunk's radius (m). */
 /** A stump spec's id: its art job's, and its key in the asset library. */

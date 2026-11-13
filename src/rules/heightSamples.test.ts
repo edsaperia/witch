@@ -19,10 +19,12 @@ it('retains the original quantised windows at arrival and after small and large 
   // roster (Ed, 2026-11-04, rules/rosters.ts: one area a kind while its compass neighbourhood lasts: its areas' types, and so their hills, dealt afresh);
   // and for Ed's 2026-11-04 home (5 areas at the start, no find or challenge area till every island is found), the code unchanged; and for
   // areas 196 m across with every two sites 50 m apart (#1807, 2026-11-04: the map a sixth bigger, its stones moved), the code unchanged; and for the challenge circle 36 to 50 m (#1827,
-  // Ed: "If this doesn't fit, make the circle bigger.": its claim, terrace and the stones round it moved), the code unchanged.
+  // Ed: "If this doesn't fit, make the circle bigger.": its claim, terrace and the stones round it moved), the code unchanged; and for
+  // legends sleeping at the back of their circles (Ed, 2026-11-12: "Legends should sleep at the back of their circles, so you can stand
+  // in the circle before them": the circles sized for it, their terraces and the sites round them moved; 2026-11-13, sized from the legends as drawn now, their meshes: config/legend-footprints.json), the code unchanged.
   for (const [seed, island, expected] of [
-    [123, 'home', ['b0892bb5e9cc26c3adc0ffd1b91de065a1537fa3f8c1a3b5c837e01b57bd3694', '255f8e0781bac2ec9e8ec4dda08a6606157e32dab1e59ca37382fad03956bc0b', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
-    [424242, 'fox', ['ff619bdcd70116db2c570da07e6ae281246df93a5bb27fe024454f4d60883504', 'dacf63be2503a1a914c4abd3ff93dcef11647113b84c0c83ec4d90ef50006da9', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [123, 'home', ['ddcfe7d5556d04413200630e4c63007493d8b478d6620aea529df86683b4299c', 'bd2ba5bbf8a7386ae9857bb0c1c4ec9a82dd823ad18d4be358f4266b5d256cd0', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [424242, 'fox', ['6b6acf82747d4da042a54984dcf192ecb13e57e4899917e628d43dd798dcf390', '7ef5fc0313c44ce2175f9b49abf5aa23378835e6a4c95cc6ef1247228494dbc5', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
   ] as const) {
     const map = generateMap(seed, tuning(island)), H = arrivalHills(map.tuning), field = new HeightSamples(map, new Forest(map), H, DataUtils);
     const { x, z } = map.start;

@@ -2,6 +2,7 @@
 // smaller and younger, each species its own, its call blended in (config/creature-voices.json: a
 // family's call style and the species' tweaks), and the mood it speaks in.
 import type { Creature } from "../../rules/creatures";
+import { seedName } from "../../rules/kinds";
 import { strengthOf } from "../../rules/combat";
 import { hash2 } from "../../rules/random";
 import type { Tuning } from "../../rules/tuning";
@@ -32,8 +33,8 @@ export function callOf(species: string): CallStyle {
 /** A creature's voice: higher the smaller and younger (its level, its strength class: a swarm's
  *  small, a loner's big), each species its own pitch, formants and source. */
 export function voiceOf(c: Creature, t: Tuning): CreatureVoice {
-  let h = 0;
-  for (let i = 0; i < c.species.length; i++) h = (h * 31 + c.species.charCodeAt(i)) >>> 0;
+  let h = 0; const name = seedName(c.species); // (a renamed kind keeps its voice: rules/kinds.ts)
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
   const a = hash2(h, 1, 851), b = hash2(h, 2, 853), k = strengthOf(c.species, c.level as 0 | 1 | 2 | 3), size = k < 1 ? 1.35 : k > 1 ? 0.78 : 1;
   const call = callOf(c.species);
   return {

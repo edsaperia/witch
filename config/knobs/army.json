@@ -202,7 +202,7 @@
       "links": [
         "config/states.json"
       ],
-      "notes": "letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed)."
+      "notes": "letters to fill it, by level (baby, young, adult, legend; no baby is invitable since Ed, 2026-10-31); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed)."
     },
     "invites.wonAway": {
       "what": "a creature she has won over whose sigil waits in its stone's stack roams its area with its happy roam and keeps `radius` m from any creature fighting her or with her, out of her fights' way.",

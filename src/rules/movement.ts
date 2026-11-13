@@ -121,7 +121,7 @@ export interface SteerContext {
   side: string;
   /** Which way the target is heading (a unit vector), or none if it's standing still (flanking goes round to its back). */
   heading?: { x: number; z: number } | null;
-  /** Lights near it (soundsystems): moths are drawn to them. */
+  /** Lights near it (soundsystems): the moth (a swallowtail since 2026-10-23, its id kept) is drawn to them. */
   lights?: { x: number; z: number }[];
   /** Its attack is ready (hit and run goes in only then). */
   ready: boolean;
@@ -132,6 +132,8 @@ export interface SteerContext {
   cutoff?: { ahead: number; angle: number; reach: number };
   /** How far it may fire from, if further than `range` (a shooter at her, tuning dodge.b.range: it keeps its distance by `range`). */
   fire?: number;
+  /** How far off it may begin its strike, if further than `want` (the long lunge's wind-up from far: rules/combat.ts longLunge). */
+  strike?: number;
   /** Where "arrive" makes for, if not `want` (committed strikes, tuning dodge.a: right in on her, striking as it comes). */
   arriveAt?: number;
   /** Its momentum chasing her (rules/momentum.ts): its heading turns no faster than its limit. */
@@ -174,7 +176,7 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   const dx = x.px - c.x, dz = x.pz - c.z, d = Math.hypot(dx, dz) || 1e-6, ux = dx / d, uz = dz / d, S = FIGHT.scale;
   // (whether it may strike goes by where she is, even when it steers for where she was: momentum, rules/momentum.ts)
   const dNow = x.now ? Math.hypot(x.now.x - c.x, x.now.z - c.z) : d;
-  let vx = 0, vz = 0, may = dNow <= Math.max(x.want + 1.5 * S, (x.fire ?? x.range) * 0.95); // (a shooter may strike from anywhere in its range)
+  let vx = 0, vz = 0, may = dNow <= Math.max(x.want + 1.5 * S, (x.fire ?? x.range) * 0.95, x.strike ?? 0); // (a shooter may strike from anywhere in its range)
   const add = (ax: number, az: number, w: number) => { vx += ax * w; vz += az * w; };
   const pack = x.pack, n = pack ? pack.members.length : 1, i = pack ? Math.max(0, pack.members.indexOf(c)) : 0;
   // The slot its pack's tactic gives it (if any), and whether the tactic lets it strike now.
@@ -240,7 +242,7 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
       case "cohesion": { if (pack && n > 1) { const cx = pack.cx - c.x, cz = pack.cz - c.z, cd = Math.hypot(cx, cz); if (cd > (b.radius ?? 14) * S) add(cx / cd, cz / cd, b.w); } break; }
       case "wander": { const a = hash2(c.id, Math.floor(x.time * 2), 13) * Math.PI * 2; add(Math.cos(a), Math.sin(a), b.w); break; }
       case "light": {
-        // Drawn to the nearest light (a moth): toward it, fluttering round it once there.
+        // Drawn to the nearest light (the moth, now a swallowtail): toward it, fluttering round it once there.
         let best: { x: number; z: number } | null = null, bd = (b.radius ?? 30) * S;
         for (const l of x.lights ?? []) { const ld = Math.hypot(l.x - c.x, l.z - c.z); if (ld < bd) { bd = ld; best = l; } }
         if (best) { const lx = best.x - c.x, lz = best.z - c.z, ld = Math.max(bd, 1e-3); if (ld > 3 * S) add(lx / ld, lz / ld, b.w); else add(-lz / ld, lx / ld, b.w); }

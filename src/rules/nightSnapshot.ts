@@ -1,6 +1,7 @@
 // A whole night's rules state. Static map functions and forest caches are rebuilt from its seed,
 // while every seeded random stream continues at its saved cursor. No executable code is loaded.
 import { newGame, type Game } from "./game";
+import { RENAMED } from "./kinds";
 import { rng, rngState } from "./random";
 import type { Tuning } from "./tuning";
 
@@ -100,10 +101,23 @@ export function snapshotGame(game: Game): NightSnapshot {
   return { version: 1, seed: game.seed, tuning: JSON.parse(JSON.stringify(game.tuning)) as Tuning, state: encode(state, new Set(game.witches)) };
 }
 
+/** A night saved before a kind changed its id (rules/kinds.ts RENAMED; Ed, 2026-11-13: the swallowtail that wore the moth's id is
+ *  the kind `butterfly`): its tuning has no line for the new id, so every old id in it (its island, its tuning's lists and tables,
+ *  each creature's species) is the kind under its old name, and is read as the new one; a night saved since is left as it is.
+ *  Whole names only: a longer text that holds one is not changed. A copy; the saved night itself is untouched. */
+export function renamedSnapshot(snapshot: NightSnapshot): NightSnapshot {
+  const text = JSON.stringify(snapshot.tuning), old = Object.keys(RENAMED).filter(k => text.includes(`"${k}"`) && !text.includes(`"${RENAMED[k]}"`));
+  if (!old.length || !snapshot.state || !Array.isArray(snapshot.state.nodes)) return snapshot;
+  const now = (x: string) => (old.includes(x) ? RENAMED[x] : x);
+  const plain = (x: unknown): unknown => typeof x === "string" ? now(x) : Array.isArray(x) ? x.map(plain) : x && typeof x === "object" ? Object.fromEntries(Object.entries(x).map(([k, v]) => [now(k), plain(v)])) : x;
+  const nodes = snapshot.state.nodes.map(n => (n && Array.isArray(n.values) ? { ...n, values: n.values.map(v => (typeof v === "string" ? now(v) : v)), ...(Array.isArray(n.keys) ? { keys: n.keys.map(k => (typeof k === "string" ? now(k) : k)) } : {}) } : n));
+  return { ...snapshot, tuning: plain(snapshot.tuning) as Tuning, state: { root: typeof snapshot.state.root === "string" ? now(snapshot.state.root) : snapshot.state.root, nodes } };
+}
+
 /** Restore matching save formats across builds. Throws before handing a bad night to play. */
 export function restoreGame(input: unknown): Game {
   if (!input || typeof input !== "object") return invalid();
-  const snapshot = input as NightSnapshot;
+  const snapshot = renamedSnapshot(input as NightSnapshot);
   if (snapshot.version !== 1 || !Number.isInteger(snapshot.seed) || !snapshot.tuning || typeof snapshot.tuning !== "object") return invalid();
   // Decode before generating a map, so corrupt graph data doesn't trigger expensive world generation.
   const state = decode(snapshot.state) as Record<string, unknown>;

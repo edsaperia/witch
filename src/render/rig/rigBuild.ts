@@ -21,7 +21,7 @@ export interface RigMeta {
   torso: (RigPiece | null)[]; head: (RigPiece | null)[]; tail: (RigPiece | null)[];
   /** A party animal's shoe at each heading (art/genome/parts.js rigShoe), worn on every foot; none when barefoot. */
   shoe?: (RigPiece | null)[];
-  /** The head piece in each expression but neutral (art/genome/expressions.js): angry, happy, dazed. */
+  /** The head piece in each expression but neutral (art/genome/expressions.js): angry, happy, dazed, a legend's asleep and the open jaws; the faces off, a legend's asleep alone. */
   faces: Partial<Record<RigFace, (RigPiece | null)[]>>;
   discs: Record<number, Record<number, RigPiece>>;
   legs: RigLeg[]; neck: V3; headAt: V3; tailAt: V3; top: number; len: number;

@@ -1,7 +1,7 @@
 // The Fight Arena's panel (Ed, 2026-10-27; rules/fightArena.ts, app/fightArena.ts): down the right edge while ?fight= is on. The
 // seed and its link, a random pack (seeded) or one typed, the fight again (J), its speed (slow motion, pause, a frame at a time), the
-// telegraphs' timings over the fight, the attack (a form made from the composable attacks' schema, ui/schemaForm.ts, once they're
-// in; its raw JSON always; copy and paste), and the library of attacks found fun (app/attackLibrary.ts). Its clicks and keys are its
+// telegraphs' timings over the fight, the attack (a form made from the composable attacks' schema, ui/schemaForm.ts;
+// its raw JSON always; copy and paste), and the library of attacks found fun (app/attackLibrary.ts). Its clicks and keys are its
 // own, never the game's.
 import { renderForm, type Schema } from "./schemaForm";
 import type { Saved } from "../app/attackLibrary";
@@ -62,7 +62,7 @@ export interface FightHost {
   link(): string;
   /** The attack each kind in the pack fights with today. */
   attacks(): { species: string; level: number; name: string; attack: object }[];
-  /** The composable attacks' schema (the form's), when they're in; null till then. */
+  /** The composable attacks' schema (the form's: rules/attacks/schema.ts); null for none. */
   attackSchema(): Schema | null;
   /** The attack being edited (null: the pack's own), and it set: what's wrong with it and what the composer changed. */
   attack: unknown;
@@ -73,7 +73,7 @@ export interface FightHost {
   editOwn?(i: number): void;
   /** What to know about the attack set now (the pack fighting with it or not), under the box. */
   attackNote?: string;
-  /** A random fair attack, when the composable attacks are in. */
+  /** A random fair attack (the composable attacks'). */
   randomAttack?(): unknown;
   /** The library. */
   library(): Saved[];

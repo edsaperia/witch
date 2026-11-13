@@ -51,7 +51,7 @@ void main() {
   gl_FragColor = vec4(uMoteRgb * vA, 1.0);
 }`;
 
-/** The clearings in play, written into `out` (its objects reused; returns how many): art builder 1's (the map's `glades`)
+/** The clearings in play, written into `out` (its objects reused; returns how many): art builder 1's (the map's `legendClearings`)
  *  where there are any, else one round each sleeping legend, the legend near the top of its circle. */
 export function gladesOf(g: Game, T: GladeTuning, out: Glade[]): number {
   let n = 0;

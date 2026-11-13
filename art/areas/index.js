@@ -84,7 +84,7 @@ export const AREA_FOLDER_KINDS = [
   {"kind":"heron","slot":13,"phase":2,"bearing":213.75,"dir":"SW","biome":"mangrove swamp"},
   {"kind":"turtle","slot":14,"phase":1,"bearing":195,"dir":"SSW","biome":"temperate"},
   {"kind":"woodlouse","slot":15,"phase":3,"bearing":101.25,"dir":"ESE","biome":"volcanic"},
-  {"kind":"moth","slot":16,"phase":1,"bearing":135,"dir":"SE","biome":"temperate"},
+  {"kind":"butterfly","slot":16,"phase":1,"bearing":135,"dir":"SE","biome":"temperate"},
   {"kind":"bat","slot":17,"phase":2,"bearing":281.25,"dir":"WNW","biome":"jungle"},
   {"kind":"toad","slot":18,"phase":1,"bearing":15,"dir":"NNE","biome":"temperate"},
   {"kind":"raven","slot":19,"phase":2,"bearing":56.25,"dir":"ENE","biome":"mountains and glaciers"},

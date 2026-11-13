@@ -1,14 +1,14 @@
 // What playtesters will feel in fights (Ed, 2026-10-05, after #89's 💌s): a bot plays the real rules
 // headless (src/rules/game.ts: the 💌s of rules/invites.ts, combat and every species' movement), no
 // new rules. Each fight: she lands in a real wild area two areas out from home, holding the
-// creatures its kind would have grown to by wave W (the game's own population start and growth),
+// creatures its kind would have grown to by wave W (population's start and growth numbers; in the game growth is off, Ed 2026-10-28),
 // aims at the nearest invitable one and holds fire while it's in range, and moves: circling the
 // crowd at a share of her ground speed (the more she moves, the fewer hits she takes and the fewer
 // letters land), greedily (standing to shoot, closing in when out of range), or kiting (standing to shoot, backing away from any fighter that comes close). It ends when all of them are invited, she's knocked out (sent home), or after a time
 // limit. Builds are stronger invites tunings, named for the legend buffs they were modelled on (Flutter +1 a burst,
 // Fan a 3-way spread, Quick fire half the cooldown, Echo a second burst, Long thread more range, Big heart bigger
 // letters, Charm stronger homing; the buffs themselves removed, Ed 2026-10-28).
-//   node tools/balance/fightbot.mjs [--seeds 2] [--areas 3] [--waves 1,5,10,20,30] [--builds 0,2,4,7] [--bots circle20,circle35,circle50,kiter,greedy,skilled] [--kite 9] [--blink 5] [--limit 240] [--start babies,young,adults] [--json out.json] | --report a.json,b.json
+//   node tools/balance/fightbot.mjs [--seeds 2] [--areas 3] [--waves 1,5,10,20,30] [--builds 0,2,4,7] [--bots circle20,circle35,circle50,kiter,greedy,skilled] [--kite 9] [--blink 5] [--limit 240] [--start babies,young,adults] [--lunge old] [--json out.json] | --report a.json,b.json
 import { openRules, arg, list, mean } from "./lib.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 
@@ -36,7 +36,7 @@ else {
 
   /** One fight. */
   function fight(seed, areaIx, wave, buffs, bot) {
-    const t = withTuning({ invites: BUILDS[buffs].f(TUNING.invites), ...(START ? { population: { ...TUNING.population, start: START } } : {}) });
+    const t = withTuning({ invites: BUILDS[buffs].f(TUNING.invites), ...(START ? { population: { ...TUNING.population, start: START } } : {}), ...(arg("lunge") === "old" && TUNING.lunge ? { lunge: { ...TUNING.lunge, on: false } } : {}) }); // (--lunge old: the lunges before Ed's 2026-11-13 change, to compare)
     const g = newGame(seed, t), w = g.witches[0];
     g.clock.paused = false; g.party.paused = true; // (no waves: just this fight)
     const [hx, hy] = g.map.centreCell, ring = [[2, 0], [-2, 0], [0, 2], [0, -2], [2, 2], [-2, -2]][areaIx % 6], cell = [hx + ring[0], hy + ring[1]];
@@ -90,7 +90,11 @@ else {
           const tg = sk.target, td = Math.hypot(tg.x - w.body.x, tg.z - w.body.z);
           aimX = tg.x - w.body.x; aimZ = tg.z - w.body.z; fire = td < R * 0.95;
           // A telegraph aimed at her (a lunge winding up, a charge's lowered head), close: blink across it.
-          const threat = fighters.find(c => Math.hypot(c.x - w.body.x, c.z - w.body.z) < 14 && ((c.fight?.target?.kind === "witch" && c.fight.windupUntil > T && c.fight.windupUntil - T < 0.35) || (c.charge && (c.charge.from ?? 0) > T)));
+          // (a long lunge, tuning lunge, Ed 2026-11-13: wound up from up to lunge.from dashes off, so its telegraph is seen that far: a
+          // melee wind-up, not a shot's, which has its aim track; and one let go and still coming, not yet past her)
+          const far = t.lunge?.on ? t.lunge.from * t.dash.distance + 3 : 14;
+          const coming = c => { const L = c.fight?.lunge; return !!L?.through && !L.landed && (w.body.x - c.x) * L.dx + (w.body.z - c.z) * L.dz > 0 && Math.hypot(c.x - w.body.x, c.z - w.body.z) < L.left + 3; };
+          const threat = fighters.find(c => { const d = Math.hypot(c.x - w.body.x, c.z - w.body.z), wind = c.fight?.target?.kind === "witch" && c.fight.windupUntil > T && c.fight.windupUntil - T < 0.35; return (d < 14 && (wind || (c.charge && (c.charge.from ?? 0) > T))) || (d < far && wind && !c.fight.aim) || coming(c); });
           const close = fighters.reduce((m, c) => { const d = Math.hypot(c.x - w.body.x, c.z - w.body.z); return d < m.d ? { c, d } : m; }, { c: null, d: Infinity });
           if (threat && T >= w.dash.readyAt) { const dx = threat.x - w.body.x, dz = threat.z - w.body.z, d = Math.hypot(dx, dz) || 1; mx = -dz / d; mz = dx / d; dash = true; blinks++; }
           else if (td > 24 && sk.goal) { const dx = sk.goal.x - w.body.x, dz = sk.goal.z - w.body.z, d = Math.hypot(dx, dz); if (d > 1.5) { mx = dx / d; mz = dz / d; } } // (to its shooting spot, from the edge)

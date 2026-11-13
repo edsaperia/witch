@@ -53,7 +53,8 @@ describe("wild flyers swoop (owl, bat, raven)", () => {
     // Walking east the whole time.
     const walk = (turn: boolean | "blink"): number => {
       // (seed 6: which far creature the arena borrows, so its id-seeded circling, follows the map's population; since the swarms by island,
-      // Ed 2026-11-03, seed 5's owl times its dive so a straight walk slips it. Seeds 4, 6, 7 and 8 all hold.)
+      // Ed 2026-11-03, seed 5's owl times its dive so a straight walk slips it. Since the legends' circles are sized from their meshes
+      // and put them at the back, Ed 2026-11-12, of seeds 4 to 12 this and the bat's dives below both hold on 6, 9 and 12.)
       const { g, ids } = arena("owl*1@2", 6), o = g.creatures[ids[0]], hp0 = g.witches[0].health.hp;
       run(g, 10, idle, () => o.swoop?.phase === "circle" && !!o.moveReadyAt && g.clock.time >= o.moveReadyAt - 0.05);
       let dir = 1, released = false;
