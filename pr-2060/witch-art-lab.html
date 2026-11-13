@@ -2572,6 +2572,9 @@ const WITCH_GENOME = {
     lantern: false, vial: false, book: false, patches: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, clutch: false, messenger: false, wristband: false, chunky: false,
     lipstick: false, eyeshadow: false, blush: false }, // (the basin's makeup, Ed 2026-11-07: off till she puts it on; blush always off since 2026-11-12, kept so older saves and messages still read)
   cloakLength: 1, scarfLength: 1, bagSize: 1, backpackSize: 0,
+  // her top under her jacket, her trousers and her shoes (Ed, 2026-11-13; art/witch.js WITCH_WEAR: the wardrobe's and the shoe rack's
+  // items; no jacket is top "none"). A generated witch keeps hers.
+  shirt: "tee", trousers: "jeans", shoes: "trainers",
   palette: null, // null: hers (DEFAULT_OUTFIT, the style's hues on top)
 };
 // The axes and their limits, for the creator, the lab and the check (Ed, 2026-10-05: "the sliders in the character creation
@@ -2646,7 +2649,8 @@ function witchGenome(seed = 0, { party = false } = {}) {
 function upgradeGenome(g) {
   const W = WITCH_GENOME, o = g && typeof g === "object" ? g : {};
   const { familiar: _f, ...acc } = o.accessories ?? {}, pal = o.palette && Object.fromEntries(Object.entries(o.palette).filter(([k]) => k !== "familiar" && k !== "familiar2"));
-  return oneMakeup({ ...W, ...o, hat: { ...W.hat, ...o.hat }, broom: { ...W.broom, ...o.broom }, accessories: { ...W.accessories, ...acc }, palette: pal ?? null });
+  const wear = Object.fromEntries(["shirt", "trousers", "shoes"].map(k => [k, WITCH_WEAR[k].includes(o[k]) ? o[k] : W[k]])); // (a save from before them, or naming a kind this build doesn't know: hers)
+  return oneMakeup({ ...W, ...o, ...wear, hat: { ...W.hat, ...o.hat }, broom: { ...W.broom, ...o.broom }, accessories: { ...W.accessories, ...acc }, palette: pal ?? null });
 }
 // The basin's makeup is one colour for her lips and eyes together (Ed, 2026-11-12: "have only one option which is both the lips and
 // eyes together, the same colour"; "Drop blush"). A look from before (a fresh copy, `g` itself untouched): her blush off; her lipstick
@@ -2660,7 +2664,7 @@ function oneMakeup(g) {
 }
 // The look and outfit witch.js draws a genome with.
 function genomeLook(g = WITCH_GENOME) {
-  const look = { ...DEFAULT_LOOK, hat: g.hat.shape, hatHeight: g.hat.height, hatBrim: g.hat.brim, hatTilt: g.hat.tilt, hatBand: g.hat.band ?? 1, hair: g.hair, top: g.top, cloak: g.cloak,
+  const look = { ...DEFAULT_LOOK, hat: g.hat.shape, hatHeight: g.hat.height, hatBrim: g.hat.brim, hatTilt: g.hat.tilt, hatBand: g.hat.band ?? 1, hair: g.hair, top: g.top, cloak: g.cloak, shirt: g.shirt ?? "tee", trousers: g.trousers ?? "jeans", shoes: g.shoes ?? "trainers",
     broom: g.broom.kind, broomLength: g.broom.length, broomBend: g.broom.bend, bristles: g.broom.bristles, broomThickness: g.broom.thickness ?? 1, cloakLength: g.cloakLength ?? 1, scarfLength: g.scarfLength ?? 1, bagSize: g.bagSize ?? 1, backpackSize: g.backpackSize ?? 0, ...g.accessories };
   return { look, outfit: g.palette ? { ...DEFAULT_OUTFIT, ...g.palette } : null };
 }
@@ -2670,7 +2674,7 @@ function witchGenomeProblems(g) {
   if (!A.hatShape.includes(g.hat.shape)) out.push("hat " + g.hat.shape);
   for (const [k, v, lim] of [["hatHeight", g.hat.height, A.hatHeight], ["hatBrim", g.hat.brim, A.hatBrim], ["hatTilt", g.hat.tilt, A.hatTilt], ["hatBand", g.hat.band ?? 1, A.hatBand], ["broomLength", g.broom.length, A.broomLength], ["broomBend", g.broom.bend, A.broomBend], ["bristles", g.broom.bristles, A.bristles], ["broomThickness", g.broom.thickness ?? 1, A.broomThickness], ["cloakLength", g.cloakLength ?? 1, A.cloakLength], ["scarfLength", g.scarfLength ?? 1, A.scarfLength], ["bagSize", g.bagSize ?? 1, A.bagSize], ["backpackSize", g.backpackSize ?? 0, A.backpackSize]]) if (!inR(v, lim)) out.push(`${k} ${v}`);
   if (g.accessories && ![false, true, "round"].includes(g.accessories.shades ?? false)) out.push("shades " + g.accessories.shades); // sunglasses: none, plain or round
-  if (!A.hair.includes(g.hair)) out.push("hair " + g.hair); if (!A.top.includes(g.top)) out.push("top " + g.top); if (!A.cloak.includes(g.cloak)) out.push("cloak " + g.cloak); if (!A.broom.includes(g.broom.kind)) out.push("broom " + g.broom.kind);
+  if (!A.hair.includes(g.hair)) out.push("hair " + g.hair); if (!WITCH_WEAR.top.includes(g.top)) out.push("top " + g.top); for (const k of ["shirt", "trousers", "shoes"]) if (g[k] !== undefined && !WITCH_WEAR[k].includes(g[k])) out.push(`${k} ${g[k]}`); if (!A.cloak.includes(g.cloak)) out.push("cloak " + g.cloak); if (!A.broom.includes(g.broom.kind)) out.push("broom " + g.broom.kind);
   if (g.palette) for (const [k, c] of Object.entries(g.palette)) if (!(Array.isArray(c) && c.length === 3 && c.every(v => v >= 0 && v <= 1))) out.push("palette " + k);
   return out;
 }
@@ -2741,8 +2745,66 @@ const DEFAULT_LOOK = { hat: "classic", hair: "long", top: "jacket", phones: true
   scarfLength: 1, bagSize: 1, backpackSize: 0,
   // the basin's makeup (Ed, 2026-11-07: "lipstick colour, eyeshadow colour, blush on/off ... her face is a few pixels, so subtle"): off;
   // since 2026-11-12 her lipstick and eyeshadow go on together in one colour, and blush is never drawn ("Drop blush")
-  lipstick: false, eyeshadow: false, blush: false };
+  lipstick: false, eyeshadow: false, blush: false,
+  // the wardrobe's and the shoe rack's (Ed, 2026-11-13: "give options for no jacket and no top"; "some more options for trousers (none,
+  // jeans, breeches, shorts, miniskirt, long skirt)"; "more options for shoes (none, high heels, boots)"): her top under her jacket
+  // (`shirt`), her trousers and her shoes, each as hers by default (WITCH_WEAR); no jacket is top "none"
+  shirt: "tee", trousers: "jeans", shoes: "trainers" };
+// What each of those can be (hers first); a kind not known here draws as hers. With no jacket she's in her top, its sleeves short;
+// with no top, a white bandeau; with no trousers, white briefs: her underwear, as white as her nightie.
+const WITCH_WEAR = { top: [...WITCH_LOOKS.top, "none"], shirt: ["tee", "vest", "crop", "none"], trousers: ["jeans", "breeches", "shorts", "miniskirt", "longskirt", "none"], shoes: ["trainers", "heels", "boots", "none"] };
 const shoeR = L => L.chunky ? [.095, .056, .056] : [.08, .04, .045]; // her sneakers, or chunky trainers
+// A shoe on a foot: its middle at c (her trainer's), o its group and the way it points (dir; none: along x), `sole` a trainer's white
+// sole's paint. Her trainers as ever; bare feet; high heels (her foot tipped toe-down, a toe and a heel cup, a thin heel under it); boots (a
+// rounder foot and a shaft up her shin, over her trousers).
+function drawShoe(m, L, knee, foot, c, o, sole) {
+  const S = L.shoes;
+  if (S !== "none" && S !== "heels" && S !== "boots") return m.ell(c, shoeR(L), M.SHOES, { ...o, paint: sole });
+  const d = v3.norm(o.dir ?? [1, 0, 0]), up = [-d[1], d[0], 0];
+  if (S === "none") return m.ell(v3.add(v3.sub(c, v3.mul(d, .015)), [0, -.005, 0]), [.06, .026, .036], M.SKIN, o);
+  if (S === "boots") { m.ell(c, [.088, .048, .05], M.SHOES, o); return m.seg(foot, v3.lerp(foot, knee, .6), .05, .055, M.SHOES, { group: o.group }); }
+  // (heels: her foot tipped toe-down, its instep bare; the shoe a toe and a heel cup, a thin heel under it)
+  const tip = v3.norm(v3.add(d, v3.mul(up, -.35))), mid = v3.add(c, v3.add(v3.mul(d, -.005), v3.mul(up, .01)));
+  m.ell(mid, [.062, .024, .034], M.SKIN, { ...o, dir: tip });
+  m.ell(v3.add(mid, v3.mul(tip, .045)), [.034, .027, .038], M.SHOES, { ...o, dir: tip });
+  const heel = v3.add(mid, v3.mul(tip, -.05));
+  m.ell(heel, [.026, .028, .034], M.SHOES, { group: o.group });
+  return m.seg(heel, v3.add(heel, v3.mul(up, -.05)), .014, .01, M.SHOES, { group: o.group });
+}
+// A leg, hip to knee to foot, in her trousers: jeans (hers); breeches (full in the thigh, a cuff below the knee, her calf bare);
+// shorts (to mid-thigh); bare under a skirt (drawSkirt) or with none.
+const isSkirt = L => L.trousers === "miniskirt" || L.trousers === "longskirt";
+function drawLeg(m, L, hip, knee, foot, g) {
+  const T = L.trousers, o = { group: g };
+  if (T === "none" || isSkirt(L)) { m.seg(hip, knee, .05, .04, M.SKIN, o); m.seg(knee, foot, .04, .033, M.SKIN, o); }
+  else if (T === "shorts") { const c = v3.lerp(hip, knee, .5); m.seg(hip, c, .058, .054, M.JEANS, o); m.seg(c, knee, .046, .04, M.SKIN, o); m.seg(knee, foot, .04, .033, M.SKIN, o); }
+  else if (T === "breeches") { const c = v3.lerp(knee, foot, .3); m.seg(hip, knee, .062, .05, M.JEANS, o); m.seg(knee, c, .048, .044, M.JEANS, o); m.seg(c, foot, .037, .033, M.SKIN, o); }
+  else { m.seg(hip, knee, .055, .045, M.JEANS, o); m.seg(knee, foot, .045, .04, M.JEANS, o); }
+}
+// A skirt over her legs (each [hip, knee, foot]): cloth hung between them all the way down to its hem (mid-thigh, or most of the way
+// down her shins), so it goes where her legs go: swinging with her stride, over her lap sitting, either side of her broom. Its own
+// group: one piece of cloth, apart from her body (and kept with her legs in the limbo).
+const SKIRT = 31;
+function drawSkirt(m, L, legs) {
+  if (!isSkirt(L)) return;
+  const long = L.trousers === "longskirt", end = long ? 1.7 : .62, n = long ? 9 : 4;
+  const at = ([hip, knee, foot], s) => s <= 1 ? v3.lerp(hip, knee, s) : v3.lerp(knee, foot, s - 1);
+  for (let i = 0; i <= n; i++) { const s = end * i / n, r = long ? .07 + .012 * i / n : .068 + .02 * i / n; m.seg(at(legs[0], s), at(legs[1], s), r, r, M.JEANS, { group: SKIRT }); }
+}
+// Her hips' material: her trousers' (a skirt's), or with none her white briefs.
+const hipsMat = L => L.trousers === "none" ? M.BELLY : M.JEANS;
+// Her top's material a distance u up her chest from its middle: a tee or a vest, all of it; a crop top, her midriff bare below it;
+// none, a white bandeau round her.
+const shirtAt = (L, u) => L.shirt === "crop" ? (u > -.035 ? M.TOP : M.SKIN) : L.shirt === "none" ? (u > -.015 && u < .07 ? M.BELLY : M.SKIN) : M.TOP;
+const plainShirt = L => L.shirt !== "crop" && L.shirt !== "none";
+// An arm, shoulder to elbow to hand: her jacket's sleeve; with no jacket (top "none") her top's short sleeve (a tee's, a crop top's)
+// over a bare forearm, or a bare arm (a vest, no top).
+function drawArm(m, L, sh, elbow, hand, g) {
+  if (L.top !== "none") { m.seg(sh, elbow, .04, .035, M.JACKET, { group: g }); m.seg(elbow, hand, .035, .03, M.JACKET, { group: g }); return; }
+  if (L.shirt === "vest" || L.shirt === "none") { m.ell(sh, [.036, .034, .036], M.SKIN, { group: g }); m.seg(sh, elbow, .031, .028, M.SKIN, { group: g }); }
+  else { const c = v3.lerp(sh, elbow, .7); m.seg(sh, c, .04, .037, M.TOP, { group: g }); m.seg(c, elbow, .03, .028, M.SKIN, { group: g }); }
+  m.seg(elbow, hand, .028, .025, M.SKIN, { group: g });
+}
 // The hat's shape from the look: a crown point p scaled from the brim by hatHeight and leaned back by hatTilt; a brim's radii by hatBrim.
 const hatPt = (L, brim, p) => { const k = L.hatHeight ?? 1, a = L.hatTilt || 0; if (k === 1 && !a) return p; let d = v3.mul(v3.sub(p, brim), k); if (a) { const c = Math.cos(a), s = Math.sin(a); d = [d[0] * c - d[1] * s, d[0] * s + d[1] * c, d[2]]; } return v3.add(brim, d); };
 const brimR = (L, r) => (L.hatBrim ?? 1) === 1 ? r : [r[0] * L.hatBrim, r[1], r[2] * L.hatBrim];
@@ -2956,12 +3018,19 @@ function drawGlowsticks(m, L, elbow, hand, side, g) {
   for (const t of side > 0 ? [.62, .82] : [.78]) m.ell(v3.lerp(elbow, hand, t), [.026, .05, .05], t > .7 ? M.COLLAR : M.GLOW, { dir: d, group: g });
 }
 // The torso's paint: her open jacket over a top down its front (fwd: the way her chest faces), or a party top.
-function torsoPaint(L, chest, fwd) {
-  const front = p => v3.dot(v3.sub(p, chest), fwd);
+function torsoPaint(L, chest, fwd, spine = [0, 1, 0]) {
+  const front = p => v3.dot(v3.sub(p, chest), fwd), up = p => v3.dot(v3.sub(p, chest), spine);
+  if (L.top === "none") return p => { // no jacket: her top all round her (the chest drawn in it: torsoMat), a vest's neckline scooped, her shoulders bare
+    const u = up(p); if (L.shirt === "vest" && u > (front(p) > .015 ? .03 + Math.abs(p[2] - chest[2]) * 1.1 : .08)) return M.SKIN;
+    const mt = shirtAt(L, u); return mt === M.TOP ? undefined : mt;
+  };
   if (L.top === "sequins") return p => front(p) > .03 && Math.abs(p[2]) < .075 ? (hash2(Math.floor(p[0] * 15), Math.floor(p[1] * 15) + Math.floor(p[2] * 15) * 31, 5) < .4 ? M.HAT2 : M.TOP) : undefined;
   if (L.top === "mesh") return p => front(p) > .03 && Math.abs(p[2]) < .08 ? ((((p[0] + p[2]) * 9) % 1 + 1) % 1 < .4 || ((p[1] * 9) % 1 + 1) % 1 < .4 ? M.TOP : M.SKIN) : undefined;
+  if (!plainShirt(L)) return p => front(p) > .045 && Math.abs(p[2]) < .05 ? shirtAt(L, up(p)) : undefined; // (a crop top, or none: her skin down her open jacket's front)
   return p => front(p) > .045 && Math.abs(p[2]) < .05 ? M.TOP : undefined;
 }
+// Her chest's own material: her jacket's, or with none her top's.
+const torsoMat = L => L.top === "none" ? M.TOP : M.JACKET;
 // A poncho over her shoulders (striped), or a cape: hanging down her back (standing) or streaming out behind (flying).
 function drawWrap(m, L, chest, fwd, spine, flying) {
   if (L.top === "poncho") m.ell(v3.add(chest, v3.mul(spine, .06)), [.17, .11, .2], M.JACKET, { dir: fwd, up: spine, group: 13, paint: p => { const k = Math.floor((p[1] - chest[1]) * 16) & 3; return k === 0 ? M.HAT1 : k === 2 ? M.HAT2 : undefined; } });
@@ -3002,6 +3071,9 @@ const cloakDrop = cloak => cloak === "short" ? .22 : .42;
 const cloakLengthIn = (cloak, k, lo = .6, hi = 6) => { const knee = CLOAK_KNEE / cloakDrop(cloak); return cloak === "short" ? Math.max(lo, Math.min(knee, k)) : Math.max(knee, Math.min(hi, k)); };
 // The witch generator's extras: a cloak from her shoulders (short, long, or long with a hood), streaming out behind in flight or
 // hanging down her back; a scarf round her neck, its end flying; a satchel on her near hip on a strap across her; a glowing pendant.
+// A bag's strap (its belt, its handles' straps): the parts `draw` adds marked `strap`, so a station's card can picture the bag without
+// it (Ed, 2026-11-13: "show bags previews without the strap"; WITCH_CARD_ITEMS.bag).
+function strap(m, draw) { const n = m.parts.length; draw(); for (let i = n; i < m.parts.length; i++) m.parts[i].strap = true; }
 function drawExtras(m, L, chest, fwd, spine, flying) {
   const back = v3.mul(fwd, -1), side = [0, 0, 1], neck = v3.add(chest, v3.mul(spine, .14));
   if (L.cloak && L.cloak !== "none") {
@@ -3031,13 +3103,13 @@ function drawExtras(m, L, chest, fwd, spine, flying) {
   if (L.satchel) {
     const hip = v3.add(chest, v3.add(v3.mul(spine, -.17), v3.add(v3.mul(side, .12), v3.mul(back, .02))));
     const bs = L.bagSize ?? 1; m.ell(v3.add(hip, v3.mul(spine, -.03 * (bs - 1))), [.065 * bs, .058 * bs, .028 * Math.sqrt(bs)], M.WOOD, { dir: fwd, up: spine, group: 16 }); // (an ellipsoid: the posed flight turns only ellipsoids and limbs)
-    m.chain([[...v3.add(chest, v3.add(v3.mul(spine, .12), v3.mul(side, -.08))), .012], [...v3.add(chest, v3.add(v3.mul(fwd, .1), [0, 0, .02])), .012], [...hip, .012]], M.WOOD, { group: 16 });
+    strap(m, () => m.chain([[...v3.add(chest, v3.add(v3.mul(spine, .12), v3.mul(side, -.08))), .012], [...v3.add(chest, v3.add(v3.mul(fwd, .1), [0, 0, .02])), .012], [...hip, .012]], M.WOOD, { group: 16 }));
   }
   if (L.pendant) m.ell(v3.add(chest, v3.add(v3.mul(fwd, .105), v3.mul(spine, .05))), [.022, .028, .018], M.MAGIC, { group: 17 });
   if (L.backpackSize > 0) { // a backpack on her back, its top flap darker, glowing tags on its straps
     const k = L.backpackSize, c = v3.add(chest, v3.add(v3.mul(back, .1 + .03 * k), v3.mul(spine, -.04)));
     m.ell(c, [.09 * k, .11 * k, .085 * k], M.LEAF, { dir: spine, up: back, group: 23, paint: p => v3.dot(v3.sub(p, c), spine) > .06 * k ? M.HAT1 : undefined });
-    for (const s2 of [-1, 1]) m.ell(v3.add(chest, v3.add(v3.mul(fwd, .09), [0, 0, s2 * .05])), [.012, .05, .012], M.LEAF, { dir: spine, up: fwd, group: 23 });
+    strap(m, () => { for (const s2 of [-1, 1]) m.ell(v3.add(chest, v3.add(v3.mul(fwd, .09), [0, 0, s2 * .05])), [.012, .05, .012], M.LEAF, { dir: spine, up: fwd, group: 23 }); });
   }
   drawAccessories(m, L, chest, fwd, spine, flying);
 }
@@ -3058,17 +3130,17 @@ function drawAccessories(m, L, chest, fwd, spine, flying) {
     const c = at(waist + .07, .06, .115);
     m.ell(c, [.05, .038, .024], M.HAT1, { dir: fwd, up: spine, group: 24 });
     m.ell(v3.add(c, v3.add(v3.mul(spine, .025), v3.mul(fwd, .024))), [.014, .011, .011], M.FRAME, { group: 24 });
-    m.chain([[...at(.13, .0, -.08), .006], [...at(.07, .1, .0), .006], [...v3.add(c, v3.mul(spine, .032)), .006]], M.FRAME, { group: 24 });
+    strap(m, () => m.chain([[...at(.13, .0, -.08), .006], [...at(.07, .1, .0), .006], [...v3.add(c, v3.mul(spine, .032)), .006]], M.FRAME, { group: 24 }));
   }
   if (L.tote) { // a tall canvas tote hanging from her near shoulder by two straps (Ed, 2026-10-29: a found bag)
     const c = at(waist - .05, .04, .16);
     m.ell(c, [.07, .09, .026], M.WEB, { dir: fwd, up: spine, group: 24 });
-    for (const f of [-.03, .03]) m.chain([[...at(.14, f, .09), .006], [...v3.add(c, v3.add(v3.mul(spine, .07), v3.mul(fwd, f))), .006]], M.HAT1, { group: 24 });
+    strap(m, () => { for (const f of [-.03, .03]) m.chain([[...at(.14, f, .09), .006], [...v3.add(c, v3.add(v3.mul(spine, .07), v3.mul(fwd, f))), .006]], M.HAT1, { group: 24 }); });
   }
   if (L.duffel) { // a long duffel slung at her near hip, end to end along her, its strap over the far shoulder, its ends in her trim colour
     const c = at(waist - .03, .0, .17);
     m.ell(c, [.13, .055, .05], M.STONED, { dir: fwd, up: spine, group: 24, paint: p => Math.abs(v3.dot(v3.sub(p, c), fwd)) > .1 ? M.HAT1 : undefined });
-    m.chain([[...at(.13, .0, -.08), .007], [...at(.06, .1, .02), .007], [...v3.add(c, v3.mul(spine, .04)), .007]], M.STONED, { group: 24 });
+    strap(m, () => m.chain([[...at(.13, .0, -.08), .007], [...at(.06, .1, .02), .007], [...v3.add(c, v3.mul(spine, .04)), .007]], M.STONED, { group: 24 }));
   }
   if (L.briefcase) { // a briefcase at her near side, flat and square, a gold clasp and handle
     const c = at(waist - .12, .04, .18);
@@ -3083,9 +3155,9 @@ function drawAccessories(m, L, chest, fwd, spine, flying) {
   if (L.messenger) { // a messenger bag on a wide strap across her, hung at her near hip, its big flap in her trim colour (Ed, 2026-10-29: the chain's bag)
     const c = at(waist - .07, -.02, .17);
     m.ell(c, [.09, .07, .028], M.POM, { dir: fwd, up: spine, group: 24, paint: p => v3.dot(v3.sub(p, c), spine) > -.01 ? M.HAT1 : undefined });
-    m.chain([[...at(.14, -.02, -.08), .009], [...at(.06, .09, .04), .009], [...v3.add(c, v3.mul(spine, .06)), .009]], M.HAT1, { group: 24 });
+    strap(m, () => m.chain([[...at(.14, -.02, -.08), .009], [...at(.06, .09, .04), .009], [...v3.add(c, v3.mul(spine, .06)), .009]], M.HAT1, { group: 24 }));
   }
-  if (L.bumbag) { const c = at(waist - .03, .1, .03); m.ell(c, [.035, .03, .065], M.EAR, { dir: fwd, up: spine, group: 22 }); m.chain([[...at(waist - .02, .07, -.08), .008], [...c, .008], [...at(waist - .02, .07, .1), .008]], M.EAR, { group: 22 }); }
+  if (L.bumbag) { const c = at(waist - .03, .1, .03); m.ell(c, [.035, .03, .065], M.EAR, { dir: fwd, up: spine, group: 22 }); strap(m, () => m.chain([[...at(waist - .02, .07, -.08), .008], [...c, .008], [...at(waist - .02, .07, .1), .008]], M.EAR, { group: 22 })); }
 }
 // Every part (those `only` picks), flat and anchor of m turned by angle a about the vertical ("y") or the side-to-side ("z") axis through P.
 function turnModel(m, axis, a, P, only = () => true) {
@@ -3132,20 +3204,22 @@ function fastModel(frame, L = DEFAULT_LOOK) {
   broomBristles(m, L, [-.64, bx(-.64) + .005, 0], [.2, .1, .11], { dir: [1, dip * 1.6, 0], group: 3, paint: p => p[0] < -.76 ? M.MAGIC2 : p[0] > -.5 ? M.BROOM : undefined });
   // her hands on the very front of the handle, arms straight back to her shoulders
   const hands = [-1, 1].map(side => [.5, bx(.5) + .03, side * .045]), sh = [-1, 1].map(side => [.2, y + .24 + j[1], side * .1]);
-  for (const k of [0, 1]) { const side = k ? 1 : -1, g = side > 0 ? 7 : 5; m.seg(sh[k], hands[k], .04, .03, M.JACKET, { group: g }); m.ell(hands[k], [.035, .03, .035], M.SKIN, { group: g }); }
+  for (const k of [0, 1]) { const side = k ? 1 : -1, g = side > 0 ? 7 : 5; if (L.top === "none") drawArm(m, L, sh[k], v3.lerp(sh[k], hands[k], .5), hands[k], g); else m.seg(sh[k], hands[k], .04, .03, M.JACKET, { group: g }); m.ell(hands[k], [.035, .03, .035], M.SKIN, { group: g }); }
   // her body streams out behind, nearly flat: head at the front, then the chest, then the hips
   const H = [.3 + j[0], y + .27 + j[1], 0], chest = [.07, y + .28 + j[1] * .5, 0], hips = [-.15, y + .35 + j[2], 0]; // clear of the handle: only her hands touch it
-  m.ell(chest, [.17, .1, .11], M.JACKET, { dir: [1, -.25, 0], group: 1, paint: p => p[1] < chest[1] - .04 && Math.abs(p[2]) < .055 ? M.TOP : undefined });
-  m.ell(hips, [.11, .08, .1], M.JEANS, { dir: [1, -.3, 0], group: 1 });
+  const along = v3.norm([1, -.25, 0]), under = p => p[1] < chest[1] - .04 && Math.abs(p[2]) < .055; // (her chest's front: under her, flat out)
+  m.ell(chest, [.17, .1, .11], torsoMat(L), { dir: [1, -.25, 0], group: 1, paint: L.top === "none" ? torsoPaint(L, chest, [0, -1, 0], along) : plainShirt(L) ? p => under(p) ? M.TOP : undefined : p => under(p) ? shirtAt(L, v3.dot(v3.sub(p, chest), along)) : undefined });
+  m.ell(hips, [.11, .08, .1], hipsMat(L), { dir: [1, -.3, 0], group: 1 });
   // the jacket's tail whipping back hard
-  m.chain([[...v3.add(hips, [-.02, .06, 0]), .07], [...v3.add(hips, [-.18, .08 + j[0] * 2, 0]), .05], [...v3.add(hips, [-.34, .05 + j[1] * 3, .02]), .025]], M.JACKET, { group: 12 });
+  if (L.top !== "none") m.chain([[...v3.add(hips, [-.02, .06, 0]), .07], [...v3.add(hips, [-.18, .08 + j[0] * 2, 0]), .05], [...v3.add(hips, [-.34, .05 + j[1] * 3, .02]), .025]], M.JACKET, { group: 12 });
   // legs flapping out behind: one knee bent, one leg kicking
   const legs = [[[-.32, y + .5 + j[1] * 2, -.07], [-.46, y + .38 + j[0] * 2, -.08]], [[-.34, y + .33 + j[2] * 2, .08], [-.55, y + .44 - j[1] * 3, .1]]];
   legs.forEach(([knee, foot], k) => {
     const g = k ? 6 : 4, hip = v3.add(hips, [-.04, 0, k ? .06 : -.06]);
-    m.seg(hip, knee, .055, .045, M.JEANS, { group: g }); m.seg(knee, foot, .045, .04, M.JEANS, { group: g });
-    m.ell(v3.add(foot, [-.05, 0, 0]), shoeR(L), M.SHOES, { dir: [-1, .3, 0], group: g, paint: p => p[1] < foot[1] - .03 ? M.BELLY : undefined });
+    drawLeg(m, L, hip, knee, foot, g);
+    drawShoe(m, L, knee, foot, v3.add(foot, [-.05, 0, 0]), { dir: [-1, .3, 0], group: g }, p => p[1] < foot[1] - .03 ? M.BELLY : undefined);
   });
+  drawSkirt(m, L, legs.map(([knee, foot], k) => [v3.add(hips, [-.04, 0, k ? .06 : -.06]), knee, foot]));
   // her head: eyes wide, teeth gritted
   m.ell(H, [.11, .115, .1], M.SKIN, { group: 8, paint: p => (p[0] < H[0] - .01 || p[1] > H[1] + .075) ? M.HAIR : undefined });
   for (const side of [-1, 1]) { const e = Model.surface(H, [.11, .115, .1], v3.norm([.85, .1, side * .45])); m.ell(e, [.026, .036, .026], M.BELLY, { group: 8 }); m.ell(v3.add(e, [.012, 0, side * .004]), [.014, .018, .014], M.EYE, { group: 8 }); }
@@ -3461,6 +3535,7 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
     broomBristles(m, L, along(-.13), [.17, .07, .08], { dir: bdir, group: 3, paint: p => { const t = v3.dot(v3.sub(p, bind), bdir); return t < -.22 ? M.MAGIC2 : t > -.01 ? M.BROOM : undefined; } });
   }
   // legs: jeans to the knee, then down to sneakers; one swung up over the broom; on her toes pushing off; or each foot placed
+  const legs = []; // (each in her trousers, for a skirt over them: drawSkirt)
   for (const side of [-1, 1]) {
     const g = side > 0 ? 6 : 4, hip = [hipX, hipY, side * .07], given = K.feet && K.feet[side > 0 ? 1 : 0];
     const swing = K.sit ? K.swing * side : 0; // sitting: her legs over the seat's edge, swinging one forward, one back
@@ -3469,10 +3544,11 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
     const toe = K.toes ? [.03, -.045, 0] : [.05, -.03, 0];
     // in her nightie (Ed, 2026-10-23: "When waking up she wears only a nightie"; mid-thigh since 2026-10-29): bare legs below its hem; barefoot till her shoes are on
     if (bareLegs) { m.seg(hip, knee, .05, .04, M.SKIN, { group: g }); m.seg(knee, foot, .04, .033, M.SKIN, { group: g }); }
-    else { m.seg(hip, knee, .055, .045, M.JEANS, { group: g }); m.seg(knee, foot, .045, .04, M.JEANS, { group: g }); }
+    else { drawLeg(m, L, hip, knee, foot, g); legs.push([hip, knee, foot]); }
     if (L.barefoot) m.ell(v3.add(foot, [.035, -.035, 0]), [.06, .026, .036], M.SKIN, { dir: K.toes ? [1, -.6, 0] : [1, 0, 0], group: g });
-    else m.ell(v3.add(foot, toe), shoeR(L), M.SHOES, { dir: K.toes ? [1, -.6, 0] : [1, 0, 0], group: g, paint: p => p[1] < foot[1] + toe[1] - .015 ? M.BELLY : undefined });
+    else drawShoe(m, L, knee, foot, v3.add(foot, toe), { dir: K.toes ? [1, -.6, 0] : [1, 0, 0], group: g }, p => p[1] < foot[1] + toe[1] - .015 ? M.BELLY : undefined);
   }
+  if (legs.length) drawSkirt(m, L, legs);
   // body: hips in jeans, a top under an open jacket (or a party top), leaning with the spine
   const spine = v3.norm([Math.sin(K.bend), Math.cos(K.bend), Math.sin(K.roll)]), fwd = [Math.cos(K.bend), -Math.sin(K.bend), 0];
   const hips = [hipX, hipY + .03, 0];
@@ -3496,8 +3572,8 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
     m.seg(top, tier, .1, .135, M.BELLY, { group: 1 });
     m.seg(tier, low, .145, .172, M.BELLY, { group: 1 });
   }
-  if (!bareLegs) m.ell(hips, [.1, .08, .105], M.JEANS, { group: 1 }); // (her jeans' hips: under the chemise's skirt, `nightieTop`)
-  if (!bodice) m.ell(chest, [.1, .15 + K.breathe * .5, .115], M.JACKET, { dir: fwd, group: 1, paint: torsoPaint(L, chest, fwd) });
+  if (!bareLegs) m.ell(hips, [.1, .08, .105], hipsMat(L), { group: 1 }); // (her jeans' hips: under the chemise's skirt, `nightieTop`)
+  if (!bodice) m.ell(chest, [.1, .15 + K.breathe * .5, .115], torsoMat(L), { dir: fwd, group: 1, paint: torsoPaint(L, chest, fwd, spine) });
   // in bed: the bed's covers over her legs and lap to her waist (its colours, art/bedColours.js: the duvet and its stripes), a mound
   // over her lap and lower over her legs
   if (K.covers) {
@@ -3506,20 +3582,20 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
     m.box([.36, .055, 0], [.22, .055, .21], M.SHELL, { ...duvet, round: .05 }); // over her legs and feet, out to the foot of the bed
   }
   // the jacket's hem hanging behind, stirring (a poncho or a cape instead)
-  if (!bodice && L.top !== "poncho" && L.top !== "cape") m.chain([[...v3.add(chest, v3.add(v3.mul(fwd, -.07), v3.mul(spine, -.08))), .07], [...v3.add(chest, v3.add(v3.mul(fwd, -.11 - sway), v3.mul(spine, -.2))), .05], [...v3.add(chest, v3.add(v3.mul(fwd, -.13 - sway * 1.6), v3.mul(spine, -.29))), .025]], M.JACKET, { group: 12 });
+  if (!bodice && L.top !== "poncho" && L.top !== "cape" && L.top !== "none") m.chain([[...v3.add(chest, v3.add(v3.mul(fwd, -.07), v3.mul(spine, -.08))), .07], [...v3.add(chest, v3.add(v3.mul(fwd, -.11 - sway), v3.mul(spine, -.2))), .05], [...v3.add(chest, v3.add(v3.mul(fwd, -.13 - sway * 1.6), v3.mul(spine, -.29))), .025]], M.JACKET, { group: 12 });
   if (!bodice) drawWrap(m, L, chest, fwd, spine, false);
   // head: tilted to one side, looking up or down, nodding
   const H = v3.add(chest, v3.add(v3.mul(spine, .27), [K.look * .03 + K.nod * .07, -K.nod * .05, K.tilt * .04]));
   // arms: the far hand grips the broom (or not); the near hand is free (or on the handle, astride)
   const shoulder = side => v3.add(chest, v3.add(v3.mul(spine, .1), [0, 0, side * .12]));
-  m.cuts = { shoulder: v3.add(shoulder(0), v3.mul(spine, -.06)), thigh: [hipX, hipY - .08, 0] }; // (where a station card's picture of her is cut: witchCardSprite; not turned with her, read only standing)
+  m.cuts = { shoulder: v3.add(shoulder(0), v3.mul(spine, -.06)), thigh: [hipX, hipY - .08, 0], waist: [hipX, hipY + .09, 0] }; // (where a station card's picture of her is cut: witchCardSprite; not turned with her, read only standing)
   const grip = astride ? [.28, yb + .03, -.05] : parked ? [.03, hipY + .01, -.17] : B ? along(Math.max(.12, (Math.min(.62, hipY + .2) - bind[1]) / Math.max(.3, bdir[1]))) : null;
   const free = astride ? [.28, yb + .03, .05] : K.free ?? [hipX + .03, hipY + .02, .16]; // (a broom's frame drawn without it, not yet dressed: the hand at her side)
   for (const side of [-1, 1]) {
     const g = side > 0 ? 7 : 5, sh = shoulder(side), hand = side > 0 ? free : K.far || grip || [hipX + .03, hipY + .02, -.16]; // (no broom to hold: at her side)
     const elbow = side > 0 && K.elbow ? K.elbow : side < 0 && K.farElbow ? K.farElbow : v3.add(v3.lerp(sh, hand, .5), [-.03, -.02, side * .05]);
     if (bodice) { m.ell(sh, [.036, .034, .036], M.SKIN, { group: g }); m.seg(sh, elbow, .031, .028, M.SKIN, { group: g }); m.seg(elbow, hand, .028, .025, M.SKIN, { group: g }); } // (bare shoulders and arms: only its straps over them)
-    else { m.seg(sh, elbow, .04, .035, M.JACKET, { group: g }); m.seg(elbow, hand, .035, .03, M.JACKET, { group: g }); }
+    else drawArm(m, L, sh, elbow, hand, g);
     drawHand(m, side > 0 ? (astride ? "grip" : K.hand) : K.farHand || "grip", hand, g);
     drawGlowsticks(m, L, elbow, hand, side, g);
   }
@@ -3564,7 +3640,7 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   if (K.turn) turnModel(m, "y", K.turn, [hipX, 0, 0]);
   // the limbo: everything above her hips leans far back over her bent legs; her top is the highest point of her (what passes under the bar)
   if (K.limbo) {
-    turnModel(m, "z", K.limbo, hips, q => q.group !== 4 && q.group !== 6);
+    turnModel(m, "z", K.limbo, hips, q => q.group !== 4 && q.group !== 6 && q.group !== SKIRT);
     let top = null; for (const q of m.parts) { if (q.extra) continue; for (const [p, r] of q.type === "cone" ? [[q.a, q.r1], [q.b, q.r2]] : [[q.c, Math.max(...q.r)]]) if (!top || p[1] + r > top[1]) top = [p[0], p[1] + r, 0]; }
     m.anchors.top = top;
   }
@@ -3595,23 +3671,26 @@ function witchModel({ frame = 0, lean = false, pose, look = DEFAULT_LOOK } = {})
   if (brake) broomBristles(m, LK, [-.56, y - .08, 0], [.17, .07, .09], { dir: [.55, 1, 0], group: 3, paint: p => p[1] < y - .18 ? M.MAGIC2 : p[1] > y - .01 ? M.BROOM : undefined }); // skidding: the bristles swing forward and down under her, like reins hauled in
   else { const fl = cyc >= 0 ? [0, .035, -.015, .05][cyc] : 0; broomBristles(m, LK, [-.62, y - tilt * 2 - .01, 0], [.17, .07, .08], { dir: [1, tilt, 0], group: 3, paint: p => p[0] < -.72 + fl ? M.MAGIC2 : cyc >= 0 && p[0] < -.66 + fl ? M.MAGIC : p[0] > -.5 ? M.BROOM : undefined }); } // leaning along, the bristles' glow flickers
   // legs astride: jeans to the knee, then down to sneakers (reaching down and forward to land)
+  const legs = [];
   for (const side of [-1, 1]) {
     const kick = cyc >= 0 ? [[0, 0], [.07, .04], [.01, .015], [-.06, -.015]][(cyc + (side > 0 ? 0 : 2)) % 4] : [0, 0]; // leaning along, her legs kick in turn
     const sitIn = SIT_IN.has(LK.broom); // sitting in a canoe or a basket: knees up, feet in front of her
     const hip = [-.04, y + .06, side * .07], knee = sitIn ? [.12 + L * .3, y + .11, side * .1] : brake ? [.18, y - .01, side * .14] : desc ? [.16, y - .05, side * .14] : rise ? [.06, y - .07, side * .14] : [.12 + L * .5, y - .02, side * .14], foot = sitIn ? [.24 + L * .3 + kick[0] * .3, y - .06, side * .09] : brake ? (side > 0 ? [.44, y - .02 + sway, side * .13] : [.3, y - .16, side * .13]) : desc ? [.2, y - .26, side * .13] : rise ? [-.1, y - .23, side * .13] : [.08 + L + kick[0], y - .2 + kick[1], side * .13]; // climbing, her legs tuck back and dangle
-    m.seg(hip, knee, .055, .045, M.JEANS, { group: side > 0 ? 6 : 4 });
-    m.seg(knee, foot, .045, .04, M.JEANS, { group: side > 0 ? 6 : 4 });
-    m.ell(v3.add(foot, [.05, -.02, 0]), shoeR(look), M.SHOES, { group: side > 0 ? 6 : 4, paint: p => p[1] < foot[1] - .04 ? M.BELLY : undefined });
+    drawLeg(m, LK, hip, knee, foot, side > 0 ? 6 : 4); legs.push([hip, knee, foot]);
+    drawShoe(m, LK, knee, foot, v3.add(foot, [.05, -.02, 0]), { group: side > 0 ? 6 : 4 }, p => p[1] < foot[1] - .04 ? M.BELLY : undefined);
   }
+  drawSkirt(m, LK, legs);
   // body: a top under an open jacket; hips in jeans
-  m.ell([-.04, y + .08, 0], [.11, .07, .1], M.JEANS, { group: 1 });
+  m.ell([-.04, y + .08, 0], [.11, .07, .1], hipsMat(LK), { group: 1 });
   const chest = [.0 + L * .8, y + .26 - Math.abs(L) * .3, 0];
-  const tp = LK.top === "jacket" || LK.top === "poncho" || LK.top === "cape" ? p => p[0] > chest[0] + .04 && Math.abs(p[2]) < .055 ? M.TOP : undefined : torsoPaint(LK, chest, [1, 0, 0]);
-  m.ell(chest, [.1, .16, .11], M.JACKET, { dir: [L * 2.5, 1, 0], up: [-1, 0, 0], group: 1, paint: tp });
+  const up = v3.norm([L, 1, 0]), open = p => p[0] > chest[0] + .04 && Math.abs(p[2]) < .055; // (her spine; her open jacket's front)
+  const tp = LK.top === "none" ? torsoPaint(LK, chest, [1, 0, 0], up) : LK.top === "jacket" || LK.top === "poncho" || LK.top === "cape" ? (plainShirt(LK) ? p => p[0] > chest[0] + .04 && Math.abs(p[2]) < .055 ? M.TOP : undefined : p => open(p) ? shirtAt(LK, v3.dot(v3.sub(p, chest), up)) : undefined) : torsoPaint(LK, chest, [1, 0, 0]);
+  m.ell(chest, [.1, .16, .11], torsoMat(LK), { dir: [L * 2.5, 1, 0], up: [-1, 0, 0], group: 1, paint: tp });
   drawWrap(m, LK, chest, [1, 0, 0], v3.norm([L, 1, 0]), true);
   // in flight the jacket's tail flaps out behind her
   const flap = cyc >= 0 ? [-.02, .05, .09, .03][cyc] : 0; // leaning along, the tail flutters up and down
-  if (brake) m.chain([[...v3.add(chest, [-.08, -.06, 0]), .07], [...v3.add(chest, [-.02, .12 + sway, .02]), .05], [...v3.add(chest, [.14, .18 + sway, .03]), .025]], M.JACKET, { group: 12 }); // swinging forward past her with the sudden stop
+  if (LK.top === "none") { /* no jacket: no tail */ }
+  else if (brake) m.chain([[...v3.add(chest, [-.08, -.06, 0]), .07], [...v3.add(chest, [-.02, .12 + sway, .02]), .05], [...v3.add(chest, [.14, .18 + sway, .03]), .025]], M.JACKET, { group: 12 }); // swinging forward past her with the sudden stop
   else if ((posed || cyc >= 0) && LK.top !== "cape") m.chain([[...v3.add(chest, [-.08, -.1, 0]), .07], [...v3.add(chest, [-.2, -.12 + (cyc >= 0 ? flap * .5 : flow * (.08 + sway)), 0]), .05], [...v3.add(chest, [-.3 - (cyc >= 0 ? .03 : 0), -.12 + (cyc >= 0 ? flap : flow * (.16 + sway * 1.5)), .02]), .025]], M.JACKET, { group: 12 });
   // head (needed for the hand on the hat)
   const H = v3.add(chest, [.03 + L * .5, .26, 0]), brim = v3.add(H, [brake ? .05 : desc ? -.01 : -.03, brake ? .06 : .1, 0]);
@@ -3619,8 +3698,7 @@ function witchModel({ frame = 0, lean = false, pose, look = DEFAULT_LOOK } = {})
   for (const side of [-1, 1]) {
     const sh = v3.add(chest, [.01, .11, side * .11]), hand = desc && side > 0 ? v3.add(brim, [.1, .01, .1]) : brake ? [.3, y + .03, side * .05] : [.26 + L, y + .03, side * .05]; // braking: arms straight, hauling on the handle
     const elbow = desc && side > 0 ? v3.add(sh, [.1, .02, .1]) : v3.lerp(sh, hand, .5);
-    m.seg(sh, elbow, .04, .035, M.JACKET, { group: side > 0 ? 7 : 5 });
-    m.seg(elbow, hand, .035, .03, M.JACKET, { group: side > 0 ? 7 : 5 });
+    drawArm(m, LK, sh, elbow, hand, side > 0 ? 7 : 5);
     m.ell(hand, [.035, .03, .035], M.SKIN, { group: side > 0 ? 7 : 5 });
     drawGlowsticks(m, LK, elbow, hand, side, side > 0 ? 7 : 5);
     if (side > 0) m.anchors.hand = hand; // her near hand (in flight it holds the broom; a sigil can still hang from it)
@@ -3728,6 +3806,9 @@ function liftShadow(sp, model, project) {
 //           render her from shoulders to top of her head, without hat");
 //   "legs": thighs down, face on (the shoe rack: "shoes should show her legs, thighs down");
 //   "back": all of her three-quarters from the back, her hat off (the cloak pegs: "cloak should be shown 3/4 from the back, hat removed");
+//   "hips": her waist down, face on (the shoe rack's Trousers: a skirt and shorts sit above the thigh);
+//   "top": her body, neck to thighs, face on, her jacket off and her head left out, so her top shows whole (the wardrobe's Top; with
+//          no top, what's under it); and the Jacket shelf's None the same with the top she has on (no jacket to draw alone);
 //   an item of WITCH_CARD_ITEMS ("jacket", "bag"): that alone, the rest of her left out of the model (so none of her hides it).
 // Each drawn at the scale that makes what's shown `size` pixels along its longer side (it fills its card: Ed, 2026-11-02).
 // Never with her broom (her hands at her sides).
@@ -3737,18 +3818,21 @@ const WITCH_CARD_ITEMS = {
   jacket: { pick: q => q.mat === M.JACKET, clear: [M.SKIN], yaw: WITCH_HEADINGS.towards },
   // a bag and its strap (drawExtras, drawAccessories: the satchel's group, the bum bag's, the backpack's, the found bags'), side on (the
   // flat ones' faces turned to us)
-  bag: { pick: q => [16, 22, 23, 24].includes(q.group), clear: [], yaw: 0 },
+  // (without its strap, belt or shoulder straps: Ed, 2026-11-13, "show bags previews without the strap"; drawExtras' `strap`)
+  bag: { pick: q => [16, 22, 23, 24].includes(q.group) && !q.strap, clear: [], yaw: 0 },
 };
 function witchCardSprite(st = {}, { look, show, size = show === "back" ? 44 : 32 } = {}) {
-  const L = { ...DEFAULT_LOOK, ...look, broomless: true, ...(show === "bust" || show === "back" ? { hat: "none" } : {}) }, item = WITCH_CARD_ITEMS[show];
+  if (show === "jacket" && look?.top === "none") show = "top";
+  const L = { ...DEFAULT_LOOK, ...look, broomless: true, ...(show === "bust" || show === "back" ? { hat: "none" } : {}), ...(show === "top" ? { top: "none", hat: "none", phones: false, cloak: "none", scarf: false } : {}) }, item = WITCH_CARD_ITEMS[show];
   const m = witchModel({ pose: "stand", look: L }), cuts = m.cuts, s0 = witchScale(witchHeight(st));
+  if (show === "top") m.parts = m.parts.filter(q => ![8, 9, 10, 11].includes(q.group)); // (her head, hair, headphones and hat left out)
   if (item) { m.parts = m.parts.filter(item.pick); m.flats = []; if (!m.parts.some(q => !q.cut)) return null; }
   const draw = scale => {
     const r = render(m, { scale, ...(show === "back" ? { facing: "away" } : { yaw: item ? item.yaw : WITCH_HEADINGS.towards }) });
     liftShadow(r.sp, m, r.project);
     if (item) for (let i = 0; i < r.sp.m.length; i++) if (item.clear.includes(r.sp.m[i])) r.sp.m[i] = 0;
-    const cut = show === "bust" ? r.project(cuts.shoulder)[1] : show === "legs" ? r.project(cuts.thigh)[1] : null;
-    if (cut !== null) for (let y = 0; y < r.sp.h; y++) if (show === "bust" ? y > cut : y < cut) r.sp.m.fill(0, y * r.sp.w, (y + 1) * r.sp.w);
+    const cut = show === "bust" ? r.project(cuts.shoulder)[1] : show === "legs" || show === "top" ? r.project(cuts.thigh)[1] : show === "hips" ? r.project(cuts.waist)[1] : null;
+    if (cut !== null) for (let y = 0; y < r.sp.h; y++) if (show === "bust" || show === "top" ? y > cut : y < cut) r.sp.m.fill(0, y * r.sp.w, (y + 1) * r.sp.w);
     cleanFlecks(r.sp); r.sp.scale = scale;
     return r.sp;
   };
@@ -3784,20 +3868,28 @@ function clothesPileSprite(st = {}, { look, facing = "towards", slots = ["top", 
   const L = { ...DEFAULT_LOOK, ...look }, m = new Model({ blend: .04 }), has = k => slots.includes(k);
   if (!slots.length) return null;
   let top = .02; // (how high the heap is so far: the hat sits on what's there)
-  if (has("trousers")) { // (their own piece since Ed's report of 2026-11-11: the shoe rack's Trousers shelf's)
+  // (what she wore: no trousers, no jacket, no top or no shoes leaves none in the heap; a skirt or shorts with no leg trailing off: Ed, 2026-11-13)
+  const trousers = has("trousers") && L.trousers !== "none", legged = !isSkirt(L) && L.trousers !== "shorts", jacket = L.top !== "none", shirt = L.shirt !== "none";
+  if (trousers) { // (their own piece since Ed's report of 2026-11-11: the shoe rack's Trousers shelf's)
     m.ell([.02, .05, .02], [.22, .05, .15], M.JEANS, { group: 1 }); // the jeans, folded under
-    m.seg([-.2, .03, -.08], [-.32, .025, .02], .045, .04, M.JEANS, { group: 1 }); // a leg trailing off
+    if (legged) m.seg([-.2, .03, -.08], [-.32, .025, .02], .045, .04, M.JEANS, { group: 1 }); // a leg trailing off
     top = .1;
   }
-  if (has("top")) {
-    const y = has("trousers") ? 0 : -.05; // (on the jeans, or on the floor without them)
-    m.ell([-.03, .11 + y, -.02], [.19, .055, .14], M.JACKET, { dir: [1, .15, .3], group: 2 }); // the jacket, crumpled over it
-    m.seg([.12, .1 + y, .05], [.25, .04, .13], .04, .035, M.JACKET, { group: 2 }); // a sleeve, flung out
-    m.ell([.06, .15 + y, .03], [.11, .035, .09], M.TOP, { dir: [1, -.2, .5], group: 3 }); // her top on top
-    top = .17 + y;
+  if (has("top") && (jacket || shirt)) {
+    const y = trousers ? 0 : -.05; // (on the jeans, or on the floor without them)
+    if (jacket) {
+      m.ell([-.03, .11 + y, -.02], [.19, .055, .14], M.JACKET, { dir: [1, .15, .3], group: 2 }); // the jacket, crumpled over it
+      m.seg([.12, .1 + y, .05], [.25, .04, .13], .04, .035, M.JACKET, { group: 2 }); // a sleeve, flung out
+    }
+    if (shirt) m.ell([.06, (jacket ? .15 : .09) + y, .03], [.11, .035, .09], M.TOP, { dir: [1, -.2, .5], group: 3 }); // her top on top
+    top = (jacket ? .17 : .11) + y;
   }
   if (has("cloak") && L.cloak && L.cloak !== "none") { m.ell([-.12, top - .01, .1], [.17, .04, .12], M.CLOTH, { dir: [1, .1, -.4], group: 6 }); top += .03; } // her cloak, bundled
-  if (has("shoes")) for (const [x, z, a] of [[.27, -.1, .4], [.33, .03, -.3]]) m.ell([x, .035, z], shoeR(L), M.SHOES, { dir: [Math.cos(a), 0, Math.sin(a)], group: 4, paint: p => (p[1] < .015 ? M.BELLY : undefined) }); // her trainers, kicked off
+  if (has("shoes") && L.shoes !== "none") for (const [x, z, a] of [[.27, -.1, .4], [.33, .03, -.3]]) { // her trainers, kicked off (her boots lying on their sides, her heels: the same shoes she wears)
+    if (L.shoes === "boots") { m.ell([x, .04, z], [.088, .04, .05], M.SHOES, { dir: [Math.cos(a), 0, Math.sin(a)], group: 4 }); m.seg([x - Math.cos(a) * .05, .045, z - Math.sin(a) * .05], [x - Math.cos(a) * .19, .045, z - Math.sin(a) * .19], .05, .05, M.SHOES, { group: 4 }); }
+    else if (L.shoes === "heels") m.ell([x, .03, z], [.075, .03, .038], M.SHOES, { dir: [Math.cos(a), 0, Math.sin(a)], group: 4 });
+    else m.ell([x, .035, z], shoeR(L), M.SHOES, { dir: [Math.cos(a), 0, Math.sin(a)], group: 4, paint: p => (p[1] < .015 ? M.BELLY : undefined) });
+  }
   if (has("bits") && L.phones) { m.chain([[-.2, .03, .12, .015], [-.24, .07, .17, .015], [-.29, .03, .2, .015]], M.PHONES, { group: 5 }); for (const c of [[-.2, .03, .12], [-.29, .03, .2]]) m.ell(c, [.035, .03, .035], M.PHONES, { group: 5 }); }
   if (has("hat") && L.hat && L.hat !== "none") { const brim = [-.05, top, -.02]; drawHat(m, L, brim, [1, .35, .3], v3.add(brim, [.03, .14, .02]), v3.add(brim, [-.12, .2, .05])); } // her hat, tipped over on the heap
   if (!m.parts.length) return null;
@@ -22352,6 +22444,88 @@ function discoPaint(g, cells, { x = 0, y = 0, cell = 8, glow = true } = {}) {
 }
 // One frame of one pattern as cells (no transition, no witch): for contact sheets.
 const discoCells = (p, frame = 0, level = 3) => discoCompose({ pattern: p, frame, level });
+
+
+
+// ---- inlined from art/danceStones.js ----
+// The dancefloor ring's stones, before her party turns them into speakers (Ed, 2026-11-13: "Dancefloor stones (before they become
+// speakers) look too similar to speakers. They should be more knee height like in this reference image."; his reference a modern
+// stone circle on a lawn). Its traits, not the photo: low (knee to thigh height on her), as wide as tall or wider, rounded egg and
+// dome boulders, smooth and weathered, pale grey to buff, a little lichen-mottled, no two alike (upright eggs, squat domes, a
+// couple low and flat), each sat in a little worn ground. Plain: the old ring stones' three glowing dots (Ed, 2026-10-08) are dropped (Ed, 2026-11-13,
+// asked whether to keep them at a pixel each: "drop them").
+// The stones as they were (an area's rune stone at half its width, as tall as a speaker): art/areas.js runeStone, the link's
+// ?dancestones=old.
+
+
+
+/** How many different stones (the ring's twelve: one each). */
+const DANCE_STONE_FORMS = 12;
+// Each kind's height and half-width, as shares of her drawn height (her knee is about a quarter of it, her hip about a half), and
+// how deep it is for its width. Round the ring: mostly eggs and domes, two low flat ones, two lumpy boulders.
+const DANCE_STONE_KINDS = {
+  egg: { h: [.25, .3], w: [.1, .115], d: .9, sink: .42 },      // upright: taller than wide, its widest a little below its middle
+  dome: { h: [.19, .23], w: [.13, .155], d: .85, sink: .12 },  // squat: wider than tall
+  flat: { h: [.12, .14], w: [.15, .175], d: .8, sink: .05 },   // low and flat: shin height
+  lump: { h: [.21, .25], w: [.12, .14], d: .9, sink: .3 },     // a boulder with a shoulder
+};
+const DANCE_STONE_ORDER = ["egg", "dome", "lump", "flat", "egg", "dome", "egg", "flat", "dome", "lump", "dome", "egg"];
+const DANCE_GREY = [166, 166, 162], DANCE_BUFF = [180, 167, 138];
+const danceMix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+
+/** One stone's shape and colours, by its place in the ring (seeded: the same every time). */
+function danceStoneForm(i) {
+  const n = ((i % DANCE_STONE_FORMS) + DANCE_STONE_FORMS) % DANCE_STONE_FORMS, kind = DANCE_STONE_ORDER[n], K = DANCE_STONE_KINDS[kind], r = rng(4177 + n * 6271), u = (a, b) => a + r() * (b - a);
+  return { n, kind, h: u(...K.h), w: u(...K.w), d: K.d * u(.9, 1.1), sink: K.sink, lean: u(-.03, .03), yaw: u(-.5, .5), buff: r(), lichen: u(.1, .26), moss: u(.2, .6), side: r() < .5 ? -1 : 1, grass: 2 + Math.floor(r() * 4) };
+}
+
+function danceStoneModel(F, px) { // px: a pixel in the model's units (her height: 1)
+  const m = new Model({ blend: .03 }), { h, w, sink } = F, d = w * F.d;
+  m.clipY = 0; // (sat in the ground: its underside cut away)
+  // its main body: an ellipsoid whose middle is `sink` of its height up, so a dome's is near the ground and an egg's near its waist
+  const cy = h * sink, ry = h - cy, C = [F.lean * .5, cy, 0];
+  // the dots' middles: three heights up it, each on its surface on the side we see
+  const fwd = [Math.sin(F.yaw), 0, Math.cos(F.yaw)];
+  const dots = [.34, .58, .82].map(t => { const y = h * t, q = Math.sqrt(Math.max(0, 1 - ((y - cy) / ry) ** 2)); return [C[0] + fwd[0] * w * q, y, fwd[2] * d * q]; });
+  const stone = p => {
+    if (p[1] < h * .16 && hash2(Math.floor(p[0] / px), Math.floor(p[2] / px) * 5 + Math.floor(p[1] / px), 11 + F.n) < F.moss) return M.MOSS; // moss at its foot
+    const a = hash2(Math.floor(p[0] / (px * 2)), Math.floor(p[1] / (px * 2)) * 7 + Math.floor(p[2] / (px * 2)), 23 + F.n);
+    if (a < F.lichen) return M.BODY2;       // pale lichen, in blotches
+    if (a > .93) return M.STONED;           // weathered pits
+    return undefined;
+  };
+  m.ell(C, [w, ry, d], M.STONE, { group: 1, rough: px * .35, paint: stone });
+  if (F.kind === "egg") m.ell([C[0] + F.lean, h * .68, 0], [w * .74, h * .32, d * .74], M.STONE, { group: 1, paint: stone }); // its narrower top
+  if (F.kind === "lump") m.ell([F.side * w * .55, h * .22, d * .15], [w * .7, h * .42, d * .75], M.STONE, { group: 1, rough: px * .35, paint: stone }); // its shoulder
+  if (F.kind === "flat") m.ell([-F.side * w * .35, h * .3, 0], [w * .6, h * .62, d * .7], M.STONE, { group: 1, paint: stone }); // a low hump off its middle
+  // the worn ground it sits in, and a few blades of grass at its edge
+  m.ell([0, 0, d * .15], [w * 1.45, px * 1.6, d * 1.5], M.BARK2, { group: 2, extra: true });
+  for (let k = 0; k < F.grass; k++) {
+    const s = k % 2 ? 1 : -1, x = s * w * (1.05 + hash2(k, F.n, 31) * .4), z = d * (hash2(k, F.n, 32) * 1.4 - .3), g = px * (2.2 + hash2(k, F.n, 33) * 2.2);
+    m.seg([x, 0, z], [x + s * px * .6, g, z], px * .5, px * .25, k % 3 ? M.LEAF : M.LEAF2, { group: 10 + k, extra: true });
+  }
+  return { m, dots };
+}
+
+/** A ring stone, baked: `form` its place in the ring. With its ground point under its middle (`origin`) and its dots' middles
+ *  (`dots`), in art pixels from its top-left, as art/areas.js runeStone's turned stones have. Drawn at her scale (docs/STYLE.md §1). */
+function danceStone(st, { form = 0, makeCanvas = defaultCanvas } = {}) {
+  const F = danceStoneForm(form), s = witchHeight(st), { m, dots } = danceStoneModel(F, 1 / s);
+  const R = render(m, { scale: s, yaw: 0 }), sp = R.sp, at = p => (([x, y]) => ({ x: +x.toFixed(1), y: +y.toFixed(1) }))(R.project(p));
+  // where the old ring stones' dots would sit (on the stone's own pixel nearest): no longer drawn (Ed, 2026-11-13: "drop them"),
+  // kept only as the height its speaker springs from (render/view/home.ts)
+  const lit = [], isStone = (x, y) => [M.STONE, M.STONED, M.BODY2, M.MOSS].includes(sp.get(x, y));
+  for (const q of dots.map(at)) {
+    let x = Math.floor(q.x), y = Math.floor(q.y);
+    while (lit.length && y >= lit[lit.length - 1].y - 1.5) y--;
+    for (let k = 0; k < 4 && !isStone(x, y); k++) y--;
+    if (!isStone(x, y)) continue;
+    lit.push({ x: x + .5, y: y + .5 }); // (not drawn: Ed, 2026-11-13, of the three dots, "drop them"; kept as the place its speaker springs from)
+  }
+  const stone = danceMix(DANCE_GREY, DANCE_BUFF, F.buff);
+  const colours = { [M.STONE]: stone, [M.STONED]: stone.map(c => Math.round(c * .78)), [M.BODY2]: danceMix(stone, [196, 200, 168], .6), [M.MOSS]: [96, 124, 70], [M.BARK2]: [84, 72, 52], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: [80, 230, 255] };
+  return { ...bake(sp, colours, st, "none", makeCanvas), origin: at([0, 0, 0]), dots: lit, height: F.h * s, sp };
+}
 
 
 
