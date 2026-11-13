@@ -1,0 +1,6 @@
+{
+  "reason": "Release 47: #2031 (claude/mesh-batch-g): Creature meshes, batch G (docs/plans/creature-mesh-rollout.md; Ed, 2026-11-13: \"The mesh builders work is good enough, please merge it when submitted.\"): the five many-legged kinds, beetle, woodlouse, spider, scorpion and crab, are drawn from low-poly meshes on skeletons (art/mesh/species/<id>.js, with jointed legs in sets of six, eight and fourteen, pincers and a sting new in art/mesh/kit) in place of today's drawings, at today's drawn heights (Ed, 2026-11-12: \"keep the sizes\"). They have eight-frame walks and runs with planted feet; the crab goes sideways. No kind changes its id, its island or its numbers, so the rules are untouched.",
+  "frames": {
+    "*": "wherever a beetle, woodlouse, spider, scorpion or crab is in view: its new drawing, its walk's and run's frames and how fast they pass, where it is drawn along its way (up to a step behind), the frame it stops on, its sleeping pose (the woodlouse rolled in a ball, the scorpion's tail laid round it, the rest on their bellies with their legs folded in), and what hangs over it by its height"
+  }
+}
