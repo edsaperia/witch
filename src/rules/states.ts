@@ -2,8 +2,8 @@
 // damage, and her only action is the invite. A wild creature she invites turns happy and stays
 // to defend its own area (never enraged); leashing a happy one is a second step, and only leashed
 // ones (her army) grow, eating berries as her posse goes. When an area gets its soundsystem its
-// wild young and up turn enraged and besiege the nearest soundsystem; babies never do, and stay
-// invitable. Legends (Ed, 2026-10-05, redesigned): asleep until their area holds none of their kind,
+// wild young and up turn enraged and besiege the nearest soundsystem; babies never do (nor can
+// they be invited: Ed, 2026-10-31, "No, no baby is invitable"). Legends (Ed, 2026-10-05, redesigned): asleep until their area holds none of their kind,
 // then restless, and angry after restlessTime (slow long-range blasts at her and her posse only,
 // never soundsystems, reaching into the next areas); happy (a defender, blasting the enraged in
 // range) where she places one of the map's few relics. Knocked down, happy, leashed and
