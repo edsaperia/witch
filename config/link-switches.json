@@ -1103,6 +1103,20 @@
    "decision": "The soundsystem spell's analyser ring round the decks by default (Ed, 2026-11-12: \"At the decks, when the party starts, there is a visual effect - I want to remove this. ... Instead I want something like the soundsystem spell (audio analyser ring)\")"
   },
   {
+   "name": "magicglow",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Her own magic glows as the creatures' spells do (the party start's ring, her blink, the ley line's spark and the other native effects: a bright core, a dithered halo, a pool of light on the ground, real lights); 0 draws it without the glow, as before, to compare.",
+   "group": "compare",
+   "since": "2026-11-13",
+   "readIn": [
+    "src/render/fx/spellGlow.ts"
+   ],
+   "decision": "Glowing by default (Ed, 2026-11-13, asked whether to extend the creatures' glow to her magic: \"extend\")"
+  },
+  {
    "name": "fxmock",
    "values": [
     "1",

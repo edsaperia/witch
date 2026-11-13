@@ -27,7 +27,8 @@ import type * as THREE from "three";
 import type { LeashView } from "../leash";
 import { groundHeight } from "../height";
 import { entDepth } from "../view/home";
-import { analyserBloom, barLevel, type DotLayer, type FlatRing, type RingLayers } from "./stones";
+import { analyserBloom, barLevel, type BarTip, type DotLayer, type FlatRing, type RingLayers } from "./stones";
+import { rainbow } from "../indicator";
 
 /** ?decksfx=old: the party start's pieces as they were and no ring, to compare (the tests set `old` themselves). Read once, from the link. */
 export const DECKS_FX = { old: new URLSearchParams(globalThis.location?.search ?? "").get("decksfx") === "old" };
@@ -197,5 +198,21 @@ export function drawDecksRing(lv: LeashView, time: number, dot: number[], camera
   const x0 = F ? desk!.x : R.x, z0 = F ? desk!.z : R.z;
   if (F && R.rim?.length !== K.bars) R.rim = Array.from({ length: K.bars }, (_, i) => reachOnFloor(g, x0, z0, Math.PI / 2 + (i / K.bars) * Math.PI * 2, edge, K.margin));
   const rim = F ? R.rim! : null, reach = rim ? (a: number) => rim[Math.round(((a - Math.PI / 2) / (Math.PI * 2)) * K.bars) % K.bars] : edge;
-  analyserBloom(L, dot, S, x0, z0, reach, K.bars, P.fill, P.alpha, decksLevels(lv, R), time, K.least);
+  // Glowing (Ed, 2026-11-13, asked whether to extend the creatures' glow to her magic: "extend"; render/fx/spellGlow.ts): each
+  // bar's tip a glowing core in the bar's colour with its dithered halo, its pool of light on the floor under it (both on the floor
+  // as drawn, in the ring's own layers over the house: LeashView.decksHalo), and one real light over the decks in the rainbow's
+  // drifting colour, as strong as the ring is grown and shown (steady: the bars move with the music, the light doesn't flicker).
+  const magic = (lv.look as LeashView["look"] | undefined)?.magic, G = DECKS_GLOW, data = magic?.herData("party", true) ?? null; // (none in a view with no magic: the tests' stand-ins)
+  const halo = data ? laid(lv.decksHalo.core) : null, pool = data ? laid(lv.decksHalo.pool) : null, span = magic?.batches.spellGlow.value.w ?? 1;
+  const tipAt: BarTip | undefined = data ? (x, z, c, a, k) => {
+    const s = a * (G.least + (1 - G.least) * k); // (a bar far out, a loud one, glows brighter: the kick's bass bars brightest)
+    pool!.add(x, lift - 0.03, z, G.pool, data, c[0], c[1], c[2], s * G.poolAlpha);
+    halo!.add(x, lift + G.lift, z, G.core * span, data, c[0], c[1], c[2], s);
+  } : undefined;
+  analyserBloom(L, dot, S, x0, z0, reach, K.bars, P.fill, P.alpha, decksLevels(lv, R), time, K.least, tipAt);
+  if (data) magic!.lamp("decksRing", R.x, R.y + G.lightY, R.z, rainbow(time * 0.05), G.reach, G.light * P.fill * P.alpha, 2);
 }
+/** The ring's glow (her own magic's: render/fx/spellGlow.ts): each bar's tip's glowing core `core` m across, `lift` m over the
+ *  floor, its pool on the floor `pool` m across and `poolAlpha` strong; a silent bar's tip `least` as bright as a full one's; its
+ *  one light `lightY` m over the decks, reaching `reach` m, `light` strong (a creature's strongest spell's is 0.85). */
+export const DECKS_GLOW = { core: 0.3, lift: 0.12, pool: 1.5, poolAlpha: 0.7, least: 0.45, lightY: 3, reach: 16, light: 0.7 } as const;

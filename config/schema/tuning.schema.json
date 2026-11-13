@@ -6194,6 +6194,39 @@
           ],
           "additionalProperties": false,
           "description": "How the creatures' spells glow: a bright core the bloom picks up, a dithered pixel halo round it, a pool of its light on the ground under it, and a real light for the brightest few nearest her (core, halo, pool and light 0 draw them as before 9 November; ?spellglow=0 does too, to compare)."
+        },
+        "magicGlow": {
+          "type": "object",
+          "properties": {
+            "core": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "halo": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "pool": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "light": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            }
+          },
+          "required": [
+            "core",
+            "halo",
+            "pool",
+            "light"
+          ],
+          "additionalProperties": false,
+          "description": "How her own magic glows, with the same pieces as the creatures' spells: a bright core the bloom picks up, a dithered pixel halo round it, a pool of its light on the ground under it, and a real light where it earns one (all four at 0 draw her magic as before 13 November; ?magicglow=0 does too, to compare)."
         }
       },
       "required": [
@@ -6209,7 +6242,8 @@
         "turnTo",
         "legendFlash",
         "visibility",
-        "glow"
+        "glow",
+        "magicGlow"
       ],
       "additionalProperties": false,
       "description": "How attacks feel on screen: attackers crouch and lunge, hits squash their target, and hard knock-backs send it tumbling."

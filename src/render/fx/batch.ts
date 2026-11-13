@@ -31,7 +31,7 @@ void main(){
   if(overBend(onGround(iPos))<0.5)gl_Position=vec4(2.0,2.0,2.0,1.0);
 }`;
 const FRAG=/* glsl */ `
-uniform sampler2D uFxRamp;uniform float uFxTime,uLayer,uCalm,uSecondary,uDistort,uGlow;uniform vec2 uHalo;uniform vec4 uSpellGlow;
+uniform sampler2D uFxRamp;uniform float uFxTime,uLayer,uCalm,uSecondary,uDistort,uGlow;uniform vec2 uHalo;uniform vec4 uSpellGlow,uMagicGlow;
 varying vec2 vP;varying vec4 vData,vCol;varying vec3 vWorld;varying vec2 vGrid;
 ${LIGHT_GLSL}
 float hash(vec2 q){return fract(sin(dot(q,vec2(127.1,311.7)))*43758.5453);}
@@ -42,7 +42,9 @@ float bayer4(vec2 a){return bayer2(0.5*a)*0.25+bayer2(a);}
 // a glowing core and a dithered halo round it) and 5 (on the ground: its light's pool), both light added on. In whole art pixels
 // (vGrid), the halo and the pool in stepped rings dithered by a 4 x 4 Bayer pattern (the brief's "dithered pixel halos"), in its
 // element's bright step (or a party animal's neon: its element's row past 100). uSpellGlow: core, halo, pool, the halo's reach.
+// Her own magic's (Ed, 2026-11-13: "extend"; its intensity past 10): the same, its strengths uMagicGlow's (attackFx.magicGlow).
 void spellGlow(){
+  vec3 k=vData.z>5.0?uMagicGlow.xyz:uSpellGlow.xyz;
   float tinted=step(50.0,vData.y),row=vData.y-100.0*tinted,form=vData.x;
   vec3 bright=texelFetch(uFxRamp,ivec2(2,int(row+0.5)),0).rgb,hot=texelFetch(uFxRamp,ivec2(3,int(row+0.5)),0).rgb;
   if(tinted>0.5){bright=vCol.rgb;hot=mix(vCol.rgb,vec3(1.0),0.45);}
@@ -57,18 +59,18 @@ void spellGlow(){
   if(uLayer<4.5){
     // s: 1 at the core's edge; the quad reaches uSpellGlow.w times as far
     float s=(line?abs(p.y):length(p))*uSpellGlow.w;
-    if(s<0.5){a=uSpellGlow.x*0.9;rgb=mix(bright,hot,0.2);}
-    else if(s<0.85)a=uSpellGlow.x*0.5;
+    if(s<0.5){a=k.x*0.9;rgb=mix(bright,hot,0.2);}
+    else if(s<0.85)a=k.x*0.5;
     else{
       float t=(s-0.85)/max(0.01,uSpellGlow.w-0.85),band=floor(t*3.0);
       if(band>2.5||bayer4(cell)>0.75-band*0.25)discard;
-      a=uSpellGlow.y*(0.34-band*0.11);
+      a=k.y*(0.34-band*0.11);
     }
     if(line)a*=abs(p.x)>0.92?0.5:1.0;
   }else{
     float s=line?abs(p.y):length(p),band=floor(s*4.0);
     if(band>3.5||bayer4(cell)>1.0-band*0.25)discard;
-    a=uSpellGlow.z*(0.5-band*0.12);
+    a=k.z*(0.5-band*0.12);
     if(line)a*=abs(p.x)>0.9?0.5:1.0;
   }
   a*=vCol.a*even;if(a<0.004)discard;
@@ -165,6 +167,8 @@ export class FxBatches {
   /** The creatures' spell glow's strengths this frame (render/fx/spellGlow.ts): core, halo, pool, and how far the halo reaches (its
    *  quad's size over the core's). */
   readonly spellGlow={value:new THREE.Vector4(0,0,0,GLOW_SPAN)};
+  /** Her own magic's glow's strengths this frame (spellGlow.ts magicGlowLook): core, halo, pool. */
+  readonly magicGlow={value:new THREE.Vector4(0,0,0,0)};
   private count=0;
   canopy=false;
   /** `order`: its layers' draw order from this (ground layers, then upright ones, then the canopy halo) in place of the magic's own
@@ -190,15 +194,32 @@ export class FxBatches {
     // The creatures' spell glow (render/fx/spellGlow.ts): slot 9 standing (its glowing core and dithered halo, after the magic's own
     // standing layers), slot 10 on the ground (its light's pool, under the magic's ground layers), both added light. (None for a
     // light-alone set of batches: the party start's draws no creature spells.)
+    this.ramp=ramp;
     if(!opts.glow)for(const flat of [0,1]){
-      const mat=new THREE.ShaderMaterial({vertexShader:VERT,fragmentShader:FRAG,uniforms:{...LIGHT_UNIFORMS,...HEIGHT_UNIFORMS,
-        uRight:SPRITE_UNIFORMS.uRight,uUp:SPRITE_UNIFORMS.uUp,uRes:SPRITE_UNIFORMS.uRes,uMpp:this.mpp,uHalo:{value:new THREE.Vector2(...settings.halo as [number,number])},uFxRamp:{value:ramp},uFlat:{value:flat},uLayer:{value:4+flat},uFxTime:this.time,uCalm:this.calm,uSecondary:this.secondary,uDistort:this.distort,uGlow:{value:0},uSpellGlow:this.spellGlow},
-        transparent:true,depthWrite:false,depthTest:true,...(flat?SCREEN:{blending:THREE.AdditiveBlending})});
-      const batch=new Instances(mat);batch.mesh.name=`${opts.name??"Magic"} spell glow ${flat?"pool":"core"}`;
-      batch.mesh.renderOrder=opts.order!==undefined?opts.order+(flat?-0.0005:0.0045):flat?2.895:2.84;batch.mesh.visible=false;scene.add(batch.mesh);this.layers.push(batch);
+      const batch=this.glowLayer(scene,flat,opts.order!==undefined?opts.order+(flat?-0.0005:0.0045):flat?2.895:2.84,`${opts.name??"Magic"} spell glow ${flat?"pool":"core"}`);
+      this.layers.push(batch);this.glows.push(batch);
     }
   }
-  begin(time:number,calm:boolean):void {this.time.value=time;this.calm.value=calm?1:0;this.count=0;for(const b of this.layers)b.begin();}
+  private readonly ramp:THREE.DataTexture;
+  /** The glow layers (drawn only while something asks: end). */
+  private readonly glows:Instances[]=[];
+  /** One glow layer: standing (flat 0: glowing cores and dithered halos) or on the ground (flat 1: pools, screen blended). */
+  private glowLayer(scene:THREE.Scene,flat:number,order:number,name:string):Instances {
+    const mat=new THREE.ShaderMaterial({vertexShader:VERT,fragmentShader:FRAG,uniforms:{...LIGHT_UNIFORMS,...HEIGHT_UNIFORMS,
+      uRight:SPRITE_UNIFORMS.uRight,uUp:SPRITE_UNIFORMS.uUp,uRes:SPRITE_UNIFORMS.uRes,uMpp:this.mpp,uHalo:{value:new THREE.Vector2(...settings.halo as [number,number])},uFxRamp:{value:this.ramp},uFlat:{value:flat},uLayer:{value:4+flat},uFxTime:this.time,uCalm:this.calm,uSecondary:this.secondary,uDistort:this.distort,uGlow:{value:0},uSpellGlow:this.spellGlow,uMagicGlow:this.magicGlow},
+      transparent:true,depthWrite:false,depthTest:true,...(flat?SCREEN:{blending:THREE.AdditiveBlending})});
+    const batch=new Instances(mat);batch.mesh.name=name;batch.mesh.renderOrder=order;batch.mesh.visible=false;scene.add(batch.mesh);
+    return batch;
+  }
+  /** Two more glow layers of these batches at a draw order of their own (her decks' analyser ring's, over the house's floor:
+   *  render/leash/decksRing.ts): the same shader, ramp and strengths; begun and ended with the rest. */
+  extraGlow(scene:THREE.Scene,order:number,name:string):{core:Instances;pool:Instances} {
+    const pool=this.glowLayer(scene,1,order,`${name} glow pool`),core=this.glowLayer(scene,0,order+0.0002,`${name} glow core`);
+    this.extras.push(pool,core);this.glows.push(pool,core);
+    return {core,pool};
+  }
+  private readonly extras:Instances[]=[];
+  begin(time:number,calm:boolean):void {this.time.value=time;this.calm.value=calm?1:0;this.count=0;for(const b of this.layers)b.begin();for(const b of this.extras)b.begin();}
   /** glow: the halo's strength and spread, times its own (1 for everything but the creatures' attacks: attackFx.visibility.bloom).
    *  tall: an upright's height times this (0: square, as every effect but the party start's pillar). */
   add(x:number,y:number,z:number,size:number,data:number[],alpha:number,ground:boolean,tint:readonly number[]|null=null,particles=true,glow=1,tall=0):void {
@@ -237,5 +258,5 @@ export class FxBatches {
     if(this.count>=settings.instances||!this.layers[10])return;this.count++;
     this.layers[pool?10:9].add(x,pool?0:y,z,width*(pool?1:this.spellGlow.value.w),data,tint?.[0]??1,tint?.[1]??1,tint?.[2]??1,alpha,-length,false,heading);
   }
-  end():void {for(const b of this.layers)b.end();for(const i of [9,10])if(this.layers[i])this.layers[i].mesh.visible=(this.layers[i].mesh.geometry as THREE.InstancedBufferGeometry).instanceCount>0;}
+  end():void {for(const b of this.layers)b.end();for(const b of this.extras)b.end();for(const b of this.glows)b.mesh.visible=(b.mesh.geometry as THREE.InstancedBufferGeometry).instanceCount>0;}
 }

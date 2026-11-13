@@ -112,6 +112,9 @@ export class LeashView {
   ink: Instances;
   /** The decks' ring's dots painted on and their glow as light (render/leash/decksRing.ts): over the house's floor (DECKS_RING_ORDER),
    *  depth-tested, so the DJ table in front of them covers them. */
+  /** Its glow (Ed, 2026-11-13: her own magic glows; render/fx/spellGlow.ts): its bars' tips' glowing cores and dithered halos, and
+   *  their pools on the floor, in the magic's glow layers at the ring's own order (begun and ended with the magic's). */
+  decksHalo!: { core: Instances; pool: Instances };
   decksInk: Instances;
   decksGlow: Instances;
   /** Each glyph's reach from its slot's middle, a share of its half-width (measured from the atlas when drawn), by its rect. */
@@ -243,6 +246,7 @@ export class LeashView {
     scene.add(this.decksInk.mesh, this.decksGlow.mesh);
     scene.add(this.standing.mesh, this.flat.mesh, this.through.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh, this.backing.mesh, this.ink.mesh, this.stackBack.mesh, this.stackGlyphs.mesh);
     this.look = new AttackLook(scene, game);
+    this.decksHalo = this.look.magic.batches.extraGlow(scene, DECKS_RING_ORDER + 0.001, "Decks ring");
     const hex = berryColour(game.tuning).replace("#", ""); // (berry pink, or the old cherry red: render/colourGrammar.ts)
     this.berryRgb = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
   }

@@ -87,6 +87,7 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     // CPU effects read these too. Stamp them before drawing any markers or sparkles.
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht;
     a4ViewHost.magic.begin(ht, g.witch.x, g.witch.z, g);
+    a4ViewHost.magic.hers(t.attackFx?.magicGlow); // (her own magic glows: Ed, 2026-11-13, "extend"; render/fx/spellGlow.ts)
     a4ViewHost.magic.batches.mpp.value = a4ViewHost.mpp;
     a4ViewHost.magic.batches.canopy = g.witch.lift > 0.5;
     // The scenery budget follows the real frame rate (only frames that are drawn count).
@@ -216,18 +217,22 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     const speakerLights = drawSpeakers(a4ViewHost, time, pose.angle);
     a4ViewHost.spellFx.update(g, ht, witchHeight(w, t) + 0.6 + a4ViewHost.rideOff);
     const speedForMagic=Math.hypot(w.vx,w.vz);
-    if(speedForMagic>2){a4ViewHost.magic.native("flightTrail",w.x,witchHeight(w,t),w.z,Math.min(1,speedForMagic/20),920002);a4ViewHost.magic.native("broomSpark",w.x,witchHeight(w,t),w.z,0.5,920003);}
+    if(speedForMagic>2)a4ViewHost.magic.native("broomSpark",w.x,witchHeight(w,t),w.z,0.5,920003); // (her trail's: below, in its colour)
     const blink = g.witches[0].dash;
     if (blink.at !== a4PrivateHost.magicBlink && ht >= blink.at && Number.isFinite(blink.at)) {
       a4PrivateHost.magicBlink = blink.at;
-      a4ViewHost.magic.emit("moonlight", "aura", blink.fromX, 1.5, blink.fromZ, 1, 0.7, 0.5, 910001);
-      a4ViewHost.magic.emit("moonlight", "burst", blink.toX, 0.8, blink.toZ, 1, 0.7, 0.6, 910002);
+      // (hers: glowing where she left and where she lands, a streak of its light and its pool along the way; render/fx/spellGlow.ts)
+      a4ViewHost.magic.emit("moonlight", "aura", blink.fromX, 1.5, blink.fromZ, 1, 0.7, 0.5, 910001, true);
+      a4ViewHost.magic.emit("moonlight", "burst", blink.toX, 0.8, blink.toZ, 1, 0.7, 0.6, 910002, true);
+      a4ViewHost.magic.streak("moonlight", blink.fromX, blink.fromZ, blink.toX, blink.toZ, 0.9, 0.22, 0.45);
     }
     {
       // her trail: behind her broom, as long as she's fast, in the colour of the area under her (its creature's neon, as the
       // ley lines and runestones; home's own lavender)
       const lift = canopyShown(w), A = g.map.areaAt(w.x, w.z), sp = Math.hypot(w.vx, w.vz), top = t.groundSpeed + (t.treetopSpeed - t.groundSpeed) * lift;
       const c = A.look === HOME_LOOK ? a4PrivateHost.trailRgb.set(0.8, 0.7, 1) : a4PrivateHost.trailRgb.copy(a4ViewHost.markerArt.colour.get(AREA_TYPES[A.type].creature) ?? a4PrivateHost.trailRgb.set(0.8, 0.7, 1));
+      // (the magic's part of it: its small light, and since Ed, 2026-11-13, its pool on the ground under her in the trail's colour)
+      if (sp > 2) a4ViewHost.magic.native("flightTrail", w.x, witchHeight(w, t), w.z, Math.min(1, sp / 20), 920002, a4ViewHost.magic.her ? [c.x, c.y, c.z] : null);
       const dt = a4ViewHost.trailAt < 0 ? 0 : Math.min(0.1, Math.max(0, ht - a4ViewHost.trailAt)); a4ViewHost.trailAt = ht;
       const back = sp > 0.1 ? 0.6 / sp : 0, W0 = g.witches[0], D = W0.dash;
       // (and its length at least the shared cooldown's share: rules/cooldown.ts, Ed 2026-10-15; the ribbon along her blink's line)

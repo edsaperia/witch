@@ -221,6 +221,26 @@
       ],
       "notes": "core: how bright the glowing core added over each spell's own is, in its element's bright colour (a party animal's: its neon), enough to cross the bloom's threshold, so the bloom gives it a small smooth glow (0 none). halo: the dithered halo round bolts, hits and beams, in three art-pixel steps fading out (0 none). pool: its light's pool on the ground under every spell in flight (smaller and fainter the higher it flies, so the lit spot shows its height), at its hits and across lingering zones and quakes (0 none). lights: at most this many spells light the world around them at once (the strongest nearest her first, sharing the effects' six slots, config/fx/intensity.json lightCap, within the light budget; easing in and out, the world's farthest lights making room the same way, so none pops); 0 none. light: those lights' strength (1 as the magic layers' own). Reduce flashing (the Settings page) halves core, halo, pool and light; nothing in the glow flickers."
     },
+    "attackFx.magicGlow": {
+      "what": "How her own magic glows, with the same pieces as the creatures' spells: a bright core the bloom picks up, a dithered pixel halo round it, a pool of its light on the ground under it, and a real light where it earns one (all four at 0 draw her magic as before 13 November; ?magicglow=0 does too, to compare).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-13",
+          "quote": "extend",
+          "rest": "asked whether to extend the creatures' glow (2026-11-09: \"The animal magic effects need to glow.\") to her own magic, which #1928 had left with its own look; core 1, halo 1, pool 1, light 1; the look is still the magic brief's (Ed, 2026-10-28: \"Pixel cores and dithered pixel halos, with a small smooth bloom over the top\")"
+        }
+      ],
+      "links": [
+        "render/fx/spellGlow.ts",
+        "render/fx/batch.ts",
+        "render/fx/system.ts",
+        "render/leash/decksRing.ts",
+        "render/view/frame.ts",
+        "config/fx/native.json"
+      ],
+      "notes": "What glows: the party start's analyser ring at her decks (each bar's tip a core in the bar's colour with its halo and a pool on the floor, and one light over the decks); her blink (where she left, where she lands, and a streak of light with its pool along the way); the ley line's spark (core, halo, pool, light); the soundsystem spell's eruption, vortex and dome and a cleared challenge's; and pools on the ground under her flight trail (in the trail's colour, smaller and fainter the higher she flies), under party witches' swoops, placed sigils and the ring's dots (config/fx/native.json glow: no core where one would cover her or a sigil's glyph). core: how bright the glowing cores are (0 none). halo: the dithered halo round them (0 none). pool: the pools on the ground (0 none). light: her magic's real lights' strength (1 as before; 0 none). Lights: her magic shares the effects' six slots with the creatures' spells; her cast magic (the blink, the party start, the ley line's spark) takes the first two when both want slots, the creatures' spells keep at least four (attackFx.glow.lights caps them at five), and every light still eases in and out with the world's farthest lights making room, so none pops. Reduce flashing (the Settings page) halves core, halo, pool and light; nothing in the glow flickers."
+    },
     "combat": {
       "what": "How creatures fight: who goes for whom, how fast they run and chase, and how much a soundsystem and home's speakers can take.",
       "decisions": [
