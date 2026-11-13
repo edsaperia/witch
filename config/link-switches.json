@@ -560,10 +560,11 @@
     "0",
     "1"
    ],
-   "does": "Creatures that have one are drawn as low-poly meshes on skeletons (art/mesh), on by default: every kind with a file in art/mesh/species (ten at first, 2026-11-12; most kinds now); 0 compares the generated creatures.",
+   "does": "Creatures that have one are drawn as low-poly meshes on skeletons (art/mesh), on by default: every kind with a file in art/mesh/species (ten at first, 2026-11-12; most kinds now); 0 compares the generated creatures, and spaces her line of babies by their old drawings' lengths (tuning leash.babies.mesh false).",
    "group": "compare",
    "since": "2026-11-12",
    "readIn": [
+    "src/app/linkParams.ts",
     "src/app/viewParams.ts"
    ]
   },
