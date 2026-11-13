@@ -131,9 +131,13 @@ export type DotLayer = Pick<Instances, "add">;
 /** Where it's drawn: its dots painted on in `ink`, glowing over them as light in `glow`, `y` m over the ground. */
 export interface RingLayers { ink: DotLayer; glow: DotLayer; y: number }
 
+/** A bar's tip as it's drawn (its last dot: where, its colour, the ring's strength, and how far out it is, 0 to 1): for what's drawn
+ *  on it (the decks' ring's glow, render/leash/decksRing.ts). */
+export type BarTip = (x: number, z: number, c: number[], alpha: number, reach: number) => void;
+
 /** One bar of the flat analyser lying on the ground (a great stump's: Ed, 2026-10-29, "the audio analyser effect should be the same
  *  orientation as the stump rings"): at angle `a` from its middle (x0, z0), `reach` (0 to 1) of the way out to `edge` m, in colour c. */
-export function analyserBar(L: RingLayers, dot: number[], S: FlatRing, x0: number, z0: number, a: number, edge: number, reach: number, c: number[], alpha: number): void {
+export function analyserBar(L: RingLayers, dot: number[], S: FlatRing, x0: number, z0: number, a: number, edge: number, reach: number, c: number[], alpha: number, tipAt?: BarTip): void {
   const ux = Math.cos(a), uz = Math.sin(a), steps = Math.max(1, Math.floor((edge * S.fill - S.inner) / S.cell)), top = Math.round(reach * steps);
   for (let j = 0; j <= top; j++) {
     const r = S.inner + j * S.cell, tip = j === top, x = x0 + ux * r, z = z0 + uz * r;
@@ -144,6 +148,7 @@ export function analyserBar(L: RingLayers, dot: number[], S: FlatRing, x0: numbe
     // lit wood and where the glows overlap it saturates rather than whitening)
     const gk = S.glow ?? 0, lo = Math.min(c[0], c[1], c[2]) * 0.9;
     if (gk > 0) L.glow.add(x, L.y + 0.02, z, S.cell * 1.8, dot, (c[0] - lo) * gk, (c[1] - lo) * gk, (c[2] - lo) * gk, alpha * (tip ? 0.6 : 0.45), 1, true);
+    if (tip) tipAt?.(x, z, c, alpha, reach);
   }
 }
 
@@ -152,8 +157,8 @@ export function analyserBar(L: RingLayers, dot: number[], S: FlatRing, x0: numbe
  *  1) of the way times the music's level (`level`: analyserLevels), in the rainbow drifting round, at `alpha`. `edge`: how far out
  *  the bars may reach (m), or that by each bar's angle (the decks': the Terrace's rim); `least`: the share of the way a silent bar
  *  still reaches (a stump's 0.55; the decks' much less, so its bars are the music's own heights). */
-export function analyserBloom(L: RingLayers, dot: number[], S: FlatRing, x0: number, z0: number, edge: number | ((a: number) => number), n: number, fill: number, alpha: number, level: (i: number, m: number) => number, time: number, least = 0.55): void {
-  for (let i = 0; i < n; i++) { const f = i / n, a = Math.PI / 2 + f * Math.PI * 2; analyserBar(L, dot, S, x0, z0, a, typeof edge === "number" ? edge : edge(a), fill * (least + (1 - least) * level(i, n)), rainbow(f + time * 0.15), alpha); }
+export function analyserBloom(L: RingLayers, dot: number[], S: FlatRing, x0: number, z0: number, edge: number | ((a: number) => number), n: number, fill: number, alpha: number, level: (i: number, m: number) => number, time: number, least = 0.55, tipAt?: BarTip): void {
+  for (let i = 0; i < n; i++) { const f = i / n, a = Math.PI / 2 + f * Math.PI * 2; analyserBar(L, dot, S, x0, z0, a, typeof edge === "number" ? edge : edge(a), fill * (least + (1 - least) * level(i, n)), rainbow(f + time * 0.15), alpha, tipAt); }
 }
 
 /** A rainbow hue, 0 to 1 round (the wave pointer cycles the same: render/indicator.ts). */
@@ -228,7 +233,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     if (!C) {
       const col = [...V.last.values()].find(c => Math.abs(c.x - p.from!.x) < 0.5 && Math.abs(c.z - p.from!.z) < 0.5) ?? { x: p.from.x, z: p.from.z, top: 5.4, items: [] };
       V.converted.push(C = { col, at: time });
-      lv.look.magic.emit("party","eruption",col.x,col.top+3,col.z,3,1.3,1.5,950001);
+      lv.look.magic.emit("party","eruption",col.x,col.top+3,col.z,3,1.3,1.5,950001,true);
     }
     const it = C.col.items.find(q => q.id === p.id), lvl = it?.level ?? Math.min(3, g.creatures[p.id]?.level ?? 0), y = it?.y ?? 0.6 + (p.from.y + 0.5) * sizeOf(lvl) * 1.15;
     const t0 = time + K.convert * (0.1 + 0.2 * hash2(p.id, 3, 91));

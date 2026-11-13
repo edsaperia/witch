@@ -260,8 +260,8 @@ export function drawChallenge(lv: LeashView, time: number, dot: number[]): void 
     lv.standing.add(s.x, COLUMN_TOP, s.z, 1.2 + 1.2 * p, dot, c[0], c[1], c[2], a, 1, true);
     lv.flat.add(s.x, 0.03, s.z, 3.2, dot, c[0], c[1], c[2], 0.25 * a, 1, true);
   });
-  if (e < 0.25 && BURST.get(g) !== ch.clearedAt) { BURST.set(g, ch.clearedAt); lv.look.magic.emit("party", "eruption", ch.x, 3, ch.z, 3, 1.6, 1.8, 950101); }
-  if (e < FLOOR_RISE * 2) { const k = Math.min(1, e / FLOOR_RISE); lv.look.magic.draw("party", "dome", ch.x, 1, ch.z, 2, 0.9, (1 - k * 0.5) * 0.4, k, 700101); }
+  if (e < 0.25 && BURST.get(g) !== ch.clearedAt) { BURST.set(g, ch.clearedAt); lv.look.magic.emit("party", "eruption", ch.x, 3, ch.z, 3, 1.6, 1.8, 950101, true); }
+  if (e < FLOOR_RISE * 2) { const k = Math.min(1, e / FLOOR_RISE); lv.look.magic.draw("party", "dome", ch.x, 1, ch.z, 2, 0.9, (1 - k * 0.5) * 0.4, k, 700101, null, undefined, 1, lv.look.magic.her); }
   // Its reward coming down from the sky (rules/challenge.ts rewardFall): a trail of sparkles above it, and a flask a glowing orb (its
   // sigil lies on the floor once it's landed); a find is its own sprite (render/view/finds.ts).
   const f = rewardFall(g);
