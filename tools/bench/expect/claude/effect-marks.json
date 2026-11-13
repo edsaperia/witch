@@ -1,0 +1,9 @@
+{
+  "reason": "Stun on her becomes slow, effects shown on her, and element-coloured telegraphs (Ed, 2026-11-13: \"I think stun and slow are very similar, and stun is less fun than slow, so how about stun is replaced with slow and we use circling stars?\", \"Big: 40% speed, 3× as long\"; \"Mark + tint + sound\"; \"Element coloured warning shape on the ground\", \"Let's try element colours and see\"). Rules: a creature's stun on her (the lynx's pounce, the ram's headbutt, the lion's roar, the sphinx's gaze) no longer staggers her; it slows her to 40% of her speed for three times the stun's length (witch.stunAsSlow). View: while she's slowed, stars circle her head and her steps leave drag marks; confused, a spiral over her head; thrown hard, a dust skid; her sprite tinted with the attacker's element colour; and every wild attack's warning shape drawn in its attacker's element colour, not red.",
+  "rules": {
+    "*": "wherever a lynx, ram, lion or sphinx lands its own attack on her: she is slowed (0.6 to 0.9 s at 40% speed) instead of held still (0.2 to 0.3 s), so her position and what follows from it (who reaches her, what she dodges) differ from then on"
+  },
+  "frames": {
+    "*": "wherever a fight shows: its warning shapes in their element's colour, and the marks and tint on her while an effect is on her"
+  }
+}

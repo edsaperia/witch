@@ -18,6 +18,7 @@ import { Night, type NightKind } from "./night";
 import { powerUp } from "./power";
 import { Spell } from "./spell";
 import { groan, pour, splash } from "./seaLife";
+import * as herEffects from "./herEffects";
 import { rewind, sadTrumpet } from "./knockdown";
 import { Sparkler } from "./sparkler";
 import { Aggro } from "./aggro";
@@ -131,6 +132,10 @@ export class Sfx {
   knockdown(pan = 0): void { this.babble.knockdown(pan); }
   knock(metres: number, pan = 0): void { knock(this.k, metres, pan); }
   twinkle(i: number, pan = 0): void { chimes.twinkle(this.k, i, pan); }
+  /** The effects on her (audio/herEffects.ts; Ed, 2026-11-13): slowed and confused, one of each's repeats; thrown hard, its skid. */
+  slowed(i: number, pan = 0): void { herEffects.slowed(this.k, i, pan); }
+  confused(i: number, pan = 0): void { herEffects.confused(this.k, i, pan); }
+  skid(metres: number, pan = 0): void { herEffects.skid(this.k, metres, pan); }
   /** Brushing her teeth at the basin: scrubs and a glint (chimes.ts brushTeeth). */
   brushTeeth(pan = 0, len = 1.2): void { chimes.brushTeeth(this.k, pan, len); }
   /** The hydraulic lift going up or down (chimes.ts hiss). */

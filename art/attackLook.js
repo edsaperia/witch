@@ -183,20 +183,27 @@ function drawMark(c, kind, P, A, k) {
 
 // ---- the danger frame's pieces and the motifs ----
 const NEUTRAL = {
-  warn: [4, c => { c.disc(1.5, 1.5, 2.1, INK, 235); c.put(1, 1, RED); c.put(2, 1, RED); c.put(1, 2, RED); c.put(2, 2, RED); }],
-  pip: [5, c => { c.disc(2, 2, 2.4, INK, 235); c.disc(2, 2, 1.2, RED); }],
   pipOff: [5, c => { c.disc(2, 2, 2.4, INK, 200); c.ring(2, 2, 1.4, [120, 120, 130], 200); }],
-  tick: [11, c => { const o = 3; for (let y = 0; y < 11; y++) for (let x = 0; x < 5; x++) c.put(o + x, y, INK, 235); for (let y = 1; y < 7; y++) { c.put(o + 2, y, RED); if (y < 6) { c.put(o + 1, y, RED); c.put(o + 3, y, RED); } } for (let x = 1; x < 4; x++) c.put(o + x, 9, RED); }],
-  chev: [7, c => { for (let k = 0; k < 4; k++) { c.put(3 + k - 3, 3 - k, RED); c.put(3 + k - 3, 3 + k, RED); } c.outline(INK, 230); }],
   hatch: [16, c => { for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if ((x + y) % 6 < 2) c.put(x, y, INK, 255); else c.put(x, y, INK, 90); }],
 };
-for (let q = 0; q < 4; q++) NEUTRAL["bracket" + q] = [8, c => { const fx = q & 1 ? -1 : 1, fy = q & 2 ? -1 : 1, X = q & 1 ? 6 : 1, Y = q & 2 ? 6 : 1; for (let k = 0; k < 5; k++) { c.put(X + fx * k, Y, RED); c.put(X, Y + fy * k, RED); } c.outline(INK, 235); }];
-for (let f = 0; f < 3; f++) NEUTRAL["flash" + f] = [13, c => { const x = 6, y = 6, L = 2 + f * 2; for (let k = -L; k <= L; k++) { c.put(x + k, y, RED); c.put(x, y + k, RED); } if (f) for (let k = -L + 2; k <= L - 2; k++) { c.put(x + k, y + k, RED, 180); c.put(x + k, y - k, RED, 180); } c.disc(x, y, 1 + f * 0.5, RED); }];
+// (the danger frame's coloured pieces twice: in red, and "W" in white, tinted as they're drawn with the attacker's element: Ed,
+// 2026-11-13, "Element coloured warning shape on the ground", "Let's try element colours and see"; ?telegraphs=red draws the red ones)
+for (const [sfx, C] of [["", RED], ["W", WHITE]]) {
+  NEUTRAL["warn" + sfx] = [4, c => { c.disc(1.5, 1.5, 2.1, INK, 235); c.put(1, 1, C); c.put(2, 1, C); c.put(1, 2, C); c.put(2, 2, C); }];
+  NEUTRAL["pip" + sfx] = [5, c => { c.disc(2, 2, 2.4, INK, 235); c.disc(2, 2, 1.2, C); }];
+  NEUTRAL["tick" + sfx] = [11, c => { const o = 3; for (let y = 0; y < 11; y++) for (let x = 0; x < 5; x++) c.put(o + x, y, INK, 235); for (let y = 1; y < 7; y++) { c.put(o + 2, y, C); if (y < 6) { c.put(o + 1, y, C); c.put(o + 3, y, C); } } for (let x = 1; x < 4; x++) c.put(o + x, 9, C); }];
+  NEUTRAL["chev" + sfx] = [7, c => { for (let k = 0; k < 4; k++) { c.put(3 + k - 3, 3 - k, C); c.put(3 + k - 3, 3 + k, C); } c.outline(INK, 230); }];
+  for (let q = 0; q < 4; q++) NEUTRAL["bracket" + sfx + q] = [8, c => { const fx = q & 1 ? -1 : 1, fy = q & 2 ? -1 : 1, X = q & 1 ? 6 : 1, Y = q & 2 ? 6 : 1; for (let k = 0; k < 5; k++) { c.put(X + fx * k, Y, C); c.put(X, Y + fy * k, C); } c.outline(INK, 235); }];
+  for (let f = 0; f < 3; f++) NEUTRAL["flash" + sfx + f] = [13, c => { const x = 6, y = 6, L = 2 + f * 2; for (let k = -L; k <= L; k++) { c.put(x + k, y, C); c.put(x, y + k, C); } if (f) for (let k = -L + 2; k <= L - 2; k++) { c.put(x + k, y + k, C, 180); c.put(x + k, y - k, C, 180); } c.disc(x, y, 1 + f * 0.5, C); }];
+}
 // the motifs, white (the element's colour tints them): slow's chain (links, turning), stun's star, knockback's shock arc, confuse's spiral
 for (let f = 0; f < 4; f++) NEUTRAL["chain" + f] = [10, c => { for (let k = 0; k < 2; k++) { const x = 3 + k * 4, y = 5 + (k + f) % 2; c.ring(x, y, 2.2, WHITE, 255, k === f % 2 ? 0.55 : 1); } c.outline(INK, 160); }];
 for (let f = 0; f < 2; f++) NEUTRAL["star" + f] = [7, c => { const x = 3, y = 3; for (let k = -2; k <= 2; k++) { c.put(x + k, y, WHITE); c.put(x, y + k, WHITE); } if (f) { c.put(x - 1, y - 1, WHITE); c.put(x + 1, y + 1, WHITE); c.put(x + 1, y - 1, WHITE); c.put(x - 1, y + 1, WHITE); } }];
 for (let f = 0; f < 3; f++) NEUTRAL["shock" + f] = [14, c => { const r = 3 + f * 2; for (let t = -50; t <= 50; t += 8) { const a = (t * Math.PI) / 180; c.put(7 - r * 0.6 + Math.cos(a) * r, 7 + Math.sin(a) * r, WHITE); c.put(7 - r * 0.6 + Math.cos(a) * (r - 1), 7 + Math.sin(a) * (r - 1), WHITE, 160); } c.line(1, 4, 4 - f, 4, WHITE, 200); c.line(1, 10, 4 - f, 10, WHITE, 200); }];
 for (let f = 0; f < 4; f++) NEUTRAL["spiral" + f] = [11, c => { for (let k = 0; k < 26; k++) { const a = k * 0.42 + f * (Math.PI / 2), r = k * 0.19; c.put(5 + Math.cos(a) * r, 5 + Math.sin(a) * r, WHITE, 140 + k * 4); } }];
+// the mark of a hard throw on her, white (its attacker's element tints it; Ed, 2026-11-13: "Mark + tint + sound"): a skid's dust
+// puff (3 frames, growing). Her slow wears the stun's stars (Ed, 2026-11-13: "stun is replaced with slow and we use circling stars"), her confusion the spiral.
+for (let f = 0; f < 3; f++) NEUTRAL["dust" + f] = [13, c => { const r = 2 + f * 1.3; c.disc(6, 7, r, WHITE, 230 - f * 50); c.disc(6 - r * 0.7, 7.5, r * 0.6, WHITE, 210 - f * 50); c.disc(6 + r * 0.7, 6.5, r * 0.55, WHITE, 200 - f * 50); }];
 
 /** Every cell to bake: [name, width, height, draw(cell)]. */
 export function atlasCells(cfg) {

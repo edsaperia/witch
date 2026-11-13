@@ -118,7 +118,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `kit=full` | Her kit stays full while the party spell waits (otherwise she starts with a fresh kit). | 2026-10-26 | app/gameParams.ts |
 | `latency=<category>` / `latency=<seconds>` | The audio output buffer for one load: a latency category or seconds. | 2026-10-07 | app/sound.ts |
 | `loadmist=1` / `loadmist=0` | The loading mist (render/loadingMist.ts) on or off for this load, whatever the tuning and `quick=1` say (it's off under `quick=1`). | 2026-10-24 | app/viewParams.ts |
-| `lookdemo=telegraphs` / `lookdemo=elements` / `lookdemo=fx` / `lookdemo=fx:<element>` | The attack looks' showcase round her; fx shows the production magic family and intensity ladder with ground and camera controls. | 2026-10-27 | render/leash/combat.ts |
+| `lookdemo=telegraphs` / `lookdemo=colours` / `lookdemo=elements` / `lookdemo=fx` / `lookdemo=fx:<element>` | The attack looks' showcase round her; colours shows every element's warning colour side by side (with ?telegraphs=red, all red); fx shows the production magic family and intensity ladder with ground and camera controls. | 2026-10-27 | render/leash/combat.ts |
 | `fxmock=1` / `fxmock=iso` / `fxmock=frost` | Show the original fire and frost mock for comparison with the production effects. | 2026-10-29 | render/view.ts |
 | `micCheck=1` | Also listens to the microphone for dropouts after the game (debug only). | 2026-10-06 | main.ts |
 | `mistgate=0` | The bedroom's curtains and door don't wait for the island's art, so she can go out while it's still drawing. | 2026-10-24 | main.ts |
@@ -157,6 +157,9 @@ Each brings back how something was before a change, to compare against what repl
 
 | switch | does | since | read in |
 |---|---|---|---|
+| `stun=old` | A creature's stun on her staggers her for its length, as before, to compare: not the slow that replaced it (to 40% of her speed for three times as long, with the circling stars). *Decision: A slow by default (Ed, 2026-11-13: "I think stun and slow are very similar, and stun is less fun than slow, so how about stun is replaced with slow and we use circling stars?"; "Big: 40% speed, 3× as long").* | 2026-11-13 | app/linkParams.ts |
+| `effectmarks=0` | No marks, tints or sounds for the effects on her (slowed: circling stars and drag marks; confused: a spiral; thrown hard: a dust skid), as before, to compare: only her confusion's pale swirl. *Decision: Shown by default (Ed, 2026-11-13: "Mark + tint + sound").* | 2026-11-13 | render/herEffects.ts |
+| `telegraphs=red` | Every attack's warning shape on the ground red, as before, to compare: not in its attacker's element colour. *Decision: Element colours by default, as a trial (Ed, 2026-11-13: "Element coloured warning shape on the ground", "Let's try element colours and see.").* | 2026-11-13 | render/leash/attackLook.ts |
 | `projection=old` | The placed sigils' projection over the canopy as it was, to compare: its glyph at opacity 0.65 of the ground sigils' dimmed colour, its column of light a faint dot every 1.5 m. *Decision: Ed, 2026-11-13: "I'd like them to be more visible at treetop mode".* | 2026-11-13 | render/leash/projection.ts |
 | `dancestones=old` | The dancefloor ring's stones as they were, to compare: each an area's rune stone at half its width, as tall as the speaker it becomes (not the low rounded stones, knee to thigh height on her: Ed, 2026-11-13). | 2026-11-13 | app/viewParams.ts |
 | `challengehide=0` | The challenge circle there from the start, as before: not hidden in the forest before the party starts, nor after a lost party (Ed, 2026-11-12). | 2026-11-12 | app/linkParams.ts |

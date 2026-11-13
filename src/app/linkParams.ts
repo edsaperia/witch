@@ -173,6 +173,7 @@ export function tuningFromLink(params: URLSearchParams) {
   if (params.get("challengehide") === "0" && tuning.challenge) tuning.challenge = { ...tuning.challenge, hide: { fade: 3, ...tuning.challenge.hide, on: false } }; // (the challenge circle there from the start, as before: Ed 2026-11-12's hiding off)
   if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
   if (params.get("trail") === "0") tuning.trail = { ...tuning.trail, on: false };
+  if (params.get("stun") === "old" && tuning.witch.stunAsSlow) tuning.witch = { ...tuning.witch, stunAsSlow: { ...tuning.witch.stunAsSlow, on: false } }; // (?stun=old: a creature's stun on her staggers her as before, not the slow Ed chose on 2026-11-13, to compare)
   if (params.get("knock") === "0") tuning.witch = { ...tuning.witch, knock: { ...tuning.witch.knock, on: false } };
   // ?attacks=old: every species fights with its old attacks (config/combat.json), not its own in the grammar (rules/attacks/species.ts).
   if (params.get("attacks") === "old") tuning.attacks = { reactionFloor: tuning.attacks?.reactionFloor ?? 0.45, species: false };

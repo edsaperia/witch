@@ -1,6 +1,7 @@
 // The Three.js view: reads the game state each frame and draws it. Rendered into a canvas of
 // (window size / pixel size) and stretched with nearest-neighbour by the browser, so every art
 // pixel stays a crisp square.
+import { HER_TINT } from "./herTint";
 import { RigView } from "./rig/rigView";
 import type { newStride } from "../../art/mesh/stride.js";
 type MeshStride = ReturnType<typeof newStride>;
@@ -1259,7 +1260,7 @@ export class View {
 
   /** Her sprite batch, from the assets' witch frames (bare: her hat knocked off, and the hat on the ground). */
   makeWitchBatch(bare = false): SpriteBatch {
-    const t = this.game.tuning, b = new SpriteBatch(bare ? this.assets.witchBare() : this.assets.witch, this.mpp, { absolute: true, rim: true, unmark: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
+    const t = this.game.tuning, b = new SpriteBatch(bare ? this.assets.witchBare() : this.assets.witch, this.mpp, { absolute: true, rim: true, unmark: true, tint: HER_TINT, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
     b.mesh.renderOrder = 10;
     this.scene.add(...b.meshes);
     return b;

@@ -601,6 +601,11 @@ export type SchemaTuning = {
       "stunMax": number;
       "immune": number;
     };
+    "stunAsSlow": {
+      "on": boolean;
+      "speed": number;
+      "time": number;
+    };
     "lightFloor": number;
     "lightTint": number;
     "lightRim": number;
@@ -1210,6 +1215,29 @@ export type SchemaTuning = {
       "pool": number;
       "light": number;
     };
+    "telegraph": {
+      "gain": number;
+    };
+  };
+  "effectMarks": {
+    "on": boolean;
+    "tint": {
+      "slow": number;
+      "confuse": number;
+      "thrown": number;
+    };
+    "size": number;
+    "slow": {
+      "stars": number;
+      "dragEvery": number;
+      "dragLife": number;
+    };
+    "thrown": {
+      "minMetres": number;
+      "dustEvery": number;
+      "dustLife": number;
+    };
+    "calm": number;
   };
   "combat": {
     "packs": {
@@ -1925,6 +1953,13 @@ export type SchemaTuning = {
       "whoosh": number;
       "twinkle": number;
       "twinkleEvery": number;
+    };
+    "effects": {
+      "volume": number;
+      "slow": number;
+      "confuse": number;
+      "skid": number;
+      "every": number;
     };
     "charge": {
       "volume": number;

@@ -765,6 +765,11 @@
       "stunMax": 1,
       "immune": 1
     },
+    "stunAsSlow": {
+      "on": true,
+      "speed": 0.4,
+      "time": 3
+    },
     "lightFloor": 0.75,
     "lightTint": 1,
     "lightRim": 0.6,
@@ -1406,7 +1411,30 @@
       "halo": 1,
       "pool": 1,
       "light": 1
+    },
+    "telegraph": {
+      "gain": 1
     }
+  },
+  "effectMarks": {
+    "on": true,
+    "tint": {
+      "slow": 0.35,
+      "confuse": 0.3,
+      "thrown": 0.25
+    },
+    "size": 1,
+    "slow": {
+      "stars": 3,
+      "dragEvery": 0.6,
+      "dragLife": 1.2
+    },
+    "thrown": {
+      "minMetres": 4,
+      "dustEvery": 0.7,
+      "dustLife": 0.6
+    },
+    "calm": 0.6
   },
   "combat": {
     "packs": {
@@ -2243,6 +2271,13 @@
       "whoosh": 1,
       "twinkle": 0.16,
       "twinkleEvery": 0.13
+    },
+    "effects": {
+      "volume": 0.5,
+      "slow": 1,
+      "confuse": 1,
+      "skid": 1,
+      "every": 0.55
     },
     "charge": {
       "volume": 0.5,

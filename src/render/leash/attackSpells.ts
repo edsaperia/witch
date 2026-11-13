@@ -39,6 +39,7 @@ export function drawSpells(lv: LeashView, g: Game, time: number, up: boolean, cl
   for (const [id, T] of S.tells) {
     const c = creature(id);
     if (!c || c.leashed || c.legendState === "happy" || time < T.from || time > T.until || !close(c.x, c.z)) continue;
+    L.danger(dressOf(c.species, "", c.level, null));
     L.tell(c.x, c.z, lv.tops.get(c.id) ?? 1.4, 1.2 + T.glow, (time - T.from) / Math.max(0.05, T.until - T.from), time, c.level === 3 && up);
   }
   // telegraphs: the wild's only (a party animal's warnings are its own business)
@@ -47,6 +48,7 @@ export function drawSpells(lv: LeashView, g: Game, time: number, up: boolean, cl
     if (!place(t, g, S) || !close(SHAPE.x, SHAPE.z, 150)) continue;
     LIVE.kind = t.kind; LIVE.start = t.start; LIVE.fire = t.fire;
     if (time > t.fire && t.kind !== "arming" && t.kind !== "tetherLine") continue; // (fired: what it warned of is drawn now)
+    { const c = creature(t.source); L.danger(c ? dressOf(c.species, SPECIES_ATTACKS[c.species]?.body?.element ?? "", c.level, null) : null); } // (its caster's element: Ed, 2026-11-13)
     L.telegraph(LIVE, time, up && (creature(t.source)?.level ?? 0) === 3);
   }
   // bodies in flight (bolts, runners, lures, lobs), and mines and seeds lying in wait

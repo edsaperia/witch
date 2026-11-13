@@ -3092,6 +3092,29 @@
           "additionalProperties": false,
           "description": "A blow knocks her back and staggers her, harder for big attacks and charges."
         },
+        "stunAsSlow": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "time": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "speed",
+            "time"
+          ],
+          "additionalProperties": false,
+          "description": "A creature's stun on her slows her instead: she keeps speed of her speed, for time times as long as the stun would have held her (on false: stunned as before)."
+        },
         "lightFloor": {
           "type": "number",
           "minimum": 0
@@ -3131,6 +3154,7 @@
       },
       "required": [
         "knock",
+        "stunAsSlow",
         "lightFloor",
         "lightTint",
         "lightRim",
@@ -6233,6 +6257,20 @@
           ],
           "additionalProperties": false,
           "description": "How her own magic glows, as the creatures' spells do: a bright core, a dithered pixel halo, a pool of its light on the ground and a real light where it earns one (all four at 0 draw her magic as before 13 November; ?magicglow=0 does too, to compare)."
+        },
+        "telegraph": {
+          "type": "object",
+          "properties": {
+            "gain": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "gain"
+          ],
+          "additionalProperties": false,
+          "description": "How bright each attack's warning shape on the ground is drawn in its attacker's element colour (gain 1: the colour as config/attack-look.json gives it; ?telegraphs=red draws them all red as before 13 November, to compare)."
         }
       },
       "required": [
@@ -6249,10 +6287,106 @@
         "legendFlash",
         "visibility",
         "glow",
-        "magicGlow"
+        "magicGlow",
+        "telegraph"
       ],
       "additionalProperties": false,
       "description": "How attacks feel on screen: attackers crouch and lunge, hits squash their target, and hard knock-backs send it tumbling."
+    },
+    "effectMarks": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "tint": {
+          "type": "object",
+          "properties": {
+            "slow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "confuse": {
+              "type": "number",
+              "minimum": 0
+            },
+            "thrown": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "slow",
+            "confuse",
+            "thrown"
+          ],
+          "additionalProperties": false
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        },
+        "slow": {
+          "type": "object",
+          "properties": {
+            "stars": {
+              "type": "number",
+              "minimum": 0
+            },
+            "dragEvery": {
+              "type": "number",
+              "minimum": 0
+            },
+            "dragLife": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "stars",
+            "dragEvery",
+            "dragLife"
+          ],
+          "additionalProperties": false
+        },
+        "thrown": {
+          "type": "object",
+          "properties": {
+            "minMetres": {
+              "type": "number",
+              "minimum": 0
+            },
+            "dustEvery": {
+              "type": "number",
+              "minimum": 0
+            },
+            "dustLife": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "minMetres",
+            "dustEvery",
+            "dustLife"
+          ],
+          "additionalProperties": false
+        },
+        "calm": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "tint",
+        "size",
+        "slow",
+        "thrown",
+        "calm"
+      ],
+      "additionalProperties": false,
+      "description": "What shows on her while an effect is on her: slowed, stars circle her head and her steps leave drag marks; confused, a spiral turns over her head; thrown hard, she leaves a dust skid; her sprite is tinted with the attacker's element colour, and each has a sound (sfx.effects)."
     },
     "combat": {
       "type": "object",
@@ -9840,6 +9974,40 @@
           "additionalProperties": false,
           "description": "the witch knocked back (#108), a thump and a whoosh by how far (volume, whoosh), and stunned, a soft dizzy twinkle every twinkleEvery seconds (twinkle)."
         },
+        "effects": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "slow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "confuse": {
+              "type": "number",
+              "minimum": 0
+            },
+            "skid": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "slow",
+            "confuse",
+            "skid",
+            "every"
+          ],
+          "additionalProperties": false,
+          "description": "The sounds of the effects on her, under the music: a low sagging note while she's slowed, a thin wobbling tone while she's confused, a scrape of grit when she's thrown hard; volume for all three, each one's own share, and every, the seconds between a lasting effect's repeats."
+        },
         "charge": {
           "type": "object",
           "properties": {
@@ -10240,6 +10408,7 @@
         "tempoUp",
         "stir",
         "knock",
+        "effects",
         "charge",
         "relic",
         "meadow",
@@ -15628,6 +15797,7 @@
     "teamRounds",
     "creatureMomentum",
     "attackFx",
+    "effectMarks",
     "combat",
     "notice",
     "dodge",

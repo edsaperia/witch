@@ -18,6 +18,9 @@ export interface SpellElement {
   /** dark, mid, bright, hot ("#rrggbb") */
   palette: string[];
   accent?: string;
+  /** its warning shapes' colour on the ground ("#rrggbb"; Ed, 2026-11-13: "Element coloured warning shape on the ground", "Let's try
+   *  element colours and see"): bright, and far enough from every other element's to read apart (danger.bright, danger.apart) */
+  telegraph: string;
   core: (typeof CORES)[number]; trail: (typeof TRAILS)[number]; impact: (typeof IMPACTS)[number]; bits: (typeof BITS)[number];
   mark: (typeof MARKS)[number]; beam: (typeof BEAMS)[number]; area: (typeof MARKS)[number];
   /** its core and bits painted, not glowing (earth's rock, shadow's dark) */
@@ -30,7 +33,7 @@ export interface SpellsConfig {
   scale: number;
   power: Record<string, number>;
   particles: { trail: number; impact: number };
-  danger: { warn: string; edge: string; dash: number; gap: number; march: number; flash: number; hatch: number };
+  danger: { warn: string; edge: string; dash: number; gap: number; march: number; flash: number; hatch: number; /** the least two elements' telegraph colours may differ (CIE Lab distance) and the least lightness (Lab L) one may have, so each reads apart and reads on dark ground */ apart: number; bright: number };
   default: string;
   /** other names for elements (the attack grammar's body.element tags: stone, light, spore, web, water, sound) */
   aliases: Record<string, string>;
@@ -43,6 +46,14 @@ export interface SpellsConfig {
   looks: Record<string, { core: (typeof LOOK_CORES)[number]; palette?: string[] }>;
   byBiome: Record<string, string>;
   bySpecies: Record<string, string>;
+}
+
+/** A "#rrggbb" colour in CIE Lab (D65): L 0 to 100, a, b. */
+export function labOf(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map(v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+  const X = (c[0] * 0.4124 + c[1] * 0.3576 + c[2] * 0.1805) / 0.95047, Y = c[0] * 0.2126 + c[1] * 0.7152 + c[2] * 0.0722, Z = (c[0] * 0.0193 + c[1] * 0.1192 + c[2] * 0.9505) / 1.08883;
+  const f = (t: number) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+  return [116 * f(Y) - 16, 500 * (f(X) - f(Y)), 200 * (f(Y) - f(Z))];
 }
 
 export const ATTACK_LOOK = raw as unknown as SpellsConfig;
@@ -91,6 +102,8 @@ export function spellsProblems(cfg: SpellsConfig, species: readonly string[], bi
   for (const [id, e] of Object.entries(cfg.elements)) {
     if (!Array.isArray(e.palette) || e.palette.length !== 4 || !e.palette.every(hex)) bad.push(`${id}: its palette isn't four "#rrggbb" colours`);
     if (e.accent !== undefined && !hex(e.accent)) bad.push(`${id}: its accent isn't a "#rrggbb" colour`);
+    if (!hex(e.telegraph)) bad.push(`${id}: its telegraph isn't a "#rrggbb" colour`);
+    else if (labOf(e.telegraph)[0] < cfg.danger.bright) bad.push(`${id}: its telegraph is too dark to read on night ground (L ${labOf(e.telegraph)[0].toFixed(0)}, under ${cfg.danger.bright})`);
     for (const [k, known] of parts) if (!known.includes(e[k] as string)) bad.push(`${id}: no ${k} called ${String(e[k])}`);
   }
   for (const [mod, m] of Object.entries(cfg.effects)) if (!MOTIFS.includes(m)) bad.push(`effect ${mod}: no motif called ${m}`);
@@ -107,6 +120,10 @@ export function spellsProblems(cfg: SpellsConfig, species: readonly string[], bi
   for (const [b, e] of Object.entries(cfg.byBiome)) { if (!cfg.elements[e]) bad.push(`byBiome ${b}: no element ${e}`); if (!biomes.includes(b)) bad.push(`byBiome: no biome called ${b}`); }
   for (const [s, e] of Object.entries(cfg.bySpecies)) { if (!cfg.elements[e]) bad.push(`bySpecies ${s}: no element ${e}`); if (!species.includes(s)) bad.push(`bySpecies: no species called ${s}`); }
   const d = cfg.danger;
+  // (two elements' warning shapes must read apart: Ed's trial of element-coloured telegraphs, 2026-11-13)
+  const els = Object.entries(cfg.elements).filter(([, e]) => hex(e.telegraph));
+  for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) { const a = labOf(els[i][1].telegraph), b = labOf(els[j][1].telegraph), far = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]); if (far < d.apart) bad.push(`telegraphs: ${els[i][0]} and ${els[j][0]} are too alike (${far.toFixed(1)}, under ${d.apart})`); }
+  if (!(d.apart > 0) || !(d.bright > 0)) bad.push("danger: apart and bright must be over 0");
   if (!hex(d.warn) || !hex(d.edge) || !(d.dash > 0) || !(d.gap > 0) || !(d.flash >= 0) || !(d.hatch >= 0 && d.hatch <= 1)) bad.push("danger: a value missing or out of range");
   return bad;
 }

@@ -8,6 +8,7 @@
     "#ffc43c",
     "#fff6c8"
    ],
+   "telegraph": "#ff5a1e",
    "core": "orb",
    "trail": "embers",
    "impact": "burst",
@@ -23,6 +24,7 @@
     "#c4eeff",
     "#ffffff"
    ],
+   "telegraph": "#8ad8ff",
    "core": "shard",
    "trail": "sparkles",
    "impact": "shatter",
@@ -38,6 +40,7 @@
     "#c8ff5a",
     "#faffdc"
    ],
+   "telegraph": "#96ff28",
    "core": "droplet",
    "trail": "drips",
    "impact": "splash",
@@ -53,6 +56,7 @@
     "#e0daff",
     "#ffffff"
    ],
+   "telegraph": "#c4b0ff",
    "core": "crescent",
    "trail": "wisps",
    "impact": "ring",
@@ -68,6 +72,7 @@
     "#b6deff",
     "#ffffff"
    ],
+   "telegraph": "#4a78ff",
    "core": "spark",
    "trail": "sparks",
    "impact": "crackle",
@@ -83,6 +88,7 @@
     "#ecb45a",
     "#ffecaa"
    ],
+   "telegraph": "#d2822a",
    "core": "rock",
    "trail": "dust",
    "impact": "rubble",
@@ -99,6 +105,7 @@
     "#a45cdc",
     "#ecc4ff"
    ],
+   "telegraph": "#b040f0",
    "core": "void",
    "trail": "smoke",
    "impact": "poof",
@@ -115,6 +122,7 @@
     "#ffb8d6",
     "#fff6d2"
    ],
+   "telegraph": "#ff6cb8",
    "accent": "#56b040",
    "core": "petal",
    "trail": "petals",
@@ -131,6 +139,7 @@
     "#7ad4ff",
     "#e6fbff"
    ],
+   "telegraph": "#14c8dc",
    "core": "droplet",
    "trail": "drips",
    "impact": "splash",
@@ -146,6 +155,7 @@
     "#ead08a",
     "#fff4cc"
    ],
+   "telegraph": "#f8e478",
    "core": "rock",
    "trail": "dust",
    "impact": "rubble",
@@ -162,6 +172,7 @@
     "#c08a4a",
     "#f0d090"
    ],
+   "telegraph": "#a8a02c",
    "accent": "#5aa040",
    "core": "rock",
    "trail": "petals",
@@ -179,6 +190,7 @@
     "#e0f6ff",
     "#ffffff"
    ],
+   "telegraph": "#f4fcff",
    "core": "crescent",
    "trail": "wisps",
    "impact": "ring",
@@ -211,6 +223,8 @@
   "gap": 3,
   "march": 8,
   "flash": 0.25,
+  "apart": 20,
+  "bright": 50,
   "hatch": 0.22
  },
  "default": "moonlight",

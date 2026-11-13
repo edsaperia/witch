@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { attackOf } from "./combat";
-import { ELEMENTS, ATTACK_LOOK, elementNamed, elementOf, spellPower, spellsProblems } from "./attackLook";
+import { ELEMENTS, ATTACK_LOOK, elementNamed, elementOf, labOf, spellPower, spellsProblems } from "./attackLook";
 import { KINDS_TABLE } from "./kinds";
 import { SPECIES } from "../../art/creatures.js";
 
@@ -39,6 +39,21 @@ describe("the attack look's data (config/attack-look.json)", () => {
     broken.elements.fire.core = "teapot" as never; broken.bySpecies.nobody = "fire"; broken.byBiome.temperate = "plasma";
     expect(spellsProblems(broken, IDS, biomes)).toEqual(expect.arrayContaining([
       "fire: no core called teapot", "bySpecies: no species called nobody", "byBiome temperate: no element plasma"]));
+  });
+});
+
+describe("each element's warning colour (Ed, 2026-11-13: \"Element coloured warning shape on the ground\")", () => {
+  it("is bright enough for night ground and far enough from every other element's to read apart", () => {
+    const labs = ELEMENTS.map(e => labOf(ATTACK_LOOK.elements[e].telegraph));
+    for (const l of labs) expect(l[0]).toBeGreaterThanOrEqual(ATTACK_LOOK.danger.bright);
+    for (let i = 0; i < labs.length; i++) for (let j = i + 1; j < labs.length; j++) expect(Math.hypot(labs[i][0] - labs[j][0], labs[i][1] - labs[j][1], labs[i][2] - labs[j][2]), `${ELEMENTS[i]} / ${ELEMENTS[j]}`).toBeGreaterThanOrEqual(ATTACK_LOOK.danger.apart);
+  });
+  it("is checked: two alike, or a dark one, is a problem", () => {
+    const broken = structuredClone(ATTACK_LOOK);
+    broken.elements.wood.telegraph = broken.elements.earth.telegraph; broken.elements.shadow.telegraph = "#201030";
+    const bad = spellsProblems(broken, IDS, biomes).join("\n");
+    expect(bad).toMatch(/telegraphs: earth and wood are too alike/);
+    expect(bad).toMatch(/shadow: its telegraph is too dark/);
   });
 });
 

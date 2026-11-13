@@ -3,6 +3,45 @@
  "intro": "Every `?name=value` the game reads from its link, and where it reads it. Most are read once as the page loads (`src/app/linkParams.ts` for the tuning, `src/app/gameParams.ts` for the game, `src/app/viewParams.ts` for the view, `src/main.ts` for the page); a few are read where they're used. Several can be combined: `?seed=123&wave=30&creator=0`. This page is written from `config/link-switches.json`, and a test checks that file against the code.",
  "switches": [
   {
+   "name": "stun",
+   "values": [
+    "old"
+   ],
+   "does": "A creature's stun on her staggers her for its length, as before, to compare: not the slow that replaced it (to 40% of her speed for three times as long, with the circling stars).",
+   "group": "compare",
+   "since": "2026-11-13",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "A slow by default (Ed, 2026-11-13: \"I think stun and slow are very similar, and stun is less fun than slow, so how about stun is replaced with slow and we use circling stars?\"; \"Big: 40% speed, 3× as long\")"
+  },
+  {
+   "name": "effectmarks",
+   "values": [
+    "0"
+   ],
+   "does": "No marks, tints or sounds for the effects on her (slowed: circling stars and drag marks; confused: a spiral; thrown hard: a dust skid), as before, to compare: only her confusion's pale swirl.",
+   "group": "compare",
+   "since": "2026-11-13",
+   "readIn": [
+    "src/render/herEffects.ts"
+   ],
+   "decision": "Shown by default (Ed, 2026-11-13: \"Mark + tint + sound\")"
+  },
+  {
+   "name": "telegraphs",
+   "values": [
+    "red"
+   ],
+   "does": "Every attack's warning shape on the ground red, as before, to compare: not in its attacker's element colour.",
+   "group": "compare",
+   "since": "2026-11-13",
+   "readIn": [
+    "src/render/leash/attackLook.ts"
+   ],
+   "decision": "Element colours by default, as a trial (Ed, 2026-11-13: \"Element coloured warning shape on the ground\", \"Let's try element colours and see.\")"
+  },
+  {
    "name": "projection",
    "values": [
     "old"
@@ -1092,11 +1131,12 @@
    "name": "lookdemo",
    "values": [
     "telegraphs",
+    "colours",
     "elements",
     "fx",
     "fx:<element>"
    ],
-   "does": "The attack looks' showcase round her; fx shows the production magic family and intensity ladder with ground and camera controls.",
+   "does": "The attack looks' showcase round her; colours shows every element's warning colour side by side (with ?telegraphs=red, all red); fx shows the production magic family and intensity ladder with ground and camera controls.",
    "group": "debug",
    "since": "2026-10-27",
    "readIn": [
