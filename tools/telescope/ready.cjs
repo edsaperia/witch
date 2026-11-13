@@ -57,6 +57,17 @@ const BEARINGS = [["N", 0], ["NE", 45], ["E", 90], ["SE", 135], ["S", 180], ["SW
       for (let k = 0; k < 150; k++) { const f = await frame(); if (k > 100 && !f.listing) break; } // (the crowns' reach eased back in, the house's own view listed)
     }
     await look("N", 0, false);
+    // A fast pan with it open (3° a frame, 180° a second: faster than the keys', telescope.pan 50°/s): the worst frame and the
+    // most its picture lacked on any of them, so a pan is still a slice a frame and never the whole listing at once.
+    out.pan = await (async () => {
+      let worst = 0, missing = 0, total = 0;
+      for (let k = 0; k < 120; k++) {
+        await page.evaluate(h => window.witch.telescope.look(h, 0), (k * 3) % 360);
+        const f = await frame(); worst = Math.max(worst, f.ms); missing = Math.max(missing, f.missing); total += f.ms;
+      }
+      return { frames: 120, worstMs: Math.round(worst), meanMs: Math.round(total / 120), mostMissing: missing };
+    })();
+    console.error("pan", JSON.stringify(out.pan));
     out.turn = await look("N to E", 90, false); // (turned 90° at once with it open)
     await page.evaluate(() => window.witch.telescope.close());
   } finally { await browser.close(); server.close(); }
