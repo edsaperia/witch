@@ -13,10 +13,10 @@
 import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
 import { bareHeadAt, CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, shownItems, SKIN_COLS, skinSwatch, wear, type Shelf, type WardrobeItem } from "../rules/wardrobe";
-import { BOARD, partById, type Fitted } from "../rules/broomParts";
+import { BOARD, SLOTS, partById, type Fitted, type Slot } from "../rules/broomParts";
 import type { Tuning } from "../rules/tuning";
-import { broomColours, partCanvas } from "../render/workshopArt";
-import { broomSummary, CARD_SHOW, cardAt, fromTo, itemAt, panelPad, stationTitle, partStats, setChips, setsOf, spellLine, type Line } from "./stationLines";
+import { bareSlotCanvas, broomColours, partCanvas } from "../render/workshopArt";
+import { broomSummary, CARD_SHOW, cardAt, cardFace, fromTo, itemAt, panelPad, stationTitle, partStats, setChips, setsOf, spellLine, type Line } from "./stationLines";
 import { PanelChoice } from "./stationChoice";
 import { bindings } from "../platform/bindings";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
@@ -298,25 +298,25 @@ export class StationPanel {
       if (l.shelf !== shelf) {
         if (shelf >= 0) html += shut(shelf);
         shelf = l.shelf;
-        const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name ?? "Empty" : s.trail && !s.colour ? trailPreset(this.trailNow).name : s.toggle ? shownItems(s).filter(it => this.c.wears(it, s)).map(it => it.short ?? it.name).join(", ") : shownItems(s).find(it => this.c.wears(it, s))?.name;
+        const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name ?? "Empty" : s.trail && !s.colour ? trailPreset(this.trailNow).name : s.oneColour ? undefined : s.toggle ? shownItems(s).filter(it => this.c.wears(it, s)).map(it => it.short ?? it.name).join(", ") : shownItems(s).find(it => this.c.wears(it, s))?.name;
         const note = s.always ? "every colour" : s.slot ? SLOT_ROLE[s.slot] : s.board ? "north up" : "";
         html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}" data-shelf="${l.shelf}"><div class="sp-lab" data-card="${i}">${s.id === "hat" && (this.g.hat as { shape?: string } | undefined)?.shape !== "none" ? `<span class="sp-hatpic" data-thumb="hatpic:now:${hash(JSON.stringify(this.g))}"></span>` : ""}<b>${esc(s.label)}</b>${worn ? `<span>${esc(worn)}</span>` : ""}${note ? `<em>${esc(note)}</em>` : ""}</div>`;
       }
       const f = (c: number) => at.line === i && at.col === c ? " focus" : "";
-      if (l.kind === "items") html += `<div class="sp-row">${Array.from({ length: l.n }, (_, c) => { const it = itemAt(s, l, c), own = this.owned.has(it.id), on = this.c.wears(it, s); return `<div class="sp-card${s.toggle ? " sp-toggle" : ""}${own ? "" : " unfound"}${on ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${s.toggle ? `<span class="sp-short">${esc(it.short ?? it.name)}</span>` : none(it) ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${on ? `<b class="sp-tick">✓</b>` : ""}</div>`; }).join("")}</div>`; // (one not found yet: its silhouette, no padlock: Ed, 2026-11-07, "they're not locked, they just haven't been found yet!")
+      if (l.kind === "items") html += `<div class="sp-row">${Array.from({ length: l.n }, (_, c) => { const it = itemAt(s, l, c), face = cardFace(s, l, c)!, own = this.owned.has(it.id), on = this.c.wears(it, s); return `<div class="sp-card${s.toggle ? " sp-toggle" : ""}${own ? "" : " unfound"}${on ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${face.kind === "name" ? `<span class="sp-short">${esc(face.text)}</span>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${on ? `<b class="sp-tick">✓</b>` : ""}</div>`; }).join("")}</div>`; // (one not found yet: its silhouette, no padlock: Ed, 2026-11-07, "they're not locked, they just haven't been found yet!"; a "None" or "Bare" one pictured too, her without it: stationLines.ts cardFace, Ed 2026-11-12)
       else if (l.kind === "action") html += `<div class="sp-action${f(0)}" data-line="${i}" data-col="0">${esc(ACTION_NAMES[s.action!] ?? s.action!)}</div>`;
       else if (l.kind === "cards" && s.board) html += `<div class="sp-row sp-board">${Array.from({ length: l.n }, (_, c) => {
         const id = cardAt(s, l, c)!, cell = BOARD[(l.row ?? 0) * 3 + c], own = this.found_().has(id), tonight = !own && this.ws?.tonight === id;
         return `<div class="sp-cell${own ? "" : " unfound"}${tonight ? " tonight" : ""}${id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}"><small>${esc(cell.point)} · ${esc(cell.biome)}</small><span data-thumb="${this.partKey(id)}"></span><b>${own ? esc(partById(id)!.name) : "?"}</b></div>`;
       }).join("")}</div>`;
       else if (l.kind === "cards") html += `<div class="sp-row">${Array.from({ length: l.n }, (_, c) => {
-        const id = cardAt(s, l, c), own = id === null || this.found_().has(id), on = (this.ws?.fitted[s.slot!] ?? null) === id;
-        return `<div class="sp-card sp-wide${own ? "" : " unfound"}${on ? " worn" : ""}${id !== null && id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${id === null ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.partKey(id)}"></span>`}${on ? `<b class="sp-tick">✓</b>` : ""}</div>`;
+        const id = cardAt(s, l, c), face = cardFace(s, l, c)!, own = id === null || this.found_().has(id), on = (this.ws?.fitted[s.slot!] ?? null) === id;
+        return `<div class="sp-card sp-wide${own ? "" : " unfound"}${on ? " worn" : ""}${id !== null && id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}"><span data-thumb="${face.kind === "bare" ? this.partKey(face.slot, "bare") : this.partKey(id!)}"></span>${on ? `<b class="sp-tick">✓</b>` : ""}</div>`;
       }).join("")}</div>`;
       else if (l.kind === "trail") html += `<div class="sp-row">${TRAIL_PRESETS.map((p, c) => `<div class="sp-card sp-trail${p.id === this.trailNow ? " worn" : ""}${f(c)}" data-line="${i}" data-col="${c}" data-trail="${esc(p.id)}"><span data-thumb="trail:${esc(p.id)}:1"></span>${p.id === this.trailNow ? `<b class="sp-tick">✓</b>` : ""}</div>`).join("")}</div>`;
       else if (l.kind === "chips") html += `<div class="sp-chips">${setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null }).map((x, c) => `<span class="${x.whole ? "whole" : x.fitted ? "some" : ""}${f(c)}" data-line="${i}" data-col="${c}">${x.whole ? "✦ " : ""}${esc(x.name)} ${x.fitted}/${x.of} · ${esc(x.spell)}</span>`).join("")}</div>`;
       else if (l.kind === "parts") html += `<div class="sp-parts">${s.colour!.map((p, c) => `<span class="${p === this.partOf(s) ? "on" : ""}${f(c)}" data-line="${i}" data-col="${c}"><i style="background:${css(this.colourOf(p))}"></i>${esc(PART_NAMES[p] ?? p)}</span>`).join("")}</div>`;
-      else if (l.kind === "grid") { const [sc, sr] = this.c.chosenSwatch(s); html += `<div class="sp-grid" style="grid-template-columns:repeat(${l.n},var(--sw))">${Array.from({ length: l.n }, (_, c) => `<i class="${!this.c.awaits(s) && sc === c && sr === l.row ? "sel" : ""}${f(c)}" data-line="${i}" data-col="${c}" style="background:${css(this.swatch(s, c, l.row!))}"></i>`).join("")}</div>`; }
+      else if (l.kind === "grid") { const [sc, sr] = this.c.chosenSwatch(s); html += `<div class="sp-grid" style="grid-template-columns:repeat(${l.n},var(--sw))">${Array.from({ length: l.n }, (_, c) => `<i class="${this.c.colourShown(s) && sc === c && sr === l.row ? "sel" : ""}${f(c)}" data-line="${i}" data-col="${c}" style="background:${css(this.swatch(s, c, l.row!))}"></i>`).join("")}</div>`; }
       else if (l.kind === "fit") { const [lo, hi] = this.fitRange(l.axis!), on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g), v = Math.max(0, Math.min(1, (this.fitValue(l.axis!) - lo) / (hi - lo))); html += `<div class="sp-fit${on ? "" : " off"}${f(0)}" data-line="${i}" data-col="0"><span>${esc(FIT_NAMES[l.axis!] ?? l.axis!)}</span><div class="bar"><i style="left:${(v * 100).toFixed(1)}%"></i></div></div>`; }
     });
     if (shelf >= 0) html += shut(shelf);
@@ -382,8 +382,9 @@ export class StationPanel {
 
   // ---- the items' pictures: each one as its shelf shows it, on her as she is (baked a few a frame, kept by look) ----
   private thumbKey(it: WardrobeItem, s: Shelf): string { return `${s.id}:${it.id}:${hash(JSON.stringify(wear(this.g, it)))}`; }
-  /** A broom part's picture (the bay's and the pegboard's cards: render/workshopArt.ts), in her broom's colours. */
-  private partKey(id: string): string { const c = broomColours(this.st, this.g); return `part:${id}:${hash(JSON.stringify([c[ART_M.BROOM], c[ART_M.STRAW]]))}`; }
+  /** A broom part's picture (the bay's and the pegboard's cards: render/workshopArt.ts), or with `kind` "bare" an empty slot's (`id` the
+   *  slot: the bare broom's own piece there), in her broom's colours. */
+  private partKey(id: string, kind: "part" | "bare" = "part"): string { const c = broomColours(this.st, this.g); return `${kind}:${id}:${hash(JSON.stringify([c[ART_M.BROOM], c[ART_M.STRAW]]))}`; }
   private thumbInto(el: HTMLElement): void {
     const key = el.dataset.thumb!, c = this.thumbs.get(key);
     if (c) { el.replaceChildren(c); return; }
@@ -392,6 +393,7 @@ export class StationPanel {
       const [sid, iid] = key.split(":"), s = this.shelves.find(q => q.id === sid), it = s?.items.find(i => i.id === iid);
       if (sid === "trail") this.queue.push({ key, make: () => trailTile(trailPreset(iid).colours) });
       else if (sid === "hatpic") { const g = this.g; this.queue.push({ key, make: () => hatPicture(this.st, g) ?? document.createElement("canvas") }); } // (the mirror's Hat card: her hat as it is now)
+      else if (sid === "bare" && (SLOTS as readonly string[]).includes(iid)) { const g = this.g; this.queue.push({ key, make: () => bareSlotCanvas(this.st, broomColours(this.st, g), iid as Slot, { fit: 58 }) }); } // (the empty slot's card)
       else if (sid === "part" && partById(iid)) { const g = this.g; this.queue.push({ key, make: () => partCanvas(this.st, broomColours(this.st, g), iid, { fit: 58 }).c }); }
       else if (s && it) this.queue.push({ key, make: () => wearPicture(this.st, this.g, it, s.id) });
     }
@@ -489,7 +491,6 @@ body.paused #station-panel { visibility: hidden; }
 #station-panel .sp-card.unfound canvas { filter: brightness(0) invert(.32) drop-shadow(1px 0 0 rgba(214,204,240,.6)) drop-shadow(-1px 0 0 rgba(214,204,240,.6)) drop-shadow(0 1px 0 rgba(214,204,240,.6)) drop-shadow(0 -1px 0 rgba(214,204,240,.6)); } /* (one not found yet: a grey silhouette, a shade softer than a disabled one, no padlock: Ed, 2026-11-07, "they're good foreshadowing") */
 #station-panel .focus { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 12px rgba(255,255,255,.75), inset 0 0 0 1px var(--ol); }
 #station-panel .sp-card.worn:not(.focus) { outline: 2px solid rgba(232,180,106,.8); outline-offset: 1px; }
-#station-panel .sp-none { font-style: normal; font-size: 1.8em; }
 #station-panel .sp-tick { position: absolute; top: .15em; right: .15em; width: 1.2em; height: 1.2em; border-radius: 50%; background: var(--gold); color: #1a1430; font-size: .75em; display: grid; place-items: center; text-shadow: none; box-shadow: 0 0 0 1px var(--ol); }
 #station-panel .sp-toggle { width: auto; min-width: 4.6em; height: 1.9em; padding: 0 .9em; } #station-panel .sp-short { font-size: .9em; }
 #station-panel .sp-toggle .sp-tick { top: -.45em; right: -.45em; }

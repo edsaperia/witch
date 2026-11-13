@@ -2327,6 +2327,25 @@
     "challenge": {
       "type": "object",
       "properties": {
+        "hide": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "fade": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20
+            }
+          },
+          "required": [
+            "on",
+            "fade"
+          ],
+          "additionalProperties": false,
+          "description": "the challenge circle hidden before the party starts, normal forest on its floor and nothing of it there to step onto, fading in over `fade` s as the party starts (the trees on its floor fading away), and out again, the trees back, once a lost night's party is over if it wasn't won."
+        },
         "on": {
           "type": "boolean"
         },
@@ -2520,6 +2539,7 @@
         }
       },
       "required": [
+        "hide",
         "on",
         "radius",
         "margin",
@@ -2585,7 +2605,7 @@
         "16",
         "0"
       ],
-      "description": "The trees' normal maps: \"full\" (the default) as ever; \"64\", \"32\" or \"16\" their directions cut to a k-means palette of that many per tree atlas; \"0\" off, every tree pixel lit flat, as if it faced the camera (the normal 128, 128, 255)."
+      "description": "The trees' normal maps: \"32\" (the default) their directions cut to a k-means palette of 32 per tree atlas; \"64\" or \"16\" that many; \"full\" as ever; \"0\" off, every tree pixel lit flat, as if it faced the camera (the normal 128, 128, 255)"
     },
     "wind": {
       "type": "object",
@@ -4959,6 +4979,175 @@
             "youthRise": {
               "type": "number",
               "minimum": 0
+            },
+            "taut": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "boolean"
+                },
+                "groundDrag": {
+                  "type": "object",
+                  "properties": {
+                    "youth": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "adult": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "legend": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "youth",
+                    "adult",
+                    "legend"
+                  ],
+                  "additionalProperties": false
+                },
+                "hurry": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "tug": {
+                  "type": "object",
+                  "properties": {
+                    "perMetre": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "rise": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hold": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "ease": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "perMetre",
+                    "rise",
+                    "hold",
+                    "ease"
+                  ],
+                  "additionalProperties": false
+                },
+                "pop": {
+                  "type": "object",
+                  "properties": {
+                    "fill": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "drain": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "fill",
+                    "drain"
+                  ],
+                  "additionalProperties": false
+                },
+                "yank": {
+                  "type": "object",
+                  "properties": {
+                    "metres": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "every": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "metres",
+                    "every"
+                  ],
+                  "additionalProperties": false
+                },
+                "links": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "look": {
+                  "type": "object",
+                  "properties": {
+                    "colour": {
+                      "type": "array",
+                      "items": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "alpha": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "glow": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "flash": {
+                      "type": "object",
+                      "properties": {
+                        "every": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "time": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "width": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "every",
+                        "time",
+                        "width"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "colour",
+                    "alpha",
+                    "glow",
+                    "flash"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "on",
+                "groundDrag",
+                "hurry",
+                "tug",
+                "pop",
+                "yank",
+                "links",
+                "look"
+              ],
+              "additionalProperties": false,
+              "description": "Pulling on a taut chain: up in the treetops it drags her down to the ground, on foot it slides that sigil out of her stack and puts it down, and a legend's chain yanks her back instead; with a lighter drag on foot and the chains' look."
             }
           },
           "required": [
@@ -4967,7 +5156,8 @@
             "fadeFrom",
             "glow",
             "rattle",
-            "youthRise"
+            "youthRise",
+            "taut"
           ],
           "additionalProperties": false,
           "description": "Every creature on her leash is on a chain this long; taut and moving away, she drags it, slowed by the heaviest taut chain's drag by level (a legend's stops her)."
@@ -6431,6 +6621,75 @@
       ],
       "additionalProperties": false,
       "description": "Dodging matters: creatures commit to their strikes, so she can dodge them by moving or blinking away."
+    },
+    "ranged": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean",
+          "description": "on: shots aim where she's going (the ranged rule); off, as ?ranged=old: each aims at her place as its wind-up starts, the old pack bolts leading her as they let go, no speed floor, fans and walls as before."
+        },
+        "lead": {
+          "type": "number",
+          "minimum": 0,
+          "description": "times the way to where she'll be when the shot arrives that the aim takes (1: all of it, 0: where she is), a wall of rollers rollerLead of it."
+        },
+        "commit": {
+          "type": "number",
+          "minimum": 0,
+          "description": "seconds before its release that a shot's aim locks at the latest (the caster holds still from then)."
+        },
+        "lock": {
+          "type": "object",
+          "properties": {
+            "young": {
+              "type": "number",
+              "minimum": 0
+            },
+            "adult": {
+              "type": "number",
+              "minimum": 0
+            },
+            "legend": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "young",
+            "adult",
+            "legend"
+          ],
+          "additionalProperties": false,
+          "description": "seconds before a shot can reach her that its aim locks at the latest, by the caster's level: a youth's longer, so a change of direction dodges it more often."
+        },
+        "speedFloor": {
+          "type": "number",
+          "minimum": 0,
+          "description": "a straight bolt or roller at her flies at least this many times her ground speed (2: 38.5 m/s at her 19.25)."
+        },
+        "areaLock": {
+          "type": "number",
+          "minimum": 0,
+          "description": "seconds before an area put down where she stands strikes (or a mine is laid there) that its aim locks, at every level: with no flight to see, the lock is all the warning she gets."
+        },
+        "rollerLead": {
+          "type": "number",
+          "minimum": 0,
+          "description": "times the lead a wall of rollers takes (the rhino's and beaver's logs): a wall is wider than her change of direction, so at full lead it was the harshest attack."
+        }
+      },
+      "required": [
+        "on",
+        "lead",
+        "commit",
+        "lock",
+        "speedFloor",
+        "areaLock",
+        "rollerLead"
+      ],
+      "additionalProperties": false,
+      "description": "Creatures' shots aim where she's going: each follows her through its wind-up and locks a moment before it can reach her, so a steady walk gets hit and a change of direction dodges."
     },
     "stoneIdle": {
       "type": "object",
@@ -11122,11 +11381,36 @@
           ],
           "additionalProperties": false,
           "description": "the wake-up in her bedroom (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it."
+        },
+        "eyes": {
+          "type": "object",
+          "properties": {
+            "shut": {
+              "type": "number",
+              "minimum": 0
+            },
+            "open": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reopen": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "shut",
+            "open",
+            "reopen"
+          ],
+          "additionalProperties": false,
+          "description": "Her eyelids' speeds: the seconds her eyes stay shut after her alarm first rings (shut), the seconds they then take to open (open), and how fast they open again when E is let go early at the bed (reopen)."
         }
       },
       "required": [
         "bedroom",
-        "wake"
+        "wake",
+        "eyes"
       ],
       "additionalProperties": false,
       "description": "A plain first load wakes her in her bedroom on the home island while the night is made."
@@ -13426,13 +13710,23 @@
                   "minimum": 0,
                   "description": "How far her glow is cooled in the wild (0 her own colour everywhere)."
                 },
-                "colour": {
-                  "type": "array",
-                  "items": {
-                    "type": "number",
-                    "minimum": 0
-                  },
-                  "description": "The colour (0-255) her glow cools toward in the wild."
+                "hue": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The hue (0 to 1 round the colour wheel) her glow cools toward in the wild; 0.507 the teal as built (80, 200, 205)."
+                },
+                "sat": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How deep the colour her glow cools toward in the wild is (0 white, 1 the hue at its deepest)."
+                },
+                "value": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How bright the colour her glow cools toward in the wild is (0 black, 1 full)."
                 },
                 "ease": {
                   "type": "number",
@@ -13442,11 +13736,57 @@
               },
               "required": [
                 "mix",
-                "colour",
+                "hue",
+                "sat",
+                "value",
                 "ease"
               ],
               "additionalProperties": false,
               "description": "Her glow cooled toward a teal while she's in an area the party hasn't reached, eased in and out as she crosses."
+            },
+            "wildGrade": {
+              "type": "object",
+              "properties": {
+                "strength": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How strong the wild-only grade is (0 off)."
+                },
+                "desat": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much colour the wild-only grade drains from the dark and middle tones (0 none, 1 grey before the tint)."
+                },
+                "pivot": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The brightness above which the wild-only grade leaves the picture alone, so bright lights keep their colour."
+                },
+                "hue": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The hue (0 to 1 round the colour wheel) the wild-only grade tints toward."
+                },
+                "sat": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How deep the wild-only grade's tint is (0 none, only drained)."
+                }
+              },
+              "required": [
+                "strength",
+                "desat",
+                "pivot",
+                "hue",
+                "sat"
+              ],
+              "additionalProperties": false,
+              "description": "A colour grade over the picture in the wild only (an area the party hasn't reached; never on party ground or home), eased in and out as she crosses at the area moods' pace (light.spooky.areaEase); laid after the spooky grade (light.spooky.grade), so in the wild both apply, one after the other."
             },
             "moonHue": {
               "type": "number",
@@ -14221,6 +14561,7 @@
             "ambient",
             "unlit",
             "wildGlow",
+            "wildGrade",
             "moonHue",
             "moonSat",
             "moon",
@@ -15126,6 +15467,7 @@
     "combat",
     "notice",
     "dodge",
+    "ranged",
     "stoneIdle",
     "sigilAvoid",
     "wildWatch",

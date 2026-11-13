@@ -18,7 +18,7 @@ export const WITCH_PARTS = { hair: M.HAIR, hat: M.HAT, headphones: M.PHONES, top
   cloak: M.CLOTH, scarf: M.BODY, satchel: M.WOOD, // the witch generator's: a cloak, a scarf, a satchel (art/witchGenome.js)
   lantern: M.STONED, book: M.BARKD, bumbag: M.EAR, band: M.IRIS, vial: M.CRYSTAL,
   plume: M.WEB, gold: M.BARKL, backpack: M.LEAF, // the creator's: a musketeer's plume, a crown's gold, a backpack
-  lips: M.MOUTH, eyeshadow: M.PUPIL, blush: M.SHELL }; // and its accessories: a lantern, a spellbook, a bum bag, a festival wristband, a potion vial; the basin's makeup (Ed, 2026-11-07): lipstick, eyeshadow and blush, each drawn only while she wears it (drawMakeup)
+  lips: M.MOUTH, eyeshadow: M.PUPIL, blush: M.SHELL }; // and its accessories: a lantern, a spellbook, a bum bag, a festival wristband, a potion vial; the basin's makeup (Ed, 2026-11-07): lipstick and eyeshadow, each drawn only while she wears it (drawMakeup); blush no longer drawn (Ed, 2026-11-12: "Drop blush"), its colour kept so older palettes still read
 // The default outfit: a hue, saturation and value per part. Style knobs override the hues.
 export const DEFAULT_OUTFIT = {
   hair: [.01, .7, .85], hat: [.74, .45, .45], headphones: [.92, .55, .9], top: [.13, .15, .95], jacket: [.72, .45, .7],
@@ -27,7 +27,7 @@ export const DEFAULT_OUTFIT = {
   cloak: [.74, .5, .4], scarf: [.98, .6, .85], satchel: [.07, .55, .5],
   lantern: [.08, .3, .3], book: [.98, .55, .35], bumbag: [.5, .5, .55], band: [.95, .6, .9], vial: [.55, .15, .95],
   plume: [.13, .5, 1], gold: [.12, .75, .95], backpack: [.33, .55, .5],
-  lips: [.97, .7, .75], eyeshadow: [.78, .45, .7], blush: [.98, .38, .97],
+  lips: [.97, .7, .75], eyeshadow: [.97, .7, .75], blush: [.98, .38, .97], // (her eyes in her lips' colour: the basin's makeup is one colour, Ed 2026-11-12)
 };
 // Her hat's glowing band (and a hat's glowing bits: a bead, a crown's jewels) in the plume's colour (Ed, 2026-10-29: "There is a
 // setting called 'plume' ... This should be renamed to 'band'. It should pick the colour of both the band and the plume"): its own
@@ -61,7 +61,8 @@ export const DEFAULT_LOOK = { hat: "classic", hair: "long", top: "jacket", phone
   cloakLength: 1, patches: false, lantern: false, vial: false, book: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, clutch: false, messenger: false, wristband: false, chunky: false,
   // the creator's (Ed, round 11): the scarf's length (times hers; 0 none, 3 trailing on the ground), the satchel's size, a backpack's size (0 none)
   scarfLength: 1, bagSize: 1, backpackSize: 0,
-  // the basin's makeup (Ed, 2026-11-07: "lipstick colour, eyeshadow colour, blush on/off ... her face is a few pixels, so subtle"): off
+  // the basin's makeup (Ed, 2026-11-07: "lipstick colour, eyeshadow colour, blush on/off ... her face is a few pixels, so subtle"): off;
+  // since 2026-11-12 her lipstick and eyeshadow go on together in one colour, and blush is never drawn ("Drop blush")
   lipstick: false, eyeshadow: false, blush: false };
 const shoeR = L => L.chunky ? [.095, .056, .056] : [.08, .04, .045]; // her sneakers, or chunky trainers
 // The hat's shape from the look: a crown point p scaled from the brim by hatHeight and leaned back by hatTilt; a brim's radii by hatBrim.
@@ -252,13 +253,13 @@ function drawEyes(m, L, H, look = 0, tilt = 0, shut = false) {
 }
 // Her makeup (the basin's, Ed 2026-11-07: "her face is a few pixels, so subtle: a pixel or two of lip colour, a touch on the
 // eyelids"): lipstick where her mouth is (none while it's open: talking, laughing), eyeshadow just over each eye (not behind
-// sunglasses, nor on shut eyes), blush a dab on each cheek. Each only while she wears it, so a witch without is drawn as before.
+// sunglasses, nor on shut eyes). Each only while she wears it, so a witch without is drawn as before. Blush, a dab on each cheek,
+// is no longer drawn (Ed, 2026-11-12: "Drop blush"; a saved look's comes off as it loads, art/witchGenome.js upgradeGenome).
 function drawMakeup(m, L, H, look = 0, tilt = 0, shut = false, open = false) {
-  if (!L.lipstick && !L.eyeshadow && !L.blush) return;
+  if (!L.lipstick && !L.eyeshadow) return;
   const R = [.11, .115, .1], at = d => Model.surface(H, R, v3.norm(d));
   if (L.lipstick && !open) m.ell(at([1, -.5 + look, tilt * .1]), [.011, .01, .024], M.MOUTH, { group: 8 });
   if (L.eyeshadow && !L.shades && !shut) for (const s of [-1, 1]) m.ell(at([.82, .2 + look, s * .45 + tilt * .1]), [.013, .012, .02], M.PUPIL, { group: 8 });
-  if (L.blush) for (const s of [-1, 1]) m.ell(at([.78, -.22 + look, s * .62 + tilt * .1]), [.012, .011, .018], M.SHELL, { group: 8 });
 }
 // A hand at `hand` in group g: "palm" (open, palm up), "down" (flat, palm to the ground), "wave" (fingers spread, up),
 // "point" (a finger up), or a loose fist.

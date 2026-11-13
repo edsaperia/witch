@@ -6,8 +6,10 @@
 // it (the left lit, the right in shade) and each object shows its top and its two near sides; drawn far to near. Laid in the plane the Ent's house is drawn in, as she is
 // (render/view/witch.ts: her place on the house's floor taken into the Ent's art pixels and along the ray from the camera), so she
 // walks on them; drawn only while she's in the house (from outside the house isn't seen: treehouse.md). Over them, on the page:
-// the object she's at, its name and E; a placeholder's line in a bubble a few seconds when she uses it; the bed's ring filling as
-// E is held (rules/houseRooms.ts stepBed).
+// the object she's at, its name and E; a placeholder's line in a bubble a few seconds when she uses it; her eyes closing as E is
+// held at the bed (rules/houseRooms.ts stepBed; render/eyelids.ts, Ed, 2026-11-12: "going to sleep zzz timer should be an eye
+// closing vignette instead of a dial"; ?sleepdial=1, the bed's ring filling as before), and opening as her alarm first wakes her
+// ("we can also use this animation for waking up (in reverse)").
 import { approachStrength, houseApproachDistance, showHouseLayer } from "../rules/treehouseLook";
 import { setApproachDepth } from "./treehouseLook";
 import { HOUSE_FLOOR_OVERLAY_ORDER } from "./houseWitchPass";
@@ -38,6 +40,7 @@ import { witchLookOf } from "./artBuild";
 import { pileOut } from "../rules/clothesPile";
 import { placedDecorRooms } from "./houseDecor";
 import { Spotlight } from "./spotlight";
+import { EYES_DEFAULT, EyeLids, sleepDial, wakeClosure } from "./eyelids";
 import { LoanSparkle } from "./loanSparkle";
 import { UseGlow } from "./useGlow";
 import { glyphOf, keycapCanvas, wasdCanvas, type KeycapGlyph } from "../ui/keyHint";
@@ -174,7 +177,7 @@ class Part {
  *  (View.compileAll), as the beach's (render/ground.ts): the floors and the furniture take their textured materials only as their
  *  pictures come back from the art workers, often after the start, and a program's first draw waits for its link there (the
  *  coordinator, 2026-10-26: 2 to 10 s held at the start in some cold starts). Each the same material as its own, with a texel for a map:
- *  the floor's, the Terrace's and the furniture's (the Workshop's pictures and last night's clothes share the furniture's). */
+ *  the floor's, the Terrace's and the furniture's (the Workshop's pictures and last night's clothes share the furniture's), and the walls' as seen from the air (no map). */
 function programTwins(): THREE.Mesh[] {
   const tex = new THREE.DataTexture(new Uint8Array(4), 1, 1, THREE.RGBAFormat);
   tex.colorSpace = THREE.NoColorSpace; tex.needsUpdate = true;
@@ -186,6 +189,9 @@ function programTwins(): THREE.Mesh[] {
     { map: tex, transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }, // (the floor's)
     { map: tex, alphaTest: 0.5, side: THREE.DoubleSide }, // (the Terrace's)
     { map: tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false, depthTest: false }, // (a piece of furniture's)
+    // (the walls' and roofs' as seen from the air, opaque and depth-tested: setApproachDepth, render/treehouseLook.ts, on her first rise
+    // off the house; made there, on the page's thread, before. Ed, 2026-11-12: "a very long freeze when taking off from the treehouse")
+    { vertexColors: true, side: THREE.DoubleSide },
   ].map(o => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial(o)); m.visible = false; m.frustumCulled = false; return m; });
 }
 
@@ -223,6 +229,8 @@ export class HouseRoomsView {
   private tapUse: ((down: boolean) => void) | null = null;
   private readonly bubble: HTMLDivElement;
   private readonly ring: HTMLDivElement;
+  /** her eyes closing while E is held at the bed, opening as she wakes (render/eyelids.ts; made when first wanted, none under ?sleepdial=1) */
+  private lids: EyeLids | null = null;
   /** The wake-up's keys beside the bed, in bed with her alarm ringing: getting up on its left, snoozing on its right. */
   private readonly wakeL: HTMLDivElement;
   private readonly wakeR: HTMLDivElement;
@@ -339,7 +347,14 @@ export class HouseRoomsView {
     return { floor: { shown: this.floor.visible, asked: this.floorAsked, painted: !!this.floorCame, art: !!A, compiled: this.floorCompiled, opacity: +m.opacity.toFixed(3), arrivalAt: Number.isFinite(this.floorArrivalAt) ? r(this.floorArrivalAt) : null,
         paintMpp: +this.floorPaint.mpp.toFixed(4), mpp: +v.mpp.toFixed(4), paintFailed: this.floorPaint.failed, size: A ? [A.w, A.h] : null, map: !!m.map, mat: [m.transparent ? 1 : 0, m.depthTest ? 1 : 0, m.depthWrite ? 1 : 0, m.side, m.alphaTest].join(","), layers: this.floor.layers.mask, inScene: !!this.floor.parent, corner: first && first.every(Number.isFinite) ? first.map(r) : first },
       loading: this.loadingFloor.visible, furniture: this.furniture.visible, pieces: this.pieces.size, rooms: this.parts.map(p => p.mesh.visible ? 1 : 0).join(""),
-      landing: { late: v.shaderLandingLimited, share: +v.landingHouseShare.toFixed(3), sleeping: v.landingSleeping, now: r(v.landingPresentationMs + v.game.clock.time * 1000) }, behind: +v.post.behind.toFixed(3) };
+      landing: { late: v.shaderLandingLimited, share: +v.landingHouseShare.toFixed(3), sleeping: v.landingSleeping, now: r(v.landingPresentationMs + v.game.clock.time * 1000) }, behind: +v.post.behind.toFixed(3), sleepEyes: +(this.lids?.closure ?? 0).toFixed(3) };
+  }
+  /** Her eyes this frame (render/eyelids.ts): closing by `fill`, the bed's hold, and opening as her alarm first wakes her (none
+   *  under ?sleepdial=1, the old dial). */
+  private eyes(g: View["game"], ht: number, fill: number): void {
+    if (sleepDial()) return;
+    const K = g.tuning.opening?.eyes ?? EYES_DEFAULT, waking = wakeClosure(g.wake, ht, K);
+    if (fill > 0 || waking > 0 || this.lids) (this.lids ??= new EyeLids()).update(fill, waking, ht, K.reopen);
   }
   /** The actual floor and bed, not optional props/ground/detail programs. */
   landingReady(renderer: THREE.WebGLRenderer): boolean {
@@ -549,6 +564,7 @@ export class HouseRoomsView {
     if (!shown) {
       this.box.style.display = "none"; this.plan = null; this.sparkle?.draw([], 0, 1); v.usePrompt.id = "";
       for (const el of [this.ring, this.wakeL, this.wakeR, ...this.labels.map(l => l.el)]) el.style.display = 'none';
+      this.eyes(g, ht, 0);
       if (v.landingSleeping && d?.house?.rooms) {
         // Retain the boot's already-drawn bed while the next house atlas is still absent.
         const bed = HOUSE_ROOMS.objects.find(o => o.use.kind === 'bed'), M = v.camera.matrixWorld.elements;
@@ -733,7 +749,7 @@ export class HouseRoomsView {
     if (this.said && (ht - this.said.at > SAY_FOR || this.said.at > ht)) this.said = null; // (no guest-room doors to hide since Ed, 2026-11-03)
     if (!inside) {
       this.box.style.display = "none"; this.sparkle?.draw(NO_GLINTS, 0, 1); this.tapUse = null; v.usePrompt.id = ""; this.telephoneScreen = null;
-      this.ring.style.display = this.wakeL.style.display = this.wakeR.style.display = "none";
+      this.ring.style.display = this.wakeL.style.display = this.wakeR.style.display = "none"; this.eyes(g, ht, 0);
       for (const label of this.labels) label.el.style.display = "none";
       return;
     }
@@ -777,12 +793,14 @@ export class HouseRoomsView {
     if (usable) v.usePrompt.top = screen(usable, decks ? 1.9 : tagHeight(usable.use.kind))[1] - this.tag.offsetHeight; // (the keycap stands on that point: translate -100%)
     place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.line ?? "");
     const from = W.house?.bedFrom, bed = at?.use.kind === "bed" ? at : null;
-    if (bed && from !== undefined) {
-      const f = Math.min(1, (ht - from) / Math.max(1e-6, HOUSE_ROOMS.bed.hold));
-      place(this.ring, bed, 1.6);
-      this.ring.style.background = `conic-gradient(rgba(255,214,140,.95) ${f * 360}deg, rgba(20,14,32,.6) 0deg)`;
-      this.ring.style.boxShadow = "0 0 0 3px rgba(20,14,32,.7) inset";
-    } else this.ring.style.display = "none";
+    const fill = bed && from !== undefined ? Math.min(1, (ht - from) / Math.max(1e-6, HOUSE_ROOMS.bed.hold)) : -1;
+    if (sleepDial()) { // (?sleepdial=1: the old dial, the ring over the bed filling)
+      if (fill >= 0) {
+        place(this.ring, bed, 1.6);
+        this.ring.style.background = `conic-gradient(rgba(255,214,140,.95) ${fill * 360}deg, rgba(20,14,32,.6) 0deg)`;
+        this.ring.style.boxShadow = "0 0 0 3px rgba(20,14,32,.7) inset";
+      } else this.ring.style.display = "none";
+    } else this.eyes(g, ht, Math.max(0, fill));
     // the wake-up in bed (rules/wakeUp.ts; Ed, 2026-10-26: "This should just be WASD in keycaps to the left of the bed and 'E
     // snooooze' to the right", "or the equivalent for controller"), in place of the card at the foot of the screen: the walking keys
     // (a pad's left stick) beside the bed's left, its snooze key (the use button as bound) and "snooooze" beside its right while it rings (not

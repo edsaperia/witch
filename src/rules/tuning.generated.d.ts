@@ -448,6 +448,10 @@ export type SchemaTuning = {
     "clear": number;
   };
   "challenge": {
+    "hide": {
+      "on": boolean;
+      "fade": number;
+    };
     "on": boolean;
     "radius": number;
     "margin": number;
@@ -969,6 +973,40 @@ export type SchemaTuning = {
         "time": number;
       };
       "youthRise": number;
+      "taut": {
+        "on": boolean;
+        "groundDrag": {
+          "youth": number;
+          "adult": number;
+          "legend": number;
+        };
+        "hurry": number;
+        "tug": {
+          "perMetre": number;
+          "rise": number;
+          "hold": number;
+          "ease": number;
+        };
+        "pop": {
+          "fill": number;
+          "drain": number;
+        };
+        "yank": {
+          "metres": number;
+          "every": number;
+        };
+        "links": Array<number>;
+        "look": {
+          "colour": Array<number>;
+          "alpha": number;
+          "glow": number;
+          "flash": {
+            "every": number;
+            "time": number;
+            "width": number;
+          };
+        };
+      };
     };
     "babies": {
       "gap": number;
@@ -1245,6 +1283,19 @@ export type SchemaTuning = {
       "ahead": number;
       "sprint": number;
     };
+  };
+  "ranged": {
+    "on": boolean;
+    "lead": number;
+    "commit": number;
+    "lock": {
+      "young": number;
+      "adult": number;
+      "legend": number;
+    };
+    "speedFloor": number;
+    "areaLock": number;
+    "rollerLead": number;
   };
   "stoneIdle": {
     "on": boolean;
@@ -2166,6 +2217,11 @@ export type SchemaTuning = {
       "stretch": number;
       "alarmMin": number;
     };
+    "eyes": {
+      "shut": number;
+      "open": number;
+      "reopen": number;
+    };
   };
   "arrive": {
     "zoom": number;
@@ -2622,8 +2678,17 @@ export type SchemaTuning = {
       "unlit": number;
       "wildGlow": {
         "mix": number;
-        "colour": Array<number>;
+        "hue": number;
+        "sat": number;
+        "value": number;
         "ease": number;
+      };
+      "wildGrade": {
+        "strength": number;
+        "desat": number;
+        "pivot": number;
+        "hue": number;
+        "sat": number;
       };
       "moonHue": number;
       "moonSat": number;

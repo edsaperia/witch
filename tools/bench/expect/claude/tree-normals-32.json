@@ -1,0 +1,4 @@
+{
+  "reason": "the trees' normal maps default to 32 directions a tree atlas (Ed, 2026-11-12: \"we can see 32 tree normal maps as the default\"), full before: tree shading changes slightly",
+  "frames": { "*": "trees lit from 32 normal directions instead of the full normal maps" }
+}

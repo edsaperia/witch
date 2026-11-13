@@ -15,7 +15,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
   await new Promise(r => server.listen(0, "127.0.0.1", r));
   const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   const errors = [];
-  const kinds = (process.argv[4] || "hedgehog,squirrel,hare,fox,marten,stoat,mole,snail,dormouse,badger").split(",");
+  const kinds = (process.argv[4] || "hedgehog,squirrel,hare,fox,bee,stoat,mole,snail,dormouse,badger").split(",");
   try {
     for (const kind of kinds) {
       const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });

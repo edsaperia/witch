@@ -33,10 +33,10 @@ describe("affected art checks", () => {
     expect(() => taskDispatcher(source.replace('task("species-sprites", async', 'if (true) task("species-sprites", async'))).toThrow();
     const workflow = readFileSync(".github/workflows/art-check.yml", "utf8");
     const parsed = YAML.parse(workflow);
-    expect(Object.keys(parsed.on).sort()).toEqual(["schedule", "workflow_dispatch"]);
+    expect(Object.keys(parsed.on).sort()).toEqual(["pull_request", "schedule", "workflow_dispatch"]);
     expect(parsed.on.schedule[0].cron).toBe("17 3 * * *");
     expect(workflow).not.toContain("claude/rel-*");
-    expect(workflow).toContain('if: steps.checked.outputs.run == \'\'');
+    expect(workflow).toContain("&& steps.checked.outputs.run == ''");
   });
   it("binds each fetched config file only to the task that reads it, and refuses unknown fetches", () => {
     const source = readFileSync("art/check.mjs", "utf8"), d = taskDispatcher(source);

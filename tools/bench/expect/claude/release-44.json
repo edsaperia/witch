@@ -1,0 +1,6 @@
+{
+  "reason": "Release 44: #2025 (claude/mesh-batch-e): Creature meshes, batch E (docs/plans/creature-mesh-rollout.md; Ed, 2026-11-13: batches D and E run straight through to release): the seven cold-blooded kinds, salamander, komodo, crocodile, toad, armadillo, snake and rattlesnake, are drawn from low-poly meshes on skeletons (art/mesh/species/<id>.js, with sprawled legs, scutes and a legless slithering body new in art/mesh/kit) in place of today's drawings, at today's drawn heights (Ed, 2026-11-12: \"keep the sizes\"). The legged ones have eight-frame walks and runs with planted feet; the snakes one eight-frame slither stepped along its own track. No kind changes its id, its island or its numbers, so the rules are untouched.",
+  "frames": {
+    "*": "wherever a salamander, komodo, crocodile, toad, armadillo, snake or rattlesnake is in view: its new drawing, its walk's and run's (or slither's) frames and how fast they pass, where it is drawn along its way (up to a step behind), the frame it stops on, its sleeping pose (the snakes coiled, the toad squatting, the rest curled or lying flat), and what hangs over it by its height"
+  }
+}

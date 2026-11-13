@@ -21,10 +21,8 @@
       { "id": "hair-mohawk", "name": "Mohawk", "set": { "hair": "mohawk" } }
     ] },
     "skin": { "frame": "face", "label": "Skin", "colour": ["skin"], "grid": "skin", "always": true, "items": [] },
-    "makeup": { "frame": "face", "label": "Makeup", "toggle": true, "colour": ["lips", "eyeshadow"], "items": [
-      { "id": "lipstick", "name": "Lipstick", "short": "Lips", "colour": "lips", "set": { "accessories.lipstick": true }, "start": true },
-      { "id": "eyeshadow", "name": "Eyeshadow", "short": "Eyes", "colour": "eyeshadow", "set": { "accessories.eyeshadow": true }, "start": true },
-      { "id": "blush", "name": "Blush", "short": "Blush", "set": { "accessories.blush": true }, "start": true }
+    "makeup": { "frame": "face", "label": "Makeup", "oneColour": true, "colour": ["lips", "eyeshadow"], "items": [
+      { "id": "makeup", "name": "Makeup", "set": { "accessories.lipstick": true, "accessories.eyeshadow": true }, "start": true }
     ] },
     "teeth": { "frame": "face", "label": "Teeth", "action": "teeth", "items": [] },
     "face": { "frame": "head", "label": "Face", "items": [

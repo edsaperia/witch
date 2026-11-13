@@ -130,15 +130,15 @@ test('actual affected executor preserves original sprite and atomic auxiliary co
     fs.writeFileSync(path.join(root,'art/input.js'),'changed');assert.throws(()=>execute(p,root,path.join(root,'cache'),()=>{throw Error('Must not execute stale source');}));
   }finally{assert.equal(path.dirname(root),path.resolve(os.tmpdir()));assert.ok(path.basename(root).startsWith('art-shard-fixture-'));fs.rmSync(root,{recursive:true,force:true});}
 });
-test('nightly workflow pins every job to one source and cannot become a release gate',()=>{
+test('nightly and pull-request workflow pins every job to one source and cannot become a release gate',()=>{
   const w=YAML.parse(fs.readFileSync('.github/workflows/art-check.yml','utf8'));
-  assert.deepEqual(Object.keys(w.on).sort(),['schedule','workflow_dispatch']);assert.equal(w.on.schedule[0].cron,'17 3 * * *');
-  assert.deepEqual(Object.keys(w.jobs),['plan','shards','art']);assert.equal(w.jobs.shards.strategy['fail-fast'],false);
+  assert.deepEqual(Object.keys(w.on).sort(),['pull_request','schedule','workflow_dispatch']);assert.equal(w.on.schedule[0].cron,'17 3 * * *');
+  assert.deepEqual(Object.keys(w.jobs),['plan','narrowed','shards','art']);assert.equal(w.jobs.shards.strategy['fail-fast'],false);
   assert.equal(w.jobs.plan.steps.find(s=>s.uses==='actions/checkout@v4').with.ref,'${{ steps.source.outputs.sha }}');
-  for(const name of ['shards','art'])assert.equal(w.jobs[name].steps.find(s=>s.uses==='actions/checkout@v4').with.ref,'${{ needs.plan.outputs.sha }}');
+  for(const name of ['narrowed','shards','art'])assert.equal(w.jobs[name].steps.find(s=>s.uses==='actions/checkout@v4').with.ref,'${{ needs.plan.outputs.sha }}');
   assert.equal(w.jobs.plan.steps.find(s=>s.with?.path==='.art-check-results').uses,'actions/cache/restore@v4');
   assert.equal(w.jobs.shards.steps.find(s=>s.name==='Save successful shard proof').if,'success()');
-  assert.equal(w.jobs.art.if,'${{ always() }}');assert.deepEqual(w.jobs.art.needs,['plan','shards']);
+  assert.equal(w.jobs.art.if,"${{ always() && needs.plan.outputs.mode != 'skip' && needs.plan.outputs.mode != 'only' }}");assert.deepEqual(w.jobs.art.needs,['plan','shards']);
   assert.ok(w.jobs.art.steps.find(s=>s.name==='Validate complete coverage and combine proof').run.includes('shards.mjs combine'));
   const notify=w.jobs.art.steps.find(s=>s.name==='Update the single nightly art result on issue 1476');assert.ok(notify.if.includes("github.event_name == 'schedule'"));assert.ok(notify.with.script.includes('witch-art-check-nightly-result'));
   for(const file of fs.readdirSync('.github/workflows').filter(f=>f.endsWith('.yml')&&f!=='art-check.yml'))assert.ok(!/needs:.*\bart\b/.test(fs.readFileSync('.github/workflows/'+file,'utf8')),file);

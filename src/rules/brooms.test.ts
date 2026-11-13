@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
 import { newGame, stepGame, type Controls, type Game } from "./game";
 import { chainLength, dragWitch } from "./chains";
-import { newWitch } from "./witch";
+import { newWitch, type WitchState } from "./witch";
 import { castSpell, stealthed } from "./spells";
 import { leyJumpTarget } from "./brooms";
 import { SETS, fittedOf, partsPull } from "./broomParts";
@@ -78,11 +78,14 @@ describe("the Canoe hull (Haul's old job, a part since the Workshop: Ed, 2026-10
     const p = partsPull(fittedOf("canoe"));
     expect(p).toBeCloseTo(0.65);
     const mk = (level: number) => [{ id: 0, x: 0, z: 0, level, species: "wolf", gone: false, speed: 100 } as unknown as Creature];
-    const L = chainLength(TUNING), body = { ...newWitch(L + 1, 0), vx: 60, vz: 0 }, from = { x: L, z: 0 };
-    const moved = (level: number, pull: number) => dragWitch(body, from, [0], mk(level), TUNING, 1 / 60, pull).body.x - L;
+    // (flying, the drag; on foot the taut chain's lighter ground drag, times it the same: rules/tautChain.ts)
+    const L = chainLength(TUNING), air = { ...newWitch(L + 1, 0), vx: 60, vz: 0, mode: "treetop" as const, lift: 1 }, foot = { ...air, mode: "ground" as const, lift: 0 }, from = { x: L, z: 0 };
+    const moved = (level: number, pull: number, body: WitchState = air) => dragWitch(body, from, [0], mk(level), TUNING, 1 / 60, pull).body.x - L;
     expect(moved(2, p)).toBeCloseTo(1 - TUNING.leash.chain!.drag.adult * p, 6);
     expect(moved(2, 1)).toBeCloseTo(1 - TUNING.leash.chain!.drag.adult, 6);
+    expect(moved(2, p, foot)).toBeCloseTo(1 - TUNING.leash.chain!.taut!.groundDrag.adult * p, 6);
     expect(moved(3, p)).toBeCloseTo(0, 6);
+    expect(moved(3, p, foot)).toBeCloseTo(0, 6);
   });
 });
 

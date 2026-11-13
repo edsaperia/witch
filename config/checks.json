@@ -42,9 +42,19 @@
       "what": "The art generator's check: every species, area and the lab pages drawn headless (only the touched creatures and areas when that is all that changed).",
       "paths": ["art/**", "tools/art-lab/**", "tools/art-check/**", "config/style.json"],
       "runner": "builder",
-      "ci": "nightly only (art-check.yml; Ed, 4 November: \"split, keep nightly\"), never on a PR",
+      "ci": "every PR that changes art, narrowed to it, and skipped at once otherwise (art-check.yml's plan: these paths and {art-scope}; Ed, 2026-11-12: \"(b) also run a narrowed art check on PRs that touch art\"), a release PR over its whole diff, a publish PR not; the full check nightly (Ed, 4 November: \"split, keep nightly\"); no build or release waits on it",
       "from": "Ed, 2026-10-29",
       "note": "docs/notes/art-checks.md"
+    },
+    {
+      "id": "sail-takeoff",
+      "command": "npm run build && CHECK=1 node tools/stall/sail-takeoff.cjs dist",
+      "what": "A sail by the map table's chart (the dive path), woken and taken off from the treehouse: fails if the take-off makes any shader program (a compile on the page's thread).",
+      "paths": ["src/render/view/readiness.ts", "src/render/view/lifecycle.ts", "src/render/post.ts", "src/render/houseRooms.ts", "src/render/treehouseLook.ts", "tools/stall/**"],
+      "runner": "coordinator",
+      "ci": "nightly only (stall-nightly.yml: 15 to 20 minutes on the software renderer), never on a PR",
+      "from": "Ed, 2026-11-12",
+      "note": "docs/notes/performance.md"
     },
     {
       "id": "server-tests",

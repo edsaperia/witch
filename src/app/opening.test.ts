@@ -55,7 +55,7 @@ describe("the first load waking in her bedroom", () => {
     expect(opensInBedroom(link("opening=bedroom&timing=1"), off)).toBe(true);
     expect(opensInBedroom(link(""), off)).toBe(false);
     // arriving from the chart (the sail's own landing), a bot game, the room skipped or the zoo: its own start
-    for (const q of ["island=marten&seed=4&arrive=1", "bot=skilled", "creator=0", "zoo=1"]) expect(opensInBedroom(link(q), on), q).toBe(false);
+    for (const q of ["island=bee&seed=4&arrive=1", "bot=skilled", "creator=0", "zoo=1"]) expect(opensInBedroom(link(q), on), q).toBe(false);
   });
 
   it("a sail lands her asleep in her bed (Ed, 2026-10-25, his 2a), in place or by the island's link (&arrive=1); only ?opening=old at her decks", () => {
@@ -68,7 +68,7 @@ describe("the first load waking in her bedroom", () => {
 
   it("a first game's chart has only home to sail to; what she finds opens more", () => {
     expect(unlocked(emptySave())).toEqual(["home"]);
-    const after = recordNight(emptySave(), "home", { won: true, found: ["marten"] });
-    expect(unlocked(after)).toEqual(["home", "marten"]);
+    const after = recordNight(emptySave(), "home", { won: true, found: ["bee"] });
+    expect(unlocked(after)).toEqual(["home", "bee"]);
   });
 });
