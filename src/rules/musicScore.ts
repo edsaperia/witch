@@ -179,7 +179,8 @@ export interface ArcStep {
   energy: number;
   progression?: string;
   /** Semitones above the style's root: the stage's key (its scale is the style's one, dorian: Ed, 2026-10-09, "Keep it all
-   *  in the dorian"; the key changes between stages stay). */
+   *  in the dorian"; the key changes between stages stay; since then a night's set gives a step its own `mode`, and banger
+   *  mode plays most waves in natural minor: Ed, 2026-11-11, "More 'minor feel'", rules/musicBanger.ts). */
   transpose?: number;
   /** Its sections on the form (Ed, 2026-10-09: "ABAC; the first two sections should be 4 on the floor, the third sections
    *  breakbeats, and the fourth a breakdown"): A and B one four-on-the-floor block (`land` the first time round, as the

@@ -17,7 +17,7 @@ export interface MotionProfile {
   pathWeight?: number;
 }
 /** A member's place in its team's waiting formation: its index among the `count` sharing its ring, and its ring (`rank`, 0 the inner
- *  one; a big team's members past its ring cap wait in rings further out: rules/combat/teams.ts waitingOrder). */
+ *  one; a big team's members past its ring cap wait in rings further out: rules/combat/teams.ts TeamState.order). */
 export interface WaitingGroup { seed: number; index: number; count: number; gap: number; until: number; minimum?: number; rank?: number }
 /** How far apart a big team's waiting rings stand, in body gaps (Ed, 2026-11-04: "Resolve the attack rate limit for 128"). */
 export const RANK_GAP = 1.5;

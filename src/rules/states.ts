@@ -1,9 +1,11 @@
-// The creature-state model in the balance simulator (issue #87, Ed 2026-10-05): the witch does no
+// The creature-state model in the balance simulator (issue #87, Ed 2026-10-05): the rules as that
+// day's balance model had them, not the game's today (those: rules/creatureStates.ts). The witch does no
 // damage, and her only action is the invite. A wild creature she invites turns happy and stays
 // to defend its own area (never enraged); leashing a happy one is a second step, and only leashed
 // ones (her army) grow, eating berries as her posse goes. When an area gets its soundsystem its
-// wild young and up turn enraged and besiege the nearest soundsystem; babies never do (nor can
-// they be invited: Ed, 2026-10-31, "No, no baby is invitable"). Legends (Ed, 2026-10-05, redesigned): asleep until their area holds none of their kind,
+// wild young and up turn enraged and besiege the nearest soundsystem; babies never do, and in this
+// model she still invites them (the game doesn't: Ed, 2026-10-31, "No, no baby is invitable",
+// rules/creatureStates.ts invitableNow). Legends (Ed, 2026-10-05, redesigned): asleep until their area holds none of their kind,
 // then restless, and angry after restlessTime (slow long-range blasts at her and her posse only,
 // never soundsystems, reaching into the next areas); happy (a defender, blasting the enraged in
 // range) where she places one of the map's few relics. Knocked down, happy, leashed and
@@ -46,8 +48,9 @@ export interface StatesOptions {
   /** Seconds for the second step, happy to leashed (a guess: 2). */
   leashTime?: number;
   /** Relics on the map (3 or 4 by the seed, Ed 2026-10-05), one found every relicEvery waves (4),
-   *  each placed by the legend of the next area the wave wakes (relicTime s, 5). Quests give nothing
-   *  now (the legend sleeps on), so the model leaves them out. */
+   *  each placed by the legend of the next area the wave wakes (relicTime s, 5). The model leaves quests
+   *  out (they gave nothing then; since Ed, 2026-10-18, a quest done wakes its legend happy and a relic
+   *  no longer does: rules/quest.ts, rules/legends.ts). */
   relics?: number;
   relicEvery?: number;
   relicTime?: number;

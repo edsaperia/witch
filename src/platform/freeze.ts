@@ -23,7 +23,7 @@ const STILL: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 /** The pause page's own pieces: above the shield while frozen, and the only things keys and the mouse reach then (its test
  *  sliders, its Controls / What's new / Options buttons and their panel, the Music Lab, the new-build notice, the freeze's stamp). */
 export const PAUSE_UI = ["#settings-page", "#potion-lab", "#pause-sliders", "#pause-btns", ".corner-panel", "#music-lab", "#new-build", "#freeze-marker", "#freeze-stamp"];
-/** Over every overlay (the highest is the corner panel's 62). */
+/** Over every overlay (the highest in play is the touch close keycap's 70: main.ts shutButton). */
 const PAUSE_Z = 1000;
 const LAYER_CSS = `#pause-shield { position: fixed; inset: 0; z-index: ${PAUSE_Z}; display: none; }
 body.paused #pause-shield { display: block; }

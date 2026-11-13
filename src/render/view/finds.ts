@@ -1,7 +1,7 @@
 // Tonight's find (rules/finds.ts FIND_KINDS), as the finds style guide has it (Ed, 2026-10-23; docs/art-guide/FINDS.md): one
 // flask-sized object (art/country.js's find pieces: clothes a folded bundle, bags a little bag, a broom part the part), drawn each
 // frame from its own small atlas (a "find" art job: render/artBuild.ts) where the rules put it (rules/finds.ts placeTrunk), on a patch of
-// clear ground (findClear: no tufts on it, view.ts) in its own pale gold-white light (findLight, render/view/lights.ts), the
+// clear ground (findClear: no tufts on it, render/view/frame.ts) in its own pale gold-white light (findLight, render/view/lights.ts), the
 // brightest and whitest thing there. Hidden from the treetops: the light lights only the ground under the crowns. Once she's taken
 // it, it's gone, and its patch and light with it. Not taken by the time the party's lost, it's gone from the map too (Ed,
 // 2026-10-18: "All permanent unlock items disappear from the map after a party is lost").
@@ -27,7 +27,7 @@ const FIND_GOLD = new THREE.Vector3(1, 0.96, 0.84);
 /** Tonight's find while it's there to take: on the map, not yet taken, the party not lost. */
 const findThere = (v: View) => { const T = v.game.trunk; return T && T.item && !T.found && !worldAsleep(v.game) && !rewardFall(v.game, T)?.hidden ? T : null; }; // (not there in the world asleep: the afterparty, or before the party, Ed 2026-10-26)
 
-/** Where the cover is cleared for tonight's find (view.ts, with the placed sigils'), or null. */
+/** Where the cover is cleared for tonight's find (render/view/frame.ts, with the placed sigils'), or null. */
 export function findClear(v: View): { x: number; z: number; r: number } | null {
   const T = findThere(v);
   return T && !rewardFall(v.game, T) ? { x: T.x, z: T.z, r: FIND_PATCH } : null; // (a challenge's coming down: no patch till it lands)

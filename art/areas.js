@@ -261,7 +261,8 @@ export function layoutProblems(a) {
 export { LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR };
 // Placement rules (Ed, 2026-10-03, via the coordinator): wall objects are drawn only, they do
 // not block movement for now; a set piece is rare scenery, shown in only some of an area
-// type's areas, for variety. The chance is a starting value for playtesting.
+// type's areas, for variety. The chance is a starting value for playtesting (the game's own is
+// tuning's setPieceChance: 0, no set pieces in normal play, since Ed, 2026-10-29).
 export const WALLS_BLOCK = false;
 export const SET_PIECE_CHANCE = .25;
 

@@ -3,7 +3,8 @@
 // (Ed, 2026-10-11, docs/backlog/journey.md 'Rosters' and 'Biomes by direction': north cold, south hot, east rocky, west jungle,
 // the diagonals blending). `dir` is the bearing's compass point, for reading; `biome` the theme its island's direction suggests.
 // Home 10, phase 1 10, phase 2 12: the easiest and most familiar at home, tougher and stranger later. Ed approved the 32 as
-// drafted (2026-10-11). Home is green forests and mostly cute mammals, no flyers or insects (Ed, 2026-10-12): owl, toad and
+// drafted (2026-10-11). Home is green forests and mostly cute mammals, no flyers or insects (Ed, 2026-10-12; the bee has
+// stood in the marten's place there since Ed, 2026-11-11: BENCH, below): owl, toad and
 // beetle swapped phase and bearing with marten, stoat and badger, so the chart's rings stay as they were. The rest (Ed,
 // 2026-10-11: "We should generate all the islands. For islands where we haven't designed the creatures yet, use '?'";
 // journey.md: 14 introduced in phase 3, 18 in phase 4, none in phase 5) are placeholders (unknown-NN, placeholder true): their

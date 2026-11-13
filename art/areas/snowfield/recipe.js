@@ -1,5 +1,5 @@
 // The snowfield (the north's cold island, phase 3): an area type as a recipe (art/recipes.js says what each field is). Deep snow
-// with grass and needles poking through, lone snow-laden firs and dwarf birch, a ring of old stones half buried in a
+// with grass and needles poking through, lone snow-laden junipers, firs and dwarf birch, a ring of old stones half buried in a
 // drift; the arctic fox its creature.
 export const SNOWFIELD = {
   slot: 25, id: "snowfield", name: "Snowfield", creature: "arcticfox", by: "recipe", leaf: .36, floor: ["snow", .58, .06, .86], snow: 1,

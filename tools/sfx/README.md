@@ -32,7 +32,7 @@ The live audio check: plays the built game in headless Chromium for MINUTES minu
 
 ## `mix.mjs`
 
-The mix check: Bundles tools/sfx/mix.ts and renders its scenes offline in headless Chromium, as the game mixes them: home, a fight by a soundsystem and the deep forest.
+The mix check: Bundles tools/sfx/mix.ts and renders its scenes offline in headless Chromium, as the game mixes them: home, a fight by a soundsystem, the deep forest, and since then back at her decks, a wild area's watch and fireworks.
 
 ```
 node tools/sfx/mix.mjs [out-name]

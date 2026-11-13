@@ -28,7 +28,7 @@ node tools/beach/check.cjs [dist dir] [--shots]
 
 ## `dolphins-sheet.mjs`
 
-The east coast's dolphins: every leap frame and splash frame at scale 8 on a night sea, then a leap's arc laid out at game scale: splash, the frames along the arc, splash.
+The east coast's dolphins: every leap frame and splash frame at scale 8 on a night sea, then a leap's arc laid out at scale 5: splash, the frames along the arc, splash.
 
 ```
 node tools/beach/dolphins-sheet.mjs <out.png>

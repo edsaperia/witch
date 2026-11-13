@@ -121,7 +121,7 @@ export interface SteerContext {
   side: string;
   /** Which way the target is heading (a unit vector), or none if it's standing still (flanking goes round to its back). */
   heading?: { x: number; z: number } | null;
-  /** Lights near it (soundsystems): moths are drawn to them. */
+  /** Lights near it (soundsystems): the moth (a swallowtail since 2026-10-23, its id kept) is drawn to them. */
   lights?: { x: number; z: number }[];
   /** Its attack is ready (hit and run goes in only then). */
   ready: boolean;
@@ -242,7 +242,7 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
       case "cohesion": { if (pack && n > 1) { const cx = pack.cx - c.x, cz = pack.cz - c.z, cd = Math.hypot(cx, cz); if (cd > (b.radius ?? 14) * S) add(cx / cd, cz / cd, b.w); } break; }
       case "wander": { const a = hash2(c.id, Math.floor(x.time * 2), 13) * Math.PI * 2; add(Math.cos(a), Math.sin(a), b.w); break; }
       case "light": {
-        // Drawn to the nearest light (a moth): toward it, fluttering round it once there.
+        // Drawn to the nearest light (the moth, now a swallowtail): toward it, fluttering round it once there.
         let best: { x: number; z: number } | null = null, bd = (b.radius ?? 30) * S;
         for (const l of x.lights ?? []) { const ld = Math.hypot(l.x - c.x, l.z - c.z); if (ld < bd) { bd = ld; best = l; } }
         if (best) { const lx = best.x - c.x, lz = best.z - c.z, ld = Math.max(bd, 1e-3); if (ld > 3 * S) add(lx / ld, lz / ld, b.w); else add(-lz / ld, lx / ld, b.w); }

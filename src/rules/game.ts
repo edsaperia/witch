@@ -173,9 +173,9 @@ export interface Game {
   readonly tuning: Tuning;
   readonly map: ForestMap;
   readonly forest: Forest;
-  /** Every creature made so far (ids are their places here); it grows as wild areas do (rules/growth.ts). */
+  /** Every creature made so far (ids are their places here): a night's all at its start (no growth: Ed, 2026-10-28); the zoo's bar adds more. */
   readonly creatures: Creature[];
-  /** Wild areas growing wave by wave, as counts until a witch comes near (rules/growth.ts). */
+  /** The old wave-by-wave growth's counts (rules/growth.ts): never filled, growth is off (Ed, 2026-10-07, 2026-10-28). */
   growth: GrowthState;
   readonly clock: Clock;
   /** Every player's witch; the first is this machine's (the camera follows her). */
@@ -215,8 +215,8 @@ export interface Game {
   trunk: Trunk | null;
   /** The night's challenge area (rules/challenge.ts; Ed, 2026-11-03): its circle, its pack, cleared or closed; null with none. */
   challenge?: ChallengeState | null;
-  /** This frame's wave events (several steps' worth, or none): a soundsystem lost brings the next
-   *  wave sooner (Ed, 2026-10-05), with the countdown it leaves, for the HUD and the music. */
+  /** This frame's wave events (several steps' worth, or none), for the HUD and the sound: a soundsystem lost (it brought the
+   *  next wave sooner till Ed, 2026-10-08: "Losing a soundsystem no longer touches the wave countdown"), and the rest (WaveEvent). */
   waveEvents: WaveEvent[];
   /** This frame's leash events (several steps' worth, or none), for the view: `leash.events` holds only the last step's. */
   leashEvents: LeashEvent[];
@@ -281,13 +281,11 @@ export interface Game {
   introFocus?: { x: number; y: number; z: number };
   /** The new opening's wake-up in her bedroom (rules/wakeUp.ts): set as the chart's dive lands, kept after (she's up, dressed). */
   wake?: WakeState;
-  /** The island's built (the night's art drawn; main.ts sets it): the house's art swaps in its finished pieces then (nothing waits on it). */
+  /** The island's built (the night's art drawn; app/pageFrame.ts sets it): the house's art swaps in its finished pieces then (nothing waits on it). */
   islandReady?: boolean;
 }
 
-/** A soundsystem destroyed ("home" for the dancefloor's ring): the next wave `cut` seconds sooner,
- *  `left` seconds away now (0: it comes at once). */
-/** The waves' events: a soundsystem lost (cut: seconds it took off the countdown; left: seconds then left); an area cleared
+/** The waves' events: a soundsystem lost ("home" for the dancefloor's ring; nothing off the countdown since Ed, 2026-10-08); an area cleared
  *  of its wild creatures, its soundsystem rising (rules/clear.ts); a wave come to an area whose soundsystem stands already
  *  (cleared before it, Ed 2026-10-07: it changes nothing in the rules; the view's fireworks and lasers). */
 export type WaveEvent =
@@ -431,7 +429,7 @@ export const witchTime = (g: Game, W: Witch): number => W.time ?? g.herTime;
  *  "pickup", rules/leash.ts), or by filling it again (the old "again"). How many letters fill it is the tuning's invites.hits;
  *  every 💌 that lands counts (no per-animal gap since 2026-10-06: her firing rate sets the pace); it drains at the
  *  tuning's invites.drain (states.json's affection.drain only when that's missing), after states.json's drainDelay. */
-/** Napping (rules/creatures.ts stepNaps): asleep with a nap's end, so a letter can rouse it; not the party's over's sleep. */
+/** Napping (rules/creatures.ts stepCreaturesNear): asleep with a nap's end, so a letter can rouse it; not the party's over's sleep. */
 const napper = (c: Creature): boolean => !!c.asleep && c.napUntil !== undefined;
 
 export const affectionOf = (g: Game, W: Witch = g.witches[0], acceptedGuestHit = false): Affection => {
@@ -1158,8 +1156,8 @@ export function floorInputs(g: Game): FloorInputs {
 }
 
 // The home speakers' boot (Ed, 2026-10-06): each starts as a small runestone, and the boot pulse turns it into its speaker.
-// Until the pulse drives it (the rendering builder's: bootSpeaker), they turn one by one round the ring over the boot, as
-// speakersOn always counted; a run that starts after the boot has them all speakers.
+// The boot's pulse round the ring drives it (rules/bootRing.ts stoneTurned, below; bootSpeaker): they turn one by one as it
+// reaches each stone.
 function stepSpeakerBoot(g: Game): void {
   // The boot's pulse round the ring (rules/bootRing.ts): each speaker turns as the pulse reaches its stone, clockwise
   // from the top, from the party spell on.
@@ -1201,12 +1199,12 @@ function stepDancefloor(g: Game, waveBefore: number): void {
 export const dormant = (_g: Game, c: Creature): boolean => (!!c.boss && !c.leashed && (c.legendState === "asleep" || c.legendState === "restless")) || !!c.statue; // (asleep or restless: scenery, untouchable; the challenge's statues likewise, rules/challengeStatues.ts)
 
 /** The legends' states (Ed, 2026-10-05, #87; rules/legends.ts): asleep, dreaming; restless while
- *  its area has none of its kind, angry once that's run its course; happy by a relic. Angry and
+ *  its area has none of its kind, angry once that's run its course; happy by its quest (no relic since Ed, 2026-10-18). Angry and
  *  happy ones shoot from afar (combat: stepLegendAttack); worn down, they go back to sleep. Debug
  *  (O): the nearest made happy. A happy one heals while no enemy is near. */
 function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
   const time = g.clock.time;
-  // Asleep, restless (no kin in its area), angry; happy by a relic (rules/legends.ts, #87).
+  // Asleep, restless (no kin in its area), angry (rules/legends.ts, #87); happy by its quest (rules/quest.ts).
   const stomp = g.tuning.legends?.stomp, was = stomp?.on ? ids.map(id => g.creatures[id].legendState) : null;
   const placed = g.witches.flatMap(W => leashView(W, g.creatures, g.map, g.tuning).placed); // (in the treehouse, her followers count as home's: rules/houseGuard.ts)
   stepLegendStates({
@@ -1228,7 +1226,7 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
   // A happy legend heals to whole over legends.healTime while no enemy is near (balance builder, #80).
   for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.drops && !c.fight?.target) healBy(c, STEP / LEGENDS.healTime, 1, g.clock.time); } // (its 💧s, a full set in healTime: rules/orbit.ts)
   if (happyNearest) {
-    // Debug (O): the nearest sleeping legend made happy, as if a relic were put down by it.
+    // Debug (O): the nearest legend not yet happy made so, as if its quest were done.
     let best: Creature | null = null, bd = Infinity;
     for (const id of ids) { const c = g.creatures[id], d = Math.hypot(c.x - g.witch.x, c.z - g.witch.z); if (c.legendState !== "happy" && d < bd) { bd = d; best = c; } }
     if (best) cheer(best, time);

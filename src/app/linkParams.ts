@@ -219,8 +219,8 @@ export function tuningFromLink(params: URLSearchParams) {
   // The map's shape (Ed, 2026-10-06: circular, with a buffer ring): ?shape=square brings back the old square map to compare.
   const shapeParam = params.get("shape");
   if ((shapeParam === "square" || shapeParam === "circle") && tuning.map) tuning.map = { ...tuning.map, shape: shapeParam };
-  // The runestone stacks and the soundsystem spell (Ed, 2026-10-28; rules/stoneStacks.ts): off by default till their view lands
-  // (areas clearing by themselves once their wild are gone); ?cast=1 turns them on, ?cast=0 off.
+  // The runestone stacks and the soundsystem spell (Ed, 2026-10-28; rules/stoneStacks.ts): on by default since their view landed
+  // (#1378); ?cast=0 turns them off (areas clearing by themselves once their wild are gone, as before), ?cast=1 on.
   { const v = params.get("cast"); if ((v === "1" || v === "0") && tuning.cast) tuning.cast = { ...tuning.cast, on: v === "1" }; }
   // Legend circles slow time (Ed, 2026-10-06; rules/slowTime.ts): ?slow=0 turns it off, ?slow=<scale> tries another speed.
   { const v = params.get("slow"); if (v !== null && tuning.legendCircle) { const k = Number(v); tuning.legendCircle = { slow: { ...tuning.legendCircle.slow, on: k > 0 && k < 1, scale: k > 0 && k < 1 ? k : tuning.legendCircle.slow.scale } }; } }
@@ -298,7 +298,7 @@ export function tuningFromLink(params: URLSearchParams) {
   // Her hat's spell (app/loadout.ts): the creator's, kept on this browser, or ?hat=; her hats (app/hatSave.ts; Ed, 2026-10-23: the
   // plain hat hers, the rest found): a saved hat she doesn't own is the plain one.
   { const L = loadoutFrom(params), hats = unlockAll() ? "*" : hatsFrom(params, L.hat), hat = hats === "*" || L.hat === "none" || hats.split(",").includes(L.hat) ? L.hat : "none"; tuning.spells = { ...tuning.spells, hat, hats }; }
-  // Her broom's parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): those fitted at the bay on this browser, or
+  // Her broom's parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): those fitted at its stations on this browser, or
   // ?parts=missile,ladder,nozzles for one load (any parts, found or not: for testing). Her broom's spell is the set they complete.
   { const P = params.get("parts"); tuning.spells = { ...tuning.spells, parts: P !== null ? P : fittedParts(loadBroom().fitted).map(p => p.id).join(",") }; }
   // Her bag (rules/bags.ts; Ed, 2026-10-29: a Bumbag and a Far bag to choose from): the one her saved look wears (localStorage

@@ -1,4 +1,4 @@
-// The snail, four levels, as plans for tools/creature-mesh/quadruped.js (which builds any plan of bones, lofts and cones: this
+// The snail, four levels, as plans for art/mesh/shape.js (which builds any plan of bones, lofts and cones: this
 // one has no legs). Ed's ladder (docs/art-guide/EVOLUTIONS.md and its genome): a near-clear one-turn shell on a baby with big
 // stalk eyes; an amber banded young; a tall ridged cone on a frilled adult; and the elder, its shell the night sky, full of
 // stars, a gold spiral inlaid along its whorls, old grey skin, huge slow eye stalks with glowing tips. On his word for the fox

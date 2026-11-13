@@ -1,6 +1,6 @@
-// Creatures: each area's own kind, more of them and older the longer the area stays wild
-// (Ed, 2026-10-04): every area starts the same, a young and an adult (Ed, 2026-10-05), and grows by a creature
-// of a random level every wave while it stays wild (rules/growth.ts), so the areas the party
+// Creatures: each area's own kind, more of them and older the later the area comes on the waves' route
+// (Ed, 2026-10-07: "pre-populate every area by its route position", in place of 2026-10-04's growth by a creature
+// a wave; none made or lost in a night, Ed 2026-10-28; rules/growth.ts routePopulation), so the areas the party
 // reaches late are the dangerous ones. The home area holds none. Wild legends are rare, late threats (Ed,
 // 2026-10-04): a few a map, only in remote areas, each a boss, asleep until the party reaches it. Idle creatures roam their whole area, never leaving it.
 // Only those near the witch are simulated; the rest pick up where they would plausibly be.
@@ -89,7 +89,8 @@ export interface Creature {
    *  her and pulling back up. `up` while it's out of reach (no 💌, blow or talk reaches it). */
   swoop?: import("./movement").Swoop;
   fight?: Fight;
-  /** Beaten in a fight: running for (fleeX, fleeZ), just off the map's edge (fleeUntil set), then gone. */
+  /** Beaten in a fight: running for (fleeX, fleeZ), its spot on the beach (rules/runaway.ts; with no beach, just off the map's
+   *  edge) (fleeUntil set), then gone. */
   fleeUntil?: number;
   /** Gave up a chase past its band (Ed, 2026-10-06): heading back into its area, then roaming; since retreatFrom. */
   retreat?: boolean;
@@ -191,7 +192,8 @@ export interface Creature {
   /** Marching on a soundsystem (its area's key, "home" for the dancefloor): a siege. */
   siege?: string;
   /** Let go when its witch was knocked out (Ed, 2026-10-04): neutral, walking to this area of its
-   *  own kind, where it becomes an ordinary wild creature of that area. */
+   *  own kind, where it becomes an ordinary wild creature of that area. Nothing sets it now (rules/knockout.ts only
+   *  steps one that has it): since Ed, 2026-11-03, her carried sigils fall parked where she went down. */
   wanderTo?: { x: number; z: number; cell: [number, number] };
   /** The legend's clearing it was born in (Ed, 2026-10-06: "Legend circles should spawn with a ... baby in them, which
    *  tries to stay within the circle"): it roams the circle's open floor and walks back in if it's out, dancing there
@@ -262,9 +264,9 @@ export type LegendState = (typeof LEGEND_STATES)[number];
 
 export interface AreaPopulation { babies: number; young: number; adults: number }
 
-/** How many of each level every area starts with (Ed, 2026-10-04: every area the same; one young
- *  and one adult, Ed 2026-10-05; it was a baby and two adults). It grows by a creature a wave while it stays wild
- *  (rules/growth.ts). (Each area also has its sleeping legend: spawnCreatures.) */
+/** The tuning's population.start: how many of each level an area starts with before its place on the route adds its
+ *  swarm (rules/growth.ts routePopulation; Ed, 2026-10-07). No growth by the wave since (Ed, 2026-10-28).
+ *  (The areas map.hasLegend picks also have their sleeping legend: spawnCreatures.) */
 export function population(map: ForestMap): AreaPopulation {
   const S = map.tuning.population.start;
   return { babies: S.babies, young: S.young, adults: S.adults };

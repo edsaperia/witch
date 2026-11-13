@@ -20,7 +20,7 @@ export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams
   // tools and smoke runs) starts at once, as before, unless ?spell=wait; ?spell=auto starts at once anywhere.
   if (params.get("spell") !== "auto" && !(params.get("creator") === "0" && params.get("spell") !== "wait") && !params.has("fight")) game.party.spellAt = null; // (the Fight Arena: straight into the fight)
   // Her night's kit (rules/kit.ts; Ed, 2026-10-26): a night that waits for her spell starts with her invitations on the Parlour's desk
-  // and the brooms at the Workshop's lathe; ?kit=full gives her both from the start.
+  // and the brooms on the broom rack (Ed, 2026-11-07, moved there from the Workshop's lathe); ?kit=full gives her both from the start.
   if (game.party.spellAt === null && params.get("kit") !== "full") for (const W of game.witches) W.kit = newKit(true);
   // ?quest=1 (the first quest, a demo): beside the nearest sleeping legend, with the creature it
   // dreams of on her stack; put its sigil down there (E) to make it happy.

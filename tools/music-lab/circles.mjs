@@ -1,7 +1,7 @@
 // The legends' clearings check (Ed, 2026-10-06: "the music should change when you go into a legend
 // circle in ground mode"): node tools/music-lab/circles.mjs [species,...]
-// Renders tools/music-lab/circles.ts offline in headless Chromium: for each species (default all
-// 30 legends), 3 s of wave 1's music 40 m from a soundsystem, then she steps into its legend's
+// Renders tools/music-lab/circles.ts offline in headless Chromium: for each species (default the
+// first 30 kinds, ALL below; newer kinds by name), 3 s of wave 1's music 40 m from a soundsystem, then she steps into its legend's
 // clearing: the music muffled under the legend's own layer, slowing to a tenth with the world there
 // (a tape slowing; SLOW=0 renders it as before), the layer at full speed; at 11 s she leaves. Prints, in dB, the music before, the
 // layer alone and the whole inside; fails on a script error, NaN, clipping, a silent layer or a

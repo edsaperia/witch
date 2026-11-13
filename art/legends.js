@@ -7,6 +7,8 @@
 // colours: a boulder, a log or a mound until you know. No waking sequence or awake redraw yet
 // (Ed, 2026-10-04: "just the sleeping form"); awake it is the ordinary legend (critter level 3).
 // legendForm(id, st, { frame, facing }) -> { sp, colours }; legendSprites bakes the lot.
+// (Since 2026-11-12 a kind with a mesh is drawn asleep from it instead, art/mesh/index.js meshSleep; this draws the kinds
+// without one, and every kind under ?meshCreatures=0.)
 import { M, rng, uni, vnoise, hsv2rgb, bake, defaultCanvas, Sprite } from "./core.js";
 import { render, v3, spotty } from "./model3d.js";
 import { withForm, backTree3d } from "./creatures3d.js";
@@ -29,6 +31,7 @@ export const LEGEND_FRAMES = { asleep: 2 };
 // Batch 1 (the bug hunter's first slice): bat, marten, elk, stoat, owl, snail. Batch 2: wolf, fox,
 // badger, boar, stag, hare, bear. Batch 3: lynx, otter, beaver, ram, squirrel, dormouse, salamander.
 // Batch 4: toad, raven, mole, hedgehog, woodlouse. Batch 5: snake, moth, spider, stag beetle.
+// (Since 2026-10-13 each species' pose is in its own folder, art/creatures/<id>/legend.js; every species since has one.)
 export const LEGEND_POSES = {
   ...CREATURE_LEGENDS,
 };

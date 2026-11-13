@@ -15,8 +15,8 @@ import { comfort } from "./comfort";
 
 const CRYSTAL = [new THREE.Vector3(0.25, 0.85, 1), new THREE.Vector3(0.7, 0.4, 1), new THREE.Vector3(1, 0.65, 0.2)];
 
-/** A playing soundsystem, for its laser show: where its top is, its seed, when it finished rising; and when it went full party
- *  (a wave celebrated it: its lasers fully on from then, for good), if it has. */
+/** A playing soundsystem (listed for its laser show, which its sky sigil replaced: render/hologram.ts, Ed 2026-10-08): where its
+ *  top is, its seed, when it finished rising; and when it went full party (a wave celebrated it), if it has. */
 export interface Playing { x: number; y: number; z: number; seed: number; ready: number; full?: number; /** Its projector's top (a generated soundsystem: render/soundsystemGen.ts), where the sky hologram rises from; else none. */ projector?: { x: number; y: number; z: number }; /** Its damage stage: 0 playing, 1 to 3 damaged, 4 destroyed (the hologram glitching more with each). */ stage?: number }
 export type { Projector } from "./hologram";
 import type { Projector } from "./hologram";

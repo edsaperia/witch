@@ -56,7 +56,7 @@ export class Sound {
   constructor(private tuning: Tuning, private style: MusicStyle, private seed: number) {
   }
 
-  /** A new night on the same page (docs/plans/sail-without-reload.md, A4 and B6; nothing calls it yet): its tuning, seed and
+  /** A new night on the same page (docs/plans/sail-without-reload.md, A4 and B6; app/night.ts startNight calls it): its tuning, seed and
    *  style for everything made from here on (the watchdog's rebuilds too), the music's timeline anchored afresh at its game
    *  time 0, the effects re-pointed at its knobs and given fresh cues, and the safety valve's grace again. The same context. */
   setNight(tuning: Tuning, seed: number, style: MusicStyle = this.style): void {

@@ -56,7 +56,7 @@ export interface StoneView {
   falls: Map<number, { x: number; y: number; z: number; t0: number; land: number; was: boolean; hidden?: boolean }>;
   /** The loose sigils seen so far (by creature). */
   seen: Set<number>;
-  /** The music's spectrum this frame (main.ts sets it while `wantsSpectrum`: the ring showing; null: no audio running), and the bars'
+  /** The music's spectrum this frame (app/pageFrame.ts sets it while `wantsSpectrum`: the ring showing; null: no audio running), and the bars'
    *  eased levels. */
   spectrum: Uint8Array | null;
   wantsSpectrum: boolean;

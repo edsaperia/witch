@@ -1,7 +1,7 @@
 // A night's set in miniature, rendered: node tools/music-lab/set.mjs [island] [waves] [seed] [bars a wave] [encore bars] [bpm]
 // (default home, 10 waves (the hand-picked first home night), seed 7, 12 bars a wave (about 20 to 25 s), 16 bars of the
 // victory's encore; 120 bpm, the style's: the gameplay sets the game's). Renders tools/music-lab/set.ts offline in headless Chromium: every wave of the night (rules/musicSet.ts)
-// at its own tempo, then the victory. Prints each wave (its time, role, family, key, tempo, lead, bass, voice and sections);
+// at the one tempo, then the victory. Prints each wave (its time, role, family, key, energy, lead, bass, voice and sections);
 // fails on a script error, NaN, clipping or silence. Writes previews/music/sets/<island>-<waves>-<seed>.mp3 (the WAV with no
 // ffmpeg) and its wave list beside it (.txt).
 import { build } from "esbuild";

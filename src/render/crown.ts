@@ -38,7 +38,7 @@ function noiseTexture(): THREE.DataTexture {
 const smooth01 = (t: number) => t * t * (3 - 2 * t);
 /** The cut-away round her, its radius in screen pixels: the forest's own (canopyCutout: half its screenFraction of the screen's width,
  *  0.2 of it at 0.4), outdoors in every crown and indoors the oak's only cut (Ed, 2026-11-03: the house one room; it cleared her whole
- *  room). render/view/frameUniforms.ts (outdoors) and render/view.ts (indoors) both take it from here. */
+ *  room). render/view/frameUniforms.ts (outdoors) and render/view/frame.ts (indoors) both take it from here. */
 export const cutawayRadius = (cut: { screenFraction: number }, width: number): number => 0.5 * cut.screenFraction * width;
 /** How fast the oak fades away as she goes behind it and back as she comes out (1/s). */
 const BEHIND_EASE = 4;
@@ -314,7 +314,7 @@ export function warmAt(rooms: readonly { x: number; z: number; r?: number }[], x
   return Math.min(1.2, w);
 }
 
-/** The bark's tubes: a Catmull-Rom through each limb's knots, rings of `sides` round it about a third of its radius apart. */
+/** The bark's tubes: a Catmull-Rom through each limb's knots, rings of `sides` round it about a diameter apart (1.6 m at least). */
 function barkGeometry(c: Crown, rooms: HouseOutline["rooms"]): THREE.BufferGeometry {
   const pos: number[] = [], nrm: number[] = [], bark: number[] = [], warm: number[] = [], idx: number[] = [];
   for (const l of c.limbs) {
