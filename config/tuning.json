@@ -1145,9 +1145,10 @@
         },
         "hurry": 1.5,
         "tug": {
-          "perMetre": 0.022,
+          "perMetre": 0.05,
           "rise": 0.3,
-          "commit": 0.4
+          "hold": 0.4,
+          "ease": 0.15
         },
         "pop": {
           "fill": 2.5,
@@ -2527,6 +2528,11 @@
       "snooze": 5,
       "stretch": 3,
       "alarmMin": 0.4
+    },
+    "eyes": {
+      "shut": 0.5,
+      "open": 2.5,
+      "reopen": 8
     }
   },
   "arrive": {

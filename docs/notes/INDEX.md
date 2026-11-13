@@ -230,6 +230,7 @@ glossary; these are the prototype's), by note.
 - Bag design
 - Use prompt
 - Wake-up keys
+- Sleep eyelids
 - The Studio's instruments
 - Finds / travel trunk
 - Find area

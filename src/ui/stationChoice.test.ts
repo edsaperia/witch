@@ -152,14 +152,25 @@ describe("a station panel: moving only moves the focus, choosing changes her (Ed
     expect(wears(p.g, want)).toBe(true);
   });
 
-  it("the basin's makeup: a toggle chosen goes on, chosen again comes off; a colour for her lips puts her lipstick on (Ed, 2026-11-07)", () => {
-    const p = panel("basin"), L = p.lines(), mk = p.shelves.findIndex(s => s.id === "makeup"), row = L.findIndex(l => l.shelf === mk && l.kind === "items");
-    const lip = p.shelves[mk].items.find(i => i.id === "lipstick")!, col = p.shelves[mk].items.indexOf(lip);
-    expect(wears(p.g, lip)).toBe(false);
-    p.focus(row, col); expect(p.choose().look).toBeDefined(); expect(wears(p.g, lip)).toBe(true);
-    p.focus(row, col); expect(p.choose().look).toBeDefined(); expect(wears(p.g, lip)).toBe(false);
-    const grid = L.findIndex(l => l.shelf === mk && l.kind === "grid"); p.focus(grid, 3); p.choose();
-    expect(wears(p.g, lip)).toBe(true); expect((p.g.accessories as Record<string, unknown>).eyeshadow).toBe(false);
+  it("the basin's makeup: one colour grid, no cards; a colour puts lips and eyes both on in it, the same colour again takes both off (Ed, 2026-11-12)", () => {
+    // Ed, 2026-11-12: "have only one option which is both the lips and eyes together, the same colour. So the makeup box just has a
+    // colour picker, no sub-options"; "Pick again to remove"; "Drop blush".
+    const p = panel("basin"), L = p.lines(), mk = p.shelves.findIndex(s => s.id === "makeup"), s = p.shelves[mk], acc = () => p.g.accessories as Record<string, unknown>;
+    expect(L.filter(l => l.shelf === mk).map(l => l.kind)).toEqual(Array(5).fill("grid")); // (no item cards, no Lips / Eyes parts)
+    expect(s.items.some(i => Object.keys(i.set).includes("accessories.blush"))).toBe(false);
+    expect(acc().lipstick).toBeFalsy(); expect(acc().eyeshadow).toBeFalsy(); expect(p.colourShown(s)).toBe(false); // (off: no colour marked chosen)
+    const grid = L.findIndex(l => l.shelf === mk && l.kind === "grid"), row = L[grid].row!;
+    p.focus(grid, 3); expect(p.choose().look).toBeDefined();
+    expect(acc().lipstick).toBe(true); expect(acc().eyeshadow).toBe(true);
+    expect(p.g.palette!.lips).toEqual(ctx.swatch(s, 3, row)); expect(p.g.palette!.eyeshadow).toEqual(ctx.swatch(s, 3, row));
+    expect(p.colourShown(s)).toBe(true); expect(p.chosenSwatch(s)).toEqual([3, row]);
+    p.focus(grid + 1, 6); p.choose(); // (another colour while on: both change to it, still on)
+    expect(acc().lipstick).toBe(true); expect(acc().eyeshadow).toBe(true);
+    expect(p.g.palette!.lips).toEqual(ctx.swatch(s, 6, row + 1)); expect(p.g.palette!.eyeshadow).toEqual(ctx.swatch(s, 6, row + 1));
+    p.focus(grid + 1, 6); expect(p.choose().look).toBeDefined(); // (the colour she has on, again: both off)
+    expect(acc().lipstick).toBe(false); expect(acc().eyeshadow).toBe(false); expect(p.colourShown(s)).toBe(false);
+    p.focus(grid + 1, 6); p.choose(); // (and that colour once more, now off: both on again)
+    expect(acc().lipstick).toBe(true); expect(acc().eyeshadow).toBe(true);
     const teeth = L.findIndex(l => l.kind === "action"); p.focus(teeth, 0); expect(p.choose()).toEqual({ action: "teeth", unfound: false });
   });
 

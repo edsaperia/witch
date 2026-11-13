@@ -14,6 +14,10 @@ const pathsAt = (station: string) => {
   const shelves = shelvesAt(station); if (!shelves) return null;
   return new Set(shelves.flatMap(shelf => [...shelf.items.flatMap(item => Object.keys(item.set)), ...(shelf.colour ?? []).map(part => `palette.${part}`), ...(shelf.fit ?? []).map(axisPath)]));
 };
+/** Fields a station once sent that none does now: an older message's are dropped, not refused (the basin's blush: Ed, 2026-11-12,
+ *  "Drop blush"). An older makeup message, lipstick or eyeshadow alone or in two colours, merges as sent and is then made one colour
+ *  like a saved look (art/witchGenome.js oneMakeup, through appearance's upgrade). */
+const RETIRED = new Set(["accessories.blush"]);
 const get = (look: Appearance, path: string): unknown => path.split(".").reduce<unknown>((v, key) => (v as Appearance | undefined)?.[key], look);
 /** Only shelf-owned fields cross the wire, never a replacement full genome or player identity. */
 export function stationLook(station: string, value: unknown, shelf?: string): StationLook | null {
@@ -30,6 +34,7 @@ export function readStationLook(value: unknown): StationLook | null {
   if (shelf && !shelfAt(v.station as string, v.shelf)) return null;
   const changes: Record<string, LookValue> = {};
   for (const [path, item] of Object.entries(v.changes)) {
+    if (RETIRED.has(path) && typeof item === "boolean") continue;
     if (!paths.has(path)) return null;
     if (path.startsWith("palette.")) {
       if (!Array.isArray(item) || item.length !== 3 || item.some(n => typeof n !== "number" || !Number.isFinite(n) || n < 0 || n > 1)) return null;

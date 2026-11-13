@@ -9,8 +9,12 @@
 //   your creatures on the ground' without accidentally dropping them everywhere." "legend chains yank you back instead of popping out"
 // 1. The tug (treetops): each metre her step tries to take her past a chain's end (rules/chains.ts dragWitch's strain, before the drag
 //    cuts it; the tautest chain, not their sum, as the drag: "They don't stack") pulls her down tug.perMetre of the way to the ground
-//    (`tug`, 0 to 1: her height, her speed's blend and the canopy all 1 - tug of the way up, through her lift); not pulling she rises
-//    again at tug.rise a second; pulled down tug.commit of the way, her mode turns "descending" and the ordinary descent lands her.
+//    (`tug`, 0 to 1: her lift held at 1 - tug, so her height, her speed's blend, the canopy and the camera all follow the one eased
+//    curve an ordinary descent draws, only slower); not pulling she rises again at tug.rise a second, from however low; pulled all the
+//    way (tug 1) she's at the ground and her mode turns to ground there. Ed's playtest, 2026-11-13: "the transition from treetop to
+//    ground isn't smooth; she is pulled down some of the way, and then falls to the ground": till then the tug stopped 0.4 of the way
+//    down (tug.commit) and the ordinary descent dropped her the last 14 m in a third of a second. Her pull's pace is eased over
+//    tug.ease seconds (`rate`), so it comes on gently and one step's hitch in the chain (its creature a few cm late) doesn't show.
 // 2. The pop (on foot): pulling a youth's or an adult's taut chain (its drag cutting her motion away) fills a meter for the chain
 //    pulled hardest, one at a time, over pop.fill seconds of steady pulling (on past its end faster than it follows, PULL_FROM m/s or
 //    more); easing off drains it in pop.drain; the view slides that sigil out of her stack by it (render/leash/stack.ts); full, the sigil is put down
@@ -20,7 +24,7 @@
 // The lighter ground drag and the hurry are in rules/chains.ts. Pure arithmetic on the step's positions (lockstep-safe); no drawing.
 import { clamp } from "./random";
 import type { Tuning } from "./tuning";
-import { liftFor, type WitchState } from "./witch";
+import type { WitchState } from "./witch";
 import { LEGEND, type Creature } from "./creatures";
 
 export type TautKnobs = NonNullable<NonNullable<Tuning["leash"]["chain"]>["taut"]>;
@@ -33,7 +37,7 @@ export function tautKnobs(t: Tuning): TautKnobs | null {
 /** The tug's knobs, or null when off. */
 export function tugKnobs(t: Tuning): TautKnobs["tug"] | null {
   const K = tautKnobs(t)?.tug;
-  return K && K.perMetre > 0 && K.commit > 0 ? K : null;
+  return K && K.perMetre > 0 ? K : null;
 }
 
 /** Her pull past the chain's end under this speed (m/s) is her coasting round it, not pulling (a circle's curve at treetop speed
@@ -43,27 +47,29 @@ export const PULL_FROM = 2;
  *  is past the end, near treetop speed; capped, the tug never comes on much faster than a dragged youth's (about 12 m/s): never sudden. */
 export const PULL_MOST = 16;
 
-/** What else this step means: `hold`, the tug mustn't bring her down now (over a lake's water or a treehouse floor: she stays dipped
- *  till she's past it or lets off); `free`, nothing she does counts as pulling (thrown by a blow, or yanked). */
+/** What else this step means: `hold`, the tug mustn't bring her down now (over a lake's water or a treehouse floor: she's pulled no
+ *  lower than tug.hold of the way, and eases back up to it if she came over it lower, till she's past it or lets off); `free`,
+ *  nothing she does counts as pulling (thrown by a blow, or yanked). */
 export interface TugWhere { hold?: boolean; free?: boolean }
 
 /** Her tug after a step: `tug` before it, `strain` the metres her step pulled past the tautest chain (dragWitch), `pull` her broom's
- *  (the Canoe hull). Returns her body (lift held at 1 - tug of the way up; mode "descending" once it commits) and the tug left (0:
- *  none). Only in treetop mode: rising, descending or on foot it's 0. */
-export function stepTug(body: WitchState, tug: number, strain: number, dt: number, t: Tuning, pull = 1, where: TugWhere = {}): { body: WitchState; tug: number } {
+ *  (the Canoe hull). Returns her body (lift held at 1 - tug; at tug 1 she has arrived: lift 0, mode "descending", which the next
+ *  step's stepWitch turns to "ground" with no height left to lose, so the landing's own rules run: the rise cooldown, rules/game.ts)
+ *  and the tug left (0: none), with `rate`, her pull's eased pace (m/s past the chain's end; in: the last step's; 0 the moment she
+ *  lets off). Only in treetop mode: rising, descending or on foot it's 0. */
+export function stepTug(body: WitchState, tug: number, strain: number, dt: number, t: Tuning, pull = 1, where: TugWhere = {}, rate = 0): { body: WitchState; tug: number; rate: number } {
   const K = tugKnobs(t);
-  if (!K || body.mode !== "treetop" || body.perch) return { body, tug: 0 };
+  if (!K || body.mode !== "treetop" || body.perch) return { body, tug: 0, rate: 0 };
   const pulling = !where.free && strain > PULL_FROM * dt;
-  const commit = clamp(K.commit, 0, 1);
-  let next = pulling ? tug + K.perMetre * Math.min(strain, PULL_MOST * dt) * Math.max(0, pull) : tug - K.rise * dt;
-  next = clamp(next, 0, commit);
-  if (next >= commit && !where.hold) return { body: { ...body, mode: "descending" }, tug: 0 }; // (down she comes, from where she is: rules/witch.ts)
-  if (where.hold) next = Math.min(next, commit * 0.999); // (held just short of it)
-  if (next <= 0) return { body, tug: 0 };
-  // (her height 1 - tug of the way up: lift is eased, so liftFor inverts it; stepWitch's own climb back in treetop mode is never
-  // faster than riseTime, and the ease makes the last of it gentle)
-  const H = t.treetopHeight - t.groundHeight, lift = Math.min(body.lift, liftFor(t.treetopHeight - next * H, t));
-  return { body: { ...body, lift, ...(pulling ? { braking: true } : {}) }, tug: next }; // (pulling: her brake pose, the strain)
+  const up = tug - K.rise * dt, now = Math.min(strain, PULL_MOST * dt) / Math.max(dt, 1e-6);
+  rate = pulling ? rate + (now - rate) * (K.ease > 0 ? 1 - Math.exp(-dt / K.ease) : 1) : 0;
+  let next = pulling ? tug + K.perMetre * rate * dt * Math.max(0, pull) : up;
+  if (where.hold) { const most = clamp(K.hold, 0, 0.999); next = tug > most ? Math.max(most, up) : Math.min(next, most); } // (no lower than hold; lower already, back up to it)
+  next = clamp(next, 0, 1);
+  if (next >= 1) return { body: { ...body, mode: "descending", lift: 0 }, tug: 0, rate: 0 }; // (arrived: on the ground, no drop left)
+  if (next <= 0) return { body, tug: 0, rate };
+  // (stepWitch's own climb back in treetop mode is faster than tug.rise, so not pulling her lift follows 1 - tug up too)
+  return { body: { ...body, lift: Math.min(body.lift, 1 - next), ...(pulling ? { braking: true } : {}) }, tug: next, rate }; // (pulling: her brake pose, the strain)
 }
 
 /** The pop meter: which chain's sigil is sliding out of her stack, and how far (0 to 1). */

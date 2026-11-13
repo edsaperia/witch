@@ -1707,6 +1707,19 @@
    "decision": "Holds made deliberate and the transition made magical (Ed, 2026-11-12: \"make holds feel more deliberate\"; \"have a distinct flash with each transition in the sigil colour, and it burns into the ground with a glow and sparkles above the head\"); the old kept one switch away to A/B"
   },
   {
+   "name": "sleepdial",
+   "values": [
+    "1"
+   ],
+   "does": "The bed's hold shown as before, to compare: the ring over the bed filling as E is held, in place of her eyes closing (the screen's edges darkening and soft eyelids coming in from the top and bottom, shut when the hold is full, opening again if it's let go early); and no eyes opening as her alarm first wakes her. Only the drawing: the hold's length and rules are the same.",
+   "group": "compare",
+   "since": "2026-11-12",
+   "readIn": [
+    "src/render/eyelids.ts"
+   ],
+   "decision": "The sleep timer drawn as eyes closing (Ed, 2026-11-12: \"going to sleep zzz timer should be an eye closing vignette instead of a dial\"; \"we can also use this animation for waking up (in reverse)\"); the dial kept one switch away to A/B"
+  },
+  {
    "name": "tautchain",
    "values": [
     "1",
