@@ -1,0 +1,6 @@
+{
+  "reason": "Release 45: #2030 (claude/mesh-batch-f): Creature meshes, batch F (docs/plans/creature-mesh-rollout.md; Ed, 2026-11-13: \"The mesh builders work is good enough, please merge it when submitted.\"): the seven winged kinds, heron, raven, owl, penguin, moth, bat and dragonfly, are drawn from low-poly meshes on skeletons (art/mesh/species/<id>.js, with a bird's build, legs and feathered wing, a flipper, a bat's skin wing and an insect's body and wings new in art/mesh/kit) in place of today's drawings, at today's drawn heights (Ed, 2026-11-12: \"keep the sizes\"). The heron, raven and owl have an eight-frame walk or hop with planted feet and an eight-frame flight as their fast pace; the penguin a waddle at two paces; the moth, bat and dragonfly one eight-frame wingbeat stepped by the clock. No kind changes its id, its island or its numbers, so the rules are untouched.",
+  "frames": {
+    "*": "wherever a heron, raven, owl, penguin, moth, bat or dragonfly is in view: its new drawing, its walk's, flight's or wingbeat's frames and how fast they pass, where it is drawn along its way (up to a step behind), the frame it stops on, its sleeping pose (roosting, hunched, sitting, lying on its front, wings shut or wrapped), and what hangs over it by its height"
+  }
+}

@@ -13,6 +13,7 @@
 //   node tools/creature-mesh/sheet.mjs wolf lynx --out previews/creature-mesh/batch-a.png
 //     --level adult|baby|young|legend  which level's walk is shown (adult)
 //     --no-old                          leave out today's drawings (a kind with no generated creature)
+//     --fast                            a second strip: its fast pace's frames (a bird's flight: art/mesh/kit/bird.js)
 // Then publish it with tools/shots/push.mjs, as ever. It also prints each kind's gait, stride and heights.
 import fs from "node:fs";
 import path from "node:path";
@@ -24,7 +25,7 @@ import { DIM, GROUND, INK, Sheet } from "./draw.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url)), root = path.resolve(here, "../..");
 const args = process.argv.slice(2), flag = name => { const i = args.indexOf(name); if (i < 0) return undefined; const v = args[i + 1]; args.splice(i, 2); return v; };
-const out0 = flag("--out"), levelName = flag("--level") ?? "adult", noOld = args.includes("--no-old"), kinds = args.filter(a => !a.startsWith("--"));
+const out0 = flag("--out"), levelName = flag("--level") ?? "adult", noOld = args.includes("--no-old"), fast = args.includes("--fast"), kinds = args.filter(a => !a.startsWith("--"));
 const LEVELS = ["baby", "young", "adult", "legend"], walkLevel = LEVELS.indexOf(levelName);
 if (!kinds.length || walkLevel < 0) { console.error("usage: node tools/creature-mesh/sheet.mjs <kind>... [--out file.png] [--level adult] [--no-old]"); process.exit(2); }
 for (const k of kinds) if (!MESH_HEIGHTS[k]) { console.error(`${k} has no mesh (art/mesh/species/${k}.js)`); process.exit(2); }
@@ -43,7 +44,8 @@ for (const kind of kinds) {
 }
 const rowW = b => PAD + b.walks.reduce((s, w, l) => s + w.w + GAP + (b.old?.[l] ? b.old[l].w + GAP : 0), 0) + b.walks[3].w + GAP * 2 + b.naps.reduce((s, n) => s + n.w + GAP, 0);
 const stripW = b => PAD + (MESH_CYCLE + 1) * (b.W.w + 6);
-const width = Math.max(640, ...bands.map(b => Math.max(rowW(b), stripW(b)) + PAD)), height = bands.reduce((s, b) => s + 16 + b.tall + 2 + 16 + b.W.h + 2 + 22, PAD);
+const runs = b => fast && b.W.towards.length > MESH_CYCLE + 1;
+const width = Math.max(640, ...bands.map(b => Math.max(rowW(b), stripW(b)) + PAD)), height = bands.reduce((s, b) => s + 16 + b.tall + 2 + 16 + (b.W.h + 2 + 22) * (runs(b) ? 2 : 1), PAD);
 const sheet = new Sheet(width, height);
 let y = PAD;
 for (const b of bands) {
@@ -61,6 +63,10 @@ for (const b of bands) {
   const W = b.W, g2 = y + W.h + 2; sheet.line(PAD / 2, width - PAD / 2, g2, GROUND); x = PAD;
   for (let i = 0; i <= MESH_CYCLE; i++) { sheet.frame(W.towards[i], W.w, W.h, x, g2); sheet.text(i < MESH_CYCLE ? String(i) : "still", x, g2 + 4, i < MESH_CYCLE ? INK : DIM); x += W.w + 6; }
   y = g2 + 22;
+  // its fast pace: each frame of that cycle
+  if (runs(b)) { const g3 = y + W.h + 2; sheet.line(PAD / 2, width - PAD / 2, g3, GROUND); x = PAD;
+    for (let i = 0; i < MESH_CYCLE; i++) { sheet.frame(W.towards[MESH_CYCLE + 1 + i], W.w, W.h, x, g3); sheet.text(`fast ${i}`, x, g3 + 4, INK); x += W.w + 6; }
+    y = g3 + 22; }
 }
 const out = path.resolve(root, out0 ?? `previews/creature-mesh/sheet-${kinds.join("-")}.png`);
 fs.mkdirSync(path.dirname(out), { recursive: true });
