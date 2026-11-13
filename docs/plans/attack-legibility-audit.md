@@ -194,6 +194,20 @@ Speed alone isn't what makes a kind hard to hit: the stoat and the bee are as fa
 hard is the **hop-and-pause movement** (the hare's hopper style, the squirrel's hit-and-run into the trees). The pause is the window.
 It is about 0.5 s long, and nothing shows it.
 
+## The contact sheet
+
+`node tools/balance/attack-audit-sheet.cjs` makes it. Each row is one youth in the Fight Arena at the normal camera: on the left
+0.2 s before a wind-up at her lets go, on the right 0.12 s after a blow lands on her.
+
+- **The hit frames are nearly identical for all ten kinds:** her, a red claw slash and a small wobble.
+- **The wind-ups differ mostly by the animal itself.** The telegraphs are thin red dotted lanes or rings, hard to see on the dark
+  ground at this zoom.
+- **Missing frames:**
+  - the hedgehog's charge has no wind-up the sheet could catch (no telegraph: weak link 7);
+  - no snail blow landed on her within 45 s (its harm is the slow, which leaves no frame on her).
+- **What was caught:** the label under each kind says which wind-up the sheet caught (its own grammar attack, or a pack move). The
+  fox, bee and mole were caught on a generic pack nip, not their own attacks.
+
 ## Weakest links, ranked
 
 1. **Seven of ten kinds do nothing to her but the standard blow.** Every blow is 1 of 4 hits, 2.5 m of throw and 0.25 s of
