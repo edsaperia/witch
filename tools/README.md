@@ -144,7 +144,7 @@ node tools/inventory.mjs [--check]
 - [`stations/`](stations/README.md): 1 script — check.cjs
 - [`studio/`](studio/README.md): 1 script — check.cjs
 - [`telephone/`](telephone/README.md): 1 script — panel-input-proof.cjs
-- [`telescope/`](telescope/README.md): 2 scripts — moon.cjs, shots.cjs
+- [`telescope/`](telescope/README.md): 3 scripts — moon.cjs, ready.cjs, shots.cjs
 - [`view/`](view/README.md): 9 scripts — build-budget.cjs, chart-target.cjs, coast-first-use.cjs, landing-limit-preload.cjs, sail-timing.cjs, start-hold.cjs, travel-failure.cjs, travel-probe.cjs, worker-checkpoint.cjs
 - [`voice/`](voice/README.md): 2 scripts — chimera-notes.mjs, sing.mjs
 - [`witch/`](witch/README.md): 10 scripts — bags-sheet.mjs, brooms-gif.mjs, brooms-sheet.mjs, hats-sheet.mjs, longwear-sheet.mjs, nightie-sheet.mjs, slider-audit.mjs, sliders-sheet.mjs, thickness-sheet.mjs, walk-sheet.mjs

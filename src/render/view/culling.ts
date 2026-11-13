@@ -89,6 +89,9 @@ export function inView(v: View, x: number, z: number, w: number, h: number, marg
   if ((x - wx) ** 2 + (z - wz) ** 2 > far * far) return false;
   // On the rolling ground, and dropped by the bend (things far ahead come down into view): by the
   // bend now and the bend it is easing to (as she rises), as the culling isn't redone as it grows.
+  // (through the telescope, only what lies within its wedge: its view's width and telescope.wedge degrees either side, so it pans a
+  // while before the scenery is listed again: render/view/scenery.ts. First, being cheap: most of its circle lies outside it.)
+  if (v.telescope && !inWedge(v, x, z, w)) return false;
   const B = HEIGHT_UNIFORMS.uBend.value, ahead = aheadOf(x, z), g = groundHeight(x, z);
   const d1 = B.x * ahead * ahead, d2 = v.bendTo * ahead * ahead;
   // Past the bent ground's horizon, only what stands tall enough to show over the bulge is seen:
@@ -99,9 +102,7 @@ export function inView(v: View, x: number, z: number, w: number, h: number, marg
   // pop in at the horizon. #222's map: a baby wolf and a young fox 258 m ahead over the treetops.)
   const near = Math.max(0, ahead - horizonLead(v.camStep));
   if (ahead > 0 && !overHorizon(v, near, g + h + 2, B.x) && !overHorizon(v, near, g + h + 2, v.bendTo)) return false;
-  // (through the telescope, what lies within its wedge: its view's width and telescope.wedge degrees either side, so it pans a
-  // while before the scenery is listed again: render/view/scenery.ts)
-  if (v.telescope) return inWedge(v, x, z, w);
+  if (v.telescope) return true;
   v.box.min.set(x - w / 2 - margin, g - Math.max(d1, d2) - margin, z - h - margin);
   v.box.max.set(x + w / 2 + margin, g - Math.min(d1, d2) + h + margin, z + margin);
   return v.frustum.intersectsBox(v.box) || v.frustumTo.intersectsBox(v.box);

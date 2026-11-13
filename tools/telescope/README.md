@@ -10,6 +10,14 @@ The moon through the telescope: the built game at 960×600, seed 123, the moon m
 npm run build && node tools/telescope/moon.cjs <out dir> [seed]
 ```
 
+## `ready.cjs`
+
+The telescope ready as she wakes: the built game at 1280×800, a full load, the telescope opened wide the moment the night starts, at each of 8 bearings in turn, stepped at a fixed 1/60 s.
+
+```
+npm run build && node tools/telescope/ready.cjs [seed]
+```
+
 ## `shots.cjs`
 
 The telescope: the built game at 1280×800, seed 123 after three waves, stepped at a fixed 1/60 s.

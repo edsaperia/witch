@@ -102,7 +102,9 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     const TL = a4ViewHost.telescope && t.telescope, haze = LIGHT_UNIFORMS.uHazeRange.value;
     if (TL) { a4PrivateHost.hazeBeforeTelescope ??= haze.clone(); haze.set(TL.hazeNear, TL.hazeFar); } else if (a4PrivateHost.hazeBeforeTelescope) { haze.copy(a4PrivateHost.hazeBeforeTelescope); a4PrivateHost.hazeBeforeTelescope = null; }
     const canopyTo = TL ? TL.reach : g.witch.mode !== "ground" ? Math.min(t.haze.far, t.scenery.canopyReach ?? 0) : 0;
-    a4ViewHost.canopyNow = easeCanopyReach(a4ViewHost.canopyNow, canopyTo, a4ViewHost.renderEaseDt);
+    // (through the telescope at once, not eased: easing listed the whole forest again every few metres of it, 80 frames of
+    // listings before its far side was drawn; Ed, 2026-11-13, on its missing trees: "fix the others")
+    a4ViewHost.canopyNow = TL ? canopyTo : easeCanopyReach(a4ViewHost.canopyNow, canopyTo, a4ViewHost.renderEaseDt);
     LIGHT_UNIFORMS.uCanopyReach.value = a4ViewHost.canopyNow;
     const up = placeCamera(a4ViewHost, time, pose, repaintHeld);
 
@@ -299,7 +301,6 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     if (a4ViewHost.loadingMist && draw) { // (on the page's own clock, a frame counting at most a tenth of a second: not the house's slowed time)
       a4PrivateHost.updateLoadingMist(time);
     }
-    if (a4ViewHost.loadingMist) scopeMist(a4ViewHost, a4ViewHost.loadingMist, a4ViewHost.renderEaseDt);
     a4ViewHost.lightRings?.update(a4ViewHost.camera, w.x, witchHeight(w, t) + a4ViewHost.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(a4ViewHost, time, ht, onTreehouse, repaintHeld);
     a4ViewHost.partyStart.update(g.tuning, a4ViewHost.magic, ht, time);
@@ -337,6 +338,8 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     }
     a4ViewHost.time("witch");
     refresh(a4ViewHost);
+    // (after the listing: what it finished in this frame, the telescope's as it opens, has no mist over it at all)
+    if (a4ViewHost.loadingMist) scopeMist(a4ViewHost, a4ViewHost.loadingMist, a4ViewHost.renderEaseDt);
     a4ViewHost.time("refresh");
     a4PrivateHost.easeAppearing();
     drawCreatures(a4ViewHost, time);
@@ -409,12 +412,16 @@ const scopeEdges = new WeakMap<View, number>();
  *  (render/view/scenery.ts scopeCover; none listed for the telescope yet, everything past a few metres). Its edge rolls back out as
  *  the trees arrive (render/loadingFront.ts scopeEdge), on her clock (`dt`: the house's tenth isn't hers), at the loading front's
  *  speed or faster, so it has reached the trees' end within the loading mist's `fade` seconds; then, with the whole picture listed,
- *  it's off (nothing drawn for it), back only where a look turns past what's listed. */
+ *  it's off (nothing drawn for it), back only where a look turns past what's listed. A fallback: the listing is finished in the
+ *  frame the telescope opens in where the machine can (render/view/scenery.ts refresh), and then there's no mist at all. */
 function scopeMist(v: View, M: LoadingMist, dt: number): void {
   const T = v.telescope, L = v.game.tuning.loadingMist;
   if (!T || !L) { scopeEdges.delete(v); M.scope(null); return; }
   const c = scopeCover(v), f = focusOf(v), to = c ? c.reach + 2 * L.soft : 0;
-  const edge = scopeEdge(scopeEdges.get(v) ?? NaN, to, dt, Math.max(L.speed, to / Math.max(0.5, L.fade)));
+  // (the telescope just up with its picture listed already, the usual case, render/view/scenery.ts refresh: no mist to roll back;
+  // Ed, 2026-11-13, "fix the others": the mist is for a machine too slow for that, not a curtain over trees that are there)
+  const was = scopeEdges.get(v);
+  const edge = was === undefined && c ? to : scopeEdge(was ?? NaN, to, dt, Math.max(L.speed, to / Math.max(0.5, L.fade)));
   scopeEdges.set(v, edge);
   const done = !!c && edge >= to, off = c ? Math.abs(((T.heading - c.heading + 540) % 360) - 180) + telescopeHalfWidth(T.fov, v.width / v.height) : 360;
   if (done && off <= c.half) { M.scope(null); return; }

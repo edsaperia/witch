@@ -219,6 +219,9 @@ export class LoadingMist {
     this.mesh.visible = !this.done || !!s;
   }
 
+  /** Whether the telescope's mist is on (scope), for the tools (tools/telescope/ready.cjs). */
+  get scoped(): boolean { return (this.mat.uniforms.uScope.value as THREE.Vector4).w > 0; }
+
   /** When type `t`'s mist began to go (the page's clock, s; -1e9 clear from the start), or undefined: not yet. For the log. */
   beganAt(t: number): number | undefined { return this.began.get(t); }
   /** When the sea's began to go (as beganAt). */
