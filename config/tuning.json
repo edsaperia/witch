@@ -1516,6 +1516,31 @@
     "areaLock": 0.7,
     "rollerLead": 0.5
   },
+  "shotMarks": {
+    "on": true,
+    "time": 2.5,
+    "radius": 1.5,
+    "stand": 1,
+    "damage": 0.25,
+    "slow": 0.6,
+    "rough": 0.8,
+    "max": 24,
+    "merge": 1.5,
+    "kinds": {
+      "fire": "hurt",
+      "storm": "hurt",
+      "venom": "hurt",
+      "moonlight": "hurt",
+      "frost": "slow",
+      "water": "slow",
+      "shadow": "slow",
+      "earth": "rough",
+      "sand": "rough",
+      "wood": "rough",
+      "wind": "rough",
+      "bloom": "rough"
+    }
+  },
   "stoneIdle": {
     "on": true,
     "radius": 35,

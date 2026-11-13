@@ -1525,6 +1525,19 @@
    "decision": "Shots aim where she's going by default (Ed, 2026-11-12: option C with its sub-rules)"
   },
   {
+   "name": "shotmarks",
+   "values": [
+    "0"
+   ],
+   "does": "Wild creatures' shots leave no mark on the ground where they end, as before.",
+   "group": "compare",
+   "since": "2026-11-13",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Every shot marks the ground where it ends (Ed, 2026-11-13: \"Mark the ground\")"
+  },
+  {
    "name": "relief",
    "values": [
     "<strength>"
