@@ -23,6 +23,7 @@ import type { Creature } from "../../rules/creatures";
 import { restlessness } from "../../rules/dream";
 import { bossBreath, dances } from "../../rules/creatureCues";
 import type { CombatEventKind } from "../../rules/combat";
+import { HerEffects } from "../../render/herEffects";
 import type { Sfx } from "./sfx";
 import { beachOf, type Beach } from "../../rules/mapShape";
 import { dolphinLeaps, krakenRising } from "../../rules/seaLife";
@@ -128,6 +129,7 @@ export class SfxCues {
     this.tempoUp(h);
     this.hurt(h);
     this.knocked(h);
+    this.effectsOnHer(h);
     this.charges(h);
     this.relics(h);
     this.meadow(h);
@@ -293,6 +295,26 @@ export class SfxCues {
     }
     else if (this.primed && hp < this.hp && !down) { this.sfx.ouch(1 - Math.max(0, hp - 1) / Math.max(1, g.tuning.witchHealth.hits - 1)); this.duck(O.duck, O.duckTime); }
     this.hp = hp; this.down = down;
+  }
+
+  /** The effects on her (render/herEffects.ts; Ed, 2026-11-13: "Mark + tint + sound"): slowed or confused, its sound again every
+   *  sfx.effects.every seconds for exactly as long as it lasts; thrown hard, one skid as the throw begins. None with ?effectmarks=0. */
+  private her = new HerEffects();
+  private herNext = { slow: 0, confuse: 0 };
+  private herCount = { slow: 0, confuse: 0 };
+  private herThrown = false;
+  private effectsOnHer({ g }: Here): void {
+    const W = g.witches[0], E = g.tuning.sfx.effects;
+    if (!W || !E) return;
+    this.her.update(g, W, g.herTime);
+    for (const e of ["slow", "confuse"] as const) {
+      if (!this.her[e].on) { this.herNext[e] = 0; continue; }
+      if (g.herTime < this.herNext[e]) continue;
+      this.herNext[e] = g.herTime + Math.max(0.1, E.every) + (e === "confuse" ? E.every / 2 : 0) * (this.herNext[e] === 0 ? 1 : 0); // (the two never in step)
+      if (this.primed) { if (e === "slow") this.sfx.slowed(this.herCount.slow++); else this.sfx.confused(this.herCount.confuse++); }
+    }
+    if (this.her.thrown.on && !this.herThrown && this.primed) this.sfx.skid(this.her.metres);
+    this.herThrown = this.her.thrown.on;
   }
 
   /** Knocked back and stunned (#108): her knock as it begins (a thump and a whoosh by how far it

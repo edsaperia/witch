@@ -1,0 +1,4 @@
+{
+  "reason": "Effects shown on her and element-coloured telegraphs (Ed, 2026-11-13: \"Mark + tint + sound\"; \"Element coloured warning shape on the ground\", \"Let's try element colours and see\"): while she's slowed, stars circle her head and her steps leave drag marks; confused, a spiral over her head; thrown hard, a dust skid; her sprite tinted with the attacker's element colour; and every wild attack's warning shape drawn in its attacker's element colour, not red. The rules unchanged.",
+  "frames": { "*": "wherever a fight shows: its warning shapes in their element's colour, and the marks and tint on her while an effect is on her" }
+}

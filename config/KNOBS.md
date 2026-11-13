@@ -2238,6 +2238,9 @@ Code: `render/attackFeel.ts`
   1. Ed, 2026-11-13: "extend" (asked whether to extend the creatures' glow (2026-11-09: "The animal magic effects need to glow.") to her own magic, which #1928 had left with its own look; core 1, halo 1, pool 1, light 1; the look is still the magic brief's (Ed, 2026-10-28: "Pixel cores and dithered pixel halos, with a small smooth bloom over the top"))
   What glows: the party start's analyser ring at her decks (each bar's tip a core in the bar's colour with its halo and a pool on the floor, and one light over the decks); her blink (where she left, where she lands, and a streak of light with its pool along the way); the ley line's spark (core, halo, pool, light); the soundsystem spell's eruption, vortex and dome and a cleared challenge's; and pools on the ground under her flight trail (in the trail's colour, smaller and fainter the higher she flies), under party witches' swoops, placed sigils and the ring's dots (config/fx/native.json glow: no core where one would cover her or a sigil's glyph). core: how bright the glowing cores are (0 none). halo: the dithered halo round them (0 none). pool: the pools on the ground (0 none). light: her magic's real lights' strength (1 as before; 0 none). Lights: her magic shares the effects' six slots with the creatures' spells; her cast magic (the blink, the party start, the ley line's spark) takes the first two when both want slots, the creatures' spells keep at least four (attackFx.glow.lights caps them at five), and every light still eases in and out with the world's farthest lights making room, so none pops. Reduce flashing (the Settings page) halves core, halo, pool and light; nothing in the glow flickers.
   Code: `render/fx/spellGlow.ts`, `render/fx/batch.ts`, `render/fx/system.ts`, `render/leash/decksRing.ts`, `render/view/frame.ts`, `config/fx/native.json`
+- **`attackFx.telegraph`**: How bright each attack's warning shape on the ground is drawn in its attacker's element colour (gain 1: the colour as config/attack-look.json gives it; ?telegraphs=red draws them all red as before 13 November, to compare).
+  1. Ed, 2026-11-13: "Element coloured warning shape on the ground" … "Let's try element colours and see." (a trial, in place of his 2026-11-02 "the telegraph should be red" and 2026-11-03 "red telegraphs are right; red does mean warning"; the shapes and timings kept; each element's colour is its telegraph in config/attack-look.json, checked to be bright (danger.bright) and apart from every other's (danger.apart))
+  Code: `render/leash/attackLook.ts`, `config/attack-look.json`
 
 | knob | type | range |
 |---|---|---|
@@ -2267,6 +2270,29 @@ Code: `render/attackFeel.ts`
 | `attackFx.magicGlow.halo` | number | 0 to 4 |
 | `attackFx.magicGlow.pool` | number | 0 to 4 |
 | `attackFx.magicGlow.light` | number | 0 to 4 |
+| `attackFx.telegraph.gain` | number | 0 to … |
+
+### `effectMarks`
+
+What shows on her while an effect is on her: slowed, stars circle her head and her steps leave drag marks; confused, a spiral turns over her head; thrown hard, she leaves a dust skid; her sprite is tinted with the attacker's element colour, and each has a sound (sfx.effects).
+
+1. Ed, 2026-11-13: "Mark + tint + sound" … "Chain effect for slow might be confusing because we already have chains, something else?" … "Slow and stun are quite similar, maybe stun can be removed for slow and it uses circling stars" (after the attack legibility audit (#2069: the snail's slow was invisible on her); tint slow 0.35, confuse 0.3, thrown 0.25; 3 stars; a skid from a 4 m throw up (an ordinary blow's 2.5 m leaves none); a stagger has no mark of its own; Reduce flashing: steady tint at calm of its strength, slow marks, no twinkle; ?effectmarks=0 none of it, to compare)
+Code: `render/herEffects.ts`, `render/leash/combat.ts`, `render/leash/attackLook.ts`, `render/herTint.ts`
+
+| knob | type | range |
+|---|---|---|
+| `effectMarks.on` | boolean |  |
+| `effectMarks.tint.slow` | number | 0 to … |
+| `effectMarks.tint.confuse` | number | 0 to … |
+| `effectMarks.tint.thrown` | number | 0 to … |
+| `effectMarks.size` | number | 0 to … |
+| `effectMarks.slow.stars` | number | 0 to … |
+| `effectMarks.slow.dragEvery` | number | 0 to … |
+| `effectMarks.slow.dragLife` | number | 0 to … |
+| `effectMarks.thrown.minMetres` | number | 0 to … |
+| `effectMarks.thrown.dustEvery` | number | 0 to … |
+| `effectMarks.thrown.dustLife` | number | 0 to … |
+| `effectMarks.calm` | number | 0 to … |
 
 ### `combat`
 
@@ -3299,6 +3325,9 @@ The sound effects, all synthesised in the music's key [1]: volume over the music
 - **`sfx.rattle`**: A refused take-off's chains rattling: a short metallic jangle, louder for more chains (platform/audio/chimes.ts rattle).
   1. Ed, 2026-11-03: "When you try and take off but you're weighed down by creatures, the chains rattle."
   Code: `platform/audio/chimes.ts`
+- **`sfx.effects`**: The sounds of the effects on her, under the music: a low sagging note while she's slowed, a thin wobbling tone while she's confused, a scrape of grit when she's thrown hard; volume for all three, each one's own share, and every, the seconds between a lasting effect's repeats.
+  1. Ed, 2026-11-13: "Mark + tint + sound" (volume 0.5, each share 1, every 0.55 s; through the sound effects' bus and voice budget; none with ?effectmarks=0)
+  Code: `platform/audio/herEffects.ts`, `platform/audio/sfxCues.ts`, `render/herEffects.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -3443,6 +3472,11 @@ The sound effects, all synthesised in the music's key [1]: volume over the music
 | `sfx.knock.whoosh` | number | 0 to … |
 | `sfx.knock.twinkle` | number | 0 to … |
 | `sfx.knock.twinkleEvery` | number | 0 to … |
+| `sfx.effects.volume` | number | 0 to … |
+| `sfx.effects.slow` | number | 0 to … |
+| `sfx.effects.confuse` | number | 0 to … |
+| `sfx.effects.skid` | number | 0 to … |
+| `sfx.effects.every` | number | 0 to … |
 | `sfx.charge.volume` | number | 0 to … |
 | `sfx.charge.bellow` | number | 0 to … |
 | `sfx.charge.hooves` | number | 0 to … |

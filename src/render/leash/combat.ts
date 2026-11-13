@@ -19,6 +19,8 @@ import { SPECIES_ATTACKS } from "../../rules/attacks/species";
 import type { Dress } from "./attackLook";
 import { drawSpells } from "./attackSpells";
 import { comfort } from "../comfort";
+import { EFFECT_MARKS, HerEffects } from "../herEffects";
+import { HER_TINT } from "../herTint";
 import { lungeWarning, lungeWave } from "../../rules/lungeMotion";
 import { waitingProfile } from "../../rules/combatSpacing";
 import type { Attack } from "../../rules/combat/data";
@@ -41,6 +43,40 @@ function dressOf(species: string, level: number, tint: { r: number; g: number; b
   let d = dresses.get(key);
   if (!d) { const fx = magicNamed(SPECIES_ATTACKS[species]?.body?.element); dresses.set(key, (d = { el: elementOf(species), level, tint: tint ? [tint.r, tint.g, tint.b] : null, ...(fx ? { fx } : {}) })); }
   return d;
+}
+
+/** Her effects as the view follows them, and what they've left on the ground: her slowed steps' drag marks, a skid's dust. */
+const HER = new HerEffects();
+const herLeft: { kind: "drag" | "dust"; x: number; z: number; ux: number; uz: number; at: number; el: string }[] = [];
+let herLast: { x: number; z: number } | null = null, herGame: unknown = null;
+const herDress = (el: string): Dress => { let d = dresses.get(`her|${el}`); if (!d) dresses.set(`her|${el}`, (d = { el, level: 2 })); return d; };
+/** Draws the effects on her (render/herEffects.ts) and sets her sprite's tint (render/herTint.ts): each mark for exactly as long as
+ *  its effect; what a step or a skid left behind fades over effectMarks' dragLife and dustLife. Reduce flashing: the marks turn
+ *  slowly without twinkling and the tint is steady, at effectMarks.calm of its strength. */
+function drawHerEffects(lv: LeashView, time: number, hatTop: number): void {
+  const g = lv.game, W = g.witches[0], w = g.witch, M = g.tuning.effectMarks, calm = comfort.reduceFlashing;
+  if (herGame !== g) { herGame = g; herLeft.length = 0; herLast = null; }
+  HER.update(g, W, time);
+  const tinting = lookOn && M ? HER.tinting() : null;
+  if (!tinting || !M) HER_TINT.value.set(0, 0, 0, 0);
+  else {
+    const c = lv.look.colours(herDress(HER[tinting].el))[2], pulse = calm ? M.calm : 0.85 + 0.15 * Math.sin(time * 6);
+    HER_TINT.value.set(c[0], c[1], c[2], Math.max(0, Math.min(1, M.tint[tinting] * pulse)));
+  }
+  if (!M || !lookOn) { herLeft.length = 0; return; }
+  const size = M.size, moved = herLast ? Math.hypot(w.x - herLast.x, w.z - herLast.z) : 0;
+  if (HER.slow.on) {
+    lv.look.herStars(herDress(HER.slow.el), w.x, hatTop, w.z, time, M.slow.stars, size, calm);
+    if (herLast && moved >= M.slow.dragEvery && moved < 5) { herLeft.push({ kind: "drag", x: w.x, z: w.z, ux: (w.x - herLast.x) / moved, uz: (w.z - herLast.z) / moved, at: time, el: HER.slow.el }); herLast = { x: w.x, z: w.z }; }
+  }
+  if (HER.confuse.on) lv.look.herSpiral(herDress(HER.confuse.el), w.x, hatTop + (HER.slow.on ? 0.5 * size : 0), w.z, time, size, calm);
+  if (HER.thrown.on && herLast && moved >= M.thrown.dustEvery && moved < 8) { herLeft.push({ kind: "dust", x: w.x, z: w.z, ux: 0, uz: 0, at: time, el: HER.thrown.el }); herLast = { x: w.x, z: w.z }; }
+  if (!herLast || moved >= 8 || (!HER.slow.on && !HER.thrown.on)) herLast = { x: w.x, z: w.z };
+  for (let i = herLeft.length - 1; i >= 0; i--) {
+    const L = herLeft[i], life = L.kind === "drag" ? M.slow.dragLife : M.thrown.dustLife, k = (time - L.at) / Math.max(0.05, life);
+    if (k >= 1 || k < 0) { herLeft.splice(i, 1); continue; }
+    if (L.kind === "drag") lv.look.herDrag(herDress(L.el), L.x, L.z, L.ux, L.uz, 1 - k, size); else lv.look.herDust(herDress(L.el), L.x, L.z, k, size * 1.4);
+  }
 }
 
 /** Pack combat's placeholder tints (combat.md: colour says the effect: red hurts, blue slows, yellow stuns, violet confuses, green
@@ -240,7 +276,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
         const hi = legend ? Math.max(8, Math.hypot(L.tx - L.fx, L.tz - L.fz) * 0.2) : 5, y = 1 + Math.sin(k * Math.PI) * hi, T = Math.max(0.01, L.lands - L.at);
         lv.look.core(d, sh.x, y, sh.z, (L.tx - L.fx) / T, (Math.cos(k * Math.PI) * Math.PI * hi) / T, (L.tz - L.fz) / T, time, sh.id);
         // where it lands: the danger frame's ring, closing as it falls (a party animal's: a faint ring in its neon)
-        if (wild) lv.look.ring(L.tx, L.tz, sh.radius, k, L.lands - time, time, legend && up);
+        if (wild) { lv.look.danger(d); lv.look.ring(L.tx, L.tz, sh.radius, k, L.lands - time, time, legend && up); }
         else for (let i = 0; i < 24; i++) { const a = (i / 24) * Math.PI * 2; lv.flat.add(L.tx + Math.cos(a) * sh.radius, 0, L.tz + Math.sin(a) * sh.radius * 0.8, 0.3, dot, col.r, col.g, col.b, 0.2 + 0.4 * k); }
         continue;
       }
@@ -301,15 +337,19 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
     for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; lv.flat.add(m.x + Math.cos(a) * 1.2 * vsz, 0, m.z + Math.sin(a) * 0.9 * vsz, 0.45 * vsz, dot, 0.75, 0.45, 1, lv.look.lift(0.9) * left); }
     for (let i = 0; i < 16; i++) { const a = hash2(m.id, i, 61) * Math.PI * 2, ph = (time * 0.8 + i / 16) % 1; lv.standing.add(m.x + Math.cos(a) * 0.5 * vsz, 0.2 + ph * 2, m.z + Math.sin(a) * 0.35 * vsz, 0.6 * vsz, dot, 0.6, 0.35, 0.95, lv.look.lift(0.9) * fl * left * (1 - ph * 0.5)); }
   }
-  // Her aim confused (the stoat's war dance): a violet swirl round her head.
-  if (W.confused && time < W.confused.until && lookOn) lv.look.motif("confuse", null, w.x, 1.8, w.z, time, 0);
-  else if (W.confused && time < W.confused.until) for (let i = 0; i < 6; i++) { const a = time * 5 + (i / 6) * Math.PI * 2; lv.standing.add(w.x + Math.cos(a) * 0.6, 2 + Math.sin(a * 2) * 0.12, w.z + Math.sin(a) * 0.45, 0.22, dot, 0.78, 0.45, 1, 0.9); }
+  // The effects on her (render/herEffects.ts; Ed, 2026-11-13: "Mark + tint + sound"): slowed, stars circling her head and her
+  // steps' drag marks; confused, a spiral over her head; thrown hard, a dust skid where she slides; her sprite tinted with the
+  // newest one's element. ?effectmarks=0: her confusion's pale swirl only, as before.
+  drawHerEffects(lv, time, hatTop);
+  if (!EFFECT_MARKS && W.confused && time < W.confused.until && lookOn) lv.look.motif("confuse", null, w.x, 1.8, w.z, time, 0);
+  else if (!lookOn && W.confused && time < W.confused.until) for (let i = 0; i < 6; i++) { const a = time * 5 + (i / 6) * Math.PI * 2; lv.standing.add(w.x + Math.cos(a) * 0.6, 2 + Math.sin(a * 2) * 0.12, w.z + Math.sin(a) * 0.45, 0.22, dot, 0.78, 0.45, 1, 0.9); }
   for (const c of g.creatures) {
     if (c.gone || !close(c.x, c.z, c.level === 3 ? far : near)) continue;
     // In a pack (rules/combat/packs.ts): glowing for its tell, white motes rising round it; faking a lunge (the fox's feint), a red ring
     // tightening as a real one's would; in its shell (the snail), a steel ring.
     if (c.packGlow !== undefined && time < c.packGlow) { const top = lv.tops.get(c.id) ?? 1.2; for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2 + time * 3, ph = (time * 2 + i / 8) % 1; lv.standing.add(c.x + Math.cos(a) * 0.7, 0.2 + ph * top, c.z + Math.sin(a) * 0.5, 0.25, dot, 1, 1, 1, 0.9 * (1 - ph)); } }
     const wildC = !c.leashed && c.legendState !== "happy", danger = lookOn && wildC, top = lv.tops.get(c.id) ?? 1.4;
+    if (danger) lv.look.danger(dressOf(c.species, c.level, null)); // (its warning shapes in its element's colour: Ed, 2026-11-13)
     if (c.feintUntil !== undefined && time < c.feintUntil && danger) lv.look.tell(c.x, c.z, top, 1.2, Math.max(0, Math.min(1, 1 - (c.feintUntil - time) / 0.45)), time);
     else if (c.feintUntil !== undefined && time < c.feintUntil) { const k = 1 - (c.feintUntil - time) / 0.45, R = 1.8 - 0.9 * Math.max(0, Math.min(1, k)); for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; lv.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.35, dot, 1, 0.3, 0.3, 0.4 + 0.5 * k); } }
     if (c.packShell !== undefined) for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; lv.flat.add(c.x + Math.cos(a) * 1.2, 0, c.z + Math.sin(a) * 0.9, 0.4, dot, 0.75, 0.8, 0.9, 0.8); }

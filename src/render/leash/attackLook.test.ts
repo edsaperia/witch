@@ -177,3 +177,38 @@ describe("the danger frame is red everywhere (Ed, 2026-11-02: \"the telegraph sh
     expect(bad).toEqual([]);
   });
 });
+
+describe("the warning shapes in their attacker's element colour (Ed, 2026-11-13: \"Let's try element colours and see\")", () => {
+  /** What a ring telegraph puts on the ground: each quad's cell (by its uv) and colour. */
+  const ring = (d: Dress | null) => {
+    const { look } = recorder(NEW), seen: { uv: number[]; rgb: number[] }[] = [];
+    look.paintFlat.add = ((_x: number, _y: number, _z: number, _s: number, uv: number[], r: number, g: number, b: number) => { seen.push({ uv, rgb: [r, g, b] }); }) as never;
+    look.danger(d);
+    look.telegraph({ kind: "ring", shape: { x: 0, z: 0, r: 3 }, start: 0, fire: 1 }, 0.5);
+    return { look, seen };
+  };
+  it("draws a dressed attack's ring in its element's telegraph colour, on the white pieces", () => {
+    for (const el of ["venom", "earth", "frost"]) {
+      const { look, seen } = ring({ el, level: 2 }), want = rgbOf(ATTACK_LOOK.elements[el].telegraph);
+      expect(seen.length).toBeGreaterThan(10);
+      for (const q of seen) expect(q.rgb).toEqual(want);
+      expect(seen.some(q => q.uv === look.uv("warnW"))).toBe(true);
+      expect(seen.some(q => q.uv === look.uv("warn"))).toBe(false);
+    }
+  });
+  it("draws an undressed one red as before (what ?telegraphs=red draws for all), and begin() goes back to red", () => {
+    const { look, seen } = ring(null);
+    expect(seen.some(q => q.uv === look.uv("warn"))).toBe(true);
+    expect(seen.some(q => q.uv === look.uv("warnW"))).toBe(false);
+    for (const q of seen) expect(q.uv === look.uv("warn") ? q.rgb : DANGER).toEqual(q.uv === look.uv("warn") ? [1, 1, 1] : DANGER);
+    look.danger(wild); look.begin(NEW);
+    const again: number[][] = [];
+    look.paintFlat.add = ((_x: number, _y: number, _z: number, _s: number, _uv: number[], r: number, g: number, b: number) => { again.push([r, g, b]); }) as never;
+    look.telegraph({ kind: "lane", shape: { x: 0, z: 0, ax: 4, az: 0, width: 1 }, start: 0, fire: 1 }, 0.5);
+    expect(again.every(c => c[0] === 1 && c[1] === 1 && c[2] === 1)).toBe(true); // (the baked red pieces, untinted)
+  });
+  it("bakes every danger piece in white too, and the skid's dust", () => {
+    const A = attackLookAtlas(ATTACK_LOOK);
+    for (const c of ["warnW", "chevW", "pipW", "tickW", "bracketW0", "bracketW3", "flashW0", "flashW2", "dust0", "dust2"]) expect(A.cells[c], c).toBeTruthy();
+  });
+});

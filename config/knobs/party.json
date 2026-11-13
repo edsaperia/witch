@@ -1354,6 +1354,22 @@
       "links": [
         "platform/audio/chimes.ts"
       ]
+    },
+    "sfx.effects": {
+      "what": "The sounds of the effects on her, under the music: a low sagging note while she's slowed, a thin wobbling tone while she's confused, a scrape of grit when she's thrown hard; volume for all three, each one's own share, and every, the seconds between a lasting effect's repeats.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-13",
+          "quote": "Mark + tint + sound",
+          "rest": "volume 0.5, each share 1, every 0.55 s; through the sound effects' bus and voice budget; none with ?effectmarks=0"
+        }
+      ],
+      "links": [
+        "platform/audio/herEffects.ts",
+        "platform/audio/sfxCues.ts",
+        "render/herEffects.ts"
+      ]
     }
   }
 }
