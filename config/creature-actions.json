@@ -625,16 +625,10 @@
     ],
     "hare": [
       {
-        "id": "strike",
+        "id": "stamp",
         "delivery": "melee",
-        "weight": 0.25,
+        "weight": 0.85,
         "youngWeight": 1
-      },
-      {
-        "id": "moon-dust bolt",
-        "delivery": "ranged",
-        "weight": 0.6,
-        "youngWeight": 1.15
       },
       {
         "id": "call",

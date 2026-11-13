@@ -12,6 +12,8 @@
 // slowed, staggered and confused a minute, and metres knocked back a minute; the telegraph kinds and tell poses seen (grammar casts
 // at her); the actions started (windups, specials, own moves). For chase: 💌s landed a minute, share landed, seconds to the first
 // stun, and the target's speed when a 💌 lands vs its median speed (a window shows as hits landing while it's slow).
+// Since the hare's stamp and sit and the badger's long throw (Ed, 2026-11-13: "Stamp, then sit 0.8 s"; "20m"): the sits a minute (a
+// creature's `sitUntil` set: rules/combat.ts), the 💌s landing on one while it sits, and the median metres one blow throws her.
 // No game change: tools only.
 //   node tools/balance/attackaudit.mjs [--kinds hare,stoat,...] [--levels 1] [--ns 1,3] [--bots still,strafe,dodger,chase]
 //                                     [--seeds 3] [--time 60] [--react 0.15] [--chaseAt 12] [--json out.json]
@@ -96,8 +98,8 @@ function run(seed, sp, n, level, bot) {
   g.byArea = null;
   const mine = new Set(ids), dt = 1 / 60, F = Math.round(TIME / dt);
   const R = { blows: 0, paths: {}, slowS: 0, staggerS: 0, confusedS: 0, knockM: 0, slows: 0, telegraphs: {}, poses: {}, actions: {}, blinks: 0,
-    sent: 0, landed: 0, firstStun: Infinity, hitSpeeds: [], speeds: [], stillShare: 0, windows: [] };
-  const seenTg = new Set(), seenTell = new Set(), seenWind = new Set();
+    sent: 0, landed: 0, sits: 0, sitHits: 0, throws: [], firstStun: Infinity, hitSpeeds: [], speeds: [], stillShare: 0, windows: [] };
+  const seenTg = new Set(), seenTell = new Set(), seenWind = new Set(), satTill = new Map();
   let lastHp = w.health.hp, sdir = 1, lastFlip = 0, knockAt = -Infinity, slowWas = false, undo = null, stillRun = 0;
   for (let f = 0; f < F; f++) {
     if (!undo && g.combat) undo = observeAttacks(g.combat, o => {
@@ -141,7 +143,8 @@ function run(seed, sp, n, level, bot) {
     if (slowNow) R.slowS += dt; if (slowNow && !slowWas) R.slows++; slowWas = slowNow;
     if (stunned(w.knock, ht)) R.staggerS += dt;
     if (w.confused && ht < w.confused.until) R.confusedS += dt;
-    if (w.knock && w.knock.at !== knockAt && Number.isFinite(w.knock.at)) { knockAt = w.knock.at; R.knockM += Math.hypot(w.knock.kx, w.knock.kz) / t.witch.knock.ease; }
+    if (w.knock && w.knock.at !== knockAt && Number.isFinite(w.knock.at)) { knockAt = w.knock.at; const m = Math.hypot(w.knock.kx, w.knock.kz) / t.witch.knock.ease; R.knockM += m; R.throws.push(m); }
+    for (const id of ids) { const u = g.creatures[id].sitUntil; if (u !== undefined && satTill.get(id) !== u) { satTill.set(id, u); R.sits++; } } // (a new sit begun)
     // what she was shown
     const S = g.combat.spells;
     for (const tg of S?.telegraphs ?? []) if (mine.has(tg.source) && !seenTg.has(tg.id)) { seenTg.add(tg.id); R.telegraphs[tg.kind] = (R.telegraphs[tg.kind] ?? 0) + 1; }
@@ -153,7 +156,7 @@ function run(seed, sp, n, level, bot) {
     for (const e of g.combat.events) if (mine.has(e.id) && e.at === time && ["packSpecial", "charged", "leapt", "burrowed", "swooped", "packPull", "packMind"].includes(e.kind)) R.actions[e.kind] = (R.actions[e.kind] ?? 0) + 1;
     // pursuit
     if (bot === "chase") {
-      for (const e of w.invites.events) { if (e.kind === "shot") R.sent++; if (e.kind === "hit" && mine.has(e.id)) { R.landed++; const c = g.creatures[e.id]; R.hitSpeeds.push(Math.hypot(c.vx ?? 0, c.vz ?? 0)); } }
+      for (const e of w.invites.events) { if (e.kind === "shot") R.sent++; if (e.kind === "hit" && mine.has(e.id)) { R.landed++; const c = g.creatures[e.id]; if (c.sitUntil !== undefined && time < c.sitUntil) R.sitHits++; R.hitSpeeds.push(Math.hypot(c.vx ?? 0, c.vz ?? 0)); } }
       if (!Number.isFinite(R.firstStun) && ids.some(i => g.creatures[i].dazed || g.creatures[i].leashed || g.creatures[i].state === "happy")) R.firstStun = time;
     }
     if (near) { // (its speed while near her: how often it stands still, and for how long at a time)
@@ -169,22 +172,22 @@ function run(seed, sp, n, level, bot) {
 const fmt = (o, k = 1) => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([n, v]) => `${n} ${+(v / k).toFixed(1)}`).join(", ") || "–";
 const out = [], perMin = x => (x / (TIME * SEEDS)) * 60;
 console.log(`attack audit: ${SEEDS} seeds × ${TIME} s, react ${REACT} s; per minute unless said\n`);
-console.log("| kind | lvl | n | bot | blows/min | blows by path | slowed s/min | staggered s/min | confused s/min | knocked m/min | blinks/min | telegraphs/min | tells/min | actions/min |");
-console.log("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|");
+console.log("| kind | lvl | n | bot | blows/min | blows by path | slowed s/min | staggered s/min | confused s/min | knocked m/min | blinks/min | telegraphs/min | tells/min | actions/min | sits/min | median throw m |");
+console.log("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|");
 for (const sp of KINDS) for (const level of LEVELS) for (const n of NS) for (const bot of BOTS) {
   const rs = Array.from({ length: SEEDS }, (_, s) => run(s + 1, sp, n, level, bot));
   const sum = k => rs.reduce((a, r) => a + r[k], 0), merge = k => rs.reduce((a, r) => { for (const [x, v] of Object.entries(r[k])) a[x] = (a[x] ?? 0) + v; return a; }, {});
   const k = (TIME * SEEDS) / 60;
-  const row = { kind: sp, level, n, bot, blows: perMin(sum("blows")), paths: merge("paths"), slow: perMin(sum("slowS")), stagger: perMin(sum("staggerS")), confused: perMin(sum("confusedS")), knock: perMin(sum("knockM")), blinks: perMin(sum("blinks")),
+  const row = { kind: sp, level, n, bot, blows: perMin(sum("blows")), paths: merge("paths"), slow: perMin(sum("slowS")), stagger: perMin(sum("staggerS")), confused: perMin(sum("confusedS")), knock: perMin(sum("knockM")), blinks: perMin(sum("blinks")), sits: perMin(sum("sits")), throwM: median(rs.flatMap(r => r.throws)),
     telegraphs: merge("telegraphs"), poses: merge("poses"), actions: merge("actions"), stillShare: mean(rs.map(r => r.stillShare)), windows: rs.flatMap(r => r.windows), speeds: rs.flatMap(r => r.speeds) };
-  if (bot === "chase") Object.assign(row, { sent: perMin(sum("sent")), landed: perMin(sum("landed")), firstStun: median(rs.map(r => r.firstStun)), hitSpeed: median(rs.flatMap(r => r.hitSpeeds)), medSpeed: median(row.speeds) });
+  if (bot === "chase") Object.assign(row, { sent: perMin(sum("sent")), landed: perMin(sum("landed")), sitHits: perMin(sum("sitHits")), firstStun: median(rs.map(r => r.firstStun)), hitSpeed: median(rs.flatMap(r => r.hitSpeeds)), medSpeed: median(row.speeds) });
   out.push({ ...row, windows: undefined, speeds: undefined, medWindow: median(row.windows), windowsPerMin: row.windows.length / k });
-  console.log(`| ${sp} | ${level} | ${n} | ${bot} | ${row.blows.toFixed(1)} | ${fmt(row.paths, k)} | ${row.slow.toFixed(1)} | ${row.stagger.toFixed(1)} | ${row.confused.toFixed(1)} | ${row.knock.toFixed(0)} | ${row.blinks.toFixed(0)} | ${fmt(row.telegraphs, k)} | ${fmt(row.poses, k)} | ${fmt(row.actions, k)} |`);
+  console.log(`| ${sp} | ${level} | ${n} | ${bot} | ${row.blows.toFixed(1)} | ${fmt(row.paths, k)} | ${row.slow.toFixed(1)} | ${row.stagger.toFixed(1)} | ${row.confused.toFixed(1)} | ${row.knock.toFixed(0)} | ${row.blinks.toFixed(0)} | ${fmt(row.telegraphs, k)} | ${fmt(row.poses, k)} | ${fmt(row.actions, k)} | ${row.sits.toFixed(1)} | ${Number.isNaN(row.throwM) ? "–" : row.throwM.toFixed(1)} |`);
 }
 console.log("\n### pursuit (chase bot) and windows (any bot: the nearest within 30 m, standing still = under 2 m/s)\n");
-console.log("| kind | lvl | n | bot | 💌 sent/min | landed/min | landed share | first stun s | its median speed m/s | its speed at a landed 💌 | still share | still spells/min | median still spell s |");
-console.log("|---|---|---|---|---|---|---|---|---|---|---|---|---|");
-for (const r of out) if (r.bot === "chase" || r.bot === "strafe") console.log(`| ${r.kind} | ${r.level} | ${r.n} | ${r.bot} | ${r.sent?.toFixed(0) ?? "–"} | ${r.landed?.toFixed(1) ?? "–"} | ${r.sent ? Math.round((100 * r.landed) / r.sent) + "%" : "–"} | ${r.firstStun === undefined ? "–" : Number.isFinite(r.firstStun) ? r.firstStun.toFixed(1) : "never"} | ${r.medSpeed?.toFixed(1) ?? "–"} | ${r.hitSpeed !== undefined && !Number.isNaN(r.hitSpeed) ? r.hitSpeed.toFixed(1) : "–"} | ${Math.round(r.stillShare * 100)}% | ${r.windowsPerMin.toFixed(1)} | ${Number.isNaN(r.medWindow) ? "–" : r.medWindow.toFixed(2)} |`);
+console.log("| kind | lvl | n | bot | 💌 sent/min | landed/min | landed share | first stun s | its median speed m/s | its speed at a landed 💌 | still share | still spells/min | median still spell s | sits/min | 💌 landed in a sit/min |");
+console.log("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|");
+for (const r of out) if (r.bot === "chase" || r.bot === "strafe") console.log(`| ${r.kind} | ${r.level} | ${r.n} | ${r.bot} | ${r.sent?.toFixed(0) ?? "–"} | ${r.landed?.toFixed(1) ?? "–"} | ${r.sent ? Math.round((100 * r.landed) / r.sent) + "%" : "–"} | ${r.firstStun === undefined ? "–" : Number.isFinite(r.firstStun) ? r.firstStun.toFixed(1) : "never"} | ${r.medSpeed?.toFixed(1) ?? "–"} | ${r.hitSpeed !== undefined && !Number.isNaN(r.hitSpeed) ? r.hitSpeed.toFixed(1) : "–"} | ${Math.round(r.stillShare * 100)}% | ${r.windowsPerMin.toFixed(1)} | ${Number.isNaN(r.medWindow) ? "–" : r.medWindow.toFixed(2)} | ${r.sits.toFixed(1)} | ${r.sitHits?.toFixed(1) ?? "–"} |`);
 const json = arg("json", "");
 if (json) writeFileSync(json, JSON.stringify(out, null, 1));
 await close();

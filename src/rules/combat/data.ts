@@ -8,6 +8,7 @@ import { type State } from "../creatureStates";
 import { FIGHT } from "../movement";
 import { sectionOf, speciesWith } from "../creatureConfig";
 import { type Tuning } from "../tuning";
+import type { Blow } from "../knock";
 
 export type Delivery = "melee" | "shot" | "quake" | "lob" | "beam" | "pulse";
 export type Modifier = "none" | "knockback" | "slow";
@@ -338,7 +339,7 @@ export interface CombatWorld {
   /** A party animal is busy (eating, evolving): it doesn't fight. */
   busy: (id: number) => boolean;
   /** A witch is hit (one point, whatever hits her), and thrown by the blow (rules/knock.ts). */
-  hitWitch: (id: number, time: number, blow?: { x: number; z: number; knockback: number; rams: boolean }) => void;
+  hitWitch: (id: number, time: number, blow?: Blow) => void;
   /** Optional actual witch state for detached accepted-outcome diagnostics; absent means unknown. */
   witchHitState?: (id: number) => import("../attackObservation").WitchHitState | null;
   /** A party animal is lost for the run. */

@@ -1153,6 +1153,13 @@ export type SchemaTuning = {
     "ring": number;
     "window": number;
   };
+  "hareStamp": {
+    "sit": number;
+  };
+  "badgerBarge": {
+    "throw": number;
+    "stagger": number;
+  };
   "creatureMomentum": {
     "on": boolean;
     "turn": number;

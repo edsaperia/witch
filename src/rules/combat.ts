@@ -375,6 +375,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (!fighting(c) || w.asleep(c) || (c.leashed && w.busy(c.id))) { c.fight = undefined; continue; }
     // Stunned (an armoured one knocked over): it does nothing for a moment.
     if (c.stunUntil !== undefined && time < c.stunUntil) { c.moving = false; c.vx = 0; c.vz = 0; continue; }
+    // Sitting after its own stamp (the hare's: tuning hareStamp.sit; Ed, 2026-11-13, "Stamp, then sit 0.8 s": "its own stamp attack,
+    // then a shown sit you can punish"): it stays where it is, no bound, no dodge, no new strike, till its sit is over.
+    if (c.sitUntil !== undefined) { if (time < c.sitUntil) { c.moving = false; c.vx = 0; c.vz = 0; continue; } c.sitUntil = undefined; }
     const pd = c.spell === undefined ? PK?.get(c.id) : undefined; // (one given an attack in the grammar (the arena's) fights on its own; a species' own keeps its pack's turns)
     // Up the trees, underground or under water (rules/combat/packs.ts): out of sight, it makes its way round to where it comes back down
     // (Ed's playtest, 2026-10-29: "some animals seem to teleport": it was put there at once), arriving as its hide ends: round her, not
@@ -849,7 +852,22 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (g && Math.hypot(g.x - c.x, g.z - c.z) > 2 * S) { if (!startHop(c, g.x, g.z, time, hopOf(speed))) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; } continue; }
       }
       const may = steer(c, heavy ? heavyOf(c, P) : P, { px: herAt.x, pz: herAt.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed * FIGHT.creature) : run * burst, time, dt, pack: pd ? tactic : pk, neighbours: grid.near(c.x, c.z, spacing ? spacingSearch : 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" && !ownFrom ? A.range + p.r : undefined, ...(long ? { strike: long.from } : {}), momentum: chase, now: herAt === p ? undefined : p, style: place, ...(spacing ? { spacing: { tuning: t, data: SPACING, waiting } } : {}) });
-      if (spacing && waitingDrive(c, time).airborne && (!may || waiting || pd?.action?.delivery === "effect") && !strikingNow(c)) {
+      // A bounding kind whose strike is an area round itself (the hare's stamp), its turn come and out of reach: its bound is aimed
+      // to land it in that reach, beside where she'll be as it lands. (Till 2026-11-13 it bounded on at its full stride the way it was
+      // already going, some 36 m a bound at a hare's run, past her 7 to 12 m off and out the other side, so its turn ran out before
+      // it was ever within the 4 m its stamp starts from: the audit's "its own stamp almost never fires",
+      // docs/plans/attack-legibility-audit.md. Ed, 2026-11-13: "Stamp, then sit 0.8 s".)
+      const boundIn = spacing && !!pd && pd.move === "melee" && !!spell && A.delivery === "pulse" && attackReady && !waiting && !may && !strikingNow(c) && waitingDrive(c, time).airborne;
+      if (boundIn) {
+        const H = hopOf(speed, c), full = H.length * S, reach = Math.max(0.5, want * 0.8), hv = velOf(f.target);
+        let gx = p.x, gz = p.z;
+        for (let k = 0; k < 2; k++) { // (where she'll be when it comes down: its flight for that far, rules/movement.ts startHop)
+          const L = Math.min(Math.hypot(gx - c.x, gz - c.z), full), fl = Math.max(0.15 / FIGHT.speed, (H.time * Math.sqrt(L / full)) / FIGHT.speed, L / (50 * FIGHT.speed));
+          gx = p.x + hv.vx * fl; gz = p.z + hv.vz * fl;
+        }
+        const gd = Math.hypot(gx - c.x, gz - c.z);
+        if (gd > reach + 1.5 * S) startHop(c, c.x + ((gx - c.x) / gd) * (gd - reach), c.z + ((gz - c.z) / gd) * (gd - reach), time, H);
+      } else if (spacing && waitingDrive(c, time).airborne && (!may || waiting || pd?.action?.delivery === "effect") && !strikingNow(c)) {
         const v = Math.hypot(c.vx ?? 0, c.vz ?? 0), length = hopOf(speed, c).length * S;
         if (v > SPACING.epsilon) {
           const landing = { x: c.x + c.vx! / v * length, z: c.z + c.vz! / v * length };
@@ -911,6 +929,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       c.moving = v > 1; }
     if (time < f.windupUntil) continue;
     f.windupUntil = 0; f.readyAt = time + A.cooldown;
+    // (the hare's own stamp let go: it sits, tuning hareStamp.sit, as above)
+    if (spell && A.delivery === "pulse" && c.species === "hare" && spell.name === "species:hare" && (t.hareStamp?.sit ?? 0) > 0) { c.sitUntil = time + t.hareStamp!.sit; c.vx = 0; c.vz = 0; c.moving = false; }
     if (spell && A.delivery !== "melee") continue; // (released by the engine as its windup ends: rules/attacks/engine.ts; a melee one is the lunge below)
     const dmg = atk.damage;
     if (A.delivery === "melee") {

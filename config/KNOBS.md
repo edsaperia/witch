@@ -2183,6 +2183,31 @@ The round's scale is (reference / size) ^ strength, at least floor, and 1 at or 
 | `teamRounds.ring` | number | 0 to 128 |
 | `teamRounds.window` | number | 0.1 to 1 |
 
+### `hareStamp`
+
+After each of its stamps the hare sits still for `sit` seconds: it doesn't hop, dodge or strike, so her 💌s and party animals can land.
+
+1. Ed, 2026-11-13: "Stamp, then sit 0.8 s" (its own stamp attack, then a shown sit you can punish; its speed and hop-and-pause kept otherwise)
+2. Ed, 2026-11-13: "let's start with big numbers and dial it down, at least we can then perceive the effects!"
+The hare's attack is its own stamp (config/species-attacks.json hare: a 4 m ring round itself, 0.6 s wind-up), not the pack's moon-dust bolt (taken out of config/creature-actions.json). On its turn it bounds to land beside her, stamps, then sits (rules/combat.ts; its sitting pose, art/mesh/species/hare.js). 0: no sit. Measure with node tools/balance/attackaudit.mjs --kinds hare. Before (the audit, docs/plans/attack-legibility-audit.md): every blow was the generic bolt, its stamp seen twice in all the runs, 20.6 s to stun one against about 4 s for other kinds.
+
+| knob | type | range |
+|---|---|---|
+| `hareStamp.sit` | number | 0 to 5 |
+
+### `badgerBarge`
+
+The badger's shoulder-barge throws her `throw` metres and staggers her `stagger` seconds.
+
+1. Ed, 2026-11-13: "20m" (the barge throws her about 20 m; it was 6.4 m against every blow's 2.5 m, barely felt (the audit))
+2. Ed, 2026-11-13: "let's start with big numbers and dial it down, at least we can then perceive the effects!"
+Only its own lunge's blow at her (config/species-attacks.json badger); its dug-in bite and its stone shard throw her as any blow does (witch.knock). The throw is not held to witch.knock.max, which caps every other throw at 14 m. It eases off as every throw does (witch.knock.ease: nine tenths of it in a quarter of a second); she is kept on the island and ashore of lakes, stops at the treehouse instead of passing through it, and is nudged clear if she'd rest in a trunk, a rock or a speaker (rules/knock.ts, rules/game.ts treehouseWall). stagger 0.5 is about the throw's own length, so she can move again as she lands; it was 0.52 s with the old 6.4 m throw. Measure with node tools/balance/attackaudit.mjs --kinds badger (median throw m).
+
+| knob | type | range |
+|---|---|---|
+| `badgerBarge.throw` | number | 0 to 60 |
+| `badgerBarge.stagger` | number | 0 to 3 |
+
 ### `creatureMomentum`
 
 Creatures chasing her carry momentum on their run-in and wind-up, so she can dodge past them.

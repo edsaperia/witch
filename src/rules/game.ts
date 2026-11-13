@@ -518,6 +518,19 @@ export function blinkClear(g: Game, x: number, z: number, body: WitchState = g.w
   return !near(g.map.treehouse.x, g.map.treehouse.z, C.treehouse);
 }
 
+/** Where a throw from (x0, z0) to (x1, z1) first meets the treehouse's tree (its blink clearance, tuning dash.clear.treehouse), a
+ *  little short of it, or null: she's thrown through trunks and rocks (Ed, 2026-10-05: "don't make it stop at scenery") but not through
+ *  the treehouse (the badger's 20 m barge: Ed, 2026-11-13). The zoo has no treehouse. From inside it already, nothing stops her. */
+export function treehouseWall(g: Game, x0: number, z0: number, x1: number, z1: number): { x: number; z: number } | null {
+  if (g.map.zoo?.layout) return null;
+  const T = g.map.treehouse, R = g.tuning.dash.clear.treehouse + 0.05, fx = x0 - T.x, fz = z0 - T.z, dx = x1 - x0, dz = z1 - z0, a = dx * dx + dz * dz;
+  if (a < 1e-12 || fx * fx + fz * fz <= R * R) return null;
+  const b = 2 * (fx * dx + fz * dz), c = fx * fx + fz * fz - R * R, disc = b * b - 4 * a * c;
+  if (disc < 0) return null;
+  const k = (-b - Math.sqrt(disc)) / (2 * a);
+  return k >= 0 && k <= 1 ? { x: x0 + dx * k, z: z0 + dz * k } : null;
+}
+
 /** The tuning witch W moves by: the game's with her broom's parts' numbers (rules/broomParts.ts: the
  *  Workshop, Ed 2026-10-23); the bare broom's is the step's own. */
 export const witchTuning = (g: Game, W: Witch): Tuning => bagTuning(broomTuning(g.tuning, W.spells.parts), W.spells.bag); // (and her bag's 💌 stats: rules/bags.ts)
@@ -680,7 +693,7 @@ export function stepWitchLocomotion(g: Game, W: Witch, input: Controls, hdt: num
     if (pushed >= ZOO_EDGE_PUSH) g.zooExit ??= ht;
   }
   if (waking) keepInBedroom(g, W); // (the bedroom's door shut till she's up: rules/wakeUp.ts)
-  if (W.knock && !potionPhase(g, W)) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z, W.body));
+  if (W.knock && !potionPhase(g, W)) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z, W.body), (x0, z0, x1, z1) => treehouseWall(g, x0, z0, x1, z1));
   if (was.mode !== "ground" && W.body.mode === "ground") { W.landedAt = ht; if (shared) coolSpend(W.cool, tw.riseCooldown ?? 0, room); } // (landed: the rise cooldown starts; shared, the landing's share of the one cooldown)
   if (shared && was.mode === "ground" && !was.seated && W.body.mode === "rising") coolSpend(W.cool, tw.cooldown?.rise ?? 0, room); // (taken off: its share; not her first step off the decks)
   if (shared) { const wait = coolWait(W.cool, tw.dash.cooldown, room); if (wait > 0) W.dash.readyAt = ht + wait; } // (the dash's readyAt kept true to the counter, for the reticle and the buffer)
@@ -889,7 +902,7 @@ function stepSpacing(g: Game, dt: number): void {
   }
   // (one walking home to bed in the afterparty, rules/partyOver.ts, keeps its line too: the sleepers hold their ground, so one whose
   // bed lay in a sleeper's room was eased back as fast as it walked, awake for good, walking on the spot while she watched)
-  spaceOut(list, dt, c => guardsHome(c) || !!c.partyLegend || dormant(g, c) || !!c.asleep || !!c.bed || (c.stunUntil !== undefined && g.clock.time < c.stunUntil), MOVEMENT,
+  spaceOut(list, dt, c => guardsHome(c) || !!c.partyLegend || dormant(g, c) || !!c.asleep || !!c.bed || (c.stunUntil !== undefined && g.clock.time < c.stunUntil) || (c.sitUntil !== undefined && g.clock.time < c.sitUntil), MOVEMENT,
     spacingOn(g.tuning) && list.some(c => c.level >= 1 && c.level <= 2 && c.fight?.target)
       ? { radius: c => spaceRadius(c), steered: c => c.level >= 1 && c.level <= 2 && !!c.fight?.target } : undefined);
   list.length = 0; // (let them go)

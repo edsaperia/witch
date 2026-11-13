@@ -182,6 +182,13 @@ export interface Tuning {
    *  length decrease gradually as the pack gets larger"; rules/combat/teams.ts roundScale): its round time and attack window times
    *  (reference / size) ^ strength, at least `floor`; at or under `reference`, as before. */
   teamRounds?: { reference: number; strength: number; floor: number; /** how many rounds ahead a team past `reference` picks its attackers, so they close in in time (0: off; Ed, 2026-11-03: "can we decide the roles in advance and have them move in sooner, in time for their attack?") */ ahead?: number; /** how many share one waiting ring before the rest wait in rings further out (Ed, 2026-11-04: "Resolve the attack rate limit for 128"; 0: one ring, as before) */ ring?: number; /** the least share of its 3 s attack window a big team's round keeps (1: the window never shortened; the round time and rest still are) */ window?: number };
+  /** The hare's stamp (Ed, 2026-11-13: "Stamp, then sit 0.8 s"): after each of its own stamps it sits still for `sit` seconds, no
+   *  hopping or dodging, so her 💌s and party animals can land (rules/combat.ts; 0: no sit). */
+  hareStamp?: { sit: number };
+  /** The badger's shoulder-barge at her (Ed, 2026-11-13: "20m"; "let's start with big numbers and dial it down, at least we can then
+   *  perceive the effects!"): its lunge's blow throws her `throw` metres (past witch.knock.max, which holds every other throw) and
+   *  staggers her `stagger` seconds, about the throw's own length, so she has her feet as she lands (rules/combat/hits.ts, rules/knock.ts). */
+  badgerBarge?: { throw: number; stagger: number };
   /** How attacks feel on screen (render/attackFeel.ts): the wind-up's crouch, the lunge's stretch, a hit's squash and bounce, a knock-back's tumble. */
   attackFx: { windupSquash: number; windupMax: number; lungeStretch: number; squash: number; squashSecs: number; tumbleKnock: number; tumbleHeight: number; tumbleSecs: number; turnFrom: number; turnTo: number; legendFlash: number; /** the creatures' spells, dialled up (Ed, 2026-11-03): render/leash/attackLook.ts Visibility */ visibility: { size: number; opacity: number; bloom: number; duration: number; zoneDensity: number; groundMark: number }; /** the creatures' spells glowing (Ed, 2026-11-09): render/fx/spellGlow.ts GlowTuning */ glow: { core: number; halo: number; pool: number; lights: number; light: number }; /** her own magic glowing the same way (Ed, 2026-11-13: "extend"): render/fx/spellGlow.ts MagicGlowTuning */ magicGlow: { core: number; halo: number; pool: number; light: number } };
   /** The difficulty (Ed, 2026-11-03: "the game is much too easy"): creatureSpeed, every creature's movement speed in a fight times it

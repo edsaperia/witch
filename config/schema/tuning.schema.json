@@ -5949,6 +5949,42 @@
       "additionalProperties": false,
       "description": "A big pack's attacks come round faster and keep coming: shorter rounds past `reference` animals, attackers picked `ahead` rounds early, and waiting rings of `ring`."
     },
+    "hareStamp": {
+      "type": "object",
+      "properties": {
+        "sit": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5
+        }
+      },
+      "required": [
+        "sit"
+      ],
+      "additionalProperties": false,
+      "description": "After each of its stamps the hare sits still for `sit` seconds: it doesn't hop, dodge or strike, so her 💌s and party animals can land."
+    },
+    "badgerBarge": {
+      "type": "object",
+      "properties": {
+        "throw": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "stagger": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3
+        }
+      },
+      "required": [
+        "throw",
+        "stagger"
+      ],
+      "additionalProperties": false,
+      "description": "The badger's shoulder-barge throws her `throw` metres and staggers her `stagger` seconds."
+    },
     "creatureMomentum": {
       "type": "object",
       "properties": {
@@ -15616,6 +15652,8 @@
     "fight",
     "combatWaiting",
     "teamRounds",
+    "hareStamp",
+    "badgerBarge",
     "creatureMomentum",
     "attackFx",
     "combat",
