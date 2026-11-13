@@ -193,6 +193,7 @@ glossary; these are the prototype's), by note.
 - Posse / travelling
 - Conga dancer
 - Wild / happy / leashed / enraged
+- Shot mark
 - Runaway
 - Restless / angry legend, relic
 - The challenge circle hidden till the party

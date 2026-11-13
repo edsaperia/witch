@@ -2439,6 +2439,38 @@ Code: `src/rules/attacks/aim.ts`, `src/rules/attacks/engine.ts`, `src/rules/comb
 | `ranged.areaLock` | number | 0 to … |
 | `ranged.rollerLead` | number | 0 to … |
 
+### `shotMarks`
+
+Where a wild creature's shot ends without hitting (a bolt or roller that runs out, a lob landing), it leaves a small brief mark on the ground in its element that hurts or slows whoever of its foes stands in it [1].
+
+1. Ed, 2026-11-13: "Enemy projectiles seem to have no effect where they land, is that correct?" … "Mark the ground" (told that about 48 of 61 ranged kinds left nothing where a shot ended; he chose a brief mark in the shot's element that hurts or slows if you stand in it for a second or two)
+Only a cast's own bolt, roller or lob marks the ground, and only one that leaves nothing of its own (a kind with its own zone or burst where it ends keeps that; the pieces of a burst leave none; her party's shots leave none). A mark is one of the attack engine's zones, drawn as they are in the shot's element and fading out. Her own health is counted in whole hits, so a hurting mark costs her one hit, at most once a mark, and only after she has stood in it for stand seconds running: walking through never costs it. Other animals: the shot's foes only, as every zone.
+Code: `src/rules/attacks/marks.ts`, `src/rules/attacks/engine.ts`, `src/rules/attacks/combatWorld.ts`, `src/rules/combat.ts`
+
+- **`shotMarks.on`**: on: wild shots mark the ground where they end; off, as ?shotmarks=0: they leave nothing, as before.
+- **`shotMarks.time`**: seconds a mark lasts (a shot ending on a mark of its own side renews it instead of adding one).
+- **`shotMarks.radius`**: a mark's radius in metres (about her own width to twice it across).
+- **`shotMarks.stand`**: seconds running a foe must stand in a hurting mark before it bites, once a mark each.
+- **`shotMarks.damage`**: a hurting mark's bite on an animal, times what the shot's hit would have done (her: one hit whatever this is, unless it is 0).
+- **`shotMarks.slow`**: times her own speed while she stands in a slowing mark (frost, a puddle, a dark pool; an animal is slowed as by any slow).
+- **`shotMarks.rough`**: times her own speed on rough ground (earth, sand, wood, wind and bloom marks).
+- **`shotMarks.max`**: at most this many marks at once: a shot ending while there are this many leaves none (a big pack's volleys can't fill the zones).
+- **`shotMarks.merge`**: a shot ending within this many metres of a mark of its own side renews that mark rather than laying another.
+- **`shotMarks.kinds`**: what each element's mark does: hurt (stood in, it bites once), slow, rough (a milder slow) or none; a shot whose own hit slows or burns leaves a slowing or a hurting mark whatever its element.
+
+| knob | type | range |
+|---|---|---|
+| `shotMarks.on` | boolean |  |
+| `shotMarks.time` | number | 0 to … |
+| `shotMarks.radius` | number | 0 to … |
+| `shotMarks.stand` | number | 0 to … |
+| `shotMarks.damage` | number | 0 to … |
+| `shotMarks.slow` | number | 0 to … |
+| `shotMarks.rough` | number | 0 to … |
+| `shotMarks.max` | number | 0 to … |
+| `shotMarks.merge` | number | 0 to … |
+| `shotMarks.kinds` | record |  |
+
 ### `stoneIdle`
 
 A wild area's hostile creatures gather and roam near its runestone.

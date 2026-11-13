@@ -1304,6 +1304,20 @@ export type SchemaTuning = {
     "areaLock": number;
     "rollerLead": number;
   };
+  "shotMarks": {
+    "on": boolean;
+    "time": number;
+    "radius": number;
+    "stand": number;
+    "damage": number;
+    "slow": number;
+    "rough": number;
+    "max": number;
+    "merge": number;
+    "kinds": {
+      [key: string]: "hurt" | "slow" | "rough" | "none";
+    };
+  };
   "stoneIdle": {
     "on": boolean;
     "radius": number;

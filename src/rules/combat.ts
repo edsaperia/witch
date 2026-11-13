@@ -23,7 +23,7 @@ import { ATTACK_LIB } from "./attacks/index";
 import { aimLocked, cast as castSpell, newSpells, solveAim, stepSpells } from "./attacks/engine";
 import { fanOffsets, intercept, liftedWindup, locksNow, packTrack, rangedOf as rangedRule, trackFor, withSpeedFloor, type AimTrack } from "./attacks/aim";
 import { getUp } from "./orbit";
-import { bodyReach, hittableOf, meleeExtras, reachingFurther, spellAttack, speciesSpell, spellWorld } from "./attacks/combatWorld";
+import { bodyReach, hittableOf, meleeExtras, oldShotMark, reachingFurther, spellAttack, speciesSpell, spellWorld } from "./attacks/combatWorld";
 import { observeAttack } from "./attackObservation";
 import type { AttackSpec } from "./attacks/types";
 import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, styleOf, observedPackPlans, type Directive } from "./combat/packs";
@@ -145,11 +145,12 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       s.events.push({ kind: "landed", x: L.tx, z: L.tz, at: time, id: sh.from });
       area(w, s, from, sh.side, sh.species, L.tx, L.tz, sh.radius, sh.damage, a, grid);
       if (sh.patch) s.trails.push({ x: L.tx, z: L.tz, r: sh.patch.r, until: time + sh.patch.time, side: sh.side, slow: sh.patch.slow, from: sh.from }); // (the toad's spores: a slow patch where it lands)
+      else oldShotMark(w, s, sh, L.tx, L.tz, data); // (any other: its mark, Ed 2026-11-13, rules/attacks/marks.ts)
       if (sh.sound) { const h = s.sounds.get(sh.sound.key); if (h && h.hp > 0 && Math.hypot(h.x - L.tx, h.z - L.tz) <= sh.radius + h.radius) land(w, s, from, { kind: "sound", key: sh.sound.key }, sh.sound.damage, a, L.tx, L.tz); }
       return false;
     }
     sh.x += sh.vx * dt; sh.z += sh.vz * dt;
-    if (time >= sh.until) return false;
+    if (time >= sh.until) { oldShotMark(w, s, sh, sh.x, sh.z, data); return false; } // (a miss: its mark where it ran out)
     const from = w.creatures[sh.from], a = attackNamed(sh.attack, data);
     for (const o of grid.near(sh.x, sh.z, sh.radius + 2)) {
       if (!targetable(o) || !foes(sideOf(o), sh.side) || o.species === sh.species || w.asleep(o)) continue;

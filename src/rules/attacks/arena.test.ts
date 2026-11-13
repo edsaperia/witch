@@ -86,8 +86,11 @@ describe("attacks in the grammar in the real fight", () => {
   });
 
   it("leaves a fight with no attack in the grammar as it was (the old attacks: ?attacks=old)", () => {
-    const { g } = arena("wolf*3@2,raven*3@2", null, 8, withTuning({ attacks: { reactionFloor: 0.45, species: false } }));
+    const { g } = arena("wolf*3@2,raven*3@2", null, 8, withTuning({ attacks: { reactionFloor: 0.45, species: false }, shotMarks: { ...TUNING.shotMarks!, on: false } }));
     expect(g.combat.spells).toBeUndefined();
+    // (with shot marks on, Ed 2026-11-13, the old shots' marks are the engine's zones: the only thing of the grammar's there)
+    const marked = arena("wolf*3@2,raven*3@2", null, 8, withTuning({ attacks: { reactionFloor: 0.45, species: false } })).g.combat.spells;
+    if (marked) { expect(marked.bodies).toHaveLength(0); expect(marked.casts).toBe(0); expect(marked.zones.every(z => !!z.mark)).toBe(true); }
     expect(g.combat.shots.length + g.combat.events.length).toBeGreaterThanOrEqual(0);
   });
 });

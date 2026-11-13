@@ -176,6 +176,9 @@ export function tuningFromLink(params: URLSearchParams) {
   // ?lunge=old: lunges as before Ed's 2026-11-13 change (tuning lunge, rules/combat.ts longLunge): wound up close, sprinting in, and
   // stopping where they aimed, to compare with the long ones (wound up from about 1.5 dashes off, carrying through to about 2).
   if (params.get("lunge") === "old" && tuning.lunge) tuning.lunge = { ...tuning.lunge, on: false };
+  // ?shotmarks=0: wild shots leave no mark where they end, as before Ed's 2026-11-13 choice ("Mark the ground": tuning shotMarks,
+  // rules/attacks/marks.ts), to compare.
+  if (params.get("shotmarks") === "0" && tuning.shotMarks) tuning.shotMarks = { ...tuning.shotMarks, on: false };
   // ?dodge=a,b,c: which of the dodge changes are on (Ed, 2026-10-08; tuning dodge: a committed strikes, b predictive aim,
   // c packs cutting off her retreat), the rest off; ?dodge=0 none of them.
   const dodgeParam = params.get("dodge");
