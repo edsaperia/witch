@@ -9,7 +9,11 @@ import { cacheGet, cachePut } from "./artCacheStorage";
 import type { CacheHint } from "./artCache";
 import { beginWorkerTrace, traceSync, traceAsync } from "../app/workerJobTrace";
 
-const mk = (w: number, h: number) => new OffscreenCanvas(w, h);
+// Each canvas kept on the CPU (willReadFrequently, as the page's own are: ui/creator.ts cpuCanvas). A set's pixels are put into a
+// canvas a frame and read back when it's packed, hundreds of times a set; on a canvas of the GPU's each read waits its turn behind
+// the game's own drawing (Ed, 2026-11-13: "Why do outfits take a long time to load?"; her preview, 0.15 s of drawing on a page with
+// nothing else on it, took 20 to 50 s of a worker's time over the running game on the cloud machine: docs/notes/performance.md).
+const mk = (w: number, h: number) => { const c = new OffscreenCanvas(w, h); c.getContext("2d", { willReadFrequently: true }); return c; };
 const post = (m: unknown, t: Transferable[] = []) => (self as unknown as Worker).postMessage(m, t);
 // Hits and cache-only misses never load drawing modules. Concurrent misses share
 // the first import, just as later misses reuse the already loaded module.
