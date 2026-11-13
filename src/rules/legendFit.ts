@@ -21,8 +21,8 @@ type Clearing = Tuning["legendClearing"];
 /** Her on the screen before a sleeping legend (Ed, 2026-11-13, of the mole whose paw and the bear whose muzzle still covered her:
  *  "fix the others"). The circle's camera looks down at CIRCLE_ANGLE degrees (camera.circle.angle; legendFit.test.ts holds the two
  *  together), so what stands a metre tall, or is drawn a metre below its ground line, covers LAY metres of the ground's depth on
- *  the screen. HER: her height as drawn, hat and all (m). */
-export const CIRCLE_ANGLE = 20, LAY = 1 / Math.tan((CIRCLE_ANGLE * Math.PI) / 180), HER = 3;
+ *  the screen. HER: her height as drawn, hat and all, and half a metre clear over it (m; at 3 the generated naps just touched her hat). */
+export const CIRCLE_ANGLE = 20, LAY = 1 / Math.tan((CIRCLE_ANGLE * Math.PI) / 180), HER = 3.5;
 
 /** How far north of her a sleeping legend's spot must be for none of its drawn pixels to be over her on the circle's camera (m):
  *  what it draws below its ground line, and her own height above hers, laid over the ground between them. */

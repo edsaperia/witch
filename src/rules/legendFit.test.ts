@@ -98,7 +98,7 @@ describe("she stands in view before every sleeping legend, at its circle's middl
   // The kinds that can't meet it in a circle at the cap (fit.max, an area with a runestone): each a generated drawing, not yet a
   // mesh, whose nap draws metres below its ground line, so the camera lays it over more floor than a capped circle has before it.
   // A kind leaves this list when its mesh lands (run node tools/legends/footprint.mjs: its front goes to 0); the test says so.
-  const CAPPED_SHORT = ["crab", "frostwyrm", "hydra", "newt", "stegosaurus"];
+  const CAPPED_SHORT = ["crab", "frostwyrm", "griffin", "hydra", "newt", "sphinx", "stegosaurus"];
   // And these not even in a legend area of their own (fit.areaMax).
   const AREA_SHORT: string[] = [];
   it("measures the ground her height covers at the circle camera's own angle", () => {
