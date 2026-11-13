@@ -6685,6 +6685,82 @@
       "additionalProperties": false,
       "description": "Creatures' shots aim where she's going: each follows her through its wind-up and locks a moment before it can reach her, so a steady walk gets hit and a change of direction dodges."
     },
+    "shotMarks": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean",
+          "description": "on: wild shots mark the ground where they end; off, as ?shotmarks=0: they leave nothing, as before."
+        },
+        "time": {
+          "type": "number",
+          "minimum": 0,
+          "description": "seconds a mark lasts (a shot ending on a mark of its own side renews it instead of adding one)."
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0,
+          "description": "a mark's radius in metres (about her own width to twice it across)."
+        },
+        "stand": {
+          "type": "number",
+          "minimum": 0,
+          "description": "seconds running a foe must stand in a hurting mark before it bites, once a mark each."
+        },
+        "damage": {
+          "type": "number",
+          "minimum": 0,
+          "description": "a hurting mark's bite on an animal, times what the shot's hit would have done (her: one hit whatever this is, unless it is 0)."
+        },
+        "slow": {
+          "type": "number",
+          "minimum": 0,
+          "description": "times her own speed while she stands in a slowing mark (frost, a puddle, a dark pool; an animal is slowed as by any slow)."
+        },
+        "rough": {
+          "type": "number",
+          "minimum": 0,
+          "description": "times her own speed on rough ground (earth, sand, wood, wind and bloom marks)."
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0,
+          "description": "at most this many marks at once: a shot ending while there are this many leaves none (a big pack's volleys can't fill the zones)."
+        },
+        "merge": {
+          "type": "number",
+          "minimum": 0,
+          "description": "a shot ending within this many metres of a mark of its own side renews that mark rather than laying another."
+        },
+        "kinds": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "hurt",
+              "slow",
+              "rough",
+              "none"
+            ]
+          },
+          "description": "what each element's mark does: hurt (stood in, it bites once), slow, rough (a milder slow) or none; a shot whose own hit slows or burns leaves a slowing or a hurting mark whatever its element."
+        }
+      },
+      "required": [
+        "on",
+        "time",
+        "radius",
+        "stand",
+        "damage",
+        "slow",
+        "rough",
+        "max",
+        "merge",
+        "kinds"
+      ],
+      "additionalProperties": false,
+      "description": "Where a wild creature's shot ends without hitting (a bolt or roller that runs out, a lob landing), it leaves a small brief mark on the ground in its element that hurts or slows whoever of its foes stands in it."
+    },
     "stoneIdle": {
       "type": "object",
       "properties": {
@@ -15462,6 +15538,7 @@
     "notice",
     "dodge",
     "ranged",
+    "shotMarks",
     "stoneIdle",
     "sigilAvoid",
     "wildWatch",
