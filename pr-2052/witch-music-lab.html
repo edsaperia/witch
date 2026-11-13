@@ -984,6 +984,94 @@ label.check input { accent-color: var(--accent); }
     return next - was;
   }
 
+  // art/areas/index.js
+  var AREA_FOLDER_KINDS = [
+    { "kind": "hedgehog", "slot": 0, "phase": 0, "bearing": 170, "dir": "S", "biome": "temperate" },
+    { "kind": "squirrel", "slot": 1, "phase": 0, "bearing": 285, "dir": "WNW", "biome": "temperate" },
+    { "kind": "hare", "slot": 2, "phase": 0, "bearing": 0, "dir": "N", "biome": "temperate" },
+    { "kind": "fox", "slot": 3, "phase": 0, "bearing": 40, "dir": "NE", "biome": "temperate" },
+    { "kind": "bee", "slot": 4, "phase": 0, "bearing": 345, "dir": "NNW", "biome": "temperate" },
+    { "kind": "stoat", "slot": 5, "phase": 0, "bearing": 250, "dir": "WSW", "biome": "temperate" },
+    { "kind": "mole", "slot": 6, "phase": 0, "bearing": 80, "dir": "E", "biome": "temperate" },
+    { "kind": "snail", "slot": 7, "phase": 0, "bearing": 215, "dir": "SW", "biome": "temperate" },
+    { "kind": "dormouse", "slot": 8, "phase": 0, "bearing": 310, "dir": "NW", "biome": "temperate" },
+    { "kind": "badger", "slot": 9, "phase": 0, "bearing": 130, "dir": "SE", "biome": "temperate" },
+    { "kind": "beetle", "slot": 10, "phase": 3, "bearing": 78.75, "dir": "E", "biome": "volcanic" },
+    { "kind": "boar", "slot": 11, "phase": 1, "bearing": 315, "dir": "NW", "biome": "temperate" },
+    { "kind": "otter", "slot": 12, "phase": 2, "bearing": 236.25, "dir": "WSW", "biome": "mangrove swamp" },
+    { "kind": "heron", "slot": 13, "phase": 2, "bearing": 213.75, "dir": "SW", "biome": "mangrove swamp" },
+    { "kind": "turtle", "slot": 14, "phase": 1, "bearing": 195, "dir": "SSW", "biome": "temperate" },
+    { "kind": "woodlouse", "slot": 15, "phase": 3, "bearing": 101.25, "dir": "ESE", "biome": "volcanic" },
+    { "kind": "butterfly", "slot": 16, "phase": 1, "bearing": 135, "dir": "SE", "biome": "temperate" },
+    { "kind": "bat", "slot": 17, "phase": 2, "bearing": 281.25, "dir": "WNW", "biome": "jungle" },
+    { "kind": "toad", "slot": 18, "phase": 1, "bearing": 15, "dir": "NNE", "biome": "temperate" },
+    { "kind": "raven", "slot": 19, "phase": 2, "bearing": 56.25, "dir": "ENE", "biome": "mountains and glaciers" },
+    { "kind": "elk", "slot": 20, "phase": 2, "bearing": 348.75, "dir": "N", "biome": "cold" },
+    { "kind": "wolf", "slot": 21, "phase": 2, "bearing": 11.25, "dir": "NNE", "biome": "cold" },
+    { "kind": "lynx", "slot": 22, "phase": 2, "bearing": 33.75, "dir": "NE", "biome": "mountains and glaciers" },
+    { "kind": "ram", "slot": 23, "phase": 2, "bearing": 78.75, "dir": "E", "biome": "volcanic" },
+    { "kind": "salamander", "slot": 24, "phase": 2, "bearing": 101.25, "dir": "ESE", "biome": "volcanic" },
+    { "kind": "spider", "slot": 25, "phase": 2, "bearing": 123.75, "dir": "SE", "biome": "badlands" },
+    { "kind": "snake", "slot": 26, "phase": 2, "bearing": 258.75, "dir": "W", "biome": "jungle" },
+    { "kind": "cat", "slot": 27, "phase": 2, "bearing": 168.75, "dir": "S", "biome": "hot" },
+    { "kind": "stag", "slot": 28, "phase": 1, "bearing": 255, "dir": "WSW", "biome": "temperate" },
+    { "kind": "beaver", "slot": 29, "phase": 1, "bearing": 75, "dir": "ENE", "biome": "temperate" },
+    { "kind": "bear", "slot": 30, "phase": 4, "bearing": 303.75, "dir": "NW", "biome": "cold rainforest" },
+    { "kind": "owl", "slot": 31, "phase": 2, "bearing": 326.25, "dir": "NNW", "biome": "cold rainforest" },
+    { "kind": "arcticfox", "slot": 32, "phase": 3, "bearing": 348.75, "dir": "N", "biome": "cold" },
+    { "kind": "ibex", "slot": 33, "phase": 3, "bearing": 33.75, "dir": "NE", "biome": "mountains and glaciers" },
+    { "kind": "redpanda", "slot": 34, "phase": 3, "bearing": 56.25, "dir": "ENE", "biome": "mountains and glaciers" },
+    { "kind": "komodo", "slot": 35, "phase": 4, "bearing": 78.75, "dir": "E", "biome": "volcanic" },
+    { "kind": "meerkat", "slot": 36, "phase": 2, "bearing": 146.25, "dir": "SSE", "biome": "badlands" },
+    { "kind": "armadillo", "slot": 37, "phase": 3, "bearing": 123.75, "dir": "SE", "biome": "badlands" },
+    { "kind": "fennec", "slot": 38, "phase": 2, "bearing": 191.25, "dir": "SSW", "biome": "hot" },
+    { "kind": "lion", "slot": 39, "phase": 3, "bearing": 168.75, "dir": "S", "biome": "hot" },
+    { "kind": "crocodile", "slot": 40, "phase": 3, "bearing": 213.75, "dir": "SW", "biome": "mangrove swamp" },
+    { "kind": "dragonfly", "slot": 41, "phase": 3, "bearing": 236.25, "dir": "WSW", "biome": "mangrove swamp" },
+    { "kind": "tiger", "slot": 42, "phase": 3, "bearing": 258.75, "dir": "W", "biome": "jungle" },
+    { "kind": "flyingsquirrel", "slot": 43, "phase": 3, "bearing": 326.25, "dir": "NNW", "biome": "cold rainforest" },
+    { "kind": "roe", "slot": 44, "phase": 3, "bearing": 303.75, "dir": "NW", "biome": "cold rainforest" },
+    { "kind": "penguin", "slot": 45, "phase": 3, "bearing": 11.25, "dir": "NNE", "biome": "cold" },
+    { "kind": "frosttroll", "slot": 46, "phase": 4, "bearing": 11.25, "dir": "NNE", "biome": "cold" },
+    { "kind": "snowleopard", "slot": 47, "phase": 4, "bearing": 33.75, "dir": "NE", "biome": "mountains and glaciers" },
+    { "kind": "frostwyrm", "slot": 48, "phase": 4, "bearing": 56.25, "dir": "ENE", "biome": "mountains and glaciers" },
+    { "kind": "griffin", "slot": 49, "phase": 4, "bearing": 146.25, "dir": "SSE", "biome": "badlands" },
+    { "kind": "sphinx", "slot": 50, "phase": 4, "bearing": 191.25, "dir": "SSW", "biome": "hot" },
+    { "kind": "stegosaurus", "slot": 51, "phase": 4, "bearing": 101.25, "dir": "ESE", "biome": "volcanic" },
+    { "kind": "rattlesnake", "slot": 52, "phase": 3, "bearing": 146.25, "dir": "SSE", "biome": "badlands" },
+    { "kind": "scorpion", "slot": 53, "phase": 4, "bearing": 123.75, "dir": "SE", "biome": "badlands" },
+    { "kind": "rhino", "slot": 54, "phase": 4, "bearing": 168.75, "dir": "S", "biome": "hot" },
+    { "kind": "cheetah", "slot": 55, "phase": 3, "bearing": 191.25, "dir": "SSW", "biome": "hot" },
+    { "kind": "hydra", "slot": 56, "phase": 4, "bearing": 236.25, "dir": "WSW", "biome": "mangrove swamp" },
+    { "kind": "crab", "slot": 57, "phase": 4, "bearing": 213.75, "dir": "SW", "biome": "mangrove swamp" },
+    { "kind": "featheredserpent", "slot": 58, "phase": 4, "bearing": 281.25, "dir": "WNW", "biome": "jungle" },
+    { "kind": "elephant", "slot": 59, "phase": 4, "bearing": 258.75, "dir": "W", "biome": "jungle" },
+    { "kind": "jaguar", "slot": 60, "phase": 3, "bearing": 281.25, "dir": "WNW", "biome": "jungle" },
+    { "kind": "raccoon", "slot": 61, "phase": 2, "bearing": 303.75, "dir": "NW", "biome": "cold rainforest" },
+    { "kind": "unicorn", "slot": 62, "phase": 4, "bearing": 326.25, "dir": "NNW", "biome": "cold rainforest" },
+    { "kind": "polarbear", "slot": 63, "phase": 4, "bearing": 348.75, "dir": "N", "biome": "cold" }
+  ];
+
+  // art/creatures/renamed.js
+  var SEED_OF = { butterfly: "moth", moth: "moth-bench" };
+  var seedId = (id) => Object.hasOwn(SEED_OF, id) ? SEED_OF[id] : id;
+
+  // src/rules/kinds.ts
+  function assembleKinds(lines) {
+    const sorted = [...lines].sort((a, b) => a.slot - b.slot), out = {};
+    sorted.forEach((l, i) => {
+      if (l.slot !== i) throw new Error(`kinds table: ${l.kind} has slot ${l.slot}, but ${i} comes next (slots run 0 to ${sorted.length - 1}, one kind each)`);
+      if (out[l.kind]) throw new Error(`kinds table: ${l.kind} is in it twice`);
+      const { kind, slot, ...info } = l;
+      void slot;
+      out[kind] = info;
+    });
+    return out;
+  }
+  var KINDS_TABLE = assembleKinds(AREA_FOLDER_KINDS);
+  var seedName = (kind) => seedId(kind);
+  var KIND_SLOTS = Object.fromEntries(Object.keys(KINDS_TABLE).map((k, i) => [k, i]));
+
   // config/creature-voices.json
   var creature_voices_default = {
     _readme: "Each species call, its timbre and how it blends into creature babble. Detailed notes and decisions: docs/notes/config-history/creature-voices.md.",
@@ -1071,6 +1159,9 @@ label.check input { accent-color: var(--accent); }
   // art/creatures/boar/sigil.js
   var SIGIL_BOAR = { neon: "cyan", strokes: [...pair(L([0.5, 0.2], [0.3, 0.22], [0.2, 0.42], [0.28, 0.62], [0.36, 0.7]), L([0.3, 0.22], [0.12, 0.08], [0.2, 0.34]), bow([0.38, 0.84], [0.24, 0.62], 0.4), D(0.45, 0.76), D(0.36, 0.44), L([0.42, 0.2], [0.4, 0.11])), E(0.5, 0.76, 0.15, 0.1), L([0.5, 0.2], [0.5, 0.08])] };
 
+  // art/creatures/butterfly/sigil.js
+  var SIGIL_BUTTERFLY = { neon: "orange", strokes: [E(0.5, 0.54, 0.04, 0.24), ...pair(L([0.46, 0.34], [0.2, 0.14], [0.06, 0.3], [0.2, 0.5], [0.46, 0.5]), L([0.46, 0.52], [0.26, 0.62], [0.22, 0.78], [0.3, 0.84], [0.26, 0.96]), L([0.3, 0.84], [0.4, 0.82], [0.46, 0.66]), L([0.48, 0.31], [0.38, 0.1]), D(0.38, 0.09), C(0.21, 0.32, 0.05))] };
+
   // art/creatures/cat/sigil.js
   var SIGIL_CAT = { neon: "mint", strokes: [A(0.5, 0.58, 0.28, -40, 220), ...pair(L(at(0.5, 0.58, 0.28, 220), [0.24, 0.16], [0.42, 0.33]), L([0.36, 0.55], [0.44, 0.53]), L([0.34, 0.7], [0.12, 0.66]), L([0.34, 0.74], [0.14, 0.79]), L([0.44, 0.37], [0.45, 0.45])), L([0.42, 0.33], [0.58, 0.33]), L([0.5, 0.37], [0.5, 0.47]), D(0.5, 0.66)] };
 
@@ -1153,7 +1244,7 @@ label.check input { accent-color: var(--accent); }
   var SIGIL_MOLE = { neon: "cyan", strokes: [C(0.5, 0.4, 0.24), L([0.4, 0.6], [0.5, 0.86], [0.6, 0.6]), D(0.5, 0.86), ...pair(D(0.42, 0.4), E(0.17, 0.66, 0.1, 0.09), L([0.1, 0.72], [0.06, 0.82]), L([0.17, 0.75], [0.16, 0.86]), L([0.24, 0.73], [0.27, 0.83]))] };
 
   // art/creatures/moth/sigil.js
-  var SIGIL_MOTH = { neon: "orange", strokes: [E(0.5, 0.54, 0.04, 0.24), ...pair(L([0.46, 0.34], [0.2, 0.14], [0.06, 0.3], [0.2, 0.5], [0.46, 0.5]), L([0.46, 0.52], [0.26, 0.62], [0.22, 0.78], [0.3, 0.84], [0.26, 0.96]), L([0.3, 0.84], [0.4, 0.82], [0.46, 0.66]), L([0.48, 0.31], [0.38, 0.1]), D(0.38, 0.09), C(0.21, 0.32, 0.05))] };
+  var SIGIL_MOTH = { neon: "orange", strokes: [E(0.5, 0.54, 0.05, 0.24), ...pair(L([0.46, 0.34], [0.2, 0.14], [0.06, 0.3], [0.2, 0.5], [0.46, 0.5]), L([0.46, 0.52], [0.26, 0.62], [0.22, 0.82], [0.4, 0.84], [0.46, 0.66]), bow([0.47, 0.31], [0.34, 0.07], 0.3), C(0.21, 0.32, 0.05))] };
 
   // art/creatures/newt/sigil.js
   var SIGIL_NEWT = { neon: "acid", strokes: [E(0.36, 0.58, 0.24, 0.08), C(0.17, 0.55, 0.07), D(0.15, 0.53), L([0.6, 0.58], [0.94, 0.52]), L(...Array.from({ length: 25 }, (_, i) => [0.2 + 0.72 * i / 24, 0.47 - 0.012 * i / 24 * 6 - 0.035 * Math.abs(Math.sin(i / 24 * 5 * Math.PI))])), L([0.26, 0.65], [0.22, 0.76], [0.15, 0.78]), L([0.46, 0.65], [0.5, 0.76], [0.57, 0.78])] };
@@ -1377,6 +1468,9 @@ label.check input { accent-color: var(--accent); }
   // art/creatures/boar/bold.js
   var BOLD_BOAR = { strokes: [...pair(L([0.32, 0.86], [0.16, 0.82], [0.06, 0.66], [0.06, 0.46], [0.14, 0.32]), L([0.3, 0.2], [0.26, 0.02], [0.42, 0.14]), D(0.34, 0.34)), E(0.5, 0.66, 0.24, 0.16), ...pair(D(0.41, 0.66)), L([0.36, 0.16], [0.64, 0.16])] };
 
+  // art/creatures/butterfly/bold.js
+  var BOLD_BUTTERFLY = { strokes: [...pair(L([0.46, 0.3], [0.04, 0.06], [0.06, 0.36], [0.46, 0.42]), L([0.46, 0.56], [0.16, 0.62], [0.18, 0.8], [0.3, 0.82], [0.46, 0.7]), L([0.3, 0.82], [0.26, 0.98]), L([0.46, 0.2], [0.36, 0.04])), L([0.5, 0.2], [0.5, 0.76])] };
+
   // art/creatures/cat/bold.js
   var BOLD_CAT = { strokes: [...pair(L([0.2, 0.5], [0.2, 0.12], [0.44, 0.3])), C(0.5, 0.52, 0.3), ...pair(L([0.02, 0.6], [0.3, 0.64]), L([0.04, 0.78], [0.3, 0.7]), D(0.38, 0.5))] };
 
@@ -1459,7 +1553,7 @@ label.check input { accent-color: var(--accent); }
   var BOLD_MOLE = { strokes: [...pair(L([0.36, 0.5], [0.2, 0.56], [0.08, 0.5]), L([0.12, 0.42], [0.02, 0.28]), L([0.2, 0.4], [0.16, 0.24]), L([0.28, 0.42], [0.3, 0.26]), L([0.36, 0.5], [0.44, 0.92]), D(0.38, 0.38)), L([0.42, 0.26], [0.5, 0.1], [0.58, 0.26]), L([0.44, 0.92], [0.56, 0.92])] };
 
   // art/creatures/moth/bold.js
-  var BOLD_MOTH = { strokes: [...pair(L([0.46, 0.3], [0.04, 0.06], [0.06, 0.36], [0.46, 0.42]), L([0.46, 0.56], [0.16, 0.62], [0.18, 0.8], [0.3, 0.82], [0.46, 0.7]), L([0.3, 0.82], [0.26, 0.98]), L([0.46, 0.2], [0.36, 0.04])), L([0.5, 0.2], [0.5, 0.76])] };
+  var BOLD_MOTH = { strokes: [...pair(L([0.46, 0.36], [0.18, 0.14], [0.04, 0.3], [0.2, 0.52], [0.04, 0.74], [0.2, 0.92], [0.46, 0.66]), C(0.24, 0.34, 0.06), L([0.46, 0.2], [0.3, 0.04]), L([0.38, 0.12], [0.38, 0.04])), L([0.5, 0.2], [0.5, 0.8])] };
 
   // art/creatures/newt/bold.js
   var BOLD_NEWT = { strokes: [L([0.02, 0.7], [0.16, 0.58], [0.3, 0.66], [0.56, 0.66], [0.98, 0.6]), L([0.26, 0.6], [0.34, 0.38], [0.42, 0.56], [0.5, 0.3], [0.58, 0.54], [0.66, 0.3], [0.74, 0.52], [0.82, 0.32], [0.9, 0.5], [0.98, 0.36]), L([0.3, 0.66], [0.24, 0.9]), L([0.56, 0.66], [0.62, 0.9]), D(0.12, 0.52)] };
@@ -1818,6 +1912,39 @@ label.check input { accent-color: var(--accent); }
       pressure: 1,
       call: "heads down",
       tells: { melee: "head down", special: "heads down" }
+    }
+  };
+
+  // art/creatures/butterfly/creature.js
+  var CREATURE_BUTTERFLY = {
+    movement: {
+      speed: 15,
+      accel: 90,
+      fight: [
+        { kind: "orbit", w: 1, radius: 0.9 },
+        { kind: "wander", w: 0.8 },
+        { kind: "light", w: 1.4, radius: 40 },
+        { kind: "dodge", w: 0.6, radius: 14 },
+        { kind: "separation", w: 0.6, radius: 7 }
+      ],
+      tactics: [{ kind: "swarm", w: 1 }]
+    },
+    radius: 0.45,
+    ranged: true,
+    temperament: "skittish",
+    traits: ["flier", "swarm"],
+    voice: { family: "bug", pitch: 1.2, am: [120, 0.7], noise: 0.3, volume: 1.2 },
+    character: { sprite: "shiver", every: [2, 5], for: 0.6 },
+    pack: {
+      melee: null,
+      ranged: { name: "dust bolt", range: 10, shots: [0, 1, 3], spread: 20, tint: "red" },
+      special: "cloud",
+      specialWith: { flash: true, radius: 5 },
+      retreat: "swirl",
+      rhythm: "tight",
+      pressure: 3,
+      call: "the flash",
+      tells: { ranged: "wings fan", special: "the flash" }
     }
   };
 
@@ -3582,10 +3709,10 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/index.js
-  var CREATURE_SIGILS = { arcticfox: SIGIL_ARCTICFOX.strokes, armadillo: SIGIL_ARMADILLO.strokes, badger: SIGIL_BADGER.strokes, bat: SIGIL_BAT.strokes, bear: SIGIL_BEAR.strokes, beaver: SIGIL_BEAVER.strokes, bee: SIGIL_BEE.strokes, beetle: SIGIL_BEETLE.strokes, boar: SIGIL_BOAR.strokes, cat: SIGIL_CAT.strokes, cheetah: SIGIL_CHEETAH.strokes, crab: SIGIL_CRAB.strokes, crocodile: SIGIL_CROCODILE.strokes, dormouse: SIGIL_DORMOUSE.strokes, dragonfly: SIGIL_DRAGONFLY.strokes, elephant: SIGIL_ELEPHANT.strokes, elk: SIGIL_ELK.strokes, featheredserpent: SIGIL_FEATHEREDSERPENT.strokes, fennec: SIGIL_FENNEC.strokes, flyingsquirrel: SIGIL_FLYINGSQUIRREL.strokes, fox: SIGIL_FOX.strokes, frosttroll: SIGIL_FROSTTROLL.strokes, frostwyrm: SIGIL_FROSTWYRM.strokes, griffin: SIGIL_GRIFFIN.strokes, hare: SIGIL_HARE.strokes, hedgehog: SIGIL_HEDGEHOG.strokes, heron: SIGIL_HERON.strokes, hydra: SIGIL_HYDRA.strokes, ibex: SIGIL_IBEX.strokes, jaguar: SIGIL_JAGUAR.strokes, komodo: SIGIL_KOMODO.strokes, lion: SIGIL_LION.strokes, lynx: SIGIL_LYNX.strokes, marten: SIGIL_MARTEN.strokes, meerkat: SIGIL_MEERKAT.strokes, mole: SIGIL_MOLE.strokes, moth: SIGIL_MOTH.strokes, newt: SIGIL_NEWT.strokes, otter: SIGIL_OTTER.strokes, owl: SIGIL_OWL.strokes, penguin: SIGIL_PENGUIN.strokes, polarbear: SIGIL_POLARBEAR.strokes, raccoon: SIGIL_RACCOON.strokes, ram: SIGIL_RAM.strokes, rattlesnake: SIGIL_RATTLESNAKE.strokes, raven: SIGIL_RAVEN.strokes, redpanda: SIGIL_REDPANDA.strokes, rhino: SIGIL_RHINO.strokes, roe: SIGIL_ROE.strokes, salamander: SIGIL_SALAMANDER.strokes, scorpion: SIGIL_SCORPION.strokes, snail: SIGIL_SNAIL.strokes, snake: SIGIL_SNAKE.strokes, snowleopard: SIGIL_SNOWLEOPARD.strokes, sphinx: SIGIL_SPHINX.strokes, spider: SIGIL_SPIDER.strokes, squirrel: SIGIL_SQUIRREL.strokes, stag: SIGIL_STAG.strokes, stegosaurus: SIGIL_STEGOSAURUS.strokes, stoat: SIGIL_STOAT.strokes, tiger: SIGIL_TIGER.strokes, toad: SIGIL_TOAD.strokes, turtle: SIGIL_TURTLE.strokes, unicorn: SIGIL_UNICORN.strokes, wolf: SIGIL_WOLF.strokes, woodlouse: SIGIL_WOODLOUSE.strokes };
-  var CREATURE_NEONS = { arcticfox: SIGIL_ARCTICFOX.neon, armadillo: SIGIL_ARMADILLO.neon, badger: SIGIL_BADGER.neon, bat: SIGIL_BAT.neon, bear: SIGIL_BEAR.neon, beaver: SIGIL_BEAVER.neon, bee: SIGIL_BEE.neon, beetle: SIGIL_BEETLE.neon, boar: SIGIL_BOAR.neon, cat: SIGIL_CAT.neon, cheetah: SIGIL_CHEETAH.neon, crab: SIGIL_CRAB.neon, crocodile: SIGIL_CROCODILE.neon, dormouse: SIGIL_DORMOUSE.neon, dragonfly: SIGIL_DRAGONFLY.neon, elephant: SIGIL_ELEPHANT.neon, elk: SIGIL_ELK.neon, featheredserpent: SIGIL_FEATHEREDSERPENT.neon, fennec: SIGIL_FENNEC.neon, flyingsquirrel: SIGIL_FLYINGSQUIRREL.neon, fox: SIGIL_FOX.neon, frosttroll: SIGIL_FROSTTROLL.neon, frostwyrm: SIGIL_FROSTWYRM.neon, griffin: SIGIL_GRIFFIN.neon, hare: SIGIL_HARE.neon, hedgehog: SIGIL_HEDGEHOG.neon, heron: SIGIL_HERON.neon, hydra: SIGIL_HYDRA.neon, ibex: SIGIL_IBEX.neon, jaguar: SIGIL_JAGUAR.neon, komodo: SIGIL_KOMODO.neon, lion: SIGIL_LION.neon, lynx: SIGIL_LYNX.neon, marten: SIGIL_MARTEN.neon, meerkat: SIGIL_MEERKAT.neon, mole: SIGIL_MOLE.neon, moth: SIGIL_MOTH.neon, newt: SIGIL_NEWT.neon, otter: SIGIL_OTTER.neon, owl: SIGIL_OWL.neon, penguin: SIGIL_PENGUIN.neon, polarbear: SIGIL_POLARBEAR.neon, raccoon: SIGIL_RACCOON.neon, ram: SIGIL_RAM.neon, rattlesnake: SIGIL_RATTLESNAKE.neon, raven: SIGIL_RAVEN.neon, redpanda: SIGIL_REDPANDA.neon, rhino: SIGIL_RHINO.neon, roe: SIGIL_ROE.neon, salamander: SIGIL_SALAMANDER.neon, scorpion: SIGIL_SCORPION.neon, snail: SIGIL_SNAIL.neon, snake: SIGIL_SNAKE.neon, snowleopard: SIGIL_SNOWLEOPARD.neon, sphinx: SIGIL_SPHINX.neon, spider: SIGIL_SPIDER.neon, squirrel: SIGIL_SQUIRREL.neon, stag: SIGIL_STAG.neon, stegosaurus: SIGIL_STEGOSAURUS.neon, stoat: SIGIL_STOAT.neon, tiger: SIGIL_TIGER.neon, toad: SIGIL_TOAD.neon, turtle: SIGIL_TURTLE.neon, unicorn: SIGIL_UNICORN.neon, wolf: SIGIL_WOLF.neon, woodlouse: SIGIL_WOODLOUSE.neon };
-  var CREATURE_BOLD = { arcticfox: BOLD_ARCTICFOX.strokes, armadillo: BOLD_ARMADILLO.strokes, badger: BOLD_BADGER.strokes, bat: BOLD_BAT.strokes, bear: BOLD_BEAR.strokes, beaver: BOLD_BEAVER.strokes, bee: BOLD_BEE.strokes, beetle: BOLD_BEETLE.strokes, boar: BOLD_BOAR.strokes, cat: BOLD_CAT.strokes, cheetah: BOLD_CHEETAH.strokes, crab: BOLD_CRAB.strokes, crocodile: BOLD_CROCODILE.strokes, dormouse: BOLD_DORMOUSE.strokes, dragonfly: BOLD_DRAGONFLY.strokes, elephant: BOLD_ELEPHANT.strokes, elk: BOLD_ELK.strokes, featheredserpent: BOLD_FEATHEREDSERPENT.strokes, fennec: BOLD_FENNEC.strokes, flyingsquirrel: BOLD_FLYINGSQUIRREL.strokes, fox: BOLD_FOX.strokes, frosttroll: BOLD_FROSTTROLL.strokes, frostwyrm: BOLD_FROSTWYRM.strokes, griffin: BOLD_GRIFFIN.strokes, hare: BOLD_HARE.strokes, hedgehog: BOLD_HEDGEHOG.strokes, heron: BOLD_HERON.strokes, hydra: BOLD_HYDRA.strokes, ibex: BOLD_IBEX.strokes, jaguar: BOLD_JAGUAR.strokes, komodo: BOLD_KOMODO.strokes, lion: BOLD_LION.strokes, lynx: BOLD_LYNX.strokes, marten: BOLD_MARTEN.strokes, meerkat: BOLD_MEERKAT.strokes, mole: BOLD_MOLE.strokes, moth: BOLD_MOTH.strokes, newt: BOLD_NEWT.strokes, otter: BOLD_OTTER.strokes, owl: BOLD_OWL.strokes, penguin: BOLD_PENGUIN.strokes, polarbear: BOLD_POLARBEAR.strokes, raccoon: BOLD_RACCOON.strokes, ram: BOLD_RAM.strokes, rattlesnake: BOLD_RATTLESNAKE.strokes, raven: BOLD_RAVEN.strokes, redpanda: BOLD_REDPANDA.strokes, rhino: BOLD_RHINO.strokes, roe: BOLD_ROE.strokes, salamander: BOLD_SALAMANDER.strokes, scorpion: BOLD_SCORPION.strokes, snail: BOLD_SNAIL.strokes, snake: BOLD_SNAKE.strokes, snowleopard: BOLD_SNOWLEOPARD.strokes, sphinx: BOLD_SPHINX.strokes, spider: BOLD_SPIDER.strokes, squirrel: BOLD_SQUIRREL.strokes, stag: BOLD_STAG.strokes, stegosaurus: BOLD_STEGOSAURUS.strokes, stoat: BOLD_STOAT.strokes, tiger: BOLD_TIGER.strokes, toad: BOLD_TOAD.strokes, turtle: BOLD_TURTLE.strokes, unicorn: BOLD_UNICORN.strokes, wolf: BOLD_WOLF.strokes, woodlouse: BOLD_WOODLOUSE.strokes };
-  var CREATURE_CONFIGS = { arcticfox: CREATURE_ARCTICFOX, armadillo: CREATURE_ARMADILLO, badger: CREATURE_BADGER, bat: CREATURE_BAT, bear: CREATURE_BEAR, beaver: CREATURE_BEAVER, bee: CREATURE_BEE, beetle: CREATURE_BEETLE, boar: CREATURE_BOAR, cat: CREATURE_CAT, cheetah: CREATURE_CHEETAH, crab: CREATURE_CRAB, crocodile: CREATURE_CROCODILE, dormouse: CREATURE_DORMOUSE, dragonfly: CREATURE_DRAGONFLY, elephant: CREATURE_ELEPHANT, elk: CREATURE_ELK, featheredserpent: CREATURE_FEATHEREDSERPENT, fennec: CREATURE_FENNEC, flyingsquirrel: CREATURE_FLYINGSQUIRREL, fox: CREATURE_FOX, frosttroll: CREATURE_FROSTTROLL, frostwyrm: CREATURE_FROSTWYRM, griffin: CREATURE_GRIFFIN, hare: CREATURE_HARE, hedgehog: CREATURE_HEDGEHOG, heron: CREATURE_HERON, hydra: CREATURE_HYDRA, ibex: CREATURE_IBEX, jaguar: CREATURE_JAGUAR, komodo: CREATURE_KOMODO, lion: CREATURE_LION, lynx: CREATURE_LYNX, marten: CREATURE_MARTEN, meerkat: CREATURE_MEERKAT, mole: CREATURE_MOLE, moth: CREATURE_MOTH, newt: CREATURE_NEWT, otter: CREATURE_OTTER, owl: CREATURE_OWL, penguin: CREATURE_PENGUIN, polarbear: CREATURE_POLARBEAR, raccoon: CREATURE_RACCOON, ram: CREATURE_RAM, rattlesnake: CREATURE_RATTLESNAKE, raven: CREATURE_RAVEN, redpanda: CREATURE_REDPANDA, rhino: CREATURE_RHINO, roe: CREATURE_ROE, salamander: CREATURE_SALAMANDER, scorpion: CREATURE_SCORPION, snail: CREATURE_SNAIL, snake: CREATURE_SNAKE, snowleopard: CREATURE_SNOWLEOPARD, sphinx: CREATURE_SPHINX, spider: CREATURE_SPIDER, squirrel: CREATURE_SQUIRREL, stag: CREATURE_STAG, stegosaurus: CREATURE_STEGOSAURUS, stoat: CREATURE_STOAT, tiger: CREATURE_TIGER, toad: CREATURE_TOAD, turtle: CREATURE_TURTLE, unicorn: CREATURE_UNICORN, wolf: CREATURE_WOLF, woodlouse: CREATURE_WOODLOUSE };
+  var CREATURE_SIGILS = { arcticfox: SIGIL_ARCTICFOX.strokes, armadillo: SIGIL_ARMADILLO.strokes, badger: SIGIL_BADGER.strokes, bat: SIGIL_BAT.strokes, bear: SIGIL_BEAR.strokes, beaver: SIGIL_BEAVER.strokes, bee: SIGIL_BEE.strokes, beetle: SIGIL_BEETLE.strokes, boar: SIGIL_BOAR.strokes, butterfly: SIGIL_BUTTERFLY.strokes, cat: SIGIL_CAT.strokes, cheetah: SIGIL_CHEETAH.strokes, crab: SIGIL_CRAB.strokes, crocodile: SIGIL_CROCODILE.strokes, dormouse: SIGIL_DORMOUSE.strokes, dragonfly: SIGIL_DRAGONFLY.strokes, elephant: SIGIL_ELEPHANT.strokes, elk: SIGIL_ELK.strokes, featheredserpent: SIGIL_FEATHEREDSERPENT.strokes, fennec: SIGIL_FENNEC.strokes, flyingsquirrel: SIGIL_FLYINGSQUIRREL.strokes, fox: SIGIL_FOX.strokes, frosttroll: SIGIL_FROSTTROLL.strokes, frostwyrm: SIGIL_FROSTWYRM.strokes, griffin: SIGIL_GRIFFIN.strokes, hare: SIGIL_HARE.strokes, hedgehog: SIGIL_HEDGEHOG.strokes, heron: SIGIL_HERON.strokes, hydra: SIGIL_HYDRA.strokes, ibex: SIGIL_IBEX.strokes, jaguar: SIGIL_JAGUAR.strokes, komodo: SIGIL_KOMODO.strokes, lion: SIGIL_LION.strokes, lynx: SIGIL_LYNX.strokes, marten: SIGIL_MARTEN.strokes, meerkat: SIGIL_MEERKAT.strokes, mole: SIGIL_MOLE.strokes, moth: SIGIL_MOTH.strokes, newt: SIGIL_NEWT.strokes, otter: SIGIL_OTTER.strokes, owl: SIGIL_OWL.strokes, penguin: SIGIL_PENGUIN.strokes, polarbear: SIGIL_POLARBEAR.strokes, raccoon: SIGIL_RACCOON.strokes, ram: SIGIL_RAM.strokes, rattlesnake: SIGIL_RATTLESNAKE.strokes, raven: SIGIL_RAVEN.strokes, redpanda: SIGIL_REDPANDA.strokes, rhino: SIGIL_RHINO.strokes, roe: SIGIL_ROE.strokes, salamander: SIGIL_SALAMANDER.strokes, scorpion: SIGIL_SCORPION.strokes, snail: SIGIL_SNAIL.strokes, snake: SIGIL_SNAKE.strokes, snowleopard: SIGIL_SNOWLEOPARD.strokes, sphinx: SIGIL_SPHINX.strokes, spider: SIGIL_SPIDER.strokes, squirrel: SIGIL_SQUIRREL.strokes, stag: SIGIL_STAG.strokes, stegosaurus: SIGIL_STEGOSAURUS.strokes, stoat: SIGIL_STOAT.strokes, tiger: SIGIL_TIGER.strokes, toad: SIGIL_TOAD.strokes, turtle: SIGIL_TURTLE.strokes, unicorn: SIGIL_UNICORN.strokes, wolf: SIGIL_WOLF.strokes, woodlouse: SIGIL_WOODLOUSE.strokes };
+  var CREATURE_NEONS = { arcticfox: SIGIL_ARCTICFOX.neon, armadillo: SIGIL_ARMADILLO.neon, badger: SIGIL_BADGER.neon, bat: SIGIL_BAT.neon, bear: SIGIL_BEAR.neon, beaver: SIGIL_BEAVER.neon, bee: SIGIL_BEE.neon, beetle: SIGIL_BEETLE.neon, boar: SIGIL_BOAR.neon, butterfly: SIGIL_BUTTERFLY.neon, cat: SIGIL_CAT.neon, cheetah: SIGIL_CHEETAH.neon, crab: SIGIL_CRAB.neon, crocodile: SIGIL_CROCODILE.neon, dormouse: SIGIL_DORMOUSE.neon, dragonfly: SIGIL_DRAGONFLY.neon, elephant: SIGIL_ELEPHANT.neon, elk: SIGIL_ELK.neon, featheredserpent: SIGIL_FEATHEREDSERPENT.neon, fennec: SIGIL_FENNEC.neon, flyingsquirrel: SIGIL_FLYINGSQUIRREL.neon, fox: SIGIL_FOX.neon, frosttroll: SIGIL_FROSTTROLL.neon, frostwyrm: SIGIL_FROSTWYRM.neon, griffin: SIGIL_GRIFFIN.neon, hare: SIGIL_HARE.neon, hedgehog: SIGIL_HEDGEHOG.neon, heron: SIGIL_HERON.neon, hydra: SIGIL_HYDRA.neon, ibex: SIGIL_IBEX.neon, jaguar: SIGIL_JAGUAR.neon, komodo: SIGIL_KOMODO.neon, lion: SIGIL_LION.neon, lynx: SIGIL_LYNX.neon, marten: SIGIL_MARTEN.neon, meerkat: SIGIL_MEERKAT.neon, mole: SIGIL_MOLE.neon, moth: SIGIL_MOTH.neon, newt: SIGIL_NEWT.neon, otter: SIGIL_OTTER.neon, owl: SIGIL_OWL.neon, penguin: SIGIL_PENGUIN.neon, polarbear: SIGIL_POLARBEAR.neon, raccoon: SIGIL_RACCOON.neon, ram: SIGIL_RAM.neon, rattlesnake: SIGIL_RATTLESNAKE.neon, raven: SIGIL_RAVEN.neon, redpanda: SIGIL_REDPANDA.neon, rhino: SIGIL_RHINO.neon, roe: SIGIL_ROE.neon, salamander: SIGIL_SALAMANDER.neon, scorpion: SIGIL_SCORPION.neon, snail: SIGIL_SNAIL.neon, snake: SIGIL_SNAKE.neon, snowleopard: SIGIL_SNOWLEOPARD.neon, sphinx: SIGIL_SPHINX.neon, spider: SIGIL_SPIDER.neon, squirrel: SIGIL_SQUIRREL.neon, stag: SIGIL_STAG.neon, stegosaurus: SIGIL_STEGOSAURUS.neon, stoat: SIGIL_STOAT.neon, tiger: SIGIL_TIGER.neon, toad: SIGIL_TOAD.neon, turtle: SIGIL_TURTLE.neon, unicorn: SIGIL_UNICORN.neon, wolf: SIGIL_WOLF.neon, woodlouse: SIGIL_WOODLOUSE.neon };
+  var CREATURE_BOLD = { arcticfox: BOLD_ARCTICFOX.strokes, armadillo: BOLD_ARMADILLO.strokes, badger: BOLD_BADGER.strokes, bat: BOLD_BAT.strokes, bear: BOLD_BEAR.strokes, beaver: BOLD_BEAVER.strokes, bee: BOLD_BEE.strokes, beetle: BOLD_BEETLE.strokes, boar: BOLD_BOAR.strokes, butterfly: BOLD_BUTTERFLY.strokes, cat: BOLD_CAT.strokes, cheetah: BOLD_CHEETAH.strokes, crab: BOLD_CRAB.strokes, crocodile: BOLD_CROCODILE.strokes, dormouse: BOLD_DORMOUSE.strokes, dragonfly: BOLD_DRAGONFLY.strokes, elephant: BOLD_ELEPHANT.strokes, elk: BOLD_ELK.strokes, featheredserpent: BOLD_FEATHEREDSERPENT.strokes, fennec: BOLD_FENNEC.strokes, flyingsquirrel: BOLD_FLYINGSQUIRREL.strokes, fox: BOLD_FOX.strokes, frosttroll: BOLD_FROSTTROLL.strokes, frostwyrm: BOLD_FROSTWYRM.strokes, griffin: BOLD_GRIFFIN.strokes, hare: BOLD_HARE.strokes, hedgehog: BOLD_HEDGEHOG.strokes, heron: BOLD_HERON.strokes, hydra: BOLD_HYDRA.strokes, ibex: BOLD_IBEX.strokes, jaguar: BOLD_JAGUAR.strokes, komodo: BOLD_KOMODO.strokes, lion: BOLD_LION.strokes, lynx: BOLD_LYNX.strokes, marten: BOLD_MARTEN.strokes, meerkat: BOLD_MEERKAT.strokes, mole: BOLD_MOLE.strokes, moth: BOLD_MOTH.strokes, newt: BOLD_NEWT.strokes, otter: BOLD_OTTER.strokes, owl: BOLD_OWL.strokes, penguin: BOLD_PENGUIN.strokes, polarbear: BOLD_POLARBEAR.strokes, raccoon: BOLD_RACCOON.strokes, ram: BOLD_RAM.strokes, rattlesnake: BOLD_RATTLESNAKE.strokes, raven: BOLD_RAVEN.strokes, redpanda: BOLD_REDPANDA.strokes, rhino: BOLD_RHINO.strokes, roe: BOLD_ROE.strokes, salamander: BOLD_SALAMANDER.strokes, scorpion: BOLD_SCORPION.strokes, snail: BOLD_SNAIL.strokes, snake: BOLD_SNAKE.strokes, snowleopard: BOLD_SNOWLEOPARD.strokes, sphinx: BOLD_SPHINX.strokes, spider: BOLD_SPIDER.strokes, squirrel: BOLD_SQUIRREL.strokes, stag: BOLD_STAG.strokes, stegosaurus: BOLD_STEGOSAURUS.strokes, stoat: BOLD_STOAT.strokes, tiger: BOLD_TIGER.strokes, toad: BOLD_TOAD.strokes, turtle: BOLD_TURTLE.strokes, unicorn: BOLD_UNICORN.strokes, wolf: BOLD_WOLF.strokes, woodlouse: BOLD_WOODLOUSE.strokes };
+  var CREATURE_CONFIGS = { arcticfox: CREATURE_ARCTICFOX, armadillo: CREATURE_ARMADILLO, badger: CREATURE_BADGER, bat: CREATURE_BAT, bear: CREATURE_BEAR, beaver: CREATURE_BEAVER, bee: CREATURE_BEE, beetle: CREATURE_BEETLE, boar: CREATURE_BOAR, butterfly: CREATURE_BUTTERFLY, cat: CREATURE_CAT, cheetah: CREATURE_CHEETAH, crab: CREATURE_CRAB, crocodile: CREATURE_CROCODILE, dormouse: CREATURE_DORMOUSE, dragonfly: CREATURE_DRAGONFLY, elephant: CREATURE_ELEPHANT, elk: CREATURE_ELK, featheredserpent: CREATURE_FEATHEREDSERPENT, fennec: CREATURE_FENNEC, flyingsquirrel: CREATURE_FLYINGSQUIRREL, fox: CREATURE_FOX, frosttroll: CREATURE_FROSTTROLL, frostwyrm: CREATURE_FROSTWYRM, griffin: CREATURE_GRIFFIN, hare: CREATURE_HARE, hedgehog: CREATURE_HEDGEHOG, heron: CREATURE_HERON, hydra: CREATURE_HYDRA, ibex: CREATURE_IBEX, jaguar: CREATURE_JAGUAR, komodo: CREATURE_KOMODO, lion: CREATURE_LION, lynx: CREATURE_LYNX, marten: CREATURE_MARTEN, meerkat: CREATURE_MEERKAT, mole: CREATURE_MOLE, moth: CREATURE_MOTH, newt: CREATURE_NEWT, otter: CREATURE_OTTER, owl: CREATURE_OWL, penguin: CREATURE_PENGUIN, polarbear: CREATURE_POLARBEAR, raccoon: CREATURE_RACCOON, ram: CREATURE_RAM, rattlesnake: CREATURE_RATTLESNAKE, raven: CREATURE_RAVEN, redpanda: CREATURE_REDPANDA, rhino: CREATURE_RHINO, roe: CREATURE_ROE, salamander: CREATURE_SALAMANDER, scorpion: CREATURE_SCORPION, snail: CREATURE_SNAIL, snake: CREATURE_SNAKE, snowleopard: CREATURE_SNOWLEOPARD, sphinx: CREATURE_SPHINX, spider: CREATURE_SPIDER, squirrel: CREATURE_SQUIRREL, stag: CREATURE_STAG, stegosaurus: CREATURE_STEGOSAURUS, stoat: CREATURE_STOAT, tiger: CREATURE_TIGER, toad: CREATURE_TOAD, turtle: CREATURE_TURTLE, unicorn: CREATURE_UNICORN, wolf: CREATURE_WOLF, woodlouse: CREATURE_WOODLOUSE };
 
   // src/rules/creatureConfig.ts
   var CREATURES = CREATURE_CONFIGS;
@@ -4519,7 +4646,7 @@ label.check input { accent-color: var(--accent); }
   function circleParts(style2, species) {
     const C2 = style2.circle;
     if (!C2) return [];
-    const fam = VOICE_FAMILIES[species]?.family ?? "big", h = nameHash(species), out = [];
+    const fam = VOICE_FAMILIES[species]?.family ?? "big", h = nameHash(seedName(species)), out = [];
     for (const [name, u] of [...Object.entries(C2.every), ...Object.entries(C2.families[fam] ?? C2.families.big ?? {})]) {
       const ps = Array.isArray(u.p) ? u.p : [u.p];
       out.push([name, { p: ps[(h + nameHash(name)) % ps.length], level: u.level ?? 1 }]);
@@ -4612,7 +4739,7 @@ label.check input { accent-color: var(--accent); }
       if (fillBar && name === style2.fill.part && u.p !== "__fill") continue;
       const pat = u.p === "__fill" ? style2.fill.pattern : def.patterns[u.p];
       if (!pat) continue;
-      const sh = own ? nameHash(circle.species) : 0, phase = own ? sh % 8 * 2 : 0;
+      const sh = own ? nameHash(seedName(circle.species)) : 0, phase = own ? sh % 8 * 2 : 0;
       const at2 = own && ctx2.circleStep !== void 0 ? ctx2.circleStep : barIn * 16 + s;
       const i = (at2 + phase) % pat.length;
       const over = danceBass?.[name];
@@ -4649,7 +4776,7 @@ label.check input { accent-color: var(--accent); }
       }
       const { ch, dur } = hitAt(pat, i);
       if (ch === "." || ch === "-") continue;
-      const seed2 = own ? ctx2.seed + nameHash(circle.species) : ctx2.seed;
+      const seed2 = own ? ctx2.seed + nameHash(seedName(circle.species)) : ctx2.seed;
       const r = hash2(own && ctx2.circleStep !== void 0 ? ctx2.circleStep : step2, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), seed2 + phrase * 7919);
       if (ch === "?" && r >= a.energy) continue;
       const level = u.level * scaleLevel * (0.94 + 0.06 * r) * (building && !own ? 0.45 + 0.55 * build : 1);
@@ -12121,7 +12248,7 @@ registerProcessor("witch-fof", WitchFof);
     scratch(forward, pan = 0, near = 1) {
       scratch(this.k, forward, pan, near);
     }
-    /** Her routine's strokes (art/witch.js DJ_ROUTINE): the tonearm lifted and dropped, a stroke, a chirp, the spin-back, her hype. */
+    /** Her routine's strokes (rules/djSet.ts DJ_ROUTINE): the tonearm lifted and dropped, a stroke, a chirp, the spin-back, her hype. */
     deck(stroke, pan = 0, near = 1, bpm = 120) {
       this.k.pace = Math.min(1, 120 / Math.max(1, bpm));
       if (stroke === "hype") this.babble.whoop(pan, near);
@@ -12689,6 +12816,7 @@ registerProcessor("witch-fof", WitchFof);
       radius: 9,
       edge: 2.5,
       top: 0.45,
+      back: 0.7,
       minFromStone: 45,
       minFromOtherStones: 15,
       floor: {
@@ -13701,6 +13829,14 @@ registerProcessor("witch-fof", WitchFof);
         sprint: 23
       }
     },
+    lunge: {
+      on: true,
+      from: 1.5,
+      through: 2,
+      shortest: 0.75,
+      full: 16,
+      least: 8
+    },
     ranged: {
       on: true,
       lead: 1,
@@ -13839,6 +13975,7 @@ registerProcessor("witch-fof", WitchFof);
               "snail",
               "salamander",
               "bat",
+              "butterfly",
               "moth",
               "beetle",
               "spider",
