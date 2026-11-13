@@ -55,7 +55,7 @@ export function enrage(c: Creature): boolean {
 }
 
 /** Whether it can be invited now: a wild one (dazed or not; not a legend), or a happy one for its
- *  second step (states.leash). Enraged ones, legends and leashed ones can't. */
+ *  second step (states.leash). Babies (Ed, 2026-10-31), enraged ones, legends and leashed ones can't. */
 export function invitableNow(c: Creature, data: StatesData = STATES): boolean {
   if (c.homeGuard) return false;
   if (c.statue) return false; // (the challenge's pack as statues, stone or walking back to their posts: rules/challengeStatues.ts)

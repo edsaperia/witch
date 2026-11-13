@@ -19,7 +19,7 @@ export function islandSeed(kind: string): number {
 }
 
 /** An island's size in areas by its phase (rules/rosters.ts sizeOfPhase; Ed, 2026-11-04: 10 / 15 / 20 / 25 / 30 areas, 10 / 20 / 30 /
- *  40 / 50 till then; a kind of phase p, rosters' config/kinds.json, has its island in phase p + 1; home about 64 at the end). */
+ *  40 / 50 till then; a kind of phase p, the kinds table's (rules/kinds.ts), has its island in phase p + 1; home about 64 at the end). */
 export const islandAreas = (phase: number): number => sizeOfPhase(Math.max(1, Math.min(5, Math.round(phase) + 1)));
 export const HOME_AREAS = 64;
 

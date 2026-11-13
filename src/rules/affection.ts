@@ -41,7 +41,7 @@ export function hold(g: AffectionWorld, c: Creature, dt: number, time: number = 
   return true;
 }
 
-/** Whether a 💌 can affect c now (wild, or happy for its second step; not a legend, not gone). */
+/** Whether a 💌 can affect c now (wild, or happy for its second step; not a baby, a legend or gone). */
 export const invitable = (c: Creature): boolean => invitableNow(c);
 
 /** Whether c stops 💌s dead: enraged animals and legends (#87), and the challenge's statues (Ed, 2026-11-04: "The wild creatures

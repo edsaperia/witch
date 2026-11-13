@@ -149,7 +149,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     return true;
   });
 
-  // Attacks in the grammar in flight (rules/attacks/engine.ts: a creature given one, the Fight Arena's ?attack=).
+  // Attacks in the grammar in flight (rules/attacks/engine.ts: a creature given one, the Fight Arena's ?attack=, or its species' own).
   if (s.spells) stepSpells(s.spells, spellWorld(w, s, grid, s.spells.seed, data), s.attackLib ?? ATTACK_LIB, time, dt);
 
   // Beams burn along their line in ticks, sweeping after their target.

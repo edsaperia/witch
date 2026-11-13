@@ -6,7 +6,8 @@
 // pressure, under the tuning's dodge.a tokens (rules/combat.ts; Ed, 2026-10-20). Against a soundsystem there's no pack: each fights
 // as before. A new kind is a data entry (its moves, special, retreat, rhythm, pressure), not new code. The director runs once a step
 // before the fight loop (rules/combat.ts) and hands each member a directive; the loop reads it. No drawing here.
-// Phase 1's kinds (Echo, 2026-10-19: wolf, boar, bat, raven, newt, moth, heron, beetle, woodlouse, otter, toad) add two specials
+// Phase 1's kinds (Echo, 2026-10-19: wolf, boar, bat, raven, newt, moth, heron, beetle, woodlouse, otter, toad; the moth since drawn
+// as a swallowtail, its id kept, 2026-10-23; the newt on the bench, Ed 2026-11-12: rules/kinds.ts BENCH) add two specials
 // (mirage, sync), a kind's own variant of a special (`specialWith`: the bat's confusion turns her movement, the moth's cloud flashes,
 // the toad's cloud comes down from a leap, the beetle's cover locks two shells), a ranged move on a kind's own attack (the raven's
 // spit and barb) or a lob that leaves a patch (the toad's spores), and retreats (flanks, backLine, branches, water, huddle, arcs, swirl).

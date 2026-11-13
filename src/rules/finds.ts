@@ -18,7 +18,7 @@
 //
 // Hats and bags (Ed, 2026-10-23, the mock previews/ed/hat-bag-finds: "Own objects each - all permanent upgrades will have their
 // own look"): every spell hat is a find (only the plain hat is hers at first), lying where its spell would put it (art/country.js
-// a pointed hat), taken onto the Parlour's hats' floor; the bum bag and the backpack each its own, no longer in the trunk.
+// a pointed hat), taken onto the Parlour's hats' floor; each bag not hers from the start (BAG_ITEMS; the bum bag is hers since Ed, 2026-10-29) its own, no longer in the trunk.
 // How every find looks (Ed, 2026-10-23, the finds style guide, docs/art-guide/FINDS.md): one flask-sized object, no setting
 // round it, on a clear patch in its own pale gold-white light (render/view/finds.ts); clothes a folded bundle, a bag a little bag,
 // a hat a pointed hat, a broom part the part itself (art/country.js's find pieces). Taken, it's gone, its patch and light too.
@@ -51,7 +51,7 @@ export interface Trunk { x: number; z: number; cell: [number, number]; kind: Fin
 export const TRUNK_REACH = 2.2, TRUNK_CLEAR = 30;
 const RINGS = [45, 60, 35, 75, 28];
 
-/** The bags found each on its own (Ed, 2026-10-23): the bag shelf's not hers from the start (Ed, 2026-10-29: the Satchel, Bumbag and Purse are; Tote, Duffel, Briefcase, Backpack are found, each its own way to throw: rules/bags.ts). */
+/** The bags found each on its own (Ed, 2026-10-23): the bag shelf's not hers from the start (Ed, 2026-10-29: the Satchel, Bumbag and Purse are; Tote, Duffel, Briefcase, Clutch, Messenger, Backpack are found, each its own way to throw: rules/bags.ts). */
 export const BAG_ITEMS: readonly string[] = SHELVES.bag.items.filter(i => !i.start).map(i => i.id);
 /** The hats found (Ed, 2026-10-23): every built spell hat; the plain one is hers from the start. */
 export const HAT_FINDS: readonly string[] = HAT_SPELLS.filter(s => s.built && s.id !== "none").map(s => s.id);
@@ -148,7 +148,7 @@ export function wayTo(fromX: number, fromZ: number, x: number, z: number): { poi
 
 /** The night's one permanent upgrade to find (Ed, 2026-10-22: "With all permanent upgrades, there's one per night, and it's
  *  hinted through the telescope"): what kind it is, its item id and its bearing (degrees clockwise from north) from (fromX, fromZ),
- *  the treehouse. Never two at once. A wearable in the trunk or a broom part in a wreck (hats and records to come, each its own
+ *  the treehouse. Never two at once. A wearable in the trunk or a broom part in a wreck (a hat, a bag or a record each its own
  *  kind in FIND_KINDS); null with none to find tonight, or once it's found. The constellation's one source (rules/constellations.ts). */
 export interface NightFind { kind: FindKindId; item: string; bearing: number }
 export function nightFind(g: { trunk: Trunk | null }, fromX: number, fromZ: number): NightFind | null {
