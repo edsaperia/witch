@@ -87,11 +87,11 @@ function aheadOf(x: number, z: number): number {
 export function inView(v: View, x: number, z: number, w: number, h: number, margin: number, reach = v.game.tuning.haze.far): boolean {
   const { x: wx, z: wz } = focusOf(v), far = reach + margin;
   if ((x - wx) ** 2 + (z - wz) ** 2 > far * far) return false;
+  // (through the telescope, only what lies within its wedge: its view's width and telescope.wedge degrees either side, so it pans a
+  // while before the scenery is listed again: render/view/scenery.ts. Tested first, being cheap: most of its circle is outside it.)
+  if (v.telescope && !inWedge(v, x, z, w)) return false;
   // On the rolling ground, and dropped by the bend (things far ahead come down into view): by the
   // bend now and the bend it is easing to (as she rises), as the culling isn't redone as it grows.
-  // (through the telescope, only what lies within its wedge: its view's width and telescope.wedge degrees either side, so it pans a
-  // while before the scenery is listed again: render/view/scenery.ts. First, being cheap: most of its circle lies outside it.)
-  if (v.telescope && !inWedge(v, x, z, w)) return false;
   const B = HEIGHT_UNIFORMS.uBend.value, ahead = aheadOf(x, z), g = groundHeight(x, z);
   const d1 = B.x * ahead * ahead, d2 = v.bendTo * ahead * ahead;
   // Past the bent ground's horizon, only what stands tall enough to show over the bulge is seen:
