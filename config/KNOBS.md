@@ -4215,9 +4215,12 @@ See `pixelSize`.
 
 ### `sigilProjection`
 
-From the treetops each placed sigil shows above the canopy over its spot, with a faint beam down to it.
+From the treetops each placed sigil shows above the canopy over its spot, clearly, with a column of light down to it.
 
-From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, size (times the ground rune), and a faint column of light (beam opacity) from the rune up to it. Fades in as she rises.
+1. Ed, 2026-11-13: "At the moment when you place a creature sigil on the ground and you are at treetop mode, you can see it projected above the trees, but only faintly. Can you look into this system? I'd like them to be more visible at treetop mode."
+2. Ed, 2026-11-13: "A, but also take a look at the light column"
+3. Ed, 2026-11-13: "pulse is fine"
+From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, glyph (its brightness times its colour: 1 its full colour, not dimmed by leash.sigilGlyph as the ground sigils are), size (times the ground rune), and a column of light from the rune up to it (beam its opacity, a dot every beamStep metres). Fades in as she rises. Before 2026-11-13: opacity 0.65 times leash.sigilGlyph 0.5, beam 0.25 every 1.5 m (the link's ?projection=old). The creatures' own (sigilProjection.creatures) are separate and unchanged.
 
 - **`sigilProjection.creatures`**: From the treetops each leashed or happy creature's sigil hangs over it, moving with it.
   1. Ed's playtest, 2026-10-06: "I should be able to see sigils of leashed creatures and happy creatures from treetop mode"
@@ -4229,6 +4232,8 @@ From the treetops, each placed sigil shows above the canopy over its spot: heigh
 | `sigilProjection.opacity` | number | 0 to … |
 | `sigilProjection.beam` | number | 0 to … |
 | `sigilProjection.size` | number | 0 to … |
+| `sigilProjection.glyph` | number | 0 to … |
+| `sigilProjection.beamStep` | number | 0 to … |
 | `sigilProjection.creatures.range` | number | 0 to … |
 | `sigilProjection.creatures.max` | number | 0 to … |
 | `sigilProjection.creatures.size` | number | 0 to … |

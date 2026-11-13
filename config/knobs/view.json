@@ -457,8 +457,25 @@
       "see": "pixelSize"
     },
     "sigilProjection": {
-      "what": "From the treetops each placed sigil shows above the canopy over its spot, with a faint beam down to it.",
-      "notes": "From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, size (times the ground rune), and a faint column of light (beam opacity) from the rune up to it. Fades in as she rises."
+      "what": "From the treetops each placed sigil shows above the canopy over its spot, clearly, with a column of light down to it.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-13",
+          "quote": "At the moment when you place a creature sigil on the ground and you are at treetop mode, you can see it projected above the trees, but only faintly. Can you look into this system? I'd like them to be more visible at treetop mode."
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-13",
+          "quote": "A, but also take a look at the light column"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-13",
+          "quote": "pulse is fine"
+        }
+      ],
+      "notes": "From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, glyph (its brightness times its colour: 1 its full colour, not dimmed by leash.sigilGlyph as the ground sigils are), size (times the ground rune), and a column of light from the rune up to it (beam its opacity, a dot every beamStep metres). Fades in as she rises. Before 2026-11-13: opacity 0.65 times leash.sigilGlyph 0.5, beam 0.25 every 1.5 m (the link's ?projection=old). The creatures' own (sigilProjection.creatures) are separate and unchanged."
     },
     "sigilProjection.creatures": {
       "what": "From the treetops each leashed or happy creature's sigil hangs over it, moving with it.",

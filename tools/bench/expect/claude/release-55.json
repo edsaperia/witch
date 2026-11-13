@@ -1,0 +1,6 @@
+{
+  "reason": "Release 55: #2052 (claude/edge-fade): the grass's fade at the edge of her light is dithered on each tuft's own pixel grid (starting at its root), not the screen's, so which pixels of a tuft in that band are drawn differs; the scenery's dithered far edge and the string lights' fade likewise, where a scene has them at the scenery's edge; the rules are untouched",
+  "frames": {
+    "*": "tufts in the fade band at the edge of her light keep the same share of their pixels, but not the same ones (each tuft's dither starts at its own root)"
+  }
+}

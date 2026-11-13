@@ -13,6 +13,7 @@ import { CAST_SHADOW_GLSL, CAST_SHADOW_UNIFORMS } from "./castShadows";
 import { Dirty } from "./dirty";
 import { FX_UNIFORMS, FX_FIELD_GLSL } from "./fx/uniforms";
 import { THERMAL_UNIFORMS, THERMAL_GLSL } from './thermalVision';
+import { EDGE_ANCHOR_GLSL, EDGE_GRID_GLSL, EDGE_UNIFORMS } from "./edgeFade";
 
 /** One art pixel's size in the world (metres): the sprites' scale at the tuning's pixel size. */
 export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: number }): number {
@@ -84,6 +85,8 @@ export const SPRITE_UNIFORMS = {
   /** The forest's far edge dithered in the solid pass, not faded in the see-through passes (1: the quality ladder's rung,
    *  app/ladder.ts; scenery.edgeDither). Its pixels drawn or not by a 4×4 ordered dither on the art's own pixels. */
   uEdgeDither: { value: 0 },
+  /** `?edgefade=old`: that dither on the screen's grid, as before (render/edgeFade.ts). */
+  uEdgeOld: EDGE_UNIFORMS.uEdgeOld,
   /** The cut-away round her with a hard edge: each crown in the hole's band cut or drawn whole, never half see-through (the
    *  quality ladder's rung, app/ladder.ts; canopyCutout.hard): where on the soft fade it cuts (0 < it ≤ 1; 0 off, the fade as ever). */
   uHoleHard: { value: 0 },
@@ -181,8 +184,9 @@ varying float vFront;
 varying vec2 vLocal;
 varying float vSizeY;
 varying vec2 vGround; // its ground spot under this pixel: its foot, across its width (the cast shadows: render/castShadows.ts)
+varying vec2 vEdgeAt; // the pixel its base is snapped to: where the dither of its fade at the scenery's edge starts (render/edgeFade.ts)
 ${HEIGHT_VERT_GLSL}
-${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}${HIZ_GLSL}
+${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}${EDGE_ANCHOR_GLSL}${HIZ_GLSL}
 ${FX_FIELD_GLSL}
 varying vec2 vFxBase;
 varying vec4 vFxPaint;
@@ -263,7 +267,9 @@ void main() {
   vNear = uNearCut > 0.0 ? smoothstep(uNearCut * 0.75, uNearCut, -(viewMatrix * vec4(base, 1.0)).z) : 1.0;
   // Snap the whole sprite by its base to the pixel grid, so it moves a whole pixel at a time and
   // its small bright details (flowers, eyes) don't shimmer in and out as the camera glides.
-  gl_Position.xy += pixelSnap(clipOf(base)) * gl_Position.w;
+  vec4 cb = clipOf(base);
+  gl_Position.xy += pixelSnap(cb) * gl_Position.w;
+  vEdgeAt = edgeAnchor(cb);
   // The hole cut in the canopy round her (Ed, round 7: "the crown-hiding circle still has a very
   // sharp edge"): each tree's crown (and its cut trunk with it) has its own radius for it, a little
   // nearer or further than the next, so no line runs across the canopy, and fades over a wide band.
@@ -395,6 +401,7 @@ uniform vec4 uCutShape;
 varying vec2 vLocal;
 varying float vSizeY;
 varying vec2 vGround;
+varying vec2 vEdgeAt;
 uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor, rim)
 uniform float uPoolReadability; // default OFF; ?poolreadability=1 for the assigned review
 uniform float uRimOn; // this batch: 1 for characters (the witch, creatures): the mood's moonlight rim
@@ -426,6 +433,7 @@ varying vec4 vFxPaint;
 varying vec2 vFxInfo;
 ${CAST_SHADOW_GLSL}
 ${WITCH_LIGHT_GLSL}
+${EDGE_GRID_GLSL}
 // 4x4 ordered dither, for fading the canopy in pixel-art style.
 float bayer(vec2 p) {
   int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
@@ -782,7 +790,7 @@ void main() {
     gl_FragColor.rgb = mix(gl_FragColor.rgb,vec3(0.65,0.82,0.9),fxFrost*0.5);
   if (uIsScenery > 0.5) {
     float edge = vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld), k = edge * uAppear; // and a set just drawn fades in (a crown: out to the canopy's reach)
-    if (uEdgeDither > 0.5) { if (bayer(gl_FragCoord.xy) >= edge) discard; k = uAppear; } // (the quality ladder's dithered edge: each art pixel there or not)
+    if (uEdgeDither > 0.5) { if (bayer(edgeGrid(vEdgeAt)) >= edge) discard; k = uAppear; } // (the quality ladder's dithered edge: each art pixel there or not, the dither's grid the thing's own, not the screen's: render/edgeFade.ts)
     if (k < 0.004) discard;
     gl_FragColor.a *= k;
   }
