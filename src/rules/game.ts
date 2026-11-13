@@ -128,6 +128,8 @@ export interface Witch {
   pinned?: Pinned | null;
   /** Up in the treetops, how far her taut chains have pulled her down (rules/tautChain.ts; 0 to 1 of the way, absent: none). */
   tug?: number;
+  /** Her pull's eased pace while the tug brings her down (m/s past the chain's end; rules/tautChain.ts stepTug's rate; absent: none). */
+  tugRate?: number;
   /** On foot, the sigil her taut chain is pulling out of her stack, and how far (rules/tautChain.ts; absent: none). */
   pop?: PopMeter;
   /** The creature whose sigil that pull puts down this step (rules/sigilButton.ts popSigil). */
@@ -735,9 +737,10 @@ function fixedStep(g: Game, controls: readonly Controls[], guestCatchUp: readonl
       const r = dragWitch(W.body, anchorFrom[i], W.leash.stack, g.creatures, t, hdt, pullOf(W.spells)), B = r.body, { deck, ht } = motions[i], P = pullsOf(r.pulls);
       const hold = (!!g.map.bounds.lakes && onLake(g.map.bounds, B.x, B.z, lakeKnobs(t).pad)) || (!!deck && landsOn(deck, B.x, B.z));
       const thrown = !!W.knock && (!!W.knock.kx || !!W.knock.kz), pull = pullOf(W.spells);
-      const T = stepTug(B, W.tug ?? 0, r.strain, hdt, t, pull, { hold, free: thrown });
+      const T = stepTug(B, W.tug ?? 0, r.strain, hdt, t, pull, { hold, free: thrown }, W.tugRate ?? 0);
       W.body = T.body;
       if (T.tug > 0) W.tug = T.tug; else if (W.tug !== undefined) delete W.tug;
+      if (T.rate > 0) W.tugRate = T.rate; else if (W.tugRate !== undefined) delete W.tugRate;
       const onFoot = W.body.mode === "ground" && !W.body.seated && !W.body.perch;
       const Pm = stepPop(W.pop ?? null, P, hdt, t, onFoot, pull, thrown);
       if (Pm.meter) W.pop = Pm.meter; else if (W.pop) delete W.pop;
@@ -748,7 +751,7 @@ function fixedStep(g: Game, controls: readonly Controls[], guestCatchUp: readonl
         const k = (W.knock ??= newKnock()); k.kx = (dx / d) * v; k.kz = (dz / d) * v; k.at = ht; W.yankAt = ht; // (the knock's easing throw, no stagger)
         g.leashEvents.push({ kind: "yanked", id: y, x: W.body.x, z: W.body.z, at: ht });
       }
-    } else { if (W.tug !== undefined) delete W.tug; if (W.pop) delete W.pop; }
+    } else { if (W.tug !== undefined) delete W.tug; if (W.tugRate !== undefined) delete W.tugRate; if (W.pop) delete W.pop; }
   });
   const c = motions[0].c;
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null, onTreehouse(g), !!c.framing && onTreehouse(g), c.framePart ?? null); // (in a legend's circle: the lower view, camera.circle; indoors, camera.house; choosing at a station, camera.station)
