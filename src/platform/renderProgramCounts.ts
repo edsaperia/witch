@@ -14,3 +14,17 @@ export function renderProgramCounts(read: () => readonly object[] | null | undef
     },
   };
 }
+
+/** Every frame's GPU set-up work, for the stall log (Ed, 2026-11-12: "Just had a very long freeze when taking off from the treehouse
+ *  after a sail": 5.4 s of one frame's draw, the cause not in the log): the shader programs three made in the frame (each a
+ *  compile and link on the main thread when it's first drawn) and the textures it allocated (each an upload on first use), read
+ *  from renderer.info. Reads counts only; no GL call. */
+export function frameGpuCounts(programs: () => readonly object[] | null | undefined, textures: () => number) {
+  const counts = renderProgramCounts(programs, false);
+  return {
+    begin() { return { programs: counts.begin(), textures: textures() }; },
+    end(before: { programs: { before: number; newBeforeFrame: number }; textures: number }) {
+      return { programs: counts.end(before.programs).newObservedDuringFrame, textures: Math.max(0, textures() - before.textures) };
+    },
+  };
+}

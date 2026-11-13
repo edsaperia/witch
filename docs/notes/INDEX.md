@@ -41,8 +41,10 @@ glossary; these are the prototype's), by note.
 
 ### [Art checks](art-checks.md)
 
+- Art on pull requests
 - Style bible
 - Bold sigils
+- The witch's poses
 
 ### [Balance baselines — v5655 rules](balance-baselines.md)
 
@@ -101,6 +103,7 @@ glossary; these are the prototype's), by note.
 ### [Creatures' art](creatures.md)
 
 - Stiltwalkers
+- Mesh creature
 - Sleeping legend
 - Asleep / nap
 - Genome
@@ -115,6 +118,13 @@ glossary; these are the prototype's), by note.
 - Open jaw
 - Silhouette check
 - Live rig
+- Ground contact
+- Stride and planted feet
+- Gait
+- Asleep
+- Sizes
+- Nothing else
+- Checks
 
 ### [Deploys](deploys.md)
 
@@ -145,6 +155,7 @@ glossary; these are the prototype's), by note.
 - Loose sigil
 - Legend tether
 - Chain drag
+- Taut chain
 - Commanded feeding
 - Won ones out of the way
 - Follower buffs
@@ -163,6 +174,7 @@ glossary; these are the prototype's), by note.
 - Party animal
 - Combat
 - Attack grammar
+- Ranged aim
 - Siege
 - Wild watch / chase
 - Enraged
@@ -182,10 +194,12 @@ glossary; these are the prototype's), by note.
 - Wild / happy / leashed / enraged
 - Runaway
 - Restless / angry legend, relic
+- The challenge circle hidden till the party
 
 ### [The treehouse and its house](house.md)
 
 - The house one room
+- No edge at the Terrace
 - Telephone
 - Landing cooldown
 - Current brewing authority (Ed, 2026-10-31):
@@ -201,6 +215,7 @@ glossary; these are the prototype's), by note.
 - Furniture: size, freestanding, mess and layout
 - The stations regrouped
 - Station menus
+- No ∅ cards
 - Starting bags
 - Found bags
 - Bag names
@@ -328,6 +343,7 @@ glossary; these are the prototype's), by note.
 - Quality ladder
 - Palette-indexed art
 - The telescope's forest under the loading screen
+- Sail take-off freeze
 
 ### [The run](run.md)
 
@@ -441,6 +457,7 @@ glossary; these are the prototype's), by note.
 - Trail colours
 - Tree normal maps switch
 - Tree normal directions
+- Tree normal directions: never waited for
 
 ### [The witch's art](witch-art.md)
 

@@ -164,13 +164,13 @@ One area type per creature, each a small definition in Ed's columns: **floor** t
 | Beaver pond | birch leaves | a pond | stumps | birch and aspen | a beaver dam | Beaver | draft |
 | Log pile | rotting leaves | | fungi | rotting logs | a fallen giant | Stag beetle | draft |
 | Heath | heather | | gorse | wind-bent birches | | Moth | draft |
-| Old pinewood | pine needles | | pine cones | tall old pines with knotholes | | Pine marten (on home: the bee, Ed 2026-11-12; see below) | draft |
+| Old pinewood | pine needles | | pine cones | tall old pines with knotholes | | Bee (Ed 2026-11-12; the pine marten's until then, now on the bench; see below) | draft |
 | Ravine | wet moss and rock | rock walls | ferns | mossy boulders | a waterfall | Salamander | draft |
 | Bluebell glade | bluebells | | ferns | beeches | | Hare | draft |
 | Holly thicket | dead leaves | holly hedges | cobwebs | hollies | a web-hung dead tree | Spider | draft |
 | Honeysuckle tangle | grass and clover | bramble | honeysuckle | hazel coppice | | Dormouse | draft |
 
-**Home's bee** (Ed, 2026-11-12): on home the **bee** takes the pine marten's place and lives in the **old pinewood**; it **flies**. The marten and a turtle are kept for other islands. The bee isn't a kind in the game yet (no genome, rules, sounds or sigil): its first model is in the low-poly creature meshes (#1962, behind `?meshCreatures=1`), whose models for home's creatures Ed approved the same day ("I'm happy with these models, let's do the real build").
+**Home's bee** (Ed, 2026-11-12): on home the **bee** takes the pine marten's place and lives in the **old pinewood**; it **flies**. It is a kind of its own, `bee` ("make a new ID, keep the marten distinct, we may want it back one day"): genome, sigil, sounds, attack (two stings from range) and a flier's rules, all first guesses, with its model in the low-poly creature meshes (#1962). The **marten is on the bench** ("marten is on the bench"): kept whole, with no island. The **turtle** took the newt's place in the **Fen** the same day ("newt for turtle"): `turtle`, slow and armoured, fighting as the newt did with a jet of pond water for its spit; the **newt is on the bench** with the marten.
 
 ### Area types from recipes (#119)
 
@@ -178,7 +178,7 @@ Area types after the first 30 are written as **recipes**: one object of data eac
 
 | Area | Floor | Wall | Small | Big | Set piece | Creature | By |
 |---|---|---|---|---|---|---|---|
-| Fen | peat moss and sedge | black pools | sedge and reeds | aspen and alder carr | a punt sunk among the sedge | Newt | recipe |
+| Fen | peat moss and sedge | black pools | sedge and reeds | aspen and alder carr | a punt sunk among the sedge | Turtle (Ed 2026-11-12, "newt for turtle"; the newt's until then, now on the bench) | recipe |
 | Heronry | rough grass and reed litter | the mere's edge | reeds and rushes | tall elms with herons' nests | an old jetty out over the mere | Heron | recipe |
 | Mangrove swamp | tidal mud and brackish pools | brown channels | reeds and mangrove seedlings | mangroves on stilt roots, a few date palms | a dugout sunk among the roots | Crocodile (phase 3) | recipe |
 | Drowned wood | black water and drowned leaf litter | deep black channels | reeds, knuckled roots and floating weed | tall larches drowned standing, trailing willows | the drowned stones of an old wall | Hydra (phase 4) | recipe |

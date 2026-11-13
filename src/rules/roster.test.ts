@@ -30,7 +30,7 @@ function nightSpecies(seed: number, island: string, found: string[] = [], waves 
 describe("only the island's roster appears (rules/rosters.ts)", () => {
   it("home at a campaign's start: every creature made over a night is one of its starting kinds, tonight's five (no flyers, no insects)", () => {
     const home = new Set(homeKinds());
-    expect([...home].sort()).toEqual(["badger", "dormouse", "fox", "hare", "hedgehog", "marten", "mole", "snail", "squirrel", "stoat"]);
+    expect([...home].sort()).toEqual(["badger", "bee", "dormouse", "fox", "hare", "hedgehog", "mole", "snail", "squirrel", "stoat"]);
     for (const seed of [123, 7]) {
       const seen = nightSpecies(seed, "home"), tonight = new Set(homeRoster([], seed));
       expect([...seen.keys()].filter(k => !tonight.has(k)), `seed ${seed}: outside home's roster`).toEqual([]);

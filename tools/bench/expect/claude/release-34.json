@@ -1,0 +1,9 @@
+{
+  "reason": "Release 34: #1984 (claude/tree-normals-32): the trees' normal maps default to 32 directions a tree atlas (Ed, 2026-11-12: \"we can see 32 tree normal maps as the default\"), full before: tree shading changes slightly; #1987 (claude/statue-spacing-10): challenge.statues.first 3.5 → 10 m and gap 19 → 10 m (Ed, 2026-11-12): the challenge circles' statues stand at new posts, and the circle may size differently",
+  "frames": {
+    "*": "trees lit from 32 normal directions instead of the full normal maps; statue posts moved"
+  },
+  "rules": {
+    "*": "statue posts and possibly the challenge circle's size moved"
+  }
+}

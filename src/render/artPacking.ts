@@ -45,7 +45,7 @@ export function* packSteps(sprites: Baked[], width = 2048): Steps<AtlasPixels> {
     // And how far that row reaches from the middle, either way.
     let foot = 0;
     if (pad < s.h) { const row = s.h - 1 - pad; for (let x = 0; x < s.w; x++) if (pa[(row * s.w + x) * 4 + 3] >= 128) foot = Math.max(foot, Math.abs(x + 0.5 - s.w / 2) + 0.5); }
-    frames.push({ uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h), ...(foot ? { foot } : {}), ...(s.S ? { masked: true } : {}), ...(s.head ? { head: s.head } : {}) });
+    frames.push({ uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h), ...(foot ? { foot } : {}), ...(s.S ? { masked: true } : {}), ...(s.head ? { head: s.head } : {}), ...(s.tall ? { tall: s.tall } : {}) });
   }
   // Each plane as palette indices where it can be (render/palette.ts: a quarter of the bytes, the colours exact).
   yield;

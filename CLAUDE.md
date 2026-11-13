@@ -49,4 +49,4 @@ Bring a bug back to Ed early rather than guess: he can answer questions, take a 
 
 ## Testing
 
-`node tools/checks/which.mjs [--base <ref>]` lists the checks your change needs, from its changed files and `config/checks.json`: the builder's, before a FINAL, and the coordinator's, on the combined build. The builder minimum is `npm run typecheck` and the tests near what you touched (`npx vitest related --run <files>`), plus `node art/check.mjs` when you touch the art (it isn't run on PRs). CI, the smoke tests and every other check: `docs/notes/testing.md` and the area's note.
+`node tools/checks/which.mjs [--base <ref>]` lists the checks your change needs, from its changed files and `config/checks.json`: the builder's, before a FINAL, and the coordinator's, on the combined build. The builder minimum is `npm run typecheck` and the tests near what you touched (`npx vitest related --run <files>`), plus `node art/check.mjs` when you touch the art (CI runs it on PRs that change art, narrowed the same way: `docs/notes/art-checks.md`). CI, the smoke tests and every other check: `docs/notes/testing.md` and the area's note.

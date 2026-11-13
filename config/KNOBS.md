@@ -909,7 +909,12 @@ Its columns' sigils float `sigilGap` m over the columns' tops (render/challenge.
   3. Ed, 2026-11-04: "only being in the outside of the area while at treetops should end the fight, otherwise they pursue you and don't reset." … "While the fight is going on, won creatures should avoid the circle." … "they should roam the whole area, and avoid creatures that are fighting. Do this in a simple way - we just want them out of the way of the fight" (his rulings on #1804, through the coordinator: before, stepping or flying off the floor reset them; now only every witch knocked down (as built) or up in the treetops outside the area ends the fight; dazed ones reset with the rest and ones running off are left be; the analyser lingers and fades; the statues keep the moonlit rim; the won ones roam the area off the circle (`keepOut`) and away from fighters (`avoid`), both sliders.)
   4. Ed, 2026-11-04: "Further apart, same line" (through the coordinator, the adult hiding the smaller youth behind it from most camera angles: keep both on the column-to-centre line, spread so the youth is well clear of the adult and visible, both still nearer their column than the centre.)
   5. Ed, 2026-11-04: "youths should be closer to the middle of the circle than the elder. If this doesn't fit, make the circle bigger." (his ruling on #1827, through the coordinator: column / adult / youth / centre on every column (no swap south of the middle), the youth lifted clear of its adult up the screen by the spacing, the circle grown to fit rather than either rule broken. `gap` 19 m on a 50 m circle (`challenge.radius`), the youth 22.5 m in, at the 0.45 reach: on #1807's 196 m areas the most at which it still moves night to night on home's 10-area island (one area from 54 m) and a 51-area one (from 51 m), every island holding its claim (the stoat island's misses from 58 m). On the column due south, at the start camera, every youth whose adult is drawn up to 10 m tall is all but clear of it (over 90%); the hare's (its adult 15.4 m) about half showing, about a third at the flattest camera.)
+  6. Ed, 2026-11-12: "change challenge.statues.first to 10 and challenge.statues.gap to 10" (first 3.5 → 10 m, gap 19 → 10 m: the adult and youth posts 10 and 20 m in from their column)
   Posts: column / adult / youth / centre on every column, `first` and `first` + `gap` m in (squeezed evenly to fit with more than two a kind), all facing its middle, always nearer their column than the middle (never past 0.45 of the way in: Ed, 2026-11-04, "they should be closer to their column than to the centre"), the middle left open. The wake-up starts on the next bar line; they glow red (up to `red`) and their sigils on the columns glow from grey as it goes, and they wake on the bar `bars` bars on. Leaving the floor (stepping or flying off, or knocked down) before then stops it. Once awake they pursue her as any wild pack, on the ground anywhere, stepped off the floor or knocked out of the circle; only when every witch is knocked down or up in the treetops outside the challenge area do the ones not yet won walk back at `walkBack` times their pace and turn to stone again, reset to full (dazed ones too; ones running off left be), the invited staying won. While the fight's on, the won ones roam its area with their own happy roam out of the fight's way: `keepOut` m off the circle, and clear of the fighters as every area's won ones are (invites.wonAway) (Ed, 2026-11-04: "they should roam the whole area, and avoid creatures that are fighting. Do this in a simple way - we just want them out of the way of the fight"). Drawn `tint` of the way to the stone colour `grey`, with the moonlit rim. rules/challengeStatues.ts (the phases, the walk back, the reset, keeping the won out), rules/challenge.ts statuePosts and spawnPack (the posts), render/view/creatures.ts and render/statues.ts (the stone look, the wild watch's red over it while it wakes), render/challenge.ts (the grey sigils), platform/audio/sfxCues.ts (the wild watch's rising warning over the wake-up, its hit as they wake). Off: the pack wild from the start, watching her come down anywhere in its area as any wild area's.
+- **`challenge.hide`**: the challenge circle hidden before the party starts, normal forest on its floor and nothing of it there to step onto, fading in over `fade` s as the party starts (the trees on its floor fading away), and out again, the trees back, once a lost night's party is over if it wasn't won.
+  1. Ed, 2026-11-12: "the challenge circle should be hidden before the party starts; there are just normal trees, no sign of it - fades into existence and the trees fade away when the party starts. The same happens in reverse when the party is over if the challenge circle has not been won yet." (through the coordinator; ?challengehide=0 for the old behaviour.)
+  rules/challenge.ts stepReveal and challengeRevealed (its state: shown or not and since when; nothing can wake its statues or cast at it until it is shown and wholly faded in), revealK (the drawing's 0 to 1). The trees and bushes on its floor are in the forest from the start, marked as its (rules/forest.ts Plant.veil, grown as the woods round it would be) and drawn in batches of their own whose fade is 1 minus it (render/view/scenery.ts); the floor, carving, columns, lights and statues fade by it.
+  Code: `src/rules/challenge.ts`, `src/rules/forest.ts`, `src/render/challenge.ts`
 - **`challenge.analyser`**: the music spell's analyser as she casts at the circle: `bars` bars from its middle out to `fill` of its radius at the music's loudest, `steps` dots a bar, grown with the circle.
   1. Ed, 2026-11-04: "should be larger, the audio analyser filling the whole stone circle" (the soundsystem spell cast at the challenge circle; before, a small ring of rainbow dots round her.)
   It fills round as the cast fills, each bar as far out as the music's level, and is held a moment as the circle clears.
@@ -920,6 +925,8 @@ Its columns' sigils float `sigilGap` m over the columns' tops (render/challenge.
 
 | knob | type | range |
 |---|---|---|
+| `challenge.hide.on` | boolean |  |
+| `challenge.hide.fade` | number | 0 to 20 |
 | `challenge.on` | boolean |  |
 | `challenge.radius` | number | 0 to … |
 | `challenge.margin` | number | 0 to … |
@@ -994,11 +1001,12 @@ Code: `docs/ART-GUIDE.md`
 
 ### `treeNormals`
 
-The trees' normal maps: "full" (the default) as ever; "64", "32" or "16" their directions cut to a k-means palette of that many per tree atlas; "0" off, every tree pixel lit flat, as if it faced the camera (the normal 128, 128, 255).
+The trees' normal maps: "32" (the default) their directions cut to a k-means palette of 32 per tree atlas; "64" or "16" that many; "full" as ever; "0" off, every tree pixel lit flat, as if it faced the camera (the normal 128, 128, 255)
 
 1. Ed, 2026-11-07: "Make the normal maps switch." (to judge in play whether trees still look right without normal maps: dropping them would make the pre-baked tree art about 3 times smaller (PR #1884's measurement))
-2. Ed, 2026-11-07: "Normal maps do improve things, can we try a low number (16? 32? 64?)" (to see the trees in play with their normal maps cut to a small palette of directions, as a bake could ship them much smaller)
-A test choice. Live: the pause page's Tree normal maps choice, or the link's d_treeNormals=64 (or 32, 16; 0 off; anything else full). 64, 32 and 16: each loaded area type's atlas has its trees' normals (the big pieces' frames) cut to a k-means palette of that many directions (render/treeQuant.ts, ported from PR #1884's measurement: weighted by pixel count, unit directions, the centres renormalised), the alpha (the wind's sway code) kept exactly and empty pixels skipped, and its normal texture uploaded again in place (render/treeNormalDirs.ts); the original plane is kept beside it, so full puts the very bytes back, and each atlas's palettes are kept by count, so flipping back is an upload. The palettes are worked out by a worker of their own, a quarter to two-thirds of a second an atlas at 64 (less at 32 and 16), after the plane is read back from the GPU; atlases landing while a reduced setting is on are cut as they land. Off: her glow, the campfires, the soundsystems and the moon light a tree flat, a shader uniform (uTreeNormals), redrawing nothing. Only the forest's trees (their trunks, crowns and far crowns: the instances marked tree in render/view/scenery.ts) change; bushes, walls, set pieces, rocks, palms, creatures, the witch and the ground keep their normals. Nothing is held or done until a reduced setting is first picked.
+2. Ed, 2026-11-12: "we can see 32 tree normal maps as the default" (32 directions a tree atlas is the default (full before))
+3. Ed, 2026-11-07: "Normal maps do improve things, can we try a low number (16? 32? 64?)" (to see the trees in play with their normal maps cut to a small palette of directions, as a bake could ship them much smaller)
+A test choice. Live: the pause page's Tree normal maps choice, or the link's d_treeNormals=64 (or 32, 16; 0 off; anything else full). 64, 32 and 16: each loaded area type's atlas has its trees' normals (the big pieces' frames) cut to a k-means palette of that many directions (render/treeQuant.ts, ported from PR #1884's measurement: weighted by pixel count, unit directions, the centres renormalised), the alpha (the wind's sway code) kept exactly and empty pixels skipped, and its normal texture uploaded again in place (render/treeNormalDirs.ts); the original plane is kept beside it, so full puts the very bytes back, and each atlas's palettes are kept by count, so flipping back is an upload. The palettes are worked out by a worker of their own, a quarter to two-thirds of a second an atlas at 64 (less at 32 and 16), after the plane is read back from the GPU; atlases landing while a reduced setting is on are cut as they land. Off: her glow, the campfires, the soundsystems and the moon light a tree flat, a shader uniform (uTreeNormals), redrawing nothing. Only the forest's trees (their trunks, crowns and far crowns: the instances marked tree in render/view/scenery.ts) change; bushes, walls, set pieces, rocks, palms, creatures, the witch and the ground keep their normals. Nothing is held or done until a reduced setting is first picked. Never waited for (Ed, 2026-11-12, when the 32 default held up the CI proofs: "Don't wait for it"): the trees are drawn with their full normals from load and switch to the palette a moment later, each atlas as its palette comes in; the game's ready, loading and art's arrival don't wait for it. The worker sends back the cut plane, so the page only uploads it (one atlas a frame). A picture compare that needs the final look waits for window.witch.view.treeDirs.pending to be 0 (tools/smoke/paused-settle.cjs does).
 Code: `render/sprites.ts`, `render/treeNormalDirs.ts`, `render/treeQuant.ts`, `render/view/frameUniforms.ts`
 
 | knob | type | range |
@@ -1881,6 +1889,12 @@ Code: `render/colourGrammar.ts`, `render/leash/ranks.ts`, `render/leash/rainbow.
   2. Ed, 2026-11-03: "I don't think adults should be much faster; adult speed is a key balance factor. Instead, I agree that we should make chains longer and fixed length. Dragging youths slows you down a bit (e.g. 30%). Dragging adults slows you down a lot (e.g. 70%). Dragging legends slows you down completely (100%). Chains lie on the floor at full length so you can see how taut they are (though this might get messy-looking with many animals in a small space). Maybe they should all be the same length, about the size of a fight (80m?), so it mostly affects you when moving, not when fighting." … "They don't stack, you are just affected by the heaviest one." … "When you try and take off but you're weighed down by creatures, the chains rattle." … "I think leashed youths shouldn't stop you from taking off, only adults and legends do." … "A youth chain can make you rise more slowly, but effectively it's just a visual effect." (replaces the 30 m adult anchor; a chain fades in by how far along it the creature is (invisible close, opaque and glowing taut))
   Only adults and legends stop her taking off. length (m, 80): every creature in her stack but babies (no chain) and a party legend (its own pin, legends.partyReach); a sleeping legend's sigil she carries tethers her at least this far (rules/sigilButton.ts). drag (youth 0.3, adult 0.7, legend 1): the share of her motion away a taut chain takes off; several taut: the heaviest; the creature is pulled after her at that pace, never faster than its top speed; her motion round it kept, never pulled in. She can't take off with an adult or legend on her leash; youths never stop her (rules/leashWeight.ts groundedBy). 0 length: no chains. Drawn: fadeFrom (0.3), the share of its length from which a chain shows, a smoothstep to whole at full length; glow (0.6), how much brighter it is taut; rattle: a refused take-off's jolt down the weighing chains, strength m at her end, for time s (and its sound, sfx.rattle). youthRise (0.85): with a youth on her leash her rise is drawn this much slower (drawn only: when she counts as up for the rules is unchanged).
   Code: `rules/chains.ts`, `render/leash/chain.ts`, `render/leash/stack.ts`
+- **`leash.chain.taut`**: Pulling on a taut chain: up in the treetops it drags her down to the ground, on foot it slides that sigil out of her stack and puts it down, and a legend's chain yanks her back instead; with a lighter drag on foot and the chains' look.
+  1. Ed, 2026-11-12: "When you are in treetop mode and you are pulling a creature on its chain, when the chain gets taut you should be pulled back to ground mode. This shouldn't be a sudden transition, but as you pull outside of the length you are progressively pulled down; if you stop pulling, you rise up again, only if you keep pulling do you actually fully switch back to ground mode." (before: nothing pulled her out of the sky (Ed, 2026-11-03))
+  2. Ed, 2026-11-12: "Treetop pulldown is somewhat gradual - you have to tug for a while before you're pulled down. pop-out should also be gradual - you pull against a chain, the chain goes taut and you can see the sigil in your stack being pulled out, and only if you keep pulling it plops onto the ground as if placed. So the whole treetop-ground-pop is several seconds and neither part can be accidental. Also pulling on the ground should slow you down less than pulling in the air ... so it should feel possible to 'pull your creatures on the ground' without accidentally dropping them everywhere." … "legend chains yank you back instead of popping out" … "adult chains should look larger, and legend chains should look larger still." (through the coordinator: ground drag about youth 0.15, adult 0.4; a taut creature about 1.5 times its leash pace; about 2 to 3 s of steady pulling pops; one sigil at a time; chain sizes youth 1, adult about 1.6, legend about 2.4)
+  3. Ed, 2026-11-12: "chains are currently the colour of the sigil; instead I'd like them to be more generally 'magic chain' coloured, with the sigil colour as a occasional flash along it. Chains are a bit too visually dominant at the moment." (he chose one shared pale, cool silvery violet, slightly see-through; the flash runs from the creature to her stack, staggered per chain. Big youth armies: tuning only (the drag knobs), no count-based stacking)
+  on (true); off (?tautchain=0) every part below off, the chains as before. groundDrag (youth 0.15, adult 0.4, legend 1): on foot, the share of her motion away a taut chain takes off (in the air leash.chain.drag), and the creature is pulled along at her pace less it, not held to its own top speed (leash.runSpeed's 4 m/s for most, which held her to about that). hurry (1.5): a creature whose chain is taut runs after her this many times its leash pace (its own steps: rules/leash.ts stepLeashed, rules/travel.ts). tug: up in the treetops, perMetre (0.022) of the way from the treetops to the ground (her height, her speed's blend and the canopy all go with it, through her lift) each metre her step pulls past the tautest chain's end (counted from rules/tautChain.ts PULL_FROM 2 m/s, below which she's coasting round the end, to PULL_MOST 16 m/s); rise (0.3) of the way back up a second not pulling (never faster than riseTime); pulled commit (0.4) of the way down her mode turns descending and the ordinary descent lands her. Dragging a youth that's about 2.3 s of sustained pull. pop: on foot, pulling a youth's or an adult's chain (going on past its end faster than it follows, PULL_FROM 2 m/s or more) fills a meter for the one pulled hardest (one at a time; it keeps the one it has while that's still pulled), full after fill (2.5) s of steady pulling; easing off drains it in drain (1.5) s; full, that sigil is put down where she stands by the ordinary put-down. yank: pulling past a legend's chain she's thrown back toward it metres (4) m by the knock's easing throw, with no stagger, at most once every every (1.2) s, and its chain rattles; a legend's sigil never pops; the sleeping legend's tether stays a hard hold. links (0.62, 1, 1.5 m): the chains' link size by rank, youth, adult, legend (leash.ranks.chain.link's 0.62, 0.78, 1 when off; the tether keeps its own). look: every chain colour (184, 182, 210) at alpha (0.6), its taut glow times glow (0.35) of leash.chain.glow, its link glows dimmer; flash: its sigil's colour runs from the creature to her stack for time (0.9) s every every (4) s, staggered by chain, width (0.14) of its length either side; a sigil being pulled out flashes up to four times as often. Her broom's pull (the Canoe hull) scales a youth's and an adult's drag, the tug and the pop.
+  Code: `rules/tautChain.ts`, `rules/chains.ts`, `rules/game.ts`, `rules/sigilButton.ts`, `render/leash/stack.ts`, `render/leash/chain.ts`
 - **`leash.babies`**: Her leashed babies follow her in single file and scatter out of the way while she's in a fight.
   1. Ed, 2026-10-11: docs/backlog/gameplay.md
   2. Ed, 2026-10-26: "they should scatter further, e.g. outside of my camera view" (55, past the view's farthest edge at the usual ground zoom, its top 50 m from her; kept on the island's land, and pulling on her not at all while scattered)
@@ -1952,6 +1966,25 @@ Code: `render/colourGrammar.ts`, `render/leash/ranks.ts`, `render/leash/rainbow.
 | `leash.chain.rattle.strength` | number | 0 to … |
 | `leash.chain.rattle.time` | number | 0 to … |
 | `leash.chain.youthRise` | number | 0 to … |
+| `leash.chain.taut.on` | boolean |  |
+| `leash.chain.taut.groundDrag.youth` | number | 0 to … |
+| `leash.chain.taut.groundDrag.adult` | number | 0 to … |
+| `leash.chain.taut.groundDrag.legend` | number | 0 to … |
+| `leash.chain.taut.hurry` | number | 0 to … |
+| `leash.chain.taut.tug.perMetre` | number | 0 to … |
+| `leash.chain.taut.tug.rise` | number | 0 to … |
+| `leash.chain.taut.tug.commit` | number | 0 to 1 |
+| `leash.chain.taut.pop.fill` | number | 0 to … |
+| `leash.chain.taut.pop.drain` | number | 0 to … |
+| `leash.chain.taut.yank.metres` | number | 0 to … |
+| `leash.chain.taut.yank.every` | number | 0 to … |
+| `leash.chain.taut.links` | array of number |  |
+| `leash.chain.taut.look.colour` | array of number |  |
+| `leash.chain.taut.look.alpha` | number | 0 to … |
+| `leash.chain.taut.look.glow` | number | 0 to … |
+| `leash.chain.taut.look.flash.every` | number | 0 to … |
+| `leash.chain.taut.look.flash.time` | number | 0 to … |
+| `leash.chain.taut.look.flash.width` | number | 0 to … |
 | `leash.babies.gap` | number | 0 to … |
 | `leash.babies.scatter` | number | 0 to … |
 | `leash.babies.calm` | number | 0 to … |
@@ -2311,7 +2344,7 @@ Dodging matters [1]: against the witch only (fights between creatures as before)
 - **`dodge.a.heavy`**: Heavy kinds chasing her build up speed and swing their charges toward her, so a burst or a blink gets clear.
   1. Ed, 2026-10-09: "Maybe heavies can have a higher top speed, but slow acceleration?"
   2. Ed, 2026-10-09: "shooters should have longer range"
-  chasing her, those species run at up to speed m/s (above her walk) built up at accel m/s each second, their charges swinging toward her at home degrees a second as they run, so a burst or a blink gets clear and a long retreat is run down (the snail, hedgehog and woodlouse left slow, the last two with their rolling charges; the mole with its own burrow); her blink keeps her untouchable for gone seconds (dash.gone otherwise); and at most tokens creatures wind up or strike at her at once (swarmTokens when swarm or more are on her), the rest keep their places. b, predictive aim: shots aim at release where she'll be when they arrive (times lead), lobs where she'll be when they land (times lobLead), charges down the lane to where she'll be when they reach her (times chargeLead); a shot lives life times its range over its speed (1.3 before); a shot at her flies speed times as fast (chasing her at her walk it closes at only its speed less hers); a shot or lob at her reaches range times as far, the shooter keeping its usual distance, [2] and winds up at most windup seconds (a beam as before: a sweep a blink can't outrun keeps its long warning). c, packs cut off her retreat: while she moves faster than moving times her walk, share of a pack of species (wolves, foxes, martens, bats) take places ahead of her (ahead seconds of her run on, angle radians either side of her heading, reach times their attack's reach out), sprinting at up to sprint m/s to get there. ?dodge=a,b,c turns on those named and off the rest (?dodge=0 none).
+  chasing her, those species run at up to speed m/s (above her walk) built up at accel m/s each second, their charges swinging toward her at home degrees a second as they run, so a burst or a blink gets clear and a long retreat is run down (the snail, hedgehog and woodlouse left slow, the last two with their rolling charges; the mole with its own burrow); her blink keeps her untouchable for gone seconds (dash.gone otherwise); and at most tokens creatures wind up or strike at her at once (swarmTokens when swarm or more are on her), the rest keep their places. b, predictive aim: with ranged off (?ranged=old) the old pack bolts aim at release where she'll be when they arrive (times lead), their lobs where she'll be when they land (times lobLead); charges down the lane to where she'll be when they reach her (times chargeLead); a shot lives life times its range over its speed (1.3 before); the old pack bolt at her (a close kind's shot in a shooter's role, not a species' own) flies speed times as fast (chasing her at her walk it closes at only its speed less hers) and winds up at most windup seconds, lifted where ranged's lock needs it; a shot or lob at her reaches range times as far, the shooter keeping its usual distance [2]. A species' own shot takes neither speed nor windup: its speed is ranged.speedFloor's and its wind-up its own (Ed, 2026-11-12, option C: wind-ups as they were); With ranged on, every shot's and lob's lead is that rule's, followed through the wind-up, not taken at release. c, packs cut off her retreat: while she moves faster than moving times her walk, share of a pack of species (wolves, foxes, martens, bats) take places ahead of her (ahead seconds of her run on, angle radians either side of her heading, reach times their attack's reach out), sprinting at up to sprint m/s to get there. ?dodge=a,b,c turns on those named and off the rest (?dodge=0 none).
 
 | knob | type | range |
 |---|---|---|
@@ -2347,6 +2380,37 @@ Dodging matters [1]: against the witch only (fights between creatures as before)
 | `dodge.c.reach` | number | 0 to … |
 | `dodge.c.ahead` | number | 0 to … |
 | `dodge.c.sprint` | number | 0 to … |
+
+### `ranged`
+
+Creatures' shots aim where she's going: each follows her through its wind-up and locks a moment before it can reach her, so a steady walk gets hit and a change of direction dodges [1][2][3].
+
+1. Ed, 2026-11-12: "creature ranged attacks (home island, mostly youths): the preparation time seems long, projectile speed is low, if you're moving at all they basically never hit you" (measured first (the ranged-hit harness, tools/balance/rangedhit.mjs): every species' shot aimed at where she stood as its wind-up started, so any steady movement took her out of its path)
+2. Ed, 2026-11-12: "when the changes are decided, apply them to all creatures, not just home ones"
+3. Ed, 2026-11-12: "Option C with the sub-rules" … "(a)" … "(a)" (lead plus a speed floor, with the report's sub-rules (bursts keep the first shot's lock, areas lock 0.7 s, homing, spirals, boomerangs and beams left out, walls half lead, the caster holding still from the lock, the old pack bolts taking the same lock); the three wrong things fixed in the same build (an adult's even fan with a hole in the middle, the young rhino's logs straddling her, dodge.b's speed and wind-up reaching only the old pack bolts); and the treetops kept untouchable)
+Every ranged attack at her, every kind and level: its aim (the telegraph's lane or landing ring too) follows her through the wind-up at where she'll be when the shot arrives (lead times the way, her velocity as she goes), solving a curving or swaying path so it passes there; it locks at least commit s before the release and at least lock s (by level) before the shot can reach her; from the lock to the release the caster holds still, so the shot leaves from where it aimed. An area put down where she stands (and a mine or seed laid there) locks areaLock s ahead at every level; a wall of rollers leads rollerLead as far; a burst's, spray's or volley's later shots keep the first's locked aim. Straight bolts and rollers at her fly at least speedFloor times her ground speed (groundSpeed: 38.5 m/s at 19.25), an accelerating roller's profile scaled with it. Wind-ups as they were, lifted only where the lock couldn't otherwise hold (the old pack bolts' 0.35 s, dodge.b.windup). Left out of the lead and the floor: homing (owl, hydra), spirals, boomerangs, orbits, beams, melee, a pulse round itself, and pack interplay that goes by way of packmates (relay, tether, triangulate). Fans and walls always keep one body on the aim (an adult's even fan shifted half a step, a wall slid so the gap is beside her). The old pack bolts (a close kind's shot or lob in a shooter's role, rules/combat.ts) take the same lock and floor. The treetops unchanged: a witch off the ground can't be hit. ?ranged=old the old aim throughout.
+Code: `src/rules/attacks/aim.ts`, `src/rules/attacks/engine.ts`, `src/rules/combat.ts`, `src/rules/combat/legend.ts`, `tools/balance/rangedhit.mjs`
+
+- **`ranged.on`**: on: shots aim where she's going (the ranged rule); off, as ?ranged=old: each aims at her place as its wind-up starts, the old pack bolts leading her as they let go, no speed floor, fans and walls as before.
+- **`ranged.lead`**: times the way to where she'll be when the shot arrives that the aim takes (1: all of it, 0: where she is), a wall of rollers rollerLead of it.
+- **`ranged.commit`**: seconds before its release that a shot's aim locks at the latest (the caster holds still from then).
+- **`ranged.lock`**: seconds before a shot can reach her that its aim locks at the latest, by the caster's level: a youth's longer, so a change of direction dodges it more often.
+  A per-level lead factor (babies lead less) measured as a cliff: at 0.85 every youth's shot fell to 0 to 8% across, so the level difference is made by when the aim locks instead (the measurement report, 2026-11-12).
+- **`ranged.speedFloor`**: a straight bolt or roller at her flies at least this many times her ground speed (2: 38.5 m/s at her 19.25).
+- **`ranged.areaLock`**: seconds before an area put down where she stands strikes (or a mine is laid there) that its aim locks, at every level: with no flight to see, the lock is all the warning she gets.
+- **`ranged.rollerLead`**: times the lead a wall of rollers takes (the rhino's and beaver's logs): a wall is wider than her change of direction, so at full lead it was the harshest attack.
+
+| knob | type | range |
+|---|---|---|
+| `ranged.on` | boolean |  |
+| `ranged.lead` | number | 0 to … |
+| `ranged.commit` | number | 0 to … |
+| `ranged.lock.young` | number | 0 to … |
+| `ranged.lock.adult` | number | 0 to … |
+| `ranged.lock.legend` | number | 0 to … |
+| `ranged.speedFloor` | number | 0 to … |
+| `ranged.areaLock` | number | 0 to … |
+| `ranged.rollerLead` | number | 0 to … |
 
 ### `stoneIdle`
 
@@ -4683,8 +4747,19 @@ Code: `render/mood.ts`
 - **`light.spooky.wildGlow`**: Her glow cooled toward a teal while she's in an area the party hasn't reached, eased in and out as she crosses.
   1. Ed, 2026-10-29: "the overall lighting palette should be an eerie blue/green; this is to contrast with the bright and warm post-soundsystem lighting"
 - **`light.spooky.wildGlow.mix`**: How far her glow is cooled in the wild (0 her own colour everywhere).
-- **`light.spooky.wildGlow.colour`**: The colour (0-255) her glow cools toward in the wild.
+- **`light.spooky.wildGlow.hue`**: The hue (0 to 1 round the colour wheel) her glow cools toward in the wild; 0.507 the teal as built (80, 200, 205).
+  1. Ed, 2026-11-12: "Can you make a new pause menu group that has each of these applied in the wild only so I can tweak them?" (the colour was rgb [80, 200, 205]; now hue, saturation and brightness so the pause page's Wild look group can slide it, the same colour exactly)
+- **`light.spooky.wildGlow.sat`**: How deep the colour her glow cools toward in the wild is (0 white, 1 the hue at its deepest).
+- **`light.spooky.wildGlow.value`**: How bright the colour her glow cools toward in the wild is (0 black, 1 full).
 - **`light.spooky.wildGlow.ease`**: How long (s) her glow takes to cool or warm as she crosses into or out of the party's ground.
+- **`light.spooky.wildGrade`**: A colour grade over the picture in the wild only (an area the party hasn't reached; never on party ground or home), eased in and out as she crosses at the area moods' pace (light.spooky.areaEase); laid after the spooky grade (light.spooky.grade), so in the wild both apply, one after the other.
+  1. Ed, 2026-11-12: "Can you make a new pause menu group that has each of these applied in the wild only so I can tweak them?" (added at 0, so the look is unchanged till he turns it up)
+  Code: `src/render/mood.ts`, `src/render/post.ts`
+- **`light.spooky.wildGrade.strength`**: How strong the wild-only grade is (0 off).
+- **`light.spooky.wildGrade.desat`**: How much colour the wild-only grade drains from the dark and middle tones (0 none, 1 grey before the tint).
+- **`light.spooky.wildGrade.pivot`**: The brightness above which the wild-only grade leaves the picture alone, so bright lights keep their colour.
+- **`light.spooky.wildGrade.hue`**: The hue (0 to 1 round the colour wheel) the wild-only grade tints toward.
+- **`light.spooky.wildGrade.sat`**: How deep the wild-only grade's tint is (0 none, only drained).
 
 | knob | type | range |
 |---|---|---|
@@ -4693,8 +4768,15 @@ Code: `render/mood.ts`
 | `light.spooky.ambient` | number | 0 to … |
 | `light.spooky.unlit` | number | 0 to … |
 | `light.spooky.wildGlow.mix` | number | 0 to … |
-| `light.spooky.wildGlow.colour` | array of number |  |
+| `light.spooky.wildGlow.hue` | number | 0 to 1 |
+| `light.spooky.wildGlow.sat` | number | 0 to 1 |
+| `light.spooky.wildGlow.value` | number | 0 to 1 |
 | `light.spooky.wildGlow.ease` | number | 0 to … |
+| `light.spooky.wildGrade.strength` | number | 0 to 1 |
+| `light.spooky.wildGrade.desat` | number | 0 to 1 |
+| `light.spooky.wildGrade.pivot` | number | 0 to 1 |
+| `light.spooky.wildGrade.hue` | number | 0 to 1 |
+| `light.spooky.wildGrade.sat` | number | 0 to 1 |
 | `light.spooky.moonHue` | number | 0 to … |
 | `light.spooky.moonSat` | number | 0 to … |
 | `light.spooky.moon` | number | 0 to … |

@@ -10,7 +10,8 @@ import type { LeashView } from "../leash";
 import renderKnobs from "../../../config/playtest-render.json";
 import { sigilPath, travelPose } from "./travelPose";
 import { easeRoute } from "../routeEase";
-import { drawChain, rattleChain, stepChain, type Chain } from "./chain";
+import { drawChain, rattleChain, stepChain, type Chain, type ChainFlash } from "./chain";
+import { tautKnobs } from "../../rules/tautChain";
 import { DISC } from "./glyphs";
 import { chainKnobs, dotAt, drawEmbers, legendShine, queuedDot, rankKnobs, rankOf, rankSize, ranksOn, standScale, shownDots, youthDots } from "./ranks";
 import { queuedFor } from "../../rules/berries";
@@ -61,6 +62,13 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
     const rel = y - hatTop, had = lv.stackY.get(key), sy = had === undefined ? rel : had + (rel - had) * (1 - Math.exp(-dt * 9));
     lv.stackY.set(key, sy);
     const pos = new THREE.Vector3(w.x + link.x, hatTop + sy, w.z + link.z);
+    // Pulled out by its taut chain (Ed, 2026-11-12: "you can see the sigil in your stack being pulled out"; rules/tautChain.ts stepPop):
+    // slid toward its creature and down, by the meter, shaking more as it goes; full, it's put down (the ordinary put-down's look).
+    const P = c ? g.witches[0]?.pop : undefined;
+    if (P && c && P.id === it.id) {
+      const dx = c.x - w.x, dz = c.z - w.z, d = Math.hypot(dx, dz) || 1, k = P.k * P.k * (3 - 2 * P.k), shake = Math.sin(time * 47 + it.id) * 0.06 * size * P.k;
+      pos.x += (dx / d) * k * size * 1.8 + shake; pos.z += (dz / d) * k * size * 1.8; pos.y -= k * size * 0.9;
+    }
     y += size / 2;
     let col: { r: number; g: number; b: number };
     // Just picked up, it flies up from where it lay to here (Ed, 2026-11-12: "sparkles above the head"; render/leash/sigilFeel.ts):
@@ -161,6 +169,8 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
     lv.tugAt = e.at;
     if (chains && RT && RT.strength > 0) for (const id of weighingChains(s.stack, g.creatures)) { const ch = lv.chains.get(id); if (ch) ch.rattle = e.at; }
   }
+  // A legend's chain yanking her back (rules/tautChain.ts yankFrom, the "yanked" leash event): that chain rattles.
+  for (const e of g.leashEvents) if (e.kind === "yanked" && chains && RT && RT.strength > 0) { const ch = lv.chains.get(e.id); if (ch) ch.rattle = e.at; }
   const solid = groundedSolid(time - lv.tugAt);
   // Follower buffs (Ed, 2026-11-03: "While an animal is buffing her, the chain to its sigil glows"; rules/buffs.ts givers): brighter, breathing.
   const buffing = buffsOf(s.stack, g.creatures, g.berries, t).givers, glow = 0.45 + 0.15 * Math.sin(time * 3);
@@ -195,7 +205,7 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
       // close, whole and glowing taut, Ed 2026-11-03), so a crowd near her draws nothing; rattling, it shows while it rattles.
       const len = CL > 0 ? CL : Math.hypot(c.x - from.x, 0.5 - from.y, c.z - from.z) * 1.1, n = Math.max(1, Math.ceil(len / Math.max(0.2, CK.segment)));
       const shown0 = CL > 0 ? chainShown(d, t) : 1, taut = carried && CL > 0 && d >= CL - AT_END;
-      const link = CK.link[rankOf(c) - 1], ch: Chain = lv.chains.get(id) ?? { links: [] };
+      const link = linkSize(t, rankOf(c)), ch: Chain = lv.chains.get(id) ?? { links: [] };
       lv.chains.set(id, ch); live.add(id);
       let target, shown = shown0;
       if (ground) {
@@ -212,11 +222,13 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
         else ch.rattle = undefined;
         target = ch.links;
       }
-      const lit = 1 + (CC?.glow ?? 0.6) * (taut ? 1 : shown0) + (carried && buffing.has(id) ? glow : 0);
+      const LK = lookOf(t), lit = 1 + (CC?.glow ?? 0.6) * (LK ? LK.glow : 1) * (taut ? 1 : shown0) + (carried && buffing.has(id) ? glow : 0);
       const points = travelPose(ch.pose ??= {}, ground, target, time, renderKnobs.chainTransitionSeconds);
       // The old route showed through crowns from the treetops. Show the link glyphs there too.
       const batch = ground && w.mode === "treetop" ? lv.over : lv.solid;
-      drawChain(lv, { links: points }, link, Math.min(1, col.r * lit), Math.min(1, col.g * lit), Math.min(1, col.b * lit), shown, dot, 0.12 * shown, batch);
+      // (the taut chain's look, Ed 2026-11-12: every chain the one magic-chain colour, its sigil's colour a flash from it to her stack)
+      const base = LK ? LK.rgb : col, popK = g.witches[0]?.pop?.id === id ? g.witches[0].pop!.k : 0;
+      drawChain(lv, { links: points }, link, Math.min(1, base.r * lit), Math.min(1, base.g * lit), Math.min(1, base.b * lit), shown * (LK ? LK.alpha : 1), dot, (LK ? 0.05 : 0.12) * shown, batch, LK ? chainFlash(LK, col, id, time, popK) : undefined);
       continue;
     }
     if (B.thread && (d > L.length * from0 || whole)) {
@@ -245,8 +257,37 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
     // (as every chain: its full length on the ground, showing by how far along it she is, glowing held at its end)
     const shown = smoothFade(d / Math.max(1e-6, T.length), CC?.fadeFrom ?? 0), taut = 1 + (CC?.glow ?? 0.4) * (held ? 1 : shown);
     stepChain(ch, n, len / n, tf.x, tf.y, tf.z, TL.x, 0.5, TL.z, lv.frameDt, CK);
-    drawChain(lv, ch, link, Math.min(1, col.r * taut), Math.min(1, col.g * taut), Math.min(1, col.b * taut), held ? 1 : shown, dot, 0.12 * (held ? 1 : shown));
+    const LK = lookOf(t), base = LK ? LK.rgb : col, tk = LK ? 1 + (taut - 1) * LK.glow : taut, a = held ? 1 : shown;
+    drawChain(lv, ch, link, Math.min(1, base.r * tk), Math.min(1, base.g * tk), Math.min(1, base.b * tk), a * (LK ? LK.alpha : 1), dot, (LK ? 0.05 : 0.12) * a, lv.solid, LK ? chainFlash(LK, col, T.id, time, 0) : undefined);
   }
   for (const id of lv.chains.keys()) if (!live.has(id)) { lv.chains.delete(id); lv.routes.delete(id); }
 }
 
+
+/** A chain's link size by rank (1 youth to 3 legend): the taut chain's own steps (leash.chain.taut.links, Ed 2026-11-12: "adult chains
+ *  should look larger, and legend chains should look larger still"), else the rank sigils' (leash.ranks.chain.link). */
+export function linkSize(t: import("../../rules/tuning").Tuning, rank: number): number {
+  const L = tautKnobs(t)?.links, i = Math.max(0, Math.min(2, rank - 1));
+  return L && L.length >= 3 ? L[i] : chainKnobs(t).link[i];
+}
+
+/** The taut chain's look (leash.chain.taut.look), its colour 0 to 1, or null (off: each chain its sigil's colour, as before). */
+export function lookOf(t: import("../../rules/tuning").Tuning): { rgb: { r: number; g: number; b: number }; alpha: number; glow: number; flash: { every: number; time: number; width: number } } | null {
+  const K = tautKnobs(t)?.look;
+  if (!K) return null;
+  const [r = 184, g = 182, b = 210] = K.colour;
+  return { rgb: { r: r / 255, g: g / 255, b: b / 255 }, alpha: K.alpha, glow: K.glow, flash: K.flash };
+}
+
+/** The flash along a chain now (Ed, 2026-11-12: "the sigil colour as a occasional flash along it"; "flash runs from the creature to her
+ *  stack"): every look.flash.every seconds, staggered by chain (`id`, a golden-ratio share of the period) so many chains twinkle rather
+ *  than strobe, a bump of its sigil's colour runs from its creature's end (the chain's last point) to her stack's (its first) over
+ *  flash.time seconds. A sigil being pulled out (`pop`, its meter) flashes more often, up to four times as often full. */
+export function chainFlash(L: NonNullable<ReturnType<typeof lookOf>>, col: { r: number; g: number; b: number }, id: number, time: number, pop: number): ChainFlash | undefined {
+  const F = L.flash, every = Math.max(F.time, F.every / (1 + 3 * Math.max(0, Math.min(1, pop))));
+  if (!(F.every > 0) || !(F.time > 0)) return undefined;
+  const phase = (((time + ((Math.abs(id) * 0.618034) % 1) * every) % every) + every) % every;
+  if (phase >= F.time) return undefined;
+  const k = (s: number) => Math.min(1, s * 1.25 + 0.1);
+  return { r: k(col.r), g: k(col.g), b: k(col.b), at: 1 + F.width - (phase / F.time) * (1 + 2 * F.width), width: F.width };
+}
