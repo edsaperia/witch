@@ -3,7 +3,7 @@ import { pixels, packPixels } from "./artPacking";
 export { groundOf, witchLookOf } from "./artLook";
 import { witchLookOf } from "./artLook";
 export { creatureSprites, bakeOverride, headPoint, creatureFrame, walkGait, partyGearOf } from "./creatureArt";
-import { creatureSprites, headPoint, partyGearOf } from "./creatureArt";
+import { creatureSprites, headPoint, meshNapSprites, meshSleepSprites, meshSpecies, partyGearOf } from "./creatureArt";
 export { typeSprites } from "./areaArt";
 import { typeSprites } from "./areaArt";
 import { sceneSprites, speakerSprites, beachSprites, relicSprites, pathPieceSprites, beachEdgeSprites, lakeShoreSprites, decorSprites, partyObjectSprites, partyWitchSprites } from "./worldArt";
@@ -20,11 +20,11 @@ import { workshopPicture, type WorkshopPic } from "./workshopPieces";
 import type { HouseArtLayout } from "../rules/housePlacement";
 
 export type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
-export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas; /** A creature's head (art pixels from its top left): bubbles point their tails at it (headPoint). */ head?: [number, number] }
+export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** How tall what is drawn stands (Frame.tall). */ tall?: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas; /** A creature's head (art pixels from its top left): bubbles point their tails at it (headPoint). */ head?: [number, number] }
 /** Where a sprite sits in its atlas: u0, vTop, u1, vBottom, and its size in art pixels. */
 /** pad: empty rows (nothing drawn) at the bottom of the sprite, so it can stand on its lowest
  *  drawn pixel rather than on its box. */
-export interface Frame { uv: [number, number, number, number]; w: number; h: number; pad?: number; /** How far its lowest drawn row reaches either side of its middle, in art pixels (the farther side): the sprite shader stands it on the lowest ground across that much (a kapok's buttresses, a strangler fig's roots). */ foot?: number; /** Its sway mask is in its normal map's alpha (#34): it sways per pixel, leaves only. */ masked?: boolean; /** A creature's head, art pixels from its top left (Baked.head). */ head?: [number, number] }
+export interface Frame { uv: [number, number, number, number]; w: number; h: number; pad?: number; /** How tall the creature in it is as drawn, standing (art pixels): what the game sizes it by where its sprite is taller than it is, room for a leap or a raised tail (a mesh creature's: art/mesh/raster.js `tall`; Ed, 2026-11-12: sizes "come from the height actually drawn, not the canvas size"). */ tall?: number; /** How far its lowest drawn row reaches either side of its middle, in art pixels (the farther side): the sprite shader stands it on the lowest ground across that much (a kapok's buttresses, a strangler fig's roots). */ foot?: number; /** Its sway mask is in its normal map's alpha (#34): it sways per pixel, leaves only. */ masked?: boolean; /** A creature's head, art pixels from its top left (Baked.head). */ head?: [number, number] }
 /** An atlas's pixels: its albedo and normal planes, each one byte a pixel (an index into its palette, render/palette.ts) where
  *  it has 256 values or fewer, else RGBA as drawn; `albedoPal`/`normalPal` the palettes (null: that plane is RGBA). */
 export interface AtlasPixels { albedo: Uint8Array; normal: Uint8Array; albedoPal?: Uint8Array | null; normalPal?: Uint8Array | null; width: number; height: number; frames: Frame[] }
@@ -210,6 +210,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "lakeShore") { const { sprites, shore } = lakeShoreSprites(job.style, job.K, mk, job.style.biome ?? job.biome); return { px: packPixels(sprites, 2048), lakeShore: shore }; }
   // (enraged: red eyes, and the angry face; dressed up: the happy face; the faces only while tuning looks.expressions is on; art/genome/expressions.js)
   if (job.kind === "sleep") {
+    if (meshSpecies(job.species, job.style)) { const m = meshSleepSprites(job.species, mk); return { px: packPixels(m.sprites, 2048), ground: m.ground, centre: m.centre }; } // (drawn as a mesh: art/mesh)
     const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];
     for (let f = 0; f < 2; f++) {
       const { sp, colours } = Art.legendForm(job.species, job.style, { frame: f }) as { sp: { origin?: number[]; h: number; w: number }; colours: unknown };
@@ -223,6 +224,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
     const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];
     // (dressed: in its party gear, Ed 2026-10-06: sleepers keep their party gear on)
     const gear = (job.idle ? { idle: true } : { ...(job.dressed ? partyGearOf(job.dressed.seed, job.dressed.colour) : {}), nap: true }) as unknown as null;
+    if (!job.idle && meshSpecies(job.species, job.style)) { const m = meshNapSprites(job.species, mk, gear); return { px: packPixels(m.sprites, 2048), ground: m.ground, centre: m.centre }; } // (drawn as a mesh: art/mesh)
     for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
       const sp = Art.critter(job.species, level, f, job.style, "towards", gear) as { origin?: number[]; h: number; w: number; m: ArrayLike<number> };
       const b = Art.bake(sp, Art.speciesColours(job.species, job.style, gear), job.style, job.style.cOutline, mk) as Baked; b.head = headPoint(sp.m, b.w, b.h); sprites.push(b);

@@ -12,6 +12,7 @@ import { drainOf, fillOf } from "../orbit";
 import { cast as castSpell, newSpells } from "../attacks/engine";
 import { hittableOf, spellWorld } from "../attacks/combatWorld";
 import { legendAttack } from "../attacks/species";
+import { rangedOf, trackFor } from "../attacks/aim";
 import type { Game } from "../game";
 import { leyChain, leyKey } from "../leylines";
 import { frontMetres, TIP_PACE } from "../leypulse";
@@ -209,7 +210,9 @@ export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, da
   f.spellCasts = undefined;
   if (spec) {
     const S2 = (s.spells ??= newSpells()), W = spellWorld(w, s, grid, S2.seed, data), casts: number[] = [];
-    for (const a of c.aims) if (a.target.kind !== "sound") casts.push(castSpell(S2, W, spec, `legend:${c.species}`, { id: c.id, x: c.x, z: c.z, side, species: c.species, heading: Math.atan2(a.z - c.z, a.x - c.x) }, hittableOf(w, s, a.target), time, A.damage, f.windupUntil));
+    // (at her, its aim followed till it locks, as every ranged attack's: rules/attacks/aim.ts, Ed 2026-11-12; ?ranged=old as before)
+    const RG = rangedOf(w.t);
+    for (const a of c.aims) if (a.target.kind !== "sound") casts.push(castSpell(S2, W, spec, `legend:${c.species}`, { id: c.id, x: c.x, z: c.z, side, species: c.species, heading: Math.atan2(a.z - c.z, a.x - c.x) }, hittableOf(w, s, a.target), time, A.damage, f.windupUntil, { track: a.target.kind === "witch" ? trackFor(spec, LEGEND, RG) : undefined, centre: RG.on }));
     if (casts.length) { f.spellCasts = casts; c.aims = c.aims.filter(a => a.target.kind === "sound"); }
   }
   c.facing = f.aimX >= c.x ? 1 : -1;

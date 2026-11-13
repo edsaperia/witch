@@ -96,7 +96,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # A documents-only pull request plays exactly prototype's game, so it gets no preview (the coordinator,
-      # 2026-11-09: nine docs-only art-pass drafts held ~300 MB of the ~1 GB snapshot, at Pages' limit).
+      # 2026-11-09: nine docs-only art-pass drafts held ~300 MB of the ~1 GB snapshot, at Pages' limit; history:
+      # after the garbage collection gh-pages measured 406 MiB on 2026-11-12, docs/notes/deploys.md).
       - name: Skip a documents-only pull request's preview
         id: scope
         env:
@@ -129,7 +130,8 @@ jobs:
           # folders of pull requests no longer open (the remove job below only catches the ones that close from now on).
           if [ "$DEST" != "." ]; then rm -rf dist/making-of; else  # (from the checkout, before the cd into site/ below)
             # (and of those idle a week: the snapshot was ~1 GB on 2026-11-09, at Pages' limit, with 27 previews, most of
-            # them parked drafts; a preview comes back with its pull request's next push)
+            # them parked drafts, history now: 406 MiB on 2026-11-12, docs/notes/deploys.md; a preview comes back with its
+            # pull request's next push)
             OPEN=" $(gh api "repos/${GITHUB_REPOSITORY}/pulls?state=open&per_page=100" --paginate --jq '.[] | select(.updated_at > (now - 7*86400 | todate)) | .number' | tr '\n' ' ') "
           fi
           git init -q site && cd site
@@ -190,7 +192,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # A documents-only pull request plays exactly prototype's game, so it gets no preview (the coordinator,
-      # 2026-11-09: nine docs-only art-pass drafts held ~300 MB of the ~1 GB snapshot, at Pages' limit).
+      # 2026-11-09: nine docs-only art-pass drafts held ~300 MB of the ~1 GB snapshot, at Pages' limit; history:
+      # after the garbage collection gh-pages measured 406 MiB on 2026-11-12, docs/notes/deploys.md).
       - name: Skip a documents-only pull request's preview
         id: scope
         env:
@@ -223,7 +226,8 @@ jobs:
           # folders of pull requests no longer open (the remove job below only catches the ones that close from now on).
           if [ "$DEST" != "." ]; then rm -rf dist/making-of; else  # (from the checkout, before the cd into site/ below)
             # (and of those idle a week: the snapshot was ~1 GB on 2026-11-09, at Pages' limit, with 27 previews, most of
-            # them parked drafts; a preview comes back with its pull request's next push)
+            # them parked drafts, history now: 406 MiB on 2026-11-12, docs/notes/deploys.md; a preview comes back with its
+            # pull request's next push)
             OPEN=" $(gh api "repos/${GITHUB_REPOSITORY}/pulls?state=open&per_page=100" --paginate --jq '.[] | select(.updated_at > (now - 7*86400 | todate)) | .number' | tr '\n' ' ') "
           fi
           git init -q site && cd site

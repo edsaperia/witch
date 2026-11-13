@@ -5,7 +5,7 @@
     {
       "id": "treeNormals",
       "label": "Tree normal maps (directions)",
-      "note": "Full: trees lit from their normal maps, as ever. 64, 32 or 16: each tree atlas's normals cut to that many directions (a k-means palette, as a bake would ship them), worked out in the background for a second or so after a change. Off: every tree pixel lit flat, as if it faced the camera. Trees only; the wind still sways them. Changes live.",
+      "note": "Full: trees lit from their normal maps, as ever. 64, 32 or 16: each tree atlas's normals cut to that many directions (a k-means palette, as a bake would ship them), worked out in the background for a second or so after a change. Off: every tree pixel lit flat, as if it faced the camera. Trees only; the wind still sways them. Changes live. 32 is the default (Ed, 2026-11-12: \"we can see 32 tree normal maps as the default\"; full before).",
       "control": {
         "type": "choice",
         "options": [
@@ -31,7 +31,7 @@
           }
         ]
       },
-      "default": "full",
+      "default": "32",
       "apply": {
         "knob": "treeNormals"
       }

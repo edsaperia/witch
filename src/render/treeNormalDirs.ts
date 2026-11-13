@@ -11,6 +11,13 @@
 // frame's budget. The palettes are worked out by a worker of their own (render/treeQuantWorker.ts; on the page, in slices, where
 // there are no workers). An atlas that lands while a reduced setting is on is caught before its first upload, so it needs no
 // read-back, and is cut as soon as its palette is made (a frame or two of full normals as it fades in).
+//
+// Never waited for (Ed, 2026-11-12, when the 32-direction default held up the CI proofs: "Don't wait for it"): the game's ready,
+// the loading, the art's arrival and the proofs' settles take no notice of it. The trees are drawn with their full normals from
+// the start and switch to the palette a moment after load, each atlas when its palette is in. The page's share is small: the
+// worker sends back the cut plane itself (render/treeQuantWorker.ts), so the page only uploads it, one atlas a frame;
+// treeDirsStatus.longestMs keeps the longest the page spent here in one frame, to check. A test or proof that needs the final
+// look waits for treeDirsStatus.pending to be 0 (tools/smoke/paused-settle.cjs does, before it compares pictures).
 import * as THREE from "three";
 import type { TypeArt } from "./assets";
 import { atlasPixelsKept } from "./atlas";
@@ -19,20 +26,20 @@ import type { TreeQuantAsk, TreeQuantReply } from "./treeQuantWorker";
 
 /** One atlas's normals as held here: its size, its trees' boxes, the original plane (once had), its palettes by direction count,
  *  and what its texture shows now (0 the original). */
-interface Held { tex: THREE.DataTexture; w: number; h: number; rects: PixelRect[]; orig: Uint8Array | null; read: { y: number; buf: Uint8Array } | null; readMs: number; cache: Map<number, NormalPalette>; asked: Set<number>; shown: number; gone: boolean }
+interface Held { tex: THREE.DataTexture; w: number; h: number; rects: PixelRect[]; orig: Uint8Array | null; read: { y: number; buf: Uint8Array } | null; readMs: number; cache: Map<number, NormalPalette>; ready: Map<number, Uint8Array>; asked: Set<number>; shown: number; gone: boolean }
 const held = new WeakMap<THREE.DataTexture, Held>();
 
 /** What's going on, for the shots and a builder's look (window.witch.view.treeDirs): atlases not yet at the setting, and each
  *  palette made (its atlas's size, its directions, how long it took and where: the worker or the page; and how long reading its
  *  plane back from the GPU took, if it had to be). */
-export const treeDirsStatus = { pending: 0, made: [] as { w: number; h: number; k: number; ms: number; where: "worker" | "page"; readMs: number }[] };
+export const treeDirsStatus = { pending: 0, longestMs: 0, made: [] as { w: number; h: number; k: number; ms: number; where: "worker" | "page"; readMs: number }[] };
 
 /** A reduced setting has been picked this load: from then on atlases are caught as they land. */
 let engaged = false;
 /** Rows read back from a texture in one go (2048 x 128 x 4: a megabyte). */
 const BAND = 128;
-/** At most this many atlases uploaded again in a frame (each a few megabytes over to the GPU). */
-const UPLOADS = 2;
+/** At most this many atlases uploaded again in a frame (each a few megabytes over to the GPU): one, to spread the hitch. */
+const UPLOADS = 1;
 
 /** The trees' boxes in an atlas: each big piece's frames (both halves of a tree, or its one frame), once each. */
 export function treeRects(art: Pick<TypeArt, "atlas" | "layout">, w: number, h: number): PixelRect[] {
@@ -48,9 +55,9 @@ export function treeRects(art: Pick<TypeArt, "atlas" | "layout">, w: number, h: 
 
 function hold(art: TypeArt): Held {
   const tex = art.atlas.normal, img = tex.image as { data: Uint8Array | null; width: number; height: number };
-  const h: Held = { tex, w: img.width, h: img.height, rects: treeRects(art, img.width, img.height), orig: img.data ?? null, read: null, readMs: 0, cache: new Map(), asked: new Set(), shown: 0, gone: false };
+  const h: Held = { tex, w: img.width, h: img.height, rects: treeRects(art, img.width, img.height), orig: img.data ?? null, read: null, readMs: 0, cache: new Map(), ready: new Map(), asked: new Set(), shown: 0, gone: false };
   held.set(tex, h);
-  tex.addEventListener("dispose", () => { h.gone = true; h.orig = null; h.read = null; h.cache.clear(); if (job?.h === h) job = null; held.delete(tex); });
+  tex.addEventListener("dispose", () => { h.gone = true; h.orig = null; h.read = null; h.cache.clear(); h.ready.clear(); if (job?.h === h) job = null; held.delete(tex); });
   return h;
 }
 
@@ -104,6 +111,7 @@ function startWorker(): Worker | null {
       a.h.asked.delete(a.k);
       if (a.h.gone || !m.idx || !m.pal) { if (m.error) console.warn("tree normal palette failed:", m.error); return; }
       a.h.cache.set(a.k, { k: a.k, idx: m.idx, pal: m.pal, rects: a.h.rects, width: a.h.w });
+      if (m.plane) a.h.ready.set(a.k, m.plane); // (the cut plane, made in the worker: uploaded as it is, once)
       treeDirsStatus.made.push({ w: a.h.w, h: a.h.h, k: a.k, ms: Math.round(m.ms), where: "worker", readMs: Math.round(a.h.readMs) });
     };
     worker.onerror = () => { worker?.terminate(); worker = null; for (const a of asks.values()) a.h.asked.delete(a.k); asks.clear(); }; // (on the page from here)
@@ -142,7 +150,12 @@ export function stepTreeNormalDirs(renderer: THREE.WebGLRenderer | null, arts: I
   if (dirs > 0) engaged = true;
   treeDirsStatus.pending = 0;
   if (!engaged || dirs < 0) return;
-  const deadline = performance.now() + budget;
+  const t0 = performance.now();
+  step(renderer, arts, dirs, t0 + budget);
+  treeDirsStatus.longestMs = Math.max(treeDirsStatus.longestMs, Math.round(performance.now() - t0));
+}
+
+function step(renderer: THREE.WebGLRenderer | null, arts: Iterable<TypeArt>, dirs: number, deadline: number): void {
   let uploads = 0;
   for (const art of arts) {
     const tex = art.atlas.normal;
@@ -153,7 +166,7 @@ export function stepTreeNormalDirs(renderer: THREE.WebGLRenderer | null, arts: I
     if (dirs === 0) { if (h.orig && uploads < UPLOADS) { upload(h, h.orig); uploads++; h.shown = 0; } else if (!h.orig) h.shown = 0; else treeDirsStatus.pending++; continue; }
     const q = h.cache.get(dirs);
     if (q && h.orig) {
-      if (uploads < UPLOADS) { upload(h, applyNormalPalette(h.orig, q)); uploads++; h.shown = dirs; } else treeDirsStatus.pending++;
+      if (uploads < UPLOADS) { upload(h, h.ready.get(dirs) ?? applyNormalPalette(h.orig, q)); h.ready.delete(dirs); uploads++; h.shown = dirs; } else treeDirsStatus.pending++;
       continue;
     }
     treeDirsStatus.pending++;

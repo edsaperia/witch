@@ -3,7 +3,7 @@
 // stack, she stays on the ground at a press to rise (the view draws her pulled back down: the "grounded" leash event) and spends no
 // cooldown; youths (however many), babies and parked animals don't count; species strength doesn't matter; once up she stays up.
 import { describe, expect, it } from "vitest";
-import { TUNING, type Tuning } from "./tuning";
+import { TUNING, withTuning, type Tuning } from "./tuning";
 import { groundedBy } from "./leashWeight";
 import { strengthOf } from "./combat";
 import { stepGame, STEP, type Controls, type Game } from "./game";
@@ -85,7 +85,8 @@ describe("grounded by who follows her", () => {
   });
 
   it("up in the treetops when a youth grows up, she stays up: it only stops the next take-off", () => {
-    const g = onGround(), W = g.witches[0], [c] = follow(g, [1]);
+    // (the treetop tug off: flying on 3 s she'd pull past the chain's end, and that tug brings her down by its own rule, rules/tautChain.ts)
+    const g = onGround(withTuning({ ...TUNING, leash: { ...TUNING.leash, chain: { ...TUNING.leash.chain!, taut: { ...TUNING.leash.chain!.taut!, on: false } } } })), W = g.witches[0], [c] = follow(g, [1]);
     expect(press(g).up).toBe(true);
     for (let i = 0; i < 2 / STEP; i++) stepGame(g, idle, STEP);
     expect(W.body.mode).toBe("treetop");

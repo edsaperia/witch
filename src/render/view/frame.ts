@@ -43,6 +43,7 @@ import { drawBerries, drawCreatures } from "./creatures";
 import { drawHatArt } from "./hatArt";
 import { drawFinds, findClear } from "./finds";
 import { challengeCarving, challengeFloor, drawChallengeColumns, fireChallenge } from "../challenge";
+import { revealK } from "../../rules/challenge";
 import { drawMarkers, drawSpeakers, placeTreehouse } from "./home";
 import { miniTreehouse, ZooExitTag } from "../zooExit";
 import { CastTag } from "../castTag";
@@ -249,7 +250,7 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (Math.abs(c.x - w.x) < GR && Math.abs(c.z - w.z) < GR && hasRune(c)) clear.push({ x: c.x, z: c.z, r: t.groundCover.sigilClear }); } // (a happy one's rune at its feet)
     for (const r of relicsOut(g)) if ((r.state === "lying" || r.state === "dropped") && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
     { const F = findClear(a4ViewHost); if (F) clear.unshift(F); } // (tonight's find's patch, first: render/view/finds.ts)
-    { const ch = g.challenge; if (ch && Math.hypot(ch.x - w.x, ch.z - w.z) < GR + ch.radius) clear.unshift({ x: ch.x, z: ch.z, r: ch.radius }); } // (the challenge circle's stone floor: render/challenge.ts)
+    { const ch = g.challenge, k = ch ? revealK(g) : 0; if (ch && k > 0 && Math.hypot(ch.x - w.x, ch.z - w.z) < GR + ch.radius) clear.unshift({ x: ch.x, z: ch.z, r: ch.radius * k }); } // (hidden, the forest's tufts over it; fading, cleared out from its middle: Ed, 2026-11-12) // (the challenge circle's stone floor: render/challenge.ts)
     a4ViewHost.time("markers");
     a4ViewHost.grass.update(w.x, w.z, 1 - canopyShown(w), parts, t.suspects.groundCover ? LIGHT_UNIFORMS.uGlowR.value * 1.05 : t.groundCover.radius, clear); // out to the canopy hole's edge
     const partyObjectLights = a4ViewHost.partyObjects.update(g, time, a4ViewHost.camera, (x, z, ww, hh) => inView(a4ViewHost, x, z, ww, hh, 4), a4ViewHost.worldFires, a4ViewHost.lastView);

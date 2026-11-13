@@ -12,10 +12,14 @@ function worldSettled() {
     grassVersions: [grass.tuft, grass.uvA, grass.pxA, grass.open].map(attribute => attribute.version),
     grassPendingRanges: [grass.tuft, grass.uvA, grass.pxA, grass.open].map(attribute => attribute.updateRanges.length),
     grassBuildMs: grass.stats.buildMs,
+    // The trees' normal palettes (render/treeNormalDirs.ts): worked out in the background after load and never waited for by
+    // the game (Ed, 2026-11-12: "Don't wait for it"), so a picture compare waits for them here, or one landing mid-proof would
+    // change the trees between frames.
+    treeDirsPending: view.treeDirs?.pending ?? 0,
   };
   const idle = art.pending === 0 && art.queued === 0 && snapshot.pendingFloors === 0 &&
     snapshot.pendingGround === 0 && snapshot.forestMissing === 0 && snapshot.heightsReady === true &&
-    snapshot.grassBuildMs === 0 && snapshot.grassPendingRanges.every(count => count === 0);
+    snapshot.grassBuildMs === 0 && snapshot.treeDirsPending === 0 && snapshot.grassPendingRanges.every(count => count === 0);
   const frame = window.pauseProbe.draws, signature = JSON.stringify(snapshot), old = window.pauseWorldSettle;
   const consecutive = idle ? old?.signature === signature
     ? old.consecutive + (frame !== old.frame ? 1 : 0) : 1 : 0;

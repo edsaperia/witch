@@ -240,7 +240,11 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
       // island during this time"): made only once the dive began, a slice a dive frame, they took 14.5 s of his laptop's dive for
       // what the boot makes in 0.6 s, the dive flying over a forest not there. What's left as it hands over goes on through the dive.
       const compiled = a4PrivateHost.compileAll(o.sail, !!o.underDive), homeEpoch = a4PrivateHost.shaderEpoch; // (compileAll's epoch: buildHome stops only for a newer night)
-      void a4PrivateHost.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === a4PrivateHost.shaderEpoch) { a4ViewHost.homeDone = true; performance.mark('landing:house-complete'); } void a4PrivateHost.bakeTufts(tuftOrder); }); // (the tufts after the house, Ed's order: the house first; bakeTufts itself stops for a newer night)
+      void a4PrivateHost.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === a4PrivateHost.shaderEpoch) { a4ViewHost.homeDone = true; performance.mark('landing:house-complete'); } const tufts = a4PrivateHost.bakeTufts(tuftOrder);
+        // (and what the house, its forest and the tufts added compiled in the background, once with the house and again with the tufts:
+        // the compile above ran before they were made; Ed, 2026-11-12: "a very long freeze when taking off from the treehouse after a sail")
+        void a4PrivateHost.warmAfterHouse(homeEpoch).then(() => tufts).then(() => a4PrivateHost.warmAfterHouse(homeEpoch)).catch(e => { console.error("the warm-up after a sail's house went wrong", e); });
+      }); // (the tufts after the house, Ed's order: the house first; bakeTufts itself stops for a newer night)
       await compiled;
       // The ground where the dive first sees the island (Ed, 2026-10-24: the dive's view needs the ground; Echo's island black through
       // the descent, its tiles not drawn yet): the first TRACK_AHEAD metres of its track in from the sea, TRACK_REACH each side, a few

@@ -16,7 +16,10 @@ import { fileURLToPath } from "node:url";
 // (3.7 before #1951's space pass; 6.3 on CI's runner, whose convolver is relatively quicker: the deterministic counts are the bars'
 // finer guard), at most 858 nodes and 93 voices sounding at once a bar, five convolvers and four
 // compressors made live. A new convolver or compressor is a decision: raise its budget with the reason, here and in the note.
-const BUDGET = { liveRef: 8, barRef: 9, barNodes: 1100, barVoices: 125, convolvers: 5, compressors: 4, late: 0 };
+// (barRef 9 → 13, the coordinator, 2026-11-12: CI's runners measured a bar's render at 6.3, 7.55, 9.46 and 10.26 on unchanged
+// music, so 9 failed unrelated PRs and release 32's after-CI. The audio thread's budget, the one that caught Ed's crunch
+// (10.1-11.6 before the fix), stays 8; the bar render stays guarded by its node and voice counts too.)
+const BUDGET = { liveRef: 8, barRef: 13, barNodes: 1100, barVoices: 125, convolvers: 5, compressors: 4, late: 0 };
 
 const here = dirname(fileURLToPath(import.meta.url)), root = resolve(here, "../..");
 const require = createRequire(import.meta.url);
