@@ -3,6 +3,9 @@
 // radiusFactor times the floor's radius out. Gameplay (always drawn, never see-through): home is these speakers (Ed,
 // 2026-10-08: "home as 12 speakers at 500 hp each"), each its own soundsystem in the fight (combat.sounds' `home:<i>`, its
 // health combat.speakerHealth), the besiegers going for the nearest standing one; home falls when all of them have. Each
+// is 150 now, 1,800 for the twelve (Ed, 2026-11-13: "soundsystem health should be reduced substantially. I think ttk for
+// soundsystems should be relatively short, otherwise if you're marginally losing it can take a very long time to fully
+// lose."; he chose 150, and "Home speakers should change to 150 as well"). Each
 // shows its state (playing, damaged at half its health, destroyed); a debug key cycles an unhurt one's.
 // Ring angles are measured round the floor from the side nearest the camera: a speaker at ring
 // angle a stands at centre + R (sin a, cos a), x to the right and z towards the camera, as the art
