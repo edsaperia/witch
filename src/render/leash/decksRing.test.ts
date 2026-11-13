@@ -8,7 +8,7 @@ import * as THREE from "three";
 import { MagicFx } from "../fx/system";
 import { PartyStartFx } from "../partyStart";
 import { View } from "../view";
-import { DECKS_FX, DECKS_RING, DECKS_RING_FADE, DECKS_RING_HOLD_BEATS, DECKS_RING_REPLAY_BEATS, byteDb, decksBar, decksIdle, decksMiddle, decksRingAt, decksRingPhase, drawDecksRing, noDeeper, reachOnFloor, replayRing, type DecksRing } from "./decksRing";
+import { DECKS_FX, DECKS_RING, DECKS_RING_FADE, DECKS_RING_HOLD_BEATS, DECKS_RING_REPLAY_BEATS, byteDb, decksBar, decksIdle, decksMiddle, decksRingAt, decksRingPhase, drawDecksRing, noDeeper, replayRing, type DecksRing } from "./decksRing";
 import { newStoneView } from "./stones";
 import { TUNING } from "../../rules/tuning";
 import { PARTY_CAST } from "../../rules/party";
@@ -175,25 +175,21 @@ describe("before the drop, the mix silent: the idle sweep on the beat", () => {
   });
 });
 
-describe("on the Terrace's floor as it's drawn (Ed, 2026-11-13: its front ran out over the drop)", () => {
-  it("round her decks where the art draws them, every dot on the house's floor, placed where the art draws that spot", () => {
+describe("in the Terrace's floor's plane as it's drawn (Ed, 2026-11-13: its front ran out over the drop; then, of its north half cut at the rim, \"Hang past the edge\")", () => {
+  it("round her decks where the art draws them, a full circle on past the floor's rim, every dot placed where the art draws that spot", () => {
     const g = night(), D = deckOf(g.map, g.tuning)!, F = D.house!.rooms!, R = decksRingAt(g, { x: 0, y: 22, z: 0 }, 5, false);
     const at = { x: D.seat.x + 3, z: D.seat.z }; // (the art seats her east of the plan's seat: by the rim)
     g.clock.time = 8;
     const seen: { x: number; z: number }[] = [], floorAt = (x: number, z: number) => { seen.push({ x, z }); return { x: x + 100, y: 7, z: z * 0.5 }; };
     const S = leash(g, R, new Uint8Array(64).fill(255), floorAt, at); drawDecksRing(S.lv, 8, [0, 0, 1, 1]);
     expect(seen.length).toBeGreaterThan(DECKS_RING.bars * 4);
-    for (const p of seen) { expect(floorDistance(F, p.x, p.z)).toBeLessThanOrEqual(0); expect(Math.hypot(p.x - at.x, p.z - at.z)).toBeGreaterThanOrEqual(DECKS_RING.inner * R.width - 1e-6); }
+    for (const p of seen) expect(Math.hypot(p.x - at.x, p.z - at.z)).toBeGreaterThanOrEqual(DECKS_RING.inner * R.width - 1e-6);
+    expect(seen.some(p => floorDistance(F, p.x, p.z) > 0)).toBe(true); // (some of it past the rim)
     const whole = leash(g, R, new Uint8Array(64).fill(255)); drawDecksRing(whole.lv, 8, [0, 0, 1, 1]);
-    expect(S.ink.dots.length).toBeLessThan(whole.ink.dots.length); // (the bars toward the rim cut short)
+    expect(S.ink.dots.length).toBe(whole.ink.dots.length); // (no bar cut at the rim: as many dots as a ring with no floor to mind)
+    const edge = DECKS_RING.edge * R.width, far = (deg: number) => Math.max(...seen.filter(p => Math.cos(Math.atan2(p.z - at.z, p.x - at.x) - (deg * Math.PI) / 180) > 0.993).map(p => Math.hypot(p.x - at.x, p.z - at.z)));
+    for (const deg of [-90, 0, 90, 180]) { expect(far(deg)).toBeGreaterThan(edge - DECKS_RING.cell * 1.5); expect(far(deg)).toBeLessThanOrEqual(edge + 1e-6); } // (north, east, south, west: each to the edge)
     S.ink.dots.forEach((p, i) => { expect(p.x).toBeCloseTo(seen[2 * i].x + 100, 6); expect(p.y).toBeCloseTo(7.06, 6); expect(p.z).toBeCloseTo(seen[2 * i].z * 0.5, 6); });
-  });
-  it("a bar stops short of the floor's rim", () => {
-    const g = night(), D = deckOf(g.map, g.tuning)!, F = D.house!.rooms!, desk = D.house!.desk;
-    let rim = 0; while (floorDistance(F, desk.x, desk.z + rim) <= 0) rim += 0.01; // (due south of the desk)
-    const far = reachOnFloor(g, desk.x, desk.z, Math.PI / 2, rim + 5, 0.3);
-    expect(far).toBeLessThanOrEqual(rim - 0.3 + 1e-6); expect(far).toBeGreaterThan(rim - 0.3 - 0.21);
-    expect(reachOnFloor(g, desk.x, desk.z, Math.PI / 2, 1, 0.3)).toBe(1); // (room to spare: its own edge)
   });
 });
 

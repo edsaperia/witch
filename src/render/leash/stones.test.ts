@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { barLevel, columnOf, STUMP_FX, stumpMagicOld, stumpNoteSize } from "./stones";
+import { barLevel, columnOf, ringBar, STUMP_FX, stumpMagicOld, stumpNoteSize } from "./stones";
 import renderKnobs from "../../../config/playtest-render.json";
 import { CHAIN_FLOOR, layChain, LINK_ANGLES, linkAngle, rattleChain, stepChain, type Chain, type ChainMotion } from "./chain";
 import { CHAIN_DEFAULT } from "./ranks";
@@ -22,6 +22,15 @@ describe("rune stones' sigils", () => {
     expect(barLevel(bins, 18, 36)).toBeLessThan(0.2); // (the back: the treble)
     for (let i = 1; i < 18; i++) expect(barLevel(bins, i, 36)).toBe(barLevel(bins, 36 - i, 36));
     expect(barLevel(new Uint8Array(64), 5, 36)).toBe(0);
+  });
+  it("round a stump the analyser is wrapped twice: north shows what south does, the bass at both, the treble east and west (Ed, 2026-11-13)", () => {
+    // (the music as measured through the mix's analyser: its low bins at the read's top, its highs at a third to a half of it)
+    const bins = Uint8Array.from({ length: 64 }, (_, i) => (i < 4 ? 255 : i < 12 ? 170 : 110)), n = 72, at = (i: number) => barLevel(bins, ringBar(i, n), n);
+    expect(at(0)).toBe(1); // (due south)
+    expect(at(n / 2)).toBe(1); // (due north: as long as south's)
+    for (let i = 0; i < n / 2; i++) expect(at(i + n / 2)).toBe(at(i)); // (every bar's opposite the same)
+    for (let i = 1; i < n / 2; i++) expect(at(n / 2 - i)).toBe(at(n / 2 + i)); // (and still mirrored left and right)
+    expect(at(n / 4)).toBeLessThan(0.5); expect(at((3 * n) / 4)).toBe(at(n / 4)); // (the treble due west and due east)
   });
 });
 
