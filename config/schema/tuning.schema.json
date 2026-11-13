@@ -12324,6 +12324,14 @@
           "type": "number",
           "minimum": 0
         },
+        "glyph": {
+          "type": "number",
+          "minimum": 0
+        },
+        "beamStep": {
+          "type": "number",
+          "minimum": 0
+        },
         "creatures": {
           "type": "object",
           "properties": {
@@ -12369,10 +12377,12 @@
         "opacity",
         "beam",
         "size",
+        "glyph",
+        "beamStep",
         "creatures"
       ],
       "additionalProperties": false,
-      "description": "From the treetops each placed sigil shows above the canopy over its spot, with a faint beam down to it."
+      "description": "From the treetops each placed sigil shows above the canopy over its spot, clearly, with a column of light down to it."
     },
     "suspects": {
       "type": "object",
