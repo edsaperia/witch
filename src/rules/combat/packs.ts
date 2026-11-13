@@ -6,12 +6,15 @@
 // pressure, under the tuning's dodge.a tokens (rules/combat.ts; Ed, 2026-10-20). Against a soundsystem there's no pack: each fights
 // as before. A new kind is a data entry (its moves, special, retreat, rhythm, pressure), not new code. The director runs once a step
 // before the fight loop (rules/combat.ts) and hands each member a directive; the loop reads it. No drawing here.
+// With the combat spacing on (the default, packs.json spacing.on; Ed, 2026-11-01, #1622) a pack's phase and its members' roles come
+// from its team's shared round instead (rules/combat/teams.ts: mixed kinds on one target, each drawing from its own actions); the
+// phases, roles by position and 💌 reactions below are then the fallback with it off.
 // Phase 1's kinds (Echo, 2026-10-19: wolf, boar, bat, raven, newt, moth, heron, beetle, woodlouse, otter, toad; the moth since drawn
 // as a swallowtail, its id kept, 2026-10-23; the newt on the bench, Ed 2026-11-12: rules/kinds.ts BENCH) add two specials
 // (mirage, sync), a kind's own variant of a special (`specialWith`: the bat's confusion turns her movement, the moth's cloud flashes,
 // the toad's cloud comes down from a leap, the beetle's cover locks two shells), a ranged move on a kind's own attack (the raven's
 // spit and barb) or a lob that leaves a patch (the toad's spores), and retreats (flanks, backLine, branches, water, huddle, arcs, swirl).
-// Kinds keep their own moves (config/movement.json) inside a pack (Ed, 2026-10-20: "charges, dives, burrowing, screeches, slime and
+// Kinds keep their own moves (each creature.js's `movement`) inside a pack (Ed, 2026-10-20: "charges, dives, burrowing, screeches, slime and
 // the wolves surrounding her"): a member's strike, its turn come, is its kind's own move where it has one (a charger charges, a
 // toad leaps, a mole burrows in, a wild flyer dives), taking the pack's turn and her dodge token like any strike (strikingNow; its
 // pack engages from that move's reach, reachOf); a kiter's strike is its shot, never a lunge; the slime trail runs on; and while it
@@ -83,13 +86,13 @@ export const styleOf = (species: string, data: PacksData = PACKS): Style => data
 export const packKindOf = (species: string, data: PacksData = PACKS): PackKind | null => data.kinds[species] ?? null;
 /** A kind's special's numbers: the special's, with the kind's own variant over them. */
 export const specialOf = (K: PackKind, data: PacksData = PACKS): SpecialData => ({ ...data.specials[K.special], ...K.specialWith });
-/** A kind's own strike move from config/movement.json, which a pack member uses for its strike (a charge, a leap, a burrow, a
+/** A kind's own strike move from its creature.js's `movement`, which a pack member uses for its strike (a charge, a leap, a burrow, a
  *  dive), or null. */
 export function ownStrike(species: string): OwnMove | null {
   const mv = profileOf(species)?.move;
   return mv && (mv.kind === "charge" || mv.kind === "leap" || mv.kind === "burrow" || mv.kind === "swoop") ? mv : null;
 }
-/** A kiting kind (combat.json kite: the raven) keeps its distance and shoots: in a pack its strike is its shot, never a lunge. */
+/** A kiting kind (its creature.js's `kite`, the distances combat.json kite: the raven) keeps its distance and shoots: in a pack its strike is its shot, never a lunge. */
 export const kites = (species: string, K: PackKind): boolean => !!K.ranged && COMBAT.kite.species.includes(species);
 /** The move the nearest member strikes with: its melee, a kiter's (or a kind's without melee) its shot. */
 export const lungeMove = (species: string, K: PackKind): Move => (K.melee && !kites(species, K) ? "melee" : "ranged");
@@ -186,7 +189,7 @@ export const packMoveOf = (c: Creature): { attack: Attack; name: string } | null
 
 // ---- Roles by position -----------------------------------------------------------------------------------------------------
 
-/** Whether a member is hurt (under limits.hurt of its health): it leaves the combo and keeps away. */
+/** Whether a member is hurt: it leaves the combo and keeps away. */
 /** Hurt: its slots filled past the share limits.hurt leaves (hearts on one of the wild, 💧s on one of hers: rules/orbit.ts). */
 export const hurt = (c: Creature, data: PacksData = PACKS): boolean => (c.leashed || c.state === "happy" ? c.drops ?? 0 : c.dazed ? 1 : c.affection ?? 0) > 1 - data.limits.hurt + 1e-9;
 

@@ -1,5 +1,7 @@
 // Combat (Stage 4; DESIGN.md "Combat, pacing and forecasting"): one system for wild and party
-// creatures. Every creature of young age and up has an attack from config/combat.json (melee, a
+// creatures. Every creature of young age and up has an attack: by default its species' own in the
+// attack grammar (rules/attacks/species.ts; the tuning's attacks.species), and against a soundsystem
+// or with ?attacks=old the one from config/combat.json (melee, a
 // shot or the legends' quake), by its level and whether its species shoots; the numbers are data,
 // one power budget per level. Sides: party (leashed) against wild; the witch is on the party's
 // side and wild creatures shoot at her on the ground (Ed, 2026-10-04). Same kind never fights
@@ -79,7 +81,6 @@ export { COMBAT, traitsOf, counterOf, newCombat, strengthOf, combatProfile, atta
 export type { Delivery, Modifier, Attack, CombatData, Trait, Target, Fight, Shot, Beam, CombatEventKind, CombatEvent, SoundHealth, CombatState, Trail, CombatWorld } from "./combat/data";
 export { fighting, targetable, truce, guardOf, nearestSound } from "./combat/targeting";
 
-/** One step of every fight. Creatures fighting move here (their roam and leash leave them be). */
 /** How far a lunge goes (m) from where it stands to its aim (aimX, aimZ), reaching `reach`: with momentum (`chasing`) right to where
  *  it aimed, up to a quarter again its reach; else stopping half its range short. Dug in: none. The strike's own reckoning (below)
  *  and its telegraph's (render/leash/combat.ts: Ed, 2026-11-02, "the end of the line is where the lunge lands"). */
@@ -105,6 +106,7 @@ export function lungeLength(c: Creature, A: Attack, atWitch: boolean, t: Tuning,
  *  where asked. No chains (length 0): guard.radius everywhere. */
 export const guardRadius = (t: Tuning, inHome: boolean): number => (inHome ? t.guard.radius : t.leash.chain?.length || t.guard.radius);
 
+/** One step of every fight. Creatures fighting move here (their roam and leash leave them be). */
 export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = COMBAT): void {
   // (Events gather over a frame's steps: stepGame clears them once a frame, for the view.)
   const { time, dt, t } = w, C = t.combat;
@@ -301,7 +303,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (pd) pd.state.held = time;
     return false;
   };
-  /** A pack member's own move (its charge, leap or burrow: config/movement.json) as its strike: may it set off now (its turn, its
+  /** A pack member's own move (its charge, leap or burrow: its creature.js's `movement`) as its strike: may it set off now (its turn, its
    *  pack's pressure, a dodge token free: asked, not taken; the token's taken as it sets off, `ownStruck`)? Out of a pack, always. */
   const ownMay = (pd: Directive | undefined, tg: Target): boolean => {
     if (!pd) return true;
@@ -397,8 +399,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const happy = !c.leashed && (c.legendState === "happy" || c.state === "happy"); // (and every happy creature, #87: it defends its own area)
     // (a happy one looks round where it stands, for anything in its own area: area-wide, as it roams it)
     const lp = c.leashed ? w.leashPoint(c.id) : happy ? { x: c.x, z: c.z } : null, guarding = (!!lp && w.parked(c.id)) || happy;
-    // Party animals fight only near their leash point (a parked one within guard.radius of its
-    // sigil); wild ones within aggro of where they are.
+    // Party animals fight only near their leash point (a parked one within guardRadius of its
+    // sigil, and in its sigil's area: below); wild ones within aggro of where they are.
     // (Ed's motion scale pass: party animals chase about 40 m from her or their sigil before giving up)
     // (parked with its sigil in the home area, it guards all of that area and nothing outside it: Ed, 2026-10-11; parked in any
     // other area, all of that area plus guard.radius round its sigil: Ed, 2026-10-15, "Placing a sigil in any area should work as
@@ -409,8 +411,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const H = parkedIn && lp ? (atHome ? parkedIn : { x: parkedIn.x, z: parkedIn.z, r: Math.max(parkedIn.r, Math.hypot(lp.x - parkedIn.x, lp.z - parkedIn.z) + GR), inside: (x: number, z: number) => parkedIn.inside(x, z) || Math.hypot(x - lp.x, z - lp.z) <= GR }) : null; // (the circle covers the area and the radius round the sigil, so acquire finds everything in either)
     const reachX = H ? H.x : lp ? lp.x : c.x, reachZ = H ? H.z : lp ? lp.z : c.z, reach = H ? H.r : lp ? (happy ? t.wildLegends.guard * S : guarding ? GR : C.pursuit * S) : C.aggro * S;
     if (f.target && !valid(w, s, c, f.target)) {
-      // Lost her (or her party) past its band, or she rose (Ed, 2026-10-06: "instead they should retreat
-      // and go back to idling"): a wild one that isn't besieging gives up and heads home.
+      // Lost her party past its band, or she rose (Ed, 2026-10-06: "instead they should retreat
+      // and go back to idling"): a wild one that isn't besieging gives up and heads home. (She herself, on
+      // the ground, is no longer lost past the band: Ed, 2026-10-31, rules/combat/targeting.ts valid.)
       if (sideOf(c) === "wild" && !c.siege && !c.leashed && gaveUp(w, c, f.target)) c.retreat = true;
       f.target = null;
     }
@@ -547,7 +550,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // (a shooter keeps its usual distance, A0's, however far it may now fire at her: so she can still reach it with her 💌s)
     const A0 = atk.attack;
     let want = A.delivery === "shot" || A.delivery === "lob" || A.delivery === "beam" ? Math.min(A0.range * (kites ? K.far : 0.8), A.range * 0.9) : A.delivery === "pulse" ? Math.max(0.8, (A.radius ?? 2) * 0.6) : A.range + p.r + (A.lunge ?? 0) * 0.85 - 0.3;
-    // A pack member whose strike is its own move (a charge, a leap, a burrow: config/movement.json), the move ready, waits its turn
+    // A pack member whose strike is its own move (a charge, a leap, a burrow: its creature.js's `movement`), the move ready, waits its turn
     // where that move sets off from, not on top of her: where it stands, if that's in the move's reach (so its turn come it charges,
     // leaps or goes under from there: rules/combat/packs.ts).
     const om = pd && pd.move === "melee" && f.target.kind !== "sound" && time >= (c.moveReadyAt ?? 0) ? ownStrike(c.species) : null;
@@ -765,7 +768,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         const { vx, vz } = velOf(f.target), her = Math.hypot(vx, vz), i = pk.members.indexOf(c);
         if (her > DC.moving * FIGHT.walk * FIGHT.speed && Math.floor((i + 1) * DC.share) > Math.floor(i * DC.share)) cutoff = { ahead: her * DC.ahead, angle: DC.angle, reach: DC.reach };
       }
-      // (a pack member steers by its role, rules/combat/packs.ts; its kind's tactic, config/movement.json, places it (the wolves'
+      // (a pack member steers by its role, rules/combat/packs.ts; its kind's tactic, its creature.js's `movement`, places it (the wolves'
       // surround, the pincer, the flank), a shooter firing from its place, but the one whose lunge it is goes straight in (a slot held
       // it off waiting for its place); a volley keeps its line and its beat throughout. Hit and run is the pack's lull.)
       const tactic = pd && pk && !(spacing && pd.action?.delivery === "effect") && (pk.tactic === "volley" || (!(pd.move === "melee" && packGate(pd) && free(f.target)) && (pk.tactic === "surround" || pk.tactic === "pincer" || pk.tactic === "flank"))) ? pk : null;
@@ -959,7 +962,7 @@ export function startSiege(s: CombatState, key: string, at: { x: number; z: numb
   if (besiege) for (const c of creatures) if (!c.gone && !c.leashed && !c.wanderTo && !c.fleeUntil && !c.dazed && !c.friendly && c.cell[0] === cell[0] && c.cell[1] === cell[1] && c.level > 0 && enrage(c)) c.siege = key;
 }
 
-/** A kind's top speed (m/s): its fight run, its movement profile's (movement.json speed) else combat.fightRun, a legend's
+/** A kind's top speed (m/s): its fight run, its movement profile's (its creature.js's `movement` speed) else combat.fightRun, a legend's
  *  combat.legendRun, at the fight's speed (fight.speed) and the difficulty's (difficulty.creatureSpeed). */
 export function topSpeedOf(species: string, level: number, t: Tuning): number {
   return (level === LEGEND ? t.combat.legendRun : profileOf(species)?.speed ?? t.combat.fightRun) * (t.fight?.speed ?? 1) * (t.difficulty?.creatureSpeed ?? 1);
