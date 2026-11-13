@@ -1400,6 +1400,12 @@
       "pool": 1,
       "lights": 5,
       "light": 1
+    },
+    "magicGlow": {
+      "core": 1,
+      "halo": 1,
+      "pool": 1,
+      "light": 1
     }
   },
   "combat": {
@@ -1421,9 +1427,9 @@
     "reaction": 0.3,
     "marchShare": 0.5,
     "fleeMult": 8,
-    "soundsystemHealth": 500,
+    "soundsystemHealth": 150,
     "soundsystemRadius": 2.5,
-    "speakerHealth": 500,
+    "speakerHealth": 150,
     "speakerRadius": 2,
     "shake": 0.6,
     "daze": 20,

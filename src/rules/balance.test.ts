@@ -62,7 +62,9 @@ describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () =
 
   it("gives every woken area its own legend, besieging only its own soundsystem (Ed, 2026-10-04)", () => {
     // (half the areas with legends, as when this was written: the mechanism, not legends.share's balance, Ed 2026-10-08's 0.2)
-    const half = withTuning({ population: PEOPLED.population, legends: { ...TUNING.legends, share: 0.5 } }), hmap = sharedMap(1000, half);
+    // (and soundsystems at 500 health, as when this was written: at Ed's 150 of 2026-11-13 a soundsystem has fallen before its
+    // slow legend reaches it, so the legend never shows in a siege; the mechanism, not the siege's length)
+    const half = withTuning({ population: PEOPLED.population, legends: { ...TUNING.legends, share: 0.5 }, combat: { ...TUNING.combat, soundsystemHealth: 500, speakerHealth: 500 } }), hmap = sharedMap(1000, half);
     const plain = simulate(hmap, { interval: 60, maxWaves: 40 }), legends = simulate(hmap, { interval: 60, maxWaves: 40, areaLegends: true });
     // (legends.share leaves some areas without one, and a legend marches slowly: a 500-health soundsystem often falls before
     // it gets there, so it shows as a bigger siege somewhere in the first twenty waves, not always by its whole value)
@@ -97,7 +99,9 @@ describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () =
     const base = simulate(map, { interval: 300, maxWaves: 30 });
     const scatter = simulate(map, { interval: 300, maxWaves: 30, marchOn: 0 });
     expect(scatter.survived).toBeGreaterThanOrEqual(base.survived); // no survivor marches on: nothing merges
-    const dir = { base: 0, perWave: 10, alpha: 0, expected: 50 };
+    // (perWave 40, an adult's value, so the first wave already brings one: at 150 health (Ed, 2026-11-13) an idle run at
+    // five-minute waves is over at its second wave, before perWave 10's first adult at the third)
+    const dir = { base: 0, perWave: 40, alpha: 0, expected: 50 };
     const directed = simulate(map, { interval: 300, maxWaves: 30, director: dir });
     expect(directed.waves[directed.waves.length - 1].reinforced).toBeGreaterThan(0);
     expect(directed.survived).toBeLessThanOrEqual(base.survived);

@@ -16,7 +16,7 @@ import { beatAt, knockdownTempo, newBeatClock, tempoRate, timeAt, type BeatClock
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState, type CoastView } from "./camera";
 import { legendCircleNear } from "./legendCircle";
 import { MAX_STEP, newClock, type Clock } from "./clock";
-import { healBy, heldByCombat, keepsToCircle, napping, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature, type NapRules } from "./creatures";
+import { guardsHome, healBy, heldByCombat, keepsToCircle, napping, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature, type NapRules } from "./creatures";
 import { Forest } from "./forest";
 import { inviteCreature, leashPoint, newLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
@@ -872,8 +872,8 @@ function fixedStep(g: Game, controls: readonly Controls[], guestCatchUp: readonl
   const H = homeArea(g.map);
   for (const id of legends) {
     const c = g.creatures[id];
-    if (!c.homeGuard || H.inside(c.x, c.z)) continue;
-    c.x = c.lairX ?? c.homeX; c.z = c.lairZ ?? c.homeZ; c.run = undefined; c.moving = false; c.vx = 0; c.vz = 0;
+    if (!guardsHome(c) || H.inside(c.x, c.z)) continue;
+    if (c.homeGuard) { c.x = c.lairX ?? c.homeX; c.z = c.lairZ ?? c.homeZ; } else { c.x = c.journey?.x ?? H.x; c.z = c.journey?.z ?? H.z; } // (a returned route legend: its post) c.run = undefined; c.moving = false; c.vx = 0; c.vz = 0;
   }
 }
 
@@ -889,7 +889,7 @@ function stepSpacing(g: Game, dt: number): void {
   }
   // (one walking home to bed in the afterparty, rules/partyOver.ts, keeps its line too: the sleepers hold their ground, so one whose
   // bed lay in a sleeper's room was eased back as fast as it walked, awake for good, walking on the spot while she watched)
-  spaceOut(list, dt, c => !!c.homeGuard || !!c.partyLegend || dormant(g, c) || !!c.asleep || !!c.bed || (c.stunUntil !== undefined && g.clock.time < c.stunUntil), MOVEMENT,
+  spaceOut(list, dt, c => guardsHome(c) || !!c.partyLegend || dormant(g, c) || !!c.asleep || !!c.bed || (c.stunUntil !== undefined && g.clock.time < c.stunUntil), MOVEMENT,
     spacingOn(g.tuning) && list.some(c => c.level >= 1 && c.level <= 2 && c.fight?.target)
       ? { radius: c => spaceRadius(c), steered: c => c.level >= 1 && c.level <= 2 && !!c.fight?.target } : undefined);
   list.length = 0; // (let them go)

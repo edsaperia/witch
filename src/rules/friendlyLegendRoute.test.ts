@@ -9,6 +9,9 @@ import { friendlyLegendRoute } from "./combat/legend";
 import { frontMetres, pulseRouteMetres, TIP_PACE } from "./leypulse";
 import { leyChain } from "./leylines";
 import { linkLine } from "./pulseRoute";
+import { homeArea } from "./homeArea";
+import { guardsHome } from "./creatures";
+import { restoreGame, snapshotGame } from "./nightSnapshot";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 function scene() {
@@ -43,6 +46,33 @@ describe("friendly legend route integration", () => {
     stepGame(g, idle, STEP);
     expect(Math.hypot(c.x - start[0], c.z - start[1]), JSON.stringify({ time: g.clock.time, state: c.legendState, level: c.level, asleep: c.asleep, bed: c.bed, fight: c.fight, moving: c.moving, win: g.win?.phase, partyOver: g.partyOver, tip: friendlyLegendRoute(g).tip, run: c.run, homing: c.homing, gone: c.gone, scale: g.timeScale })).toBeCloseTo(g.tuning.combat.legendRun * STEP, 3);
     expect(c.moving).toBe(true);
+  });
+
+  it("walks on past the drawing tip to the route's far end, turns back there, guards home once back, and a saved night keeps its stage (Ed, 2026-11-13)", () => {
+    const { g, c } = scene(), route = friendlyLegendRoute(g), line = route.line, end = line[line.length - 1], near = line[line.length - 2];
+    let metres = 0; for (let i = 1; i < line.length - 1; i++) metres += Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]);
+    expect(metres).toBeGreaterThan(route.tip); // (the line isn't drawn this far yet)
+    g.witch = { ...g.witch, x: line[0][0] + 5000, z: line[0][1] };
+    Object.assign(c, { x: near[0], z: near[1] });
+    const far = () => Math.hypot(c.x - end[0], c.z - end[1]), before = far();
+    stepGame(g, idle, STEP);
+    expect(far()).toBeLessThan(before); expect(c.journey).toBeUndefined();
+    Object.assign(c, { x: end[0], z: end[1] });
+    stepGame(g, idle, STEP);
+    expect(c.journey).toEqual({ stage: "back" });
+    stepGame(g, idle, STEP);
+    expect(far()).toBeCloseTo(g.tuning.combat.legendRun * STEP, 3);
+    expect(restoreGame(JSON.parse(JSON.stringify(snapshotGame(g)))).creatures[c.id].journey).toEqual({ stage: "back" });
+    Object.assign(c, { x: line[0][0], z: line[0][1] });
+    stepGame(g, idle, STEP);
+    const H = homeArea(g.map);
+    expect(c.journey?.stage).toBe("guard"); expect(H.inside(c.journey!.x!, c.journey!.z!)).toBe(true); expect(guardsHome(c)).toBe(true);
+    const off = () => Math.hypot(c.x - c.journey!.x!, c.z - c.journey!.z!);
+    for (let i = 0; i < 60 * 40 && (off() > 0.01 || c.moving); i++) stepGame(g, idle, STEP);
+    expect(off()).toBeLessThan(0.01); expect(c.moving).toBe(false); expect(H.inside(c.x, c.z)).toBe(true);
+    expect(restoreGame(JSON.parse(JSON.stringify(snapshotGame(g)))).creatures[c.id].journey).toEqual(c.journey);
+    // (its party egg and the win's dance take it off guard: rules/creatures.ts guardsHome)
+    c.partyLegend = true; expect(guardsHome(c)).toBe(false);
   });
 
   it("does not teleport an unseen route legend home or apply ordinary roam; party and leashed legends keep their old ownership", () => {

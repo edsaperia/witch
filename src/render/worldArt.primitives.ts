@@ -12,6 +12,7 @@ export { PATH_PIECES, pathColours, pathPieceSprite } from "../../art/paths.js";
 export { BRIDGE_VARIANTS, PATH_GEN_IDS } from "../../art/props/bridges.js";
 export { RELICS, relicColours, relicLayouts, relicSprite } from "../../art/relics.js";
 export { SCENES, sceneLayout, scenePiece } from "../../art/scenes.js";
+export { DANCE_STONE_FORMS, danceStone } from "../../art/danceStones.js";
 export { DANCEFLOOR_SPEAKER_ANGLES, DANCEFLOOR_SPEAKER_STATES, dancefloorSpeakerColours, dancefloorSpeakerSprite } from "../../art/soundsystem.js";
 export { bakeSway } from "../../art/sway.js";
 export { bush, palmTree, splitTree, treeColours } from "../../art/trees.js";

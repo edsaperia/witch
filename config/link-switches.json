@@ -13,6 +13,17 @@
    "decision": "Ed, 2026-11-13: \"I'd like them to be more visible at treetop mode\"",
    "readIn": [
     "src/render/leash/projection.ts"
+   },
+   {
+   "name": "dancestones",
+   "values": [
+    "old"
+   ],
+   "does": "The dancefloor ring's stones as they were, to compare: each an area's rune stone at half its width, as tall as the speaker it becomes (not the low rounded stones, knee to thigh height on her: Ed, 2026-11-13).",
+   "group": "compare",
+   "since": "2026-11-13",
+   "readIn": [
+    "src/app/viewParams.ts"
    ]
   },
   {
@@ -561,10 +572,11 @@
     "0",
     "1"
    ],
-   "does": "Creatures that have one are drawn as low-poly meshes on skeletons (art/mesh), on by default: every kind with a file in art/mesh/species (ten at first, 2026-11-12; most kinds now); 0 compares the generated creatures.",
+   "does": "Creatures that have one are drawn as low-poly meshes on skeletons (art/mesh), on by default: every kind with a file in art/mesh/species (ten at first, 2026-11-12; most kinds now); 0 compares the generated creatures, and spaces her line of babies by their old drawings' lengths (tuning leash.babies.mesh false).",
    "group": "compare",
    "since": "2026-11-12",
    "readIn": [
+    "src/app/linkParams.ts",
     "src/app/viewParams.ts"
    ]
   },
@@ -1116,6 +1128,33 @@
     "src/render/leash/decksRing.ts"
    ],
    "decision": "The soundsystem spell's analyser ring round the decks by default (Ed, 2026-11-12: \"At the decks, when the party starts, there is a visual effect - I want to remove this. ... Instead I want something like the soundsystem spell (audio analyser ring)\")"
+  },
+  {
+   "name": "magicglow",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Her own magic glows as the creatures' spells do (the party start's ring, her blink, the ley line's spark and the other native effects: a bright core, a dithered halo, a pool of light on the ground, real lights); 0 draws it without the glow, as before, to compare.",
+   "group": "compare",
+   "since": "2026-11-13",
+   "readIn": [
+    "src/render/fx/spellGlow.ts"
+   ],
+   "decision": "Glowing by default (Ed, 2026-11-13, asked whether to extend the creatures' glow to her magic: \"extend\")"
+  },
+  {
+   "name": "stumpfx",
+   "values": [
+    "old"
+   ],
+   "does": "The soundsystem spell at a great stump (a wave's soundsystem appearing) with the creature-magic vortex and dome over the stump as they were, to compare: the pink-purple glow above it.",
+   "group": "compare",
+   "since": "2026-11-13",
+   "readIn": [
+    "src/render/leash/stones.ts"
+   ],
+   "decision": "No glow over the stump by default: the analyser alone (Ed, 2026-11-13: \"remove this purple effect above the stump which happens during the soundsystem spell - I think it was part of the creature magic pass - this is not the audio analyser effect\")"
   },
   {
    "name": "fxmock",

@@ -1,0 +1,6 @@
+{
+  "reason": "The soundsystem spell at a great stump (a wave's soundsystem appearing) no longer draws the creature-magic vortex and dome over the stump (Ed, 2026-11-13: \"remove this purple effect above the stump which happens during the soundsystem spell - I think it was part of the creature magic pass - this is not the audio analyser effect\"; render/leash/stones.ts, ?stumpfx=old the two as they were).",
+  "frames": {
+    "wave-fight": "the pink-purple glow over the stump where the wave's soundsystem appears is gone, and its light on the scene round it; the analyser's bars stay"
+  }
+}

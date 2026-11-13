@@ -89,13 +89,36 @@ export function barLevel(bins: ArrayLike<number>, i: number, n: number): number 
   return Math.max(0, Math.min(1, (bins[b] ?? 0) / 255));
 }
 
-/** The bars' levels this frame (the soundsystem spell's analyser: a stump's dial, a wave's bloom, the decks' ring at the party start,
- *  render/leash/decksRing.ts): bar i of m from the music's spectrum (StoneView.spectrum), rising at once and falling slowly, as an
- *  analyser's do (eased in StoneView.bars); with no audio running, a gentle idle. */
+/** ?stumpfx=old: the creature-magic vortex and dome over a great stump as a wave's soundsystem appears, as they were, to compare (as
+ *  the decks' `?decksfx=old`, ./decksRing.ts). Read once, from the link. */
+export const STUMP_FX = { old: new URLSearchParams(globalThis.location?.search ?? "").get("stumpfx") === "old" };
+
+/** The two as they were (only under `?stumpfx=old`): the party element's vortex 2 m over the stump's top and its dome 1 m over it,
+ *  growing with the bloom (`fill`) and fading with it (`fade`). */
+export function stumpMagicOld(magic: { draw: (element: string, form: "vortex" | "dome", x: number, y: number, z: number, level: number, size: number, alpha: number, phase: number, seed: number) => void }, x: number, top: number, z: number, fill: number, fade: number): void {
+  if (!STUMP_FX.old) return;
+  magic.draw("party", "vortex", x, top + 2, z, 2, 0.8, fill * fade * 0.6, fill, 700001);
+  magic.draw("party", "dome", x, top + 1, z, 2, 0.65, fill * fade * 0.35, fill, 700002);
+}
+
+/** Which of the analyser's bars (barLevel's: 0 its front, the bass; n/2 its back, the treble) the soundsystem spell's bar i of n
+ *  round a stone or a great stump shows (bar 0 due south, n/2 due north): the analyser's ring wrapped twice round, the bass due south
+ *  and due north, the treble due west and due east. Ed, 2026-11-13, of the ring at a great stump: "Why so little of the north half of
+ *  the soundsystem spell circle? (red and yellow part) compared to the southern part?" Measured that day (the music's sections played
+ *  through the mix's analyser; the ring drawn with every bin loud, then with the music's): nothing cuts or hides the north bars (with
+ *  every bin loud each reaches the edge, and only the dots behind the soundsystem itself are covered), but wrapped once round the bass
+ *  lay due south and the highs due north, and the music's low bins sit at the read's top all the time while its highs stand at a
+ *  third to a half of it, so the north bars were always the short ones; and the camera's view draws a metre north of the middle 0.74
+ *  of a metre south of it, making them shorter still. Wrapped twice, north and south show the same bins. */
+export const ringBar = (i: number, n: number): number => (2 * i) % n;
+
+/** The bars' levels this frame (the soundsystem spell's analyser: a stump's dial and a wave's bloom): bar i of m from the music's
+ *  spectrum (StoneView.spectrum) as ringBar lays it round, rising at once and falling slowly, as an analyser's do (eased in
+ *  StoneView.bars); with no audio running, a gentle idle. */
 export function analyserLevels(lv: LeashView, time: number): (i: number, m: number) => number {
   const V = lv.stoneView, spec = V.spectrum, dt = Math.min(0.1, lv.frameDt);
   return (i: number, m: number) => {
-    const live = spec ? barLevel(spec, i, m) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
+    const live = spec ? barLevel(spec, ringBar(i, m), m) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
     return (V.bars[i] = Math.max(live, V.bars[i] - dt * 1.8));
   };
 }
@@ -108,9 +131,13 @@ export type DotLayer = Pick<Instances, "add">;
 /** Where it's drawn: its dots painted on in `ink`, glowing over them as light in `glow`, `y` m over the ground. */
 export interface RingLayers { ink: DotLayer; glow: DotLayer; y: number }
 
+/** A bar's tip as it's drawn (its last dot: where, its colour, the ring's strength, and how far out it is, 0 to 1): for what's drawn
+ *  on it (the decks' ring's glow, render/leash/decksRing.ts). */
+export type BarTip = (x: number, z: number, c: number[], alpha: number, reach: number) => void;
+
 /** One bar of the flat analyser lying on the ground (a great stump's: Ed, 2026-10-29, "the audio analyser effect should be the same
  *  orientation as the stump rings"): at angle `a` from its middle (x0, z0), `reach` (0 to 1) of the way out to `edge` m, in colour c. */
-export function analyserBar(L: RingLayers, dot: number[], S: FlatRing, x0: number, z0: number, a: number, edge: number, reach: number, c: number[], alpha: number): void {
+export function analyserBar(L: RingLayers, dot: number[], S: FlatRing, x0: number, z0: number, a: number, edge: number, reach: number, c: number[], alpha: number, tipAt?: BarTip): void {
   const ux = Math.cos(a), uz = Math.sin(a), steps = Math.max(1, Math.floor((edge * S.fill - S.inner) / S.cell)), top = Math.round(reach * steps);
   for (let j = 0; j <= top; j++) {
     const r = S.inner + j * S.cell, tip = j === top, x = x0 + ux * r, z = z0 + uz * r;
@@ -121,6 +148,7 @@ export function analyserBar(L: RingLayers, dot: number[], S: FlatRing, x0: numbe
     // lit wood and where the glows overlap it saturates rather than whitening)
     const gk = S.glow ?? 0, lo = Math.min(c[0], c[1], c[2]) * 0.9;
     if (gk > 0) L.glow.add(x, L.y + 0.02, z, S.cell * 1.8, dot, (c[0] - lo) * gk, (c[1] - lo) * gk, (c[2] - lo) * gk, alpha * (tip ? 0.6 : 0.45), 1, true);
+    if (tip) tipAt?.(x, z, c, alpha, reach);
   }
 }
 
@@ -129,8 +157,8 @@ export function analyserBar(L: RingLayers, dot: number[], S: FlatRing, x0: numbe
  *  1) of the way times the music's level (`level`: analyserLevels), in the rainbow drifting round, at `alpha`. `edge`: how far out
  *  the bars may reach (m), or that by each bar's angle (the decks': the Terrace's rim); `least`: the share of the way a silent bar
  *  still reaches (a stump's 0.55; the decks' much less, so its bars are the music's own heights). */
-export function analyserBloom(L: RingLayers, dot: number[], S: FlatRing, x0: number, z0: number, edge: number | ((a: number) => number), n: number, fill: number, alpha: number, level: (i: number, m: number) => number, time: number, least = 0.55): void {
-  for (let i = 0; i < n; i++) { const f = i / n, a = Math.PI / 2 + f * Math.PI * 2; analyserBar(L, dot, S, x0, z0, a, typeof edge === "number" ? edge : edge(a), fill * (least + (1 - least) * level(i, n)), rainbow(f + time * 0.15), alpha); }
+export function analyserBloom(L: RingLayers, dot: number[], S: FlatRing, x0: number, z0: number, edge: number | ((a: number) => number), n: number, fill: number, alpha: number, level: (i: number, m: number) => number, time: number, least = 0.55, tipAt?: BarTip): void {
+  for (let i = 0; i < n; i++) { const f = i / n, a = Math.PI / 2 + f * Math.PI * 2; analyserBar(L, dot, S, x0, z0, a, typeof edge === "number" ? edge : edge(a), fill * (least + (1 - least) * level(i, n)), rainbow(f + time * 0.15), alpha, tipAt); }
 }
 
 /** A rainbow hue, 0 to 1 round (the wave pointer cycles the same: render/indicator.ts). */
@@ -205,7 +233,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     if (!C) {
       const col = [...V.last.values()].find(c => Math.abs(c.x - p.from!.x) < 0.5 && Math.abs(c.z - p.from!.z) < 0.5) ?? { x: p.from.x, z: p.from.z, top: 5.4, items: [] };
       V.converted.push(C = { col, at: time });
-      lv.look.magic.emit("party","eruption",col.x,col.top+3,col.z,3,1.3,1.5,950001);
+      lv.look.magic.emit("party","eruption",col.x,col.top+3,col.z,3,1.3,1.5,950001,true);
     }
     const it = C.col.items.find(q => q.id === p.id), lvl = it?.level ?? Math.min(3, g.creatures[p.id]?.level ?? 0), y = it?.y ?? 0.6 + (p.from.y + 0.5) * sizeOf(lvl) * 1.15;
     const t0 = time + K.convert * (0.1 + 0.2 * hash2(p.id, 3, 91));
@@ -272,8 +300,12 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     waving = true;
     analyserBloom(ground, dot, SR, st.x, st.z, edge(0), nb, fill, fade, level, time);
     if (!V.castLight) V.castLight = { x: st.x, z: st.z, rgb: hue(time * 0.3) as [number, number, number], k: fill * fade };
-    lv.look.magic.draw("party", "vortex", st.x, st.top+2, st.z, 2, 0.8, fill*fade*0.6, fill, 700001);
-    lv.look.magic.draw("party", "dome", st.x, st.top+1, st.z, 2, 0.65, fill*fade*0.35, fill, 700002);
+    // (No creature-magic effect over the stump: Ed, 2026-11-13, "remove this purple effect above the stump which happens during the
+    // soundsystem spell - I think it was part of the creature magic pass - this is not the audio analyser effect". It was two of
+    // #1468's magic effects in the party element's pink, a vortex 2 m over the stump's top and a dome 1 m over it, added with the
+    // challenge columns (2026-11-03); the analyser's bloom, its light, the sigil and the soundsystem's rise are the spell.
+    // `?stumpfx=old` draws the two again, to compare. Not to come back with #1928's spell glow either.)
+    stumpMagicOld(lv.look.magic, st.x, st.top, st.z, fill, fade);
   }
   V.wantsSpectrum = show || waving;
   if (!cs || !show) return;

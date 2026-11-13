@@ -1,0 +1,10 @@
+{
+  "reason": "A friendly route legend with nothing to fight walks tonight's whole route to its far end (not to the drawing tip), walks it back, then takes a guard post in the home area and stays (Ed, 2026-11-13: \"once it gets to the end of the route, it should turn around and walk back. Once it gets back to the dancefloor, it starts guarding the home area like the home legend\"). Nights with no happy quest legend are unchanged.",
+  "frames": {
+    "*": "a happy quest legend stands somewhere else along the route, or at a post near the dancefloor"
+  },
+  "rules": {
+    "creatures": "a happy route legend's position, movement and its new journey field",
+    "*": "anything downstream of where that legend stands (who it shoots or charges, fights near home)"
+  }
+}

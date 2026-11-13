@@ -7,7 +7,7 @@
 // pointed hat with its glowing band, a broom, a face that reads, a palette that holds together (a dark hat so the band shines,
 // the hat and cloak in neighbouring hues, the jacket against them).
 import { rng } from "./core.js";
-import { DEFAULT_OUTFIT, DEFAULT_LOOK, CLOAK_KNEE, cloakDrop, cloakLengthIn } from "./witch.js";
+import { DEFAULT_OUTFIT, DEFAULT_LOOK, CLOAK_KNEE, cloakDrop, cloakLengthIn, WITCH_WEAR } from "./witch.js";
 import { NEW_BROOMS } from "./brooms.js";
 import { HUMAN_SKINS } from "./skinTones.js";
 
@@ -20,6 +20,9 @@ export const WITCH_GENOME = {
     lantern: false, vial: false, book: false, patches: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, clutch: false, messenger: false, wristband: false, chunky: false,
     lipstick: false, eyeshadow: false, blush: false }, // (the basin's makeup, Ed 2026-11-07: off till she puts it on; blush always off since 2026-11-12, kept so older saves and messages still read)
   cloakLength: 1, scarfLength: 1, bagSize: 1, backpackSize: 0,
+  // her top under her jacket, her trousers and her shoes (Ed, 2026-11-13; art/witch.js WITCH_WEAR: the wardrobe's and the shoe rack's
+  // items; no jacket is top "none"). A generated witch keeps hers.
+  shirt: "tee", trousers: "jeans", shoes: "trainers",
   palette: null, // null: hers (DEFAULT_OUTFIT, the style's hues on top)
 };
 // The axes and their limits, for the creator, the lab and the check (Ed, 2026-10-05: "the sliders in the character creation
@@ -94,7 +97,8 @@ export function witchGenome(seed = 0, { party = false } = {}) {
 export function upgradeGenome(g) {
   const W = WITCH_GENOME, o = g && typeof g === "object" ? g : {};
   const { familiar: _f, ...acc } = o.accessories ?? {}, pal = o.palette && Object.fromEntries(Object.entries(o.palette).filter(([k]) => k !== "familiar" && k !== "familiar2"));
-  return oneMakeup({ ...W, ...o, hat: { ...W.hat, ...o.hat }, broom: { ...W.broom, ...o.broom }, accessories: { ...W.accessories, ...acc }, palette: pal ?? null });
+  const wear = Object.fromEntries(["shirt", "trousers", "shoes"].map(k => [k, WITCH_WEAR[k].includes(o[k]) ? o[k] : W[k]])); // (a save from before them, or naming a kind this build doesn't know: hers)
+  return oneMakeup({ ...W, ...o, ...wear, hat: { ...W.hat, ...o.hat }, broom: { ...W.broom, ...o.broom }, accessories: { ...W.accessories, ...acc }, palette: pal ?? null });
 }
 // The basin's makeup is one colour for her lips and eyes together (Ed, 2026-11-12: "have only one option which is both the lips and
 // eyes together, the same colour"; "Drop blush"). A look from before (a fresh copy, `g` itself untouched): her blush off; her lipstick
@@ -108,7 +112,7 @@ export function oneMakeup(g) {
 }
 // The look and outfit witch.js draws a genome with.
 export function genomeLook(g = WITCH_GENOME) {
-  const look = { ...DEFAULT_LOOK, hat: g.hat.shape, hatHeight: g.hat.height, hatBrim: g.hat.brim, hatTilt: g.hat.tilt, hatBand: g.hat.band ?? 1, hair: g.hair, top: g.top, cloak: g.cloak,
+  const look = { ...DEFAULT_LOOK, hat: g.hat.shape, hatHeight: g.hat.height, hatBrim: g.hat.brim, hatTilt: g.hat.tilt, hatBand: g.hat.band ?? 1, hair: g.hair, top: g.top, cloak: g.cloak, shirt: g.shirt ?? "tee", trousers: g.trousers ?? "jeans", shoes: g.shoes ?? "trainers",
     broom: g.broom.kind, broomLength: g.broom.length, broomBend: g.broom.bend, bristles: g.broom.bristles, broomThickness: g.broom.thickness ?? 1, cloakLength: g.cloakLength ?? 1, scarfLength: g.scarfLength ?? 1, bagSize: g.bagSize ?? 1, backpackSize: g.backpackSize ?? 0, ...g.accessories };
   return { look, outfit: g.palette ? { ...DEFAULT_OUTFIT, ...g.palette } : null };
 }
@@ -118,7 +122,7 @@ export function witchGenomeProblems(g) {
   if (!A.hatShape.includes(g.hat.shape)) out.push("hat " + g.hat.shape);
   for (const [k, v, lim] of [["hatHeight", g.hat.height, A.hatHeight], ["hatBrim", g.hat.brim, A.hatBrim], ["hatTilt", g.hat.tilt, A.hatTilt], ["hatBand", g.hat.band ?? 1, A.hatBand], ["broomLength", g.broom.length, A.broomLength], ["broomBend", g.broom.bend, A.broomBend], ["bristles", g.broom.bristles, A.bristles], ["broomThickness", g.broom.thickness ?? 1, A.broomThickness], ["cloakLength", g.cloakLength ?? 1, A.cloakLength], ["scarfLength", g.scarfLength ?? 1, A.scarfLength], ["bagSize", g.bagSize ?? 1, A.bagSize], ["backpackSize", g.backpackSize ?? 0, A.backpackSize]]) if (!inR(v, lim)) out.push(`${k} ${v}`);
   if (g.accessories && ![false, true, "round"].includes(g.accessories.shades ?? false)) out.push("shades " + g.accessories.shades); // sunglasses: none, plain or round
-  if (!A.hair.includes(g.hair)) out.push("hair " + g.hair); if (!A.top.includes(g.top)) out.push("top " + g.top); if (!A.cloak.includes(g.cloak)) out.push("cloak " + g.cloak); if (!A.broom.includes(g.broom.kind)) out.push("broom " + g.broom.kind);
+  if (!A.hair.includes(g.hair)) out.push("hair " + g.hair); if (!WITCH_WEAR.top.includes(g.top)) out.push("top " + g.top); for (const k of ["shirt", "trousers", "shoes"]) if (g[k] !== undefined && !WITCH_WEAR[k].includes(g[k])) out.push(`${k} ${g[k]}`); if (!A.cloak.includes(g.cloak)) out.push("cloak " + g.cloak); if (!A.broom.includes(g.broom.kind)) out.push("broom " + g.broom.kind);
   if (g.palette) for (const [k, c] of Object.entries(g.palette)) if (!(Array.isArray(c) && c.length === 3 && c.every(v => v >= 0 && v <= 1))) out.push("palette " + k);
   return out;
 }

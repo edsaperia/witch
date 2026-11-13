@@ -6,13 +6,15 @@ import type { Creature, Level } from "./creatures";
 import { speedFactor, wanderRange } from "./creatures";
 import { stepGame, STEP, type Controls, type Game } from "./game";
 import { babiesOf, queueDistances, queueGap, queueHalf, scatterSpot, stepBaby, trailPoint } from "./babies";
-import { SPACING } from "./combatSpacing";
+import { drawnRadius, SPACING } from "./combatSpacing";
+import meshLengthsRaw from "../../config/mesh-lengths.json";
 import { isInside } from "./mapShape";
 import { toEvolve } from "./berries";
 import { TUNING, withTuning } from "./tuning";
 import { newLeash, stepLeash } from "./leash";
 import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
+const MESH_LENGTHS = meshLengthsRaw as unknown as { lengths: Record<string, number[]> };
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const T = withTuning({ witchHealth: { ...TUNING.witchHealth, hits: 1e6 }, invites: { ...TUNING.invites, on: false } });
 const run = (g: Game, secs: number, c: Controls = idle, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, c, STEP); each?.(); } };
@@ -39,8 +41,8 @@ function scene(n: number, species: string | string[] = "fox", seed = 123): { g: 
 }
 
 describe("babies on her leash", () => {
-  it("walk in single file behind her along where she's been, in stack order (the bottom one first), spaced by their sizes (foxes: babies.gap apart)", () => {
-    const { g, babies } = scene(4), gap = babiesOf(g.tuning).gap;
+  it("walk in single file behind her along where she's been, in stack order (the bottom one first), spaced by their sizes (foxes: their meshes' lengths and the margin apart)", () => {
+    const { g, babies } = scene(4), B = babiesOf(g.tuning), fox = queueHalf({ species: "fox", level: 0 }, g.tuning);
     run(g, 3, { ...idle, moveX: 1 }); // east
     run(g, 3, { ...idle, moveZ: 1 }); // then south: a bend in the line
     run(g, 2, { ...idle, moveZ: 1 });
@@ -49,7 +51,7 @@ describe("babies on her leash", () => {
     const order = [...babies].reverse(), d = order.map(c => Math.hypot(c.x - w.x, c.z - w.z));
     for (let i = 1; i < d.length; i++) expect(d[i]).toBeGreaterThan(d[i - 1]);
     const back = queueDistances(order, g.tuning);
-    expect(back).toEqual([1, 2, 3, 4].map(k => k * gap)); // (foxes are small: the minimum gap)
+    back.forEach((d, k) => expect(d).toBeCloseTo(B.her! + fox + B.margin! + k * (2 * fox + B.margin!), 9)); // (a baby fox's mesh is about 6 m with its tail: over the minimum gap)
     order.forEach((c, k) => {
       const want = trailPoint(g.leash.trail, w.x, w.z, back[k]);
       expect(Math.hypot(c.x - want.x, c.z - want.z)).toBeLessThan(0.8); // (on its place on her trail)
@@ -134,9 +136,12 @@ describe("babies on her leash", () => {
       expect(d(big)[0]).toBeGreaterThan(d("fox")[0]); // (off her too)
       expect(d(big)[1] - d(big)[0]).toBeCloseTo(2 * queueHalf(baby(big), TUNING) + B.margin!, 9);
     }
-    // (a size knob: lengths and gaps grow with it; the margin stays)
+    // (a size knob for the old drawings, whose length is their calibrated body times it: lengths and gaps grow with it, the margin
+    // stays; a mesh's length is its own, measured, whatever the knob)
+    const OLD = withTuning({ leash: { ...TUNING.leash, babies: { ...B, mesh: false } } }), OLD2 = withTuning({ leash: { ...TUNING.leash, babies: { ...B, mesh: false, size: B.size! * 2 } } });
+    expect(queueHalf(baby("elephant"), OLD2)).toBeCloseTo(queueHalf(baby("elephant"), OLD) * 2, 9);
     const T2 = withTuning({ leash: { ...TUNING.leash, babies: { ...B, size: B.size! * 2 } } });
-    expect(queueHalf(baby("elephant"), T2)).toBeCloseTo(queueHalf(baby("elephant"), TUNING) * 2, 9);
+    expect(queueHalf(baby("elephant"), T2)).toBe(queueHalf(baby("elephant"), TUNING));
   });
 
   it("keep no two neighbours in the line overlapping, nor the first and her, whatever their kinds", () => {
@@ -153,13 +158,41 @@ describe("babies on her leash", () => {
     }
   });
 
+  // Ed, 2026-11-13: "update the conga line spacing for the new creature mesh sizes so they don't collide".
+  it("take a mesh kind's length from its mesh (config/mesh-lengths.json), the old drawing's with meshes off or for a kind without one", () => {
+    const B = babiesOf(TUNING), OLD = withTuning({ leash: { ...TUNING.leash, babies: { ...B, mesh: false } } }), perPixel = TUNING.pixelSize / (2 * TUNING.artPixelsPerMetre);
+    for (const [species, lengths] of Object.entries(MESH_LENGTHS.lengths)) for (let level = 0 as Level; level < 4; level++) {
+      const c = { species, level }, half = queueHalf(c, TUNING);
+      expect(half, `${species} ${level}`).toBeCloseTo(lengths[level] * perPixel / 2, 9); // (half its sprite's drawn width, in metres)
+      expect(queueHalf(c, OLD), `${species} ${level}`).toBeCloseTo(drawnRadius(c, TUNING) * B.size!, 9); // (?meshCreatures=0: as before)
+      // (two of a kind in line: their drawn lengths clear of each other by the margin, and the first clear of her)
+      const back = queueDistances([c, c], TUNING);
+      expect(back[1] - back[0], `${species} ${level}`).toBeGreaterThanOrEqual(lengths[level] * perPixel + B.margin! - 1e-9);
+      expect(back[0], `${species} ${level}`).toBeGreaterThanOrEqual(B.her! + lengths[level] * perPixel / 2 + B.margin! - 1e-9);
+    }
+    // (a kind with no mesh yet keeps its old drawing's length either way)
+    for (const species of SPECIES.filter(k => !(k in MESH_LENGTHS.lengths))) expect(queueHalf(baby(species), TUNING), species).toBe(queueHalf(baby(species), OLD));
+    // (the long ones are the long ones: a baby snake or crocodile well over a fox, a heron or an owl about the minimum)
+    for (const long of ["snake", "crocodile", "komodo", "elephant"]) expect(queueHalf(baby(long), TUNING)).toBeGreaterThan(1.5 * queueHalf(baby("fox"), TUNING));
+    for (const thin of ["heron", "owl", "penguin"]) expect(2 * queueHalf(baby(thin), TUNING) + B.margin!).toBeLessThan(B.gap + 0.5);
+  });
+
+  it("a full stack's line doesn't trail absurdly far: no more than half again as long as by the old drawings' lengths", () => {
+    const B = babiesOf(TUNING), OLD = withTuning({ leash: { ...TUNING.leash, babies: { ...B, mesh: false } } }), last = (kinds: string[], t: typeof TUNING) => queueDistances(kinds.map(baby), t)[kinds.length - 1];
+    // (a dozen of the longest and the smallest, mixed; then every meshed kind once, in one line, the wonders and their 25 m wyrm among them: under 10 m a baby on average)
+    const dozen = ["fox", "snake", "heron", "elephant", "squirrel", "crocodile", "owl", "bear", "hare", "toad", "komodo", "wolf"], all = Object.keys(MESH_LENGTHS.lengths);
+    for (const kinds of [dozen, all]) expect(last(kinds, TUNING)).toBeLessThan(1.5 * last(kinds, OLD));
+    expect(last(all, TUNING) / all.length).toBeLessThan(10);
+    expect(queueDistances(dozen.map(baby), TUNING)[2]).toBeLessThan(B.farAt); // (the first three still in view with her)
+  });
+
   it("keep small babies at least babies.gap apart, and off her", () => {
-    const B = babiesOf(TUNING), small = ["squirrel", "heron", "fennec", "owl", "fox"];
+    const B = babiesOf(TUNING), small = ["penguin", "fennec", "owl", "moth", "scorpion"];
     for (const k of small) expect(2 * queueHalf(baby(k), TUNING) + B.margin!).toBeLessThan(B.gap); // (small enough to be at the minimum)
     const back = queueDistances(small.map(baby), TUNING);
     expect(back).toEqual(small.map((_, k) => (k + 1) * B.gap));
     // (and never under it, even with no margin and no size)
-    const T0 = withTuning({ leash: { ...TUNING.leash, babies: { ...B, margin: 0, size: 0, her: 0 } } });
+    const T0 = withTuning({ leash: { ...TUNING.leash, babies: { ...B, margin: 0, size: 0, her: 0, mesh: false } } }); // (the old drawings: a mesh's length is no knob's)
     expect(queueDistances(SPECIES.slice(0, 6).map(baby), T0)).toEqual([1, 2, 3, 4, 5, 6].map(k => k * B.gap));
   });
 

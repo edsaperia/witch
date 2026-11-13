@@ -1,0 +1,9 @@
+{
+  "reason": "Her babies' line spaced by the meshes' drawn lengths (Ed, 2026-11-13: \"update the conga line spacing for the new creature mesh sizes so they don't collide\"): a baby drawn as a mesh keeps half its mesh's real drawn length (config/mesh-lengths.json, written by tools/creature-mesh/lengths.mjs) where it kept its old drawing's calibrated body times leash.babies.size; the margin and the minimum gap are as they were. Most mesh babies are longer than the old measure said (a fox 6.3 m where 3 m was assumed), so most stand further back; scattering babies go half that length further.",
+  "rules": {
+    "*": "wherever babies follow her on the ground or scatter: their places (most further back in the line, or further out when scattered), and what follows from them"
+  },
+  "frames": {
+    "*": "wherever babies follow her: each further behind the one in front, no longer overlapping; further out when scattered"
+  }
+}

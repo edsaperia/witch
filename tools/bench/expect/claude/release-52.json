@@ -1,0 +1,11 @@
+{
+  "reason": "Release 52: #2047 (claude/stump-fx): The soundsystem spell at a great stump (a wave's soundsystem appearing) no longer draws the creature-magic vortex and dome over the stump (Ed, 2026-11-13: \"remove this purple effect above the stump which happens during the soundsystem spell - I think it was part of the creature magic pass - this is not the audio analyser effect\"; render/leash/stones.ts, ?stumpfx=old the two as they were).; #2051 (claude/conga-mesh): Her babies' line spaced by the meshes' drawn lengths (Ed, 2026-11-13: \"update the conga line spacing for the new creature mesh sizes so they don't collide\"): a baby drawn as a mesh keeps half its mesh's real drawn length (config/mesh-lengths.json, written by tools/creature-mesh/lengths.mjs) where it kept its old drawing's calibrated body times leash.babies.size; the margin and the minimum gap are as they were. Most mesh babies are longer than the old measure said (a fox 6.3 m where 3 m was assumed), so most stand further back; scattering babies go half that length further.; #2055 (claude/legend-route-home): A friendly route legend with nothing to fight walks tonight's whole route to its far end (not to the drawing tip), walks it back, then takes a guard post in the home area and stays (Ed, 2026-11-13: \"once it gets to the end of the route, it should turn around and walk back. Once it gets back to the dancefloor, it starts guarding the home area like the home legend\"). Nights with no happy quest legend are unchanged.",
+  "frames": {
+    "wave-fight": "the pink-purple glow over the stump where the wave's soundsystem appears is gone, and its light on the scene round it; the analyser's bars stay",
+    "*": "wherever babies follow her: each further behind the one in front, no longer overlapping; further out when scattered; a happy quest legend stands somewhere else along the route, or at a post near the dancefloor"
+  },
+  "rules": {
+    "*": "wherever babies follow her on the ground or scatter: their places (most further back in the line, or further out when scattered), and what follows from them; anything downstream of where that legend stands (who it shoots or charges, fights near home)",
+    "creatures": "a happy route legend's position, movement and its new journey field"
+  }
+}

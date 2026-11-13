@@ -81,3 +81,11 @@ Her on foot indoors: the idle and the walk, and both carrying her broom, side-on
 ```
 node tools/witch/walk-sheet.mjs <out.png> [scale]
 ```
+
+## `wardrobe-sheet.mjs`
+
+The wardrobe's and the shoe rack's new options on our witch: a row an option.
+
+```
+node tools/witch/wardrobe-sheet.mjs <out.png> [walk|poses] [scale]
+```

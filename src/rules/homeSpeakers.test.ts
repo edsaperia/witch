@@ -1,4 +1,4 @@
-// Home as its ring of speakers (Ed, 2026-10-08: "home as 12 speakers at 500 hp each"; rules/speakers.ts): each speaker its
+// Home as its ring of speakers (Ed, 2026-10-08: "home as 12 speakers at 500 hp each"; 150 each from 2026-11-13: "Home speakers should change to 150 as well"; rules/speakers.ts): each speaker its
 // own soundsystem in the fight, the besiegers going for the nearest one standing, each showing its own damage, and home
 // lost (the soundsystemLost event, the party's over) only when the last of them falls.
 import { describe, expect, it } from "vitest";
@@ -24,12 +24,12 @@ function siege(spec = "wolf*1@2,boar*4@2!"): Game {
 }
 
 describe("home's speakers (Ed, 2026-10-08)", () => {
-  it("are twelve soundsystems at the ring's speakers, each combat.speakerHealth (500), and there's no single home", () => {
+  it("are twelve soundsystems at the ring's speakers, each combat.speakerHealth (150), and there's no single home", () => {
     const g = newGame(123, TUNING), C = TUNING.combat;
-    expect(C.speakerHealth).toBe(500);
+    expect(C.speakerHealth).toBe(150);
     expect(homeKeys(g)).toEqual(g.map.dancefloor.speakers.map((_, i) => speakerKey(i)));
     expect(homeKeys(g).length).toBe(12);
-    g.map.dancefloor.speakers.forEach((p, i) => expect(g.combat.sounds.get(speakerKey(i))).toEqual({ hp: 500, max: 500, x: p.x, z: p.z, radius: C.speakerRadius }));
+    g.map.dancefloor.speakers.forEach((p, i) => expect(g.combat.sounds.get(speakerKey(i))).toEqual({ hp: 150, max: 150, x: p.x, z: p.z, radius: C.speakerRadius }));
     expect(g.combat.sounds.has("home")).toBe(false);
   });
 
@@ -44,7 +44,7 @@ describe("home's speakers (Ed, 2026-10-08)", () => {
     let sawDamaged = false;
     for (let k = 0; k < 120 / STEP && !fell(); k++) {
       stepGame(g, idle, STEP);
-      homeKeys(g).forEach((key, i) => { const h = g.combat.sounds.get(key)!; if (h.hp > 0) expect(g.speakers[i], key).toBe(h.hp <= 250 ? "damaged" : "playing"); if (h.hp > 0 && h.hp <= 250) sawDamaged = true; });
+      homeKeys(g).forEach((key, i) => { const h = g.combat.sounds.get(key)!; if (h.hp > 0) expect(g.speakers[i], key).toBe(h.hp <= 75 ? "damaged" : "playing"); if (h.hp > 0 && h.hp <= 75) sawDamaged = true; });
     }
     const first = fell()!, i = Number(first.slice(5));
     expect(first).toBeDefined(); expect(sawDamaged).toBe(true);

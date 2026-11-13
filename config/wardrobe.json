@@ -36,14 +36,27 @@
     "hat": { "frame": "hat", "label": "Hat", "colour": ["hat"], "fit": ["hatHeight", "hatBrim", "hatTilt"], "items": [] },
     "band": { "frame": "hat", "label": "Band", "colour": ["plume"], "fit": ["hatBand"], "items": [] },
     "jacket": { "frame": "top", "label": "Jacket", "colour": ["jacket"], "items": [
+      { "id": "top-none", "name": "None", "set": { "top": "none" }, "start": true },
       { "id": "top-jacket", "name": "Velvet jacket", "set": { "top": "jacket" }, "start": true },
       { "id": "top-poncho", "name": "Poncho", "set": { "top": "poncho" }, "start": true },
       { "id": "top-sequins", "name": "Sequin jacket", "set": { "top": "sequins" } },
       { "id": "top-cape", "name": "Cape", "set": { "top": "cape" } },
       { "id": "top-mesh", "name": "Mesh top", "set": { "top": "mesh" } }
     ] },
-    "top": { "frame": "top", "label": "Top", "colour": ["top"], "items": [] },
-    "trousers": { "frame": "legs", "label": "Trousers", "colour": ["jeans"], "items": [] },
+    "top": { "frame": "top", "label": "Top", "colour": ["top"], "items": [
+      { "id": "shirt-none", "name": "None", "set": { "shirt": "none" }, "start": true },
+      { "id": "shirt-tee", "name": "T-shirt", "set": { "shirt": "tee" }, "start": true },
+      { "id": "shirt-vest", "name": "Vest", "set": { "shirt": "vest" }, "start": true },
+      { "id": "shirt-crop", "name": "Crop top", "set": { "shirt": "crop" }, "start": true }
+    ] },
+    "trousers": { "frame": "legs", "label": "Trousers", "colour": ["jeans"], "items": [
+      { "id": "trousers-none", "name": "None", "set": { "trousers": "none" }, "start": true },
+      { "id": "trousers-jeans", "name": "Jeans", "set": { "trousers": "jeans" }, "start": true },
+      { "id": "trousers-breeches", "name": "Breeches", "set": { "trousers": "breeches" }, "start": true },
+      { "id": "trousers-shorts", "name": "Shorts", "set": { "trousers": "shorts" }, "start": true },
+      { "id": "trousers-miniskirt", "name": "Miniskirt", "set": { "trousers": "miniskirt" }, "start": true },
+      { "id": "trousers-longskirt", "name": "Long skirt", "set": { "trousers": "longskirt" }, "start": true }
+    ] },
     "cloak": { "frame": "back", "label": "Cloak", "colour": ["cloak"], "fit": ["cloakLength"], "items": [
       { "id": "cloak-none", "name": "None", "set": { "cloak": "none" }, "start": true },
       { "id": "cloak-short", "name": "Short cloak", "set": { "cloak": "short" }, "start": true },
@@ -55,8 +68,11 @@
       { "id": "scarf", "name": "Scarf", "set": { "accessories.scarf": true }, "start": true }
     ] },
     "shoes": { "frame": "legs", "label": "Shoes", "colour": ["sneakers"], "items": [
-      { "id": "shoes-trainers", "name": "Trainers", "set": { "accessories.chunky": false }, "start": true },
-      { "id": "shoes-chunky", "name": "Chunky trainers", "set": { "accessories.chunky": true } }
+      { "id": "shoes-none", "name": "None", "set": { "shoes": "none", "accessories.chunky": false }, "start": true },
+      { "id": "shoes-trainers", "name": "Trainers", "set": { "shoes": "trainers", "accessories.chunky": false }, "start": true },
+      { "id": "shoes-chunky", "name": "Chunky trainers", "set": { "shoes": "trainers", "accessories.chunky": true } },
+      { "id": "shoes-heels", "name": "High heels", "set": { "shoes": "heels", "accessories.chunky": false }, "start": true },
+      { "id": "shoes-boots", "name": "Boots", "set": { "shoes": "boots", "accessories.chunky": false }, "start": true }
     ] },
     "bag": { "frame": "bag", "label": "Bag", "preview": true, "colour": ["satchel"], "items": [
       { "id": "satchel", "name": "Satchel", "stat": "steady throws, a little homing", "invites": { "cooldown": 1, "range": 1, "homing": 1.5, "homingCone": 1.5 }, "set": { "accessories.satchel": true, "accessories.bumbag": false, "accessories.purse": false, "accessories.tote": false, "accessories.duffel": false, "accessories.briefcase": false, "accessories.clutch": false, "accessories.messenger": false, "backpackSize": 0 }, "start": true },

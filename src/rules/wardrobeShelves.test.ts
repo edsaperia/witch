@@ -23,7 +23,7 @@ describe("the wardrobe", () => {
       const keys = path.split("."), top = keys[0];
       expect(top in CLASSIC, `${it.id}: ${path}`).toBe(true);
       if (path === "broom.kind") expect(AXES.broom, it.id).toContain(v);
-      else if (keys.length === 1 && typeof v === "string") expect(AXES[top], it.id).toContain(v);
+      else if (keys.length === 1 && typeof v === "string") expect((Art.WITCH_WEAR as Record<string, string[]>)[top] ?? AXES[top], it.id).toContain(v); // (her jacket, top, trousers and shoes: the kinds the rig draws, art/witch.js WITCH_WEAR)
       if (keys[0] === "accessories") expect(keys[1] in (CLASSIC.accessories as object), it.id).toBe(true);
     }
   });

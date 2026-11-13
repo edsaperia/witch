@@ -32,6 +32,15 @@ node tools/creature-mesh/index.mjs           writes it
 node tools/creature-mesh/index.mjs --check   fails if it is stale (src/render/meshCreatures.test.ts checks the same)
 ```
 
+## `lengths.mjs`
+
+How long each mesh creature is drawn, for her line of followers: config/mesh-lengths.json, every kind with a mesh at each level, baby to legend, in art pixels: how far across the picture it reaches, nose to tail tip, as the game's camera sees it, over its…
+
+```
+node tools/creature-mesh/lengths.mjs           writes it
+node tools/creature-mesh/lengths.mjs --check   fails if it is stale (src/render/meshLengths.test.ts checks the same)
+```
+
 ## `make.mjs`
 
 Writes a creature drawn in code as a rigged, animated.glb, for tools/creature-bake/bake.mjs or any 3D tool.

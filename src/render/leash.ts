@@ -112,6 +112,9 @@ export class LeashView {
   ink: Instances;
   /** The decks' ring's dots painted on and their glow as light (render/leash/decksRing.ts): over the house's floor (DECKS_RING_ORDER),
    *  depth-tested, so the DJ table in front of them covers them. */
+  /** Its glow (Ed, 2026-11-13: her own magic glows; render/fx/spellGlow.ts): its bars' tips' glowing cores and dithered halos, and
+   *  their pools on the floor, in the magic's glow layers at the ring's own order (begun and ended with the magic's). */
+  decksHalo!: { core: Instances; pool: Instances };
   decksInk: Instances;
   decksGlow: Instances;
   /** Each glyph's reach from its slot's middle, a share of its half-width (measured from the atlas when drawn), by its rect. */
@@ -243,6 +246,7 @@ export class LeashView {
     scene.add(this.decksInk.mesh, this.decksGlow.mesh);
     scene.add(this.standing.mesh, this.flat.mesh, this.through.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh, this.backing.mesh, this.ink.mesh, this.stackBack.mesh, this.stackGlyphs.mesh);
     this.look = new AttackLook(scene, game);
+    this.decksHalo = this.look.magic.batches.extraGlow(scene, DECKS_RING_ORDER + 0.001, "Decks ring");
     const hex = berryColour(game.tuning).replace("#", ""); // (berry pink, or the old cherry red: render/colourGrammar.ts)
     this.berryRgb = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
   }
@@ -313,7 +317,7 @@ export class LeashView {
    *  spiralling up through the bar, a flash on the bar line as it becomes its next level, a burst
    *  of party sparkles. */
   /** The ring stones' glowing dots this frame (render/view/home.ts drawSpeakers): each one's middle in the world and how bright. */
-  ringGlows: { x: number; y: number; z: number; k: number }[] = [];
+  ringGlows: { x: number; y: number; z: number; k: number; /** its halo's size, as a share of a rune stone's dot's (the low rounded stones': smaller) */ s?: number }[] = [];
   /** Their glow (Ed, 2026-10-09: "They should glow"): a soft cyan halo round each dot, smooth as the berries' (docs/STYLE.md §1
    *  rule 3: light may be smooth), and a core bright enough for the bloom; the dot's own pixels stay on the grid in the sprite. */
   drawRingGlows(time: number): void {
@@ -321,8 +325,9 @@ export class LeashView {
     for (const [i, q] of this.ringGlows.entries()) {
       this.look.magic.native("ringDot",q.x,q.y,q.z,q.k,930000+i,[0.3,0.9,1]);
       const tw = 0.9 + 0.1 * Math.sin(time * 1.7 + i * 0.9);
-      this.standing.add(q.x, q.y, q.z + 0.15, 1.6, dot, 0.3 * 1.5, 0.9 * 1.5, 1.5, 0.8 * q.k * tw); // the soft halo
-      this.standing.add(q.x, q.y, q.z + 0.16, 0.32, dot, 0.6 * 1.8, 1.8, 1.8, 0.75 * q.k); // its bright core, for the bloom
+      const s = q.s ?? 1;
+      this.standing.add(q.x, q.y, q.z + 0.15, 1.6 * s, dot, 0.3 * 1.5, 0.9 * 1.5, 1.5, 0.8 * q.k * tw); // the soft halo
+      this.standing.add(q.x, q.y, q.z + 0.16, 0.32 * s, dot, 0.6 * 1.8, 1.8, 1.8, 0.75 * q.k); // its bright core, for the bloom
     }
   }
 

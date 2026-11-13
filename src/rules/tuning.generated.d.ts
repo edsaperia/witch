@@ -1204,6 +1204,12 @@ export type SchemaTuning = {
       "lights": number;
       "light": number;
     };
+    "magicGlow": {
+      "core": number;
+      "halo": number;
+      "pool": number;
+      "light": number;
+    };
   };
   "combat": {
     "packs": {

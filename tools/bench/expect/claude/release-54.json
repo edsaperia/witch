@@ -1,0 +1,9 @@
+{
+  "reason": "Release 54: #2059 (claude/soundsystem-150): soundsystems and home's speakers have 150 health each, from 500 (Ed, 2026-11-13: \"soundsystem health should be reduced substantially. I think ttk for soundsystems should be relatively short\", \"Home speakers should change to 150 as well\")",
+  "rules": {
+    "*": "every soundsystem and speaker starts at 150, so they fall sooner; the besiegers march on earlier and the fights after that differ"
+  },
+  "frames": {
+    "wave-fight": "a soundsystem under siege shows more damage sooner, or has fallen"
+  }
+}

@@ -77,6 +77,7 @@ glossary; these are the prototype's), by note.
 - Creature momentum
 - Berry cost
 - Pacing variants
+- Soundsystem health
 - Power meter
 - Playtest log
 - Balance simulator
@@ -198,6 +199,7 @@ glossary; these are the prototype's), by note.
 - Shot mark
 - Runaway
 - Restless / angry legend, relic
+- Route out and back
 - The challenge circle hidden till the party
 
 ### [The treehouse and its house](house.md)
@@ -350,6 +352,7 @@ glossary; these are the prototype's), by note.
 - Palette-indexed art
 - The telescope's forest under the loading screen
 - Sail take-off freeze
+- Outfit load time
 
 ### [The run](run.md)
 
@@ -472,6 +475,8 @@ glossary; these are the prototype's), by note.
 - Pair poses
 - Witch genome / witch generator
 - Lean cycle
+- Her top, trousers and shoes
+- Bag straps
 
 ### [The world's art](world-art.md)
 
@@ -490,6 +495,7 @@ glossary; these are the prototype's), by note.
 - Attack effects
 - Attack look
 - Spell glow
+- Her magic's glow
 - Colour temperatures
 - Path kinds
 - Path looks
