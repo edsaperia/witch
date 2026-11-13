@@ -215,4 +215,4 @@ export function drawDecksRing(lv: LeashView, time: number, dot: number[], camera
 /** The ring's glow (her own magic's: render/fx/spellGlow.ts): each bar's tip's glowing core `core` m across, `lift` m over the
  *  floor, its pool on the floor `pool` m across and `poolAlpha` strong; a silent bar's tip `least` as bright as a full one's; its
  *  one light `lightY` m over the decks, reaching `reach` m, `light` strong (a creature's strongest spell's is 0.85). */
-export const DECKS_GLOW = { core: 0.3, lift: 0.12, pool: 1.5, poolAlpha: 0.7, least: 0.45, lightY: 3, reach: 16, light: 0.7 } as const;
+export const DECKS_GLOW = { core: 0.3, lift: 0.12, pool: 1.1, poolAlpha: 0.8, least: 0.45, lightY: 3, reach: 16, light: 0.7 } as const;
