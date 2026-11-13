@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { knockOf, knockWitch, newKnock, stepWitchKnock, stunned } from "./knock";
 import { newWitch } from "./witch";
 import { TUNING } from "./tuning";
-import { STEP, hitWitch, stepGame } from "./game";
+import { STEP, hitWitch, stepGame, stunWitch } from "./game";
 import { preppedGame } from "../test/preppedGame"; // (games on a map made once a file from its prep)
 
 const B = { minX: -1e4, maxX: 1e4, minZ: -1e4, maxZ: 1e4 };
@@ -112,5 +112,38 @@ describe("a moment's grace after a hit (witchHealth.grace)", () => {
     const off = preppedGame(7, withTuning({ witchHealth: { ...TUNING.witchHealth, grace: 0 } }));
     hitWitch(off, 0, 10, off.tuning); hitWitch(off, 0, 10, off.tuning);
     expect(off.witches[0].health.hp).toBe(H - 2); // (no grace: both land)
+  });
+});
+
+describe("a creature's stun on her is a slow (Ed, 2026-11-13: \"stun is replaced with slow and we use circling stars\"; \"Big: 40% speed, 3× as long\")", () => {
+  it("slows her to 40% for three times the stun's length, and doesn't stagger her", () => {
+    const g = preppedGame(77, TUNING), W = g.witches[0], t0 = g.clock.time;
+    expect(TUNING.witch.stunAsSlow).toEqual({ on: true, speed: 0.4, time: 3 });
+    stunWitch(g, 0, t0 + 0.3); // (the lynx's pounce)
+    expect(W.slowUntil).toBeCloseTo(t0 + 0.9, 6);
+    expect(W.slowMult).toBe(0.4);
+    expect(stunned(W.knock, t0 + 0.1)).toBe(false);
+  });
+  it("keeps a longer slow's length, at the slower of the two speeds", () => {
+    const g = preppedGame(77, TUNING), W = g.witches[0], t0 = g.clock.time;
+    W.slowUntil = t0 + 5; W.slowMult = 0.6;
+    stunWitch(g, 0, t0 + 0.25);
+    expect(W.slowUntil).toBe(t0 + 5);
+    expect(W.slowMult).toBe(0.4);
+  });
+  it("is dodged by a blink, as a blow is", () => {
+    const g = preppedGame(77, TUNING), W = g.witches[0], t0 = g.clock.time;
+    W.dash.at = t0; W.dash.until = t0 + 1;
+    stunWitch(g, 0, t0 + 0.3);
+    expect(W.slowUntil).toBeUndefined();
+  });
+  it("staggers her as before with stunAsSlow off (?stun=old)", async () => {
+    const { withTuning } = await import("./tuning");
+    const t = withTuning({ witch: { ...TUNING.witch, stunAsSlow: { ...TUNING.witch.stunAsSlow, on: false } } });
+    const g = preppedGame(77, t), W = g.witches[0], t0 = g.clock.time;
+    stunWitch(g, 0, t0 + 0.3);
+    expect(W.slowUntil).toBeUndefined();
+    expect(stunned(W.knock, g.herTime + 0.29)).toBe(true);
+    expect(stunned(W.knock, g.herTime + 0.31)).toBe(false);
   });
 });

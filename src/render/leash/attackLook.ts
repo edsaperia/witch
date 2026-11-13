@@ -346,7 +346,7 @@ export class AttackLook {
 
   // ---- the marks of an effect on her (render/herEffects.ts; Ed, 2026-11-13: "Mark + tint + sound"), in its attacker's element ----
 
-  /** Slowed: n stars circling her head (Ed, 2026-11-13: "it uses circling stars"), a dark star under each so they read on bright
+  /** Slowed: n stars circling her head (Ed, 2026-11-13: "we use circling stars"), a dark star under each so they read on bright
    *  ground; calm (Reduce flashing): slower round, no twinkling. */
   herStars(d: Dress, x: number, top: number, z: number, time: number, n: number, size: number, calm: boolean): void {
     const c = this.colours(d)[2], sp = calm ? 1.6 : 4;

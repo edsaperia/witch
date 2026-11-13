@@ -765,6 +765,11 @@
       "stunMax": 1,
       "immune": 1
     },
+    "stunAsSlow": {
+      "on": true,
+      "speed": 0.4,
+      "time": 3
+    },
     "lightFloor": 0.75,
     "lightTint": 1,
     "lightRim": 0.6,

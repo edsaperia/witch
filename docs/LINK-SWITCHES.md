@@ -157,6 +157,7 @@ Each brings back how something was before a change, to compare against what repl
 
 | switch | does | since | read in |
 |---|---|---|---|
+| `stun=old` | A creature's stun on her staggers her for its length, as before, to compare: not the slow that replaced it (to 40% of her speed for three times as long, with the circling stars). *Decision: A slow by default (Ed, 2026-11-13: "I think stun and slow are very similar, and stun is less fun than slow, so how about stun is replaced with slow and we use circling stars?"; "Big: 40% speed, 3× as long").* | 2026-11-13 | app/linkParams.ts |
 | `effectmarks=0` | No marks, tints or sounds for the effects on her (slowed: circling stars and drag marks; confused: a spiral; thrown hard: a dust skid), as before, to compare: only her confusion's pale swirl. *Decision: Shown by default (Ed, 2026-11-13: "Mark + tint + sound").* | 2026-11-13 | render/herEffects.ts |
 | `telegraphs=red` | Every attack's warning shape on the ground red, as before, to compare: not in its attacker's element colour. *Decision: Element colours by default, as a trial (Ed, 2026-11-13: "Element coloured warning shape on the ground", "Let's try element colours and see.").* | 2026-11-13 | render/leash/attackLook.ts |
 | `dancestones=old` | The dancefloor ring's stones as they were, to compare: each an area's rune stone at half its width, as tall as the speaker it becomes (not the low rounded stones, knee to thigh height on her: Ed, 2026-11-13). | 2026-11-13 | app/viewParams.ts |

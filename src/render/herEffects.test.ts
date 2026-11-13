@@ -1,5 +1,5 @@
-// The effects on her, followed for the view and the sounds (Ed, 2026-11-13: "Mark + tint + sound"; "Slow and stun are quite similar,
-// maybe stun can be removed for slow and it uses circling stars").
+// The effects on her, followed for the view and the sounds (Ed, 2026-11-13: "Mark + tint + sound"; "stun is replaced with slow and we
+// use circling stars").
 import { describe, expect, it } from "vitest";
 import { HerEffects, effectElement } from "./herEffects";
 import { TUNING } from "../rules/tuning";

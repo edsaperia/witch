@@ -267,10 +267,10 @@
           "date": "2026-11-13",
           "quote": [
             "Mark + tint + sound",
-            "Chain effect for slow might be confusing because we already have chains, something else?",
-            "Slow and stun are quite similar, maybe stun can be removed for slow and it uses circling stars"
+            "Chain effect for slow might be confusing because we already have chains",
+            "I think stun and slow are very similar, and stun is less fun than slow, so how about stun is replaced with slow and we use circling stars?"
           ],
-          "rest": "after the attack legibility audit (#2069: the snail's slow was invisible on her); tint slow 0.35, confuse 0.3, thrown 0.25; 3 stars; a skid from a 4 m throw up (an ordinary blow's 2.5 m leaves none); a stagger has no mark of its own; Reduce flashing: steady tint at calm of its strength, slow marks, no twinkle; ?effectmarks=0 none of it, to compare"
+          "rest": "after the attack legibility audit (#2069: the snail's slow was invisible on her); tint slow 0.35, confuse 0.3, thrown 0.25; 3 stars; a skid from a 4 m throw up (an ordinary blow's 2.5 m leaves none); a creature's stun on her is a slow now (witch.stunAsSlow) and wears the same stars; a blow's own short stagger has no mark of its own; nothing burns or poisons her, so neither is drawn; Reduce flashing: steady tint at calm of its strength, slow marks, no twinkle; ?effectmarks=0 none of it, to compare"
         }
       ],
       "links": [

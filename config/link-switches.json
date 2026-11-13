@@ -3,6 +3,19 @@
  "intro": "Every `?name=value` the game reads from its link, and where it reads it. Most are read once as the page loads (`src/app/linkParams.ts` for the tuning, `src/app/gameParams.ts` for the game, `src/app/viewParams.ts` for the view, `src/main.ts` for the page); a few are read where they're used. Several can be combined: `?seed=123&wave=30&creator=0`. This page is written from `config/link-switches.json`, and a test checks that file against the code.",
  "switches": [
   {
+   "name": "stun",
+   "values": [
+    "old"
+   ],
+   "does": "A creature's stun on her staggers her for its length, as before, to compare: not the slow that replaced it (to 40% of her speed for three times as long, with the circling stars).",
+   "group": "compare",
+   "since": "2026-11-13",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "A slow by default (Ed, 2026-11-13: \"I think stun and slow are very similar, and stun is less fun than slow, so how about stun is replaced with slow and we use circling stars?\"; \"Big: 40% speed, 3× as long\")"
+  },
+  {
    "name": "effectmarks",
    "values": [
     "0"

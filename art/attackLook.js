@@ -202,7 +202,7 @@ for (let f = 0; f < 2; f++) NEUTRAL["star" + f] = [7, c => { const x = 3, y = 3;
 for (let f = 0; f < 3; f++) NEUTRAL["shock" + f] = [14, c => { const r = 3 + f * 2; for (let t = -50; t <= 50; t += 8) { const a = (t * Math.PI) / 180; c.put(7 - r * 0.6 + Math.cos(a) * r, 7 + Math.sin(a) * r, WHITE); c.put(7 - r * 0.6 + Math.cos(a) * (r - 1), 7 + Math.sin(a) * (r - 1), WHITE, 160); } c.line(1, 4, 4 - f, 4, WHITE, 200); c.line(1, 10, 4 - f, 10, WHITE, 200); }];
 for (let f = 0; f < 4; f++) NEUTRAL["spiral" + f] = [11, c => { for (let k = 0; k < 26; k++) { const a = k * 0.42 + f * (Math.PI / 2), r = k * 0.19; c.put(5 + Math.cos(a) * r, 5 + Math.sin(a) * r, WHITE, 140 + k * 4); } }];
 // the mark of a hard throw on her, white (its attacker's element tints it; Ed, 2026-11-13: "Mark + tint + sound"): a skid's dust
-// puff (3 frames, growing). Her slow wears the stun's stars (Ed, 2026-11-13: "it uses circling stars"), her confusion the spiral.
+// puff (3 frames, growing). Her slow wears the stun's stars (Ed, 2026-11-13: "stun is replaced with slow and we use circling stars"), her confusion the spiral.
 for (let f = 0; f < 3; f++) NEUTRAL["dust" + f] = [13, c => { const r = 2 + f * 1.3; c.disc(6, 7, r, WHITE, 230 - f * 50); c.disc(6 - r * 0.7, 7.5, r * 0.6, WHITE, 210 - f * 50); c.disc(6 + r * 0.7, 6.5, r * 0.55, WHITE, 200 - f * 50); }];
 
 /** Every cell to bake: [name, width, height, draw(cell)]. */

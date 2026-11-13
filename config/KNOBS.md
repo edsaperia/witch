@@ -1315,6 +1315,9 @@ Speeds per mode, and how long rising and descending take. The witch is lit by th
   2. Ed: "don't make it stop at scenery"
   The witch knocked back and staggered by a blow [1]: thrown straight away from the blow, base metres for any blow (bites, swipes, shots) plus scale times the attack's own knockback (combat.json; so a maul, quake or slam sits in between), at least charge metres when it rams her (a charge, or a leap landing on her), at most max; eased off at ease a second (like a creature's knockback), straight through scenery [2], nudged to the nearest clear spot at the end if she'd rest inside a trunk, rock, speaker, soundsystem or the treehouse (the blink's clearances). Staggered (no moving, blinking or 💌s, a wobble and stars) stunBase seconds plus stunScale a metre thrown past base, at most stunMax; then not staggered again for immune seconds (the blows still count), so a pack can't stun-lock her. A blink dodges it all; the blow that knocks her out throws nothing. on false, or ?knock=0, turns it off.
   Code: `rules/knock.ts`
+- **`witch.stunAsSlow`**: A creature's stun on her slows her instead: she keeps speed of her speed, for time times as long as the stun would have held her (on false: stunned as before).
+  1. Ed, 2026-11-13: "I think stun and slow are very similar, and stun is less fun than slow, so how about stun is replaced with slow and we use circling stars?" … "Big: 40% speed, 3× as long" … "let's start with big numbers and dial it down" (only the stuns creatures put on her (the lynx's pounce 0.3 s, the ram's headbutt 0.25 s, the lion's roar 0.3 s, the sphinx's gaze 0.2 s: now slows to 40% for 0.9, 0.75, 0.9 and 0.6 s); her 💌s' and her party's stuns on creatures unchanged; every blow's own short stagger (witch.knock stunBase) unchanged; shown as the slow's circling stars (effectMarks); ?stun=old stuns her as before, to compare)
+  Code: `rules/game.ts`, `rules/attacks/combatWorld.ts`
 - **`witch.bedGlow`**: In her bed (asleep, the alarm, a snooze, the stretch), the share of her own glow and its lift on her kept, so her white nightie keeps its shading.
   1. Ed, 2026-11-07: "fix the glow in #1908 first" (her nightie clipped to white in bed under her own glow and its lift)
   Only her own sprite and only in bed: 1 keeps all of it (as anywhere else), 0 none. Taken off at once as she's put in bed; given back over the stretch (half of what's off) and the second after she's up beside the bed, so nothing pops. Her glow's pool on the world round her is unchanged.
@@ -1336,6 +1339,9 @@ Speeds per mode, and how long rising and descending take. The witch is lit by th
 | `witch.knock.stunScale` | number | 0 to … |
 | `witch.knock.stunMax` | number | 0 to … |
 | `witch.knock.immune` | number | 0 to … |
+| `witch.stunAsSlow.on` | boolean |  |
+| `witch.stunAsSlow.speed` | number | 0 to … |
+| `witch.stunAsSlow.time` | number | 0 to … |
 | `witch.lightFloor` | number | 0 to … |
 | `witch.lightTint` | number | 0 to … |
 | `witch.lightRim` | number | 0 to … |

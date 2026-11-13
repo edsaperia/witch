@@ -601,6 +601,11 @@ export type SchemaTuning = {
       "stunMax": number;
       "immune": number;
     };
+    "stunAsSlow": {
+      "on": boolean;
+      "speed": number;
+      "time": number;
+    };
     "lightFloor": number;
     "lightTint": number;
     "lightRim": number;

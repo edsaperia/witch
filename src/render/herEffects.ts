@@ -2,14 +2,18 @@
 // "Mark + tint + sound": a mark on her, her sprite tinted and a sound for each effect, in the attacker's element's colour, for
 // exactly as long as the effect lasts). Every effect the rules can put on her beyond a blow's hit and stagger:
 //   - slowed (rules/game.ts slowUntil, slowMult: the snail's slime, trail and wall, a slowing zone, a flash; a root is a slow to
-//     nearly nothing): stars circling her head (Ed, 2026-11-13: "Slow and stun are quite similar, maybe stun can be removed for
-//     slow and it uses circling stars"; not chains: "Chain effect for slow might be confusing because we already have chains"),
-//     and short drag marks behind her steps;
+//     nearly nothing; and every stun a creature puts on her, which is a slow now, rules/game.ts stunWitch, witch.stunAsSlow: the
+//     lynx's pounce, the ram's headbutt, the lion's roar, the sphinx's gaze): stars circling her head (Ed, 2026-11-13: "I think stun
+//     and slow are very similar, and stun is less fun than slow, so how about stun is replaced with slow and we use circling
+//     stars?"; not chains: "Chain effect for slow might be confusing because we already have chains"), and short drag marks behind
+//     her steps;
 //   - confused (confused: the stoat's dance, the bat's screech, a flashing cloud): a spiral over her head;
 //   - thrown or pulled hard (knock: a charge's ram, a knockback, a pack's pull; effectMarks.thrown.minMetres or more): a dust skid
 //     along the ground where she slides.
-// A stagger (knock.stunUntil, every blow's quarter second, a grammar stun) has no mark of its own: her wobble and the dizzy twinkle
-// as before. Nothing in the rules burns or poisons her (a burn is a creature's only: rules/attacks/engine.ts), so neither is drawn.
+// Every blow's own stagger (knock.stunUntil: a quarter second, longer for a harder throw, when she can't move, blink or throw 💌s)
+// has no mark of its own: her wobble and the dizzy twinkle as before (with ?stun=old a creature's stun is that stagger again, and
+// shows the same way). Nothing in the rules burns or poisons her (a burn is a creature's only: rules/attacks/engine.ts), so neither
+// is drawn.
 // No drawing and no sound here: render/leash/combat.ts draws them, platform/audio/sfxCues.ts sounds them. ?effectmarks=0: none
 // of it (her confusion's pale swirl as before), to compare.
 import type { Game, Witch } from "../rules/game";
@@ -28,7 +32,7 @@ export const HER_EFFECTS: readonly HerEffect[] = ["slow", "confuse", "thrown"];
 export interface EffectOn { on: boolean; since: number; el: string }
 
 /** What in a kind's attacks (its grammar attack, its pack's special and move) names each effect. */
-const CAN: Record<HerEffect, RegExp> = { slow: /slow|root|slime|wall|trail/i, confuse: /confus|cloud|mirage|screech/i, thrown: /knockback|pull|charge|stampede/i };
+const CAN: Record<HerEffect, RegExp> = { slow: /slow|stun|root|slime|wall|trail/i, confuse: /confus|cloud|mirage|screech/i, thrown: /knockback|pull|charge|stampede/i };
 const can = new Map<string, boolean>();
 function capable(species: string, effect: HerEffect): boolean {
   const key = `${species}|${effect}`;

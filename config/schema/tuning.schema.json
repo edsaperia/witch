@@ -3092,6 +3092,29 @@
           "additionalProperties": false,
           "description": "A blow knocks her back and staggers her, harder for big attacks and charges."
         },
+        "stunAsSlow": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "time": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "speed",
+            "time"
+          ],
+          "additionalProperties": false,
+          "description": "A creature's stun on her slows her instead: she keeps speed of her speed, for time times as long as the stun would have held her (on false: stunned as before)."
+        },
         "lightFloor": {
           "type": "number",
           "minimum": 0
@@ -3131,6 +3154,7 @@
       },
       "required": [
         "knock",
+        "stunAsSlow",
         "lightFloor",
         "lightTint",
         "lightRim",
