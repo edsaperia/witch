@@ -48,7 +48,7 @@ Each species' attack, made from `config/species-attacks.json` and its kind's `ar
 | 0 | temperate | stoat | the fastest, longest lunge at home |
 | 1 | temperate | beaver | three logs rolled at her side by side |
 | 1 | temperate | boar | a goring sweep in an arc in front |
-| 1 | temperate | moth | a fluttering puff of dust that slows |
+| 1 | temperate | butterfly | a fluttering puff of dust that slows |
 | 1 | temperate | stag | stamps marching out in a line toward her |
 | 1 | temperate | toad | a hop-splash lob that bounces once |
 | 1 | temperate | turtle | a jet of pond water that passes through and slows |

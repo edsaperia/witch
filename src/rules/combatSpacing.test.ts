@@ -90,7 +90,8 @@ describe("combat waiting spacing", () => {
     expect(waitingProfile(creature(1, 0, 0, "boar"), data).turn).toBeLessThan(waitingProfile(c, data).turn);
     const signatures = Object.keys(SPACING.body.radii).map(species => JSON.stringify(waitingProfile({ species }, data)));
     expect(signatures).toHaveLength(67); // (the 64 kinds, and the marten, the newt and the moth on the bench: rules/kinds.ts BENCH)
-    expect(new Set(signatures).size).toBe(67);
+    expect(new Set(signatures).size).toBe(66); // (each its own, but the moth: its line is the butterfly's as it was, kept with it on the bench, 2026-11-13)
+    expect(waitingProfile({ species: "moth" }, data)).toEqual(waitingProfile({ species: "butterfly" }, data));
   });
   it("moves a waiting goal clear of large drawn bodies without moving the bodies", () => {
     const c = creature(1, 15, 0), attacker = creature(2, 0, 0, "elephant"), before = { ...attacker };
