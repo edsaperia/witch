@@ -107,6 +107,9 @@ export function napping(plan, how = "sphinx") {
     // each tail brought down from where it's carried and laid round its flank
     for (const chain of tails) chain.forEach((bone, i) => { rots[bone] = [i ? -0.05 : -pitch(chain) * 0.85, i ? 0.4 : 0.5, 0]; });
   }
+  // (a kind's own way of lying, where the three above don't fit its body: its gait's `nap` is handed the pose made so far and
+  // changes it. A snake coils, kit/serpent.js; a sprawler lays its legs back along its sides, kit/sprawl.js)
+  G.nap?.({ plan, how, rots, poss });
   // (a flyer comes down to the ground and folds its wings back along itself)
   if (plan.hover) { poss[G.root] = [0, -plan.hover, 0]; for (const [name] of plan.bones) if (/^wing/.test(name)) rots[name] = [0, /L$/.test(name) ? -1.15 : 1.15, /L$/.test(name) ? -0.25 : 0.25]; }
   for (const e of G.ears ?? []) rots[e] ??= [0.35, 0, 0];

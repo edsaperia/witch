@@ -379,6 +379,10 @@ The treehouse and its occupants remain visible while the forest disappears into 
 
 She fades out of her own picture: her occluder depth (`uWitchDepth`, render/sprites.ts) is taken a few metres behind where her sprite is drawn, so the see-through machinery treats her own body as something standing in front of her and drops it. In the bug she vanished wholly (her batch has no see-through pass); a deliberate version would route her batch through the existing see-through pass so she dithers to a ghost while creatures and the world stay solid, the offset breathing with the trip envelope. Existing hook: `render/view/witch.ts` where `uWitchDepth` is set; no new pass needed if her batch gains the fade pass the scenery already has. A variant of Alone / the house in the void (she, not the world, goes missing). Suggestion only, not approved or assigned.
 
+### Suggestion: The Slither (discovered building the snakes' mesh, 2026-11-13)
+
+Everything that walks goes as a snake does: each creature's (or her own) sprite is carried along a standing sideways wave on the ground as it moves, its picture sheared ring by ring so it follows the track, and trees and tufts lean with the same wave as she passes. Found in `art/mesh/kit/serpent.js`: a wave that stands still on the ground while the body goes forward through it, so nothing slides sideways; pushed onto bodies that have legs it reads as the ground itself carrying them. Existing hook: the view already offsets a mesh creature along its way by `STRIDE.shift` (`src/render/view/creatures.ts`), so a sideways offset by distance gone is one more term; the lean could reuse the wind's sway. New machinery: the per-row shear of a sprite (a vertex term), nothing in the rules. Sound: under the trips' rule that every trip modifies existing sound continuously, footsteps could smear into one long hiss. A variant of Walking Wood (the world moving the way an animal does). Suggestion only, not approved or assigned.
+
 ## Catalogue follow-up
 
 ### Painting-style suggestions (discussion with Ed, 2026-10-31; not approved builds)
