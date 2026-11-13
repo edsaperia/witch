@@ -21,6 +21,7 @@ describe("mesh creatures", () => {
     expect(hasMesh("hydra", { meshCreatures: 1 })).toBe(false); // (no mesh yet: the last batch's)
     expect(hasMesh("wolf", { meshCreatures: 1 })).toBe(true); // (batch A, 2026-11-13)
     expect(hasMesh("snake", { meshCreatures: 1 })).toBe(true); // (batch E, 2026-11-13: a legless one)
+    expect(hasMesh("heron", { meshCreatures: 1 })).toBe(true); // (batch F, 2026-11-13: two legs and wings)
     expect(hasMesh("crab", { meshCreatures: 1 })).toBe(true); // (batch G, 2026-11-13: one on eight legs, going sideways)
     expect(hasMesh("bee", { meshCreatures: 1 })).toBe(true); // (a kind since 2026-11-12, in the marten's place on home)
     expect(hasMesh("turtle", { meshCreatures: 1 })).toBe(true); // (a kind since 2026-11-12, in the newt's place in the Fen)
@@ -130,6 +131,7 @@ describe("mesh creatures", () => {
   Object.assign(GAITS, { cat: "bound", lynx: "bound", cheetah: "bound", snowleopard: "bound", lion: "trot", tiger: "trot", jaguar: "trot" }); // (batch B, the cats: kit/feline.js)
   Object.assign(GAITS, { bear: "trot", polarbear: "trot", rhino: "trot", elephant: "walk", beaver: "trot", flyingsquirrel: "bound" }); // (batch D, the heavy and the gnawing)
   Object.assign(GAITS, { salamander: "trot", komodo: "trot", crocodile: "trot", armadillo: "trot", toad: "bound", snake: "glide", rattlesnake: "glide" }); // (batch E, the cold-blooded: kit/sprawl.js, kit/serpent.js)
+  Object.assign(GAITS, { heron: "walk", raven: "walk", owl: "bound", penguin: "walk", moth: "fly", bat: "fly", dragonfly: "fly" }); // (batch F, wings: kit/bird.js, on the ground; a bird's fast pace flies, and the insects and the bat fly at any)
   Object.assign(GAITS, { beetle: "trot", spider: "trot", scorpion: "trot", crab: "trot", woodlouse: "walk" }); // (batch G, the many-legged: kit/manylegs.js; alternating sets, and the woodlouse's ripple)
   /** How many legs a kind stands on, where it isn't four (batch G: "six, eight and fourteen legs"; the woodlouse's baby has ten). */
   const LEGS: Record<string, number[]> = { beetle: [6], spider: [8], scorpion: [8], crab: [8], woodlouse: [10, 14] };
