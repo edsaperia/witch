@@ -1,0 +1,1 @@
+import{cl as l}from"./mushrooms-DAb0Lr9N.js";const a="Lab default",f={},r={name:a,style:f};function i(s=r){const t=s??{},n=t.style&&typeof t.style=="object"?t.style:t,e=l();for(const[o,c]of Object.entries(n))o in e&&(e[o]=c);return e}export{i as l};
