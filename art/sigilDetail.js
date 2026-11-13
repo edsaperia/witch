@@ -10,7 +10,8 @@
 // sigilDetail(id, size, { tier }) gives a size × size mask, 1 where there's ink, 0 where it's carved away or empty: white, to
 // colour as the sigil's neon. No circle at any tier.
 import { SIGIL_DOT, SIGIL_STROKE, sigilArrival, sigilDetailStrokes } from "./sigils.js";
-import { seedId } from "./creatures/renamed.js"; // (a renamed kind keeps the spirals its old id seeded)
+// (a renamed kind keeps the spirals its old id seeded)
+import { seedId } from "./creatures/renamed.js";
 
 /** The tier for a sigil `px` across on screen (the plain glyph below 64 px, carved bands to 128, the carved emblem past). */
 export const detailTier = px => (px >= 128 ? 2 : px >= 64 ? 1 : 0);

@@ -20,8 +20,9 @@ describe("the kind table", () => {
     expect(kinds.butterfly).toEqual({ phase: 1, bearing: 135, dir: "SE", biome: "temperate" }); expect(KIND_SLOTS.butterfly).toBe(16); // (the moth's line, as it was)
     expect(kinds.moth).toBeUndefined();
     expect([kindNow("moth"), kindNow("butterfly"), kindNow("fox"), kindNow("constructor")]).toEqual(["butterfly", "butterfly", "fox", "constructor"]);
-    expect([seedName("butterfly"), seedName("moth"), seedName("fox")]).toEqual(["moth", "moth", "fox"]); // (what is drawn from its name is drawn from the old one)
-    expect(islandSeed("butterfly")).toBe(islandSeed("moth"));
+    expect([seedName("butterfly"), seedName("fox")]).toEqual(["moth", "fox"]); // (what is drawn from its name is drawn from the old one)
+    expect(seedName("moth")).not.toBe(seedName("butterfly")); // (the benched moth draws from a name of its own: art/creatures/renamed.js)
+    expect(islandSeed("butterfly")).toBe(830014); // (the hash of "moth": its island is the shape it always was)
     expect(["mole", "butterfly", "newt", "boar", "cat"].sort(byPlace)).toEqual(["boar", "cat", "mole", "butterfly", "newt"]); // (it sorts where "moth" did, so the deals by name are as they were)
     for (const [old, now] of Object.entries(RENAMED)) { expect(BENCH.includes(old) || !CREATURE_IDS.includes(old), old).toBe(true); expect(kinds[now], now).toBeDefined(); expect(PLACE_OF[now]).toBe(old); }
   });

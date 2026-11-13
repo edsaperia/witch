@@ -1,5 +1,6 @@
 import {witchSprite} from "./witch.js";
-import { seedId } from "./creatures/renamed.js"; // (a renamed kind keeps the motes its old id seeded)
+// (a renamed kind keeps the motes its old id seeded)
+import { seedId } from "./creatures/renamed.js";
 import {render} from "./model3d.js";
 import {sizeTargetPixels,SIZE_CLASSES,SIZE_CLASS_BY_ID} from "./genome/size-ranks.js";
 import {rng,uni} from "./core.js";

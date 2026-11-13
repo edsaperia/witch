@@ -1,7 +1,8 @@
 // Witch creatures built in 3D (see model3d.js), so they stand in true three-quarter view.
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
 import { M, Sprite, rng, uni, hash2 } from "./core.js";
-import { seedId } from "./creatures/renamed.js"; // (a renamed kind keeps the motes its old id seeded)
+// (a renamed kind keeps the motes its old id seeded)
+import { seedId } from "./creatures/renamed.js";
 import { Model, render, v3, spotty, masks } from "./model3d.js";
 import { faceUp, JAW_FACES } from "./genome/expressions.js";
 import { textureLumps } from "./genome/texture.js";

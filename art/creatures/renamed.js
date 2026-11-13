@@ -6,8 +6,13 @@
 //     texture, its sigil's detail: each a hash of the id's letters): the butterfly's are still the moth's letters, so nothing of
 //     it changed with its id. The moth on the bench shares them, and meets no one.
 export const RENAMED = { moth: "butterfly" };
-const OLD = Object.fromEntries(Object.entries(RENAMED).map(([old, now]) => [now, old]));
+/** The name each kind's seeded looks and sounds are drawn from, where it isn't its own id: the butterfly's are the moth's, the
+ *  letters they were settled under. The moth on the bench takes a name of its own, since two kinds drawing from one name would
+ *  share a magic circle (art/check.mjs, "runes alike"); it is a hash's input and nothing else, never shown, so what it says
+ *  doesn't matter, only that it is the moth's alone. Its generated drawing's fur and motes are therefore not grain for grain the
+ *  moth's of before 2026-10-23, though its genome is. */
+const SEED_OF = { butterfly: "moth", moth: "moth-bench" };
 /** @param {string} id */
 export const kindNow = id => (Object.hasOwn(RENAMED, id) ? RENAMED[id] : id);
 /** @param {string} id */
-export const seedId = id => (Object.hasOwn(OLD, id) ? OLD[id] : id);
+export const seedId = id => (Object.hasOwn(SEED_OF, id) ? SEED_OF[id] : id);

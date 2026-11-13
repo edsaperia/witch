@@ -19,7 +19,8 @@
 // leashing rune, or upright as the floating form in the leash stack over the witch's head.
 // The leash stack: a chain of springs that sways and trails behind her as she flies.
 import { hash2 } from "./core.js";
-import { seedId } from "./creatures/renamed.js"; // (a renamed kind keeps the circle its old id seeded)
+// (a renamed kind keeps the circle its old id seeded)
+import { seedId } from "./creatures/renamed.js";
 import { SPECIES } from "./creatures.js";
 import { L, A, D, C, E, at, stave, FOOT, mirror, pair, bow, wave, spiral, rays } from "./sigils/strokes.js";
 import { CREATURE_SIGILS, CREATURE_NEONS, CREATURE_BOLD } from "./creatures/index.js";

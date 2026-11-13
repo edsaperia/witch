@@ -2,7 +2,8 @@
 // call that draws one. Each is built in 3D (creatures3d.js, model3d.js) and seen in
 // three-quarter view from above; it faces right and the game mirrors it.
 import { M, hsv2rgb, rng } from "./core.js";
-import { seedId } from "./creatures/renamed.js"; // (a renamed kind keeps the texture its old id seeded)
+// (a renamed kind keeps the texture its old id seeded)
+import { seedId } from "./creatures/renamed.js";
 import { GENOMES, GENOME_BY_ID, speciesOf, selectedCreatureGenome } from "./genome/index.js";
 import { textureSprite } from "./genome/texture.js";
 import { napForm } from "./naps.js";
