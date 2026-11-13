@@ -1,5 +1,5 @@
 {
-  "version": null,
+  "version": 8031,
   "items": [
     "Wild creatures' shots now mark the ground where they land: a brief scorch, frost patch, splash or patch of rough ground in the shot's element. Stand in one for a moment and it hurts or slows you (?shotmarks=0 turns them off, to compare)"
   ]

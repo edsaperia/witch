@@ -76,6 +76,8 @@ export interface Body {
   chain: number; relay: number[]; holdUntil: number; amp: number; ampBy: number[];
   /** the look layer's tags */
   element: string; look: string;
+  /** which of its caster's heads it came from (emit.heads), counted from its left: the view strikes with that one */
+  head?: number;
 }
 export interface Zone {
   id: number; alive: boolean; attack: AttackSpec; name: string;
@@ -464,16 +466,28 @@ function release(S: SpellState, W: SpellWorld, lib: Library, p: Pending, time: n
     // later shots keep the first's locked aim: rules/attacks/aim.ts)
     const heading = p.patternIndex && !p.track ? aimHeading(a.emit?.aim ?? "target", x, z, p.heading, p.aim, W, a, p.cast, p.patternIndex) : p.heading;
     const dirs = p.patternIndex !== undefined ? [{ heading: a.emit?.pattern === "spray" ? p.heading : heading, dx: 0, dz: 0, delay: 0 }] : patternOf(a, heading, p.centre, fanSide(W, p.cast));
-    for (const d of dirs) emitOne(S, W, lib, a, p, x + d.dx, z + d.dz, d.heading, time, B);
+    // (a shot from one of several heads, in turn: set off from that head's side of its caster)
+    const m = p.patternIndex !== undefined ? headOffset(a, p.patternIndex, heading) : null;
+    for (const d of dirs) emitOne(S, W, lib, a, p, x + d.dx + (m?.dx ?? 0), z + d.dz + (m?.dz ?? 0), d.heading, time, B);
     return;
   }
   // (a burst, a spray or a volley: the first now, the rest scheduled, each its own heading)
   const beat = a.emit?.pattern === "volley" ? (W.beat ?? 0.5) : 1;
   patternOf(a, p.heading, p.centre, fanSide(W, p.cast)).forEach((d, k) => {
     const at = p.at + d.delay * beat; // (from when it was due, not the step that found it due)
-    if (k === 0) emitOne(S, W, lib, a, p, x, z, d.heading, time, B);
+    if (k === 0) { const m = headOffset(a, 0, d.heading); emitOne(S, W, lib, a, p, x + (m?.dx ?? 0), z + (m?.dz ?? 0), d.heading, time, B); }
     else queue(S, { ...p, at, heading: d.heading, patternIndex: k, fromBody: undefined, x, z });
   });
+}
+
+/** Which of its caster's heads a burst's `k`th shot comes from (emit.heads: they take turns, left to right and round again: Ed,
+ *  2026-11-13, "it would be cool if the hydra did attacks with alternating heads"), or -1 if the attack has no heads. */
+export const headOf = (a: AttackSpec, k: number): number => (a.emit?.heads ? ((k % a.emit.heads.n) + a.emit.heads.n) % a.emit.heads.n : -1);
+/** Where that shot sets off from, off its caster's middle: `apart` m between heads, across its aim; its left is the first head's. */
+function headOffset(a: AttackSpec, k: number, heading: number): { dx: number; dz: number } | null {
+  const H = a.emit?.heads; if (!H) return null;
+  const side = (headOf(a, k) - (H.n - 1) / 2) * (H.apart ?? 0.6), ahead = H.ahead ?? 0;
+  return { dx: Math.cos(heading) * ahead - Math.sin(heading) * side, dz: Math.sin(heading) * ahead + Math.cos(heading) * side };
 }
 
 function emitOne(S: SpellState, W: SpellWorld, lib: Library, a: AttackSpec, p: Pending, x: number, z: number, heading: number, time: number, B: string): void { // eslint-disable-line max-params
@@ -501,6 +515,7 @@ function emitOne(S: SpellState, W: SpellWorld, lib: Library, a: AttackSpec, p: P
     if (isPlaced(B) && p.depth === 0 && p.aimAt) { x = p.aimAt.x + (x - p.x); z = p.aimAt.z + (z - p.z); }
     const b = makeBody(a, p.name, x, z, heading, p.aim, p.side, p.species, p.source, p.damage, p.depth, p.cast, time);
     b.id = S.next++;
+    if (a.emit?.heads && p.depth === 0) b.head = headOf(a, p.patternIndex ?? 0);
     if (isPlaced(B)) telegraph(S, { kind: a.telegraph?.kind ?? "arming", attack: p.name, side: p.side, source: p.source, cast: p.cast, start: time, fire: b.armAt, until: B === "seed" ? b.armAt : b.until, shape: { type: "disc", x, z, r: B === "mine" ? a.body?.trigger ?? 2 : a.area?.r ?? a.zone?.r ?? b.radius }, follows: { body: b.id } });
     if (B === "lob") {
       // (it lands where its landing was shown: where its target stood as it was cast)

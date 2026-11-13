@@ -1,0 +1,5 @@
+{
+  "reason": "creature meshes, batch H (Ed, 2026-11-12: \"meshes are great, we should aim to transition to them for all the creatures\"; 2026-11-13: \"The mesh builders work is good enough, please merge it when submitted\"): the eight wonders are drawn as their meshes; and the hydra's heads take turns (Ed, 2026-11-13: \"it would be cool if the hydra did attacks with alternating heads\"): its three bolts a cast leave one at a time, 0.4 s apart, each from its own head, where they fanned out together. No kind's id or island changes, and no number but the hydra's emit",
+  "frames": { "*": "the griffin, sphinx, unicorn, frost wyrm, frost troll, hydra, feathered serpent and stegosaurus drawn as meshes instead of the generated creatures; the hydra's strike frames" },
+  "rules": { "*": "the hydra's attack (config/species-attacks.json): emit fan n 3 angle 50 becomes burst n 3 gap 0.4 with heads { n 3, apart 0.7, ahead 0.5 }: the same three bolts, damage, wind-up and cooldown a cast, released over 0.8 s, each re-aimed at its target as it leaves" }
+}
