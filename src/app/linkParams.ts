@@ -173,6 +173,9 @@ export function tuningFromLink(params: URLSearchParams) {
   // ?ranged=old: creatures' ranged attacks aimed as before Ed's 2026-11-12 ruling (tuning ranged, rules/attacks/aim.ts): at her place as
   // the wind-up starts (the old pack bolts leading her at their release), no speed floor, fans and walls as laid out before, for comparison.
   if (params.get("ranged") === "old" && tuning.ranged) tuning.ranged = { ...tuning.ranged, on: false };
+  // ?shotmarks=0: wild shots leave no mark where they end, as before Ed's 2026-11-13 choice ("Mark the ground": tuning shotMarks,
+  // rules/attacks/marks.ts), to compare.
+  if (params.get("shotmarks") === "0" && tuning.shotMarks) tuning.shotMarks = { ...tuning.shotMarks, on: false };
   // ?dodge=a,b,c: which of the dodge changes are on (Ed, 2026-10-08; tuning dodge: a committed strikes, b predictive aim,
   // c packs cutting off her retreat), the rest off; ?dodge=0 none of them.
   const dodgeParam = params.get("dodge");
