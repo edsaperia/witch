@@ -366,6 +366,7 @@ glossary; these are the prototype's), by note.
 - Game clock
 - The opening
 - Party spell
+- Decks' analyser ring
 - Nightie / clothes pile
 - Partified
 - Wave

@@ -130,6 +130,16 @@ function runCues(g: Game, r: { start: number; end: number; loop: boolean }): { c
   const b0 = beatAt(g.beat, r.start), beats = beatAt(g.beat, r.end) - b0, lead = Math.min(beats, Math.ceil(b0 + 0.75 - 1e-9) - b0);
   return { cues: respawnCues(g, lead, beats - lead), beats };
 }
+/** How long ago (beats) the last stroke of the routine she's in at `time` was heard (the needle lifted or dropped, a scratch, a
+ *  chirp, the spin-back); null outside a routine, or before its first. The decks' analyser ring jumps on each (render/leash/decksRing.ts). */
+export function djStrokeAgo(g: Game, time: number): number | null {
+  const r = runAt(g, time);
+  if (!r) return null;
+  const b = beatAt(g.beat, time) - beatAt(g.beat, r.start);
+  let last: number | null = null;
+  for (const c of runCues(g, r).cues) if (c.stroke && c.at <= b && (last === null || c.at > last)) last = c.at;
+  return last === null ? null : b - last;
+}
 /** Where she is in the routine at `time`: its gesture and frame, the beats in and its start; null outside one. */
 export function djRoutineAt(g: Game, time: number): { gesture: string; frame: 0 | 1; beat: number; start: number } | null {
   const r = runAt(g, time);

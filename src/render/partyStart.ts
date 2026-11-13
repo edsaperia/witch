@@ -8,6 +8,10 @@
 //   - dome: the magic's dome round her, its inside filled;
 //   - light: a real light on what's round her; shake: the camera's; ground: the glow on the floor under her (and the bloom under
 //     the house); refraction: the picture's heat ripple (render/refraction.ts).
+// Since Ed, 2026-11-12 ("At the decks, when the party starts, there is a visual effect - I want to remove this ... Instead I want
+// something like the soundsystem spell (audio analyser ring)"), none of these is drawn: the decks' analyser ring plays instead
+// (render/leash/decksRing.ts). A show is still kept (its start, its length: the replay's timing, rules/partyStart.ts replayReady);
+// `?decksfx=old` (DECKS_FX.old) draws the pieces as before, to compare.
 // Drawn over the house (overHouse): its floors, walls and furniture (19.93 to 19.944) and the crown indoors (19.96, 19.97) draw with
 // no depth after the magic (2.8 to 2.93) and painted over it; these draw after them, still depth-tested, so what's solid and in front
 // of her (the decks, the Terrace's rail) still covers them. Drawing only: nothing here touches the game.
@@ -20,6 +24,7 @@ import { comfort } from "./comfort";
 import { rng } from "../rules/random";
 import { partyStartLength, partyStartOf, type PartyStartTuning } from "../rules/partyStart";
 import type { Tuning } from "../rules/tuning";
+import { DECKS_FX } from "./leash/decksRing";
 
 /** The pieces' draw order over the house: after its floors, walls and furniture (rooms 19.93 to 19.944), her in a room (19.95), the
  *  crown indoors (19.96, 19.97) and its string lights (19.98); before the wave numbers and pops (20). The ground glow, the uprights
@@ -106,7 +111,7 @@ export class PartyStartFx {
   start(t: Tuning, x: number, y: number, z: number, at: number): void {
     const k = partyStartOf(t), S = k.sparkles, r = rng(9157 + 7919 * this.shows++);
     this.show = { x, y, z, at, kicked: false };
-    this.n = S.on ? Math.max(0, Math.min(MAX_SPARKLES, Math.round(S.count))) : 0;
+    this.n = S.on && DECKS_FX.old ? Math.max(0, Math.min(MAX_SPARKLES, Math.round(S.count))) : 0;
     const p = this.pool, v = S.speed;
     for (let i = 0; i < this.n; i++) {
       // (as the spell's motes were, render/spellfx.ts partyBurst: round her, rising and spreading out, a third rose)
@@ -126,7 +131,7 @@ export class PartyStartFx {
     D.sparkles = D.pillar = D.dome = D.light = D.ground = 0; D.over = k.overHouse;
     this.order(k.overHouse);
     const s = this.show, age = s ? ht - s.at : -1;
-    if (s && age >= 0 && magic.enabled) this.pieces(k, magic, s, age);
+    if (s && age >= 0 && magic.enabled && DECKS_FX.old) this.pieces(k, magic, s, age);
     this.drawSparkles(k, ht);
     b.end();
   }

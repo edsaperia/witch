@@ -387,6 +387,10 @@ Everything that walks goes as a snake does: each creature's (or her own) sprite 
 
 Everything that runs takes off: any creature (or she herself) that goes fast enough leaves its feet, levels its body and skims the ground with its legs trailed, as the mesh birds do when their fast pace takes over; a pair of wings of light opens from its shoulders while it is up and shuts when it slows. Found in `art/mesh/kit/bird.js`: a walker whose fast pace has no legs and says `aloft` is simply carried, and it reads as flight even on an animal that has no wings. Existing hook: the view already picks a creature's fast clip by its pace (`art/mesh/stride.js` `stepStride`'s `run`), so the trip is a lift and a lean applied to the sprite while that clip shows; the wings could be the legends' rune light drawn as two fans. Sound: by the trips' sound rules (`docs/notes/cauldron.md`), a held airy tone that rises with her pace, not a new voice.
 
+### Suggestion: Flat Camera (discovered fixing the decks' analyser ring, 2026-11-13)
+
+The house's floor is drawn in the oak's art's own, steeper view, not the camera's view of the ground; a ring laid flat for the camera came out as a flatter ellipse that slid off the floor's rim. A trip could do this on purpose: everything lying on a floor (rugs, the magic circle, sigils, shadows) drawn in the camera's flatter view while the floor keeps its own, so the furniture's footprints drift off the boards and hang over the drop. Sound, by the trips' rules: the mix's low end stays pinned at the top of the 0-255 analyser read (measured the same day), so a trip that wants the bass to move something needs the unclipped decibel read (`spectrumDb`).
+
 ## Catalogue follow-up
 
 ### Painting-style suggestions (discussion with Ed, 2026-10-31; not approved builds)
