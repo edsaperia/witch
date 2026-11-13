@@ -548,10 +548,11 @@
     "0",
     "1"
    ],
-   "does": "Creatures that have one are drawn as low-poly meshes on skeletons (art/mesh), on by default: fox, stoat, marten, hare, squirrel, dormouse, badger, mole, hedgehog and snail so far; 0 compares the generated creatures.",
+   "does": "Creatures that have one are drawn as low-poly meshes on skeletons (art/mesh), on by default: fox, stoat, marten, hare, squirrel, dormouse, badger, mole, hedgehog and snail so far; 0 compares the generated creatures, and spaces her line of babies by their lengths (tuning leash.babies.mesh false).",
    "group": "compare",
    "since": "2026-11-12",
    "readIn": [
+    "src/app/linkParams.ts",
     "src/app/viewParams.ts"
    ]
   },

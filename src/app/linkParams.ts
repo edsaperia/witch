@@ -277,6 +277,9 @@ export function tuningFromLink(params: URLSearchParams) {
   // colours, to A/B; ?tautchain=1, the default.
   { const v = params.get("tautchain"), C = tuning.leash.chain;
     if (C?.taut && (v === "0" || v === "1")) tuning.leash = { ...tuning.leash, chain: { ...C, taut: { ...C.taut, on: v === "1" } } }; }
+  // ?meshCreatures=0 (app/viewParams.ts: the generated creatures, to compare): her line of babies spaced by the old drawings'
+  // lengths too, not the meshes' (Ed, 2026-11-13; rules/babies.ts queueHalf).
+  if (params.get("meshCreatures") === "0" && tuning.leash.babies) tuning.leash = { ...tuning.leash, babies: { ...tuning.leash.babies, mesh: false } };
   applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
   // The sea chart's save (app/chartSave.ts): the islands she's found, so the night's legends favour the others (rules/rosters.ts).
   // and the campaign's world seed (every island's shape), unless ?world= names one for this load

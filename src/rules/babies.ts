@@ -9,6 +9,7 @@
 // something goes for her or hers (closing in or winding up, not on the hit) until nothing has for leash.babies.calm seconds; and one
 // more than leash.babies.farAt metres from her (about off the screen) moves at leash.babies.farSpeed, so it's always with
 // her in seconds. Berries, evolving and weight: rules/berries.ts and rules/leashWeight.ts. No drawing here.
+import meshLengths from "../../config/mesh-lengths.json";
 import type { Creature } from "./creatures";
 import { drawnRadius } from "./combatSpacing";
 import { hash2 } from "./random";
@@ -20,11 +21,20 @@ export const babiesOf = (t: Tuning) => t.leash.babies ?? BABIES_DEFAULT;
 /** A baby on her leash: level 0, and not a party legend. */
 export const isBaby = (c: Creature | undefined): boolean => !!c && c.level === 0 && !c.partyLegend;
 
-/** Half a baby's length in her line (m): its drawn body (rules/combatSpacing.ts drawnRadius, the calibrated drawing's support
- *  at its kind and level, so it matches what's drawn) times leash.babies.size (that disc's corner overstates the side-on
- *  sprite: half its drawn length measured 0.64 to 0.75 of it, fox to bear, 2026-11-03). */
+/** How far across the picture each mesh creature is drawn, baby to legend, art pixels (config/mesh-lengths.json, written from the
+ *  meshes by tools/creature-mesh/lengths.mjs: its sprite's drawn width, nose to tail tip, over its whole walk). */
+const MESH_LENGTHS = new Map<string, readonly number[]>(Object.entries((meshLengths as unknown as { lengths: Record<string, number[]> }).lengths));
+
+/** Half a baby's length in her line (m). Drawn as a mesh (art/mesh; Ed, 2026-11-13: "update the conga line spacing for the new
+ *  creature mesh sizes so they don't collide"): half its mesh's real drawn length at its kind and level, at the sprites' scale
+ *  (render/sprites.ts metresPerArtPixel). Not a mesh (a kind without one yet, or leash.babies.mesh false, the link's
+ *  ?meshCreatures=0): its drawn body (rules/combatSpacing.ts drawnRadius, the calibrated drawing's support at its kind and level)
+ *  times leash.babies.size (that disc's corner overstates the side-on sprite: half its drawn length measured 0.64 to 0.75 of it,
+ *  fox to bear, 2026-11-03). */
 export function queueHalf(c: Pick<Creature, "species" | "level">, t: Tuning): number {
-  return drawnRadius(c, t) * (babiesOf(t).size ?? BABIES_DEFAULT.size);
+  const B: NonNullable<Tuning["leash"]["babies"]> = babiesOf(t), pixels = B.mesh === false ? undefined : MESH_LENGTHS.get(c.species)?.[c.level];
+  if (pixels !== undefined) return pixels * t.pixelSize / (2 * t.artPixelsPerMetre) / 2;
+  return drawnRadius(c, t) * (B.size ?? BABIES_DEFAULT.size);
 }
 
 /** Metres between neighbours' middles in her line, given their halves: both halves and leash.babies.margin, never under gap. */
