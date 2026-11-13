@@ -3894,6 +3894,13 @@ Code: `app/opening.ts`
 
 - **`opening.wake`**: the wake-up in her bedroom (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it.
   Code: `rules/wakeUp.ts`
+- **`opening.eyes`**: Her eyelids' speeds: the seconds her eyes stay shut after her alarm first rings (shut), the seconds they then take to open (open) [2], and how fast they open again when E is let go early at the bed (reopen).
+  1. Ed, 2026-11-12: "going to sleep zzz timer should be an eye closing vignette instead of a dial" … "we can also use this animation for waking up (in reverse)"
+  2. Ed, 2026-11-12: "Slower waking" (his choice after watching the clip: shut 0.5 s then opening over 2.5 s; it was 0.25 s then 1.5 s. The reopen after letting go stays about 0.4 s)
+  3. Ed, 2026-11-12: "Lids cover them" (the bed's E keycap and the "press any key for sound" note, which showed over the shut eyes: the lids are drawn over them now)
+  4. Ed, 2026-11-12: "Leave it" (the eyes going from open to shut in one frame when a dream ends)
+  reopen is a rate, not seconds: what's left of the closure falls by this share a second (8 is about 0.4 seconds). The eyes close with the bed's hold itself (bed.hold, unchanged).
+  Code: `render/eyelids.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -3901,6 +3908,9 @@ Code: `app/opening.ts`
 | `opening.wake.snooze` | number | 0 to … |
 | `opening.wake.stretch` | number | 0 to … |
 | `opening.wake.alarmMin` | number | 0 to … |
+| `opening.eyes.shut` | number | 0 to … |
+| `opening.eyes.open` | number | 0 to … |
+| `opening.eyes.reopen` | number | 0 to … |
 
 ### `arrive`
 

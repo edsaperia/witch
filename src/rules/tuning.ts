@@ -496,7 +496,7 @@ export interface Tuning {
    *  way to a new night), or the page loaded anew on the island's link as before; ?sail=inplace or ?sail=reload for one page. */
   sail?: { inPlace: boolean };
   /** The opening (app/opening.ts): bedroom, a plain first load waking in her bedroom on home's night; ?opening=bedroom|old for one load. */
-  opening?: { bedroom: boolean; wake?: { snooze: number; stretch: number; alarmMin: number } };
+  opening?: { bedroom: boolean; wake?: { snooze: number; stretch: number; alarmMin: number }; /** her eyelids' speeds (render/eyelids.ts EyesTuning; Ed, 2026-11-12: "Slower waking") */ eyes?: { shut: number; open: number; reopen: number } };
   /** The forests' biome looks by ring (rules/lakeLooks.ts biomeStrength): strength[0] for phase from, the next ring the next, the last further out. */
   biomeLooks?: { from: number; strength: number[] };
   arrive?: { /** the sea chart's zoom in to the island, its whole length in seconds (render/chart/seaChart.ts flyLegs; 5.6 its legs' own) */ zoom?: number; /** the dive's whole length in seconds, every leg scaled to it; 0: as its legs set it (rules/arrive.ts arrivePlan) */ dive?: number; /** a sail's view build's budget, ms a frame, while the sea chart's zoom plays (and holds short of the hand-off) over it, nothing else happening then (app/night.ts buildSlice; render/slices.ts SLICE_MS, 8, everywhere else) */ buildSlice?: number; warm: { frames: number; ms: number; max: number }; maxStep: number; fade: number; speed: number; minLeg: number; low: { angle: number; distance: number; offshore: number }; frame: { angle: number; distance: number; lift: number }; rise: number; settle: number;
