@@ -560,10 +560,11 @@
     "0",
     "1"
    ],
-   "does": "Creatures that have one are drawn as low-poly meshes on skeletons (art/mesh), on by default: every kind with a file in art/mesh/species (ten at first, 2026-11-12; most kinds now); 0 compares the generated creatures.",
+   "does": "Creatures that have one are drawn as low-poly meshes on skeletons (art/mesh), on by default: every kind with a file in art/mesh/species (ten at first, 2026-11-12; most kinds now); 0 compares the generated creatures, and spaces her line of babies by their old drawings' lengths (tuning leash.babies.mesh false).",
    "group": "compare",
    "since": "2026-11-12",
    "readIn": [
+    "src/app/linkParams.ts",
     "src/app/viewParams.ts"
    ]
   },
@@ -1115,6 +1116,19 @@
     "src/render/leash/decksRing.ts"
    ],
    "decision": "The soundsystem spell's analyser ring round the decks by default (Ed, 2026-11-12: \"At the decks, when the party starts, there is a visual effect - I want to remove this. ... Instead I want something like the soundsystem spell (audio analyser ring)\")"
+  },
+  {
+   "name": "stumpfx",
+   "values": [
+    "old"
+   ],
+   "does": "The soundsystem spell at a great stump (a wave's soundsystem appearing) with the creature-magic vortex and dome over the stump as they were, to compare: the pink-purple glow above it.",
+   "group": "compare",
+   "since": "2026-11-13",
+   "readIn": [
+    "src/render/leash/stones.ts"
+   ],
+   "decision": "No glow over the stump by default: the analyser alone (Ed, 2026-11-13: \"remove this purple effect above the stump which happens during the soundsystem spell - I think it was part of the creature magic pass - this is not the audio analyser effect\")"
   },
   {
    "name": "fxmock",

@@ -299,7 +299,8 @@ export const creatureMaxHp = (c: { species: string; level: Level }, data: Combat
 
 /** What the rest of the game tells combat each step. */
 export interface CombatWorld {
-  /** Tonight's curved ley route and its drawing tip, in metres; absent in detached combat worlds. */
+  /** Tonight's whole curved ley route (planned, drawn or not) and its drawing tip, in metres; absent in detached combat worlds.
+   *  Friendly legends walk the whole line, not to the tip (Ed, 2026-11-13: "the very end of the route, not where the pulse is"). */
   friendlyRoute?: () => { line: readonly (readonly [number, number])[]; tip: number };
   creatures: Creature[];
   /** The creatures to step this time (near a witch, or busy with a siege). */

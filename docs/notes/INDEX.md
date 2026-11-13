@@ -197,6 +197,7 @@ glossary; these are the prototype's), by note.
 - Shot mark
 - Runaway
 - Restless / angry legend, relic
+- Route out and back
 - The challenge circle hidden till the party
 
 ### [The treehouse and its house](house.md)
