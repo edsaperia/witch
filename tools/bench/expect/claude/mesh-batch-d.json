@@ -1,0 +1,6 @@
+{
+  "reason": "Creature meshes, batch D of docs/plans/creature-mesh-rollout.md (Ed, 2026-11-12: \"meshes are great, we should aim to transition to them for all the creatures\"; 2026-11-13: batches D and E run straight through to release, and he sees the sheet afterwards): the six heavy and gnawing kinds, bear, polarbear, rhino, elephant, beaver and flyingsquirrel, are drawn from low-poly meshes on skeletons (art/mesh/species/<id>.js, with a trunk, a horn, a flat tail and a glide skin new in art/mesh/kit) in place of the generated creatures, at today's drawn heights, baby to legend, in art pixels (Ed, 2026-11-12: \"keep the sizes\"): bear 72, 112, 160, 265; polarbear 72, 111, 159, 265; rhino 82, 127, 179, 290; elephant 90, 139, 200, 280; beaver 51, 77, 113, 244; flyingsquirrel 36, 56, 81, 217. No kind changes its id, its island or its numbers, so the rules don't change.",
+  "frames": {
+    "*": "wherever a bear, polar bear, rhino, elephant, beaver or flying squirrel is in view: its new drawing, its walk's and run's frames and how fast they pass, where it is drawn along its way (up to a step behind), the frame it stops on, its sleeping pose (the rhino and the elephant over on their sides at every level), and what hangs over it by its drawn height"
+  }
+}
