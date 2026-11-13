@@ -46,8 +46,8 @@ function mothOf(name, o) {
 }
 const moth = {
   baby: () => mothOf("moth-baby", { fly: 0.22, k: 0.9, wing: 0.6, bands: 0, chest: 1.25, skull: 1, C: { fur: "#cdbb9c", pale: "#efe6d2", ground: "#b7a58b", band: "#b7a58b", hind: "#cdbb9c", dark: "#5a4a3a" }, abdomen: { len: 0.55, fat: 0.7 }, feeler: 0.6, plume: 0.7, barbs: 3, fur: { n: 4, long: 0.06, tip: "#fbf6ea" }, seconds: 0.4 }),
-  young: () => mothOf("moth-young", { fly: 0.26, wing: 0.85, bands: 1, feeler: 0.85, plume: 0.85, C: { ground: "#6b5a4c" } }),
-  adult: () => mothOf("moth-adult", { fly: 0.3, wing: 1.1, bands: 2, chest: 1.2, feeler: 1.1, plume: 1.2, barbs: 5, fur: { n: 5, long: 0.065 } }),
+  young: () => mothOf("moth-young", { fly: 0.26, wing: 0.85, bands: 1, feeler: 1, plume: 1.1, C: { ground: "#6b5a4c" } }),
+  adult: () => mothOf("moth-adult", { fly: 0.3, wing: 1.1, bands: 2, chest: 1.2, feeler: 1.35, plume: 1.6, barbs: 5, fur: { n: 5, long: 0.065 } }),
   legend() {
     const VERDIGRIS = "#3f6f66", BONE = "#e6dcc3", MOON = "#dff6ff", C = { fur: "#6f5d4b", pale: "#cdbb9c", ground: "#3a2f2a", band: "#8a745c", hind: "#4a3c33", dark: "#1c1613", eye: "#bfe6ff", feeler: "#cdbb9c", plume: MOON, plumeGlow: true };
     const armour = [...[1, 3, 5].map(i => ({ on: "abdomen", from: 2 * i - 0.25, to: 2 * i + 1.25, round: [0, 1.7], thick: 0.014, colour: VERDIGRIS, rim: BONE, runes: { colour: MOON, size: 0.7, max: 1, seed: i + 20 } })), { on: "thorax", from: 0.7, to: 3.3, round: [0, 1.2], thick: 0.016, colour: VERDIGRIS, rim: BONE, runes: { colour: MOON, max: 1, seed: 7 } }];
@@ -58,4 +58,4 @@ const moth = {
 /** This kind's mesh (art/mesh/species/index.js lists them, made by tools/creature-mesh/index.mjs): heights, how tall it stands, baby
  *  to legend, in art pixels (its whole silhouette as its plan draws it, wings out, turned towards us: its generated drawing's
  *  heights, Ed, 2026-11-12, "keep the sizes") (on the bench: src/rules/kinds.ts BENCH); plans, each level's build. */
-export const MESH = { id: "moth", heights: [29, 46, 69, 220], plans: moth };
+export const MESH = { id: "moth", heights: [29, 46, 69, 226], plans: moth };
