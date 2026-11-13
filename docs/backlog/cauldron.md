@@ -398,6 +398,10 @@ Every creature on the island is drawn to light as the butterfly is: while the tr
 
 The house's floor is drawn in the oak's art's own, steeper view, not the camera's view of the ground; a ring laid flat for the camera came out as a flatter ellipse that slid off the floor's rim. A trip could do this on purpose: everything lying on a floor (rugs, the magic circle, sigils, shadows) drawn in the camera's flatter view while the floor keeps its own, so the furniture's footprints drift off the boards and hang over the drop. Sound, by the trips' rules: the mix's low end stays pinned at the top of the 0-255 analyser read (measured the same day), so a trip that wants the bass to move something needs the unclipped decibel read (`spectrumDb`).
 
+### Suggestion: Footprints (discovered building the shots' ground marks, 2026-11-13)
+
+Not approved by Ed. Everything that touches the ground leaves a brief mark in its own element: her steps, every animal's, every shot's landing, so the island becomes a fading map of who went where. Hook: the shot marks' zones (`src/rules/attacks/marks.ts`, drawn by the look layer's `zone` in each species' element), laid from footfalls instead of shot ends, harmless and longer-lived on a trip. New machinery: a footfall signal a creature (the rules have hops and walk phases, not steps) and a cap far above the fight's 24 marks, so probably its own instanced layer rather than the zone pool. Sound, altering what already plays: each footstep and landing takes its element's impact voice (hiss, crackle, splash), louder the fresher the mark underfoot. A variant of any tracking or trail trip rather than a new family.
+
 ## Catalogue follow-up
 
 ### Painting-style suggestions (discussion with Ed, 2026-10-31; not approved builds)

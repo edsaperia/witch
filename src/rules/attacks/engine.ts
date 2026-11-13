@@ -39,6 +39,9 @@ export interface SpellWorld {
   force?(target: Hittable, fx: number, fz: number, push: number, dt: number, source?: number): void;
   /** Whether a caster is still winding up this cast (not stunned, gone or off its target): a cast it isn't is dropped at its release. */
   stillCasting?(source: number, cast: number): boolean;
+  /** A shot ended (a bolt or a roller run out, a lob landed) leaving nothing of its own: the world may mark the ground there
+   *  (rules/attacks/marks.ts); absent: nothing. */
+  shotEnded?(S: SpellState, b: Body, time: number): void;
   /** A caster's packmates (its own kind on its own side, awake, not itself) within r of (x, z), nearest first; absent: none (attack.pack
    *  does nothing). */
   packmates?(source: number, x: number, z: number, r: number): readonly { id: number; x: number; z: number }[];
@@ -73,6 +76,8 @@ export interface Body {
   chain: number; relay: number[]; holdUntil: number; amp: number; ampBy: number[];
   /** the look layer's tags */
   element: string; look: string;
+  /** which of its caster's heads it came from (emit.heads), counted from its left: the view strikes with that one */
+  head?: number;
 }
 export interface Zone {
   id: number; alive: boolean; attack: AttackSpec; name: string;
@@ -84,6 +89,9 @@ export interface Zone {
   /** a one-off strike (an area) rather than a lingering zone; what an expanding ring has hit already */
   once: boolean; hit: (number | string)[];
   element: string; look: string;
+  /** a shot's mark (rules/attacks/marks.ts): what it does, how long a foe must stand in a hurting one before it bites, and how many
+   *  ticks running each has been in it ([ticks, the last tick it was seen]) */
+  mark?: { kind: string; stand: number; ticks: number; dwell: Map<string, [number, number]> };
 }
 /** A beam: from its caster along `angle`, `length` long and `width` wide; charging (its telegraph thin) till `liveAt`, then burning in
  *  ticks till `until`, off between its pulses; turning by its sweep, track or spin. */
@@ -458,16 +466,28 @@ function release(S: SpellState, W: SpellWorld, lib: Library, p: Pending, time: n
     // later shots keep the first's locked aim: rules/attacks/aim.ts)
     const heading = p.patternIndex && !p.track ? aimHeading(a.emit?.aim ?? "target", x, z, p.heading, p.aim, W, a, p.cast, p.patternIndex) : p.heading;
     const dirs = p.patternIndex !== undefined ? [{ heading: a.emit?.pattern === "spray" ? p.heading : heading, dx: 0, dz: 0, delay: 0 }] : patternOf(a, heading, p.centre, fanSide(W, p.cast));
-    for (const d of dirs) emitOne(S, W, lib, a, p, x + d.dx, z + d.dz, d.heading, time, B);
+    // (a shot from one of several heads, in turn: set off from that head's side of its caster)
+    const m = p.patternIndex !== undefined ? headOffset(a, p.patternIndex, heading) : null;
+    for (const d of dirs) emitOne(S, W, lib, a, p, x + d.dx + (m?.dx ?? 0), z + d.dz + (m?.dz ?? 0), d.heading, time, B);
     return;
   }
   // (a burst, a spray or a volley: the first now, the rest scheduled, each its own heading)
   const beat = a.emit?.pattern === "volley" ? (W.beat ?? 0.5) : 1;
   patternOf(a, p.heading, p.centre, fanSide(W, p.cast)).forEach((d, k) => {
     const at = p.at + d.delay * beat; // (from when it was due, not the step that found it due)
-    if (k === 0) emitOne(S, W, lib, a, p, x, z, d.heading, time, B);
+    if (k === 0) { const m = headOffset(a, 0, d.heading); emitOne(S, W, lib, a, p, x + (m?.dx ?? 0), z + (m?.dz ?? 0), d.heading, time, B); }
     else queue(S, { ...p, at, heading: d.heading, patternIndex: k, fromBody: undefined, x, z });
   });
+}
+
+/** Which of its caster's heads a burst's `k`th shot comes from (emit.heads: they take turns, left to right and round again: Ed,
+ *  2026-11-13, "it would be cool if the hydra did attacks with alternating heads"), or -1 if the attack has no heads. */
+export const headOf = (a: AttackSpec, k: number): number => (a.emit?.heads ? ((k % a.emit.heads.n) + a.emit.heads.n) % a.emit.heads.n : -1);
+/** Where that shot sets off from, off its caster's middle: `apart` m between heads, across its aim; its left is the first head's. */
+function headOffset(a: AttackSpec, k: number, heading: number): { dx: number; dz: number } | null {
+  const H = a.emit?.heads; if (!H) return null;
+  const side = (headOf(a, k) - (H.n - 1) / 2) * (H.apart ?? 0.6), ahead = H.ahead ?? 0;
+  return { dx: Math.cos(heading) * ahead - Math.sin(heading) * side, dz: Math.sin(heading) * ahead + Math.cos(heading) * side };
 }
 
 function emitOne(S: SpellState, W: SpellWorld, lib: Library, a: AttackSpec, p: Pending, x: number, z: number, heading: number, time: number, B: string): void { // eslint-disable-line max-params
@@ -495,6 +515,7 @@ function emitOne(S: SpellState, W: SpellWorld, lib: Library, a: AttackSpec, p: P
     if (isPlaced(B) && p.depth === 0 && p.aimAt) { x = p.aimAt.x + (x - p.x); z = p.aimAt.z + (z - p.z); }
     const b = makeBody(a, p.name, x, z, heading, p.aim, p.side, p.species, p.source, p.damage, p.depth, p.cast, time);
     b.id = S.next++;
+    if (a.emit?.heads && p.depth === 0) b.head = headOf(a, p.patternIndex ?? 0);
     if (isPlaced(B)) telegraph(S, { kind: a.telegraph?.kind ?? "arming", attack: p.name, side: p.side, source: p.source, cast: p.cast, start: time, fire: b.armAt, until: B === "seed" ? b.armAt : b.until, shape: { type: "disc", x, z, r: B === "mine" ? a.body?.trigger ?? 2 : a.area?.r ?? a.zone?.r ?? b.radius }, follows: { body: b.id } });
     if (B === "lob") {
       // (it lands where its landing was shown: where its target stood as it was cast)
@@ -715,6 +736,8 @@ function end(S: SpellState, W: SpellWorld, lib: Library, b: Body, time: number, 
   const list = why === "land" ? (b.attack.on?.land ?? []) : (b.attack.on?.expire ?? []);
   if (list.length) S.events.push({ kind: "split", at: time, x: b.x, z: b.z, attack: b.name, source: b.source, body: b.id });
   for (const c of list) child(S, W, lib, b, c, time, why);
+  // (a cast's own shot that leaves nothing of its own: its mark on the ground, rules/attacks/marks.ts)
+  if (!list.length && b.depth === 0 && (b.kind === "bolt" || b.kind === "lob" || b.kind === "runner")) W.shotEnded?.(S, b, time);
 }
 
 function stepBody(S: SpellState, W: SpellWorld, lib: Library, b: Body, time: number, dt: number): void {
@@ -900,6 +923,19 @@ function stepZone(S: SpellState, W: SpellWorld, z: Zone, time: number, dt: numbe
   if (time >= z.until) { z.alive = false; S.events.push({ kind: "expire", at: time, x: z.x, z: z.z, attack: z.name, source: z.source, zone: z.id }); return; }
   if (time < z.nextTick) return;
   z.nextTick += z.tick;
+  if (z.mark) {
+    // (a shot's mark, rules/attacks/marks.ts: its slow on whoever's in it now; its damage once each, on a foe that has stood in it
+    // `stand` s running)
+    const M = z.mark, tick = ++M.ticks;
+    for (const t of W.near(z.x, z.z, z.r + 2)) if (inZone(z, t.x, t.z, t.r, time)) {
+      const key = targetKey(t), d = M.dwell.get(key), n = d && d[1] === tick - 1 ? d[0] + 1 : 1;
+      if (d) { d[0] = n; d[1] = tick; } else M.dwell.set(key, [n, tick]);
+      const bites = z.damage > 0 && n * z.tick >= M.stand - 1e-9 && !z.hit.includes(key);
+      if (!bites && !z.effect) continue;
+      if (strike(S, W, z.attack, t, bites ? z.damage : 0, z.x, z.z, z.side, z.species, z.source, z.name, time, undefined, { zone: z.id }, z.cast) && bites) z.hit.push(key);
+    }
+    return;
+  }
   // (a lingering zone: each tick, everything in it its share of the damage a tick and its effect; her damaged once, its effect each tick)
   const ticks = Math.max(1, Math.round((z.until - z.from) / z.tick));
   for (const t of W.near(z.x, z.z, z.r + 2)) if (inZone(z, t.x, t.z, t.r, time)) strike(S, W, z.attack, t, z.damage / ticks, z.x, z.z, z.side, z.species, z.source, z.name, time, z.hit, { zone: z.id }, z.cast);

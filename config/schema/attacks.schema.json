@@ -161,6 +161,28 @@
             "maximum": 3600,
             "unit": "°"
           },
+          "heads": {
+            "type": "object",
+            "properties": {
+              "n": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 8
+              },
+              "apart": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "m"
+              },
+              "ahead": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "m"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
           "aim": {
             "type": "string",
             "enum": [

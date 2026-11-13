@@ -1,0 +1,9 @@
+{
+  "reason": "Release 48: #2038 (claude/shot-marks): wild creatures' shots mark the ground where they end (Ed, 2026-11-13: \"Mark the ground\"; rules/attacks/marks.ts): a small brief zone in the shot's element that slows whoever stands in it, or hurts a foe that stands in it a second; ?shotmarks=0 for none",
+  "rules": {
+    "*": "fights with shooters play out differently once a mark slows or hurts someone: creatures' health and places, the witch's, the combat state and its spells (the marks are zones there)"
+  },
+  "frames": {
+    "wave-fight": "the marks on the ground where shots ended, where a fight has shooters in it"
+  }
+}
