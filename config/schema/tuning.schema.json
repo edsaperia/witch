@@ -5018,16 +5018,21 @@
                       "type": "number",
                       "minimum": 0
                     },
-                    "commit": {
+                    "hold": {
                       "type": "number",
                       "minimum": 0,
                       "maximum": 1
+                    },
+                    "ease": {
+                      "type": "number",
+                      "minimum": 0
                     }
                   },
                   "required": [
                     "perMetre",
                     "rise",
-                    "commit"
+                    "hold",
+                    "ease"
                   ],
                   "additionalProperties": false
                 },
