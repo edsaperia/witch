@@ -202,6 +202,7 @@ glossary; these are the prototype's), by note.
 - No edge at the Terrace
 - Telephone
 - Landing cooldown
+- The current layout
 - Current brewing authority (Ed, 2026-10-31):
 - Mushrooms and brewing
 - Mushroom kitchen artwork

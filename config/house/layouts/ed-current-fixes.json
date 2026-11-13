@@ -1,0 +1,23 @@
+{
+  "about": "The few poses where config/house/layouts/ed-current.json differs from Ed's export of 2026-11-12 (docs/evidence/treehouse-layout-ed-2026-11-12.v2.json), and why (Ed, 2026-11-13: \"fix the others\"). Each use point travels with its object, as the editor has it. src/editor/currentEdLayout.test.ts checks the export with these applied is the published layout.",
+  "fixes": [
+    {
+      "id": "basin",
+      "export": { "x": -12.29, "z": -73.64, "rotation": 48.01278750418328, "useAnchor": { "x": -13.989999999999998, "z": -73.64 } },
+      "now": { "x": -12.29, "z": -73.64, "rotation": -131.98721249581672, "useAnchor": { "x": -10.59, "z": -73.64 } },
+      "why": "Turned 180° where it stands: it faced the wall, its use point 0.32 m off the floor. Now she stands on the floor east of it, 1.95 m inside the edge."
+    },
+    {
+      "id": "broomBay",
+      "export": { "x": 20.8, "z": -10.71, "rotation": -3.728598642910356, "useAnchor": { "x": 21.85, "z": -12.528653347947323 } },
+      "now": { "x": 20.8, "z": -9.91, "rotation": -3.728598642910356, "useAnchor": { "x": 21.85, "z": -11.728653347947322 } },
+      "why": "Moved 0.8 m south, not turned: its use point was 0.13 m inside the floor's edge (a step further back was off it) and its footprint 0.6 m past the edge. Now the use point is 0.88 m inside and the whole bench is on the floor."
+    },
+    {
+      "id": "bedroom3ShoeRack",
+      "export": { "x": 47.5, "z": -23, "rotation": 16.699244233993568, "useAnchor": { "x": 47.5, "z": -24.15 } },
+      "now": { "x": 47.5, "z": -23, "rotation": -163.30075576600643, "useAnchor": { "x": 47.5, "z": -21.85 } },
+      "why": "Turned 180° where it stands: she stood north of it, behind it from the camera. Now she stands south of it, in front."
+    }
+  ]
+}

@@ -34,8 +34,9 @@ export function applyEdLayout(source: HouseConfig, on = edLayoutRequested()): Ho
   H.objects = H.objects.filter(o => !proposal.removedObjects.includes(o.id));
   for (const o of H.objects) {
     // The unused guest chest is replaced in place by Ed's requested dressing table.
+    // (Ed's exports before 2026-11-12 name it by the chest's id; his 2026-11-12 export by its own.)
     const placedId = publishedGuestFurnitureId(o.id);
-    const p = proposal.objects.find(p => p.id === placedId), original = baseline.items.find(q => q.id === placedId);
+    const p = proposal.objects.find(p => p.id === o.id) ?? proposal.objects.find(p => p.id === placedId), original = baseline.items.find(q => q.id === placedId);
     // An object new since Ed's export, with a provisional pose in his arrangement (config/house/layouts/provisional.json: the broom rack
     // and the hydraulic lift, Ed 2026-11-07), placed so, its front (where she stands) to its rotation's south.
     const prov = !p ? provisional.objects.find(q => q.id === o.id) : undefined;
@@ -44,7 +45,14 @@ export function applyEdLayout(source: HouseConfig, on = edLayoutRequested()): Ho
       o.placement = { rotation: prov.rotation, baseRotation: prov.rotation, foot: { w: o.w, d: o.d, h: o.h }, curve: 0, anchor: { x: prov.x + front.x, z: prov.z + front.z }, sourceRoom: o.room };
       o.x = prov.x; o.z = prov.z; o.room = roomAt(H.shape, prov.x, prov.z)?.id ?? o.room; continue;
     }
-    if (!p || !original) continue;
+    if (!p) continue;
+    if (!original) {
+      // An object new since the recorded baseline that Ed's export places (the basins, the guests' shoe racks, the broom rack and the
+      // hydraulic lift: Ed, 2026-11-12, "New treehouse layout"): it stands as the editor drew it, its resting facing turned to his rotation.
+      const rest = restingFacing(o, H), anchor = "useAnchor" in p && p.useAnchor ? p.useAnchor : { x: p.x, z: p.z };
+      o.placement = { rotation: p.rotation, baseRotation: rest.yaw * 180 / Math.PI, foot: rest.foot, curve: rest.curve, anchor, sourceRoom: o.room };
+      o.x = p.x; o.z = p.z; o.room = roomAt(H.shape, p.x, p.z)?.id ?? o.room; continue;
+    }
     if (o.id === "cauldron") {
       // Current large-pot data, never the held stale version-1 placeholder.
       o.placement = { rotation: p.rotation, baseRotation: 0, foot: { w: o.w, d: o.d, h: o.h }, curve: 0, anchor: { x: p.x, z: p.z }, sourceRoom: o.room };
@@ -68,6 +76,17 @@ export function applyEdLayout(source: HouseConfig, on = edLayoutRequested()): Ho
   }
   H.layout = { id: "ed", baseline: structuredClone(source), hatPoints: proposal.objects.filter(p => p.id.startsWith("hat-point:")).map(p => ({ id: Number(p.id.split(":")[1]), x: p.x, z: p.z })).sort((a, b) => a.id - b.id), decor: proposal.objects.filter(p => p.id.startsWith("clutter:")).map(p => ({ id: p.id, x: p.x, z: p.z, rotation: p.rotation })) };
   return H;
+}
+/** Which way an object stands where its room file puts it, as the editor and render/housePieces.ts standing() take it (the same sums:
+ *  its front to its room's middle, its footprint by the way it mostly faces, bent round a round room's wall). For an object Ed's export
+ *  places that the recorded baseline doesn't know. */
+export function restingFacing(o: HouseObject, H: HouseConfig): { yaw: number; foot: { w: number; d: number; h: number }; curve: number } {
+  const r = H.rooms.find(q => q.id === o.room), dx = r ? (r.x0 + r.x1) / 2 - o.x : 0, dz = r ? (r.z0 + r.z1) / 2 - o.z : 0, L = Math.hypot(dx, dz);
+  const alongX = Math.abs(dx) > Math.abs(dz), foot = alongX ? { w: o.d, d: o.w, h: o.h } : { w: o.w, d: o.d, h: o.h };
+  if (L < 1.2) return { yaw: 0, foot, curve: 0 };
+  const a = ((H.turn ?? 0) * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a), x = dx / L, z = dz / L;
+  const p = { x: 0 + x * c + z * s, z: 0 - x * s + z * c }, f = p.z < 0 ? [p.x, -p.z] : [p.x, p.z];
+  return { yaw: Math.atan2(-f[0], f[1]), foot, curve: r?.r ? L + foot.d / 2 : 0 };
 }
 /** Local source-axis attachments (bed poses, UI keys) follow the same rigid placement. */
 export function objectOffset(o: HouseObject, x: number, z: number): { x: number; z: number } {
