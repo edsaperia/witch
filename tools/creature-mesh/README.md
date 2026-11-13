@@ -82,3 +82,11 @@ How far a legless mesh creature slides sideways as it slithers.
 ```
 node tools/creature-mesh/slither.mjs [kind...]     every kind built by kit/serpent.js, or those named
 ```
+
+## `strike.mjs`
+
+A clip of a mesh creature whose heads strike in turn, to judge the strike by: two levels side by side, standing, through two casts of its attack.
+
+```
+node tools/creature-mesh/strike.mjs [kind] --out previews/creature-mesh/hydra-strike.mp4
+```
