@@ -60,6 +60,10 @@ export interface StoneView {
    *  eased levels. */
   spectrum: Uint8Array | null;
   wantsSpectrum: boolean;
+  /** The same in decibels, unclipped (platform/audio/music.ts spectrumDb), while `wantsDb`: the decks' analyser ring's
+   *  (render/leash/decksRing.ts). */
+  spectrumDb: Float32Array | null;
+  wantsDb: boolean;
   bars: Float32Array;
   /** The spell's spot shown this frame (its 🎶: x, z, its size in m, how far faded in, and whether she's casting there), for its key
    *  prompt (render/castTag.ts); null: none shown. */
@@ -68,8 +72,8 @@ export interface StoneView {
    *  trees round it with it, a frame on); null: none. */
   castLight: { x: number; z: number; rgb: [number, number, number]; k: number } | null;
 }
-export const newStoneView = (): StoneView => ({ last: new Map(), converted: [], falls: new Map(), seen: new Set(), spectrum: null, wantsSpectrum: false, bars: new Float32Array(128), notes: null, castLight: null });
-export const resetStoneView = (v: StoneView): void => { v.last.clear(); v.converted.length = 0; v.falls.clear(); v.seen.clear(); v.spectrum = null; v.wantsSpectrum = false; v.bars.fill(0); v.notes = null; v.castLight = null; };
+export const newStoneView = (): StoneView => ({ last: new Map(), converted: [], falls: new Map(), seen: new Set(), spectrum: null, wantsSpectrum: false, spectrumDb: null, wantsDb: false, bars: new Float32Array(128), notes: null, castLight: null });
+export const resetStoneView = (v: StoneView): void => { v.last.clear(); v.converted.length = 0; v.falls.clear(); v.seen.clear(); v.spectrum = null; v.wantsSpectrum = false; v.spectrumDb = null; v.wantsDb = false; v.bars.fill(0); v.notes = null; v.castLight = null; };
 
 /** A column's sigils' heights over the stone's top and sizes (m), bottom first. */
 export function columnOf(items: readonly { level: number }[], size: (level: number) => number): { y: number; size: number }[] {
@@ -122,9 +126,11 @@ export function analyserBar(L: RingLayers, dot: number[], S: FlatRing, x0: numbe
 
 /** The whole ring at once (a wave's soundsystem appearing, Ed, 2026-10-29: "all the stacks in the soundwave filling out from the centre
  *  simultaneously"; and the decks' at the party start): `n` bars round (x0, z0), the first due south, each reaching out `fill` (0 to
- *  1) of the way times the music's level (`level`: analyserLevels), in the rainbow drifting round, at `alpha`. */
-export function analyserBloom(L: RingLayers, dot: number[], S: FlatRing, x0: number, z0: number, edge: number, n: number, fill: number, alpha: number, level: (i: number, m: number) => number, time: number): void {
-  for (let i = 0; i < n; i++) { const f = i / n; analyserBar(L, dot, S, x0, z0, Math.PI / 2 + f * Math.PI * 2, edge, fill * (0.55 + 0.45 * level(i, n)), rainbow(f + time * 0.15), alpha); }
+ *  1) of the way times the music's level (`level`: analyserLevels), in the rainbow drifting round, at `alpha`. `edge`: how far out
+ *  the bars may reach (m), or that by each bar's angle (the decks': the Terrace's rim); `least`: the share of the way a silent bar
+ *  still reaches (a stump's 0.55; the decks' much less, so its bars are the music's own heights). */
+export function analyserBloom(L: RingLayers, dot: number[], S: FlatRing, x0: number, z0: number, edge: number | ((a: number) => number), n: number, fill: number, alpha: number, level: (i: number, m: number) => number, time: number, least = 0.55): void {
+  for (let i = 0; i < n; i++) { const f = i / n, a = Math.PI / 2 + f * Math.PI * 2; analyserBar(L, dot, S, x0, z0, a, typeof edge === "number" ? edge : edge(a), fill * (least + (1 - least) * level(i, n)), rainbow(f + time * 0.15), alpha); }
 }
 
 /** A rainbow hue, 0 to 1 round (the wave pointer cycles the same: render/indicator.ts). */

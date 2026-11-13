@@ -162,6 +162,14 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // pixels; eased off as she rises (her lift) into the world's own place.
   const inRoom = !!T.ent && witchRoomPass(g, g.witches[0]);
   v.houseCam.x = v.houseCam.y = v.houseCam.z = 0;
+  // (the house's floor as drawn, for what lies on it: the decks' analyser ring, render/leash/decksRing.ts; the art's view of the
+  // floor, in the plane through the deck's middle, as her feet below)
+  v.leashView.floorAt = T.ent && deck?.house ? (x: number, z: number) => {
+    const ky = (T.seat.y - T.ent!.deck.y) / Math.max(0.1, deck.seat.z - deck.z), p = onTreehouse(T.ent!.deck.x + (x - deck.x) / v.mpp, T.ent!.deck.y + (z - deck.z) * ky + v.houseShift);
+    return { x: p.x, y: p.y + groundHeight(deck.x, deck.z) - groundHeight(p.x, p.z), z: p.z };
+  } : null;
+  // (and where on that floor the art draws her at her decks: her seat's pixel, T.seat, is the plan's seat's z by `ky`, but its own x)
+  v.leashView.decksOnFloor = T.ent && deck?.house ? { x: deck.x + (T.seat.x - T.ent.deck.x) * v.mpp, z: deck.seat.z } : null;
   if (T.ent && deck && w.perch) {
     const m = (1 - w.lift) * v.landingHouseShare, ky = (T.seat.y - T.ent.deck.y) / Math.max(0.1, deck.seat.z - deck.z), dz = w.z - deck.z;
     // (the house's drawing slid up the Ent's plane by her own place on it: v.houseShift, houseShiftOf, set before the Ent is placed)

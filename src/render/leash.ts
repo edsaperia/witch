@@ -79,6 +79,14 @@ export class LeashView {
   /** The decks' analyser ring at the party start (render/leash/decksRing.ts; the view sets it at the cast and the decks' replay); null:
    *  none this night. */
   decksRing: DecksRing | null = null;
+  /** A place on the house's floor as it's drawn this frame (render/view/witch.ts: the oak's art's own view of its floor, not the
+   *  camera's, as her feet and the rooms' furniture are placed), from its place in the world (x, z): the point (y over the ground
+   *  there, as a sprite's); null with no house drawn. The decks' ring lies on it (render/leash/decksRing.ts). */
+  floorAt: ((x: number, z: number) => { x: number; y: number; z: number }) | null = null;
+  /** The spot of the house's floor (in the world, as floorAt takes it) where the oak's art draws her at her decks, its DJ table
+   *  round her: not the rules' seat's own (the art seats her some 3 m east of the plan's seat: measured in the game, 2026-11-13,
+   *  the ring round the plan's desk came out beside the drawn one); null with no house drawn. */
+  decksOnFloor: { x: number; z: number } | null = null;
   /** Her decks not drawn this frame (the Terrace one of the house's rooms, seen from outside: render/view/home.ts placeTreehouse): their tempo hidden with them. */
   decksHidden = false;
   canvas = document.createElement("canvas");
@@ -243,7 +251,7 @@ export class LeashView {
    *  (The sigils' atlas, its slots and colours, by species, and the pooled bubbles stay: the page's.) */
   setGame(game: Game): void {
     this.game = game;
-    this.seatAt = null; this.bloodPool = null; this.decksRing = null;
+    this.seatAt = null; this.bloodPool = null; this.decksRing = null; this.floorAt = null; this.decksOnFloor = null;
     for (const m of [this.ruts, this.evolved, this.cycledAt, this.joined, this.stackY, this.lastSlots, this.routes, this.tops, this.halfW, this.heads, this.dreamStones, this.chains]) m.clear();
     this.look.reset(); this.stones.length = 0; resetStoneView(this.stoneView); resetSigilFeel(this.feel);
     this.bursts = []; this.chain = []; this.fx = []; this.ringGlows = []; this.dreams = []; this.snoreNear = []; this.projected = [];

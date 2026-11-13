@@ -379,6 +379,10 @@ The treehouse and its occupants remain visible while the forest disappears into 
 
 She fades out of her own picture: her occluder depth (`uWitchDepth`, render/sprites.ts) is taken a few metres behind where her sprite is drawn, so the see-through machinery treats her own body as something standing in front of her and drops it. In the bug she vanished wholly (her batch has no see-through pass); a deliberate version would route her batch through the existing see-through pass so she dithers to a ghost while creatures and the world stay solid, the offset breathing with the trip envelope. Existing hook: `render/view/witch.ts` where `uWitchDepth` is set; no new pass needed if her batch gains the fade pass the scenery already has. A variant of Alone / the house in the void (she, not the world, goes missing). Suggestion only, not approved or assigned.
 
+### Suggestion: Flat Camera (discovered fixing the decks' analyser ring, 2026-11-13)
+
+The house's floor is drawn in the oak's art's own, steeper view, not the camera's view of the ground; a ring laid flat for the camera came out as a flatter ellipse that slid off the floor's rim. A trip could do this on purpose: everything lying on a floor (rugs, the magic circle, sigils, shadows) drawn in the camera's flatter view while the floor keeps its own, so the furniture's footprints drift off the boards and hang over the drop. Sound, by the trips' rules: the mix's low end stays pinned at the top of the 0-255 analyser read (measured the same day), so a trip that wants the bass to move something needs the unclipped decibel read (`spectrumDb`).
+
 ## Catalogue follow-up
 
 ### Painting-style suggestions (discussion with Ed, 2026-10-31; not approved builds)
