@@ -8587,6 +8587,15 @@ registerProcessor("witch-fof", WitchFof);
       this.analyser.getByteFrequencyData(this.bins);
       return this.bins;
     }
+    dbBins = null;
+    /** The same spectrum in decibels, unclipped (the decks' analyser ring, render/leash/decksRing.ts: the 0-255 read tops out at
+     *  -30 dB, where the music's low end sits all the time, so its bass bars never moved; measured 2026-11-13); null as spectrum(). */
+    spectrumDb() {
+      if (!this.spectrum() || !this.analyser) return null;
+      this.dbBins ??= new Float32Array(this.analyser.frequencyBinCount);
+      this.analyser.getFloatFrequencyData(this.dbBins);
+      return this.dbBins;
+    }
     /** Each frame: the mix to hear, the music's cue (waves, boot), the game's time and beat. `rate`: the game's time scale
      *  (game seconds a second: about a tenth in a legend's circle, Ed 2026-10-06), which the music follows, slowing like a tape;
      *  `over`: the party's-over ease (0 to 1), winding it down. */
