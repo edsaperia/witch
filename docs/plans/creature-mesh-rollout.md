@@ -58,7 +58,7 @@ By body, not by island: kinds that share a skeleton share the code and the check
 | C | Hoofed (6) | stag, elk, roe, ram, ibex, boar | hooves, antlers and horns, tusks |
 | D | Heavy and gnawing (6) | bear, polarbear, rhino, elephant, beaver, flyingsquirrel | a trunk, a horn, a flat tail, a glide skin |
 | E | Cold-blooded (7) | salamander, komodo, crocodile, toad, armadillo, snake, rattlesnake | a legless body that slithers; a sprawling gait |
-| F | Wings (7) | heron, raven, owl, penguin, moth, bat, dragonfly | a bird's two legs and feathered wing; the bee's wings and hover |
+| F | Wings (7) | heron, raven, owl, penguin, butterfly, bat, dragonfly | a bird's two legs and feathered wing; the bee's wings and hover (the butterfly was the kind `moth` until 2026-11-13; the moth, on the bench, has a mesh of its own from the same kit) |
 | G | Many legs (5) | beetle, woodlouse, spider, scorpion, crab | six, eight and fourteen legs (the bee has six); pincers, a sting |
 | H | Wonders (8) | griffin, sphinx, unicorn, frostwyrm, frosttroll, hydra, featheredserpent, stegosaurus | whatever A to G made, combined; several heads |
 

@@ -791,7 +791,8 @@
    "group": "debug",
    "since": "2026-10-14",
    "readIn": [
-    "src/app/linkParams.ts"
+    "src/app/linkParams.ts",
+    "src/app/renamedLink.ts"
    ]
   },
   {
@@ -908,6 +909,7 @@
    "since": "2026-10-11",
    "readIn": [
     "src/app/linkParams.ts",
+    "src/app/renamedLink.ts",
     "src/app/sail.ts",
     "src/main.ts",
     "src/platform/online/entry.ts"
