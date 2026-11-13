@@ -122,7 +122,8 @@ describe("mesh creatures", () => {
   /** How many empty rows lie under a frame's lowest drawn pixel. */
   const gap = (f: Frame, w: number, h: number): number => { for (let y = h - 1; y >= 0; y--) for (let x = 0; x < w; x++) if (f.albedo[(y * w + x) * 4 + 3]) return h - 1 - y; return h; };
   /** How each kind gets about (Ed, 2026-11-12: "many small creatures bound rather than trot"). A new kind's goes here with its mesh. */
-  const GAITS: Record<string, string> = { fox: "trot", stoat: "bound", marten: "bound", hare: "bound", squirrel: "bound", dormouse: "bound", badger: "trot", mole: "trot", hedgehog: "trot", turtle: "walk", snail: "glide", bee: "fly" };
+  const GAITS: Record<string, string> = { fox: "trot", stoat: "bound", marten: "bound", hare: "bound", squirrel: "bound", dormouse: "bound", badger: "trot", mole: "trot", hedgehog: "trot", turtle: "walk", snail: "glide", bee: "fly",
+    cat: "bound", lynx: "bound", cheetah: "bound", snowleopard: "bound", lion: "trot", tiger: "trot", jaguar: "trot" }; // (batch B, the cats: kit/feline.js)
 
   it("every kind says how it goes, and its stride is long enough to read as one (not a shuffle on the spot)", () => {
     for (const [species, levels] of Object.entries(PLANS)) levels.forEach((make, level) => {
