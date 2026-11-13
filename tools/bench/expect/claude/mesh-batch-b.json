@@ -1,0 +1,6 @@
+{
+  "reason": "Creature meshes, batch B of docs/plans/creature-mesh-rollout.md: the seven cats (cat, lynx, cheetah, lion, tiger, jaguar, snowleopard) are drawn from low-poly meshes on skeletons (art/mesh/species/<id>.js) in place of the generated creatures (Ed, 2026-11-12: \"meshes are great, we should aim to transition to them for all the creatures\"; of the batch previews, 2026-11-13: \"The mesh builders work is good enough, please merge it when submitted.\"). Heights kept, baby to legend, in art pixels (Ed, 2026-11-12: \"keep the sizes\"): cat 42, 68, 96, 248; lynx 50, 78, 111, 332; cheetah 54, 84, 120, 308; lion 63, 99, 141, 305; tiger 63, 97, 140, 276; jaguar 55, 84, 120, 250; snowleopard 55, 102, 144, 265. No kind changes its id, its island or its numbers, so the rules don't change.",
+  "frames": {
+    "*": "wherever one of the seven cats is in view: its new drawing, where it stands on the ground, its walk and run frames and how fast they pass (drawn up to a step behind where it is), the frame it stops on, its sleeping pose (curled at every level), and what hangs over it by its drawn height"
+  }
+}

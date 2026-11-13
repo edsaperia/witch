@@ -125,6 +125,7 @@ describe("mesh creatures", () => {
   /** How each kind gets about (Ed, 2026-11-12: "many small creatures bound rather than trot"). A new kind's goes here with its mesh. */
   const GAITS: Record<string, string> = { fox: "trot", stoat: "bound", marten: "bound", hare: "bound", squirrel: "bound", dormouse: "bound", badger: "trot", mole: "trot", hedgehog: "trot", turtle: "walk", snail: "glide", bee: "fly", stag: "trot", elk: "trot", roe: "bound", ram: "trot", ibex: "bound", boar: "trot" };
   Object.assign(GAITS, { wolf: "trot", arcticfox: "trot", raccoon: "trot", redpanda: "trot", fennec: "bound", otter: "bound", meerkat: "bound" }); // (batch A, 2026-11-13)
+  Object.assign(GAITS, { cat: "bound", lynx: "bound", cheetah: "bound", snowleopard: "bound", lion: "trot", tiger: "trot", jaguar: "trot" }); // (batch B, the cats: kit/feline.js)
 
   it("every kind says how it goes, and its stride is long enough to read as one (not a shuffle on the spot)", () => {
     for (const [species, levels] of Object.entries(PLANS)) levels.forEach((make, level) => {
