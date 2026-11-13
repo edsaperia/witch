@@ -127,6 +127,7 @@ describe("mesh creatures", () => {
   const GAITS: Record<string, string> = { fox: "trot", stoat: "bound", marten: "bound", hare: "bound", squirrel: "bound", dormouse: "bound", badger: "trot", mole: "trot", hedgehog: "trot", turtle: "walk", snail: "glide", bee: "fly", stag: "trot", elk: "trot", roe: "bound", ram: "trot", ibex: "bound", boar: "trot" };
   Object.assign(GAITS, { wolf: "trot", arcticfox: "trot", raccoon: "trot", redpanda: "trot", fennec: "bound", otter: "bound", meerkat: "bound" }); // (batch A, 2026-11-13)
   Object.assign(GAITS, { cat: "bound", lynx: "bound", cheetah: "bound", snowleopard: "bound", lion: "trot", tiger: "trot", jaguar: "trot" }); // (batch B, the cats: kit/feline.js)
+  Object.assign(GAITS, { bear: "trot", polarbear: "trot", rhino: "trot", elephant: "walk", beaver: "trot", flyingsquirrel: "bound" }); // (batch D, the heavy and the gnawing)
   Object.assign(GAITS, { salamander: "trot", komodo: "trot", crocodile: "trot", armadillo: "trot", toad: "bound", snake: "glide", rattlesnake: "glide" }); // (batch E, the cold-blooded: kit/sprawl.js, kit/serpent.js)
 
   it("every kind says how it goes, and its stride is long enough to read as one (not a shuffle on the spot)", () => {
