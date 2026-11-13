@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import * as Art from "../../art/generator.js";
 import { HOUSE_ROOMS } from "./houseRooms";
-import { CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, ITEMS, SHELVES, SKIN_COLS, STARTING_SET, bareHeadAt, itemById, itemsToChoose, ownedOf, shelvesAt, skinSwatch, wear, wears } from "./wardrobe";
+import { CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, ITEMS, SHELVES, SKIN_COLS, STARTING_SET, bareHeadAt, itemById, itemsToChoose, ownedOf, shelvesAt, skinSwatch, wear, wears, wearsOneColour } from "./wardrobe";
 import { TUNING } from "./tuning";
 import { FANTASY_SKINS, HUMAN_SKINS, MONK_HEX } from "../../art/skinTones.js";
 import DEFAULT_LOOK from "../../config/default-look.json";
@@ -56,7 +56,7 @@ describe("the wardrobe", () => {
   });
 
   it("starts her owning what she has on, on every shelf with items but the bags (she starts with none: Ed, 2026-10-29, \"Remove none\")", () => {
-    for (const s of Object.values(SHELVES).filter(q => q.items.length && q.id !== "bag" && !q.toggle)) { // (the basin's makeup toggles: none on at first)
+    for (const s of Object.values(SHELVES).filter(q => q.items.length && q.id !== "bag" && !q.toggle && !q.oneColour)) { // (the basin's makeup: off at first)
       expect(s.items.some(i => i.start && wears(CLASSIC, i)), s.id).toBe(true);
     }
     expect(SHELVES.bag.items.some(i => wears(CLASSIC, i))).toBe(false);
@@ -108,7 +108,7 @@ describe("Ed's redo (2026-10-23): nothing with no choice in it, the broom till t
     expect(itemsToChoose(face, new Set([...STARTING_SET, "shades"]))).toBe(true);
     expect(itemsToChoose(earrings, new Set(STARTING_SET))).toBe(true);
     expect(itemsToChoose({ ...face, items: face.items.slice(0, 1) }, new Set(STARTING_SET))).toBe(false); // (one item, hers: no choice)
-    expect(itemsToChoose(SHELVES.makeup, new Set(STARTING_SET))).toBe(true); // (each toggle a choice by itself)
+    expect(itemsToChoose(SHELVES.makeup, new Set(STARTING_SET))).toBe(false); // (no cards: its colour grid is the choice, Ed 2026-11-12)
   });
   it("the broom's three stations (the workbench, the lathe, the lift: Ed, 2026-11-07), the old stand and the pegboard's panel gone; no station offers a broom's power or shape", () => {
     expect(shelvesAt("broomStand")).toBeNull();
@@ -127,3 +127,55 @@ describe("Ed's redo (2026-10-23): nothing with no choice in it, the broom till t
   });
 });
 
+
+// Ed, 2026-11-12: "Makeup: have only one option which is both the lips and eyes together, the same colour. So the makeup box just has a
+// colour picker, no sub-options"; "Drop blush" (a saved look with blush on loses it).
+describe("the basin's makeup, one colour for lips and eyes (Ed, 2026-11-12)", () => {
+  const upgrade = Art.upgradeGenome as (g: unknown) => { accessories: Record<string, unknown>; palette: Record<string, number[]> | null };
+  const RED = [0, 1, .74], BLUE = [.6667, 1, 1];
+  const saved = (acc: Record<string, boolean>, palette: Record<string, number[]> | null) => ({ ...structuredClone(CLASSIC), accessories: { ...(CLASSIC.accessories as object), ...acc }, palette });
+
+  it("one item, her lipstick and eyeshadow together, both colour parts on its one grid; blush on no shelf", () => {
+    const mk = SHELVES.makeup;
+    expect(mk.oneColour).toBe(true); expect(mk.colour).toEqual(["lips", "eyeshadow"]);
+    expect(mk.items.map(i => i.set)).toEqual([{ "accessories.lipstick": true, "accessories.eyeshadow": true }]);
+    expect(STARTING_SET).toContain(mk.items[0].id);
+    expect(ITEMS.some(i => Object.keys(i.set).some(k => k.includes("blush")))).toBe(false);
+    expect(ITEMS.some(i => /blush/i.test(i.id + i.name))).toBe(false);
+    const own = new Set(STARTING_SET);
+    expect(wearsOneColour(CLASSIC, mk, own)).toBe(false);
+    expect(wearsOneColour(wear(CLASSIC, mk.items[0]), mk, own)).toBe(true);
+    expect(wearsOneColour(wear(CLASSIC, mk.items[0]), mk, new Set())).toBe(false); // (none of it hers: never shown on)
+  });
+
+  it("a saved look's blush comes off as it loads", () => {
+    expect(upgrade(saved({ blush: true }, null)).accessories.blush).toBe(false);
+    expect(upgrade(saved({ blush: true, lipstick: true, eyeshadow: true }, { lips: RED, eyeshadow: RED })).accessories).toMatchObject({ blush: false, lipstick: true, eyeshadow: true });
+  });
+
+  it("lips and eyes on together if either was, in her lips' colour (her eyeshadow's if only her eyes were made up)", () => {
+    let g = upgrade(saved({ lipstick: true, eyeshadow: true }, { lips: RED, eyeshadow: BLUE }));
+    expect(g.accessories).toMatchObject({ lipstick: true, eyeshadow: true }); expect(g.palette).toMatchObject({ lips: RED, eyeshadow: RED });
+    g = upgrade(saved({ lipstick: true, eyeshadow: false }, { lips: RED, eyeshadow: BLUE }));
+    expect(g.accessories).toMatchObject({ lipstick: true, eyeshadow: true }); expect(g.palette).toMatchObject({ lips: RED, eyeshadow: RED });
+    g = upgrade(saved({ lipstick: false, eyeshadow: true }, { lips: RED, eyeshadow: BLUE }));
+    expect(g.accessories).toMatchObject({ lipstick: true, eyeshadow: true }); expect(g.palette).toMatchObject({ lips: BLUE, eyeshadow: BLUE });
+    g = upgrade(saved({ lipstick: false, eyeshadow: false }, { lips: RED, eyeshadow: BLUE })); // (both off: off, her lips' colour kept for both)
+    expect(g.accessories).toMatchObject({ lipstick: false, eyeshadow: false }); expect(g.palette).toMatchObject({ lips: RED, eyeshadow: RED });
+    g = upgrade(saved({ eyeshadow: true }, { lips: RED })); // (her eyes on, their colour unsaved: her lips')
+    expect(g.palette).toMatchObject({ lips: RED, eyeshadow: RED });
+    g = upgrade(saved({ lipstick: true }, null)); // (the classic palette: the default's the same for both)
+    expect(g.accessories).toMatchObject({ lipstick: true, eyeshadow: true }); expect(g.palette).toBeNull();
+    expect(OUTFIT.eyeshadow).toEqual(OUTFIT.lips);
+    g = upgrade(saved({ lipstick: true }, { hair: RED })); // (a palette naming neither: still neither)
+    expect(g.palette).toEqual({ hair: RED });
+  });
+
+  it("a look already one colour, or never made up, loads as it was; the save itself isn't changed", () => {
+    const one = saved({ lipstick: true, eyeshadow: true }, { lips: RED, eyeshadow: RED });
+    expect(upgrade(one)).toEqual(one);
+    expect(upgrade(CLASSIC)).toEqual(CLASSIC);
+    const old = saved({ lipstick: true, blush: true }, { lips: RED, eyeshadow: BLUE }), copy = structuredClone(old);
+    upgrade(old); expect(old).toEqual(copy);
+  });
+});

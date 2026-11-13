@@ -343,8 +343,9 @@ export function chartWorld(pageHost: PageHost): number { return (pageHost.params
 export function soundNote(pageHost: PageHost): void {
   if (document.getElementById("sound-note")) return;
   const el = document.createElement("div");
+  // (z 29: just under her eyelids' 30, render/eyelids.ts, so shut eyes cover it; Ed, 2026-11-12: "Lids cover them")
   el.id = "sound-note"; el.textContent = "🔊 press any key for sound";
-  el.style.cssText = "position:fixed;left:50%;bottom:72px;transform:translateX(-50%);z-index:30;font:13px ui-monospace,monospace;color:#e8e2f4;background:rgba(10,9,22,.7);border:1px solid #3a2f5c;border-radius:6px;padding:6px 12px;pointer-events:none";
+  el.style.cssText = "position:fixed;left:50%;bottom:72px;transform:translateX(-50%);z-index:29;font:13px ui-monospace,monospace;color:#e8e2f4;background:rgba(10,9,22,.7);border:1px solid #3a2f5c;border-radius:6px;padding:6px 12px;pointer-events:none";
   document.body.append(el);
   const go = () => { pageHost.gestured = true; pageHost.sound.wake(); el.remove(); removeEventListener("keydown", go); removeEventListener("pointerdown", go); };
   addEventListener("keydown", go); addEventListener("pointerdown", go);

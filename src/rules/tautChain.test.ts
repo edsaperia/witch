@@ -1,8 +1,9 @@
 // The taut chain's tug (Ed, 2026-11-12: "as you pull outside of the length you are progressively pulled down; if you stop pulling,
 // you rise up again, only if you keep pulling do you actually fully switch back to ground mode"; rules/tautChain.ts,
 // leash.chain.tug): up in the treetops, pulling past a chain's end dips her in proportion to the metres pulled; letting off she rises;
-// a sustained pull brings her down through the ordinary descent; the tautest chain decides; never over a lake or a treehouse floor,
-// never from a blow's throw; off with ?tautchain=0.
+// a sustained pull carries her all the way to the ground in one eased curve and she's in ground mode as she arrives (Ed's playtest,
+// 2026-11-13: "the transition from treetop to ground isn't smooth; she is pulled down some of the way, and then falls to the
+// ground"); the tautest chain decides; never over a lake or a treehouse floor, never from a blow's throw; off with ?tautchain=0.
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning, type Tuning } from "./tuning";
 import { PULL_FROM, PULL_MOST, stepPop, stepTug, tautKnobs, tugKnobs, yankFrom, type Pull } from "./tautChain";
@@ -19,48 +20,79 @@ const newGame = smallWorld(preppedGame, "The taut chain's tug: a witch up in the
 const TK = TUNING.leash.chain!.taut!, K = TK.tug, L = TUNING.leash.chain!.length, DT = 1 / 60;
 const up = (): WitchState => ({ ...newWitch(0, 0), mode: "treetop", lift: 1 });
 const off = (t: Tuning = TUNING) => withTuning({ ...t, leash: { ...t.leash, chain: { ...t.leash.chain!, taut: { ...t.leash.chain!.taut!, on: false } } } });
+/** The tug with its pull's pace not eased (tug.ease 0), for the rule's own arithmetic. */
+const RAW = withTuning({ ...TUNING, leash: { ...TUNING.leash, chain: { ...TUNING.leash.chain!, taut: { ...TK, tug: { ...K, ease: 0 } } } } });
 const share = (w: WitchState) => (TUNING.treetopHeight - witchHeight(w, TUNING)) / (TUNING.treetopHeight - TUNING.groundHeight);
 
 describe("the tug's rule", () => {
-  it("its knobs: on, a sustained pull at a dragged youth's pace (12 m/s) brings her down in 1.5 to 3 s", () => {
+  it("its knobs: on, a sustained pull at a dragged youth's pace (about 8 m/s past its chain's end) brings her down in 2 to 4 s", () => {
     expect(tugKnobs(TUNING)).toEqual(K);
     expect(TK.on).toBe(true);
-    const s = K.commit / (K.perMetre * 12);
-    expect(s).toBeGreaterThan(1.5); expect(s).toBeLessThan(3);
-    expect(K.commit / (K.perMetre * PULL_MOST)).toBeGreaterThan(1); // (never sudden, however hard she strains)
+    const s = 1 / (K.perMetre * 8);
+    expect(s).toBeGreaterThan(2); expect(s).toBeLessThan(4);
+    expect(1 / (K.perMetre * PULL_MOST)).toBeGreaterThan(1); // (never sudden, however hard she strains)
+    expect(K.hold).toBeGreaterThan(0); expect(K.hold).toBeLessThan(1);
   });
 
-  it("pulling dips her in proportion to the metres pulled: her height, through her lift, 1 - tug of the way up", () => {
-    const r = stepTug(up(), 0.1, 0.2, DT, TUNING);
+  it("pulling dips her in proportion to the metres pulled: her lift 1 - tug, so her height on the descent's own eased curve", () => {
+    const r = stepTug(up(), 0.1, 0.2, DT, RAW);
     expect(r.tug).toBeCloseTo(0.1 + K.perMetre * 0.2, 9);
     expect(r.body.mode).toBe("treetop");
-    expect(share(r.body)).toBeCloseTo(r.tug, 6);
+    expect(r.body.lift).toBeCloseTo(1 - r.tug, 9);
+    expect(share(r.body)).toBeGreaterThan(0); expect(share(r.body)).toBeLessThan(r.tug); // (eased: gentle at the top)
+    expect(share(stepTug(up(), 0.5, 0, DT, RAW).body)).toBeCloseTo(0.5, 1); // (half way at half)
     expect(r.body.braking).toBe(true); // (the strain: her brake pose)
   });
 
   it("not pulling (no strain, or only coasting round the end) she rises at rise a second, never above where she is", () => {
-    const r = stepTug({ ...up(), lift: 0.5 }, 0.2, PULL_FROM * DT * 0.5, DT, TUNING);
+    const r = stepTug({ ...up(), lift: 0.5 }, 0.2, PULL_FROM * DT * 0.5, DT, RAW);
     expect(r.tug).toBeCloseTo(0.2 - K.rise * DT, 9);
     expect(r.body.lift).toBe(0.5); // (stepWitch's own climb sets how fast lift comes back; the tug only holds it down)
-    expect(stepTug(up(), 0.001, 0, DT, TUNING).tug).toBe(0); // (all the way back: none)
+    expect(stepTug(up(), 0.001, 0, DT, RAW).tug).toBe(0); // (all the way back: none)
   });
 
-  it("pulled down commit of the way, she comes down: mode descending from where she is, the tug done", () => {
-    const b = { ...up(), lift: 0.6 }, r = stepTug(b, K.commit - 0.001, 1, DT, TUNING);
+  it("her pull's pace is eased over tug.ease seconds: it comes on gently, a one-step hitch barely shows, and letting off drops it at once", () => {
+    const first = stepTug(up(), 0, 0.2, DT, TUNING);
+    expect(first.rate).toBeCloseTo((0.2 / DT) * (1 - Math.exp(-DT / K.ease)), 9);
+    expect(first.tug).toBeCloseTo(K.perMetre * first.rate * DT, 9);
+    expect(first.tug).toBeLessThan(stepTug(up(), 0, 0.2, DT, RAW).tug / 5);
+    let rate = 0, tug = 0;
+    for (let i = 0; i < 120; i++) ({ rate, tug } = stepTug(up(), Math.min(tug, 0.5), 0.2, DT, TUNING, 1, {}, rate));
+    expect(rate).toBeCloseTo(0.2 / DT, 3); // (settled at her pull's pace)
+    const hitch = stepTug(up(), 0.5, 0.28, DT, TUNING, 1, {}, rate); // (one step 40% harder)
+    expect(hitch.rate / rate).toBeLessThan(1.05);
+    expect(stepTug(up(), 0.5, 0, DT, TUNING, 1, {}, rate).rate).toBe(0);
+  });
+
+  it("it never hands over part way: still in treetop mode at 0.4 (the old commit) and at 0.99, her lift 1 - tug; letting off there she rises", () => {
+    for (const k of [0.4, 0.7, 0.99]) {
+      const r = stepTug({ ...up(), lift: 1 - k }, k, 0.1, DT, RAW);
+      expect(r.body.mode).toBe("treetop");
+      expect(r.body.lift).toBeCloseTo(1 - r.tug, 9);
+      expect(stepTug({ ...up(), lift: 1 - k }, k, 0, DT, RAW).tug).toBeCloseTo(k - K.rise * DT, 9);
+    }
+  });
+
+  it("pulled all the way she has arrived: at the ground (lift 0), handed to the landing with nothing left to drop, the tug done", () => {
+    const b = { ...up(), lift: 0.001 }, r = stepTug(b, 0.9995, 1, DT, RAW);
     expect(r.body.mode).toBe("descending");
-    expect(r.body.lift).toBe(0.6);
+    expect(r.body.lift).toBe(0);
+    expect(witchHeight(r.body, TUNING)).toBe(TUNING.groundHeight);
     expect(r.tug).toBe(0);
   });
 
-  it("over a lake or a treehouse floor (hold) it never commits; a blow's throw (free) isn't pulling", () => {
-    const h = stepTug(up(), K.commit - 0.001, 1, DT, TUNING, 1, { hold: true });
-    expect(h.body.mode).toBe("treetop"); expect(h.tug).toBeLessThan(K.commit);
-    expect(stepTug(up(), 0.2, 1, DT, TUNING, 1, { free: true }).tug).toBeCloseTo(0.2 - K.rise * DT, 9);
+  it("over a lake or a treehouse floor (hold) she's pulled no lower than hold, and eases back up to it from lower; a blow's throw (free) isn't pulling", () => {
+    const h = stepTug(up(), K.hold - 0.001, 1, DT, RAW, 1, { hold: true });
+    expect(h.body.mode).toBe("treetop"); expect(h.tug).toBe(K.hold);
+    const low = stepTug({ ...up(), lift: 0.1 }, 0.9, 1, DT, RAW, 1, { hold: true }); // (came over it low, still pulling)
+    expect(low.body.mode).toBe("treetop"); expect(low.tug).toBeCloseTo(0.9 - K.rise * DT, 9); expect(low.body.lift).toBe(0.1); // (no snap up)
+    expect(stepTug(up(), 0.9995, 1, DT, RAW, 1, { hold: true }).body.mode).toBe("treetop");
+    expect(stepTug(up(), 0.2, 1, DT, RAW, 1, { free: true }).tug).toBeCloseTo(0.2 - K.rise * DT, 9);
   });
 
   it("only in treetop mode, and not perched; off (or ?tautchain=0) none", () => {
-    for (const mode of ["ground", "rising", "descending"] as const) expect(stepTug({ ...up(), mode }, 0.2, 1, DT, TUNING)).toEqual({ body: { ...up(), mode }, tug: 0 });
-    expect(stepTug({ ...up(), perch: true }, 0.2, 1, DT, TUNING).tug).toBe(0);
+    for (const mode of ["ground", "rising", "descending"] as const) expect(stepTug({ ...up(), mode }, 0.2, 1, DT, RAW)).toEqual({ body: { ...up(), mode }, tug: 0, rate: 0 });
+    expect(stepTug({ ...up(), perch: true }, 0.2, 1, DT, RAW).tug).toBe(0);
     expect(stepTug(up(), 0.2, 1, DT, off()).tug).toBe(0);
     expect(tugKnobs(tuningFromLink(new URLSearchParams("tautchain=0")).tuning)).toBeNull();
     expect(tugKnobs(tuningFromLink(new URLSearchParams("tautchain=1")).tuning)).toEqual(K);
@@ -68,8 +100,8 @@ describe("the tug's rule", () => {
   });
 
   it("her broom's pull (the Canoe hull) scales it; the strain counts at most PULL_MOST m/s", () => {
-    expect(stepTug(up(), 0, 0.2, DT, TUNING, 0.5).tug).toBeCloseTo(K.perMetre * 0.1, 9);
-    expect(stepTug(up(), 0, 5, DT, TUNING).tug).toBeCloseTo(K.perMetre * PULL_MOST * DT, 9);
+    expect(stepTug(up(), 0, 0.2, DT, RAW, 0.5).tug).toBeCloseTo(K.perMetre * 0.1, 9);
+    expect(stepTug(up(), 0, 5, DT, RAW).tug).toBeCloseTo(K.perMetre * PULL_MOST * DT, 9);
   });
 
   it("several chains: the tautest decides (dragWitch's strain is the most metres past any one, not their sum)", () => {
@@ -112,13 +144,35 @@ describe("the tug in play", () => {
     expect(W.tug).toBeUndefined();
   });
 
-  it("a sustained pull brings her down to ground mode in 1.5 to 3 s, landing as any descent does (the rise cooldown after)", () => {
-    const { g } = aloft(), W = g.witches[0];
-    let at = -1, tm = 0;
-    fly(g, 4, 1, () => { tm += STEP; if (at < 0 && W.body.mode === "descending") at = tm; });
-    expect(at).toBeGreaterThan(1.5); expect(at).toBeLessThan(3);
+  // Ed's playtest, 2026-11-13: "the transition from treetop to ground isn't smooth; she is pulled down some of the way, and then falls
+  // to the ground" (measured on v7948: a steady 5 m/s down to 15.8 m, then the last 14.4 m in 0.33 s, up to 1.03 m a step).
+  it("a sustained pull carries her all the way down in one curve, 2 to 4 s: never a drop, in treetop mode till she's at the ground, landed there (the rise cooldown after)", () => {
+    const { g } = aloft(), W = g.witches[0], H = () => witchHeight(W.body, g.tuning);
+    fly(g, 2, 0); // (hovering till the camera has caught her up)
+    let at = -1, tm = 0, y = H(), most = 0, switchedAt = -1, camY = g.camera.ty, camMost = 0;
+    fly(g, 6, 1, () => {
+      tm += STEP;
+      const h = H(); most = Math.max(most, Math.abs(h - y)); y = h;
+      camMost = Math.max(camMost, Math.abs(g.camera.ty - camY)); camY = g.camera.ty;
+      if (switchedAt < 0 && W.body.mode !== "treetop") switchedAt = h;
+      if (at < 0 && W.body.mode === "ground") at = tm;
+    });
+    expect(at).toBeGreaterThan(2); expect(at).toBeLessThan(4);
+    expect(most).toBeLessThan(0.35); // (metres a step: 21 m/s; the old drop's 1.03)
+    expect(camMost).toBeLessThan(0.3); // (the camera's aim with her)
+    expect(switchedAt).toBeCloseTo(g.tuning.groundHeight, 6); // (her mode changes only at the ground)
     expect(W.body.mode).toBe("ground");
     expect(W.landedAt).toBeDefined();
+  });
+
+  it("pulled most of the way down and let off, she rises all the way back, smoothly", () => {
+    const { g } = aloft(), W = g.witches[0];
+    fly(g, 2.2, 1);
+    expect(W.body.mode).toBe("treetop"); expect(W.body.lift).toBeLessThan(0.4); // (lower than the old commit ever let her hover)
+    let y = W.body.lift, most = 0;
+    fly(g, 4, 0, () => { most = Math.max(most, W.body.lift - y); y = W.body.lift; });
+    expect(most).toBeLessThanOrEqual(g.tuning.leash.chain!.taut!.tug.rise * STEP + 1e-9);
+    expect(W.body.mode).toBe("treetop"); expect(W.body.lift).toBe(1); expect(W.tug).toBeUndefined();
   });
 
   it("switched off, the same pull leaves her in the treetops, as before", () => {
@@ -241,7 +295,7 @@ describe("the taut chain in play, on foot", () => {
     const { g, c } = aloft(), W = g.witches[0];
     let landed = -1, popped = -1, tm = 0;
     fly(g, 10, 1, () => { tm += STEP; if (landed < 0 && W.body.mode === "ground") landed = tm; if (popped < 0 && !W.leash.stack.includes(c.id)) popped = tm; });
-    expect(landed).toBeGreaterThan(1.5);
+    expect(landed).toBeGreaterThan(2);
     expect(popped).toBeGreaterThan(landed + 1.5);
   });
 });
