@@ -60,9 +60,9 @@
       ],
       "links": [
         "rules/rosters.ts",
-        "config/kinds.json"
+        "rules/kinds.ts"
       ],
-      "notes": "\"home\" plays home by roster, one area per kind she knows (the 10 kinds introduced at home and each kind whose island she's found, map.found: growing outward, its first areas the same; islandAreas its least, the kinds again past one each), its legends dealt each night, 1 in 5 areas; a kind's name (?island=fox) plays that kind's island, its own seed (where it lies on the sea chart) and size by phase (10 a phase), its roster that kind plentiful, 1-3 kinds new to its phase and the rest by bearing; empty, areas of random types as before."
+      "notes": "\"home\" plays home by roster (Ed, 2026-11-04; rules/rosters.ts homeRoster): one area per kind whose island she's found (map.found), filled up to home.start (5) with home's starting kinds, chosen each night, growing outward, its legends dealt each night, 1 in 5 areas; a kind's name (?island=fox) plays that kind's island, its own seed (where it lies on the sea chart) and size by phase (islands.phaseSizes: 10, 15, 20, 25, 30; 10 a phase till 2026-11-04), its roster that kind plentiful, 1-3 kinds new to its phase and the rest by bearing; empty, areas of random types as before."
     },
     "map.found": {
       "what": "the kinds whose islands she's found (the night's legends favour the others)."
