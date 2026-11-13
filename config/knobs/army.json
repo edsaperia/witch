@@ -626,7 +626,7 @@
           "by": "Ed",
           "date": "2026-11-13",
           "quote": "the transition from treetop to ground isn't smooth; she is pulled down some of the way, and then falls to the ground.",
-          "rest": "his playtest of v7948; so the pull carries her all the way down in one curve and she is in ground mode as she arrives: tug.commit went, tug.hold and tug.ease came, tug.perMetre 0.022 to 0.05 to keep it about 3 s"
+          "rest": "his playtest of v7948; so the pull carries her all the way down in one curve and she is in ground mode as she arrives: the tug's commit knob went, its hold and ease came, its perMetre 0.022 to 0.05 to keep it about 3 s"
         },
         {
           "by": "Ed",
