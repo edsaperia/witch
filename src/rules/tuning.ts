@@ -210,6 +210,9 @@ export interface Tuning {
    *  area put down where she stands `areaLock` ahead, a wall of rollers `rollerLead` as far; straight bolts and rollers at her at least
    *  `speedFloor` times her ground speed; `on` false (?ranged=old) the old aim. */
   ranged?: import("./attacks/aim").RangedTuning;
+  /** Shot marks (Ed, 2026-11-13, "Mark the ground"; rules/attacks/marks.ts): where a wild shot ends, a small brief mark in its
+   *  element that hurts or slows whoever stands in it; `on` false (?shotmarks=0): none. */
+  shotMarks?: import("./attacks/marks").ShotMarksTuning;
   /** Hostile wild creatures idle round their area's runestone (rules/creatures.ts idlesAtStone): within radius metres of it, clear metres off it. */
   stoneIdle?: { on: boolean; radius: number; clear: number };
   /** Idling and dancing creatures keep off the sigils on the floor (rules/sigilAvoid.ts). */

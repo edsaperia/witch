@@ -39,6 +39,9 @@ export interface SpellWorld {
   force?(target: Hittable, fx: number, fz: number, push: number, dt: number, source?: number): void;
   /** Whether a caster is still winding up this cast (not stunned, gone or off its target): a cast it isn't is dropped at its release. */
   stillCasting?(source: number, cast: number): boolean;
+  /** A shot ended (a bolt or a roller run out, a lob landed) leaving nothing of its own: the world may mark the ground there
+   *  (rules/attacks/marks.ts); absent: nothing. */
+  shotEnded?(S: SpellState, b: Body, time: number): void;
   /** A caster's packmates (its own kind on its own side, awake, not itself) within r of (x, z), nearest first; absent: none (attack.pack
    *  does nothing). */
   packmates?(source: number, x: number, z: number, r: number): readonly { id: number; x: number; z: number }[];
@@ -86,6 +89,9 @@ export interface Zone {
   /** a one-off strike (an area) rather than a lingering zone; what an expanding ring has hit already */
   once: boolean; hit: (number | string)[];
   element: string; look: string;
+  /** a shot's mark (rules/attacks/marks.ts): what it does, how long a foe must stand in a hurting one before it bites, and how many
+   *  ticks running each has been in it ([ticks, the last tick it was seen]) */
+  mark?: { kind: string; stand: number; ticks: number; dwell: Map<string, [number, number]> };
 }
 /** A beam: from its caster along `angle`, `length` long and `width` wide; charging (its telegraph thin) till `liveAt`, then burning in
  *  ticks till `until`, off between its pulses; turning by its sweep, track or spin. */
@@ -730,6 +736,8 @@ function end(S: SpellState, W: SpellWorld, lib: Library, b: Body, time: number, 
   const list = why === "land" ? (b.attack.on?.land ?? []) : (b.attack.on?.expire ?? []);
   if (list.length) S.events.push({ kind: "split", at: time, x: b.x, z: b.z, attack: b.name, source: b.source, body: b.id });
   for (const c of list) child(S, W, lib, b, c, time, why);
+  // (a cast's own shot that leaves nothing of its own: its mark on the ground, rules/attacks/marks.ts)
+  if (!list.length && b.depth === 0 && (b.kind === "bolt" || b.kind === "lob" || b.kind === "runner")) W.shotEnded?.(S, b, time);
 }
 
 function stepBody(S: SpellState, W: SpellWorld, lib: Library, b: Body, time: number, dt: number): void {
@@ -915,6 +923,19 @@ function stepZone(S: SpellState, W: SpellWorld, z: Zone, time: number, dt: numbe
   if (time >= z.until) { z.alive = false; S.events.push({ kind: "expire", at: time, x: z.x, z: z.z, attack: z.name, source: z.source, zone: z.id }); return; }
   if (time < z.nextTick) return;
   z.nextTick += z.tick;
+  if (z.mark) {
+    // (a shot's mark, rules/attacks/marks.ts: its slow on whoever's in it now; its damage once each, on a foe that has stood in it
+    // `stand` s running)
+    const M = z.mark, tick = ++M.ticks;
+    for (const t of W.near(z.x, z.z, z.r + 2)) if (inZone(z, t.x, t.z, t.r, time)) {
+      const key = targetKey(t), d = M.dwell.get(key), n = d && d[1] === tick - 1 ? d[0] + 1 : 1;
+      if (d) { d[0] = n; d[1] = tick; } else M.dwell.set(key, [n, tick]);
+      const bites = z.damage > 0 && n * z.tick >= M.stand - 1e-9 && !z.hit.includes(key);
+      if (!bites && !z.effect) continue;
+      if (strike(S, W, z.attack, t, bites ? z.damage : 0, z.x, z.z, z.side, z.species, z.source, z.name, time, undefined, { zone: z.id }, z.cast) && bites) z.hit.push(key);
+    }
+    return;
+  }
   // (a lingering zone: each tick, everything in it its share of the damage a tick and its effect; her damaged once, its effect each tick)
   const ticks = Math.max(1, Math.round((z.until - z.from) / z.tick));
   for (const t of W.near(z.x, z.z, z.r + 2)) if (inZone(z, t.x, t.z, t.r, time)) strike(S, W, z.attack, t, z.damage / ticks, z.x, z.z, z.side, z.species, z.source, z.name, time, z.hit, { zone: z.id }, z.cast);
