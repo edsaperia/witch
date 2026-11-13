@@ -155,6 +155,7 @@ glossary; these are the prototype's), by note.
 - Loose sigil
 - Legend tether
 - Chain drag
+- Taut chain
 - Commanded feeding
 - Won ones out of the way
 - Follower buffs
@@ -173,6 +174,7 @@ glossary; these are the prototype's), by note.
 - Party animal
 - Combat
 - Attack grammar
+- Ranged aim
 - Siege
 - Wild watch / chase
 - Enraged
@@ -192,10 +194,12 @@ glossary; these are the prototype's), by note.
 - Wild / happy / leashed / enraged
 - Runaway
 - Restless / angry legend, relic
+- The challenge circle hidden till the party
 
 ### [The treehouse and its house](house.md)
 
 - The house one room
+- No edge at the Terrace
 - Telephone
 - Landing cooldown
 - Current brewing authority (Ed, 2026-10-31):
@@ -211,6 +215,7 @@ glossary; these are the prototype's), by note.
 - Furniture: size, freestanding, mess and layout
 - The stations regrouped
 - Station menus
+- No ∅ cards
 - Starting bags
 - Found bags
 - Bag names
@@ -337,6 +342,7 @@ glossary; these are the prototype's), by note.
 - The GPU memory budget
 - Quality ladder
 - Palette-indexed art
+- Sail take-off freeze
 
 ### [The run](run.md)
 
@@ -450,6 +456,7 @@ glossary; these are the prototype's), by note.
 - Trail colours
 - Tree normal maps switch
 - Tree normal directions
+- Tree normal directions: never waited for
 
 ### [The witch's art](witch-art.md)
 

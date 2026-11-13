@@ -27,3 +27,9 @@ it("bounds the raw stall ring and names only the five largest measured sections"
   expect(log.count).toBe(70); expect(log.stalls).toHaveLength(50);
   expect(log.stalls.at(-1)?.parts).toEqual([["f", 10], ["e", 9], ["d", 8], ["c", 7], ["b", 6]]);
 });
+it("keeps the programs and textures a slow frame made, and names them in the overlay's line (Ed's sail take-off, 2026-11-12)", () => {
+  const log = new StallLog(() => {}, () => 1000, false);
+  log.frame({ ...sample(5400), gpu: { programs: 7, textures: 2 } });
+  expect(log.stalls[0].gpu).toEqual({ programs: 7, textures: 2 });
+  expect(log.line()).toContain("7 programs, 2 textures made");
+});

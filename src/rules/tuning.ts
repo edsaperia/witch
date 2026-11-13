@@ -196,14 +196,20 @@ export interface Tuning {
   notice: { radius: number; curious: number; skittish: number };
   /** Dodging matters (Ed, 2026-10-08: "almost all animals are easily evaded simply by walking backwards ... good play should
    *  require effective use of dodge"): against the witch, a: committed strikes (closing while winding up, a lead at release,
-   *  a longer lunge, a longer untouchable blink, at most `tokens` winding up on her at once); b: predictive aim (shots, lobs and
-   *  charges aimed at release where she'll be, shots living longer, ranged windups shorter); c: packs cutting off her retreat
+   *  a longer lunge, a longer untouchable blink, at most `tokens` winding up on her at once); b: predictive aim (charges aimed at
+   *  release where she'll be, lobs `lobLead`, shots reaching `range` times as far and living longer; `speed` and `windup` are the
+   *  old pack bolts' own, never a species' shot's, and since `ranged` their lead is that rule's); c: packs cutting off her retreat
    *  (rules/combat.ts, rules/movement.ts). ?dodge=a,b,c picks which. */
   dodge?: {
     a: { on: boolean; lead: number; commit: number; chase: number; lunge: number; surge: number; width: number; gone: number; tokens: number; swarm: number; swarmTokens: number; gap: number; heavy: { species: string[]; speed: number; accel: number; home: number } };
     b: { on: boolean; lead: number; lobLead: number; chargeLead: number; life: number; windup: number; range: number; speed: number };
     c: { on: boolean; species: string[]; moving: number; share: number; angle: number; reach: number; ahead: number; sprint: number };
   };
+  /** Creatures' ranged attacks aim where she's going (Ed, 2026-11-12; rules/attacks/aim.ts): followed through the wind-up, `lead` of
+   *  the way to where she'll be on arrival, locked `commit` s before the release and `lock` s (by level) before it can reach her, an
+   *  area put down where she stands `areaLock` ahead, a wall of rollers `rollerLead` as far; straight bolts and rollers at her at least
+   *  `speedFloor` times her ground speed; `on` false (?ranged=old) the old aim. */
+  ranged?: import("./attacks/aim").RangedTuning;
   /** Hostile wild creatures idle round their area's runestone (rules/creatures.ts idlesAtStone): within radius metres of it, clear metres off it. */
   stoneIdle?: { on: boolean; radius: number; clear: number };
   /** Idling and dancing creatures keep off the sigils on the floor (rules/sigilAvoid.ts). */
@@ -339,7 +345,7 @@ export interface Tuning {
    *  the fighters, invites.wonAway); every witch knocked down or up in the treetops outside its area, the un-won walk back (`walkBack` times their pace) and are stone again, whole; drawn `tint` of the way to the stone colour `grey`, `red` the red at the wake's end. `analyser`: the music spell's
    *  analyser cast on it, `bars` bars from its middle out to `fill` of its radius in `steps` dots (render/challenge.ts).
    *  Off: the find's area as before (an empty clearing, the find to pick up). */
-  challenge?: { on: boolean; radius: number; margin: number; spacing: number; /** its columns' sigils this far (m) over their tops (render/challenge.ts columnSigilsAt) */ sigilGap: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks?: { on: boolean; height: number; burst: number }; statues?: { on: boolean; bars: number; first: number; gap: number; walkBack: number; keepOut: number; grey: number[]; tint: number; red: number }; analyser?: { bars: number; steps: number; fill: number }; /** Its floor (render/challenge.ts carvingLook; Ed, 2026-11-04, on #1804): its carved sigil's glow while the statues are stone, waking (red), awake (cold), won (warm), fading over `fade` s as they go back to stone; `floor` the moonlight on its stone floor. */ carving?: { stone: number; red: number; wild: number; warm: number; fade: number; floor: number } };
+  challenge?: { on: boolean; radius: number; margin: number; spacing: number; /** its columns' sigils this far (m) over their tops (render/challenge.ts columnSigilsAt) */ sigilGap: number; adults: number; youths: number; castReach: number; findSets: boolean; fireworks?: { on: boolean; height: number; burst: number }; statues?: { on: boolean; bars: number; first: number; gap: number; walkBack: number; keepOut: number; grey: number[]; tint: number; red: number }; analyser?: { bars: number; steps: number; fill: number }; /** Its floor (render/challenge.ts carvingLook; Ed, 2026-11-04, on #1804): its carved sigil's glow while the statues are stone, waking (red), awake (cold), won (warm), fading over `fade` s as they go back to stone; `floor` the moonlight on its stone floor. */ carving?: { stone: number; red: number; wild: number; warm: number; fade: number; floor: number }; /** Hidden in the forest before the party starts and after a lost one, fading in or out over `fade` s (rules/challenge.ts stepReveal; Ed, 2026-11-12). */ hide?: { on: boolean; fade: number } };
   treeMarginFromSoundsystem: number;
   bushDensity: number;
   /** How much bushes gather in clumps with open floor between (0 even, 1 strongly clumped). */
@@ -560,7 +566,7 @@ export interface Tuning {
      *  at full length, moving away, she drags it, slowed by the heaviest taut chain's drag by level (youth, adult, legend: 1 stops her);
      *  0 length: no chains, and adults don't ground her. Drawn (render/leash/stack.ts): a chain shows from fadeFrom of its length (a
      *  smoothstep to full), glowing glow brighter taut; a refused take-off rattles the chains holding her (adults, legends), strength for time s; youthRise: with a youth on her leash her drawn rise eases this much slower (drawn only: the rules rise as ever). */
-    chain?: { length: number; drag: { youth: number; adult: number; legend: number }; fadeFrom: number; glow: number; rattle: { strength: number; time: number }; youthRise: number } };
+    chain?: { length: number; drag: { youth: number; adult: number; legend: number }; fadeFrom: number; glow: number; rattle: { strength: number; time: number }; youthRise: number; /** The taut chain (Ed, 2026-11-12; rules/tautChain.ts), one sequence under one switch (on false, ?tautchain=0: none of it, as before): on the ground a lighter drag by level (groundDrag) and a taut creature pulled along at her pace less it (not held to its top speed); a taut creature's own run after her hurry times its leash pace; up in the treetops, pulling past a chain's end tugs her down (tug: perMetre of the way a metre pulled, back up rise a second, at commit she comes down); on the ground, pulling a youth's or adult's chain slides its sigil out of her stack (pop: full after fill seconds of steady pulling, draining in drain seconds), full, it's put down where she is; a legend's chain yanks her back metres toward it instead, at most once every `every` seconds; links: the chains' link sizes by rank, youth to legend (m); look: every chain a shared magic-chain colour with its sigil's colour as an occasional flash. */ taut?: { on: boolean; groundDrag: { youth: number; adult: number; legend: number }; hurry: number; tug: { perMetre: number; rise: number; commit: number }; pop: { fill: number; drain: number }; yank: { metres: number; every: number }; links: number[]; /** every chain one magic-chain colour (0 to 255) at alpha, its taut glow times glow; the sigil's colour a flash running creature to stack every `every` seconds (staggered by chain), for time seconds, width of its length (Ed, 2026-11-12) */ look: { colour: number[]; alpha: number; glow: number; flash: { every: number; time: number; width: number } } } } };
   /** Follower buffs (Ed, 2026-11-03; rules/buffs.ts): groups, the kinds' retreats in each group (art/creatures/<id>/creature.js
    *  `retreat`); legend, the stacks a leashed legend gives; pips, an adult's berry pips (max, life s each, warn s before one fades
    *  it twinkles, start: pips a new adult has before it's eaten, 1); and each group's magnitudes, a stack: climbers.dash charges,

@@ -611,6 +611,10 @@
     "clear": 6
   },
   "challenge": {
+    "hide": {
+      "on": true,
+      "fade": 3
+    },
     "on": true,
     "radius": 50,
     "margin": 3,
@@ -628,8 +632,8 @@
     "statues": {
       "on": true,
       "bars": 4,
-      "first": 3.5,
-      "gap": 19,
+      "first": 10,
+      "gap": 10,
       "walkBack": 1.5,
       "keepOut": 2,
       "grey": [0.6, 0.6, 0.63],
@@ -657,7 +661,7 @@
     "value": 0.15,
     "hue": 0
   },
-  "treeNormals": "full",
+  "treeNormals": "32",
   "wind": {
     "on": true,
     "strength": 0.25,
@@ -1131,7 +1135,40 @@
         "strength": 1,
         "time": 0.5
       },
-      "youthRise": 0.85
+      "youthRise": 0.85,
+      "taut": {
+        "on": true,
+        "groundDrag": {
+          "youth": 0.15,
+          "adult": 0.4,
+          "legend": 1
+        },
+        "hurry": 1.5,
+        "tug": {
+          "perMetre": 0.022,
+          "rise": 0.3,
+          "commit": 0.4
+        },
+        "pop": {
+          "fill": 2.5,
+          "drain": 1.5
+        },
+        "yank": {
+          "metres": 4,
+          "every": 1.2
+        },
+        "links": [0.62, 1, 1.5],
+        "look": {
+          "colour": [184, 182, 210],
+          "alpha": 0.6,
+          "glow": 0.35,
+          "flash": {
+            "every": 4,
+            "time": 0.9,
+            "width": 0.14
+          }
+        }
+      }
     },
     "babies": {
       "gap": 5,
@@ -1458,6 +1495,19 @@
       "ahead": 0.5,
       "sprint": 23
     }
+  },
+  "ranged": {
+    "on": true,
+    "lead": 1,
+    "commit": 0.2,
+    "lock": {
+      "young": 0.75,
+      "adult": 0.6,
+      "legend": 0.6
+    },
+    "speedFloor": 2,
+    "areaLock": 0.7,
+    "rollerLead": 0.5
   },
   "stoneIdle": {
     "on": true,

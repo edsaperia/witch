@@ -30,13 +30,13 @@ describe("the broom's parts, a slot at each of its three stations (Ed, 2026-11-0
   });
   it("only the empty slot and the parts she's found can be chosen (an unfound one is a silhouette)", () => {
     const { sh, L } = linesAt("broomBay"), tip = L[0], found = new Set(["missile"]), chips = L[L.length - 1];
-    expect(canChoose(sh[tip.shelf], tip, 0, found)).toBe(true); // ∅
+    expect(canChoose(sh[tip.shelf], tip, 0, found)).toBe(true); // the empty slot
     expect(canChoose(sh[tip.shelf], tip, 1, found)).toBe(true); // the Missile nose, found
     expect(canChoose(sh[tip.shelf], tip, 2, found)).toBe(false);
     expect(canChoose(sh[tip.shelf], tip, 3, found)).toBe(false);
     expect(canChoose(sh[chips.shelf], chips, 0, found)).toBe(false); // (the chips only focus)
   });
-  it("a card chosen fits the part in its slot (∅ empties it); on her, the set and its spell come at once, mid-night", () => {
+  it("a card chosen fits the part in its slot (the empty slot empties it); on her, the set and its spell come at once, mid-night", () => {
     let f = bareBroom();
     f = choose(f, "tip", "missile"); f = choose(f, "chassis", "fairing"); f = choose(f, "exhaust", "nozzles");
     expect(fittedKey(f)).toBe("missile,fairing,nozzles");

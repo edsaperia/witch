@@ -1,0 +1,5 @@
+{
+  "reason": "creatures' ranged attacks aim where she's going (Ed, 2026-11-12: \"the preparation time seems long, projectile speed is low, if you're moving at all they basically never hit you\"; option C with its sub-rules, tuning ranged, rules/attacks/aim.ts): every shot, lob and area at her follows her through its wind-up and locks before it can reach her, the caster holding still from the lock; straight bolts and rollers at her fly at least twice her ground speed; fans and walls keep one body on the aim; the old pack bolts lock the same way, their 0.35 s wind-up lifted where needed; ?ranged=old the old aim",
+  "frames": { "wave-fight": "shooters hold still before they let go, their telegraphs follow her, and their shots fly faster and land differently" },
+  "rules": { "*": "the fights play out differently: where shots at her go and which hit, how fast they fly, when shooters stand still, the old pack bolts' wind-ups; creatures' health, the witch's, the combat state and its spells" }
+}
