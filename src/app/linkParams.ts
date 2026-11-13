@@ -179,6 +179,9 @@ export function tuningFromLink(params: URLSearchParams) {
   // ?ranged=old: creatures' ranged attacks aimed as before Ed's 2026-11-12 ruling (tuning ranged, rules/attacks/aim.ts): at her place as
   // the wind-up starts (the old pack bolts leading her at their release), no speed floor, fans and walls as laid out before, for comparison.
   if (params.get("ranged") === "old" && tuning.ranged) tuning.ranged = { ...tuning.ranged, on: false };
+  // ?lunge=old: lunges as before Ed's 2026-11-13 change (tuning lunge, rules/combat.ts longLunge): wound up close, sprinting in, and
+  // stopping where they aimed, to compare with the long ones (wound up from about 1.5 dashes off, carrying through to about 2).
+  if (params.get("lunge") === "old" && tuning.lunge) tuning.lunge = { ...tuning.lunge, on: false };
   // ?shotmarks=0: wild shots leave no mark where they end, as before Ed's 2026-11-13 choice ("Mark the ground": tuning shotMarks,
   // rules/attacks/marks.ts), to compare.
   if (params.get("shotmarks") === "0" && tuning.shotMarks) tuning.shotMarks = { ...tuning.shotMarks, on: false };

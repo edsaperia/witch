@@ -32,6 +32,7 @@ const { TUNING, withTuning } = await load("/src/rules/tuning.ts");
 const { newGame, stepGame } = await load("/src/rules/game.ts");
 const { speedFactor, wanderRange } = await load("/src/rules/creatures.ts");
 const { attackOf } = await load("/src/rules/combat/data.ts");
+const { longLunge } = await load("/src/rules/combat.ts");
 const { MOVEMENT } = await load("/src/rules/movement.ts");
 
 const SPECIES = Object.keys(MOVEMENT.profiles);
@@ -122,9 +123,11 @@ function threatOf(g, B, onHer, mine, time, t) {
     const f = c.fight, d = Math.hypot(c.x - B.x, c.z - B.z), A = attackOf(c.species, c.level)?.attack;
     if (!A) continue;
     // a lunge let go at her and about to reach her (blinking before it lets go, it aims where she lands), or a pulse about to go off
-    if (f.lunge && time - (f.readyAt - A.cooldown) >= REACT && d < f.lunge.left + A.range + 2) return { x: f.lunge.dx, z: f.lunge.dz };
+    // (a long lunge carrying through, tuning lunge: one whose blow has struck or that has passed her is no threat any more)
+    const past = f.lunge?.through && (f.lunge.landed || (B.x - c.x) * f.lunge.dx + (B.z - c.z) * f.lunge.dz < 0);
+    if (f.lunge && !past && time - (f.readyAt - A.cooldown) >= REACT && d < f.lunge.left + A.range + 2) return { x: f.lunge.dx, z: f.lunge.dz };
     // committed strikes: its aim locked (dodge.a.commit before it lets go), seen REACT after, within its reach
-    if (commit > REACT && A.delivery === "melee" && f.windupUntil > 0 && f.windupUntil - time <= commit - REACT && d <= (A.lunge ?? 0) * t.dodge.a.lunge + A.range + 3) return at(c.x, c.z);
+    if (commit > REACT && A.delivery === "melee" && f.windupUntil > 0 && f.windupUntil - time <= commit - REACT && d <= Math.max((A.lunge ?? 0) * t.dodge.a.lunge, longLunge(A, t)?.length ?? 0) + A.range + 3) return at(c.x, c.z);
     if (A.delivery === "pulse" && f.windupUntil > 0 && f.windupUntil - time <= 0.1 && d <= (A.radius ?? 5) + 2) return at(c.x, c.z); // (its windup seen long before)
     if (c.charge && time >= (c.charge.from ?? 0) + REACT && d < 16) { const k = Math.hypot(c.charge.dx, c.charge.dz) || 1; if (((B.x - c.x) * c.charge.dx + (B.z - c.z) * c.charge.dz) / (k * d) > 0.8) return { x: c.charge.dx / k, z: c.charge.dz / k }; }
     // a swoop's dive (rules/movement.ts): its telegraph ring and line seen, she blinks as it drops, REACT in, if its line passes her
