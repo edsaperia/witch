@@ -602,6 +602,7 @@
    "owl",
    "bat",
    "raven",
+   "butterfly",
    "moth",
    "glowworm",
    "spider",
@@ -688,6 +689,7 @@
     "elk",
     "owl",
     "bat",
+    "butterfly",
     "moth",
     "toad",
     "salamander",
@@ -708,6 +710,7 @@
     "raven",
     "bat",
     "owl",
+    "butterfly",
     "moth"
    ],
    "armoured": [
@@ -718,6 +721,7 @@
    ],
    "swarm": [
     "bat",
+    "butterfly",
     "moth"
    ],
    "heavy": [

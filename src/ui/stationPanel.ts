@@ -1,5 +1,5 @@
 // A dressing station's panel (Ed, 2026-10-21, the station menus; the mock, previews/ed/station-menus-mock on claude/ed-shots): it
-// slides in from the left on E at a station and away on E again (the pad's ✕ opens it, ○ closes it: platform/bindings.ts), she standing still at it (main.ts, rules/stations.ts;
+// slides in from the left on E at a station and away on E again (the pad's □ opens it, ○ closes it: platform/bindings.ts), she standing still at it (main.ts, rules/stations.ts;
 // Ed, 2026-10-26), over the live game.
 // Its shelves (rules/wardrobe.ts) hold the things she owns, silhouettes for those still to find (no hint: Ed), each shelf's
 // colour grid (5 rows: every colour hers), its fit sliders; and the Workshop's (Ed, 2026-10-22/23; docs/backlog/workshop.md): the bay's
@@ -207,14 +207,14 @@ export class StationPanel {
     this.c.focus(line, Math.max(0, Math.min(at.col, (lines[line]?.n ?? 1) - 1)));
     this.paint();
   }
-  /** Each frame while open: the pad's d-pad or right stick moves, its bottom face button chooses (the left stick walks her, circle closes it:
+  /** Each frame while open: the pad's d-pad or left stick moves, its bottom face button chooses (she stands still, circle closes it:
    *  platform/input.ts padControls leaves the rest of the pad to the panel). */
   update(time: number): void {
     if (!this.id) return;
     const pads = typeof navigator !== "undefined" && navigator.getGamepads ? navigator.getGamepads() : [];
     let dir = "", choose = false, card: -1 | 0 | 1 = 0;
     for (const p of pads) { if (!p) continue; const P = panelPad(p.buttons.map(x => x.pressed), p.axes); choose ||= P.choose; card ||= P.card; dir = P.dir; if (dir) break; }
-    if (choose && !this.padChoose) this.pick(); // (the pad's A or X: platform/input.ts leaves them to the panel while it's open)
+    if (choose && !this.padChoose) this.pick(); // (the pad's choose, ✕ or A: platform/input.ts leaves it to the panel while it's open)
     this.padChoose = choose;
     if (card && card !== this.padCard) this.jump(card); // (L1 and R1: the card before or after, once a press)
     this.padCard = card;

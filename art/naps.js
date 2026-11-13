@@ -14,6 +14,8 @@
 //   flat:  bugs and the low (beetle, woodlouse, spider, moth, snail, toad, mole, hedgehog):
 //          pressed to the ground, legs hidden; the bat and the moth wrap their wings round themselves.
 // napForm(S) is a form for withForm (creatures3d.js): critter(..., { nap: true }) draws a creature with it.
+// (Since 2026-11-12 a kind with a mesh naps as its mesh instead, art/mesh/index.js meshNap; this draws the kinds
+// without one, and every kind under ?meshCreatures=0. Each species' pose is in art/creatures/<id>/nap.js.)
 import { M } from "./core.js";
 import { render, v3 } from "./model3d.js";
 import { CREATURE_NAPS } from "./creatures/index.js";

@@ -220,7 +220,7 @@ function scoreText(o: Omit<WindowJob, "samples">): string {
 }
 
 /** When each note of the patches `only` should start in bars `from` to `to` (seconds from the window's start: its sixteenth
- *  and its own offset, the kit's swing in it), for the timing check (tools/music-lab/tight.mjs). */
+ *  and its own offset, the kit's swing in it), for the timing check (docs/notes/music.md, "Tight"; its runner was never committed). */
 function noteTimes(o: Pick<WindowJob, "seed" | "island" | "landings" | "from" | "to" | "only">): { patch: string; t: number; dur: number }[] {
   const { style } = styled({ ...o, banger: true }), C = new Conductor(style), spb = 60 / style.bpm / 4, out: { patch: string; t: number; dur: number }[] = [];
   for (let b = o.from; b < o.to; b++) {

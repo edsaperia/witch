@@ -1,10 +1,10 @@
 // The treehouse's furniture (Ed, 2026-10-23: real art for the house's objects, config/house/, in place of the plain boxes
 // render/houseRooms.ts drew). Ed's style: "a charming mismatched combination ... cozy cottage vibes sprouting leaves, occasional
 // gothic pieces, and random modern clutter"; a palette per room (one for the whole house since Ed, 2026-11-03: below); its lights "a mix of magic, candles, gas lamps, modern lamps, fairy
-// lights, neon lamps". From the mock (#1017), his answers: twice the size it was (as big as her creator bedroom's: house.json's
+// lights, neon lamps". From the mock (#1017), his answers: twice the size it was (as big as her creator bedroom's: config/house/rooms/'s
 // footprints are twice a real piece's, SIZE), the bed's canopy over its head half, the rooms dim with the glows lighting what's
 // near them, and the clutter fewer, chunkier things that read at a glance.
-// Each piece is a 3D model (model3d.js) built to its object's footprint (w, d, h as house.json gives them, over SIZE), never to where
+// Each piece is a 3D model (model3d.js) built to its object's footprint (w, d, h as its room's file gives them, over SIZE), never to where
 // it stands, so the house's plan can move it: drawn by id, at the house's own art pixel and view.
 //   - Model space: metres of the real piece; x along the wall it backs on (-W/2 to W/2), z out from that wall into the room (its back
 //     at -D/2, its front at D/2), y up from the floor. It's drawn turned by `yaw` (model3d.js render's): 0 its front facing the camera
@@ -16,11 +16,11 @@ import { Model, render } from "./model3d.js";
 import { SHEETED_PIECES, SHEETED_COLOURS } from "./sheeted.js";
 import { BED_COVERS } from "./bedColours.js";
 
-/** House.json's footprints over a real piece's: the pieces drawn twice their real size (Ed, 2026-10-23: "about 2x, as big as in her
+/** The room files' footprints (config/house/rooms/) over a real piece's: the pieces drawn twice their real size (Ed, 2026-10-23: "about 2x, as big as in her
  *  old creator bedroom"), so a piece is built at its footprint over this and drawn this many times over. */
 export const SIZE = 2;
 /** Each piece drawn this much bigger again (Ed, 2026-10-26: "I think they're too small, which makes it hard to see what they are"):
- *  house.json's footprint is the real piece's times SIZE times this, so the piece is the same, drawn bigger, its details chunkier.
+ *  its room file's footprint is the real piece's times SIZE times this, so the piece is the same, drawn bigger, its details chunkier.
  *  The bed's already big; the small ones grow most. */
 export const GROW = { bed: 1, telephone: 1.8, microphone: 1.6, book: 1.7, telescope: 1.6, hats: 1, drumKit: 1.1, synthRack: 1.4, broomBay: 1.35, lathe: 1.2, broomRack: 1.2, broomLift: 1.3, pegboard: 1.4, cauldron: 1.4, teaTable: 1.4, cardTable: 1.4, invitations: 1 };
 export const GROW_ALL = 1.5;
@@ -964,10 +964,10 @@ export function furnitureColours(st = {}, id = "", state = undefined) {
 }
 
 /** A piece, drawn: its sprite (cropped), where its footprint's middle on the floor lands (`origin`, pixels from its top-left) and its
- *  lights in pixels ({ x, y, z, R, rgb, power }, as art/lighting.js shade takes them). foot: { w, d, h } in metres as house.json gives
+ *  lights in pixels ({ x, y, z, R, rgb, power }, as art/lighting.js shade takes them). foot: { w, d, h } in metres as its room's file gives
  *  it (twice the real piece's, SIZE), w along the wall it backs on (its front along d); yaw: which way it faces; ppm: art pixels a
  *  metre (the house's: 1 / the view's metres an art pixel); pitch: the view's; state: one of its FURNITURE_STATES; curve: the radius (m,
- *  house.json's) of the round wall it backs on, its back that far from the room's middle (0: straight), for the pieces in BEND. */
+ *  its room's) of the round wall it backs on, its back that far from the room's middle (0: straight), for the pieces in BEND. */
 /** @param {string} id @param {{ w: number, d: number, h: number }} foot @param {object} [st] @param {{ ppm?: number, pitch?: number, yaw?: number, state?: string, curve?: number }} [o] */
 export function furnitureSprite(id, foot, st = {}, { ppm = 32 / 3, pitch = .6, yaw = Math.PI / 4, state = undefined, curve = 0 } = {}) {
   const build = PIECES[id];

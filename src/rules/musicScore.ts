@@ -3,6 +3,7 @@
 // conductor (rules/musicPlan.ts) has chosen. Numbers only, no sound: src/platform/audio/musicEngine.ts
 // plays the notes. The same seed and section always give the same notes.
 import { hash2 } from "./random";
+import { seedName } from "./kinds"; // (a renamed kind keeps its melody)
 import voices from "../../config/creature-voices.json";
 import { sectionOf } from "./creatureConfig";
 import type { CuratedStep, FamilyDef, SetDef } from "./musicSet";
@@ -178,7 +179,8 @@ export interface ArcStep {
   energy: number;
   progression?: string;
   /** Semitones above the style's root: the stage's key (its scale is the style's one, dorian: Ed, 2026-10-09, "Keep it all
-   *  in the dorian"; the key changes between stages stay). */
+   *  in the dorian"; the key changes between stages stay; since then a night's set gives a step its own `mode`, and banger
+   *  mode plays most waves in natural minor: Ed, 2026-11-11, "More 'minor feel'", rules/musicBanger.ts). */
   transpose?: number;
   /** Its sections on the form (Ed, 2026-10-09: "ABAC; the first two sections should be 4 on the floor, the third sections
    *  breakbeats, and the fourth a breakdown"): A and B one four-on-the-floor block (`land` the first time round, as the
@@ -1090,7 +1092,7 @@ const nameHash = (name: string) => { let h = 0; for (let i = 0; i < name.length;
 export function circleParts(style: MusicStyle, species: string): [string, { p: string; level: number }][] {
   const C = style.circle;
   if (!C) return [];
-  const fam = VOICE_FAMILIES[species]?.family ?? "big", h = nameHash(species), out: [string, { p: string; level: number }][] = [];
+  const fam = VOICE_FAMILIES[species]?.family ?? "big", h = nameHash(seedName(species)), out: [string, { p: string; level: number }][] = [];
   for (const [name, u] of [...Object.entries(C.every), ...Object.entries(C.families[fam] ?? C.families.big ?? {})]) {
     const ps = Array.isArray(u.p) ? u.p : [u.p];
     out.push([name, { p: ps[(h + nameHash(name)) % ps.length], level: u.level ?? 1 }]);
@@ -1187,7 +1189,7 @@ function scoreNotes(style: MusicStyle, plan: BlockPlan, next: BlockPlan | null, 
     if (!pat) continue;
     // a legend's layer, its species' own: its rhythm placed its own way, its melody from its own
     // chord tone and in its own octave (still the music's chords, so it sits in with them)
-    const sh = own ? nameHash(circle!.species) : 0, phase = own ? (sh % 8) * 2 : 0;
+    const sh = own ? nameHash(seedName(circle!.species)) : 0, phase = own ? (sh % 8) * 2 : 0;
     const at = own && ctx.circleStep !== undefined ? ctx.circleStep : barIn * 16 + s; // (the layer on its own clock, or the music's)
     const i = (at + phase) % pat.length;
     // the composer's bassline (Ed, 2026-11-08: "smarter rules"): the part's pattern bar varied over a four-bar phrase, stepping
@@ -1230,7 +1232,7 @@ function scoreNotes(style: MusicStyle, plan: BlockPlan, next: BlockPlan | null, 
     }
     const { ch, dur } = hitAt(pat, i);
     if (ch === "." || ch === "-") continue;
-    const seed = own ? ctx.seed + nameHash(circle!.species) : ctx.seed; // (a legend's layer its species' own melody)
+    const seed = own ? ctx.seed + nameHash(seedName(circle!.species)) : ctx.seed; // (a legend's layer its species' own melody)
     const r = hash2(own && ctx.circleStep !== undefined ? ctx.circleStep : step, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), seed + phrase * 7919);
     if (ch === "?" && r >= a.energy) continue;
     const level = u.level * scaleLevel * (0.94 + 0.06 * r) * (building && !own ? 0.45 + 0.55 * build : 1); // (the boot's few speakers quieter, filling out to the twelfth)

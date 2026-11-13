@@ -81,7 +81,8 @@ describe("the Lullaby hat (Ed, 2026-10-12: 'Wild creatures that are asleep wake 
   it("put down, wild creatures near it sleep, even with her on the ground beside them, till a 💌 lands on one", () => {
     const g = game(wearingHat("lullaby")), W = g.witches[0], p = spot(g), L = TUNING.spells.lullaby!;
     at(g, p.x, p.z);
-    const a = WILD_STATE(g, p.x + 8, p.z, 1), b = WILD_STATE(g, p.x - 8, p.z), far = WILD_STATE(g, p.x + L.range + 10, p.z);
+    // (b a youth too: a wild baby beside a youth going for her runs from the fight, out of the hat's reach, before it's down: rules/wildBabies.ts, Ed 2026-11-13)
+    const a = WILD_STATE(g, p.x + 8, p.z, 1), b = WILD_STATE(g, p.x - 8, p.z, 1), far = WILD_STATE(g, p.x + L.range + 10, p.z);
     putDown(g);
     for (const c of [a, b]) { expect(c.asleep).toBe(true); expect(c.lulled).toBe(true); }
     expect(far.asleep).toBeFalsy();

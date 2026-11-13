@@ -5,7 +5,7 @@ import { defaultStyle } from '../../../art/generator.js';
 import { rigGearKey } from './rigBuild';
 
 const style = defaultStyle();
-const counts: Record<string, number> = { armadillo: 4, bat: 2, bee: 6, beetle: 6, crab: 8, dragonfly: 6, frosttroll: 2, hedgehog: 4, heron: 2, mole: 4, moth: 6, owl: 2, penguin: 2, raven: 2, scorpion: 8, spider: 8, toad: 4, turtle: 4, woodlouse: 14 };
+const counts: Record<string, number> = { armadillo: 4, bat: 2, bee: 6, beetle: 6, butterfly: 6, crab: 8, dragonfly: 6, frosttroll: 2, hedgehog: 4, heron: 2, mole: 4, moth: 6, owl: 2, penguin: 2, raven: 2, scorpion: 8, spider: 8, toad: 4, turtle: 4, woodlouse: 14 };
 const legless = new Set(['featheredserpent', 'hydra', 'rattlesnake', 'snail', 'snake']);
 const bakeStiltParts = rigParts as unknown as (id: string, level: number, style: unknown, gear: { stilt: true }) => {
   template: string; joints: { legs: { mat: number }[] }; pieces: { torso: unknown[] | null; head: unknown[] | null }; discs: Record<number, Record<number, unknown>>;
@@ -39,7 +39,7 @@ describe('optional all-legged Stiltwalkers extraction', () => {
     expect(rigGearKey({ woken: true, stilt: true })).toBe('woken|stilt');
   });
   it('keeps real wing surfaces with the normal body and excludes baked ground shadows', () => {
-    for (const id of ['bat', 'moth', 'dragonfly']) {
+    for (const id of ['bat', 'butterfly', 'moth', 'dragonfly']) {
       const { m } = stiltRigCapture(id, 2, style);
       expect(m.flats.some((q: { part: string }) => q.part === 'body')).toBe(true);
       expect(m.parts.filter((q: { group: number }) => q.group === 0).every((q: { part: string }) => q.part === 'ground-shadow')).toBe(true);

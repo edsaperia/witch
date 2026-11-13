@@ -20,7 +20,7 @@ import { Post, type PostTuning } from "../post";
 import { CHART_SCALE, K, SIGIL_TIERS } from "./chartScale";
 import { buildIslandMesh, RELIEF, type IslandMesh } from "./islandMesh";
 export { CHART_SCALE };
-/** Till an island's land comes, about how far it reaches (units) by its phase: its round coast drawn that big. */
+/** Till an island's land comes, about how far it reaches (units) by its phase (nothing of it is drawn till then: island()). */
 const REACH = [8, 5.5, 8, 11, 13, 15];
 const reachOf = (d: { id: string; phase: number }) => (d.id === "home" ? REACH[0] : REACH[Math.max(1, Math.min(5, d.phase))]);
 /** A typical island's reach (units), for the zoom's limits. */
@@ -83,7 +83,7 @@ const SIGIL_FLOOR = 9;
 
 /** An island's real land (app/chartOutlines.worker.ts): its coast's loops (x, z interleaved, metres from its home's middle; `sea`
  *  its coast, one loop for each piece of land, else a lake's shore), their box, and its ground on a grid (heights and colours). */
-export interface ChartOutline { loops: { pts: ArrayLike<number>; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; /** its meshes, made with its ground off the page (render/chart/islandMesh.ts) */ mesh?: IslandMesh; /** its sigil's ink at each tier, drawn off the page with it */ sigils?: { px: number; ink: ArrayLike<number> }[]; ground?: { x0: number; z0: number; step: number; cols: number; rows: number; h: ArrayLike<number>; rgb: ArrayLike<number>; /** 0 land, 1 sea, 2 lake */ water?: ArrayLike<number>; /** a lake's water level (m, as h) */ level?: ArrayLike<number>; /** each sample's lake look (chartOutlines.worker.ts LOOK_IDS: 0 water, 1 ice, 2 lava, 3 oasis, 4 sinkhole, 5 tarn, 6 hot spring, 7 rust pool, 8 lily pond) */ looks?: ArrayLike<number> } }
+export interface ChartOutline { loops: { pts: ArrayLike<number>; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; /** its meshes, made with its ground off the page (render/chart/islandMesh.ts) */ mesh?: IslandMesh; /** its sigil's ink at each tier, drawn off the page with it */ sigils?: { px: number; ink: ArrayLike<number> }[]; ground?: { x0: number; z0: number; step: number; cols: number; rows: number; h: ArrayLike<number>; rgb: ArrayLike<number>; /** 0 land, 1 sea, 2 lake */ water?: ArrayLike<number>; /** a lake's water level (m, as h) */ level?: ArrayLike<number>; /** each sample's lake look (chartOutlines.worker.ts LOOK_IDS: 0 water, 1 ice, 2 lava, 3 oasis, 4 sinkhole, 5 tarn, 6 tar pit, 7 rust pool, 8 lily pond) */ looks?: ArrayLike<number> } }
 
 export interface ChartIsland {
   id: string;
@@ -91,7 +91,7 @@ export interface ChartIsland {
   x: number; y: number;
   /** Its phase (0 home), for its size on the chart. */
   phase: number;
-  /** Its round coast (rules/islandShape.ts islandCoast radii), drawn until its real land comes. */
+  /** Its round coast (rules/islandShape.ts islandCoast radii); not drawn (Ed, 2026-10-13: nothing till its real land comes). */
   radii: ArrayLike<number>;
   /** Its real land, once made. */
   outline?: ChartOutline;
@@ -216,7 +216,7 @@ void main() {
 /** The sea's shallows' colours, and a lake's (lighter than the sea, as in the game: about 0.15, 0.28, 0.37 against 0.09, 0.18,
  *  0.26; hotel, #711), each pale by its shore. */
 const SEA_WATER = { deep: new THREE.Color(0.08, 0.2, 0.34), pale: new THREE.Color(0.22, 0.46, 0.52) }, LAKE_WATER = { deep: new THREE.Color(0.15, 0.28, 0.37), pale: new THREE.Color(0.3, 0.52, 0.56) };
-/** How deep (m) a lake's shallows fade out to. */
+// (how deep a lake's shallows reach by its shore: render/chart/islandMesh.ts LAKE_SHALLOWS)
 // A lake by its island's biome (Ed, 2026-10-12: frozen in the cold, lava in the volcano, an oasis in the desert, a sinkhole in the
 // jungle; chartOutlines.worker.ts LAKE_LOOKS, which picks each lake's, blending by bearing, and paints its rim on its shore): aLook 0 water (as the shallows), 1
 // ice (pale, frost white by the shore, faint cracks), 2 lava (glowing and slowly churning, crusting dark by the shore), 3 an
@@ -309,7 +309,7 @@ void main() {
   } else c = mix(uDeep, uPale, a * a);
   gl_FragColor = vec4(c * uDim * moonLit(vL, 1.0 / uYScale), 1.0);
 }`;
-/** How far in from its shore (m) a special lake's edge reaches. */
+// (how far in from its shore a special lake's edge reaches: render/chart/islandMesh.ts LAKE_RIM)
 
 /** One island's meshes and where it is. */
 /** A sail's flight (fly): its legs' ends (the camera's focus, distance and tilt, in chart units) and their seconds; how far in. */
@@ -494,7 +494,7 @@ export class SeaChart {
   }
 
   /** An island: its land rising out of the sea (its real ground once made: its hills, each area's floor, its beaches, its lakes
-   *  under the water; till then a low landmass raised from its round coast), a shelf of shallows round it; its sigil lying on
+   *  under the water; till then nothing: Ed, 2026-10-13, no round coast in its place), a shelf of shallows round it; its sigil lying on
    *  it glowing if she can sail there; a gold ring on the water if won. */
   private island(d: ChartIsland): Isle {
     const g = new THREE.Group(), x = d.x * CHART_SCALE, z = d.y * CHART_SCALE;
@@ -791,7 +791,7 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
     const r = this.canvas.getBoundingClientRect();
     return { x: r.left + d.x * r.width, y: r.top + (1 - d.y) * r.height, r: 0.045 * r.height };
   }
-  /** Where an island's drawing reaches highest on the screen (render/chart/chartPin.ts islandTop): its land's reach, or its sigil's
+  /** Where an island's drawing reaches highest on the screen (render/chart/chartPinPlace.ts islandTop): its land's reach, or its sigil's
    *  halo and sparkle where they're wider, at its land's top height. CSS pixels from the canvas's top left, as screenOf. */
   screenTopOf(id: string): { x: number; y: number } | null {
     const i = this.isles.get(id); if (!i) return null;
@@ -905,7 +905,7 @@ export function releaseSeaChart(chart: SeaChart): void {
   if (pooled?.chart !== chart) { chart.dispose(); return; }
   chart.reset(); pooled.busy = false;
 }
-/** A stand-in island (a small heightfield with a lake of each look, sailable, won): its materials, drawn once, link the islands' programs. */
+/** A stand-in island (a small heightfield with a lake, sailable, won): its materials, drawn once, link the islands' programs. */
 function standIn(id: string, x: number): ChartIsland {
   const cols = 9, rows = 9, n = cols * rows, h = new Float32Array(n), water = new Uint8Array(n), level = new Float32Array(n), looks = new Uint8Array(n), rgb = new Uint8Array(n * 3).fill(120);
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) { const i = r * cols + c, d = Math.hypot(c - 4, r - 4); h[i] = d < 3.5 ? 40 - d * 8 : -20; if (d < 1.2) { water[i] = 2; level[i] = h[i] + 2; looks[i] = 1; } else if (h[i] <= 0) water[i] = 1; }

@@ -212,7 +212,7 @@ async function render(name: string, seconds: number, play: Play) {
     void oc.suspend(Math.round(5.2 * rate) / rate).then(() => { s.knockdown(); return oc.resume(); });
   } else if (name === "species-calls") {
     // one line per family (and the owl's hoot, the raven's croak, the canids' howl), each a young one's grumble then a happy reply
-    const lines: [string, number][] = [["owl", 1], ["raven", 1], ["wolf", 2], ["fox", 1], ["bear", 2], ["boar", 1], ["elk", 2], ["hare", 0], ["squirrel", 1], ["beetle", 1], ["moth", 1], ["snake", 1], ["toad", 1], ["bat", 1], ["otter", 1], ["lynx", 1]];
+    const lines: [string, number][] = [["owl", 1], ["raven", 1], ["wolf", 2], ["fox", 1], ["bear", 2], ["boar", 1], ["elk", 2], ["hare", 0], ["squirrel", 1], ["beetle", 1], ["butterfly", 1], ["snake", 1], ["toad", 1], ["bat", 1], ["otter", 1], ["lynx", 1]];
     lines.forEach(([sp, lv], i) => {
       const at = i * 1.3;
       void oc.suspend(Math.round(at * rate) / rate).then(() => { s.speak(v(sp, lv), i % 2 ? "happy" : "grumpy"); return oc.resume(); });

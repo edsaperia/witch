@@ -49,7 +49,7 @@ export interface HouseOutline {
  *  (true unless false): the Terrace's gap and its notch out to the crown's edge, with the ring of lights round them; false, the crown
  *  whole over the Terrace as over every room (Ed, 2026-10-26: "I'd like to try the treehouse canopy not being cut-through while she's
  *  in treehouse mode - this will make it easier for her to land in the treehouse successfully, as the area is bigger"; the tuning's
- *  treehouse.house.crown.gap, a switch on the pause page). */
+ *  treehouse.house.crown.whole, true for no gap, a switch on the pause page). */
 export interface CrownInput { outline: HouseOutline; floor: number; seed: number; open?: { x: number; z: number; r: number }[]; gap?: boolean;
   /** its lights wound round it (Ed, 2026-10-27: "Maybe think of the lights wrapped around the crown in a spiral (if seen top down)"):
    *  this many long strands spiralling out over its top from its middle, in place of the drapes and garlands; 0, as before */

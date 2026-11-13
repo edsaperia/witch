@@ -8,6 +8,7 @@
 // middle; runes and medallions seeded by species), drawn whole (tier 2) with its grooves at least CARVE_PX wide so
 // they read cut into the stone. A species without one falls back to the stand-in below (the same parts, plainer).
 import { legendSigilMask } from "../../art/generator.js";
+import { seedName } from "../rules/kinds"; // (a renamed kind keeps its carving)
 
 /** The mask's side, pixels (the whole design, runes and cells, needs 150 or more). */
 export const CARVING_SIZE = 256;
@@ -70,7 +71,7 @@ function segDist(px: number, py: number, ax: number, ay: number, bx: number, by:
 
 /** The stand-in (before the legendary sigils): rings, a rune band, three medallions on a triangle, seeded strokes in the middle. */
 function drawCarving(species: string, n: number): Uint8Array {
-  const r = seeded(species), out = new Uint8Array(n * n), w = 0.016; // (a groove about 2 px wide at 128)
+  const r = seeded(seedName(species)), out = new Uint8Array(n * n), w = 0.016; // (a groove about 2 px wide at 128)
   // the triangle's corners (the medallions' middles), turned by the species a little
   const turn = -Math.PI / 2 + (r() - 0.5) * 0.3, tri: [number, number][] = [0, 1, 2].map(k => [Math.cos(turn + (k * Math.PI * 2) / 3) * 0.62, Math.sin(turn + (k * Math.PI * 2) / 3) * 0.62]);
   // the middle: a handful of strokes, the animal's stand-in

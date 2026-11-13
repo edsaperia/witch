@@ -53,7 +53,6 @@ export function lightsNear(_w: CombatWorld, s: CombatState, c: Creature, R: numb
   return out;
 }
 
-/** Whether a target is still worth fighting for this creature. */
 /** Whether (x, z) is more than combat.leaveArea metres past the creature's area's edge (Ed,
  *  2026-10-05): outside its area, and still outside it that far back toward its home. */
 export function pastEdge(w: CombatWorld, c: Creature, x: number, z: number): boolean {
@@ -81,14 +80,16 @@ export function aloftHunted(w: CombatWorld, c: Creature, tg: Target | null | und
 }
 
 /** Why a wild one lost its target, if it's a chase it gives up (not one she's inviting, a fall, a knockout):
- *  she's risen to the treetops, or it (her or a party animal) is past its band beyond its area's edge. */
+ *  she's risen to the treetops (or is sheltered in a calm legend's circle), or her party animal is past its band beyond its
+ *  area's edge (she herself, on the ground, is followed anywhere: Ed, 2026-10-31, valid below). */
 export function gaveUp(w: CombatWorld, c: Creature, tg: Target): boolean {
-  if (tg.kind === "witch" && c.hunting === tg.id) return false; // (a hunter never gives her up while she's in its area: rules/hunt.ts; out of it, the hunt ends and this rule applies)
+  if (tg.kind === "witch" && c.hunting === tg.id) return false; // (a hunter never gives her up while its hunt's on: rules/hunt.ts; the hunt over, this rule applies)
   if (tg.kind === "witch") { const v = w.witches[tg.id]; return !!v && !v.down && (!v.onGround || sheltered(v, c)); }
   if (tg.kind === "creature") { const o = w.creatures[tg.id]; return !!o && !o.gone && pastEdge(w, c, o.x, o.z); }
   return false;
 }
 
+/** Whether a target is still worth fighting for this creature. */
 export function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): boolean {
   if (tg.kind === "creature") {
     const o = w.creatures[tg.id];
@@ -103,7 +104,7 @@ export function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): 
     if (!huntsWitch(sideOf(c)) || !v || v.down || w.talkingTo(c.id) === tg.id || sheltered(v, c)) return false;
     if (!v.onGround) return aloftHunted(w, c, tg); // (up out of reach: only a hunter after her keeps her, waiting under her)
     if (v.hidden !== undefined && Math.hypot(v.x - c.x, v.z - c.z) > v.hidden) return false; // (her Stealth broom: out of its range, it's lost her)
-    if (c.hunting === tg.id) return true; // (hunting her: she's in its area, rules/hunt.ts; once she leaves it the hunt ends and pastEdge applies, 30 m)
+    if (c.hunting === tg.id) return true; // (hunting her: on the ground it pursues beyond its area too, rules/hunt.ts, clarified 2026-10-31)
     if (!c.siege) return true; // Ed, 2026-10-31: ordinary pursuers follow anywhere on the ground until take-off.
     const d = Math.hypot(v.x - c.x, v.z - c.z), range = attackOf(c.species, c.level)?.attack.range ?? 0;
     return !(d > range && d >= w.t.combat.witchLose * FIGHT.scale && !w.inArea(c, v.x, v.z));
@@ -112,8 +113,8 @@ export function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): 
 }
 
 /** What a creature goes for: the nearest enemy within `range` of (x, z), of the other side and
- *  another kind, never a baby. A wild one goes for a witch on the ground once she's within its
- *  attack range or she's on the ground in its area (Ed's playtest, 2026-10-04). A party animal following her takes on only
+ *  another kind, never a baby. A wild one goes for a witch on the ground in its area (Ed's playtest, 2026-10-04), its watch
+ *  of her over (rules/wildWatch.ts); across its edge only as below (Ed, 2026-10-13). A party animal following her takes on only
  *  what attacks her or her party (Ed: they engage anything that attacks the witch or them); a
  *  parked one, anything within its guard radius of its sigil (rules/combat.ts guardRadius). */
 export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: number, attackRange: number, grid: Grid, guarding: boolean, keep?: (o: Creature) => boolean, claims?: Map<number, number>): Target | null {

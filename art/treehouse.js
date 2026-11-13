@@ -1,6 +1,8 @@
 // The witch's treehouse (Ed, second go: "mostly wood, but with modern elements. It can be larger than it is now;
 // the top of the treehouse should be tall, standing above the treeline ... the inside - this is where we should have
-// her sitting at the start"). The home landmark, a tall timber tower of storeys stacked up a giant living tree:
+// her sitting at the start"). The old treehouse: the game now draws the Ent's deck (Ed, 2026-10-11) and the oak house on it
+// (Ed, 2026-10-24; art/ent.js, docs/notes/house.md) in its place, and this tower only with the tuning's treehouse.deck off;
+// its DJ table (djTable) and candles are still the game's. A tall timber tower of storeys stacked up a giant living tree:
 //   - the tree: a huge trunk running up through every storey, roots spilling over the ground, branches curling up
 //     round the studio's deck, and a leafy crown round the third storey;
 //   - the porch storey: a round board-clad room on a braced deck on posts, big multi-pane windows, the front door,
