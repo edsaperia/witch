@@ -14,19 +14,19 @@ import { witchHeight } from "./witch.js";
 export const DANCE_STONE_FORMS = 12;
 // Each kind's height and half-width, as shares of her drawn height (her knee is about a quarter of it, her hip about a half), and
 // how deep it is for its width. Round the ring: mostly eggs and domes, two low flat ones, two lumpy boulders.
-const KINDS = {
+const DANCE_STONE_KINDS = {
   egg: { h: [.25, .3], w: [.1, .115], d: .9, sink: .42 },      // upright: taller than wide, its widest a little below its middle
   dome: { h: [.19, .23], w: [.13, .155], d: .85, sink: .12 },  // squat: wider than tall
   flat: { h: [.12, .14], w: [.15, .175], d: .8, sink: .05 },   // low and flat: shin height
   lump: { h: [.21, .25], w: [.12, .14], d: .9, sink: .3 },     // a boulder with a shoulder
 };
-const ORDER = ["egg", "dome", "lump", "flat", "egg", "dome", "egg", "flat", "dome", "lump", "dome", "egg"];
-const GREY = [166, 166, 162], BUFF = [180, 167, 138];
-const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+const DANCE_STONE_ORDER = ["egg", "dome", "lump", "flat", "egg", "dome", "egg", "flat", "dome", "lump", "dome", "egg"];
+const DANCE_GREY = [166, 166, 162], DANCE_BUFF = [180, 167, 138];
+const danceMix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 
 /** One stone's shape and colours, by its place in the ring (seeded: the same every time). */
 export function danceStoneForm(i) {
-  const n = ((i % DANCE_STONE_FORMS) + DANCE_STONE_FORMS) % DANCE_STONE_FORMS, kind = ORDER[n], K = KINDS[kind], r = rng(4177 + n * 6271), u = (a, b) => a + r() * (b - a);
+  const n = ((i % DANCE_STONE_FORMS) + DANCE_STONE_FORMS) % DANCE_STONE_FORMS, kind = DANCE_STONE_ORDER[n], K = DANCE_STONE_KINDS[kind], r = rng(4177 + n * 6271), u = (a, b) => a + r() * (b - a);
   return { n, kind, h: u(...K.h), w: u(...K.w), d: K.d * u(.9, 1.1), sink: K.sink, lean: u(-.03, .03), yaw: u(-.5, .5), buff: r(), lichen: u(.1, .26), moss: u(.2, .6), side: r() < .5 ? -1 : 1, grass: 2 + Math.floor(r() * 4) };
 }
 
@@ -72,7 +72,7 @@ export function danceStone(st, { form = 0, makeCanvas = defaultCanvas } = {}) {
     if (!isStone(x, y)) continue;
     sp.recolour(x, y, M.RUNE); lit.push({ x: x + .5, y: y + .5 });
   }
-  const stone = mix(GREY, BUFF, F.buff);
-  const colours = { [M.STONE]: stone, [M.STONED]: stone.map(c => Math.round(c * .78)), [M.BODY2]: mix(stone, [196, 200, 168], .6), [M.MOSS]: [96, 124, 70], [M.BARK2]: [84, 72, 52], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: [80, 230, 255] };
+  const stone = danceMix(DANCE_GREY, DANCE_BUFF, F.buff);
+  const colours = { [M.STONE]: stone, [M.STONED]: stone.map(c => Math.round(c * .78)), [M.BODY2]: danceMix(stone, [196, 200, 168], .6), [M.MOSS]: [96, 124, 70], [M.BARK2]: [84, 72, 52], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: [80, 230, 255] };
   return { ...bake(sp, colours, st, "none", makeCanvas), origin: at([0, 0, 0]), dots: lit, height: F.h * s, sp };
 }
