@@ -66,7 +66,7 @@ export class CrownLandmark {
   private readonly bulbs: THREE.Points;
   private readonly u: Record<string, THREE.IUniform>;
   private baked = false;
-  /** The real crown wholly hidden behind the bend this frame (render/view.ts leaves it undrawn). */
+  /** The real crown wholly hidden behind the bend this frame (render/view/frame.ts leaves it undrawn). */
   realHidden = false;
   /** The baked picture's frame in the crown's plan: its middle x, the ground under it (m over the floor) and its size (m). */
   private frame = { x: 0, w: 1, h: 1, y0: 0 };

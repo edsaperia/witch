@@ -240,7 +240,7 @@ export class HouseRoomsView {
   /** A line for over her decks, said at the next frame (sayAtDecks). */
   private decksLine: { at: number; line: string } | null = null;
   private readonly labels: { el: HTMLDivElement; x: number; z: number }[] = [];
-  /** The furniture drawn as art (render/houseFurniture.ts): each piece's picture and its quad, baked a piece a frame as she first comes in. */
+  /** The furniture drawn as art (render/houseFurniture.ts): each piece's picture and its quad, drawn by the art workers ahead (preload, askPieces). */
   private readonly furniture = new THREE.Group();
   /** Named points of the furniture in the world this frame, "<id>.<mark>" (the mic's spot lamp: "microphone.spot"), for the view. */
   readonly marks = new Map<string, V3>();
@@ -698,7 +698,7 @@ export class HouseRoomsView {
     }
     // the Workshop's (render/workshopArt.ts): her broom resting on the bay while she's at it, on the lathe while she's at that (Ed,
     // 2026-10-23: "only while she's at the bay"; rules/stations.ts broomWhere), her parts on the pegboard;
-    // only in or near the Workshop (its pieces baked: they're baked as she nears them)
+    // laid on those pieces' marks once they're in (workshopFrame, below; made ahead under the loading screen: preload)
     const piece = (id: string) => { for (const p of this.pieces.values()) if (p.id === id && p.mesh.visible) return p; return null; };
     // (the hats on top of the hats' floor's own piece, wherever the house puts it)
     // (no hats' floor in Ed's arrangement: after the furniture of the half their spawn points lie in, hatsOrder's own fallback)
