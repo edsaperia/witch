@@ -26,6 +26,7 @@ const SOUNDS: [string, number, Play][] = [
   ["fight-crowd", 1.4, s => { const sp = ["wolf", "fox", "boar", "hare", "owl", "stoat", "badger", "toad"]; sp.forEach((x, i) => s.speak(v(x, (i % 3) as number), i % 2 ? "enraged" : "happy", (i % 5) / 2 - 1, 1 - i * 0.1)); }],
   ["witch-ouch", 7, () => {}],
   ["witch-knock", 6, () => {}],
+  ["her-effects", 6, () => {}],
   ["legend-charge", 9, () => {}],
   ["relic-found", 3, s => s.relic()],
   ["spell-hum", 3, s => s.spell("hum", 1)],
@@ -135,6 +136,11 @@ async function render(name: string, seconds: number, play: Play) {
     const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
     at(0, () => s.knock(1)); at(1.2, () => s.knock(4)); at(2.6, () => s.knock(9));
     for (let i = 0; i < 14; i++) at(2.75 + i * 0.13, () => s.twinkle(i));
+  } else if (name === "her-effects") {
+    // the effects on her (Ed, 2026-11-13: "Mark + tint + sound"): slowed, four repeats; confused, four; then a short and a long skid
+    const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
+    for (let i = 0; i < 4; i++) { at(i * 0.55, () => s.slowed(i)); at(2.4 + i * 0.55, () => s.confused(i)); }
+    at(4.7, () => s.skid(4)); at(5.3, () => s.skid(12));
   } else if (name === "area-cleared") {
     void oc.suspend(Math.round(0.1 * rate) / rate).then(() => { s.cleared(0.2); return oc.resume(); });
   } else if (name === "fall-thud") {
