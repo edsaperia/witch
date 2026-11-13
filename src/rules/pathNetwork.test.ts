@@ -212,7 +212,7 @@ describe("the find's own area (findArea)", () => {
       expect(spawnCreatures(m).filter(cr => key(cr.cell) === k)).toEqual([]);
       // its patch clear of trees
       expect(m.hardClear(sp.x, sp.z)).toBe(true);
-      expect(f.treesNear(sp.x, sp.z, sp.r).filter(t => Math.hypot(t.x - sp.x, t.z - sp.z) < sp.r)).toEqual([]);
+      expect(f.treesNear(sp.x, sp.z, sp.r).filter(t => !t.veil && Math.hypot(t.x - sp.x, t.z - sp.z) < sp.r)).toEqual([]); // (the challenge's hidden forest aside: Plant.veil)
     }
   });
 

@@ -11,6 +11,7 @@
 // on is a small port (SpellWorld), so it runs headless in tests and in combat.ts alike.
 import { childSpec, type Library } from "./parse";
 import { REACTION_FLOOR, telegraphKind } from "./timeline";
+import { fanOffsets, intercept, locksNow, wallOffsets, type AimTrack } from "./aim";
 import type { Aim, AttackSpec, BodyKind, Child, Effect, TelegraphKind, TellPose } from "./types";
 
 // ---- the world it acts on ----
@@ -110,7 +111,10 @@ export interface Telegraph {
   follows?: { body?: number; creature?: number; end?: number };
 }
 /** Something waiting to happen: a release after a windup, a burst's next shot, a timer's child. */
-interface Pending { at: number; attack: AttackSpec; name: string; x: number; z: number; heading: number; aim: Hittable | null; side: string; species: string; source: number; damage: number; depth: number; cast: number; index: number; fromBody?: number; patternIndex?: number; /** a turret's casts still to come */ left?: number; /** where its target stood as it was cast (an area there lands where it was telegraphed) */ aimAt?: { x: number; z: number }; /** placed where it is (a pattern's cell, a raindrop): not moved to its caster */ placed?: boolean; /** a triangulation's corners */ points?: number[] }
+interface Pending { at: number; attack: AttackSpec; name: string; x: number; z: number; heading: number; aim: Hittable | null; side: string; species: string; source: number; damage: number; depth: number; cast: number; index: number; fromBody?: number; patternIndex?: number; /** a turret's casts still to come */ left?: number; /** where its target stood as it was cast (an area there lands where it was telegraphed) */ aimAt?: { x: number; z: number }; /** placed where it is (a pattern's cell, a raindrop): not moved to its caster */ placed?: boolean; /** a triangulation's corners */ points?: number[]; /** its aim followed till it locks (rules/attacks/aim.ts: her, as she goes) */ track?: AimTrack; /** a fan or wall keeps one body on its aim */ centre?: boolean }
+
+/** How a cast at her is aimed (rules/attacks/aim.ts; none: as the attack says, at her place as the cast starts). */
+export interface CastOpts { /** followed and locked as aim.ts says; the same object, so the fight can see it lock */ track?: AimTrack; centre?: boolean }
 
 export type SpellEventKind = "cast" | "release" | "emit" | "hit" | "expire" | "bounce" | "land" | "timer" | "split" | "zone" | "beam" | "armed" | "sprung" | "sprout" | "telegraph" | "fire" | "capped" | "chain" | "relay" | "amplify" | "fizzle";
 export interface SpellEvent { kind: SpellEventKind; at: number; x: number; z: number; attack: string; source: number; body?: number; zone?: number; beam?: number; telegraph?: number; element?: string; /** a hit on an animal it wasn't aimed at (hit.allies) */ ally?: boolean }
@@ -161,15 +165,79 @@ export interface Caster { id: number; x: number; z: number; side: string; specie
 
 /** A cast begins: its telegraphs from now to `fireAt` (the windup's end), and the caster's tell; the release is scheduled at fireAt.
  *  Returns the cast's id. `damage`: the cast's damage (the level's budget for its cooldown, as combat.ts works it out). */
-export function cast(S: SpellState, W: SpellWorld, spec: AttackSpec, name: string, c: Caster, target: Hittable | null, time: number, damage: number, fireAt = time + (spec.cast?.windup ?? 0.6)): number {
+export function cast(S: SpellState, W: SpellWorld, spec: AttackSpec, name: string, c: Caster, target: Hittable | null, time: number, damage: number, fireAt = time + (spec.cast?.windup ?? 0.6), opts: CastOpts = {}): number {
   const id = ++S.casts, tell = spec.cast?.tell;
   if (tell && (tell.pose ?? "none") !== "none") S.tells.set(c.id, { pose: tell.pose ?? "none", glow: tell.glow ?? 0, from: time, until: fireAt, attack: name });
   S.events.push({ kind: "cast", at: time, x: c.x, z: c.z, attack: name, source: c.id });
   const heading = aimHeading(spec.emit?.aim ?? "target", c.x, c.z, c.heading ?? 0, target, W, spec, id, 0);
-  showTelegraphs(S, W, spec, name, c.x, c.z, heading, target, c.side, c.id, id, time, fireAt);
   const at = target && W.where(target.kind, target.id);
-  queue(S, { at: fireAt, attack: spec, name, x: c.x, z: c.z, heading, aim: target, side: c.side, species: c.species, source: c.id, damage, depth: 0, cast: id, index: 0, ...(at ? { aimAt: { x: at.x, z: at.z } } : {}) });
+  const p: Pending = { at: fireAt, attack: spec, name, x: c.x, z: c.z, heading, aim: target, side: c.side, species: c.species, source: c.id, damage, depth: 0, cast: id, index: 0, ...(at ? { aimAt: { x: at.x, z: at.z } } : {}), ...(opts.centre ? { centre: true } : {}), ...(opts.track && target ? { track: Object.assign(opts.track, { locked: false }) } : {}) };
+  if (p.track) followAim(S, W, p, time, false); // (where she'll be: its first telegraph shows that, not where she is)
+  showTelegraphs(S, W, spec, name, p.x, p.z, p.heading, target, c.side, c.id, id, time, fireAt, { aimAt: p.track ? p.aimAt : undefined, centre: p.centre });
+  queue(S, p);
   return id;
+}
+
+/** Whether a cast's aim is settled: locked (its caster holds still till it lets go: rules/combat.ts), never followed, or released. */
+export function aimLocked(S: SpellState, castId: number): boolean {
+  for (const p of S.pending) if (p.cast === castId && p.depth === 0 && !p.placed && p.patternIndex === undefined) return !p.track || !!p.track.locked;
+  return true;
+}
+
+/** Which way an even fan's extra body goes, by the cast (seeded). */
+const fanSide = (W: SpellWorld, castId: number) => (rnd(W.seed, castId, 4242) < 0.5 ? -1 : 1);
+
+/** Where to aim a body from (x, z) so its path (its curve or sway, unhomed) passes through (qx, qz): the heading and how long it takes
+ *  (a lob its flight; an area or a mine, laid at once, none). */
+export function solveAim(spec: AttackSpec, x: number, z: number, qx: number, qz: number, source: number, W: SpellWorld): { heading: number; time: number } {
+  const kind = spec.body?.kind ?? "bolt", dq = Math.hypot(qx - x, qz - z);
+  let h = Math.atan2(qz - z, qx - x);
+  if (kind === "lob") return { heading: h, time: spec.body?.flight ?? 1.2 };
+  if (kind !== "bolt" && kind !== "runner") return { heading: h, time: 0 };
+  const bent = (spec.path ?? []).some(t => "curve" in t || "wave" in t || "arc" in t);
+  if (!bent) {
+    // (straight: its speed profile run out to her distance)
+    const P = spec.speed;
+    if (!P?.profile || P.profile === "constant" || P.profile === "slow") return { heading: h, time: dq / Math.max(1, speedAt(spec, 0)) };
+    let d = 0, t = 0; const dt = 1 / 60;
+    while (d < dq && t < 6) { d += speedAt(spec, t) * dt; t += dt; }
+    return { heading: h, time: t };
+  }
+  let time = dq / Math.max(1, speedAt(spec, 0));
+  for (let it = 0; it < 3; it++) {
+    const p = predictPath(spec, x, z, h, source, W);
+    let hit = -1;
+    for (let i = 2; i < p.length; i += 2) if (Math.hypot(p[i] - x, p[i + 1] - z) >= dq) { hit = i; break; }
+    if (hit < 0) break;
+    const d0 = Math.hypot(p[hit - 2] - x, p[hit - 1] - z), d1 = Math.hypot(p[hit] - x, p[hit + 1] - z), f = d1 > d0 ? (dq - d0) / (d1 - d0) : 0;
+    const px = p[hit - 2] + (p[hit] - p[hit - 2]) * f, pz = p[hit - 1] + (p[hit + 1] - p[hit - 1]) * f;
+    time = (hit / 2 - 1 + f) * 0.1;
+    let off = Math.atan2(qz - z, qx - x) - Math.atan2(pz - z, px - x);
+    off = Math.atan2(Math.sin(off), Math.cos(off));
+    if (Math.abs(off) < 1e-3) break;
+    h += off;
+  }
+  return { heading: h, time };
+}
+
+/** A cast at her, its aim followed (rules/attacks/aim.ts): from where its caster is now, at where she'll be when it arrives (its
+ *  lead of the way), its telegraphs moved with it (`reshow`); locked once it's `commit` from its release or `ahead` from reaching her. */
+function followAim(S: SpellState, W: SpellWorld, p: Pending, time: number, reshow: boolean): void {
+  const T = p.track!, tg = p.aim, at = tg && W.where(tg.kind, tg.id);
+  if (!at) { T.locked = true; T.at = time; return; }
+  const c = W.where("creature", p.source), x = c ? c.x : p.x, z = c ? c.z : p.z, toRelease = Math.max(0, p.at - time);
+  const q = intercept(at, toRelease, T.lead, (qx, qz) => solveAim(p.attack, x, z, qx, qz, p.source, W).time);
+  p.x = x; p.z = z; p.heading = solveAim(p.attack, x, z, q.x, q.z, p.source, W).heading; p.aimAt = { x: q.x, z: q.z };
+  if (reshow) {
+    // (its telegraphs, its lane or its landing, where it now aims: the same ones moved, no new warning)
+    const own = S.telegraphs.filter(t => t.alive && t.cast === p.cast && t.attack === p.name).sort((a, b) => a.id - b.id);
+    if (own.length) {
+      const tmp = newSpells(S.seed);
+      showTelegraphs(tmp, W, p.attack, p.name, x, z, p.heading, tg, p.side, p.source, p.cast, own[0].start, p.at, { aimAt: p.aimAt, centre: p.centre });
+      tmp.telegraphs.forEach((t, i) => { if (own[i]) own[i].shape = t.shape; });
+    }
+  }
+  if (locksNow(T, toRelease, q.flight)) { T.locked = true; T.at = time; }
 }
 
 /** A cast's release cancelled (the caster stunned, knocked down, gone): its pending release and its telegraphs dropped. */
@@ -197,15 +265,15 @@ function aimHeading(aim: Aim, x: number, z: number, facing: number, target: Hitt
 }
 
 /** The headings and offsets a pattern releases at once (a burst's and a spray's later ones are scheduled). */
-function patternOf(spec: AttackSpec, heading: number): { heading: number; dx: number; dz: number; delay: number }[] {
+function patternOf(spec: AttackSpec, heading: number, centre = false, side = 1): { heading: number; dx: number; dz: number; delay: number }[] {
   const E = spec.emit ?? {}, n = Math.max(1, E.n ?? 1), out: { heading: number; dx: number; dz: number; delay: number }[] = [];
   switch (E.pattern ?? "single") {
     // (a fan's or ring's things set off `spacing` out from the middle along their heading: a ring of bombs round where one landed)
-    case "fan": { const a = (E.angle ?? 45) * RAD, sp = E.spacing ?? 0; for (let k = 0; k < n; k++) { const h = heading + (n > 1 ? (k / (n - 1) - 0.5) * a : 0); out.push({ heading: h, dx: Math.cos(h) * sp, dz: Math.sin(h) * sp, delay: 0 }); } break; }
+    case "fan": { const sp = E.spacing ?? 0; for (const o of fanOffsets(n, (E.angle ?? 45) * RAD, centre, side)) { const h = heading + o; out.push({ heading: h, dx: Math.cos(h) * sp, dz: Math.sin(h) * sp, delay: 0 }); } break; }
     case "ring": { const o = (E.offset ?? 0) * RAD, sp = E.spacing ?? 0; for (let k = 0; k < n; k++) { const h = heading + o + (k / n) * Math.PI * 2; out.push({ heading: h, dx: Math.cos(h) * sp, dz: Math.sin(h) * sp, delay: 0 }); } break; }
     case "burst": case "volley": for (let k = 0; k < n; k++) out.push({ heading, dx: 0, dz: 0, delay: k * (E.gap ?? 0.15) }); break;
     case "spray": { const T = E.time ?? 1, rate = (E.rate ?? 180) * RAD; for (let k = 0; k < n; k++) { const t = n > 1 ? (k / (n - 1)) * T : 0; out.push({ heading: heading + rate * t, dx: 0, dz: 0, delay: t }); } break; }
-    case "wall": { const sp = E.spacing ?? 2, holes = new Set(E.holes ?? []), px = -Math.sin(heading), pz = Math.cos(heading); for (let k = 0; k < n; k++) if (!holes.has(k)) { const o = (k - (n - 1) / 2) * sp; out.push({ heading, dx: px * o, dz: pz * o, delay: 0 }); } break; }
+    case "wall": { const px = -Math.sin(heading), pz = Math.cos(heading); for (const o of wallOffsets(n, E.spacing ?? 2, E.holes ?? [], centre)) out.push({ heading, dx: px * o, dz: pz * o, delay: 0 }); break; }
     default: out.push({ heading, dx: 0, dz: 0, delay: 0 });
   }
   return out;
@@ -274,11 +342,11 @@ function telegraph(S: SpellState, t: Omit<Telegraph, "id" | "alive">): void {
 }
 
 /** An attack's warnings, from `start` to its release at `fire`: each by its kind, as geometry. */
-function showTelegraphs(S: SpellState, W: SpellWorld, spec: AttackSpec, name: string, x: number, z: number, heading: number, target: Hittable | null, side: string, source: number, castId: number, start: number, fire: number): void {
+function showTelegraphs(S: SpellState, W: SpellWorld, spec: AttackSpec, name: string, x: number, z: number, heading: number, target: Hittable | null, side: string, source: number, castId: number, start: number, fire: number, o: { aimAt?: { x: number; z: number }; centre?: boolean } = {}): void { // eslint-disable-line max-params
   const kind = telegraphKind(spec), lead = spec.telegraph?.lead, from = lead !== undefined ? Math.max(start, fire - lead) : start;
   if (kind === "none") return;
   const base = { kind, attack: name, side, source, cast: castId, start: from, fire };
-  const B = spec.body?.kind ?? "bolt", range = lifeRange(spec), width = 2 * (spec.body?.radius ?? 0.6), at = target && W.where(target.kind, target.id);
+  const B = spec.body?.kind ?? "bolt", range = lifeRange(spec), width = 2 * (spec.body?.radius ?? 0.6), at = o.aimAt ?? (target && W.where(target.kind, target.id)); // (a followed aim: where it now aims, rules/attacks/aim.ts)
   const A0 = spec.area ?? {}, centre = (A0.at ?? "caster") === "target" && at ? at : { x, z };
   if (B === "area" && (A0.shape === "cross" || A0.shape === "line" || A0.shape === "grid")) {
     // (a pattern's cells: each its own landing, firing in turn)
@@ -325,7 +393,7 @@ function showTelegraphs(S: SpellState, W: SpellWorld, spec: AttackSpec, name: st
       // (one lane a heading the pattern releases at once, up to 16; a curving or swaying body's lane is the path it will fly, unaimed)
       // (relayed: its first leg toward its nearest packmate)
       const mate = spec.pack?.relay ? W.packmates?.(source, x, z, range)[0] : undefined, h0 = mate ? Math.atan2(mate.z - z, mate.x - x) : heading;
-      const dirs = patternOf(spec, h0).slice(0, 16), bent = (spec.path ?? []).some(t => "curve" in t || "wave" in t || "spiral" in t || "orbit" in t || "boomerang" in t);
+      const dirs = patternOf(spec, h0, o.centre, fanSide(W, castId)).slice(0, 16), bent = (spec.path ?? []).some(t => "curve" in t || "wave" in t || "spiral" in t || "orbit" in t || "boomerang" in t);
       for (const d of dirs) {
         if (bent) telegraph(S, { ...base, shape: { type: "path", x: x + d.dx, z: z + d.dz, width, points: predictPath(spec, x + d.dx, z + d.dz, d.heading, source, W) }, until: fire + d.delay });
         else telegraph(S, { ...base, shape: { type: "segment", x: x + d.dx, z: z + d.dz, x2: x + d.dx + Math.cos(d.heading) * range, z2: z + d.dz + Math.sin(d.heading) * range, width }, until: fire + d.delay });
@@ -386,15 +454,16 @@ function release(S: SpellState, W: SpellWorld, lib: Library, p: Pending, time: n
   }
   S.events.push({ kind: p.depth === 0 ? "release" : "emit", at: time, x, z, attack: p.name, source: p.source, element: a.body?.element });
   if (p.patternIndex !== undefined || !(a.emit && (a.emit.pattern === "burst" || a.emit.pattern === "spray" || a.emit.pattern === "volley"))) {
-    // (re-aimed as it goes, for a burst's later shots and a stop-and-go's legs; the first as aimed at the cast)
-    const heading = p.patternIndex ? aimHeading(a.emit?.aim ?? "target", x, z, p.heading, p.aim, W, a, p.cast, p.patternIndex) : p.heading;
-    const dirs = p.patternIndex !== undefined ? [{ heading: a.emit?.pattern === "spray" ? p.heading : heading, dx: 0, dz: 0, delay: 0 }] : patternOf(a, heading);
+    // (re-aimed as it goes, for a burst's later shots and a stop-and-go's legs; the first as aimed at the cast; a followed aim's
+    // later shots keep the first's locked aim: rules/attacks/aim.ts)
+    const heading = p.patternIndex && !p.track ? aimHeading(a.emit?.aim ?? "target", x, z, p.heading, p.aim, W, a, p.cast, p.patternIndex) : p.heading;
+    const dirs = p.patternIndex !== undefined ? [{ heading: a.emit?.pattern === "spray" ? p.heading : heading, dx: 0, dz: 0, delay: 0 }] : patternOf(a, heading, p.centre, fanSide(W, p.cast));
     for (const d of dirs) emitOne(S, W, lib, a, p, x + d.dx, z + d.dz, d.heading, time, B);
     return;
   }
   // (a burst, a spray or a volley: the first now, the rest scheduled, each its own heading)
   const beat = a.emit?.pattern === "volley" ? (W.beat ?? 0.5) : 1;
-  patternOf(a, p.heading).forEach((d, k) => {
+  patternOf(a, p.heading, p.centre, fanSide(W, p.cast)).forEach((d, k) => {
     const at = p.at + d.delay * beat; // (from when it was due, not the step that found it due)
     if (k === 0) emitOne(S, W, lib, a, p, x, z, d.heading, time, B);
     else queue(S, { ...p, at, heading: d.heading, patternIndex: k, fromBody: undefined, x, z });
@@ -616,6 +685,8 @@ function moveBody(b: Body, a: AttackSpec, age: number, dt: number, W: SpellWorld
 /** Advance every attack in flight by dt to `time`: releases due, bodies moved and hitting, zones ticking, telegraphs over. */
 export function stepSpells(S: SpellState, W: SpellWorld, lib: Library, time: number, dt: number): void {
   S.now = time;
+  // (casts at her whose aim follows her till it locks: rules/attacks/aim.ts)
+  for (const p of S.pending) if (p.track && !p.track.locked && p.depth === 0) followAim(S, W, p, time, true);
   // (what's due, in the order it was queued: a release may queue more, for later)
   if (S.pending.length) {
     const due = S.pending.filter(p => p.at <= time + 1e-9);

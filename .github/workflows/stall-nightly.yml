@@ -1,0 +1,53 @@
+# The sail take-off check (Ed, 2026-11-12, live v7872: "Just had a very long freeze when taking off from the treehouse after a sail";
+# tools/stall/README.md): home, sail by the map table's chart (the dive path) to raven, wake, take off; fails if the take-off makes any
+# shader program, a compile on the page's thread. 15 to 20 minutes on the software renderer, too slow for a PR's smoke budget, so
+# nightly on prototype or by hand on any ref; informational, never a PR gate. Fast unit guards for the two causes run on every PR
+# (src/render/houseTwins.test.ts, src/render/postCompile.test.ts).
+name: Nightly sail take-off check
+on:
+  schedule:
+    - cron: '41 4 * * *'
+  workflow_dispatch:
+concurrency:
+  group: nightly-sail-takeoff-${{ github.ref }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  sail-takeoff:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    env:
+      PLAYWRIGHT_VERSION: 1.56.1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'schedule' && 'claude/prototype' || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build the game
+        run: npx vite build
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+      - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
+      - name: Install Chromium (bounded, one retry)
+        shell: bash
+        run: node tools/ci/install-chromium.cjs
+      - name: Sail, wake and take off; no shader program made at take-off
+        env:
+          NODE_PATH: ${{ github.workspace }}/.pw/node_modules
+          CHECK: '1'
+        run: mkdir -p stall-results && node tools/stall/sail-takeoff.cjs dist stall-results/sail-takeoff.json
+      - name: Keep the evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-sail-takeoff-${{ github.run_attempt }}
+          path: stall-results
+          retention-days: 14
+          if-no-files-found: warn

@@ -5,7 +5,7 @@
 import { Model } from "./model3d.js";
 import { ctPlace } from "./country.js";
 import { modelSprite, HANG, SIZE } from "./furniture.js";
-import { PART_ART, drawPart, drawBroom, stubby } from "./broomParts.js";
+import { PART_ART, BARE_ART, drawPart, drawBroom, stubby } from "./broomParts.js";
 
 /** How much stubbier each part hangs on the pegboard (1: as it is; the short, tall ones keep their shape). */
 const HUNG_K = { horse: 1, curl: 1, missile: .7 };
@@ -21,6 +21,15 @@ export function partSprite(id, { fit = 58, pitch = .45, yaw = .35, hung = false 
   if (k !== 1) stubby(m, 0, k);
   if (hung) { ctPlace(m, 0, { pitch: HANG }); m.lights = []; } // (hung, its own lights off: the board stays readable under the room's)
   return modelSprite(m, { ppm: fit / (P.len * k * SIZE), pitch, yaw });
+}
+/** An empty slot's card sprite (the bay's first card in each slot's line, ui/stationPanel.ts): the bare broom's own piece there
+ *  (art/broomParts.js BARE_ART: the handle's rounded end, the plain handle, her straw bristles), drawn as partSprite draws a part on a
+ *  card, `fit` art pixels long, so it sits in its line like the parts beside it. */
+export function bareSlotSprite(slot, { fit = 58, pitch = .45, yaw = .35 } = {}) {
+  const B = BARE_ART[slot], m = new Model({ blend: .02 });
+  if (!B) throw new Error(`no slot "${slot}"`);
+  B.draw(m);
+  return modelSprite(m, { ppm: fit / (B.len * SIZE), pitch, yaw });
 }
 /** Her broom's sprite, resting (render/workshopArt.ts): its fitted parts (ids or null) assembled (art/broomParts.js drawBroom), turned
  *  `turn` radians on the floor's plane from lying along the piece it rests on (yaw: that piece's), `scale` times a real broom (the
