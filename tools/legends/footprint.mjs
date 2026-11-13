@@ -3,7 +3,9 @@
 // (config/style.json at the tuning's pixel size, as app/viewParams.ts gameStyle), each species' legend (level 3) asleep (its nap,
 // both breaths: as a wild legend lies in its circle, wildLegends.seen.nap) and awake (standing, both frames, facing us and away),
 // measured in metres (its drawn pixels' box, from its material mask, times the game's metres an art pixel: render/sprites.ts metresPerArtPixel): its width (on
-// the ground, across) and its height (standing up off the ground, which the camera lays over the ground behind it). Writes
+// the ground, across) and its height (standing up off the ground, which the camera lays over the ground behind it).
+// A kind drawn as a mesh (art/mesh) is measured from its mesh: its curled legend and its walk. Each also gets `front`: how far its nap
+// is drawn below its ground line (0 for a mesh, whose ground is its bottom row), which the camera lays over the ground in front of it. Writes
 // config/legend-footprints.json; --check fails if that's out of date (a legend's art changed: run it again and commit).
 //   node tools/legends/footprint.mjs [--check]
 import { readFile, writeFile } from "node:fs/promises";
