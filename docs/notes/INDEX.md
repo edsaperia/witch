@@ -103,6 +103,7 @@ glossary; these are the prototype's), by note.
 ### [Creatures' art](creatures.md)
 
 - Stiltwalkers
+- Mesh creature
 - Sleeping legend
 - Asleep / nap
 - Genome
@@ -117,6 +118,13 @@ glossary; these are the prototype's), by note.
 - Open jaw
 - Silhouette check
 - Live rig
+- Ground contact
+- Stride and planted feet
+- Gait
+- Asleep
+- Sizes
+- Nothing else
+- Checks
 
 ### [Deploys](deploys.md)
 

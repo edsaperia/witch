@@ -1,6 +1,7 @@
 // Ed's new core design (2026-10-07): clearing an area transforms its runestone at once; the waves keep their schedule and
 // only celebrate at a stone that already plays; every area is peopled from the start by its place on the route, and
 // nothing grows on a clock.
+import { BENCH } from "./kinds";
 import { describe, expect, it } from "vitest";
 import { affectionOf, loseSoundsystem, stepGame, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
@@ -48,7 +49,7 @@ describe("the hostile swarms by the runestone order (Ed, 2026-10-08: the swarm p
     expect(Object.fromEntries(Object.entries(W.classes).map(([k, c]) => [k, c.cap]))).toEqual({ strong: 6, medium: 12, light: 16 });
     for (const sp of kinds) { const c = classOf(sp, W); expect(strengthOf(sp, 1), sp).toBeCloseTo(12 / W.classes[c].cap, 9); expect(capOf(sp, W), sp).toBe(W.classes[c].cap); }
     expect(classOf("bear", W)).toBe("strong"); expect(classOf("wolf", W)).toBe("medium"); expect(classOf("hedgehog", W)).toBe("light"); expect(classOf("bat", W)).toBe("light");
-    for (const sp of Object.values(W.classes).flatMap(c => c.species)) expect(kinds, sp).toContain(sp);
+    for (const sp of Object.values(W.classes).flatMap(c => c.species)) expect([...kinds, ...BENCH], sp).toContain(sp); // (a creature on the bench keeps its class: rules/kinds.ts)
     expect(Object.values(W.classes).flatMap(c => c.species).length).toBe(new Set(Object.values(W.classes).flatMap(c => c.species)).size); // (each in one class)
     expect(classStrengths({ reference: "medium", classes: { medium: { cap: 12, species: [] }, big: { cap: 4, species: ["x"] } } })).toEqual({ x: 3 });
   });

@@ -2,6 +2,8 @@
 // (window size / pixel size) and stretched with nearest-neighbour by the browser, so every art
 // pixel stays a crisp square.
 import { RigView } from "./rig/rigView";
+import type { newStride } from "../../art/mesh/stride.js";
+type MeshStride = ReturnType<typeof newStride>;
 import { CauldronView } from "./cauldronView";
 import { FxMock } from "./fxMock";
 import { fxFor } from "./fx/system";
@@ -342,7 +344,7 @@ function nightState(t: Tuning) {
     /** Each watching creature's aggro red as last drawn and when (view/creatures.ts), so it eases out when the watch ends. */
     aggroLast: new Map<number, { a: number; at: number }>(),
     /** Each creature's distance walked as drawn, for its baked walk's frames (view/creatures.ts strideFrame). */
-    strides: new Map<number, { x: number; z: number; d: number; at: number }>(),
+    strides: new Map<number, { x: number; z: number; d: number; at: number; t?: number; /** A mesh creature's (art/mesh/stride.js newStride). */ m?: MeshStride; /** When it last came to a stand. */ landed?: number }>(),
     /** A party animal's gear for its rig page (as its party bake wears it), kept per creature and look. */
     rigGears: new Map<string, RigGear>(),
     /** Sparks from campfires lighting up as the party arrives (drawn with the markers' motes, next frame). */
