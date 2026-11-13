@@ -157,6 +157,7 @@ Each brings back how something was before a change, to compare against what repl
 
 | switch | does | since | read in |
 |---|---|---|---|
+| `projection=old` | The placed sigils' projection over the canopy as it was, to compare: its glyph at opacity 0.65 of the ground sigils' dimmed colour, its column of light a faint dot every 1.5 m. *Decision: Ed, 2026-11-13: "I'd like them to be more visible at treetop mode".* | 2026-11-13 | render/leash/projection.ts |
 | `dancestones=old` | The dancefloor ring's stones as they were, to compare: each an area's rune stone at half its width, as tall as the speaker it becomes (not the low rounded stones, knee to thigh height on her: Ed, 2026-11-13). | 2026-11-13 | app/viewParams.ts |
 | `challengehide=0` | The challenge circle there from the start, as before: not hidden in the forest before the party starts, nor after a lost party (Ed, 2026-11-12). | 2026-11-12 | app/linkParams.ts |
 | `crawl=old` | The crawl as it was, to compare: overlapping see-through things of one layer drawn in the order of their distance from the camera (not the world's fixed far-to-near order), and the camera's pixel snap taken up the screen (not along the ground), so things off the focus's depth slide to and fro as she walks north or south. | 2026-11-11 | render/drawOrder.ts |

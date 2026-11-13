@@ -3,6 +3,19 @@
  "intro": "Every `?name=value` the game reads from its link, and where it reads it. Most are read once as the page loads (`src/app/linkParams.ts` for the tuning, `src/app/gameParams.ts` for the game, `src/app/viewParams.ts` for the view, `src/main.ts` for the page); a few are read where they're used. Several can be combined: `?seed=123&wave=30&creator=0`. This page is written from `config/link-switches.json`, and a test checks that file against the code.",
  "switches": [
   {
+   "name": "projection",
+   "values": [
+    "old"
+   ],
+   "does": "The placed sigils' projection over the canopy as it was, to compare: its glyph at opacity 0.65 of the ground sigils' dimmed colour, its column of light a faint dot every 1.5 m.",
+   "group": "compare",
+   "since": "2026-11-13",
+   "decision": "Ed, 2026-11-13: \"I'd like them to be more visible at treetop mode\"",
+   "readIn": [
+    "src/render/leash/projection.ts"
+   ]
+  },
+  {
    "name": "dancestones",
    "values": [
     "old"
