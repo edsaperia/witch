@@ -2,6 +2,22 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
+## `attack-audit-sheet.cjs`
+
+The attack legibility audit's contact sheet: the built game in headless Chromium, the Fight Arena with one youth of each kind against her standing still at the game's normal camera, and two frames a kind: late in a wind-up aimed at her, and HIT s after a…
+
+```
+OUT=/tmp/sheet.png node tools/balance/attack-audit-sheet.cjs [--kinds hare,stoat] [--wait 45]
+```
+
+## `attackaudit.mjs`
+
+The attack legibility audit's measures: the real rules headless, one or three of a home kind placed 25 to 33 m from her in a wild area two out from home, one of four bots playing her for `time` seconds, and what reaches her counted from the game's own…
+
+```
+node tools/balance/attackaudit.mjs [--kinds hare,stoat,...] [--levels 1] [--ns 1,3] [--bots still,strafe,dodger,chase]
+```
+
 ## `bagstun.mjs`
 
 Each bag's 💌s against one wild creature: the real rules headless, her standing still at a distance from one wild creature of a kind and rank, throwing at it all the while, the letters that land counted and the seconds till its ring is full taken.
@@ -324,6 +340,7 @@ node tools/balance/waves.mjs --report a.json,b.json,...   (merge several runs' J
 
 ## Also here
 
+- `attack-audit`
 - `expert-contract.test.mjs`
 - `expert-coverage-screen.test.mjs`
 - `expert-delivery-screen.test.mjs`
