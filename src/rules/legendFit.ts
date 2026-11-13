@@ -10,33 +10,50 @@
 import RAW from "../../config/legend-footprints.json";
 import type { Tuning } from "./tuning";
 
-/** A species' legend as drawn: [width, height] in metres, asleep and awake. */
-export interface LegendSize { asleep: [number, number]; awake: [number, number] }
+/** A species' legend as drawn: [width, height] in metres, asleep and awake; `front`: how far its nap draws below its ground line
+ *  (m; 0 for a kind drawn as a mesh, whose ground is its sprite's bottom row: art/mesh). */
+export interface LegendSize { asleep: [number, number]; awake: [number, number]; front?: number }
 
 export const LEGEND_SIZES = (RAW as unknown as { species: Record<string, LegendSize> }).species;
 
 type Clearing = Tuning["legendClearing"];
 
-/** The radius a species' legend needs (m) for its sleeping body to fit where it lies, with the margin; before the cap. */
+/** Her on the screen before a sleeping legend (Ed, 2026-11-13, of the mole whose paw and the bear whose muzzle still covered her:
+ *  "fix the others"). The circle's camera looks down at CIRCLE_ANGLE degrees (camera.circle.angle; legendFit.test.ts holds the two
+ *  together), so what stands a metre tall, or is drawn a metre below its ground line, covers LAY metres of the ground's depth on
+ *  the screen. HER: her height as drawn, hat and all (m). */
+export const CIRCLE_ANGLE = 20, LAY = 1 / Math.tan((CIRCLE_ANGLE * Math.PI) / 180), HER = 3;
+
+/** How far north of her a sleeping legend's spot must be for none of its drawn pixels to be over her on the circle's camera (m):
+ *  what it draws below its ground line, and her own height above hers, laid over the ground between them. */
+export function reachOf(species: string): number {
+  return ((LEGEND_SIZES[species]?.front ?? 0) + HER) * LAY;
+}
+
+/** The radius a species' legend needs (m), before the cap: for its sleeping body to fit where it lies, `back` x r north of the
+ *  middle, with the margin; and, if that is not yet far enough back for her to stand at the middle clear of its drawn pixels
+ *  (reachOf: a nap drawn far below its ground line), for it to fit, with the margin, that far back. */
 export function radiusToFit(species: string, LC: Clearing): number {
   const s = LEGEND_SIZES[species];
   if (!s) return 0;
-  const half = s.asleep[0] / 2 + (LC.fit?.margin ?? 0), b = backOf(LC);
-  return half / Math.sqrt(Math.max(0.05, 1 - b * b));
+  const half = s.asleep[0] / 2 + (LC.fit?.margin ?? 0), b = backOf(LC), r = half / Math.sqrt(Math.max(0.05, 1 - b * b));
+  return b > LC.top ? Math.max(r, Math.hypot(reachOf(species), half)) : r;
 }
 
-/** How far back a sleeping legend lies, at most, as a share of its circle's radius: `back` (never less than the old `top`). */
+/** How far back a sleeping legend lies, as a share of its circle's radius: `back` (never less than the old `top`). */
 export const backOf = (LC: Clearing): number => Math.max(LC.top, LC.back ?? LC.top);
 
 /** How far north of its circle's middle a species' sleeping legend lies, as a share of the radius r (Ed, 2026-11-12: "Legends
- *  should sleep at the back of their circles, so you can stand in the circle before them"): `back`, unless its sleeping width
- *  would cross the ring there (a circle capped or squeezed smaller than its legend needs): then as far back as it fits with
- *  `fit.margin` to spare, and never further forward than `top` (where it lay before), so the front stays as open as it was. */
+ *  should sleep at the back of their circles, so you can stand in the circle before them"): `back`, or further if she couldn't
+ *  otherwise stand at the middle clear of its drawn pixels (reachOf); unless its sleeping width would cross the circle's edge
+ *  there (a circle capped or squeezed smaller than its legend needs): then as far back as it fits inside the circle (on the ring
+ *  of trodden earth if it must be: a full-size circle keeps it `fit.margin` off), and never further forward than `top` (where it
+ *  lay before), so the front stays as open as it was. */
 export function spotShare(species: string, r: number, LC: Clearing): number {
   const b = backOf(LC), s = LEGEND_SIZES[species];
   if (b <= LC.top || !s || !(r > 0)) return LC.top;
-  const q = (s.asleep[0] / 2 + (LC.fit?.margin ?? 0)) / r, fits = q < 1 ? Math.sqrt(1 - q * q) : 0;
-  return Math.min(b, Math.max(LC.top, fits));
+  const q = s.asleep[0] / 2 / r, fits = q < 1 ? Math.sqrt(1 - q * q) : 0;
+  return Math.max(LC.top, Math.min(Math.max(b, reachOf(species) / r), fits));
 }
 
 /** Where a species' legend sleeps in its circle of middle (x, z) and radius r: spotShare x r north (-z) of the middle. */

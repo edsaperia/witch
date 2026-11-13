@@ -3,6 +3,7 @@ import { isInside } from "./mapShape";
 import { Forest, legendGrove } from "./forest";
 import { keepsToCircle, pointInArea, spawnCreatures, stepCreature } from "./creatures";
 import { rng } from "./random";
+import { spotShare } from "./legendFit";
 import { cellKey, soundsystemFor } from "./party";
 import { TUNING, withTuning } from "./tuning";
 import { joinParty, loseSoundsystem, stepGame, STEP, type Controls, type Game } from "./game";
@@ -39,7 +40,8 @@ describe("legend clearings", () => {
         // their circles, so you can stand in the circle before them"), the open floor in front: rules/legendFit.ts spotShare
         const L = creatures.find(o => o.boss && o.cell[0] === c.cell[0] && o.cell[1] === c.cell[1])!, LC = TUNING.legendClearing;
         expect(L.x).toBeCloseTo(c.x, 6);
-        expect(Math.hypot(L.x - c.x, L.z - c.z)).toBeLessThanOrEqual(c.r * (LC.back ?? LC.top) + 1e-6);
+        expect(Math.hypot(L.x - c.x, L.z - c.z)).toBeCloseTo(c.r * spotShare(L.species, c.r, LC), 6); // (back x r, or further for a nap drawn far below its ground line: reachOf)
+        expect(Math.hypot(L.x - c.x, L.z - c.z)).toBeLessThan(c.r);
         expect(L.z).toBeLessThanOrEqual(c.z - c.r * LC.top + 1e-6);
       }
     });

@@ -20,7 +20,7 @@ let code = 0;
 try {
   await b.page.goto(b.base + "/art/headless-blank.html");
   const sizes = await b.page.evaluate(async ({ style, pixel }) => {
-    const G = await import("/art/generator.js");
+    const G = await import("/art/generator.js"), M = await import("/art/mesh/index.js");
     const st = G.defaultStyle(), given = style.style && typeof style.style === "object" ? style.style : style;
     for (const [k, v] of Object.entries(given)) if (k in st) st[k] = v;
     st.pixel = pixel; // (the game draws at its own pixel size: app/viewParams.ts gameStyle)
@@ -28,22 +28,30 @@ try {
     const box = sp => { let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } return x1 < 0 ? [0, 0] : [x1 - x0 + 1, y1 - y0 + 1]; };
     const out = {};
     const ids = [...new Set(G.SPECIES.map(S => S.id))].sort();
+    // (a kind drawn as a mesh, art/mesh: its curled legend and its walk as the game draws them, the ground on the sprite's bottom row)
+    const lit = (f, w, h) => { let x0 = w, x1 = -1, y0 = h, y1 = -1; for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (f.albedo[(y * w + x) * 4 + 3]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } return x1 < 0 ? [0, 0] : [x1 - x0 + 1, y1 - y0 + 1]; };
     for (const id of ids) {
-      let nw = 0, nh = 0, aw = 0, ah = 0;
-      for (const frame of [0, 1]) {
+      let nw = 0, nh = 0, aw = 0, ah = 0, front = 0;
+      if (M.hasMesh(id, st)) {
+        const nap = M.meshNap(id, 3), walk = M.meshWalk(id, 3);
+        for (const f of nap.towards) { const [w0, h0] = lit(f, nap.w, nap.h); nw = Math.max(nw, w0); nh = Math.max(nh, h0); }
+        for (const f of [...walk.towards, ...walk.away]) { const [w1, h1] = lit(f, walk.w, walk.h); aw = Math.max(aw, w1); ah = Math.max(ah, h1); }
+      } else for (const frame of [0, 1]) {
         const n = G.critter(id, 3, frame, st, "towards", { nap: true });
         const [w0, h0] = box(n); nw = Math.max(nw, w0); nh = Math.max(nh, h0);
+        // (what it draws below its ground line, the ground under its middle: the camera lays that over the ground in front of it)
+        if (n.origin) { let y1 = -1; for (let y = n.h - 1; y >= 0 && y1 < 0; y--) for (let x = 0; x < n.w; x++) if (n.m[y * n.w + x]) { y1 = y; break; } front = Math.max(front, y1 + 1 - n.origin[1]); }
         for (const facing of ["towards", "away"]) { const [w1, h1] = box(G.critter(id, 3, frame, st, facing)); aw = Math.max(aw, w1); ah = Math.max(ah, h1); }
       }
-      out[id] = [nw, nh, aw, ah];
+      out[id] = [nw, nh, aw, ah, front];
     }
     return out;
   }, { style, pixel: tuning.pixelSize });
   const mpp = 1 / (tuning.artPixelsPerMetre * (2 / tuning.pixelSize)), m = px => Math.round(px * mpp * 10) / 10;
   const species = {};
-  for (const [id, [nw, nh, aw, ah]] of Object.entries(sizes)) species[id] = { asleep: [m(nw), m(nh)], awake: [m(aw), m(ah)] };
+  for (const [id, [nw, nh, aw, ah, front]] of Object.entries(sizes)) species[id] = { asleep: [m(nw), m(nh)], awake: [m(aw), m(ah)], front: m(Math.max(0, front)) };
   const json = JSON.stringify({
-    _: "Each species' legend as drawn, in metres: asleep (its nap, both breaths) and awake (standing, both frames, facing us and away), each [width, height]. Written by node tools/legends/footprint.mjs from the art in the game's style (config/style.json at the tuning's pixelSize); rules/legendFit.ts sizes each legend's circle from it. Run it again after a change to a creature's art (--check says whether it's stale).",
+    _: "Each species' legend as drawn, in metres: asleep (its nap, both breaths; a mesh kind's curled legend) and awake (standing, both frames, facing us and away), each [width, height]; front: how far its nap draws below its ground line (0 for a mesh kind). Written by node tools/legends/footprint.mjs from the art in the game's style (config/style.json at the tuning's pixelSize); rules/legendFit.ts sizes each legend's circle from it. Run it again after a change to a creature's art (--check says whether it's stale).",
     species,
   }, null, 1).replace(/\[\n\s+([\d.]+),\n\s+([\d.]+)\n\s+\]/g, "[$1, $2]") + "\n";
   if (check) {

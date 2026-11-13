@@ -21,10 +21,10 @@ it('retains the original quantised windows at arrival and after small and large 
   // areas 196 m across with every two sites 50 m apart (#1807, 2026-11-04: the map a sixth bigger, its stones moved), the code unchanged; and for the challenge circle 36 to 50 m (#1827,
   // Ed: "If this doesn't fit, make the circle bigger.": its claim, terrace and the stones round it moved), the code unchanged; and for
   // legends sleeping at the back of their circles (Ed, 2026-11-12: "Legends should sleep at the back of their circles, so you can stand
-  // in the circle before them": the circles sized for it, up to a quarter bigger, their terraces and the sites round them moved), the code unchanged.
+  // in the circle before them": the circles sized for it, their terraces and the sites round them moved; 2026-11-13, sized from the legends as drawn now, their meshes: config/legend-footprints.json), the code unchanged.
   for (const [seed, island, expected] of [
-    [123, 'home', ['fd31e33517101b7ac6d59a60d3b54f314e99024662ba61dd5347253c8ea5b780', '3fe75ec3c6da1715b15daada5de3bb95c03b8ae2f47c9a9165bac08ecc7e3509', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
-    [424242, 'fox', ['5421d3d9ef00ad59ea94879f75486e0ac69ad4d8d20daacfb8b3ab9c76ef8d7e', '4bfc5364795716884bf18d6b36e69d021032c16a80037595388b1c29da1d5adb', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [123, 'home', ['ddcfe7d5556d04413200630e4c63007493d8b478d6620aea529df86683b4299c', 'bd2ba5bbf8a7386ae9857bb0c1c4ec9a82dd823ad18d4be358f4266b5d256cd0', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
+    [424242, 'fox', ['6b6acf82747d4da042a54984dcf192ecb13e57e4899917e628d43dd798dcf390', '7ef5fc0313c44ce2175f9b49abf5aa23378835e6a4c95cc6ef1247228494dbc5', '211c9e70da0879e0d83ef85f17394c85dedb41623ac8517b46d774cb0cafaef2']],
   ] as const) {
     const map = generateMap(seed, tuning(island)), H = arrivalHills(map.tuning), field = new HeightSamples(map, new Forest(map), H, DataUtils);
     const { x, z } = map.start;

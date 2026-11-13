@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LEGEND_SIZES, backOf, legendRadius, legendSpot, overflow, radiusToFit, spotShare } from "./legendFit";
+import { CIRCLE_ANGLE, HER, LAY, LEGEND_SIZES, backOf, legendRadius, legendSpot, overflow, radiusToFit, reachOf, spotShare } from "./legendFit";
 import { AREA_TYPES, generateMap } from "./map";
 import { TUNING as gameTuning } from "./tuning";
 import { spawnCreatures } from "./creatures";
@@ -43,8 +43,10 @@ describe("legends sleep at the back of their circles (rules/legendFit.ts spotSha
     for (const sp of Object.keys(LEGEND_SIZES)) {
       const r = legendRadius(sp, LC), k = spotShare(sp, r, LC);
       expect(k, sp).toBeGreaterThanOrEqual(LC.top);
-      expect(k, sp).toBeLessThanOrEqual(back);
-      if (radiusToFit(sp, LC) <= r + 1e-9) expect(k, sp).toBeCloseTo(back, 9); // (not capped: all the way back)
+      expect(k, sp).toBeLessThan(1);
+      // (not capped: all the way back, and further if she'd otherwise be under what it draws in front of itself: reachOf)
+      if (radiusToFit(sp, LC) <= r + 1e-9) expect(k, sp).toBeCloseTo(Math.max(back, reachOf(sp) / r), 9);
+      else expect(k, sp).toBeLessThanOrEqual(Math.max(back, reachOf(sp) / r) + 1e-9);
     }
   });
   it("keeps its whole sleeping body inside the circle and off its ring, where its circle could be its full size", () => {
@@ -87,3 +89,42 @@ describe("legends sleep at the back of their circles (rules/legendFit.ts spotSha
 });
 
 // The old-cap giant identity baseline is informational in tools/behaviour/legends-fit.behaviour.ts.
+
+// Ed, 2026-11-13, of the legends whose paw, belly or muzzle still covered her at the circle's middle: "fix the others". With her at
+// the middle of its circle, none of a sleeping legend's drawn pixels are over her on the circle's camera: its spot is far enough
+// north for what it draws below its ground line (its footprint's `front`), and her own height (HER), laid over the ground at the
+// camera's angle (LAY), to fall short of each other. A kind drawn as a mesh has its ground on its sprite's bottom row (front 0).
+describe("she stands in view before every sleeping legend, at its circle's middle (rules/legendFit.ts reachOf)", () => {
+  // The kinds that can't meet it in a circle at the cap (fit.max, an area with a runestone): each a generated drawing, not yet a
+  // mesh, whose nap draws metres below its ground line, so the camera lays it over more floor than a capped circle has before it.
+  // A kind leaves this list when its mesh lands (run node tools/legends/footprint.mjs: its front goes to 0); the test says so.
+  const CAPPED_SHORT = ["crab", "frostwyrm", "hydra", "newt", "stegosaurus"];
+  // And these not even in a legend area of their own (fit.areaMax).
+  const AREA_SHORT: string[] = [];
+  it("measures the ground her height covers at the circle camera's own angle", () => {
+    expect(CIRCLE_ANGLE).toBe(gameTuning.camera.circle!.angle);
+    expect(LAY).toBeCloseTo(1 / Math.tan((gameTuning.camera.circle!.angle * Math.PI) / 180), 9);
+    expect(HER).toBeGreaterThanOrEqual(2.5);
+  });
+  const clear = (sp: string, r: number) => r * spotShare(sp, r, LC) >= reachOf(sp) - 1e-6;
+  it("for every species, in a circle at its full size: in an area with a runestone (up to fit.max) and in a legend area (up to fit.areaMax)", () => {
+    const capped: string[] = [], area: string[] = [];
+    for (const sp of Object.keys(LEGEND_SIZES).sort()) {
+      if (!clear(sp, legendRadius(sp, LC))) capped.push(sp);
+      if (!clear(sp, legendRadius(sp, LC, LC.fit!.areaMax))) area.push(sp);
+    }
+    expect(capped).toEqual(CAPPED_SHORT);
+    expect(area).toEqual(AREA_SHORT);
+    for (const sp of [...capped, ...area]) expect(LEGEND_SIZES[sp].front ?? 0, sp).toBeGreaterThan(0); // (never a mesh kind)
+  });
+  it("for every circle the map places that is its legend's full size, and for every mesh kind's circle whatever its size", () => {
+    for (const seed of [1, 123, 4242, 90210]) {
+      const map = generateMap(seed, TUNING);
+      for (const c of map.legendClearings) {
+        const sp = AREA_TYPES[map.typeOf(c.cell[0], c.cell[1])].creature, mesh = !(LEGEND_SIZES[sp].front ?? 0);
+        if (!mesh && (c.r < radiusToFit(sp, LC) - 1e-6 || CAPPED_SHORT.includes(sp))) continue;
+        expect(c.z - c.legend.z, `${sp} in ${c.cell} (seed ${seed}), r ${c.r.toFixed(1)}`).toBeGreaterThanOrEqual(reachOf(sp) - 1e-6);
+      }
+    }
+  });
+});
