@@ -89,13 +89,24 @@ export function barLevel(bins: ArrayLike<number>, i: number, n: number): number 
   return Math.max(0, Math.min(1, (bins[b] ?? 0) / 255));
 }
 
-/** The bars' levels this frame (the soundsystem spell's analyser: a stump's dial, a wave's bloom, the decks' ring at the party start,
- *  render/leash/decksRing.ts): bar i of m from the music's spectrum (StoneView.spectrum), rising at once and falling slowly, as an
- *  analyser's do (eased in StoneView.bars); with no audio running, a gentle idle. */
+/** Which of the analyser's bars (barLevel's: 0 its front, the bass; n/2 its back, the treble) the soundsystem spell's bar i of n
+ *  round a stone or a great stump shows (bar 0 due south, n/2 due north): the analyser's ring wrapped twice round, the bass due south
+ *  and due north, the treble due west and due east. Ed, 2026-11-13, of the ring at a great stump: "Why so little of the north half of
+ *  the soundsystem spell circle? (red and yellow part) compared to the southern part?" Measured that day (the music's sections played
+ *  through the mix's analyser; the ring drawn with every bin loud, then with the music's): nothing cuts or hides the north bars (with
+ *  every bin loud each reaches the edge, and only the dots behind the soundsystem itself are covered), but wrapped once round the bass
+ *  lay due south and the highs due north, and the music's low bins sit at the read's top all the time while its highs stand at a
+ *  third to a half of it, so the north bars were always the short ones; and the camera's view draws a metre north of the middle 0.74
+ *  of a metre south of it, making them shorter still. Wrapped twice, north and south show the same bins. */
+export const ringBar = (i: number, n: number): number => (2 * i) % n;
+
+/** The bars' levels this frame (the soundsystem spell's analyser: a stump's dial and a wave's bloom): bar i of m from the music's
+ *  spectrum (StoneView.spectrum) as ringBar lays it round, rising at once and falling slowly, as an analyser's do (eased in
+ *  StoneView.bars); with no audio running, a gentle idle. */
 export function analyserLevels(lv: LeashView, time: number): (i: number, m: number) => number {
   const V = lv.stoneView, spec = V.spectrum, dt = Math.min(0.1, lv.frameDt);
   return (i: number, m: number) => {
-    const live = spec ? barLevel(spec, i, m) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
+    const live = spec ? barLevel(spec, ringBar(i, m), m) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
     return (V.bars[i] = Math.max(live, V.bars[i] - dt * 1.8));
   };
 }

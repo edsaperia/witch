@@ -16,13 +16,17 @@
 //   once a bar, the whole ring ticking up on each beat (decksIdle); the music's own levels take over as it comes in;
 // - on the Terrace's floor as it's drawn: each dot placed through the oak's art's own view of its floor (LeashView.floorAt, as her
 //   feet and the furniture are; the first lay flat in the camera's view of the ground, a flatter ellipse than the floor's, so its
-//   front hung past the rim), and each bar stopped short of the floor's rim (rules/houseRooms.ts floorDistance).
+//   front hung past the rim), and each bar stopped short of the floor's rim.
+// Since Ed, 2026-11-13, of that ring live ("Why so little of the north half of the soundsystem spell circle? (red and yellow part)
+// compared to the southern part?": the decks sit close to the Terrace's north rim, so its north bars had under a metre of floor;
+// he chose "Hang past the edge"): a full circle, every bar reaching `edge` all round. Past the rim a dot goes on in the floor's own
+// plane as drawn (floorAt is the art's view of the floor carried straight on, not the camera's ground), in the air over the drop
+// at the floor's height, in line with the dots on the floor.
 import { PARTY_CAST } from "../../rules/party";
 import { djIntroEnd, djStrokeAgo } from "../../rules/djSet";
 import { beatAt, timeAt } from "../../rules/beat";
 import type { Game } from "../../rules/game";
 import { deckOf } from "../../rules/treehouse";
-import { floorDistance } from "../../rules/houseRooms";
 import type * as THREE from "three";
 import type { LeashView } from "../leash";
 import { groundHeight } from "../height";
@@ -34,15 +38,15 @@ export const DECKS_FX = { old: new URLSearchParams(globalThis.location?.search ?
 
 /** One showing of the ring: the decks' middle as drawn (y over the ground: the Terrace's floor) and their desk's width (m), and on the
  *  world's clock (the beat's and the music's) when it starts, when it's fully grown and when it starts to fade. */
-export interface DecksRing { x: number; y: number; z: number; width: number; at: number; grown: number; until: number; /** how loud the mix has lately been (0 to 1, falling slowly): the idle sweep's fade */ live?: number; /** how far out each bar may reach (m): the floor's rim, found once */ rim?: number[]; /** its analyser begun: its bars from nothing */ heard?: boolean }
+export interface DecksRing { x: number; y: number; z: number; width: number; at: number; grown: number; until: number; /** how loud the mix has lately been (0 to 1, falling slowly): the idle sweep's fade */ live?: number; /** its analyser begun: its bars from nothing */ heard?: boolean }
 
 /** Its sizes, to the decks' desk (config/house/base.json terrace.decks: 5 m wide, its art about 3 m as drawn), in desk widths: its
- *  first dot past the desk's ends as drawn (`inner`), its bars reaching out to `edge` all round where the floor does. Bars to read
+ *  first dot past the desk's ends as drawn (`inner`), its bars reaching out to `edge` all round, on past the floor's rim (Ed, 2026-11-13: "Hang past the edge"). Bars to read
  *  as bars (Ed, 2026-11-13; the first had a stump's 72 of 0.36 m dots, 0.16 m apart at its inner edge: one smooth band): `bars` of
  *  them, of dots `cell` m, so even at the inner edge the gap between two is most of a dot wide; their glow kept under a stump's (its
  *  halo is 1.8 dots wide: brighter, it fills the gaps again). `least`: a silent bar's share of the way out (a stub; a stump's bloom
- *  0.55); `margin`: how far short of the floor's rim a bar stops (m). */
-export const DECKS_RING = { inner: 0.4, edge: 0.84, cell: 0.26, fill: 1, glow: 0.5, bars: 28, least: 0.08, margin: 0.3 } as const;
+ *  0.55). */
+export const DECKS_RING = { inner: 0.4, edge: 0.84, cell: 0.26, fill: 1, glow: 0.5, bars: 28, least: 0.08 } as const;
 /** How far in front of the Terrace's near half (render/view/home.ts entDepth: its art stood past the desk's front, in front of her)
  *  a dot is drawn, at most (m along its ray): over the floor that half draws, still behind the DJ table drawn over it (DJ_DEPTH.fore,
  *  0.25 m nearer). */
@@ -109,10 +113,11 @@ export function nearHalfDepth(lv: LeashView, camera: THREE.Camera): number | nul
   return -(m[2] * px + m[6] * py + m[10] * pz + m[14]);
 }
 
-/** A layer whose dots lie on the house's floor as it's drawn (LeashView.floorAt): each one's place in the world (x, z) taken to
- *  where the oak's art draws that spot of its floor, `lift` m over it; one `keep` turns down (off the floor) isn't drawn. */
-export function onDrawnFloor(into: DotLayer, floorAt: (x: number, z: number) => { x: number; y: number; z: number }, lift: number, keep?: (x: number, z: number) => boolean): DotLayer {
-  return { add(x, _y, z, size, uv, r, g, b, a, draw, glow) { if (keep && !keep(x, z)) return; const p = floorAt(x, z); into.add(p.x, p.y + lift, p.z, size, uv, r, g, b, a, draw, glow); } };
+/** A layer whose dots lie in the house's floor's plane as it's drawn (LeashView.floorAt): each one's place in the world (x, z) taken
+ *  to where the oak's art draws that spot of its floor, `lift` m over it; a spot past the floor's rim to where the art would draw it
+ *  were the floor to go on (the same straight map of the plan onto the art's pixels: at the floor's height, over the drop). */
+export function onDrawnFloor(into: DotLayer, floorAt: (x: number, z: number) => { x: number; y: number; z: number }, lift: number): DotLayer {
+  return { add(x, _y, z, size, uv, r, g, b, a, draw, glow) { const p = floorAt(x, z); into.add(p.x, p.y + lift, p.z, size, uv, r, g, b, a, draw, glow); } };
 }
 
 /** The idle sweep (Ed, 2026-11-13, of the 8.7 s before the drop: the mix silent, so nothing live to show; her needle-drop routine's
@@ -167,35 +172,22 @@ export function decksLevels(lv: LeashView, R: DecksRing): (i: number, m: number)
 /** How loud the mix must be (its loudest bin's share of the way from DECKS_LEVELS' floor to its top) for the idle sweep to be gone altogether. */
 export const DECKS_LIVE = 0.3;
 
-/** How far out from the decks' middle (x, z in the world) a bar at angle `a` may reach (m): to `edge`, or `margin` short of the
- *  house's floor's rim if that's nearer (its last step still on the floor). */
-export function reachOnFloor(g: Game, x: number, z: number, a: number, edge: number, margin: number): number {
-  const F = deckOf(g.map, g.tuning)?.house?.rooms;
-  if (!F) return edge;
-  const ux = Math.cos(a), uz = Math.sin(a);
-  for (let r = 0; r <= edge + margin; r += 0.1) if (floorDistance(F, x + ux * r, z + uz * r) > 0) return Math.max(0, r - 0.1 - margin);
-  return edge;
-}
-
 /** A frame (render/leash.ts, after the stones, whose analyser it shares: the music's spectrum and the bars' eased levels): the ring
  *  on the Terrace's floor round the decks, if it's showing; `time` her clock (the rainbow's drift). Drawn over the house's floors
  *  (render/leash.ts DECKS_RING_ORDER), depth-tested, each dot no deeper than just in front of the Terrace's near half (noDeeper), so
  *  the whole ring shows round the decks and the DJ table in front of it still covers it (tried in the game, 2026-11-12). With the
- *  house drawn (LeashView.floorAt), round the desk's own place on the floor, each dot where the art draws that spot (onDrawnFloor)
- *  and each bar kept on the floor (reachOnFloor); without it (the old studio), round the decks' middle as drawn, flat. */
+ *  house drawn (LeashView.floorAt), round the desk's own place on the floor, each dot where the art draws that spot (onDrawnFloor),
+ *  every bar its whole reach, on past the rim in the floor's plane; without it (the old studio), round the decks' middle as drawn, flat. */
 export function drawDecksRing(lv: LeashView, time: number, dot: number[], camera?: THREE.Camera): void {
   const R = DECKS_FX.old ? null : lv.decksRing, P = R ? decksRingPhase(R, lv.game.clock.time) : null;
   lv.stoneView.wantsDb = false;
   if (!R || !P || P.alpha <= 0.002) return;
   lv.stoneView.wantsSpectrum = lv.stoneView.wantsDb = true; // (the mix's spectrum for the bars, unclipped, from the next frame: app/pageFrame.ts)
-  const K = DECKS_RING, g = lv.game, H = deckOf(g.map, g.tuning)?.house, desk = lv.decksOnFloor, F = desk ? lv.floorAt : null;
-  const floor = H?.rooms, on = floor ? (x: number, z: number) => floorDistance(floor, x, z) <= 0 : undefined; // (a bar with no room at all, its first dot off the floor: not drawn)
+  const K = DECKS_RING, desk = lv.decksOnFloor, F = desk ? lv.floorAt : null;
   const S: FlatRing = { inner: K.inner * R.width, cell: K.cell, fill: K.fill, glow: K.glow }, edge = K.edge * R.width;
   const near = camera ? nearHalfDepth(lv, camera) : null, lift = F ? 0.06 : R.y + 0.06;
-  const front = (l: DotLayer) => (near === null ? l : noDeeper(l, camera!, near - DECKS_RING_LIFT)), laid = (l: DotLayer) => (F ? onDrawnFloor(front(l), F, lift, on) : front(l));
+  const front = (l: DotLayer) => (near === null ? l : noDeeper(l, camera!, near - DECKS_RING_LIFT)), laid = (l: DotLayer) => (F ? onDrawnFloor(front(l), F, lift) : front(l));
   const L: RingLayers = { ink: laid(lv.decksInk), glow: laid(lv.decksGlow), y: lift };
   const x0 = F ? desk!.x : R.x, z0 = F ? desk!.z : R.z;
-  if (F && R.rim?.length !== K.bars) R.rim = Array.from({ length: K.bars }, (_, i) => reachOnFloor(g, x0, z0, Math.PI / 2 + (i / K.bars) * Math.PI * 2, edge, K.margin));
-  const rim = F ? R.rim! : null, reach = rim ? (a: number) => rim[Math.round(((a - Math.PI / 2) / (Math.PI * 2)) * K.bars) % K.bars] : edge;
-  analyserBloom(L, dot, S, x0, z0, reach, K.bars, P.fill, P.alpha, decksLevels(lv, R), time, K.least);
+  analyserBloom(L, dot, S, x0, z0, edge, K.bars, P.fill, P.alpha, decksLevels(lv, R), time, K.least);
 }
