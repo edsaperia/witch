@@ -96,7 +96,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
   // (on the ground, and from the treetops through the crowns too, as the ley lines and leash routes do)
   const mark = (x: number, z: number, size: number, r: number, gg: number, b: number, a: number) => { lv.flat.add(x, 0, z, size, dot, r, gg, b, a); if (up) lv.over.add(x, 0.3, z, size * 0.8, dot, r, gg, b, Math.min(1, a * 1.1)); };
   const lungeTell = (c: Creature, A: Attack, aimX: number, aimZ: number, atWitch: boolean, k: number, modern: boolean, colour = RED_30) => {
-    const length = lungeLength(c, A, atWitch, t, time, aimX, aimZ), angle = Math.atan2(aimZ - c.z, aimX - c.x);
+    const length = lungeLength(c, A, atWitch, t, time, aimX, aimZ, c.fight?.target?.kind === "sound"), angle = Math.atan2(aimZ - c.z, aimX - c.x);
     const ux = Math.cos(angle), uz = Math.sin(angle), turn = waitingProfile(c).strikeTurn;
     if (length <= 1) return;
     const half = Math.max(0.6, A.range * (atWitch && t.dodge?.a.on ? t.dodge.a.width : 1));

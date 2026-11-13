@@ -8,7 +8,7 @@
 // limit. Builds are stronger invites tunings, named for the legend buffs they were modelled on (Flutter +1 a burst,
 // Fan a 3-way spread, Quick fire half the cooldown, Echo a second burst, Long thread more range, Big heart bigger
 // letters, Charm stronger homing; the buffs themselves removed, Ed 2026-10-28).
-//   node tools/balance/fightbot.mjs [--seeds 2] [--areas 3] [--waves 1,5,10,20,30] [--builds 0,2,4,7] [--bots circle20,circle35,circle50,kiter,greedy,skilled] [--kite 9] [--blink 5] [--limit 240] [--start babies,young,adults] [--json out.json] | --report a.json,b.json
+//   node tools/balance/fightbot.mjs [--seeds 2] [--areas 3] [--waves 1,5,10,20,30] [--builds 0,2,4,7] [--bots circle20,circle35,circle50,kiter,greedy,skilled] [--kite 9] [--blink 5] [--limit 240] [--start babies,young,adults] [--lunge old] [--json out.json] | --report a.json,b.json
 import { openRules, arg, list, mean } from "./lib.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 
@@ -36,7 +36,7 @@ else {
 
   /** One fight. */
   function fight(seed, areaIx, wave, buffs, bot) {
-    const t = withTuning({ invites: BUILDS[buffs].f(TUNING.invites), ...(START ? { population: { ...TUNING.population, start: START } } : {}) });
+    const t = withTuning({ invites: BUILDS[buffs].f(TUNING.invites), ...(START ? { population: { ...TUNING.population, start: START } } : {}), ...(arg("lunge") === "old" && TUNING.lunge ? { lunge: { ...TUNING.lunge, on: false } } : {}) }); // (--lunge old: the lunges before Ed's 2026-11-13 change, to compare)
     const g = newGame(seed, t), w = g.witches[0];
     g.clock.paused = false; g.party.paused = true; // (no waves: just this fight)
     const [hx, hy] = g.map.centreCell, ring = [[2, 0], [-2, 0], [0, 2], [0, -2], [2, 2], [-2, -2]][areaIx % 6], cell = [hx + ring[0], hy + ring[1]];

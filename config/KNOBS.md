@@ -2383,6 +2383,30 @@ Dodging matters [1]: against the witch only (fights between creatures as before)
 | `dodge.c.ahead` | number | 0 to … |
 | `dodge.c.sprint` | number | 0 to … |
 
+### `lunge`
+
+Long lunges: a lunging creature winds up from about a dash and a half away, then lunges about two dashes along its line, through and past where she was [1].
+
+1. Ed, 2026-11-13: "Lunge ranges seem very short; they could be twice as long, around 1.5-2 dashes range." … "Both" (measured first (tools/balance/lunges.mjs): wind-ups already began 15 to 19 m off, but the creature sprinted in as it wound up and let go 3 to 6 m from her, its lunge stopping where it aimed. Asked how to lengthen them (wind up from far, or carry through), he chose both)
+A dash is dash.distance (15 m). For a kind whose own lunge is full metres or more (the stoat, the lynx, every youth's maul) the wind-up may begin from dashes off its target and the lunge runs through dashes; a kind with a shorter lunge gets its share of both, never under shortest (so every long lunge is 1.5 to 2 dashes). An attack that lunges under least metres is a swipe (the bear's, the big cats') and stays as it was, as do lunges at a soundsystem, dug-in bites and the legends. Winding up, it gathers itself where it is (no sprint in, the old dodge.a.surge); its blow lands as it meets its target on the way, once, and it never turns back after. on false (?lunge=old): the lunges as before.
+Code: `src/rules/combat.ts`, `tools/balance/lunges.mjs`
+
+- **`lunge.on`**: Long lunges on; off, lunges as they were (?lunge=old).
+- **`lunge.from`**: How many dashes away a lunger's wind-up may begin (the longest kinds).
+- **`lunge.through`**: How many dashes a lunge runs along its line, through and past its target (the longest kinds). The one knob to turn down if lunges prove too hard to dodge.
+- **`lunge.shortest`**: The least share of those two that a short-lunging kind gets.
+- **`lunge.full`**: A kind's own lunge, in metres, at which it gets the whole of from and through.
+- **`lunge.least`**: An attack lunging under this many metres is a swipe, left as it was.
+
+| knob | type | range |
+|---|---|---|
+| `lunge.on` | boolean |  |
+| `lunge.from` | number | 0 to … |
+| `lunge.through` | number | 0 to … |
+| `lunge.shortest` | number | 0 to … |
+| `lunge.full` | number | 0 to … |
+| `lunge.least` | number | 0 to … |
+
 ### `ranged`
 
 Creatures' shots aim where she's going: each follows her through its wind-up and locks a moment before it can reach her, so a steady walk gets hit and a change of direction dodges [1][2][3].

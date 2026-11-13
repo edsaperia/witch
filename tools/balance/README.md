@@ -148,7 +148,7 @@ node tools/balance/fight.mjs [--seeds 2] [--sizes 2,4,8,12] [--mixes wolf,boar,r
 What playtesters will feel in fights: a bot plays the real rules headless, no new rules.
 
 ```
-node tools/balance/fightbot.mjs [--seeds 2] [--areas 3] [--waves 1,5,10,20,30] [--builds 0,2,4,7] [--bots circle20,circle35,circle50,kiter,greedy,skilled] [--kite 9] [--blink 5] [--limit 240] [--start babies,young,adults] [--json out.json] | --report a.json,b.json
+node tools/balance/fightbot.mjs [--seeds 2] [--areas 3] [--waves 1,5,10,20,30] [--builds 0,2,4,7] [--bots circle20,circle35,circle50,kiter,greedy,skilled] [--kite 9] [--blink 5] [--limit 240] [--start babies,young,adults] [--lunge old] [--json out.json] | --report a.json,b.json
 ```
 
 ## `leycross.mjs`
@@ -169,6 +169,14 @@ The logistics sweep. Over a grid of area size × treetop speed, with the balance
 
 ```
 node tools/balance/logistics.mjs [--seeds 8] [--sizes 112,168,224,280] [--treetops 32,48,64,96]
+```
+
+## `lunges.mjs`
+
+How long are lunges really?
+
+```
+node tools/balance/lunges.mjs [--groups wolf*4,stoat*4,...] [--levels 1,2,3] [--bots still,strafe] [--posse wolf*3] [--seeds 2]
 ```
 
 ## `mapsize.mjs`

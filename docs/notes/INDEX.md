@@ -173,6 +173,7 @@ glossary; these are the prototype's), by note.
 - Chains
 - Party animal
 - Combat
+- Long lunges
 - Attack grammar
 - Ranged aim
 - Siege

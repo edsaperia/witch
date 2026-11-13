@@ -6616,6 +6616,50 @@
       "additionalProperties": false,
       "description": "Dodging matters: creatures commit to their strikes, so she can dodge them by moving or blinking away."
     },
+    "lunge": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean",
+          "description": "Long lunges on; off, lunges as they were (?lunge=old)."
+        },
+        "from": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How many dashes away a lunger's wind-up may begin (the longest kinds)."
+        },
+        "through": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How many dashes a lunge runs along its line, through and past its target (the longest kinds)."
+        },
+        "shortest": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The least share of those two that a short-lunging kind gets."
+        },
+        "full": {
+          "type": "number",
+          "minimum": 0,
+          "description": "A kind's own lunge, in metres, at which it gets the whole of from and through."
+        },
+        "least": {
+          "type": "number",
+          "minimum": 0,
+          "description": "An attack lunging under this many metres is a swipe, left as it was."
+        }
+      },
+      "required": [
+        "on",
+        "from",
+        "through",
+        "shortest",
+        "full",
+        "least"
+      ],
+      "additionalProperties": false,
+      "description": "Long lunges: a lunging creature winds up from about a dash and a half away, then lunges about two dashes along its line, through and past where she was."
+    },
     "ranged": {
       "type": "object",
       "properties": {
@@ -15461,6 +15505,7 @@
     "combat",
     "notice",
     "dodge",
+    "lunge",
     "ranged",
     "stoneIdle",
     "sigilAvoid",

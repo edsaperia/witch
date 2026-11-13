@@ -1497,6 +1497,14 @@
       "sprint": 23
     }
   },
+  "lunge": {
+    "on": true,
+    "from": 1.5,
+    "through": 2,
+    "shortest": 0.75,
+    "full": 16,
+    "least": 8
+  },
   "ranged": {
     "on": true,
     "lead": 1,
