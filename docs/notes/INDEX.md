@@ -469,6 +469,8 @@ glossary; these are the prototype's), by note.
 - Pair poses
 - Witch genome / witch generator
 - Lean cycle
+- Her top, trousers and shoes
+- Bag straps
 
 ### [The world's art](world-art.md)
 

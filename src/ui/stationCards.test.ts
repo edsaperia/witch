@@ -22,9 +22,9 @@ const items = (shelf: string) => SHELVES[shelf].items.filter(it => !none(it)); /
 /** Each station's shelves with items, and how their cards show them (Ed, 2026-11-02). */
 const STATIONS: Record<string, Record<string, string>> = {
   dressingTable: { hair: "bust", face: "bust", earrings: "bust" }, // "render her from shoulders to top of her head, without hat"
-  wardrobe: { jacket: "jacket" }, // the item alone
+  wardrobe: { jacket: "jacket", top: "top" }, // the item alone; her top on her body, her jacket off (Ed, 2026-11-13: the Top shelf's items)
   cloakPegs: { cloak: "back", scarf: "back" }, // "cloak should be shown 3/4 from the back, hat removed"
-  shoeRack: { shoes: "legs" }, // "shoes should show her legs, thighs down"
+  shoeRack: { trousers: "hips", shoes: "legs" }, // "shoes should show her legs, thighs down"; her trousers her waist down (a skirt and shorts sit above the thigh)
   bags: { bag: "bag" }, // "include shoes and bags" (the item alone)
 };
 
@@ -73,6 +73,21 @@ describe("station card pictures", () => {
     }
   });
 
+  it("the shoe rack's trousers are her waist down, and the wardrobe's tops her body with her jacket off (Ed, 2026-11-13)", () => {
+    for (const it of items("trousers")) {
+      const m = mats(card(it, "hips"));
+      expect(m.has(M.JEANS), it.id).toBe(true);
+      for (const not of [M.HAT, M.HAIR, M.BROOM]) expect(m.has(not), `${it.id} ${not}`).toBe(false);
+    }
+    for (const it of items("top")) {
+      const m = mats(card(it, "top"));
+      expect(m.has(M.TOP), it.id).toBe(true);
+      for (const not of [M.HAT, M.HAIR, M.BROOM, M.JACKET, M.SHOES]) expect(m.has(not), `${it.id} ${not}`).toBe(false);
+    }
+    const noJacket = mats(card(SHELVES.jacket.items.find(none)!, "jacket")); // (no jacket to draw alone: her body in her top)
+    expect(noJacket.has(M.TOP)).toBe(true); expect(noJacket.has(M.JACKET)).toBe(false);
+  });
+
   it("the cloak pegs' are all of her from behind, hat off, the cloak on", () => {
     for (const it of items("cloak")) {
       const m = mats(card(it, "back"));
@@ -108,7 +123,7 @@ describe("no station card is a ∅", () => {
         }
       });
     }
-    expect(nones, "the None and Bare items seen").toBeGreaterThanOrEqual(5); // face-bare, earrings-none, cloak-none, scarf-none, shoes-trainers
+    expect(nones, "the None and Bare items seen").toBeGreaterThanOrEqual(5); // face-bare, earrings-none, cloak-none, scarf-none, and since 2026-11-13 top-none, shirt-none, trousers-none, shoes-none
     expect(bare, "an empty slot's card in each slot's line").toBe(SLOTS.length);
   });
 
