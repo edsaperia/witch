@@ -35,6 +35,7 @@ import { focusOf, inView } from "./culling";
 import { mark } from "./pops";
 import { newStride, stepStride } from "../../../art/mesh/stride.js";
 import { attackFeel, newFeel } from "../attackFeel";
+import { headStrike } from "../headStrike";
 import { impactOf } from "../impact";
 import { creatureHeat } from '../thermalVision';
 import { cheerKind, cheerPose, type CheerPose } from "../cheer";
@@ -233,7 +234,7 @@ export function drawCreatures(v: View, time = 0): void {
     if (lk !== key && !stone) legendKeys.set(lk, c.species);
     arts.set(lk, art);
     STRIDE.shift = 0; STRIDE.land = 0;
-    const gait = art.walk, wide = art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * (c.boss && !c.leashed ? g.tuning.wildLegends.scale : 1), fi = glided ? art.frame(c.level, Math.floor(time * 3 + c.id * 0.37) % 2) : slept || napped ? art.frame(c.level, Math.floor(time / (slept ? 2.5 : 1.8) + c.id * 0.37) % 2) : art.frame(c.level, strideFrame(v, c, time, wide * (gait?.steps?.[c.level] ?? gait?.step ?? 0.3), gait?.frames ?? 2, gait, wide * (gait?.run?.steps[c.level] ?? 0)), c.away), frame = art.atlas.frames[fi]; // (walking: its cycle by the distance it's gone, a planted foot staying put) // (asleep: a slow breath, in and out)
+    const gait = art.walk, wide = art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * (c.boss && !c.leashed ? g.tuning.wildLegends.scale : 1), walked = glided ? art.frame(c.level, Math.floor(time * 3 + c.id * 0.37) % 2) : slept || napped ? art.frame(c.level, Math.floor(time / (slept ? 2.5 : 1.8) + c.id * 0.37) % 2) : art.frame(c.level, strideFrame(v, c, time, wide * (gait?.steps?.[c.level] ?? gait?.step ?? 0.3), gait?.frames ?? 2, gait, wide * (gait?.run?.steps[c.level] ?? 0)), c.away), struck = gait?.strike && !glided && !slept && !napped ? headStrike(g.combat.spells, c.id, time, gait.strike) : -1, fi = struck >= 0 && gait?.strike ? art.frame(c.level, gait.strike.from + struck, c.away) : walked, frame = art.atlas.frames[fi]; // (a hydra's heads striking in turn: render/headStrike.ts) // (walking: its cycle by the distance it's gone, a planted foot staying put) // (asleep: a slow breath, in and out)
     // A wild legend (Ed, 2026-10-04): bigger and imposing, swelling slowly as it breathes (slower asleep).
     const boss = c.boss && !c.leashed ? g.tuning.wildLegends : null;
     // (its size a constant, so its pixels stay the scene's: its breath a squash in whole art pixels, sy, not a swelling; Ed's round 14 playtest)
