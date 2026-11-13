@@ -1,9 +1,9 @@
-// The turtle, four levels, as plans for tools/creature-mesh/quadruped.js: a candidate to stand in for the marten or the stoat
+// The turtle, four levels, as plans for art/mesh/shape.js: first a candidate to stand in for the marten or the stoat
 // (Ed, 2026-11-11: "Martens and Stoats are pretty similar, maybe we should have a different animal. Bees? Turtles?"). A pond
 // turtle's build: a flat body slung between four splayed legs, a long neck with a blunt beaked head, its shell over all. Its
 // ladder is a proposal: a hatchling still wearing half its egg; a quick smooth-shelled young; an adult under a high keeled
 // dome with moss at its rim; and the oracle, the old one whose shell is read: its shell become plate armour, a mark lit on
-// every plate and its joins lit like the cracks a fire reads a shell by, a beard and long brows. Kept for another island (Ed, 2026-11-11: "keep both, but swap the marten for the bee").
+// every plate and its joins lit like the cracks a fire reads a shell by, a beard and long brows. In the Fen, in the newt's place (Ed, 2026-11-12: "newt for turtle").
 import { dome } from "../kit/dome.js";
 import { plod } from "../kit/gaits.js";
 import { plan } from "../kit/plan.js";

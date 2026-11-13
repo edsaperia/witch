@@ -2,12 +2,12 @@
 // crossings (art/paths.js footbridge, rope-bridge and root-bridge, where a path crosses a stream) as seeded variants, so the
 // crossings along a stream differ instead of repeating one sprite. Built like the path pieces (model units, spanning along x, a
 // stream's water under the middle), drawn in the path pieces' colours (pathColours), so a variant changes shape only. Under
-// ?props=gen (style.propGen) the art build bakes BRIDGE_VARIANTS of each as "<id>~<k>", and the view picks one by the crossing's place.
+// style.propGen (the game always has it on) the art build bakes BRIDGE_VARIANTS of each as "<id>~<k>", and the view picks one by the crossing's place.
 //   footbridge:  planks over a low arch on two stringers, rails on both sides, one or none (rails, posts only, or X-braced),
 //                a plank or two missing, moss on the old ones
 //   rope-bridge: planks hung between two pairs of posts, sagging, handropes (one pair or two), a few planks gone
 //   root-bridge: gnarled roots arching over the stream, twisted together, mossed, ferns at its ends, a crown at one end or both
-// And the fingerposts where a footpath comes into an area's clearing (rules/paths.ts, under ?props=gen: paths.fingerposts):
+// And the fingerposts where a footpath comes into an area's clearing (rules/paths.ts, paths.fingerposts: on in the game):
 //   fingerpost:  an old wooden post, 1 to 4 blank arms pointing different ways (pointed, swallowtailed or square-ended; no words),
 //                a cap, a ball or a plain top, leaning a little, an arm sometimes snapped or hanging, moss up its foot, ivy now and then
 import { M, rng, pickByWeight } from "../core.js";

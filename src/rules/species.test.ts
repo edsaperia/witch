@@ -39,7 +39,7 @@ describe("fight profiles for every species (Ed's species pass)", () => {
   it("gives every species a profile, each with a speed, and an arena preset for each new move", () => {
     expect(SPECIES.length).toBeGreaterThanOrEqual(30);
     for (const sp of SPECIES) { expect(MOVEMENT.profiles[sp], sp).toBeTruthy(); expect(MOVEMENT.profiles[sp].speed, sp).toBeGreaterThan(0); }
-    for (const k of ["swipe", "wide", "pair", "ram", "dig", "block", "flank", "pounce", "weave", "packflank", "otter", "squirrel", "dart", "roll", "slime", "woodlouse", "strike", "moth", "cat"]) expect(ARENA_PRESETS[k], k).toBeTruthy();
+    for (const k of ["swipe", "wide", "pair", "ram", "dig", "block", "flank", "pounce", "weave", "packflank", "otter", "squirrel", "dart", "roll", "slime", "woodlouse", "strike", "butterfly", "cat"]) expect(ARENA_PRESETS[k], k).toBeTruthy();
   });
 
   it("has a bear swipe: a heavy blow with a short lunge", () => {

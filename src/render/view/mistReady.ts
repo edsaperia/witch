@@ -6,7 +6,7 @@
 // the dive sees keeps its mist till they come into view); the stumps', the campfires' and the creatures' wherever any are in view. The sea's (and any ground
 // not filled in yet: they read the same) holds till the ground is drawn with its own program (the coast's sand and waves, Ed:
 // "Coast (waves, sand) is urgent because we cross it first") and the ground in view is filled.
-// Each part's first time ready is logged (View.mistLog), with when the mist began to go, for the tools (tools/mist/dive-order.cjs).
+// Each part's first time ready is logged (View.mistLog), with when the mist began to go, for the tools (none of tools/mist reads it now).
 import type * as THREE from "three";
 import { AREA_TYPES } from "../../rules/map";
 import type { StumpSpec } from "../artBuild";

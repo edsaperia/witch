@@ -182,7 +182,7 @@ const CAMPFIRES = {
 
 // ---------------- the home stretch (Ed's playtest: decorate the home area between the dancefloor and the home soundsystem) ----------------
 // A small set, class "home", for the prototype to place along that stretch, never on the dancefloor itself: a path edge of stepping stones,
-// a glowing mushroom ring, warm lantern posts and little path lights, a speaker stack, a crate stack, flower pots, a signpost (blank arrows
+// a glowing mushroom ring, warm lantern posts and little path lights, a crate stack, flower pots, a signpost (blank arrows
 // and a glowing note, no words) and a fairy-lit branch arch to walk under. Same conventions as the rest: glow and light (neon or warm),
 // pointLight on the lantern posts.
 const HOME = {
@@ -245,9 +245,9 @@ const PICNIC = Object.fromEntries([
 
 // ---------------- the table ----------------
 const SIZE = { litter: 1.5, balloon: 1.2, small: 1.2, furniture: 1, set: 1, home: 1, picnic: 1 }; // litter a touch larger than life, to read at all
-// ---------------- generated (the prop generator, #119; behind ?props=gen): a few seeded variants each of the bunting, the balloon bunches
+// ---------------- generated (the prop generator, #119; always on in the game since 2026-10-07): a few seeded variants each of the bunting, the balloon bunches
 // and the paper lanterns, so they vary in shape (their genomes: PARTY_PROP_GENOMES, art/props/genomes.js). Each variant is a piece of
-// its own ("gen-<kind>-<n>") that `replaces` the hand-made ones: the game swaps them in with partyObjects.generated (?props=gen). ----------------
+// its own ("gen-<kind>-<n>") that `replaces` the hand-made ones: the game swaps them in with partyObjects.generated (set at load). ----------------
 const pgVar = (kind, k) => propVariant(kind, k * 7 + 3, {}, PARTY_PROP_GENOMES);
 const PG_FLAG = { triangle: (s, t) => Math.abs(s) < (t + 1) / 2, square: (s, t) => t > -.8, round: (s, t) => s * s + (t - .2) ** 2 < .7, pennant: (s, t) => t > -1 + Math.abs(s) * 1.6 && (t < .6 || Math.abs(s) < .9) };
 function pgBunting(m, v) {

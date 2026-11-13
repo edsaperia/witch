@@ -2,7 +2,7 @@
 // that rebuilt one conflicted with every other): tools/art-lab/build.mjs writes tools/art-lab/dist/witch-art-lab.html and
 // tools/music-lab/build.mjs tools/music-lab/dist/witch-music-lab.html (both git-ignored now), and this copies them into
 // dist/, so the Pages deploy publishes them beside the game: https://edsaperia.github.io/witch/witch-art-lab.html and
-// /witch-music-lab.html (a pull request's under /pr-<number>/). The last step of `npm run build`.
+// /witch-music-lab.html (a pull request's under /pr-<number>/). A step of `npm run build`.
 //   node tools/labs/publish.mjs [dist dir]
 import { execFileSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";

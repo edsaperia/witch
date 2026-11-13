@@ -19,10 +19,11 @@ import { nextFrame, runSliced, sliceLog, SLICE_MS, type Steps } from "../../rend
 import { buildProgress } from "./buildProgress";
 import { prepareJoin } from "./joinPreparation";
 import { sessionDeparture } from "./departure";
+import { renamedLink } from "../../app/renamedLink";
 
 declare const __BUILD__: string;
 const build = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
-const params = new URLSearchParams(location.search), guest = params.get("online") === "guest";
+const params = renamedLink(new URLSearchParams(location.search)), guest = params.get("online") === "guest";
 const endpoint = params.get("relay") ?? "ws://localhost:8787";
 const room = params.get("room") ?? String(crypto.getRandomValues(new Uint32Array(1))[0] % 9000000 + 1000000);
 const token = new URLSearchParams(location.hash.slice(1)).get("invite") ?? undefined;

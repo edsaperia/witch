@@ -2,7 +2,7 @@
 // on fixed seeds, brought on to a late wave with the playtest key, then flown along a fixed path
 // for a fixed number of steps, timing every stepGame. Prints the timings and a fingerprint of the
 // game's state at checkpoints; a refactor that changes no behaviour gives the same fingerprints
-// (tools/bench/run.mjs compares them with a saved baseline). Bundled by tools/bench/run.mjs with
+// (tools/bench/compare.cjs compares two runs' part by part). Bundled by tools/bench/run.mjs with
 // esbuild and run in Node: no Three.js, no browser.
 import { newGame, stepGame, STEP, type Controls } from "../../src/rules/game";
 import { fingerprint } from "./fingerprint";

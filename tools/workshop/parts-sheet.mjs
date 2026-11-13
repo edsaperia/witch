@@ -16,7 +16,7 @@ function png(w, h, rgba) { const crc = b => { let c, t = []; for (let n = 0; n <
   const raw = Buffer.alloc((w * 4 + 1) * h); for (let y = 0; y < h; y++) { raw[y * (w * 4 + 1)] = 0; Buffer.from(rgba.buffer, y * w * 4, w * 4).copy(raw, y * (w * 4 + 1) + 1); }
   const hd = Buffer.alloc(13); hd.writeUInt32BE(w, 0); hd.writeUInt32BE(h, 4); hd[8] = 8; hd[9] = 6;
   return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk("IHDR", hd), chunk("IDAT", zlib.deflateSync(raw)), chunk("IEND", Buffer.alloc(0))]); }
-// her broom's colours over the workshop's (the classic witch's: render/workshopArt.ts partColours)
+// her broom's colours over the workshop's (the classic witch's: render/workshopArt.ts broomColours)
 const wc = G.witchColours({}, G.genomeLook(G.WITCH_GENOME).outfit ?? undefined);
 const col = { ...furnitureColours({}), [M.BROOM]: wc[M.BROOM], [M.STRAW]: wc[M.STRAW] };
 const ids = Object.keys(PART_ART), house = 32 / 3;

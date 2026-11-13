@@ -157,7 +157,7 @@ export const haloSpread=(glow:number):number=>1.45*(1+0.15*Math.max(0,glow-1));
  *  ground layers, then the upright ones, then the halo (the party start's over the house: render/partyStart.ts). */
 export function fxLayerOrder(slot:number,base?:number):number {
   const through=slot===8,flat=through?0:Math.floor(slot/4),layer=through?2:slot%4;
-  // White warning marks (2.97) are composited after every new layer.
+  // The red warning marks (2.97; white until Ed, 2026-11-02) are composited after every new layer.
   return base!==undefined?base+(through?0.009:flat?layer*0.001:0.004+layer*0.001):through?11.2:flat?2.9+layer*0.01:2.8+layer*0.01;
 }
 export class FxBatches {

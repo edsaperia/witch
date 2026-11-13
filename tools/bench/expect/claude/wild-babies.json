@@ -1,0 +1,9 @@
+{
+  "reason": "Wild babies keep out of fights, as her leashed ones do (Ed, 2026-11-13: \"wild babies should avoid combat in the way that friendly babies do\"; src/rules/wildBabies.ts): a wild baby with a fight within combat.defendRadius runs to a spot of its own area leash.babies.scatter off it and roams again leash.babies.calm seconds after; its roam and its notice of her leave it be meanwhile. Creatures carry a new optional field, shy. No new knobs.",
+  "rules": {
+    "*": "wherever a fight comes within 30 m of a wild baby: its place (run off from the fight), its roam's seeded draws after, and what follows from them; and the new shy field wherever a creature's fields are listed"
+  },
+  "frames": {
+    "*": "wherever a fight is in view near wild babies: the babies gone from beside it, further off in their area"
+  }
+}

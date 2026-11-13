@@ -2,7 +2,7 @@
 
 Generated from `config/tuning.json` (the values), `config/schema/tuning.schema.json` (types and ranges) and `config/knobs/<section>.json` (what each knob does, Ed's decisions) by `node tools/config/schema.mjs --docs`; don't edit by hand. A test fails if it's out of date.
 
-Witch tuning. Edit the numbers, push, and the playable link rebuilds. Distances are metres, times seconds, angles degrees. Keys starting with _ are notes.
+Witch tuning. Edit the numbers, push, and the playable link rebuilds. Distances are metres, times seconds, angles degrees. What each knob does is in config/knobs/<section>.json, not in the tuning file (no notes there since 2026-10-28).
 
 ## Map
 
@@ -31,8 +31,8 @@ The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is a
   Code: `rules/land.ts`
 - **`map.island`**: Which island is played: home, built from the kinds she knows, or another by its roster.
   1. Ed, 2026-10-11: the journey's rosters; rules/rosters.ts, config/kinds.json
-  "home" plays home by roster, one area per kind she knows (the 10 kinds introduced at home and each kind whose island she's found, map.found: growing outward, its first areas the same; islandAreas its least, the kinds again past one each), its legends dealt each night, 1 in 5 areas; a kind's name (?island=fox) plays that kind's island, its own seed (where it lies on the sea chart) and size by phase (10 a phase), its roster that kind plentiful, 1-3 kinds new to its phase and the rest by bearing; empty, areas of random types as before.
-  Code: `rules/rosters.ts`, `config/kinds.json`
+  "home" plays home by roster (Ed, 2026-11-04; rules/rosters.ts homeRoster): one area per kind whose island she's found (map.found), filled up to home.start (5) with home's starting kinds, chosen each night, growing outward, its legends dealt each night, 1 in 5 areas; a kind's name (?island=fox) plays that kind's island, its own seed (where it lies on the sea chart) and size by phase (islands.phaseSizes: 10, 15, 20, 25, 30; 10 a phase till 2026-11-04), its roster that kind plentiful, 1-3 kinds new to its phase and the rest by bearing; empty, areas of random types as before.
+  Code: `rules/rosters.ts`, `rules/kinds.ts`
 - **`map.found`**: the kinds whose islands she's found (the night's legends favour the others).
 - **`map.phase`, `map.shapes`**: How an island grows out from home, its outline rounder or more lobed, bayed and armed the further out it is.
   1. Ed, 2026-10-11: the journey's irregular islands: rules/islandGrowth.ts
@@ -646,6 +646,11 @@ Each sleeping legend lies in a small round clearing of its own, sized to fit it.
 1. Ed, 2026-10-06
 Each area's sleeping legend lies in a small circular clearing of its own [1], where no tree or decor stands: radius metres across from its middle (species: a radius for that legend, sized to fit it: half its sleeping width plus 4 m), a soft ring edge metres wide marking it on the ground, and the legend lying top x radius north of the middle (the circle's far side from the camera), the open floor in front. Quest sigils and relics take effect inside it.
 
+- **`legendClearing.back`**: How far back in its circle a sleeping legend lies: its middle this share of the radius north of the circle's middle (the side furthest from the camera), so the front of the circle is open for her to stand in, facing it [1].
+  1. Ed, 2026-11-12: "Legends should sleep at the back of their circles, so you can stand in the circle before them."
+  2. Ed, 2026-11-13: "fix the others"
+  Circles are sized (legendClearing.fit) so the legend's sleeping width fits there with fit.margin to spare, which keeps it inside the ring of trodden earth (edge metres inside the radius). Where a circle is capped or squeezed smaller than that, the legend lies as far back as it fits, never further forward than top x radius (where it lay before 2026-11-12; the link switch ?legendspot=old puts it back there, its circle sized as before). 0.7 at first (circles sized for it about a quarter bigger than for top, up to fit.max); top (0.45) is the old place, and a value at or under top means the old place. Since 2026-11-13 [2] (the elephant that had not moved, the mole and the bear that still covered her at the middle): the footprints are the legends as drawn now, a mesh kind's from its mesh; a legend lies further back than this share where its nap is drawn so far below its ground line that the circle camera would lay it over her at the circle's middle (legendFit.ts reachOf), its circle sized for that too; and in a capped or squeezed circle it lies as far back as its width fits inside the circle, on the ring if it must.
+  Code: `rules/legendFit.ts`
 - **`legendClearing.minFromStone`**: its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot grows to hold one (logged).
   1. Ed, 2026-10-06: "The legend circle shouldn't spawn near its runestone"
   2. Ed, 2026-11-04: "make the last-resort placement grow the area instead of breaking the gap"
@@ -673,6 +678,7 @@ Each area's sleeping legend lies in a small circular clearing of its own [1], wh
 | `legendClearing.radius` | number | 0 to … |
 | `legendClearing.edge` | number | 0 to … |
 | `legendClearing.top` | number | 0 to … |
+| `legendClearing.back` | number | 0 to … |
 | `legendClearing.minFromStone` | number | 0 to … |
 | `legendClearing.minFromOtherStones` | number | 0 to … |
 | `legendClearing.floor.on` | boolean |  |
@@ -1698,7 +1704,7 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
   1. Ed, 2026-10-06: "the invitation dropoff rate (the speed at which animals become less invited) is too fast" (0.03 after 4 s, a full meter in about 33 s; it was states.json's 0.08 after 1.5 s, this knob unread)
   2. Ed, 2026-10-06: "I think we should remove the 0.5s cooldown between counted hits per creature - better to control this through the witch firing speed instead of having hits not register"
   3. Ed, 2026-10-28: "let's change the drain rate to 2% instead of 3%" (0.02 after 4 s, a full meter in about 50 s; hearts from her animals' blows fade the same, in one queue with the 💌s ("this should be the same speed as 💌s fade ... and they go in the same fade 'queue'"))
-  letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed).
+  letters to fill it, by level (baby, young, adult, legend; no baby is invitable since Ed, 2026-10-31); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed).
   Code: `config/states.json`
 - **`invites.wonAway`**: a creature she has won over whose sigil waits in its stone's stack roams its area with its happy roam and keeps `radius` m from any creature fighting her or with her, out of her fights' way.
   1. Ed, 2026-11-04: "they should roam the whole area, and avoid creatures that are fighting. Do this in a simple way - we just want them out of the way of the fight" … "Newly won creatures can't be grabbed until the spell is cast, so they don't need to be near" (on #1804, through the coordinator: first for the challenge circle's won ones, then every area's; happy ones defending their area against enraged attackers in a wave keep doing that; one shared helper with its own switch and radius slider, on by default.)
@@ -2272,7 +2278,7 @@ How creatures fight: who goes for whom, how fast they run and chase, and how muc
 4. Ed, 2026-10-04
 5. Ed, 2026-10-08: from 4000: shorter games, falls that cascade, and you must stop a swarm before it arrives
 6. Ed, 2026-10-08: "home as 12 speakers at 500 hp each" (rules/speakers.ts)
-Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range [1], and let her go when she rises to the treetops, or once she's out of their area, out of their range and at least witchLose metres away; then they walk back to their spot. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party; parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. Marching on a soundsystem, its own area's or marching on after a fall, a creature moves at marchShare of its top (fight) speed: its movement profile's, else fightRun, a legend legendRun [2]. Against a soundsystem or speaker, charging kinds don't charge and swoopers don't swoop: they land and use their ordinary attack [3]. A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good [4]; a party animal is lost for the run. A soundsystem has soundsystemHealth, passive, and is hit within soundsystemRadius metres: sieges should outlast the wave gap. A soundsystem has 500 [5]. Home is its ring of speakers [6], each a soundsystem of speakerHealth, hit within speakerRadius metres, the besiegers going for the nearest standing one; home falls when every one has (its old homeHealth 8000 and homeRadius 9 gone).
+Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range [1], and follow her anywhere on the ground until she takes off (Ed's 31 Oct playtest; rules/combat/targeting.ts); only a besieger still lets her go once she's out of its area, out of its range and at least witchLose metres away. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party; parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. Marching on a soundsystem, its own area's or marching on after a fall, a creature moves at marchShare of its top (fight) speed: its movement profile's, else fightRun, a legend legendRun [2]. Against a soundsystem or speaker, charging kinds don't charge and swoopers don't swoop: they land and use their ordinary attack [3]. A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good [4]; a party animal is lost for the run. A soundsystem has soundsystemHealth, passive, and is hit within soundsystemRadius metres: sieges should outlast the wave gap. A soundsystem has 500 [5]. Home is its ring of speakers [6], each a soundsystem of speakerHealth, hit within speakerRadius metres, the besiegers going for the nearest standing one; home falls when every one has (its old homeHealth 8000 and homeRadius 9 gone).
 Code: `config/combat.json`, `rules/speakers.ts`
 
 - **`combat.packs.shadow`**: A pack member hiding in its lull (in the trees, underground, under water, in the branches, or scattered) is drawn as a shadow of itself, not left out.
@@ -2284,7 +2290,7 @@ Code: `config/combat.json`, `rules/speakers.ts`
 - **`combat.packs`**: Pack kinds fight in combos (the nearest lunges, the ranged fire where she'd dodge, one behind her throws its special) and fall back between them.
   1. Ed, 2026-10-19: docs/backlog/combat.md, build step 1
   2. Ed, 2026-10-20: "Turn pack combat on by default"
-  pack combat [1], on by default [2] and on the pause page to turn off for testing: on, packs of config/packs.json's kinds (home's ten and Phase 1's eleven) fight in combos (the nearest lunges, the ones at range fire where a dodge would go, the one behind her throws the special), fall back by their kind's retreat between combos, and her own pack combos without retreating.
+  pack combat [1], on by default [2] and on the pause page to turn off for testing: on, packs of every kind with a pack of its own (art/creatures/<id>/creature.js; config/packs.json holds the shared rhythms, specials and retreats) fight in combos (the nearest lunges, the ones at range fire where a dodge would go, the one behind her throws the special), fall back by their kind's retreat between combos, and her own pack combos without retreating.
   Code: `docs/backlog/combat.md`, `config/packs.json`
 - **`combat.aggro`**: wild creatures go for party animals within this, and for the witch anywhere in their area.
 - **`combat.leaveArea`**: How far past its area's edge a wild creature chases another creature, or comes out after her across its edge, before going home; once it's after her it follows her anywhere on the ground until she takes off.
@@ -2354,7 +2360,7 @@ Dodging matters [1]: against the witch only (fights between creatures as before)
 - **`dodge.a.heavy`**: Heavy kinds chasing her build up speed and swing their charges toward her, so a burst or a blink gets clear.
   1. Ed, 2026-10-09: "Maybe heavies can have a higher top speed, but slow acceleration?"
   2. Ed, 2026-10-09: "shooters should have longer range"
-  chasing her, those species run at up to speed m/s (above her walk) built up at accel m/s each second, their charges swinging toward her at home degrees a second as they run, so a burst or a blink gets clear and a long retreat is run down (the snail, hedgehog and woodlouse left slow, the last two with their rolling charges; the mole with its own burrow); her blink keeps her untouchable for gone seconds (dash.gone otherwise); and at most tokens creatures wind up or strike at her at once (swarmTokens when swarm or more are on her), the rest keep their places. b, predictive aim: with ranged off (?ranged=old) the old pack bolts aim at release where she'll be when they arrive (times lead), their lobs where she'll be when they land (times lobLead); charges down the lane to where she'll be when they reach her (times chargeLead); a shot lives life times its range over its speed (1.3 before); the old pack bolt at her (a close kind's shot in a shooter's role, not a species' own) flies speed times as fast (chasing her at her walk it closes at only its speed less hers) and winds up at most windup seconds, lifted where ranged's lock needs it; a shot or lob at her reaches range times as far, the shooter keeping its usual distance [2]. A species' own shot takes neither speed nor windup: its speed is ranged.speedFloor's and its wind-up its own (Ed, 2026-11-12, option C: wind-ups as they were); With ranged on, every shot's and lob's lead is that rule's, followed through the wind-up, not taken at release. c, packs cut off her retreat: while she moves faster than moving times her walk, share of a pack of species (wolves, foxes, martens, bats) take places ahead of her (ahead seconds of her run on, angle radians either side of her heading, reach times their attack's reach out), sprinting at up to sprint m/s to get there. ?dodge=a,b,c turns on those named and off the rest (?dodge=0 none).
+  chasing her, those species run at up to speed m/s (above her walk) built up at accel m/s each second, their charges swinging toward her at home degrees a second as they run, so a burst or a blink gets clear and a long retreat is run down (the snail, hedgehog and woodlouse left slow, the last two with their rolling charges; the mole with its own burrow); her blink keeps her untouchable for gone seconds (dash.gone otherwise); and at most tokens creatures wind up or strike at her at once (swarmTokens when swarm or more are on her), the rest keep their places. b, predictive aim: with ranged off (?ranged=old) the old pack bolts aim at release where she'll be when they arrive (times lead), their lobs where she'll be when they land (times lobLead); charges down the lane to where she'll be when they reach her (times chargeLead); a shot lives life times its range over its speed (1.3 before); the old pack bolt at her (a close kind's shot in a shooter's role, not a species' own) flies speed times as fast (chasing her at her walk it closes at only its speed less hers) and winds up at most windup seconds, lifted where ranged's lock needs it; a shot or lob at her reaches range times as far, the shooter keeping its usual distance [2]. A species' own shot takes neither speed nor windup: its speed is ranged.speedFloor's and its wind-up its own (Ed, 2026-11-12, option C: wind-ups as they were); With ranged on, every shot's and lob's lead is that rule's, followed through the wind-up, not taken at release. c, packs cut off her retreat: while she moves faster than moving times her walk, share of a pack of species (wolves, foxes, bees, bats; martens too, on the bench since Ed, 2026-11-11) take places ahead of her (ahead seconds of her run on, angle radians either side of her heading, reach times their attack's reach out), sprinting at up to sprint m/s to get there. ?dodge=a,b,c turns on those named and off the rest (?dodge=0 none).
 
 | knob | type | range |
 |---|---|---|
@@ -2390,6 +2396,31 @@ Dodging matters [1]: against the witch only (fights between creatures as before)
 | `dodge.c.reach` | number | 0 to … |
 | `dodge.c.ahead` | number | 0 to … |
 | `dodge.c.sprint` | number | 0 to … |
+
+### `lunge`
+
+Long lunges: a lunging creature winds up from about a dash and a half away, then lunges about two dashes along its line, through and past where she was [1].
+
+1. Ed, 2026-11-13: "Lunge ranges seem very short; they could be twice as long, around 1.5-2 dashes range." … "Both" (measured first (tools/balance/lunges.mjs): wind-ups already began 15 to 19 m off, but the creature sprinted in as it wound up and let go 3 to 6 m from her, its lunge stopping where it aimed. Asked how to lengthen them (wind up from far, or carry through), he chose both)
+A dash is dash.distance (15 m). For a kind whose own lunge is full metres or more (the stoat, the lynx, every youth's maul) the wind-up may begin from dashes off its target and the lunge runs through dashes; a kind with a shorter lunge gets its share of both, never under shortest (so every long lunge is 1.5 to 2 dashes). An attack that lunges under least metres is a swipe (the bear's, the big cats') and stays as it was, as do lunges at a soundsystem, dug-in bites and the legends. Winding up, it gathers itself where it is (no sprint in, the old dodge.a.surge); its blow lands as it meets its target on the way, once, and it never turns back after. on false (?lunge=old): the lunges as before.
+Code: `src/rules/combat.ts`, `tools/balance/lunges.mjs`
+
+- **`lunge.on`**: Long lunges on; off, lunges as they were (?lunge=old).
+- **`lunge.from`**: How many dashes away a lunger's wind-up may begin (the longest kinds).
+- **`lunge.through`**: How many dashes a lunge runs along its line, through and past its target (the longest kinds).
+  The one knob to turn down if lunges prove too hard to dodge: at 1.5 every lunge is 17 to 22.5 m.
+- **`lunge.shortest`**: The least share of those two that a short-lunging kind gets.
+- **`lunge.full`**: A kind's own lunge, in metres, at which it gets the whole of from and through.
+- **`lunge.least`**: An attack lunging under this many metres is a swipe, left as it was.
+
+| knob | type | range |
+|---|---|---|
+| `lunge.on` | boolean |  |
+| `lunge.from` | number | 0 to … |
+| `lunge.through` | number | 0 to … |
+| `lunge.shortest` | number | 0 to … |
+| `lunge.full` | number | 0 to … |
+| `lunge.least` | number | 0 to … |
 
 ### `ranged`
 
@@ -2538,7 +2569,7 @@ Wild creatures roaming their area now and then lie down for a nap.
 Wild idlers nap [1][2]: a wild creature roaming its own still-wild area (not besieging, fleeing, dazed, marching, fighting, happy or a legend), at each pause, lies down instead with chance, for length seconds (a range: min, max), then gets up. It gets up at once when a witch is on the ground in its area (none starts a nap then), and when its area is partified or it's enraged or taken; getting up takes wake seconds (a stretch, a yawn), out of fights till then, so landing isn't an instant pounce. Asleep it stays down with her in the treetops or on the ground in another area, however near. Sleepers skip their roam and every fight.
 
 - **`naps.on`**: false turns naps off.
-- **`naps.circle`**: a legend circle's baby [1] naps at each pause with its own chance, for its own length (seconds), and is woken only by a witch on the ground within reach metres of its circle's edge (so she can still invite it), not anywhere in its area.
+- **`naps.circle`**: a legend circle's baby [1] naps at each pause with its own chance, for its own length (seconds), and is woken only by a witch on the ground within reach metres of its circle's edge, not anywhere in its area (never invited: Ed, 2026-10-31, "No, no baby is invitable").
   1. Ed, 2026-10-07: "the legend circle baby should spend most of its time napping when in the circle"
 
 | knob | type | range |
@@ -2650,7 +2681,7 @@ Code: `rules/simLod.ts`
 The witch is much faster than almost all creatures.
 
 1. 2026-10-04
-Ed [1]: the witch is much faster than almost all creatures (she flies at groundSpeed, 19.25 m/s, on the ground and treetopSpeed, 48, over the treetops; at first 14 and 32). Wild creatures amble at creatureSpeed m/s (legends legendSpeed); leashed ones run after their leash point at leash.runSpeed. The fast few (fast: hare, stoat, marten; rare, and weaker when combat comes) move fastMult times the usual; legends run at legend times it: very slow.
+Ed [1]: the witch is much faster than almost all creatures (she flies at groundSpeed, 19.25 m/s, on the ground and treetopSpeed, 48, over the treetops; at first 14 and 32). Wild creatures amble at creatureSpeed m/s (legends legendSpeed); leashed ones run after their leash point at leash.runSpeed. The fast few (fast: hare, stoat, bee, and the marten, on the bench since Ed, 2026-11-11; rare, and weaker when combat comes) move fastMult times the usual; legends run at legend times it: very slow.
 
 | knob | type | range |
 |---|---|---|
@@ -2732,7 +2763,7 @@ Which areas have a legend (a happy one's reach is legends.friendRange).
   1. Ed, 2026-10-06: "perhaps" … "an angry legend simply stamps on the soundsystem in its area, destroying immediately. The angry legend waking timer may have to be longer" (a)
   2. Ed, 2026-10-06: "It would be funny if you could leash an elder, but it's so heavy that it stops you moving at all outside the leash slack distance, and it doesn't move towards you at all. Maybe you should be able to turn a happy legend into a party legend with an absurd number of invites (100?) and then pick up its sigil but it's totally useless" (rules/partyLegend.ts)
   3. Ed, 2026-10-06: "They're a high-roll mechanic; you don't know how hard the quest will be before you go off to try and find the creature" (the gamble kept)
-  on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg [2]: partyEgg turns it on; a happy legend (by its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands. questNear: 0, a legend dreams of any kind on the map [3]; N, one of the N nearest other kinds round it, an area nearer home counting as nearer (a knob for trying it).
+  on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg [2]: partyEgg turns it on; a happy legend (by its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands. questCap (questNear before it): 0, a legend dreams of any kind on the map [3]; N, only of a kind living within N areas of it (see legends.questCap, legends.questLater).
   Code: `rules/partyLegend.ts`
 
 | knob | type | range |
@@ -4047,7 +4078,7 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
   each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. It runs on her clock (a pause holds it, a slowed world doesn't stretch it), and a bout of hits shakes for maxSecs seconds at most from its first (a knockdown starts a new bout).
 - **`camera.circle`**: In a legend's circle the camera tilts and frames her and the legend together.
   1. Ed, 2026-10-08: "lowering the camera angle while you're in the circle to make them seem more looming" (considering it; legends being hard to make out in their circles)
-  on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off.
+  on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 26 to 42), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off.
 - **`camera.house`**: landed on the treehouse's floor, the camera eases over ease seconds to angle degrees and its distance times distance.
   1. Ed, 2026-10-14: "the camera zooms in so you can see the detail" (indoors)
 - **`camera.station`**: at a dressing station and choosing (the pointer or the d-pad in its panel, or stood still a moment: ui/stationPanel.ts), its distance times distance and moved side times that distance east (west when negative), so she stands clear of the panel; eased over ease seconds, and back as soon as she moves.

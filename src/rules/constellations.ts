@@ -1,7 +1,7 @@
 // Tonight's find written in the stars (Ed, 2026-10-22: "Instead of a crystal ball, the hint should be written in the stars as a
 // constellation seen through the telescope in the direction of the item!"; "With all permanent upgrades, there's one per night,
 // and it's hinted through the telescope"; his answers to the mock, previews/ed/starfield-mock): the night's find's outline traced
-// in 7 to 10 stars (rules/finds.ts nightFind: a wearable or a broom part; hats and records to come, any item id an outline here),
+// in 7 to 10 stars (rules/finds.ts nightFind: a wearable, a bag, a hat or a broom part; a record has none yet, any item id an outline here),
 // standing about 35° up at its bearing from the treehouse, there all night and gone once she's found it. Seen only through the telescope (render/view/camera.ts); its stars
 // a little brighter than their neighbours, faint dotted lines between them fading in once she holds the view on it (render/sky.ts).
 // Here, the outlines and where tonight's stands: drawing only, nothing in the rules reads it.
@@ -11,7 +11,7 @@ import type { NightFind } from "./finds";
 /** An outline: its stars (degrees across the sky from its middle: x to the right, y up) and the lines joining them (by index). */
 export interface Outline { stars: [number, number][]; lines: [number, number][] }
 
-/** The outlines by item id, about 12 to 17° across: every item in the finds pool's (rules/finds.ts FIND_KINDS: the wearables and the broom parts). */
+/** The outlines by item id, about 12 to 17° across: every item in the finds pool's (rules/finds.ts FIND_KINDS: the wearables, the bags, the hats and the broom parts; no record's yet). */
 export const OUTLINES: Record<string, Outline> = {
   "hair-mohawk": { stars: [[-3, -4], [3, -4], [4, 0], [-4, 0], [-2.5, 2], [-1, 4.5], [1, 5], [2.5, 2.5]], lines: [[0, 1], [1, 2], [3, 0], [3, 4], [4, 5], [5, 6], [6, 7], [7, 2]] },
   shades: { stars: [[-6, 1], [-2, 1], [-2.5, -2], [-5.5, -2], [2, 1], [6, 1], [5.5, -2], [2.5, -2], [-8.5, 2], [8.5, 2]], lines: [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [1, 4], [0, 8], [5, 9]] },

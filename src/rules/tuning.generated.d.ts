@@ -344,6 +344,7 @@ export type SchemaTuning = {
     "radius": number;
     "edge": number;
     "top": number;
+    "back": number;
     "minFromStone": number;
     "minFromOtherStones": number;
     "floor": {
@@ -1288,6 +1289,14 @@ export type SchemaTuning = {
       "ahead": number;
       "sprint": number;
     };
+  };
+  "lunge": {
+    "on": boolean;
+    "from": number;
+    "through": number;
+    "shortest": number;
+    "full": number;
+    "least": number;
   };
   "ranged": {
     "on": boolean;

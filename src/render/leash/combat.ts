@@ -1,5 +1,5 @@
 // The fight as the leash view draws it (render/leash.ts): attacks' wind-ups, shots, beams and pulses, hits and their bits,
-// trait marks, health bars, the knockout's release and the quake's shake.
+// trait marks, the knockout's release and the quake's shake (no health bars since Ed, 2026-10-28: render/invites.ts's rings).
 import * as THREE from "three";
 import { speciesColours, defaultStyle, M } from "../../../art/generator.js";
 import { attackNamed, attackOf, lungeLength, traitsOf, type Trait } from "../../rules/combat";
@@ -65,7 +65,7 @@ const TRAIT_MARKS: Record<Trait, { r: number; g: number; b: number; size: number
 /** What a hit throws off a creature (render: the contact's bits): feathers off birds, chips off a shell or plates, tufts of fur
  *  off the rest; confetti (in its neon) off a party animal. */
 const HIT_BITS = { feather: { r: 0.95, g: 0.95, b: 0.9 }, chip: { r: 0.72, g: 0.78, b: 0.86 }, fur: { r: 0.85, g: 0.7, b: 0.52 }, confetti: { r: 1, g: 1, b: 1 } };
-const FEATHERED = new Set(["owl", "raven", "heron"]), SHELLED = new Set(["beetle", "spider", "woodlouse", "snail", "moth", "hedgehog", "dragonfly", "crab", "scorpion"]);
+const FEATHERED = new Set(["owl", "raven", "heron"]), SHELLED = new Set(["beetle", "spider", "woodlouse", "snail", "butterfly", "moth", "hedgehog", "dragonfly", "crab", "scorpion"]);
 const hitBits = (species: string, party: boolean) => party ? HIT_BITS.confetti : FEATHERED.has(species) ? HIT_BITS.feather : SHELLED.has(species) ? HIT_BITS.chip : HIT_BITS.fur;
 /** A species' coat, for the bits a hit throws off it (the art director, #193: a wolf throws grey, a fox rust): its lit coat
  *  material (BODYL) from its palette row, toned down toward the night floor; worked out once per species. */
@@ -79,7 +79,7 @@ function coatOf(species: string, tone: number): { r: number; g: number; b: numbe
 }
 
 /** Combat (rules/combat.ts) and knockouts (rules/knockout.ts): shots and their telegraphs, hits,
- *  health bars (only when hurt), puffs as beaten creatures flee, the knockout's splashing sigils
+ *  trait marks (no health bars since Ed, 2026-10-28), puffs as beaten creatures flee, the knockout's splashing sigils
  *  and teleport, the marker on creatures walking home, and the witch's claw slashes (her hits). */
 export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, width: number, height: number, hatTop: number): void {
   const g = lv.game, w = g.witch, W = g.witches[0], dot = lv.uv(0), sq = lv.uv(SQ), near = 90, t = g.tuning;
@@ -96,7 +96,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
   // (on the ground, and from the treetops through the crowns too, as the ley lines and leash routes do)
   const mark = (x: number, z: number, size: number, r: number, gg: number, b: number, a: number) => { lv.flat.add(x, 0, z, size, dot, r, gg, b, a); if (up) lv.over.add(x, 0.3, z, size * 0.8, dot, r, gg, b, Math.min(1, a * 1.1)); };
   const lungeTell = (c: Creature, A: Attack, aimX: number, aimZ: number, atWitch: boolean, k: number, modern: boolean, colour = RED_30) => {
-    const length = lungeLength(c, A, atWitch, t, time, aimX, aimZ), angle = Math.atan2(aimZ - c.z, aimX - c.x);
+    const length = lungeLength(c, A, atWitch, t, time, aimX, aimZ, c.fight?.target?.kind === "sound"), angle = Math.atan2(aimZ - c.z, aimX - c.x);
     const ux = Math.cos(angle), uz = Math.sin(angle), turn = waitingProfile(c).strikeTurn;
     if (length <= 1) return;
     const half = Math.max(0.6, A.range * (atWitch && t.dodge?.a.on ? t.dodge.a.width : 1));
@@ -291,7 +291,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
     if (time >= k.until || !close(k.x, k.z)) continue;
     const left = Math.min(1, (k.until - time) / 1.5);
     for (let i = 0; i < 18; i++) { const a = hash2(k.from, i, 51) * Math.PI * 2 + time * 0.2, q = Math.sqrt(hash2(k.from, i, 53)) * k.r; lv.solid.add(k.x + Math.cos(a) * q, 0.6 + hash2(k.from, i, 57) * 1.6, k.z + Math.sin(a) * q * 0.8, 2.2 * vsz, dot, 0.5, 0.42, 0.33, lv.look.lift(0.5) * left); }
-    // A flashing cloud (the moth's): a violet-white burst through it as it flashes.
+    // A flashing cloud (the moth's, a swallowtail since 2026-10-23, its id kept): a violet-white burst through it as it flashes.
     if (k.flash !== undefined && time - k.flash < 0.5) { const f = 1 - (time - k.flash) / 0.5; for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, q = k.r * (0.3 + 0.7 * (1 - f)); lv.standing.add(k.x + Math.cos(a) * q, 1.2, k.z + Math.sin(a) * q * 0.8, 0.5 * vsz, dot, 0.95, 0.85, 1, f); } }
   }
   // The raven's mirage (placeholder till the art step's shimmer): each image a dark violet column of motes over a ring, flickering.
@@ -452,7 +452,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
         }
       }
     }
-    // Healed (every heal, rules/creatures.ts heal and healBy: Ed, 2026-10-09): its bar shows full a moment, and green "+"s float up off it.
+    // Healed (every heal, rules/creatures.ts heal and healBy: Ed, 2026-10-09): green "+"s float up off it, and its trait marks show a moment (its bar went, 2026-10-28).
     const healed = c.healedAt !== undefined && time - c.healedAt < 0.8;
     if (c.healedAt !== undefined && time - c.healedAt < HEAL_PLUS.span) healPluses(lv, c, time - c.healedAt, artPx, up, camera, height);
     // Stunned (an armoured one knocked over): stars round its head.

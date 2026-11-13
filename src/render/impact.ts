@@ -1,7 +1,7 @@
 // A 💌 landing on a creature, felt (Ed, 2026-10-29, from his playtest: "invitation impacts feel unsatisfying"): the view's part
 // only, timed by the night. The creature flashes white an instant and squashes a little, springing back (no
 // flash and a gentler squash with reduce-flashing on: render/comfort.ts); the slot it fills pops in (render/invites.ts); and the
-// 💌 that fills its ring holds the picture a few frames (a hitstop: main.ts keeps the last frame drawn, the rules run on). The
+// 💌 that fills its ring holds the picture a few frames (a hitstop: app/pageFrame.ts keeps the last frame drawn, the rules run on). The
 // thunk is the sound's (platform/audio/chimes.ts thunk). Knobs: the tuning's invites.impact.
 import type { Tuning } from "../rules/tuning";
 import { comfort } from "./comfort";

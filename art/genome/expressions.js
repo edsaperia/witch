@@ -1,6 +1,6 @@
 // Witch creature expressions (Ed, 2026-10-05: "the eyebrows should be with the creature generator"):
 // a creature's face as part of its model, not marks drawn over it. Four expressions, every species
-// at every level:
+// at every level (off in the game since Ed, 2026-11-05: "Scrap animal expressions for now."; tuning looks.expressions):
 //   neutral: as it is (nothing added; the sprite is the plain one, pixel for pixel);
 //   angry:   brows down to the middle over narrowed eyes (with the woken look's red eyes, enraged);
 //   happy:   eyes closed up into smiling arcs, brows lifted;

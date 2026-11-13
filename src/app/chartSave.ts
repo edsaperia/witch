@@ -5,6 +5,7 @@ import { slotStorage } from "./saveSlots";
 // voyage, a line on the chart); won islands are marked; every island is drawn, a sigil only on those she can travel to. Losing loses nothing (Ed,
 // 2026-10-11): the night's island is only played. Every storage access is try/caught: blocked storage plays with nothing saved.
 import { isPlaceholder, KINDS, playableIsland, REAL_KINDS } from "../rules/rosters";
+import { kindNow } from "../rules/kinds";
 
 export const SAVE_KEY = "witch.chart";
 
@@ -35,9 +36,12 @@ export function worldSeed(text?: string | null): number {
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 const storeOf = (s?: Store | null): Store | null => { try { return s ?? slotStorage ?? null; } catch { return null; } };
-const strings = (xs: unknown): string[] => (Array.isArray(xs) ? xs.filter((x): x is string => typeof x === "string") : []);
+/** A save's list of names, each as the kind is called today (rules/kinds.ts RENAMED: a save made when the swallowtail wore the
+ *  moth's id names the moth, and means the butterfly), none twice. */
+const strings = (xs: unknown): string[] => (Array.isArray(xs) ? [...new Set(xs.filter((x): x is string => typeof x === "string").map(kindNow))] : []);
 
-/** The save in this browser (an empty one if there's none, it's unreadable, or storage is blocked); unknown kinds dropped. */
+/** The save in this browser (an empty one if there's none, it's unreadable, or storage is blocked); unknown kinds dropped, a
+ *  renamed kind read as what it is now (the moth's island found, won or played is the butterfly's: Ed, 2026-11-13). */
 export function loadSave(storage?: Store | null): ChartSave {
   try {
     const raw = storeOf(storage)?.getItem(SAVE_KEY);
@@ -49,7 +53,7 @@ export function loadSave(storage?: Store | null): ChartSave {
       found: strings(o.found).filter(kind),
       won: strings(o.won).filter(island),
       played: strings(o.played).filter(island),
-      voyages: (Array.isArray(o.voyages) ? o.voyages : []).filter(v => v && typeof v.from === "string" && typeof v.to === "string" && island(v.from) && kind(v.to)).map(v => ({ from: v.from, to: v.to })),
+      voyages: (Array.isArray(o.voyages) ? o.voyages : []).filter(v => v && typeof v.from === "string" && typeof v.to === "string").map(v => ({ from: kindNow(v.from), to: kindNow(v.to) })).filter(v => island(v.from) && kind(v.to)),
     };
   } catch { return emptySave(); }
 }
@@ -63,7 +67,7 @@ export function clearSave(storage?: Store | null): void {
   try { storeOf(storage)?.removeItem(SAVE_KEY); } catch { /* storage blocked */ }
 }
 
-/** Start a new campaign in the world `world` (Start over on the sea chart): nothing found, nothing won. */
+/** Start a new campaign in the world `world` (the sea chart's Start over, gone since Ed, 2026-10-23: only the tests call it now): nothing found, nothing won. */
 export function newCampaign(world: number, storage?: Store | null): ChartSave {
   const save = emptySave(world);
   storeSave(save, storage);

@@ -1,5 +1,5 @@
 // The pack ice (a journey kind: unknown-32's, phase 4, the cold north-north-west; Ed approved the mock, 2026-10-12): the polar bear's. Broken sea ice and drifted snow with dark leads of open
-// water between the floes; stunted, wind-bent firs and birch hug the shore. Unlike the arctic fox's snowfield (inland,
+// water between the floes; stunted, wind-bent larches, firs and birch hug the shore. Unlike the arctic fox's snowfield (inland,
 // soft and white), this is the frozen sea: ice slabs, black water, pressure ridges.
 export const PACKICE = {
   slot: 16, id: "packice", name: "Pack ice", creature: "polarbear", by: "recipe", leaf: .45, floor: ["ice", .6, .38, .86],

@@ -40,10 +40,10 @@ export function relicKinds(R: LegendsData["relics"]): { kind: string; look: stri
   return out;
 }
 
-/** A relic: a giant half-buried party object (its kind: the art's party relic id), lying at (x, z)
- *  until she picks it up; then carried (in her leash's relics), then put down by a legend. */
-export interface Relic { id: number; kind: string; x: number; z: number; cell: [number, number]; state: "lying" | "carried" | "used" | /** put down on the ground by her, off any legend's clearing (Ed, 2026-10-08): only its sigil lies there, at (sx, sz), to pick up again */ "dropped"; legend?: number;
-  /** Its relic sigil on the ground, sigilOffset metres south of it (Ed, 2026-10-06): she picks the relic up by standing on this, like any sigil. */
+/** A relic: a giant half-buried party object (its kind: the art's party relic id), a flask lying at (x, z)
+ *  until she drinks it on its sigil, then used (Ed, 2026-10-18; it was carried and put down by a legend till then). */
+export interface Relic { id: number; kind: string; x: number; z: number; cell: [number, number]; state: "lying" | "carried" | "used" | /** only its sigil lies there, at (sx, sz), no bottle: the zoo's and the challenge's flasks (and one she'd put down, while they were carried: Ed, 2026-10-08) */ "dropped"; legend?: number;
+  /** Its relic sigil on the ground, sigilOffset metres south of it (Ed, 2026-10-06): she drinks the flask standing on this (flaskUnder). */
   sx: number; sz: number }
 
 /** Whether a tree's crown hangs over ground point (x, z), seen from the treetops (a crown is drawn
@@ -85,7 +85,7 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
     if (kinds.length === before) break;
   }
   // The zoo (rules/zoo.ts; Ed, 2026-10-13: "There's a flask at each junction"): a relic's flask at every crossing of its paths,
-  // put down already (dropped: its sigil alone, no bottle), there for the picking up and taking to any sleeping legend.
+  // put down already (dropped: its sigil alone, no bottle), there to be drunk like any other (they woke its legends till Ed, 2026-10-18).
   if (map.zoo) return map.zoo.junctions.map((j, i) => { const c = map.cellSafe(j.x, j.z).cell; return { id: i, kind: all[i % all.length].kind, x: j.x, z: j.z, cell: [c[0], c[1]], state: "dropped", sx: j.x, sz: j.z }; });
   const put = (kind: string, x: number, z: number) => { const c = map.cellSafe(x, z).cell; out.push({ id: out.length, kind, x, z, cell: [c[0], c[1]], state: "lying", sx: x, sz: Math.min(b.maxZ - 1, z + R.sigilOffset) }); };
 

@@ -1,4 +1,4 @@
-// Drawing creatures with the live rig (#79 stage 5), behind ?rig=1 (without it the game draws them
+// Drawing creatures with the live rig (#79 stage 5), on unless ?rig=0 (with it the game draws them
 // as before). Each rigged creature's pieces and discs (rig.ts lays them out) become instances in a
 // sprite batch per species and level, standing where their pivots fall in the world; a species
 // whose parts aren't baked yet is drawn the old way until they are.

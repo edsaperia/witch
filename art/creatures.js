@@ -1,11 +1,13 @@
-// Witch creatures: the bestiary (30 species, one per area type), their colours, and the
+// Witch creatures: the bestiary (a species per area type, and the bench's), their colours, and the
 // call that draws one. Each is built in 3D (creatures3d.js, model3d.js) and seen in
 // three-quarter view from above; it faces right and the game mirrors it.
 import { M, hsv2rgb, rng } from "./core.js";
+// (a renamed kind keeps the texture its old id seeded)
+import { seedId } from "./creatures/renamed.js";
 import { GENOMES, GENOME_BY_ID, speciesOf, selectedCreatureGenome } from "./genome/index.js";
 import { textureSprite } from "./genome/texture.js";
 import { napForm } from "./naps.js";
-export const textureSeed = id => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) & 0xffff;
+export const textureSeed = id => [...seedId(id)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) & 0xffff;
 import { withForm, withGear, withTexture, withView, viewKey, height3d, quad3d, owl3d, hedgehog3d, toad3d, troll3d, raven3d, heron3d, HERON_GAIT, bat3d, mole3d, sentinel3d, armadillo3d, beetle3d, scarab3d, snail3d, woodlouse3d, snake3d, hydra3d, moth3d, spider3d, dragonfly3d, crab3d, rattlesnake3d, rattle3d, scorpion3d, penguin3d, quetzal3d } from "./creatures3d.js";
 // Every species is built in 3D (true three-quarter view, Ed 2026-10-03): four-legged ones by
 // quad3d, the others by a builder per body plan.
@@ -18,7 +20,7 @@ export const IDLE_BUILDERS = { sentinel: sentinel3d, rattle: rattle3d };
 // Builds one creature's sprite (uncached): its body plan's builder.
 export const buildCreature = (S, level, frame, st, facing = "towards") => S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing);
 
-// ================= the bestiary: 30 species, each a genome record (art/genome/species.js) =================
+// ================= the bestiary: each species a genome record (art/creatures/<id>/genome.js) =================
 // The records hold each species' template, palette, proportions and parts as data (#79 stage 1);
 // speciesOf turns one into the object the builders draw from (plan, hue/sat/val, belly, legend,
 // and for the four-legged q, their proportions, and sizes, their template's size curves).
@@ -89,6 +91,7 @@ function baseColours(s, st) {
 // A creature's height in art pixels at each level: 0 baby (about 30), 1 young (about 45 at the
 // default style, what was the adult model), 2 adult (1.65 times young, a heavier build), 3 legend
 // (about 4.5 times young, at least 2.2 times its adult). They keep their size on screen as pixels grow.
+// (The model before Ed adopted the revised sizes, 2026-10-31: art/creature-size.js fits each kind's final size now.)
 export const LEVELS = ["baby", "young", "adult", "legend"];
 export const levelHeight = (level, st) => height3d(level, st);
 
@@ -98,7 +101,7 @@ export const levelHeight = (level, st) => height3d(level, st);
 const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "fur", "texture", "creatureScale", "creatureSizeCandidate"], cache = new Map();
 // gear (optional): party gear, the woken look and the expression, { collar, hat, glasses, shoes, woken, face }:
 //   collar: a colour [r, g, b] (the creature's sigil neon) or true; hat: a colourway 0..2;
-//   glasses: "bar" | "star" | "heart"; shoes: "sneakers" | "glitter" | "platform"; woken: true;
+//   glasses: "bar" | "star" | "heart"; shoes: a SHOE_STYLES key ("sneakers", "glitter", "platform"...); woken: true;
 //   face: "neutral" | "angry" | "happy" | "dazed" (genome/expressions.js, drawn as part of the face).
 // Give the same gear to speciesColours for its colours. Shapes are cached per gear combination.
 /** A species' walk as baked (render/artBuild.ts, render/view/creatures.ts): frames in its cycle (2 unless it has its own), and

@@ -1,7 +1,7 @@
 // Each species' own attack in the grammar (docs/plans/attack-grammar.md step 5; Ed, 2026-10-27: within each biome every species a
 // distinct style, more complex the further out its island's phase; the default from then on, ?attacks=old for the old ones):
 // config/species-attacks.json gives its young's, and its adult's is the same grown (adultOf). Each held to the reaction floor as it's
-// read (liftToFloor; species.test.ts keeps them there as written). A legend's stays its own move (legends.json) for now.
+// read (liftToFloor; species.test.ts keeps them there as written). A legend's is its kind's thrown big (legendOf below; legends.json its reach and timing).
 import raw from "../../../config/species-attacks.json";
 import { liftToFloor } from "./timeline";
 import type { AttackSpec, Child } from "./types";

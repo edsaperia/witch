@@ -165,7 +165,8 @@ export class AssetLibrary {
 
   /** The night's seed (its own trees, tonight); a new night's by reseat. */
   seed: number;
-  /** Which treehouse is drawn (the old one, "home", or the Ent holding the deck: "ent:<height>:<radius>..."). */
+  /** Which treehouse is drawn (the old one, "home"; the Ent holding the deck, "ent:<height>:<radius>"; or the oak house,
+   *  "house:<height>:<radius>": render/view.ts). */
   private treehouseId: string;
   /** The island the sets are for, by number: bumped by reseat, so an island's set asked before lands to nothing (receive). */
   gen = 0;
@@ -198,7 +199,7 @@ export class AssetLibrary {
     // or not, so her frames never wait behind the area types the first frame asks for; the first-load hunt, 2026-10-20: hers came
     // last, 30 s in on the cloud, and play waited for them)
     for (const job of first) this.early(job);
-    this.ask({ kind: "treehouse", id: treehouse, style }, true, true); // (the old treehouse, or the Ent holding the deck: "ent:<height>:<radius>")
+    this.ask({ kind: "treehouse", id: treehouse, style }, true, true); // (the old treehouse, the Ent holding the deck, "ent:<height>:<radius>", or the oak house, "house:<height>:<radius>")
     this.ask(this.witchJob(witchGenome, false), true, true);
     this.ask({ kind: "soundsystems", id: "home", style }, true, true);
     this.ask({ kind: "props", id: "home", style }, true, true);

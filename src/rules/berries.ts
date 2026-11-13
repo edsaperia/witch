@@ -76,7 +76,7 @@ export function strengthGain(level: Level, species: string | undefined, t: Tunin
 }
 
 /** Berries needed to go up from a level (Ed, 2026-10-05: "tie the cost to strength"): the strength
- *  it gains, at berries.cost.per a berry, rounded, at least one. By fighting value (cost.by "value") a species of normal strength pays 4 and 4. Adults and
+ *  it gains, at berries.cost.per a berry, rounded, at least one. By fighting value (cost.by "value") a young of normal strength pays 4 (a baby berries.babyCost, 1). Adults and
  *  legends don't evolve. */
 export const toEvolve = (level: Level, t: Tuning, species?: string): number => {
   if (level >= TOP_LEVEL) return Infinity;

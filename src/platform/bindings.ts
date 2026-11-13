@@ -8,7 +8,7 @@ import table from "../../config/bindings.json";
 import { slotStorage } from "../app/saveSlots";
 
 /** Where an action works: in play, in a menu (a station's panel, the sea chart, the telescope, the Studio), or both. Two actions in
- *  one context can't share an input; a game action and a menu action can (cross is both use and choose). */
+ *  one context can't share an input; a game action and a menu action can (cross is both rise / land and choose). */
 export type Context = "game" | "menu" | "global";
 export interface Binding { keys: string[]; mouse: string[]; pad: string[] }
 export interface Action extends Binding { id: ActionId; context: Context; name: string; about: string; dev?: boolean }
