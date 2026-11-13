@@ -205,6 +205,12 @@ export interface Tuning {
     b: { on: boolean; lead: number; lobLead: number; chargeLead: number; life: number; windup: number; range: number; speed: number };
     c: { on: boolean; species: string[]; moving: number; share: number; angle: number; reach: number; ahead: number; sprint: number };
   };
+  /** Long lunges (Ed, 2026-11-13: "Lunge ranges seem very short; they could be twice as long, around 1.5-2 dashes range"; how, "Both":
+   *  wound up from far away, and carried on through and past the spot it aimed at; rules/combat.ts longLunge): a lunger's wind-up
+   *  may begin `from` dashes (dash.distance) off its target and its lunge runs `through` dashes along its line, for a kind whose own
+   *  lunge is `full` metres or more; a shorter kind's by its share of that, never under `shortest`; an attack lunging under `least`
+   *  metres is a swipe, left as it was. `on` false (?lunge=old): the lunges as before. */
+  lunge?: { on: boolean; from: number; through: number; shortest: number; full: number; least: number };
   /** Creatures' ranged attacks aim where she's going (Ed, 2026-11-12; rules/attacks/aim.ts): followed through the wind-up, `lead` of
    *  the way to where she'll be on arrival, locked `commit` s before the release and `lock` s (by level) before it can reach her, an
    *  area put down where she stands `areaLock` ahead, a wall of rollers `rollerLead` as far; straight bolts and rollers at her at least

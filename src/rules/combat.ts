@@ -88,13 +88,28 @@ export function lungeOf(c: Creature, A: Attack, reach: number, chasing: boolean,
   const ad = Math.hypot(aimX - c.x, aimZ - c.z), short = chasing ? 0 : A.range * 0.5, far = chasing ? Math.max(reach, Math.min(reach * 1.25, ad)) : reach;
   return c.dug !== undefined && time < c.dug ? 0 : Math.min(far, Math.max(0, ad - short));
 }
+/** The long lunge (Ed, 2026-11-13: "Lunge ranges seem very short; they could be twice as long, around 1.5-2 dashes range"; asked how,
+ *  "Both": it winds up from far away, and the lunge carries on through and past the spot it aimed at; tuning lunge). For a lunging
+ *  attack (its own lunge at least lunge.least metres: a swipe stays a swipe), by how long its kind's lunge is (lunge.full metres and
+ *  over the longest: the stoat's, the lynx's; never under lunge.shortest of that): `from`, how far off its target its wind-up may
+ *  begin (lunge.from dashes), and `length`, how far the lunge then runs along its line (lunge.through dashes), not stopping where it
+ *  aimed. Null: the lunge as it was (?lunge=old, a swipe, anything not a melee blow). */
+export function longLunge(A: Attack, t: Tuning): { from: number; length: number } | null {
+  const U = t.lunge, own = (A.lunge ?? 0) / FIGHT.scale;
+  if (!U?.on || A.delivery !== "melee" || own < U.least) return null;
+  const k = Math.max(U.shortest, Math.min(1, own / U.full)), dash = t.dash.distance * FIGHT.scale;
+  return { from: U.from * dash * k, length: U.through * dash * k };
+}
 /** How much of its top waiting pace a pick for a coming round counts on making good toward its ready spot (rules/combat.ts movingGoal):
  *  the crowd's avoidance, its path's curve and its gait's turns cost the rest (measured in the challenge's 128-animal pack, 2026-11-04:
  *  about 8 m/s made good against 15 to 20 m/s top). Low, so it sets off early rather than late: waiting at its ready spot commits it
  *  to nothing. */
 const SET_OFF_PACE = 0.4;
-/** A lunge wound up now: how far it will go (m), reckoned as the strike will (lungeOf), at her with dodge.a's longer reach and her momentum. */
-export function lungeLength(c: Creature, A: Attack, atWitch: boolean, t: Tuning, time: number, aimX: number, aimZ: number): number {
+/** A lunge wound up now: how far it will go (m), reckoned as the strike will: the long lunge's full length (longLunge; at a
+ *  soundsystem, `atSound`, the lunge as it was), else lungeOf, at her with dodge.a's longer reach and her momentum. */
+export function lungeLength(c: Creature, A: Attack, atWitch: boolean, t: Tuning, time: number, aimX: number, aimZ: number, atSound = false): number {
+  const long = atSound ? null : longLunge(A, t);
+  if (long) return c.dug !== undefined && time < c.dug ? 0 : long.length;
   const DA = t.dodge?.a.on ? t.dodge.a : null, chasing = atWitch && c.level !== LEGEND && !!momentumOf(c.species, t);
   return lungeOf(c, A, (A.lunge ?? 0) * (DA && atWitch ? DA.lunge : 1), chasing, time, aimX, aimZ);
 }
@@ -556,6 +571,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const om = pd && pd.move === "melee" && f.target.kind !== "sound" && time >= (c.moveReadyAt ?? 0) ? ownStrike(c.species) : null;
     const ownFrom = om && om.kind !== "swoop" ? (om.from ?? 10) * 1.4 * FIGHT.scale : 0, ownTo = om?.to ? om.to * 0.8 * (om.kind === "leap" ? FIGHT.leap.reach : 1) * FIGHT.scale : ownFrom;
     if (ownFrom) want = Math.max(want, ownFrom, Math.min(d, ownTo));
+    // The long lunge (Ed, 2026-11-13; longLunge above): at her, hers or a wild one (a soundsystem's besiegers as they were), its
+    // wind-up may begin long.from off, where it stops and crouches (no surge in), and its lunge runs long.length along its line.
+    const long = f.target.kind !== "sound" && !ownFrom && c.level !== LEGEND ? longLunge(A, t) : null;
     if (spacing && pd?.action?.delivery === "effect") want = Math.min(want, actionReach(c, pd.action, PACKS) * 0.8);
     // Its lunge under way: bounded course correction, with the original travel budget.
     if (f.lunge) {
@@ -563,10 +581,15 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // (with momentum, Ed 2026-10-05: it builds up to 60 m/s and eases out at the end, carrying some speed on)
       const L = f.lunge, travel = lungeAdvance(L.left, L.v ?? 0, dt), v = travel.speed, step = travel.step;
       L.v = v;
-      [L.dx, L.dz] = turnHeading(L.dx, L.dz, p.x - c.x, p.z - c.z, waitingProfile(c).strikeTurn / FIGHT.momentum, dt);
+      // (the long lunge, carrying through: once its blow has landed or it has passed its target it keeps its line, never turning back)
+      if (!L.through || !(L.landed || (p.x - c.x) * L.dx + (p.z - c.z) * L.dz < 0)) [L.dx, L.dz] = turnHeading(L.dx, L.dz, p.x - c.x, p.z - c.z, waitingProfile(c).strikeTurn / FIGHT.momentum, dt);
       advanceMotion(c, { vx: L.dx * step / dt, vz: L.dz * step / dt }, time, dt); L.left -= step; c.moving = true; c.walk += dt * 12; c.facing = L.dx >= 0 ? 1 : -1;
       c.vx = L.dx * v; c.vz = L.dz * v;
-      if (L.left <= 1e-6) { f.lunge = undefined; if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) { const observation = { source: c.id, attack: spell?.name ?? null, delivery: "melee", phase: "damage" as const }; land(w, s, c, f.target, atk.damage, A, c.x, c.z, observation); if (spell) meleeExtras(w, s, f.target, spell.spec, c.x, c.z, c, observation); } if (c.taunt && time < c.taunt.until && w.creatures[c.taunt.by]) f.target = { kind: "creature", id: c.taunt.by }; } // (taunted mid-lunge: its lunge done, it turns on the taunter)
+      // Its blow: at its lunge's end if its target's in reach; the long lunge's as it meets its target on its way (once: a blink
+      // through it then, and it has missed), and it carries on past to the end of its line.
+      const meets = L.through ? !L.landed : L.left <= 1e-6;
+      if (meets && Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) { L.landed = true; const observation = { source: c.id, attack: spell?.name ?? null, delivery: "melee", phase: "damage" as const }; land(w, s, c, f.target, atk.damage, A, c.x, c.z, observation); if (spell) meleeExtras(w, s, f.target, spell.spec, c.x, c.z, c, observation); }
+      if (L.left <= 1e-6) { f.lunge = undefined; if (c.taunt && time < c.taunt.until && w.creatures[c.taunt.by]) f.target = { kind: "creature", id: c.taunt.by }; } // (taunted mid-lunge: its lunge done, it turns on the taunter)
       continue;
     }
     // Just noticed: it turns to look a moment before it goes (combat.reaction).
@@ -825,7 +848,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         const g = shoot ? null : place ?? (Math.hypot(p.x - c.x, p.z - c.z) > want + YS.hopper.ring * S ? { x: p.x + ((c.x - p.x) / Math.max(1e-3, d)) * (want + YS.hopper.ring * S * 0.5), z: p.z + ((c.z - p.z) / Math.max(1e-3, d)) * (want + YS.hopper.ring * S * 0.5) } : null);
         if (g && Math.hypot(g.x - c.x, g.z - c.z) > 2 * S) { if (!startHop(c, g.x, g.z, time, hopOf(speed))) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; } continue; }
       }
-      const may = steer(c, heavy ? heavyOf(c, P) : P, { px: herAt.x, pz: herAt.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed * FIGHT.creature) : run * burst, time, dt, pack: pd ? tactic : pk, neighbours: grid.near(c.x, c.z, spacing ? spacingSearch : 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" && !ownFrom ? A.range + p.r : undefined, momentum: chase, now: herAt === p ? undefined : p, style: place, ...(spacing ? { spacing: { tuning: t, data: SPACING, waiting } } : {}) });
+      const may = steer(c, heavy ? heavyOf(c, P) : P, { px: herAt.x, pz: herAt.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed * FIGHT.creature) : run * burst, time, dt, pack: pd ? tactic : pk, neighbours: grid.near(c.x, c.z, spacing ? spacingSearch : 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" && !ownFrom ? A.range + p.r : undefined, ...(long ? { strike: long.from } : {}), momentum: chase, now: herAt === p ? undefined : p, style: place, ...(spacing ? { spacing: { tuning: t, data: SPACING, waiting } } : {}) });
       if (spacing && waitingDrive(c, time).airborne && (!may || waiting || pd?.action?.delivery === "effect") && !strikingNow(c)) {
         const v = Math.hypot(c.vx ?? 0, c.vz ?? 0), length = hopOf(speed, c).length * S;
         if (v > SPACING.epsilon) {
@@ -844,11 +867,12 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     }
     if (c.swoop) landSwoop(c, time); // (a flyer marching on a soundsystem far off, or a party one: on the ground)
     if (f.windupUntil === 0) {
-      if (d > want) { const q = w.round?.(c.x, c.z, p.x, p.z); moveToward(c, q ? q.x : p.x, q ? q.z : p.z, q ? 0 : want, marching ? marchSpeed(c, w.t) : speed, dt); continue; } // (round a lake on the way: rules/lakes.ts)
+      const farStart = !!long && d > want && d <= long.from && time >= f.readyAt && strikeNow(pd, f.target); // (the long lunge: wound up from out here)
+      if (d > want && !farStart) { const q = w.round?.(c.x, c.z, p.x, p.z); moveToward(c, q ? q.x : p.x, q ? q.z : p.z, q ? 0 : want, marching ? marchSpeed(c, w.t) : speed, dt); continue; } // (round a lake on the way: rules/lakes.ts)
       // A kiter backs off when its target comes too close, keeping its distance while it shoots.
       if (kites && d < A0.range * K.near && d > 0.01) { c.x -= ((p.x - c.x) / d) * speed * dt; c.z -= ((p.z - c.z) / d) * speed * dt; c.moving = true; c.walk += dt * 6; c.facing = p.x >= c.x ? 1 : -1; if (time < f.readyAt) continue; }
       c.moving = false; c.facing = p.x >= c.x ? 1 : -1;
-      if (time >= f.readyAt && strikeNow(pd, f.target)) {
+      if (farStart || (time >= f.readyAt && strikeNow(pd, f.target))) {
         if (pd) markStrike(pd, c, time);
         f.windupAt = time; f.windupUntil = time + windupOf(A, f.target); f.aimX = p.x; f.aimZ = p.z; aimOld(A);
         s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });
@@ -874,7 +898,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     }
     const held = !!aimed?.locked && (!spell || (f.spellCast !== undefined && aimLocked(s.spells!, f.spellCast)));
     if (held) { c.vx = 0; c.vz = 0; c.moving = false; }
-    else if (DA && A.delivery === "melee" && f.target.kind === "witch" && d > A.range + p.r && !(c.dug !== undefined && time < c.dug)) { // (not dug in: rooted)
+    else if (DA && !long && A.delivery === "melee" && f.target.kind === "witch" && d > A.range + p.r && !(c.dug !== undefined && time < c.dug)) { // (not dug in: rooted; nor the long lunge's wind-up, which gathers itself where it began: Ed, 2026-11-13)
       const surge = c.level === LEGEND ? speed : heavy ? Math.max(own * FIGHT.speed * FIGHT.creature * slow, Math.hypot(c.vx ?? 0, c.vz ?? 0)) : Math.max(speed, sprint * FIGHT.speed * FIGHT.creature * DA.surge * slow); // (a heavy carries on at the speed it has built up)
       // (with momentum, its surge in too: for where she was, turning no faster than its limit; its aim, above, still leads her)
       const ms = mo, q = ms ? chaseAt(s, f.target.id, time, ms) ?? p : p, qd = Math.hypot(q.x - c.x, q.z - c.z) || 1e-6;
@@ -895,8 +919,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // (with momentum, Ed 2026-10-27: its run-in may have left it short, so the committed lunge goes right to where the wind-up aimed,
       // up to a quarter again its usual length: a strike that starts stays reliable; at twice, a skilled bot backing away from a fight
       // was knocked out early in 3 seeds of 12, at a quarter 2, with no momentum none)
-      const ax = aimX - c.x, az = aimZ - c.z, ad = Math.hypot(ax, az), L = lungeOf(c, A, reach, !!mo, time, aimX, aimZ); // (dug in: no lunge)
-      if (ad > 0.01 && L > 0.05) f.lunge = { dx: ax / ad, dz: az / ad, left: L, v: Math.hypot(c.vx ?? 0, c.vz ?? 0) };
+      const ax = aimX - c.x, az = aimZ - c.z, ad = Math.hypot(ax, az), L = long ? (c.dug !== undefined && time < c.dug ? 0 : long.length) : lungeOf(c, A, reach, !!mo, time, aimX, aimZ); // (dug in: no lunge)
+      // (the long lunge, Ed 2026-11-13: its full length along its line, through and past where it aimed)
+      if (ad > 0.01 && L > 0.05) f.lunge = { dx: ax / ad, dz: az / ad, left: L, v: Math.hypot(c.vx ?? 0, c.vz ?? 0), ...(long ? { through: true } : {}) };
       else if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) land(w, s, c, f.target, dmg, A, c.x, c.z);
     }
     else if (A.delivery === "shot") {

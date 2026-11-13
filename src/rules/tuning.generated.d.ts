@@ -1284,6 +1284,14 @@ export type SchemaTuning = {
       "sprint": number;
     };
   };
+  "lunge": {
+    "on": boolean;
+    "from": number;
+    "through": number;
+    "shortest": number;
+    "full": number;
+    "least": number;
+  };
   "ranged": {
     "on": boolean;
     "lead": number;

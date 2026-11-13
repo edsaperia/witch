@@ -1513,6 +1513,19 @@
    ]
   },
   {
+   "name": "lunge",
+   "values": [
+    "old"
+   ],
+   "does": "Lunges as before, to compare: wound up close, the creature sprinting in as it winds up, and stopping where it aimed (a few metres long), not wound up from about 1.5 dashes off and carried through and past her for about 2 dashes. Sets tuning lunge.on.",
+   "group": "compare",
+   "since": "2026-11-13",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Ed, 2026-11-13: \"Lunge ranges seem very short; they could be twice as long, around 1.5-2 dashes range.\" Asked how: \"Both\" (wound up from far away, and carried on through and past the spot it aimed at)"
+  },
+  {
    "name": "ranged",
    "values": [
     "old"

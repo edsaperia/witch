@@ -123,7 +123,7 @@ export interface Fight {
   move?: string;
   /** When it noticed its target (it reacts combat.reaction seconds later), and a melee lunge under way: its way, and the metres left. */
   seenAt?: number;
-  lunge?: { dx: number; dz: number; left: number; /** its speed now */ v?: number };
+  lunge?: { dx: number; dz: number; left: number; /** its speed now */ v?: number; /** the long lunge (tuning lunge): it carries on through and past its target, its blow landing as it meets it */ through?: boolean; /** that blow struck (landed or blinked through) */ landed?: boolean };
   /** In a pack (rules/combat/packs.ts): the move its wind-up or lunge uses. */
   packMove?: "melee" | "ranged";
   /** An attack in the grammar being wound up (rules/attacks/combatWorld.ts): the engine's cast, released at the windup's end. */
