@@ -33,7 +33,13 @@ const sleeps = (p, level) => p.gait?.sleep ?? (level === 3 ? "curl" : "sphinx");
 /** A species' walk at a level (0 baby to 3 legend), drawn: art/mesh/raster.js bakeMesh's { w, h, step, towards, away }, each
  *  heading its slow cycle's MESH_CYCLE frames, then it standing still (MESH_STAND), then its fast cycle's (from MESH_RUN). gear: a party animal's (art/mesh/gear.js
  *  `dress`). Not kept: a legend's frames are tens of megabytes. */
-export const meshWalk = (species, level, gear = null) => { const p = () => plan(species, level, gear); return bakeMesh(shape(p()), { ppu: scale(species, level), frames: MESH_CYCLE, stand: true, run: runs(p()) ? shape(p(), "run") : null, colours: colours(level), texture: texture(level) }); };
+export const meshWalk = (species, level, gear = null) => { const p = () => plan(species, level, gear); return bakeMesh(shape(p()), { ppu: scale(species, level), frames: MESH_CYCLE, stand: true, run: runs(p()) ? shape(p(), "run") : null, more: strikes(p), colours: colours(level), texture: texture(level) }); };
+/** A kind whose heads strike in turn (its plan's gait.strike: the hydra's, art/mesh/species/hydra.js; Ed, 2026-11-13: "it would be
+ *  cool if the hydra did attacks with alternating heads"): for each of its striking heads in turn, MESH_STRIKE's poses, that
+ *  head drawn back twice over (the others swaying between the two) and then struck forward. They are drawn after its walk's
+ *  frames (meshGait's `strike` says where). */
+export const MESH_STRIKE = ["a", "b", "snap"];
+const strikes = p => { const S = p().gait?.strike; return S ? S.heads.flatMap((_, k) => MESH_STRIKE.map(phase => { const q = p(); return shape({ ...q, still: { ...q.gait.strike.pose(k, phase), root: q.gait.root } }); })) : undefined; };
 /** Whether a plan has a fast pace of its own (a legged kind's: art/mesh/kit/gaits.js). */
 const runs = p => !!p.gait?.paces?.run;
 /** The scale a species is drawn at, art pixels a metre: its bare self standing MESH_HEIGHTS tall, so a hat doesn't shrink it. */
@@ -67,7 +73,8 @@ export function meshSleep(species) {
  *  cycle), stand (the one it stands still in), rate (a flyer's: frames of its wingbeat a second), type (how it goes:
  *  art/mesh/shape.js GAIT_TYPES), steps: how far it goes between frames of its slow pace at each level, as a share of that
  *  level's sprite's width, so its planted feet stay put on the ground (step: its adult's), rests (the slow pace's frames that
- *  have every foot down: what it stops on) and, if it has a fast pace, run: { from (its first frame), steps }. Worked out
+ *  have every foot down: what it stops on), if it has a fast pace, run: { from (its first frame), steps }, and, if its heads
+ *  strike in turn, strike: { from (the first of those frames), heads, each (frames a head: MESH_STRIKE) }. Worked out
  *  without drawing anything, once. */
 const gaits = new Map();
 export function meshGait(species) {
@@ -76,7 +83,8 @@ export function meshGait(species) {
     const shapes = MESH_PLANS[species].map(make => { const p = () => ({ ...make(), fine: 2 }); return { walk: shape(p()), run: runs(p()) ? shape(p(), "run") : null }; }), adult = shapes[2];
     const steps = shapes.map(s => meshStep(s.walk, MESH_CYCLE, s.run)), feet = adult.walk.feet ?? [];
     const rests = feet.length ? Array.from({ length: MESH_CYCLE }, (_, i) => i).filter(i => feet.every(f => (((i / MESH_CYCLE + f.phase) % 1) + 1) % 1 < f.duty - 1e-9)) : [];
-    gaits.set(species, (g = { frames: MESH_FRAMES + (adult.run ? MESH_CYCLE : 0), cycle: MESH_CYCLE, stand: MESH_STAND, rate: MESH_RATE, type: gaitType(MESH_PLANS[species][2]()), step: steps[2], steps, rests, ...(adult.run ? { run: { from: MESH_RUN, steps: shapes.map(s => meshStep(s.walk, MESH_CYCLE, s.run, s.run)) } } : {}) }));
+    const strike = MESH_PLANS[species][2]().gait?.strike, walked = MESH_FRAMES + (adult.run ? MESH_CYCLE : 0);
+    gaits.set(species, (g = { frames: walked + (strike ? strike.heads.length * MESH_STRIKE.length : 0), ...(strike ? { strike: { from: walked, heads: strike.heads.length, each: MESH_STRIKE.length } } : {}), cycle: MESH_CYCLE, stand: MESH_STAND, rate: MESH_RATE, type: gaitType(MESH_PLANS[species][2]()), step: steps[2], steps, rests, ...(adult.run ? { run: { from: MESH_RUN, steps: shapes.map(s => meshStep(s.walk, MESH_CYCLE, s.run, s.run)) } } : {}) }));
   }
   return g;
 }
