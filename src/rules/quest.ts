@@ -6,6 +6,7 @@
 // tonight (g.islandsTonight: kept on the sea chart only if the night is won, Ed's correction, 2026-10-18). A quest gives no boon
 // (Ed, 2026-10-18: "Finishing quests no longer gives boons"). No drawing here.
 import { AREA_TYPES, areaCellAt, inLegendClearing, type ForestMap } from "./map";
+import { byPlace } from "./kinds";
 import { LEGENDS, cheer } from "./legends";
 import type { Creature } from "./creatures";
 import { cellKey, routeOf } from "./party";
@@ -32,7 +33,7 @@ export function earlyQuest(map: ForestMap): EarlyQuest | null {
     const shuffled = [...first]; for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
     for (const host of [...shuffled, ...order.slice(3)]) {
       if (!map.legendCells.has(host)) continue;
-      const wants = [...new Set(first.filter(k => k !== host).map(kind))].filter(sp => sp !== kind(host)).sort();
+      const wants = [...new Set(first.filter(k => k !== host).map(kind))].filter(sp => sp !== kind(host)).sort(byPlace);
       if (wants.length) { out = { host, wants: wants[Math.floor(r() * wants.length)], first }; break; }
     }
   }
@@ -61,8 +62,8 @@ export function questFor(map: ForestMap, cell: [number, number], own: string, wa
     if (d < (nearest.get(sp) ?? Infinity)) nearest.set(sp, d);
     if (after.has(cellKey([cx, cy])) && d < (nearestLater.get(sp) ?? Infinity)) nearestLater.set(sp, d);
   }
-  const all = [...nearest.keys()].sort(), inReach = cap > 0 ? all.filter(sp => nearest.get(sp)! <= cap) : all;
-  const lat = [...nearestLater.keys()].sort(), latIn = cap > 0 ? lat.filter(sp => nearestLater.get(sp)! <= cap) : lat;
+  const all = [...nearest.keys()].sort(byPlace), inReach = cap > 0 ? all.filter(sp => nearest.get(sp)! <= cap) : all;
+  const lat = [...nearestLater.keys()].sort(byPlace), latIn = cap > 0 ? lat.filter(sp => nearestLater.get(sp)! <= cap) : lat;
   const dist = lat.length ? nearestLater : nearest;
   const kinds = latIn.length ? latIn : lat.length ? [lat.reduce((a, b) => (nearestLater.get(b)! < nearestLater.get(a)! ? b : a))] : inReach.length ? inReach : all;
   if (!kinds.length) return undefined;

@@ -543,6 +543,19 @@
    ]
   },
   {
+   "name": "meshCreatures",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Creatures that have one are drawn as low-poly meshes on skeletons (art/mesh), on by default: fox, stoat, marten, hare, squirrel, dormouse, badger, mole, hedgehog and snail so far; 0 compares the generated creatures.",
+   "group": "compare",
+   "since": "2026-11-12",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
    "name": "creatureSizeCandidate",
    "values": [
     "0",

@@ -3,6 +3,7 @@
 // Sets are asked for as the witch nears them and drawn by a few Web Workers in the background;
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
+import { hasMesh } from "../../art/mesh/index.js";
 import { enqueueWorkerTrace, postTracedJob, cancelWorkerTrace } from "../app/workerJobTrace";
 import { atlasBytes, atlasFromPixels, placeholderAtlas, type Atlas } from "./atlas";
 import { channelAt } from "./palette";
@@ -30,7 +31,7 @@ export interface TypeArt {
 export interface CreatureArt { key?: string }
 export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
 export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]>; /** the island biome it was drawn in (none: temperate) */ biome?: string }
-export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** Its walk (art/creatures.js walkGait): frames in the cycle, and how far it moves between them (a share of its width). */ walk?: { frames: number; step: number }; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[]; /** And how far its body's middle lies right of the frame's middle in each frame (pixels): drawn with its middle on its place. */ centre?: number[] }
+export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** Its walk (art/creatures.js walkGait): frames in the cycle, and how far it moves between them (a share of its width). */ walk?: { frames: number; step: number; /** A mesh creature's (art/mesh/index.js meshGait): each level's step, how many of its frames are its walk's cycle, the frame it stands still in, the most frames shown a second, and how it goes. */ steps?: number[]; cycle?: number; stand?: number; rate?: number; type?: string; rests?: number[]; run?: { from: number; steps: number[] } }; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[]; /** And how far its body's middle lies right of the frame's middle in each frame (pixels): drawn with its middle on its place. */ centre?: number[] }
 /** A creature asleep's frame: its level's two breaths (render/artBuild.ts "nap"). */
 export const napFrame = (level: number, f: number) => level * 2 + (f % 2);
 /** A species' live-rig parts at one level (#79): its atlas page and what the rig needs. */
@@ -419,9 +420,9 @@ export class AssetLibrary {
     } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "nap") this.creatures.set(r.job.id, { atlas, frame: napFrame, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "glide") this.creatures.set(r.job.id, { atlas, frame: napFrame });
-    else if (r.job.kind === "party") { const G = walkGait(r.job.species);
+    else if (r.job.kind === "party") { const G = walkGait(r.job.species, this.style);
       this.creatures.set(r.job.id, { atlas, key: r.job.id, frame: (_l, f, away) => partySheetFrame(f, away, G.frames), walk: G }); }
-    else { const G = walkGait("species" in r.job ? r.job.species : r.job.id); // (its walk's frames: a party look's, woken or a face's are its species')
+    else { const G = walkGait("species" in r.job ? r.job.species : r.job.id, this.style); // (its walk's frames: a party look's, woken or a face's are its species')
       this.creatures.set(r.job.id, { atlas, frame: (l: number, f: number, away?: boolean) => creatureFrame(l, f, away, G.frames), walk: G }); }
     this.inFlight.delete(this.key(r.job)); this.promoted.delete(this.key(r.job)); this.urgentKeys.delete(this.key(r.job));
     if (r.job.kind !== "witch") this.version++; // (her frames aren't the scenery's: a bump rebuilt the whole scenery, 130-190 ms at a time below 30 fps, at every look a station's choice drew; Ed's log of v4821)
@@ -491,6 +492,7 @@ export class AssetLibrary {
   rigArt(species: string, level: number, gear?: RigGear, urgent = true): RigArt | undefined { // gear: a party animal's, baked on (a page per species, level and gear)
     const base = (Art.GENOME_BY_ID as Record<string, unknown>)[species];
     if (!base) return undefined;
+    if (hasMesh(species, this.style)) return undefined; // (drawn as a mesh, art/mesh: it walks on its own frames, the live rig leaves it be)
     const g = Art.selectedCreatureGenome(base, this.style, level);
     const hashId = `${species}:${level}`;
     let h = this.genomeHashes.get(hashId);
@@ -562,11 +564,13 @@ export class AssetLibrary {
    *  undefined (and asked for). Baked as a nap is (its ground line and middle). */
   /** A glider spread out in the air (Profile.glide: its legs out, its membrane taut; each level in 2 frames), or undefined (and asked for). */
   glideArt(species: string): CreatureArt | undefined {
+    if (hasMesh(species, this.style)) return undefined; // (drawn as a mesh, art/mesh: it has no such pose of its own yet, so its walk's frames stand in, not the generated animal's)
     const k = `glide-${species}`, a = this.creatures.get(k);
     if (!a) this.ask({ kind: "glide", id: k, species, style: this.style });
     return a;
   }
   idleArt(species: string): CreatureArt | undefined {
+    if (hasMesh(species, this.style)) return undefined; // (drawn as a mesh, art/mesh: it has no such pose of its own yet, so its walk's frames stand in, not the generated animal's)
     const k = `idle-${species}`, a = this.creatures.get(k);
     if (!a) this.ask({ kind: "nap", id: k, species, style: this.style, idle: true });
     return a;

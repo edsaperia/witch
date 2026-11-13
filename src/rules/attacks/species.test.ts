@@ -55,7 +55,8 @@ describe("each species' own attack", () => {
   it("gives every species in a biome its own style, and composes more the further out its phase", () => {
     const byBiome = new Map<string, string[]>(), byPhase = new Map<number, number[]>();
     for (const [sp, a] of Object.entries(SPECIES_ATTACKS)) {
-      const k = KINDS_TABLE[sp], key = `${k.biome ?? "temperate"}`;
+      const k = KINDS_TABLE[sp]; if (!k) continue; // (a creature on the bench, rules/kinds.ts BENCH: it keeps its attack and has no island)
+      const key = `${k.biome ?? "temperate"}`;
       byBiome.set(key, [...(byBiome.get(key) ?? []), `${styleOf(a)}`]);
       byPhase.set(k.phase, [...(byPhase.get(k.phase) ?? []), complexity(a)]);
     }

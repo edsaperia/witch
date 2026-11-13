@@ -33,7 +33,7 @@ import { lakeDepth, lakeKnobs } from "./lakes";
 import { growIsland, lakePlan, placeLakes, reachOf, shapeOf, type Candidate, type PatchGrowth } from "./islandGrowth";
 import { patchAt, STRAIT } from "./archipelago";
 import { dealLegends, foundKinds, HOME_START, homeEndgame, homeIsland, homeKinds, homeRoster, islandOf, isPlaceholder, knownKinds, playableIsland, REAL_KINDS, type Island } from "./rosters";
-import { CLASSIC_SLOTS, KIND_SLOTS } from "./kinds";
+import { byPlace, CLASSIC_SLOTS, KIND_SLOTS } from "./kinds";
 import { ZOO_CONFIG, zooChartPlan, zooJunctions, type ZooPlan } from "./zoo";
 import { coastAlong, zooFence, zooLayout, zooPartition } from "./zooMap";
 
@@ -631,7 +631,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     // (one for every kind a night could deal here, not just tonight's: the island's shape, and so its land, coast and chart
     // outline, is its world's every night; tonight's legends take theirs, the rest stand empty. The early quest's kinds choose
     // first, then the rest in an order seeded by the island's own seed.)
-    const pool = [...new Set(shapeKinds ?? rosterIsland.roster.map(r => r.kind))].filter(k => k !== rosterIsland.kind && !isPlaceholder(k)).sort(); // (home's: its world's kinds as made above)
+    const pool = [...new Set(shapeKinds ?? rosterIsland.roster.map(r => r.kind))].filter(k => k !== rosterIsland.kind && !isPlaceholder(k)).sort(byPlace); // (home's: its world's kinds as made above; by name, a kind that took another's place in the other's: rules/kinds.ts)
     const order = [...pool.filter(k => early.includes(k)), ...pool.filter(k => !early.includes(k)).sort((a, b) => hash2(pool.indexOf(a), 3, shapeSeed + 6153) - hash2(pool.indexOf(b), 3, shapeSeed + 6153))];
     order.forEach((kind, ki) => {
       const want = legendRadius(kind, LC0, areaMax);

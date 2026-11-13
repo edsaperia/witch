@@ -35,6 +35,19 @@ export function assembleKinds(lines: KindLine[]): Record<string, KindInfo> {
   return out;
 }
 export const KINDS_TABLE: Record<string, KindInfo> = assembleKinds(AREA_FOLDER_KINDS as KindLine[]);
+/** Creatures on the bench: drawn, voiced and given their attacks (art/creatures/<id>/ and the config tables keep their lines),
+ *  but with no island, so the rosters never deal them and no one meets them. The marten: the bee took its place on home, in the
+ *  old pinewood (Ed, 2026-11-11: "keep both, but swap the marten for the bee"; 2026-11-12: "make a new ID, keep the marten
+ *  distinct, we may want it back one day", "marten is on the bench"). The newt: the turtle took its place, in the Fen (Ed, 2026-11-12: "newt for turtle"). A save that names the marten is not turned into the bee's: loading drops
+ *  a kind the table doesn't know (app/chartSave.ts loadSave), so whoever had found the marten's island finds the bee's afresh.
+ *  kinds.test.ts holds this list to the truth. */
+export const BENCH: readonly string[] = ["marten", "newt"];
+/** A kind that took another's place stands where the other stood whenever kinds are set in order by name (the deal of an island's
+ *  legend areas, rules/map.ts; a legend's quest, rules/quest.ts), so the swap changes who lives there and nothing of the land or
+ *  the deals: every seed's map is the map it was. The bee stands where the marten did (it sorts as "marten"). */
+export const PLACE_OF: Readonly<Record<string, string>> = { bee: "marten", turtle: "newt" };
+/** Kinds in order by name, each in its place (PLACE_OF): for `.sort(byPlace)` where a plain sort stood. */
+export const byPlace = (a: string, b: string): number => { const x = PLACE_OF[a] ?? a, y = PLACE_OF[b] ?? b; return x < y ? -1 : x > y ? 1 : 0; };
 /** Each kind's slot (the table is assembled in slot order). */
 export const KIND_SLOTS: Record<string, number> = Object.fromEntries(Object.keys(KINDS_TABLE).map((k, i) => [k, i]));
 /** The classic map's kinds: the first 32 slots, today's 32 when the journey began (all introduced before phase 3 then). By slot,
