@@ -730,6 +730,25 @@
       ],
       "notes": "Each area's sleeping legend lies in a small circular clearing of its own [1], where no tree or decor stands: radius metres across from its middle (species: a radius for that legend, sized to fit it: half its sleeping width plus 4 m), a soft ring edge metres wide marking it on the ground, and the legend lying top x radius north of the middle (the circle's far side from the camera), the open floor in front. Quest sigils and relics take effect inside it."
     },
+    "legendClearing.back": {
+      "what": "How far back in its circle a sleeping legend lies: its middle this share of the radius north of the circle's middle (the side furthest from the camera), so the front of the circle is open for her to stand in, facing it [1].",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-12",
+          "quote": "Legends should sleep at the back of their circles, so you can stand in the circle before them."
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-13",
+          "quote": "fix the others"
+        }
+      ],
+      "links": [
+        "rules/legendFit.ts"
+      ],
+      "notes": "Circles are sized (legendClearing.fit) so the legend's sleeping width fits there with fit.margin to spare, which keeps it inside the ring of trodden earth (edge metres inside the radius). Where a circle is capped or squeezed smaller than that, the legend lies as far back as it fits, never further forward than top x radius (where it lay before 2026-11-12; the link switch ?legendspot=old puts it back there, its circle sized as before). 0.7 at first (circles sized for it about a quarter bigger than for top, up to fit.max); top (0.45) is the old place, and a value at or under top means the old place. Since 2026-11-13 [2] (the elephant that had not moved, the mole and the bear that still covered her at the middle): the footprints are the legends as drawn now, a mesh kind's from its mesh; a legend lies further back than this share where its nap is drawn so far below its ground line that the circle camera would lay it over her at the circle's middle (legendFit.ts reachOf), its circle sized for that too; and in a capped or squeezed circle it lies as far back as its width fits inside the circle, on the ring if it must."
+    },
     "legendClearing.minFromStone": {
       "what": "its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot grows to hold one (logged).",
       "notes": "Its area grows into the land round it, claiming a full-size circle's ground (rules/map.ts growClearing), before any circle is made smaller: docs/notes/world-art.md Site gaps.",
