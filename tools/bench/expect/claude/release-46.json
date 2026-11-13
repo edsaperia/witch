@@ -1,0 +1,11 @@
+{
+  "reason": "Release 46: #1979 (claude/layout-1112): Ed, 2026-11-12, \"New treehouse layout\": his export from the treehouse editor is the house's arrangement; among what moved, the DJ decks and their seat (1.29 m east, 1.01 m north), where she starts, and the basin, telescope, broom rack, hydraulic lift and workbench.; #1986 (claude/decks-analyser): The party start at the decks (Ed, 2026-11-12: \"At the decks, when the party starts, there is a visual effect - I want to remove this ... Instead I want something like the soundsystem spell (audio analyser ring)\"): the party start's pieces (sparkles, pillar, dome, light, shake, floor glow, heat ripple) no longer drawn, the soundsystem spell's flat analyser ring round the decks instead, from the cast to a bar after the drop. Drawing only: the rules unchanged. The bench's night is cast long before its shots (party.spellAt -100), so its scenes should not change; declared in case a frame lands inside the party start.",
+  "frames": {
+    "boot": "she starts at the decks' seat, moved with the decks, so the whole frame shifts and she ends 1.29 m east, 1.01 m north of where she did; the moved stations wherever they show; off the decks just after the start: the same, if a frame lands inside it",
+    "booth": "at her decks: the analyser ring in place of the party start's pieces, if a frame lands inside it"
+  },
+  "start": {
+    "boot": "she starts seated at the DJ decks, which Ed moved 1.29 m east and 1.01 m north (2026-11-12)",
+    "bedroom": "she starts seated at the DJ decks, which Ed moved 1.29 m east and 1.01 m north (2026-11-12)"
+  }
+}

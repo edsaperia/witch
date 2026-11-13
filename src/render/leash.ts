@@ -48,6 +48,7 @@ import type { Chain } from "./leash/chain";
 import { drawRainbow } from "./leash/rainbow";
 import type { LeyLines } from "./leylines";
 import { drawStones, newStoneView, resetStoneView, type StoneSpot } from "./leash/stones";
+import { drawDecksRing, type DecksRing } from "./leash/decksRing";
 import { drawChallenge } from "./challenge";
 import { drawProjection } from "./leash/projection";
 import { RUNE_SCALE, runeOffset, sigilSize } from "../rules/runeOffset";
@@ -63,6 +64,10 @@ const WHITE_COL = new THREE.Color(1, 1, 1);
 /** How far from her (m) happy creatures' runes are drawn. */
 const RUNE_VIEW = 70;
 /** The party legend's giant hat's stripes (the Easter egg): the party neons, in pairs of rows. */
+/** The decks' ring's draw order (render/leash/decksRing.ts): on the house's floor, so after its floors, walls and furniture (19.925 to
+ *  19.944: render/houseRooms.ts ROOMS_ORDER, drawn with no depth over what came before, the Terrace's floor among them) and before
+ *  what stands on it drawn over them (her room pass, 19.95: render/houseWitchPass.ts; the crown indoors, 19.96). */
+export const DECKS_RING_ORDER = 19.946;
 const PARTY_HAT = [[1, 0.35, 0.72], [0.35, 0.95, 1], [1, 0.85, 0.3], [0.7, 0.45, 1]];
 
 export class LeashView {
@@ -71,6 +76,17 @@ export class LeashView {
   /** How far her decks are slid this frame with the house's drawing, off the Terrace (render/view/home.ts placeTreehouse): the tempo
    *  over them goes with them. */
   seatSlide = { x: 0, y: 0, z: 0 };
+  /** The decks' analyser ring at the party start (render/leash/decksRing.ts; the view sets it at the cast and the decks' replay); null:
+   *  none this night. */
+  decksRing: DecksRing | null = null;
+  /** A place on the house's floor as it's drawn this frame (render/view/witch.ts: the oak's art's own view of its floor, not the
+   *  camera's, as her feet and the rooms' furniture are placed), from its place in the world (x, z): the point (y over the ground
+   *  there, as a sprite's); null with no house drawn. The decks' ring lies on it (render/leash/decksRing.ts). */
+  floorAt: ((x: number, z: number) => { x: number; y: number; z: number }) | null = null;
+  /** The spot of the house's floor (in the world, as floorAt takes it) where the oak's art draws her at her decks, its DJ table
+   *  round her: not the rules' seat's own (the art seats her some 3 m east of the plan's seat: measured in the game, 2026-11-13,
+   *  the ring round the plan's desk came out beside the drawn one); null with no house drawn. */
+  decksOnFloor: { x: number; z: number } | null = null;
   /** Her decks not drawn this frame (the Terrace one of the house's rooms, seen from outside: render/view/home.ts placeTreehouse): their tempo hidden with them. */
   decksHidden = false;
   canvas = document.createElement("canvas");
@@ -94,6 +110,10 @@ export class LeashView {
    *  both painted (not added) just before the additive glyph (groundSigil). */
   backing: Instances;
   ink: Instances;
+  /** The decks' ring's dots painted on and their glow as light (render/leash/decksRing.ts): over the house's floor (DECKS_RING_ORDER),
+   *  depth-tested, so the DJ table in front of them covers them. */
+  decksInk: Instances;
+  decksGlow: Instances;
   /** Each glyph's reach from its slot's middle, a share of its half-width (measured from the atlas when drawn), by its rect. */
   private extent = new Map<string, number>();
   standing: Instances;
@@ -218,6 +238,9 @@ export class LeashView {
     this.blood = new Instances(mat(1, true, true, BLOOD_PULL)); // (over the grass tufts: Ed's pick, 2026-10-09)
     this.backing = new Instances(mat(1, true, true)); this.backing.mesh.renderOrder = 2.9;
     this.ink = new Instances(mat(1, true, true)); this.ink.mesh.renderOrder = 2.95;
+    this.decksInk = new Instances(mat(1, true, true)); this.decksInk.mesh.renderOrder = DECKS_RING_ORDER;
+    this.decksGlow = new Instances(mat(1)); this.decksGlow.mesh.renderOrder = DECKS_RING_ORDER + 0.0005;
+    scene.add(this.decksInk.mesh, this.decksGlow.mesh);
     scene.add(this.standing.mesh, this.flat.mesh, this.through.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh, this.backing.mesh, this.ink.mesh, this.stackBack.mesh, this.stackGlyphs.mesh);
     this.look = new AttackLook(scene, game);
     const hex = berryColour(game.tuning).replace("#", ""); // (berry pink, or the old cherry red: render/colourGrammar.ts)
@@ -228,7 +251,7 @@ export class LeashView {
    *  (The sigils' atlas, its slots and colours, by species, and the pooled bubbles stay: the page's.) */
   setGame(game: Game): void {
     this.game = game;
-    this.seatAt = null; this.bloodPool = null;
+    this.seatAt = null; this.bloodPool = null; this.decksRing = null; this.floorAt = null; this.decksOnFloor = null;
     for (const m of [this.ruts, this.evolved, this.cycledAt, this.joined, this.stackY, this.lastSlots, this.routes, this.tops, this.halfW, this.heads, this.dreamStones, this.chains]) m.clear();
     this.look.reset(); this.stones.length = 0; resetStoneView(this.stoneView); resetSigilFeel(this.feel);
     this.bursts = []; this.chain = []; this.fx = []; this.ringGlows = []; this.dreams = []; this.snoreNear = []; this.projected = [];
@@ -607,7 +630,7 @@ export class LeashView {
     this.bodyY = bodyY; this.hatTop = hatTop; this.feetY = feetY; this.frameH = frameH;
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, L = t.leash, dot = this.uv(0);
     this.look.begin(t.attackFx?.visibility, t.attackFx?.glow);
-    this.standing.begin(); this.flat.begin(); this.through.begin(); this.over.begin(); this.solid.begin(); this.blood.begin(); this.backing.begin(); this.ink.begin(); this.stackBack.begin(); this.stackGlyphs.begin();
+    this.standing.begin(); this.flat.begin(); this.through.begin(); this.over.begin(); this.solid.begin(); this.blood.begin(); this.backing.begin(); this.ink.begin(); this.stackBack.begin(); this.stackGlyphs.begin(); this.decksInk.begin(); this.decksGlow.begin();
     // Every sigil's glyph (placed, happy runes, the ghost, a relic's, her stack, the treetop projection, one walking home) under the
     // bloom's threshold, and its halo (Ed's pick B, 2026-10-12: "it's their glow that makes them hard to see, not the pixellation").
     const gain = L.sigilGlyph ?? 1, halo = L.sigilHalo ?? 1;
@@ -810,9 +833,10 @@ export class LeashView {
     drawStones(this, time, dot); // (the rune stones' sigils, the spell's spot, its cast and the conversion: render/leash/stones.ts)
     drawChallenge(this, time, dot); // (the challenge circle's notes, fill, columns' lights and little dancefloor: render/challenge.ts)
     drawRainbow(this, time, dot, camera); // (an early clear's rainbow wave along the ley line, and the analyser behind the spark: render/leash/rainbow.ts)
+    drawDecksRing(this, time, dot, camera); // (the decks' analyser ring at the party start, after the stones whose analyser it shares: render/leash/decksRing.ts)
     drawBond(this, time, slotPos, dot); // (the bond: render/leash/stack.ts)
     this.look.end();
-    this.standing.end(); this.flat.end(); this.through.end(); this.over.end(); this.solid.end(); this.blood.end(); this.backing.end(); this.ink.end(); this.stackBack.end(); this.stackGlyphs.end();
+    this.standing.end(); this.flat.end(); this.through.end(); this.over.end(); this.solid.end(); this.blood.end(); this.backing.end(); this.ink.end(); this.stackBack.end(); this.stackGlyphs.end(); this.decksInk.end(); this.decksGlow.end();
     bubbles(this, time, camera, width, height);
     drawDreams(this, camera, width, height);
     drawSnores(this, camera, width, height);

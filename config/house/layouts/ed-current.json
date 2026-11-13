@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "floorplan": "oak-ae6685a7",
+  "floorplan": "oak-v3-74bc4160",
   "objects": [
     {
       "id": "teaTable",
@@ -8,7 +8,6 @@
       "z": 46.56,
       "rotation": -63.02308529760313,
       "physicalRoom": "kitchen",
-      "lightingRoom": "kitchen",
       "useAnchor": {
         "x": -68.63,
         "z": 46.56
@@ -20,7 +19,6 @@
       "z": 19.31,
       "rotation": 56.2910479066378,
       "physicalRoom": "studio",
-      "lightingRoom": "studio",
       "useAnchor": {
         "x": 47.22,
         "z": 19.309999999999995
@@ -32,7 +30,6 @@
       "z": -36.39,
       "rotation": -36.02944460572104,
       "physicalRoom": null,
-      "lightingRoom": "parlour",
       "useAnchor": {
         "x": -16.74765333685647,
         "z": -35.03770384319531
@@ -44,7 +41,6 @@
       "z": -33.08,
       "rotation": -15,
       "physicalRoom": null,
-      "lightingRoom": "parlour",
       "useAnchor": {
         "x": -23.50824381430521,
         "z": -31.24474093005077
@@ -56,7 +52,6 @@
       "z": -51.12,
       "rotation": -14.9894301898521,
       "physicalRoom": null,
-      "lightingRoom": "boudoir",
       "useAnchor": {
         "x": 6.1,
         "z": -49.72
@@ -68,7 +63,6 @@
       "z": -63.81,
       "rotation": -63.00544377447312,
       "physicalRoom": "bedroom",
-      "lightingRoom": "bedroom",
       "useAnchor": {
         "x": -21.75451867793749,
         "z": -64.22411047216404
@@ -76,14 +70,13 @@
     },
     {
       "id": "dressingTable",
-      "x": -16.12,
-      "z": -70,
+      "x": -16.72,
+      "z": -69.91,
       "rotation": -20.995769600226595,
       "physicalRoom": null,
-      "lightingRoom": "bedroom",
       "useAnchor": {
-        "x": -15.783535241366724,
-        "z": -68.74429642582422
+        "x": -16.383535241366722,
+        "z": -68.65429642582421
       }
     },
     {
@@ -92,7 +85,6 @@
       "z": -53.54,
       "rotation": 30,
       "physicalRoom": "boudoir",
-      "lightingRoom": "boudoir",
       "useAnchor": {
         "x": -0.35014828016698174,
         "z": -53.88293523476084
@@ -100,26 +92,35 @@
     },
     {
       "id": "clothesPile",
-      "x": -9.05,
-      "z": -65.19,
+      "x": -8.5,
+      "z": -65.6,
       "rotation": 0,
       "physicalRoom": null,
-      "lightingRoom": "bedroom",
       "useAnchor": {
-        "x": -9.05,
-        "z": -63.69
+        "x": -8.5,
+        "z": -64.1
+      }
+    },
+    {
+      "id": "basin",
+      "x": -12.29,
+      "z": -73.64,
+      "rotation": -131.98721249581672,
+      "physicalRoom": null,
+      "useAnchor": {
+        "x": -10.59,
+        "z": -73.64
       }
     },
     {
       "id": "telescope",
-      "x": 0.68,
-      "z": -76.18,
+      "x": 1.09,
+      "z": -74.25,
       "rotation": 6.0405651828972395,
       "physicalRoom": "turret",
-      "lightingRoom": "turret",
       "useAnchor": {
-        "x": 0.6800000000000008,
-        "z": -74.4
+        "x": 1.0900000000000007,
+        "z": -72.47
       }
     },
     {
@@ -128,7 +129,6 @@
       "z": -78.47,
       "rotation": 45.20209202266972,
       "physicalRoom": "turret",
-      "lightingRoom": "turret",
       "useAnchor": {
         "x": -3.4553212482682447,
         "z": -80.02
@@ -136,38 +136,57 @@
     },
     {
       "id": "pegboard",
-      "x": 33.9,
-      "z": -15.27,
+      "x": 35.69,
+      "z": -15.04,
       "rotation": 24.025276064367063,
       "physicalRoom": "cloakroom",
-      "lightingRoom": "cloakroom",
       "useAnchor": {
-        "x": 32.687564434701784,
-        "z": -14.569999999999999
+        "x": 34.47756443470178,
+        "z": -14.339999999999998
       }
     },
     {
       "id": "broomBay",
-      "x": 23.79,
-      "z": -12.27,
+      "x": 20.8,
+      "z": -9.91,
       "rotation": -3.728598642910356,
       "physicalRoom": null,
-      "lightingRoom": "cloakroom",
       "useAnchor": {
-        "x": 24.84,
-        "z": -14.088653347947321
+        "x": 21.85,
+        "z": -11.728653347947322
       }
     },
     {
       "id": "lathe",
       "x": 13.81,
-      "z": -9.05,
+      "z": -9.42,
       "rotation": -6.004587373442746,
       "physicalRoom": null,
-      "lightingRoom": "terrace",
       "useAnchor": {
         "x": 14.927228714274747,
-        "z": -7.932771285725256
+        "z": -8.302771285725255
+      }
+    },
+    {
+      "id": "broomRack",
+      "x": -1.21,
+      "z": -16,
+      "rotation": 45,
+      "physicalRoom": null,
+      "useAnchor": {
+        "x": -2.09,
+        "z": -15.34
+      }
+    },
+    {
+      "id": "broomLift",
+      "x": 28.08,
+      "z": -17.39,
+      "rotation": -90,
+      "physicalRoom": "cloakroom",
+      "useAnchor": {
+        "x": 30.85272429209974,
+        "z": -16.00363785395013
       }
     },
     {
@@ -176,7 +195,6 @@
       "z": 28.9,
       "rotation": 0,
       "physicalRoom": "dining",
-      "lightingRoom": "dining",
       "useAnchor": {
         "x": -16.73,
         "z": 28.9
@@ -188,7 +206,6 @@
       "z": -10.33,
       "rotation": 24.450144571755573,
       "physicalRoom": "terrace",
-      "lightingRoom": "terrace",
       "useAnchor": {
         "x": 6.267275866404784,
         "z": -9.855
@@ -200,7 +217,6 @@
       "z": -12.64,
       "rotation": 30,
       "physicalRoom": "terrace",
-      "lightingRoom": "terrace",
       "useAnchor": {
         "x": 1.2894075518808483,
         "z": -12.264712384601344
@@ -212,7 +228,6 @@
       "z": 9.04,
       "rotation": -26.531770741082823,
       "physicalRoom": "workshop",
-      "lightingRoom": "workshop",
       "useAnchor": {
         "x": -55.37469332628706,
         "z": 11.744592313609388
@@ -224,7 +239,6 @@
       "z": 7.44,
       "rotation": 28.739795291688097,
       "physicalRoom": "workshop",
-      "lightingRoom": "workshop",
       "useAnchor": {
         "x": -46.99208152801713,
         "z": 8.64208152801713
@@ -236,7 +250,6 @@
       "z": 16.6,
       "rotation": 11.386428796409177,
       "physicalRoom": "workshop",
-      "lightingRoom": "workshop",
       "useAnchor": {
         "x": -50.45,
         "z": 15.3
@@ -248,7 +261,6 @@
       "z": -39.83,
       "rotation": -90,
       "physicalRoom": "solarium",
-      "lightingRoom": "solarium",
       "useAnchor": {
         "x": -43.64,
         "z": -39.83
@@ -260,7 +272,6 @@
       "z": -15.96,
       "rotation": -2.981429696964028,
       "physicalRoom": "bestiary",
-      "lightingRoom": "bestiary",
       "useAnchor": {
         "x": -63.94340494855583,
         "z": -14.491792744040618
@@ -272,7 +283,6 @@
       "z": -14.09,
       "rotation": -42.005718883904706,
       "physicalRoom": "bestiary",
-      "lightingRoom": "bestiary",
       "useAnchor": {
         "x": -71.84,
         "z": -12.59
@@ -284,7 +294,6 @@
       "z": -60.98,
       "rotation": 30,
       "physicalRoom": "bedroom2",
-      "lightingRoom": "bedroom2",
       "useAnchor": {
         "x": 30.79233903981781,
         "z": -57.985629938503884
@@ -296,19 +305,17 @@
       "z": -61.64,
       "rotation": -21.801409486351872,
       "physicalRoom": "bedroom2",
-      "lightingRoom": "bedroom2",
       "useAnchor": {
         "x": 24.7,
         "z": -60.44
       }
     },
     {
-      "id": "bedroom2Chest",
+      "id": "bedroom2DressingTable",
       "x": 34.46,
       "z": -60.88,
       "rotation": -16.313852426260496,
       "physicalRoom": "bedroom2",
-      "lightingRoom": "bedroom2",
       "useAnchor": {
         "x": 34.46,
         "z": -59.580000000000005
@@ -320,22 +327,31 @@
       "z": -54.05,
       "rotation": -7.943471810590381,
       "physicalRoom": "bedroom2",
-      "lightingRoom": "bedroom2",
       "useAnchor": {
         "x": 26.02,
         "z": -55.349999999999994
       }
     },
     {
-      "id": "bedroom2Door",
-      "x": 21.8,
-      "z": -55.46,
-      "rotation": 64.288598588387,
+      "id": "bedroom2Basin",
+      "x": 31.5,
+      "z": -55,
+      "rotation": 49.39870535499551,
       "physicalRoom": "bedroom2",
-      "lightingRoom": "bedroom2",
       "useAnchor": {
-        "x": 20.6,
-        "z": -55.46
+        "x": 29.9,
+        "z": -55
+      }
+    },
+    {
+      "id": "bedroom2ShoeRack",
+      "x": 23.5,
+      "z": -57.5,
+      "rotation": -83.65980825409008,
+      "physicalRoom": "bedroom2",
+      "useAnchor": {
+        "x": 25.6,
+        "z": -57.5
       }
     },
     {
@@ -344,7 +360,6 @@
       "z": -30.6,
       "rotation": 45,
       "physicalRoom": "bedroom3",
-      "lightingRoom": "bedroom3",
       "useAnchor": {
         "x": 48.6,
         "z": -27.5
@@ -356,19 +371,17 @@
       "z": -33.81,
       "rotation": 2.354024636261329,
       "physicalRoom": "bedroom3",
-      "lightingRoom": "bedroom3",
       "useAnchor": {
         "x": 42.97,
         "z": -32.770769515458674
       }
     },
     {
-      "id": "bedroom3Chest",
+      "id": "bedroom3DressingTable",
       "x": 51.42,
       "z": -24.6,
       "rotation": -153.08344538304868,
       "physicalRoom": "bedroom3",
-      "lightingRoom": "bedroom3",
       "useAnchor": {
         "x": 52.339238815542515,
         "z": -25.519238815542515
@@ -380,22 +393,31 @@
       "z": -24.39,
       "rotation": -148.99491399474584,
       "physicalRoom": "bedroom3",
-      "lightingRoom": "bedroom3",
       "useAnchor": {
         "x": 42.42429642582421,
         "z": -24.053535241366724
       }
     },
     {
-      "id": "bedroom3Door",
-      "x": 39.89,
-      "z": -32.07,
-      "rotation": 74.10339105776325,
+      "id": "bedroom3Basin",
+      "x": 40.5,
+      "z": -29,
+      "rotation": -79.69515353123398,
       "physicalRoom": "bedroom3",
-      "lightingRoom": "bedroom3",
       "useAnchor": {
-        "x": 38.69,
-        "z": -32.07
+        "x": 42.1,
+        "z": -29
+      }
+    },
+    {
+      "id": "bedroom3ShoeRack",
+      "x": 47.5,
+      "z": -23,
+      "rotation": -163.30075576600643,
+      "physicalRoom": "bedroom3",
+      "useAnchor": {
+        "x": 47.5,
+        "z": -21.85
       }
     },
     {
@@ -404,7 +426,6 @@
       "z": 30.74,
       "rotation": 0,
       "physicalRoom": "dining",
-      "lightingRoom": "dining",
       "useAnchor": {
         "x": -27.56,
         "z": 30.74
@@ -416,7 +437,6 @@
       "z": 33.95,
       "rotation": 0,
       "physicalRoom": "dining",
-      "lightingRoom": "dining",
       "useAnchor": {
         "x": -26.26,
         "z": 33.95
@@ -428,7 +448,6 @@
       "z": 36.39,
       "rotation": 0,
       "physicalRoom": "dining",
-      "lightingRoom": "dining",
       "useAnchor": {
         "x": -24.23,
         "z": 36.39
@@ -440,7 +459,6 @@
       "z": 37.33,
       "rotation": 0,
       "physicalRoom": "dining",
-      "lightingRoom": "dining",
       "useAnchor": {
         "x": -21.25,
         "z": 37.33
@@ -452,7 +470,6 @@
       "z": 37.89,
       "rotation": 0,
       "physicalRoom": "dining",
-      "lightingRoom": "dining",
       "useAnchor": {
         "x": -17.94,
         "z": 37.89
@@ -464,7 +481,6 @@
       "z": 38.2,
       "rotation": 0,
       "physicalRoom": "dining",
-      "lightingRoom": "dining",
       "useAnchor": {
         "x": -14.84,
         "z": 38.2
@@ -476,7 +492,6 @@
       "z": 37.68,
       "rotation": 0,
       "physicalRoom": "dining",
-      "lightingRoom": "dining",
       "useAnchor": {
         "x": -11.43,
         "z": 37.68
@@ -488,7 +503,6 @@
       "z": 36.32,
       "rotation": 0,
       "physicalRoom": "dining",
-      "lightingRoom": "dining",
       "useAnchor": {
         "x": -8.76,
         "z": 36.32
@@ -500,7 +514,6 @@
       "z": 32.69,
       "rotation": 0,
       "physicalRoom": "dining",
-      "lightingRoom": "dining",
       "useAnchor": {
         "x": -6.91,
         "z": 32.69
@@ -512,7 +525,6 @@
       "z": -25.46,
       "rotation": 0,
       "physicalRoom": "parlour",
-      "lightingRoom": "parlour",
       "kind": "hat-spawn-point",
       "order": 1
     },
@@ -522,7 +534,6 @@
       "z": -21.29,
       "rotation": 0,
       "physicalRoom": "parlour",
-      "lightingRoom": "parlour",
       "kind": "hat-spawn-point",
       "order": 2
     },
@@ -532,7 +543,6 @@
       "z": -16.12,
       "rotation": 0,
       "physicalRoom": null,
-      "lightingRoom": "parlour",
       "kind": "hat-spawn-point",
       "order": 3
     },
@@ -542,7 +552,6 @@
       "z": -23.5,
       "rotation": 0,
       "physicalRoom": "parlour",
-      "lightingRoom": "parlour",
       "kind": "hat-spawn-point",
       "order": 4
     },
@@ -552,7 +561,6 @@
       "z": -17.46,
       "rotation": 0,
       "physicalRoom": "parlour",
-      "lightingRoom": "parlour",
       "kind": "hat-spawn-point",
       "order": 5
     },
@@ -562,7 +570,6 @@
       "z": -13.51,
       "rotation": 0,
       "physicalRoom": null,
-      "lightingRoom": "parlour",
       "kind": "hat-spawn-point",
       "order": 6
     },
@@ -572,7 +579,6 @@
       "z": -10.13,
       "rotation": 0,
       "physicalRoom": null,
-      "lightingRoom": "parlour",
       "kind": "hat-spawn-point",
       "order": 7
     },
@@ -582,7 +588,6 @@
       "z": -7.58,
       "rotation": 0,
       "physicalRoom": null,
-      "lightingRoom": "terrace",
       "kind": "hat-spawn-point",
       "order": 8
     },
@@ -592,7 +597,6 @@
       "z": -9.72,
       "rotation": 0,
       "physicalRoom": "terrace",
-      "lightingRoom": "terrace",
       "kind": "hat-spawn-point",
       "order": 9
     },
@@ -602,7 +606,6 @@
       "z": -3.3,
       "rotation": 0,
       "physicalRoom": null,
-      "lightingRoom": "terrace",
       "kind": "hat-spawn-point",
       "order": 10
     },
@@ -612,7 +615,6 @@
       "z": -4.32,
       "rotation": 0,
       "physicalRoom": "terrace",
-      "lightingRoom": "terrace",
       "kind": "hat-spawn-point",
       "order": 11
     },
@@ -622,7 +624,6 @@
       "z": -12.3,
       "rotation": 0,
       "physicalRoom": null,
-      "lightingRoom": "terrace",
       "kind": "hat-spawn-point",
       "order": 12
     },
@@ -632,7 +633,6 @@
       "z": -5.06,
       "rotation": 0,
       "physicalRoom": "terrace",
-      "lightingRoom": "terrace",
       "kind": "hat-spawn-point",
       "order": 13
     },
@@ -642,7 +642,6 @@
       "z": -6.22,
       "rotation": 0,
       "physicalRoom": "terrace",
-      "lightingRoom": "terrace",
       "kind": "hat-spawn-point",
       "order": 14
     },
@@ -652,20 +651,18 @@
       "z": 1.8,
       "rotation": 0,
       "physicalRoom": "terrace",
-      "lightingRoom": "terrace",
       "kind": "hat-spawn-point",
       "order": 15
     },
     {
       "id": "terrace:decks",
-      "x": 6.91,
-      "z": 8.9,
+      "x": 8.2,
+      "z": 7.89,
       "rotation": -30,
       "physicalRoom": "terrace",
-      "lightingRoom": "terrace",
       "useAnchor": {
-        "x": 6.11,
-        "z": 7.514359353944899
+        "x": 7.3999999999999995,
+        "z": 6.504359353944898
       }
     },
     {
@@ -674,7 +671,6 @@
       "z": 46.25,
       "rotation": 0,
       "physicalRoom": "kitchen",
-      "lightingRoom": "kitchen",
       "useAnchor": {
         "x": -71.05,
         "z": 46.25
@@ -686,7 +682,6 @@
       "z": -17.43,
       "rotation": -63.02308529760313,
       "physicalRoom": "parlour",
-      "lightingRoom": "parlour",
       "useAnchor": {
         "x": -21.69,
         "z": -17.43
@@ -698,7 +693,6 @@
       "z": 19.31,
       "rotation": 56.2910479066378,
       "physicalRoom": "studio",
-      "lightingRoom": "studio",
       "useAnchor": {
         "x": 50.1,
         "z": 19.31
@@ -710,7 +704,6 @@
       "z": -40.91,
       "rotation": -35,
       "physicalRoom": "solarium",
-      "lightingRoom": "solarium",
       "useAnchor": {
         "x": -41.68,
         "z": -40.91
@@ -722,7 +715,6 @@
       "z": -15.64,
       "rotation": 67,
       "physicalRoom": "bestiary",
-      "lightingRoom": "bestiary",
       "useAnchor": {
         "x": -68.81,
         "z": -15.64
@@ -734,7 +726,6 @@
       "z": -76.68,
       "rotation": 130,
       "physicalRoom": "turret",
-      "lightingRoom": "turret",
       "useAnchor": {
         "x": -4.87,
         "z": -76.68
@@ -746,7 +737,6 @@
       "z": 6.12,
       "rotation": 49,
       "physicalRoom": null,
-      "lightingRoom": "terrace",
       "useAnchor": {
         "x": 18.19,
         "z": 6.12
@@ -758,7 +748,6 @@
       "z": -43.24,
       "rotation": 71,
       "physicalRoom": "solarium",
-      "lightingRoom": "solarium",
       "useAnchor": {
         "x": -49.81,
         "z": -43.24
@@ -770,7 +759,6 @@
       "z": 37.22,
       "rotation": 37,
       "physicalRoom": "kitchen",
-      "lightingRoom": "kitchen",
       "useAnchor": {
         "x": -73.29,
         "z": 37.22
@@ -782,7 +770,6 @@
       "z": -56.31,
       "rotation": -89,
       "physicalRoom": "bedroom",
-      "lightingRoom": "bedroom",
       "useAnchor": {
         "x": -22.42,
         "z": -56.31
@@ -794,7 +781,6 @@
       "z": -67.61,
       "rotation": 61,
       "physicalRoom": "bedroom",
-      "lightingRoom": "bedroom",
       "useAnchor": {
         "x": -20.48,
         "z": -67.61
@@ -806,7 +792,6 @@
       "z": 46.62,
       "rotation": -59,
       "physicalRoom": "kitchen",
-      "lightingRoom": "kitchen",
       "useAnchor": {
         "x": -64.51,
         "z": 46.62
@@ -818,7 +803,6 @@
       "z": -75.07,
       "rotation": -14.9894301898521,
       "physicalRoom": "turret",
-      "lightingRoom": "turret",
       "useAnchor": {
         "x": -3.92,
         "z": -75.07
@@ -830,7 +814,6 @@
       "z": -5.14,
       "rotation": 85,
       "physicalRoom": null,
-      "lightingRoom": "bestiary",
       "useAnchor": {
         "x": -75.26,
         "z": -5.14
@@ -842,7 +825,6 @@
       "z": 13.07,
       "rotation": 31,
       "physicalRoom": null,
-      "lightingRoom": "terrace",
       "useAnchor": {
         "x": 3,
         "z": 13.07
@@ -854,7 +836,6 @@
       "z": -38.66,
       "rotation": -61,
       "physicalRoom": "solarium",
-      "lightingRoom": "solarium",
       "useAnchor": {
         "x": -53.8,
         "z": -38.66
@@ -866,7 +847,6 @@
       "z": 48.96,
       "rotation": 65,
       "physicalRoom": null,
-      "lightingRoom": "kitchen",
       "useAnchor": {
         "x": -77.65,
         "z": 48.96
@@ -878,7 +858,6 @@
       "z": -64.49,
       "rotation": -48.00544377447312,
       "physicalRoom": "bedroom",
-      "lightingRoom": "bedroom",
       "useAnchor": {
         "x": -22.62,
         "z": -64.49
@@ -890,7 +869,6 @@
       "z": -69.66,
       "rotation": -35.995769600226595,
       "physicalRoom": null,
-      "lightingRoom": "bedroom",
       "useAnchor": {
         "x": -16.29,
         "z": -69.66
@@ -902,7 +880,6 @@
       "z": -54.2,
       "rotation": -77,
       "physicalRoom": null,
-      "lightingRoom": "bedroom",
       "useAnchor": {
         "x": -20.75,
         "z": -54.2
@@ -910,14 +887,13 @@
     },
     {
       "id": "clutter:bedroom:shelf:-916779174",
-      "x": -12.86,
-      "z": -72.18,
-      "rotation": 145,
-      "physicalRoom": null,
-      "lightingRoom": "turret",
+      "x": -1.51,
+      "z": -79.86,
+      "rotation": -140,
+      "physicalRoom": "turret",
       "useAnchor": {
-        "x": -12.86,
-        "z": -72.18
+        "x": -1.51,
+        "z": -79.86
       }
     },
     {
@@ -926,7 +902,6 @@
       "z": -76.25,
       "rotation": 49,
       "physicalRoom": "turret",
-      "lightingRoom": "turret",
       "useAnchor": {
         "x": -8.43,
         "z": -76.25
@@ -938,7 +913,6 @@
       "z": 16.39,
       "rotation": 31,
       "physicalRoom": null,
-      "lightingRoom": "terrace",
       "useAnchor": {
         "x": -0.28,
         "z": 16.39
@@ -950,7 +924,6 @@
       "z": -68.35,
       "rotation": 77,
       "physicalRoom": "bedroom",
-      "lightingRoom": "bedroom",
       "useAnchor": {
         "x": -19.48,
         "z": -68.35
@@ -962,7 +935,6 @@
       "z": -76.18,
       "rotation": 6.0405651828972395,
       "physicalRoom": "turret",
-      "lightingRoom": "turret",
       "useAnchor": {
         "x": 0.68,
         "z": -76.18
@@ -974,7 +946,6 @@
       "z": -52.73,
       "rotation": -29,
       "physicalRoom": null,
-      "lightingRoom": "boudoir",
       "useAnchor": {
         "x": 1.12,
         "z": -52.73
@@ -986,7 +957,6 @@
       "z": -58.86,
       "rotation": -85,
       "physicalRoom": "bedroom",
-      "lightingRoom": "bedroom",
       "useAnchor": {
         "x": -23.98,
         "z": -58.86
@@ -998,7 +968,6 @@
       "z": 5.2,
       "rotation": 77,
       "physicalRoom": "workshop",
-      "lightingRoom": "workshop",
       "useAnchor": {
         "x": -49.57,
         "z": 5.2
@@ -1010,7 +979,6 @@
       "z": 15.63,
       "rotation": 59,
       "physicalRoom": null,
-      "lightingRoom": "dining",
       "useAnchor": {
         "x": -30.81,
         "z": 15.63
@@ -1022,7 +990,6 @@
       "z": -35.99,
       "rotation": -77,
       "physicalRoom": null,
-      "lightingRoom": "solarium",
       "useAnchor": {
         "x": -35.03,
         "z": -35.99
@@ -1034,7 +1001,6 @@
       "z": -34.17,
       "rotation": 85,
       "physicalRoom": "parlour",
-      "lightingRoom": "parlour",
       "useAnchor": {
         "x": -20.01,
         "z": -34.17
@@ -1046,7 +1012,6 @@
       "z": -51.86,
       "rotation": -85,
       "physicalRoom": null,
-      "lightingRoom": "boudoir",
       "useAnchor": {
         "x": 4.1,
         "z": -51.86
@@ -1058,7 +1023,6 @@
       "z": 20.37,
       "rotation": 0,
       "physicalRoom": "studio",
-      "lightingRoom": "studio",
       "useAnchor": {
         "x": 50.22,
         "z": 20.37
@@ -1070,7 +1034,6 @@
       "z": 7.51,
       "rotation": -11.531770741082823,
       "physicalRoom": "workshop",
-      "lightingRoom": "workshop",
       "useAnchor": {
         "x": -53.88,
         "z": 7.51
@@ -1082,7 +1045,6 @@
       "z": 6.9,
       "rotation": 28.739795291688097,
       "physicalRoom": "workshop",
-      "lightingRoom": "workshop",
       "useAnchor": {
         "x": -46.48,
         "z": 6.9
@@ -1094,7 +1056,6 @@
       "z": 6.28,
       "rotation": -55,
       "physicalRoom": null,
-      "lightingRoom": "terrace",
       "useAnchor": {
         "x": 13.24,
         "z": 6.28
@@ -1106,7 +1067,6 @@
       "z": 15.47,
       "rotation": 83,
       "physicalRoom": null,
-      "lightingRoom": "dining",
       "useAnchor": {
         "x": -29.2,
         "z": 15.47
@@ -1118,7 +1078,6 @@
       "z": -34.38,
       "rotation": -65,
       "physicalRoom": null,
-      "lightingRoom": "solarium",
       "useAnchor": {
         "x": -30.49,
         "z": -34.38
@@ -1130,7 +1089,6 @@
       "z": -37.64,
       "rotation": -85,
       "physicalRoom": null,
-      "lightingRoom": "solarium",
       "useAnchor": {
         "x": -38.7,
         "z": -37.64
@@ -1142,7 +1100,6 @@
       "z": -41.74,
       "rotation": -17,
       "physicalRoom": null,
-      "lightingRoom": "solarium",
       "useAnchor": {
         "x": -55.56,
         "z": -41.74
@@ -1154,7 +1111,6 @@
       "z": 15.5,
       "rotation": 83,
       "physicalRoom": null,
-      "lightingRoom": "dining",
       "useAnchor": {
         "x": -27.68,
         "z": 15.5
@@ -1166,7 +1122,6 @@
       "z": 40.52,
       "rotation": 37,
       "physicalRoom": "kitchen",
-      "lightingRoom": "kitchen",
       "useAnchor": {
         "x": -74.53,
         "z": 40.52
@@ -1178,7 +1133,6 @@
       "z": 37.83,
       "rotation": 59,
       "physicalRoom": null,
-      "lightingRoom": "kitchen",
       "useAnchor": {
         "x": -66.48,
         "z": 37.83
@@ -1190,7 +1144,6 @@
       "z": -9.4,
       "rotation": -30,
       "physicalRoom": "bestiary",
-      "lightingRoom": "bestiary",
       "useAnchor": {
         "x": -66.95,
         "z": -9.4
@@ -1202,7 +1155,6 @@
       "z": -15.42,
       "rotation": -2.981429696964028,
       "physicalRoom": "bestiary",
-      "lightingRoom": "bestiary",
       "useAnchor": {
         "x": -64.23,
         "z": -15.42
@@ -1214,7 +1166,6 @@
       "z": -6.76,
       "rotation": -162.0057188839047,
       "physicalRoom": "bestiary",
-      "lightingRoom": "bestiary",
       "useAnchor": {
         "x": -70.82,
         "z": -6.76
@@ -1226,7 +1177,6 @@
       "z": 24.69,
       "rotation": -77,
       "physicalRoom": null,
-      "lightingRoom": "workshop",
       "useAnchor": {
         "x": -39.69,
         "z": 24.69
@@ -1238,7 +1188,6 @@
       "z": 44.98,
       "rotation": 25,
       "physicalRoom": "kitchen",
-      "lightingRoom": "kitchen",
       "useAnchor": {
         "x": -75.68,
         "z": 44.98
@@ -1250,7 +1199,6 @@
       "z": 37.33,
       "rotation": -73,
       "physicalRoom": "kitchen",
-      "lightingRoom": "kitchen",
       "useAnchor": {
         "x": -69.68,
         "z": 37.33
@@ -1262,7 +1210,6 @@
       "z": -10.52,
       "rotation": -47,
       "physicalRoom": "bestiary",
-      "lightingRoom": "bestiary",
       "useAnchor": {
         "x": -73.61,
         "z": -10.52
@@ -1274,12 +1221,38 @@
       "z": -35.4,
       "rotation": 83,
       "physicalRoom": "solarium",
-      "lightingRoom": "solarium",
       "useAnchor": {
         "x": -52.05,
         "z": -35.4
       }
     }
+  ],
+  "removed": [
+    "clutter:dining:lamp:585857408",
+    "clutter:terrace:lantern:-2108666640",
+    "clutter:parlour:rug:-1478395494",
+    "clutter:parlour:mess:bags",
+    "clutter:parlour:lamp:-1478395494",
+    "clutter:boudoir:rug:-615205163",
+    "clutter:bedroom:mess:shoeRack",
+    "clutter:turret:lantern:1055133623",
+    "clutter:workshop:rug:268483214",
+    "clutter:workshop:mess:pegboard",
+    "clutter:workshop:mess:broomBay",
+    "clutter:workshop:mess:lathe",
+    "clutter:workshop:lantern:268483315",
+    "clutter:workshop:lamp:268483618",
+    "clutter:kitchen:mess:cauldron",
+    "clutter:cloakroom:rug:1928006788",
+    "clutter:cloakroom:mess:mirror",
+    "clutter:cloakroom:mess:cloakPegs",
+    "clutter:cloakroom:lantern:1928006990",
+    "clutter:studio:mess:microphone",
+    "clutter:solarium:rug:1706137703",
+    "clutter:solarium:mess:mapTable"
+  ],
+  "removedObjects": [
+    "hats"
   ],
   "migration": {
     "from": 1,
@@ -1551,32 +1524,5 @@
       "x": -9.7,
       "z": 1.8
     }
-  ],
-  "removed": [
-    "clutter:dining:lamp:585857408",
-    "clutter:terrace:lantern:-2108666640",
-    "clutter:parlour:rug:-1478395494",
-    "clutter:parlour:mess:bags",
-    "clutter:parlour:lamp:-1478395494",
-    "clutter:boudoir:rug:-615205163",
-    "clutter:bedroom:mess:shoeRack",
-    "clutter:turret:lantern:1055133623",
-    "clutter:workshop:rug:268483214",
-    "clutter:workshop:mess:pegboard",
-    "clutter:workshop:mess:broomBay",
-    "clutter:workshop:mess:lathe",
-    "clutter:workshop:lantern:268483315",
-    "clutter:workshop:lamp:268483618",
-    "clutter:kitchen:mess:cauldron",
-    "clutter:cloakroom:rug:1928006788",
-    "clutter:cloakroom:mess:mirror",
-    "clutter:cloakroom:mess:cloakPegs",
-    "clutter:cloakroom:lantern:1928006990",
-    "clutter:studio:mess:microphone",
-    "clutter:solarium:rug:1706137703",
-    "clutter:solarium:mess:mapTable"
-  ],
-  "removedObjects": [
-    "hats"
   ]
 }

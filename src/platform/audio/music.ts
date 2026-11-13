@@ -60,6 +60,15 @@ export class Music {
     this.analyser.getByteFrequencyData(this.bins!);
     return this.bins;
   }
+  private dbBins: Float32Array<ArrayBuffer> | null = null;
+  /** The same spectrum in decibels, unclipped (the decks' analyser ring, render/leash/decksRing.ts: the 0-255 read tops out at
+   *  -30 dB, where the music's low end sits all the time, so its bass bars never moved; measured 2026-11-13); null as spectrum(). */
+  spectrumDb(): Float32Array | null {
+    if (!this.spectrum() || !this.analyser) return null;
+    this.dbBins ??= new Float32Array(this.analyser.frequencyBinCount);
+    this.analyser.getFloatFrequencyData(this.dbBins);
+    return this.dbBins;
+  }
 
   constructor(private ctx: BaseAudioContext, public volume: number, style: MusicStyle, seed: number, src = "", drawAhead = false, destination: AudioNode = ctx.destination) {
     this.potionGate = ctx.createGain(); this.potionGate.connect(destination);

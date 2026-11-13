@@ -1,8 +1,9 @@
 // The party start's pieces (render/partyStart.ts; Ed, 2026-11-03: "Isolate each of the effects so I can tweak ... press square at
 // the decks after the party is started that replays the visual effects"): each knob under partyStart reaching its own piece and no
 // other, the pieces drawn over the house's layers (still depth-tested), and the decks' replay playing them again with her line,
-// rate-limited, and touching nothing of the game's. Headless: the batches' instances read back, no WebGL.
-import { afterEach, describe, expect, it, vi } from "vitest";
+// rate-limited, and touching nothing of the game's. Headless: the batches' instances read back, no WebGL. Since Ed, 2026-11-12, the
+// decks' analyser ring plays in their place (render/leash/decksRing.ts, its own tests); these are the pieces under ?decksfx=old.
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
 import { MagicFx } from "./fx/system";
 import { comfort } from "./comfort";
@@ -17,8 +18,10 @@ import { MAKE_SOME_NOISE, PARTY_START_DEFAULTS, PARTY_START_PIECES, REPLAY_GAP, 
 import { newGame as fullGame } from "../rules/game";
 import { smallWorld } from "../test/worlds";
 import { hsv2rgb } from "../../art/generator.js";
+import { DECKS_FX } from "./leash/decksRing";
 
-afterEach(() => { comfort.reduceFlashing = false; vi.restoreAllMocks(); });
+beforeEach(() => { DECKS_FX.old = true; }); // (?decksfx=old: the pieces as they were)
+afterEach(() => { comfort.reduceFlashing = false; DECKS_FX.old = false; vi.restoreAllMocks(); });
 
 type Knobs = { [K in keyof PartyStartTuning]?: PartyStartTuning[K] extends object ? Partial<PartyStartTuning[K]> : PartyStartTuning[K] };
 /** The tuning with these party-start knobs over the defaults. */

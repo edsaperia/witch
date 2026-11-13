@@ -256,7 +256,8 @@ export function frameBody(pageHost: PageHost, now: number): void {
   pageHost.sound.update(audioGame, cue, pageHost.creator.open, pageHost.phone.visiting ? { shareBeat: true } : undefined);
   // The soundsystem spell's analyser bars (render/leash/stones.ts): the mix's spectrum, read once a frame only while its ring shows, and
   // only while the audio runs (else the bars idle gently).
-  { const SV = pageHost.view.leashView.stoneView; SV.spectrum = SV.wantsSpectrum && pageHost.sound.audio?.state === "running" ? pageHost.sound.music?.spectrum() ?? null : null; }
+  { const SV = pageHost.view.leashView.stoneView; SV.spectrum = SV.wantsSpectrum && pageHost.sound.audio?.state === "running" ? pageHost.sound.music?.spectrum() ?? null : null;
+    SV.spectrumDb = SV.spectrum && SV.wantsDb ? pageHost.sound.music?.spectrumDb() ?? null : null; } // (the decks' ring's: render/leash/decksRing.ts)
   const meter0 = performance.now();
   if (pageHost.sound.audio) {
     pageHost.meter.tap(pageHost.sound.audio, [pageHost.sound.music?.output, pageHost.sound.music?.circleOutput, pageHost.sound.sfx?.output]);
