@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
-import { snapshotGame, restoreGame } from "./nightSnapshot";
+import { snapshotGame, restoreGame, renamedSnapshot, type NightSnapshot } from "./nightSnapshot";
 import { rng, rngState } from "./random";
 import { inviteCreature } from "./leash";
 import { knockOut } from "./knockout";
@@ -28,6 +28,32 @@ describe("a whole night's snapshot", () => {
     old.mushrooms.trips[0] = { recipe: ['blue', 'blue', 'blue'], key: 'blue+blue+blue', at: 10, until: 610 };
     expect(roundtrip(old).mushrooms).toEqual(old.mushrooms);
   });
+  it("reads a night saved when the swallowtail wore the moth's id as the butterfly's night (Ed, 2026-11-13); a night saved since is left as it is", () => {
+    const g = fresh("butterfly"); g.clock.paused = false;
+    for (let i = 0; i < 120; i++) stepGame(g, idle, STEP);
+    const now = JSON.parse(JSON.stringify(snapshotGame(g))) as NightSnapshot;
+    expect(JSON.stringify(now.state)).toContain('"butterfly"'); // (its creatures are in the night)
+    expect(renamedSnapshot(now)).toBe(now);
+    // the same night as the build before would have saved it: no butterfly anywhere, the moth's name in its place
+    const old1 = (x: string) => (x === "butterfly" ? "moth" : x);
+    const old = (x: unknown): unknown => typeof x === "string" ? old1(x) : Array.isArray(x) ? x.filter(v => v !== "moth").map(old) : x && typeof x === "object" ? Object.fromEntries(Object.entries(x).filter(([k]) => k !== "moth").map(([k, v]) => [old1(k), old(v)])) : x;
+    const before = { ...now, tuning: old(now.tuning), state: { root: now.state.root, nodes: now.state.nodes.map(n => ({ ...n, values: n.values.map(v => (typeof v === "string" ? old1(v) : v)), ...(n.keys ? { keys: n.keys.map(old1) } : {}) })) } } as NightSnapshot;
+    expect(JSON.stringify(before)).not.toContain('"butterfly"');
+    expect(before.tuning.map!.island).toBe("moth");
+    const frozen = JSON.stringify(before), read = renamedSnapshot(before);
+    expect(JSON.stringify(before)).toBe(frozen); // (the saved night itself untouched)
+    expect(read.tuning.map!.island).toBe("butterfly");
+    expect(JSON.stringify(read)).not.toContain('"moth"');
+    const a = restoreGame(before), b = restoreGame(now);
+    expect(a.map.island?.kind).toBe("butterfly");
+    expect(a.creatures.some(c => c.species === "butterfly")).toBe(true);
+    expect(a.creatures.some(c => c.species === "moth")).toBe(false);
+    expect(a.creatures.map(c => [c.species, c.level, c.x, c.z])).toEqual(b.creatures.map(c => [c.species, c.level, c.x, c.z]));
+    a.clock.paused = false; b.clock.paused = false;
+    for (let i = 0; i < 120; i++) { stepGame(a, idle, STEP); stepGame(b, idle, STEP); }
+    expect(a.creatures.map(c => [c.species, c.x, c.z])).toEqual(b.creatures.map(c => [c.species, c.x, c.z])); // (and it plays on as the same night)
+  });
+
   it("keeps seeded streams at their cursor without changing the existing generator", () => {
     const a = rng(123); expect([a(), a(), a()]).toEqual([0.7872516233474016, 0.1785435655619949, 0.49531551403924823]);
     const b = rng(rngState(a)!); expect([b(), b(), b()]).toEqual([a(), a(), a()]);

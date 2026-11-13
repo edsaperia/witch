@@ -1,4 +1,4 @@
-// Experimental model-space graph. No production imports: migration requires visual review.
+// Model-space graph, opt-in: art/creatures3d.js compiles it only for a quadruped record with body.graph.
 // x forward, y up, z across, matching model3d. Socket offsets use model axes;
 // rotating spine frames and attaching sockets to other sockets are future work.
 import { M } from "../core.js";

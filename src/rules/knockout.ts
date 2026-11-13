@@ -197,7 +197,7 @@ export function stepWanderers(creatures: Creature[], map: ForestMap, dt: number)
 }
 
 /** Seconds left of her wait behind her decks after a knockout (knockout.respawn), or null when she isn't waiting: for the
- *  countdown at the decks (render/leash/respawn.ts). */
+ *  view (render/view/witch.ts: she scratches at her decks while it runs). */
 export const respawnLeft = (k: Knockout | null | undefined, time: number): number | null => (k && time >= k.seatAt && time < k.backAt ? k.backAt - time : null);
 
 /** The candles along the front of her DJ desk while she scratches (Ed, 2026-10-07; art builder 4 draws them), a loading bar:

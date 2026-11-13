@@ -2,7 +2,7 @@
 // shares; the playable ones a circle of them round home (Ed, 2026-10-06; or, ?shape=square, the
 // old mapAreas x mapAreas square), then a buffer ring of forest she can fly over but where nothing
 // happens, then a margin of areas past it so the forest never visibly ends. World units are metres: x runs east, z runs south, one area cell is areaSize.
-import { legendRadius } from "./legendFit";
+import { legendRadius, legendSpot } from "./legendFit";
 import rawTypes from "../../config/area-types.json";
 import { seatOffset } from "./treehouse";
 import { AREAS, HOME_AREA } from "../../art/areas.js";
@@ -19,7 +19,8 @@ import { floorClearing, speakerRadius, speakerRing, type Speaker } from "./speak
  *  that way: Ed, 2026-10-24; due south while it stood due north). */
 const frontOf = (t: { x: number; z: number }, d: { x: number; z: number }, clear: number) => { const L = Math.hypot(d.x - t.x, d.z - t.z) || 1; return { x: t.x + ((d.x - t.x) / L) * clear, z: t.z + ((d.z - t.z) / L) * clear }; };
 /** How far the treehouse's foot stands from the dancefloor's middle (Ed, 2026-10-05: "5m due north of
- *  the dance floor, outside the speaker ring"): past the ring's outer edge by gap, plus its footprint. */
+ *  the dance floor, outside the speaker ring"; north-west since Ed, 2026-10-24, treehouse.angle, and its gap the
+ *  tuning's): past the ring's outer edge by gap, plus its footprint. */
 export const treehouseDistance = (t: Tuning) => speakerRadius(t) + t.dancefloor.speakers.footprint + t.treehouse.gap + t.treehouse.clear;
 import { PathNetwork } from "./paths";
 import { knownPathGeometry, rememberPathGeometry, pathGeometryProblem, type PathGeometry } from "./pathGeometry";
@@ -37,8 +38,8 @@ import { byPlace, CLASSIC_SLOTS, KIND_SLOTS } from "./kinds";
 import { ZOO_CONFIG, zooChartPlan, zooJunctions, type ZooPlan } from "./zoo";
 import { coastAlong, zooFence, zooLayout, zooPartition } from "./zooMap";
 
-/** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
- *  the game's own numbers. Only plain data is read here. */
+/** An area type: Ed's first 30 and those added since (one a kind: rules/kinds.ts) are defined with their art in
+ *  art/areas.js; config/area-types.json adds the game's own numbers. Only plain data is read here. */
 export interface AreaType {
   id: string;
   name: string;
@@ -153,7 +154,7 @@ export interface ForestMap {
   readonly dancefloor: { x: number; z: number; radius: number; /** the ring of speakers round it */ speakers: readonly Speaker[] };
   /** The witch's treehouse: its trunk's foot, just beyond the dancefloor's clearing. */
   readonly treehouse: { x: number; z: number };
-  /** The treehouse's front (Ed, 2026-10-05): the foot of its door's side, south (towards the camera), just outside its footprint. */
+  /** The treehouse's front (Ed, 2026-10-05): treehouse.clear metres from its foot towards the dancefloor (frontOf; due south, towards the camera, while it stood due north). */
   readonly treehouseFront: { x: number; z: number };
   /** The old playgrounds and sports grounds: a handful per map, each in a clearing of its own off
    *  an area's centre; kind is the art's arrangement (playground, tennis, baseball, football, basketball). */
@@ -173,7 +174,7 @@ export interface ForestMap {
   /** Which area a point is in (cheaper than areaAt), and how far in metres it can move in any
    *  direction and surely stay in that area, so a walker need not ask again until it has. */
   cellSafe(x: number, z: number): { cell: Cell; safe: number };
-  /** The area's set piece, if this one has one (rare: setPieceChance of the types that have one). */
+  /** The area's set piece, if this one has one (setPieceChance of the types that have one: 0, none, since Ed, 2026-10-29). */
   setPieceOf(cx: number, cy: number): string | null;
   /** Where an area's soundsystem stands when the party reaches it (reserved from the start). */
   soundsystemSpot(cx: number, cy: number): { x: number; z: number };
@@ -202,7 +203,7 @@ export interface ForestMap {
   challengeVeil?: { x: number; z: number; r: number } | null;
   /** How far (x, z) is out of its area's fighting arena: 0 in its open middle, rising smoothly over its band to 1 (tuning arena); `cell` if known. */
   arenaOpen(x: number, z: number, cell?: Cell): number;
-  /** Whether an area has a sleeping legend (Ed, 2026-10-06: "only in about half of areas"): legends.share of them, seeded, spread out; never home. */
+  /** Whether an area has a sleeping legend (Ed, 2026-10-06: "only in about half of areas"; a fifth since 2026-10-08): legends.share of them, seeded, spread out; never home. */
   hasLegend(cx: number, cy: number): boolean;
   /** The areas with a legend, as "cx,cy" keys. */
   readonly legendCells: ReadonlySet<string>;
@@ -230,13 +231,13 @@ export interface ForestMap {
   readonly paths: PathNetwork;
   /** The areas with a special site where a stone would stand (Ed, 2026-11-03: "Each non-lake area has a stump site or a special
    *  site (find and challenge areas)"): tonight's find's area (tuning findArea), with no stone, wave or creatures of its own (not
-   *  playable: like a legend area), the find at its site. */
+   *  playable: like a legend area), the find at its site; with the tuning's challenge on, the challenge circle's (rules/challenge.ts). */
   readonly specialSites: readonly SpecialSite[];
   /** An area's special site, or null (a stone's area, home, the buffer's, a lake). */
   special(cx: number, cy: number): SpecialSite | null;
 }
 
-/** A special site (map.specialSites): what's there (the night's find; challenge areas later), its area, the spot (its site, on
+/** A special site (map.specialSites): what's there (the night's find, or the challenge circle), its area, the spot (its site, on
  *  its own ground and off the rails and streams) and the clearing kept round it (m: no trees, bushes or scenery; paths end at its edge). */
 export interface SpecialSite {
   kind: "find" | "challenge"; cell: Cell; x: number; z: number; r: number;
@@ -1371,14 +1372,14 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       };
       const spots: [number, number][] = [[site.x, site.z]];
       for (const f of [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5]) for (let k = 0; k < 16; k++) { const b = a0 + (k / 16) * Math.PI * 2; spots.push([site.x + Math.cos(b) * A * f, site.z + Math.sin(b) * A * f]); }
-      placed: for (const k of [1, 0.92, 0.85, 0.78, 0.72, 0.65, 0.55, 0.45]) { const r = Math.max(LC.radius, r0 * k); if (r < need) break; for (const [x, z] of spots) if (fits(x, z, r)) { clearings.set(cellKey(cx, cy), { cell: [lx, ly], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); break placed; } }
+      placed: for (const k of [1, 0.92, 0.85, 0.78, 0.72, 0.65, 0.55, 0.45]) { const r = Math.max(LC.radius, r0 * k); if (r < need) break; for (const [x, z] of spots) if (fits(x, z, r)) { clearings.set(cellKey(cx, cy), { cell: [lx, ly], x, z, r, edge: LC.edge, legend: legendSpot(species, x, z, r, LC) }); break placed; } }
       if (clearings.has(cellKey(cx, cy))) return true;
     }
     const species = AREA_TYPES[typeOf(cx, cy)].creature, r0 = legendRadius(species, zooAt ? { ...LC, fit: { margin: LC.fit?.margin ?? 3, max: ZOO_CONFIG.legendCap ?? LC.fit?.max ?? 25 } } : LC); // (sized to fit its legend: rules/legendFit.ts; the zoo's cap its own)
     let r = r0;
     const site = siteOf(cx, cy), a0 = hash2(cx, cy, seed + 891) * Math.PI * 2;
     // (the zoo: at its island's middle, Ed 2026-10-26: "Each zoo area has the corresponding legend circle at the centre of it")
-    if (zooAt) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x: site.x, z: site.z, r, edge: LC.edge, legend: { x: site.x, z: site.z - r * LC.top } }); return true; }
+    if (zooAt) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x: site.x, z: site.z, r, edge: LC.edge, legend: legendSpot(species, site.x, site.z, r, LC) }); return true; }
     // Away from its area's runestone (where its soundsystem comes; Ed, 2026-10-06: "The legend circle shouldn't spawn
     // near its runestone"): its edge at least minFromStone metres off, so the circle, its grove and its rim kit stand
     // clear of the stone's clearing and the party's dance space (and a siege gets no safe spot beside its soundsystem).
@@ -1398,7 +1399,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     let pathK = 1;
     search: for (pathK of [1, 0.6]) for (const f of [0.4, 0.3, 0.5, 0.22, 0.6, 0.15, 0.7, 0.08]) for (let k = 0; k < 16; k++) {
       const b = a0 + (k / 16) * Math.PI * 2, x = site.x + Math.cos(b) * A * f, z = site.z + Math.sin(b) * A * f;
-      if (fits(x, z)) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); break search; }
+      if (fits(x, z)) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: legendSpot(species, x, z, r, LC) }); break search; }
     }
     // Failing that (an area at the map's edge, or one whose ground lies off its middle): anywhere it fits in the area, nearest the usual distance first.
     if (!clearings.has(cellKey(cx, cy))) {
@@ -1410,14 +1411,14 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       grid.sort((p, q) => p[2] - q[2]);
       pathK = 0.6;
       // (and in a tight area, a smaller circle: the legend fills it more; in fine steps, so a big legend's circle loses no more than it must)
-      sized: for (const k of SHRINK) { r = r0 * k; if (r < need) break; for (const [x, z] of grid) if (fits(x, z)) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); break sized; } }
+      sized: for (const k of SHRINK) { r = r0 * k; if (r < need) break; for (const [x, z] of grid) if (fits(x, z)) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: legendSpot(species, x, z, r, LC) }); break sized; } }
       // (still none: a grid twice as fine, and the smaller circles a legend area's may take, never under legendClearing.radius, so every
       // site keeps its gap, Ed 2026-11-04: "minimum distance between sites/circles/dancefloor/treehouse of 50m")
       if (!clearings.has(cellKey(cx, cy))) {
         const fine: [number, number, number][] = [];
         for (let i = -28; i <= 28; i++) for (let j = -28; j <= 28; j++) { const x = ox + i * A * 0.04, z = oz + j * A * 0.04; fine.push([x, z, Math.abs(Math.hypot(x - ox, z - oz) - A * 0.4)]); }
         fine.sort((p, q) => p[2] - q[2]);
-        finer: for (const k of [...SHRINK, 0.55, 0.45]) { r = Math.max(LC.radius, r0 * k); if (r < need) break; for (const [x, z] of fine) if (fits(x, z)) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); break finer; } }
+        finer: for (const k of [...SHRINK, 0.55, 0.45]) { r = Math.max(LC.radius, r0 * k); if (r < need) break; for (const [x, z] of fine) if (fits(x, z)) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: legendSpot(species, x, z, r, LC) }); break finer; } }
       }
     }
     return clearings.has(cellKey(cx, cy));
@@ -1489,7 +1490,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
         if (!neighbours.has(g)) neighbours.set(g, nb);
       }
       grownCells.add(g);
-      clearings.set(k, { cell: [gx, gy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } });
+      clearings.set(k, { cell: [gx, gy], x, z, r, edge: LC.edge, legend: legendSpot(species, x, z, r, LC) });
       grownLog.push(`${g} by ${Math.round(got.m2)} m² of ${Math.round(census.get(g) ?? 0)} (its ${r.toFixed(0)} m circle ${Math.round(Math.hypot(x - ox, z - oz))} m off its heart)`);
       return true;
     }
@@ -1530,7 +1531,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
 }
 
 /** Whether (x, z) is inside the legend's clearing of the area at cell (Ed, 2026-10-06: "Quest sigils and relics
- *  need to be placed in the circle to have their effect"); where an area has no clearing (no room for one),
+ *  need to be placed in the circle to have their effect"; relics no more: Ed, 2026-10-18); where an area has no clearing (no room for one),
  *  within fallback metres of its legend at legendAt. */
 export function inLegendClearing(map: ForestMap, cell: Cell, x: number, z: number, legendAt: { x: number; z: number }, fallback: number): boolean {
   const c = map.legendClearing(cell[0], cell[1]);

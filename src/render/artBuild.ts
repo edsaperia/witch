@@ -8,7 +8,7 @@ export { typeSprites } from "./areaArt";
 import { typeSprites } from "./areaArt";
 import { sceneSprites, speakerSprites, beachSprites, relicSprites, pathPieceSprites, beachEdgeSprites, lakeShoreSprites, decorSprites, partyObjectSprites, partyWitchSprites } from "./worldArt";
 export { SPEAKER_STONE_WIDTH, RING_STONE_CARVING, RING_STONE_CARVINGS, ringStoneKey, danceStoneKey, stumpId, HARVEST_SPROUTS, CYCLONE_FRAMES, CYCLONE_TINT } from "./artMetadata";
-// Drawing the sprite sets with art/generator.js and packing them into atlas pixels. No Three.js
+// Drawing the sprite sets with the art's modules (art/, each family's own *.primitives.ts) and packing them into atlas pixels. No Three.js
 // and no page needed, so it runs in a Web Worker (with OffscreenCanvas) as well as on the page.
 import * as Art from "./artBuild.primitives";
 import type { Style } from "./style";

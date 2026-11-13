@@ -89,7 +89,7 @@ export const RIM_GENOMES = {
     colour: { wood: [.07, .3, .36], dark: [.06, .35, .2], light: [.08, .22, .52], pale: [.1, .14, .62], moss: [.24, .45, .36], fungus: [.08, .45, .62], spread: .05 } }, // weathered grey-brown wood
 };
 
-// The party's generated decorations (art/party.js "gen-*" pieces, behind ?props=gen): bunting, balloon bunches and paper lanterns,
+// The party's generated decorations (art/party.js "gen-*" pieces, always on in the game): bunting, balloon bunches and paper lanterns,
 // each a few seeded variants, in the witch model's units like the other party pieces. Their colours are the party's (neon or
 // balloon palettes at bake), so the genomes hold shapes only.
 export const PARTY_PROP_GENOMES = {

@@ -1,7 +1,7 @@
 // The legends' clearings check (Ed, 2026-10-06: "the music should change when you go into a legend
 // circle in ground mode"): node tools/music-lab/circles.mjs [species,...]
-// Renders tools/music-lab/circles.ts offline in headless Chromium: for each species (default all
-// 30 legends), 3 s of wave 1's music 40 m from a soundsystem, then she steps into its legend's
+// Renders tools/music-lab/circles.ts offline in headless Chromium: for each species (default the
+// first 30 kinds, ALL below; newer kinds by name), 3 s of wave 1's music 40 m from a soundsystem, then she steps into its legend's
 // clearing: the music muffled under the legend's own layer, slowing to a tenth with the world there
 // (a tape slowing; SLOW=0 renders it as before), the layer at full speed; at 11 s she leaves. Prints, in dB, the music before, the
 // layer alone and the whole inside; fails on a script error, NaN, clipping, a silent layer or a
@@ -14,7 +14,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url)), root = resolve(here, "../..");
-const ALL = ["bat", "marten", "elk", "stoat", "owl", "snail", "wolf", "fox", "badger", "boar", "stag", "hare", "bear", "lynx", "otter", "beaver", "ram", "squirrel", "dormouse", "salamander", "toad", "raven", "mole", "hedgehog", "woodlouse", "snake", "moth", "cat", "spider", "beetle"];
+const ALL = ["bat", "marten", "elk", "stoat", "owl", "snail", "wolf", "fox", "badger", "boar", "stag", "hare", "bear", "lynx", "otter", "beaver", "ram", "squirrel", "dormouse", "salamander", "toad", "raven", "mole", "hedgehog", "woodlouse", "snake", "butterfly", "cat", "spider", "beetle"];
 const species = process.argv[2] ? process.argv[2].split(",") : ALL;
 const require = createRequire(import.meta.url);
 let playwright;

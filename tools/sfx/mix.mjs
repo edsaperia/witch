@@ -3,7 +3,8 @@
 // Bundles tools/sfx/mix.ts (the game's own music, sound effects and tuning) and renders its scenes
 // offline in headless Chromium, as the game mixes them: home (the meadow, 💌s, an invite, a relic),
 // a fight by a soundsystem (a crowd turning and speaking, ouch, knocked back and down, a
-// soundsystem lost) and the deep forest (a sleeping legend's moans, a wind-up, a charge). Prints
+// soundsystem lost), the deep forest (a sleeping legend's moans, a wind-up, a charge), and since then
+// back at her decks, a wild area's watch and fireworks (mix.ts's scenes). Prints
 // each cue's loudness over the music under it (short-term, 200 ms, dB) and writes each scene's whole mix
 // to previews/sfx/mix/<scene>[-<out-name>].wav (not committed; mp3s of a before and after
 // to listen to go beside them), its numbers to previews/sfx/mix/mix[-<out-name>].json. Fails on a script error or clipping.

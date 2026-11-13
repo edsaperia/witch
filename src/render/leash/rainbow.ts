@@ -44,7 +44,7 @@ export function drawRainbow(lv: LeashView, time: number, dot: number[], camera: 
   const runs = K.on && g.rainbows?.length ? rainbowRuns(g.party, g.map, g.rainbows, g.clock.time) : [];
   if (!runs.length && !dots) return;
   const V = lv.stoneView;
-  V.wantsSpectrum = true; // (the mix's spectrum for the bars, from the next frame: main.ts)
+  V.wantsSpectrum = true; // (the mix's spectrum for the bars, from the next frame: app/pageFrame.ts)
   const n = Math.max(4, Math.min(levels.length, Math.round(K.bars ?? 84))), gap = K.spacing ?? 1.4, cell = K.cell ?? 0.6, tall = K.height ?? 9;
   const calm = comfort.reduceFlashing, spec = V.spectrum, dt = Math.min(0.1, lv.frameDt);
   const settle = (L: Float32Array, i: number, live: number) => { L[i] = Math.max(calm ? L[i] * 0.9 + live * 0.1 : live, L[i] - dt * (calm ? 0.8 : 1.8)); };

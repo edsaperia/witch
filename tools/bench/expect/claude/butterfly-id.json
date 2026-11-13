@@ -1,0 +1,6 @@
+{
+  "reason": "Butterfly gets its own id; the moth on the bench (Ed, 2026-11-13: \"Note that the moth was replaced by a butterfly.\"; \"can we actually rename it in the files and put the moth on the bench?\"): the swallowtail that wore the moth's id since 2026-10-23 is the kind `butterfly`, with the moth's island, numbers, attacks and look, and the moth is a kind on the bench, with no island. Nothing of the game changes: whatever is drawn or sounded from a kind's name is still drawn from the old one (art/creatures/renamed.js seedId), so its island's shape, the night's set, its voice, melody, coat, motes and circle are as they were, and a save or link naming the moth loads the butterfly. Nine islands' maps, its voices and a 120 s bot night on its island came out identical to the last digit, and its sheet pixel for pixel the same; so the only difference the bench should see is the name itself, wherever a fingerprint carries a creature's species.",
+  "rules": {
+    "*": "wherever a fingerprint carries a creature's or an island's species: \"butterfly\" where it read \"moth\", the same creature in the same place doing the same thing (no number changes)"
+  }
+}

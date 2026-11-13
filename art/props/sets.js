@@ -1,6 +1,6 @@
 // Small set pieces from genomes (art builder 1's ask on #119: "a generated small set piece, a ring, a heap, a jetty or a punt from a
 // genome, would let new areas have their own"): an area's landmark built from its genome and a seed, like the props (art/props/
-// generator.js), so an area recipe (art/recipes/) can name one as its `setPiece` ([kind, text, size, { seed, ...numbers }]) and get
+// generator.js), so an area recipe (art/areas/<id>/recipe.js) can name one as its `setPiece` ([kind, text, size, { seed, ...numbers }]) and get
 // a set piece of its own instead of reusing another area's builder. Each is 6 to 12 m across, at the witch's scale, standing on its
 // bottom row, its origin the ground under its middle (as art/setpieces.js gives the hand-made ones). Most are unlit; a jetty's lantern
 // and a ring's embers are their one warm touch.

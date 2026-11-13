@@ -1,7 +1,7 @@
 // The crags (the north-east's island of mountains and glaciers, phase 3): an area type as a recipe (art/recipes.js says what each
-// field is). Lichened rock and glacier ice, scree, rock spires standing over it, wind-bent larch with snow on them and gnarled wild
-// olives in the lee of the rocks, hardy scrub (broom, juniper, heather) among the stones (Ed, 2026-10-12: "even crags should have
-// shrubs and maybe olive trees"), a heap of glacier rubble with a slab on top; the ibex its creature.
+// field is). Lichened rock and glacier ice, scree, rock spires standing over it, wind-bent larch with snow on them and junipers and
+// pines in the lee of the rocks, hardy scrub (broom, juniper, heather) among the stones (Ed, 2026-10-12: "even crags should have
+// shrubs and maybe olive trees"; juniper for the olive since 2026-10-23, below), a heap of glacier rubble with a slab on top; the ibex its creature.
 export const CRAGS = {
   slot: 26, id: "crags", name: "Crags", creature: "ibex", by: "recipe", leaf: .3, floor: ["lichen", .3, .22, .44], snow: .45,
   text: { floor: "lichen, scree and glacier ice", wall: "rock walls", small: "scree, broom and juniper scrub", big: "rock spires, wind-bent larch and juniper krummholz", set: "a heap of glacier rubble with a slab on top" },

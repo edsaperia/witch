@@ -1,6 +1,6 @@
 // Roster review, Ed 2026-10-30: real-animal likeness before distinctness.
 // Isolated data for the existing speciesOf/quad3d interface, not a second engine.
-// No production import. Each species requires an explicit opt-in; defaults are off.
+// Read by art/genome/selection.js: its DEFAULT_ROSTER_IDS (Ed's release set) are on by default; any other needs an explicit opt-in.
 const ROSTER_SNOW_REGIONS = {
   torso: { kind: "rosettes", outerPx: 8, density: .55, inner: .22, outer: .43, sizeVariation: .15, closedFraction: .25, filledFraction: .2, gapRange: [0, .65], densityFalloff: [{ axis: "x", from: .2, to: 1, min: .2 }, { axis: "y", from: 0, to: -1, min: 0 }], xRange: [-1.2, .9], flankMin: .2, mat: "BODY3", centreMat: "BODYL" },
   head: { kind: "spots", k: 14, density: .5, radius: .43, mat: "BODY3" },

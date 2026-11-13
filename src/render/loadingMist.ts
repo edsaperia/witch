@@ -135,7 +135,7 @@ export class LoadingMist {
   private first = true;
   /** The sea's mist (over the sea round the island, out `sea` metres past its furthest ground, and over any ground not filled in yet):
    *  its reach, and when it began to go (once the ground's program, the coast's sand and waves, is drawn and the ground in view is
-   *  filled: render/view.ts seaReady). */
+   *  filled: render/view/mistReady.ts seaReady). */
   private seaReach: TypeReach;
   private seaAt: number | undefined;
   private seaGone = false;
@@ -176,7 +176,7 @@ export class LoadingMist {
     this.mesh.renderOrder = 3; // (over the low mist)
   }
 
-  /** A frame: the page's clock (s); whether each type's areas are ready (render/view.ts mistReady: its trees, stumps, campfires and
+  /** A frame: the page's clock (s); whether each type's areas are ready (render/view/mistReady.ts areaReady: its trees, stumps, campfires and
    *  creatures loaded and drawn), and the sea (seaReady); `before`, on the first frame only: a type in before she's seen anything
    *  (a load's, not a sail's: the loading screen made and drew it), clear from the start. A type's mist holds till it's ready, then
    *  goes (rolling back from the treehouse, thinning away over `fade` seconds: render/loadingFront.ts mistLeft), never in one

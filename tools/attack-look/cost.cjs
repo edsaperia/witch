@@ -12,7 +12,7 @@ const serve = () => new Promise(r => { const s = http.createServer((req, res) =>
   const server = await serve(), browser = await pw.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   for (const demo of ["", "elements", "telegraphs"]) {
     const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
-    await page.goto(`http://127.0.0.1:${server.address().port}/?creator=0&seed=123&arena=moth*1@0${demo ? `&lookdemo=${demo}` : ""}`);
+    await page.goto(`http://127.0.0.1:${server.address().port}/?creator=0&seed=123&arena=butterfly*1@0${demo ? `&lookdemo=${demo}` : ""}`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });

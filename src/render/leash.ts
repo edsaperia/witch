@@ -5,10 +5,10 @@
 //   a ghost under her shows where the bottom sigil would land (none where it can't: Ed, 2026-10-07, "no visual feedback
 //   when you can't put down a sigil, just a refusal sound");
 // - the bond, each switchable in the tuning file (bond): a glow at the creature's feet in its
-//   sigil's colour, a spark now and then from sigil to creature (staggered), and a dotted thread
-//   only while the leash is under strain;
+//   sigil's colour, a spark now and then from creature back to its sigil (staggered), and its chain
+//   (Ed, 2026-10-28: render/leash/chain.ts; the dotted thread under strain only with ?sigils=old);
 // - the talk: emoji speech bubbles taking turns over the witch and the creature (HTML, over the
-//   canvas), with a bar for how far the conversation has got.
+//   canvas), with a ring round the creature for how far the conversation has got.
 // The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
 import type { SlashPixel } from "./leash/slashes";
 import { bossBreath } from "../rules/creatureCues";
@@ -189,7 +189,7 @@ export class LeashView {
   hatTop = 1.6;
   feetY = 0;
   frameH = 0;
-  /** Each creature's height as drawn (the view sets it), so its health bar sits just over it. */
+  /** Each creature's height as drawn (the view sets it), so its marks and bubbles sit just over it (its health bar went, Ed 2026-10-28). */
   readonly tops = new Map<number, number>();
   /** Each creature's half-width as drawn (metres), with tops: its bounds, which a legend's dream bubble and circle panel keep clear of. */
   readonly halfW = new Map<number, number>();
@@ -207,7 +207,7 @@ export class LeashView {
     const dot = g.createRadialGradient(SLOT / 2, SLOT / 2, 0, SLOT / 2, SLOT / 2, SLOT / 2);
     dot.addColorStop(0, "rgba(255,255,255,1)"); dot.addColorStop(0.35, "rgba(255,255,255,.55)"); dot.addColorStop(1, "rgba(255,255,255,0)");
     g.fillStyle = dot; g.fillRect(0, 0, SLOT, SLOT);
-    // The last slot: a solid square (health bars).
+    // The last slot: a solid square (trait marks, the heal's "+"s, blood; health bars before 2026-10-28).
     g.fillStyle = "#ffffff"; g.fillRect((SQ % SLOTS) * SLOT + 4, Math.floor(SQ / SLOTS) * SLOT + 4, SLOT - 8, SLOT - 8);
     // The one before: the backing disc, in chunky cells of 2 px (16 across), full inside 80% of its radius and a lighter outer step
     // (Bravo's o3: "edges not too smooth"), its alpha the step's.

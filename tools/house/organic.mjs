@@ -5,10 +5,10 @@
 // trunk to the Terrace and to the take-off.
 //   node tools/house/organic.mjs [--write <file>] [--outline [<file>]]
 // --write: the house assembled, as one file (for a look, or a tool that wants one).
-// --outline: the floor's outlines for the crown's builder (the crown over the house is built apart, on claude/oak-crown), written to
+// --outline: the floor's outlines for the crown's builder (the crown over the house, rules/crown.ts, is built from them), written to
 // config/house/outline.json (or <file>): metres on the house's plan (x east, z south, the Terrace's middle 0, at the map's treehouse;
 // no turn), the floor at treehouse.house.height; what each part is, its own `_` says (config/house/outline.js houseOutline).
-// src/rules/houseShape.test.ts fails when it's out of date.
+// src/rules/houseConfig.test.ts fails when it's out of date.
 import { writeFileSync } from "node:fs";
 import { loadHouse } from "../../config/house/load.mjs";
 import { field } from "../../config/house/shape.js";

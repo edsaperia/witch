@@ -1,4 +1,4 @@
-// The sound effects (2026-10-05): every one synthesised, like the music (no samples), each a few
+// The sound effects (2026-10-05): every one synthesised (no samples), each a few
 // short-lived nodes; the lasting ones (a charge's rumble, home's meadow) built once and only turned
 // up and down. Pitches keep to the music's key (the style's root, a minor pentatonic). Volumes and
 // rates are the tuning's sfx (config/tuning.json); platform/audio/sfxCues.ts decides when.
@@ -187,7 +187,7 @@ export class Sfx {
   private trumpet: { gain: GainNode; lastAt: number } | null = null;
   /** Her decks (deck.ts): a stroke of the record under her hand; her hype. */
   scratch(forward: boolean, pan = 0, near = 1): void { scratch(this.k, forward, pan, near); }
-  /** Her routine's strokes (art/witch.js DJ_ROUTINE): the tonearm lifted and dropped, a stroke, a chirp, the spin-back, her hype. */
+  /** Her routine's strokes (rules/djSet.ts DJ_ROUTINE): the tonearm lifted and dropped, a stroke, a chirp, the spin-back, her hype. */
   deck(stroke: "lift" | "drop" | "f" | "b" | "chirp" | "spin" | "hype" | "trans" | "flare" | "tear" | "stab", pan = 0, near = 1, bpm = 120): void {
     this.k.pace = Math.min(1, 120 / Math.max(1, bpm)); // (a faster record's strokes shorter: none longer than at 120)
     if (stroke === "hype") this.babble.whoop(pan, near);
