@@ -2,7 +2,7 @@
 // draw, in ground mode only. Each grid cell's tufts are worked out once, a few cells a frame,
 // nearest first, and kept; the batch is rebuilt as she moves. In the vertex shader they sway in
 // the same wind as the trees and part round the witch and nearby creatures; they fade out in an
-// ordered dither towards the edge of their radius. The tufts are the art's own (art/tufts.js,
+// ordered dither towards the edge of their radius, each tuft's own (render/edgeFade.ts). The tufts are the art's own (art/tufts.js,
 // bakeTufts: each area's kinds in its palette, with their shares), lit by their normal maps; each
 // sways by its sway mask (rigid pebbles, litter and mushrooms stay still).
 import * as THREE from "three";
@@ -20,6 +20,7 @@ import { runSync, type Steps } from "./slices";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { SPRITE_UNIFORMS } from "./sprites";
+import { EDGE_ANCHOR_GLSL, EDGE_GRID_GLSL, EDGE_UNIFORMS } from "./edgeFade";
 
 const VERT = /* glsl */ `
 uniform vec3 uRight, uUp;
@@ -40,8 +41,9 @@ varying vec4 vRect; // its frame (atlas pixels)
 varying vec2 vLocal; // where in it, in its own pixels (0 to width, 0 to height down from its top)
 varying vec3 vWorld;
 varying float vMoonK;
+varying vec2 vEdgeAt; // the pixel its root is snapped to: where its fade's dither starts (render/edgeFade.ts)
 ${HEIGHT_VERT_GLSL}
-${VALUE_NOISE_GLSL}${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}void main() {
+${VALUE_NOISE_GLSL}${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}${EDGE_ANCHOR_GLSL}void main() {
   float s = iTuft.z * uGrass.x;
   vec3 base = onGround(vec3(iTuft.x, 0.0, iTuft.y)); // on the rolling ground
   // Round a placed sigil the cover is trampled: none under the middle of its rune, flattened short over the rest of it and
@@ -80,7 +82,9 @@ ${VALUE_NOISE_GLSL}${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}void main() {
     vMoonK = 1.0 - uCanopy.x * smoothstep(-0.07, 0.07, cover - leaves);
   }
   gl_Position = clipOf(w);
-  gl_Position.xy += pixelSnap(clipOf(base)) * gl_Position.w;
+  vec4 cb = clipOf(base);
+  gl_Position.xy += pixelSnap(cb) * gl_Position.w;
+  vEdgeAt = edgeAnchor(cb);
 }`;
 
 const FRAG = /* glsl */ `
@@ -93,16 +97,19 @@ varying vec4 vRect;
 varying vec2 vLocal;
 varying vec3 vWorld;
 varying float vMoonK;
+varying vec2 vEdgeAt;
 ${LIGHT_GLSL}
-${BAYER_GLSL}void main() {
+${BAYER_GLSL}${EDGE_GRID_GLSL}void main() {
   // Its texel picked in its own pixels and sampled at that texel's centre (the bench, 2026-10-13: as fractions of the atlas, which texel
   // a fragment landed on shifted with the atlas's height, so a new area's tufts moved every tuft's pixels everywhere)
   vec2 vUv = (vRect.xy + clamp(floor(vLocal), vec2(0.0), vRect.zw - 1.0) + 0.5) / uTuftSize;
   vec4 m = albedoAt(vUv);
   if (m.a < 0.5) discard;
-  // Fading out towards the edge of the cover, and as she rises, in an ordered dither.
+  // Fading out towards the edge of the cover, and as she rises, in an ordered dither: each tuft's own, its grid starting at the
+  // tuft's root, so it stays put on the tuft as the camera moves (Ed, 2026-11-13; render/edgeFade.ts. It was the screen's: the
+  // tufts in the band slid under it and their pixels blinked as she walked).
   float k = (1.0 - smoothstep(uFade.z * 0.7, uFade.z, length(vWorld.xz - uFade.xy))) * uFade.w * (1.0 - uPotionSky);
-  if (k <= 0.0 || k < 0.999 && bayer4(gl_FragCoord.xy) > k) discard;
+  if (k <= 0.0 || k < 0.999 && bayer4(edgeGrid(vEdgeAt)) > k) discard;
   vec4 n = normalAt(vUv);
   vec3 N = normalize(uRight * ((n.r * 255.0 - 128.0) / 127.0) - uUp * ((n.g * 255.0 - 128.0) / 127.0) + uFacing * n.b);
   gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), m.rgb * nightLightShaded(N, vWorld, vMoonK) * 1.25), vWorld), vWorld), 1.0);
@@ -162,7 +169,7 @@ export class GrassView {
     this.geo.instanceCount = 0;
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uFacing: SPRITE_UNIFORMS.uFacing, uRes: SPRITE_UNIFORMS.uRes, uWind: SPRITE_UNIFORMS.uWind,
+      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...EDGE_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uFacing: SPRITE_UNIFORMS.uFacing, uRes: SPRITE_UNIFORMS.uRes, uWind: SPRITE_UNIFORMS.uWind,
         uPotionSky: SPRITE_UNIFORMS.uPotionSky,
         ...atlasUniforms(this.atlas, "uTufts", "uTuftN"), uTuftSize: { value: new THREE.Vector2(this.atlasW, this.atlasH) }, uPart: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) }, uClear: { value: Array.from({ length: 8 }, () => new THREE.Vector4()) },
         uGrass: { value: new THREE.Vector4(metresPerPixel, t.groundCover.sway, t.groundCover.part, 0) }, uFade: { value: new THREE.Vector4() },
