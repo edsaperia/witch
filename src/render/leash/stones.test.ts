@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { barLevel, columnOf, stumpNoteSize } from "./stones";
+import { afterEach, describe, expect, it } from "vitest";
+import { barLevel, columnOf, STUMP_FX, stumpMagicOld, stumpNoteSize } from "./stones";
 import renderKnobs from "../../../config/playtest-render.json";
 import { CHAIN_FLOOR, layChain, LINK_ANGLES, linkAngle, rattleChain, stepChain, type Chain, type ChainMotion } from "./chain";
 import { CHAIN_DEFAULT } from "./ranks";
@@ -23,6 +23,13 @@ describe("rune stones' sigils", () => {
     for (let i = 1; i < 18; i++) expect(barLevel(bins, i, 36)).toBe(barLevel(bins, 36 - i, 36));
     expect(barLevel(new Uint8Array(64), 5, 36)).toBe(0);
   });
+});
+
+describe("a wave's soundsystem appearing on a great stump (Ed, 2026-11-13: \"remove this purple effect above the stump\")", () => {
+  afterEach(() => { STUMP_FX.old = false; });
+  const drawn = () => { const D: string[] = []; stumpMagicOld({ draw: (_e, form) => { D.push(form); } }, 0, 1, 0, 1, 1); return D; };
+  it("draws no creature-magic effect over the stump", () => { expect(drawn()).toEqual([]); });
+  it("?stumpfx=old: the vortex and the dome as they were, to compare", () => { STUMP_FX.old = true; expect(drawn()).toEqual(["vortex", "dome"]); });
 });
 
 describe("chains (lying on the ground at full length: the chain rework, Ed 2026-11-03)", () => {
