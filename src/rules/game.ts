@@ -39,6 +39,7 @@ import { isHomeKey, nextSpeakerState, speakerIndex, speakerKey, speakerRadius, s
 import { moonState } from "./moon";
 import { floorEvent, floorLevel, islandKinds, islandSigilOf, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
+import { stepWildBabies } from "./wildBabies";
 import { COMBAT, marchOn, marchSpeed, nearestHomeSpeaker, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { friendlyLegendRoute } from "./combat/legend";
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
@@ -803,6 +804,7 @@ function fixedStep(g: Game, controls: readonly Controls[], guestCatchUp: readonl
   }
   stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => !!c.partyLegend || !!c.bed || c.finale !== undefined || dormant(g, c), { ...g.tuning.simLod, full: fullRadius(g.tuning, g.witch.mode) }, g.lod, napRules(g), t.wildWatch?.on ? t.wildWatch : undefined, g.witches.length > 1 ? g.witches.map(W => ({ x: W.body.x, z: W.body.z, radius: simRadius(g), full: fullRadius(t, W.body.mode) })) : undefined);
   if (stepWanderers([...g.combat.busy].map(id => g.creatures[id]), g.map, dt)) g.byArea = null; // (those walking home are among combat's busy)
+  stepWildBabies(g, dt); // (wild babies run from fights, as her leashed ones scatter: rules/wildBabies.ts; Ed, 2026-11-13)
   stepWonAway(g, dt); // (her won ones waiting for their stone's spell roam out of her fights' way: rules/wonKeepAway.ts)
   stepStatueWalk(g, dt); // (the challenge's un-won walking back to their posts, the stone ones facing its middle: rules/challengeStatues.ts)
   // (A party animal in a fight is moved by combat, not its leash.)
