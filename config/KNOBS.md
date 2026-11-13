@@ -2393,7 +2393,8 @@ Code: `src/rules/combat.ts`, `tools/balance/lunges.mjs`
 
 - **`lunge.on`**: Long lunges on; off, lunges as they were (?lunge=old).
 - **`lunge.from`**: How many dashes away a lunger's wind-up may begin (the longest kinds).
-- **`lunge.through`**: How many dashes a lunge runs along its line, through and past its target (the longest kinds). The one knob to turn down if lunges prove too hard to dodge.
+- **`lunge.through`**: How many dashes a lunge runs along its line, through and past its target (the longest kinds).
+  The one knob to turn down if lunges prove too hard to dodge: at 1.5 every lunge is 17 to 22.5 m.
 - **`lunge.shortest`**: The least share of those two that a short-lunging kind gets.
 - **`lunge.full`**: A kind's own lunge, in metres, at which it gets the whole of from and through.
 - **`lunge.least`**: An attack lunging under this many metres is a swipe, left as it was.

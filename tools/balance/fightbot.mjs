@@ -90,7 +90,11 @@ else {
           const tg = sk.target, td = Math.hypot(tg.x - w.body.x, tg.z - w.body.z);
           aimX = tg.x - w.body.x; aimZ = tg.z - w.body.z; fire = td < R * 0.95;
           // A telegraph aimed at her (a lunge winding up, a charge's lowered head), close: blink across it.
-          const threat = fighters.find(c => Math.hypot(c.x - w.body.x, c.z - w.body.z) < 14 && ((c.fight?.target?.kind === "witch" && c.fight.windupUntil > T && c.fight.windupUntil - T < 0.35) || (c.charge && (c.charge.from ?? 0) > T)));
+          // (a long lunge, tuning lunge, Ed 2026-11-13: wound up from up to lunge.from dashes off, so its telegraph is seen that far: a
+          // melee wind-up, not a shot's, which has its aim track; and one let go and still coming, not yet past her)
+          const far = t.lunge?.on ? t.lunge.from * t.dash.distance + 3 : 14;
+          const coming = c => { const L = c.fight?.lunge; return !!L?.through && !L.landed && (w.body.x - c.x) * L.dx + (w.body.z - c.z) * L.dz > 0 && Math.hypot(c.x - w.body.x, c.z - w.body.z) < L.left + 3; };
+          const threat = fighters.find(c => { const d = Math.hypot(c.x - w.body.x, c.z - w.body.z), wind = c.fight?.target?.kind === "witch" && c.fight.windupUntil > T && c.fight.windupUntil - T < 0.35; return (d < 14 && (wind || (c.charge && (c.charge.from ?? 0) > T))) || (d < far && wind && !c.fight.aim) || coming(c); });
           const close = fighters.reduce((m, c) => { const d = Math.hypot(c.x - w.body.x, c.z - w.body.z); return d < m.d ? { c, d } : m; }, { c: null, d: Infinity });
           if (threat && T >= w.dash.readyAt) { const dx = threat.x - w.body.x, dz = threat.z - w.body.z, d = Math.hypot(dx, dz) || 1; mx = -dz / d; mz = dx / d; dash = true; blinks++; }
           else if (td > 24 && sk.goal) { const dx = sk.goal.x - w.body.x, dz = sk.goal.z - w.body.z, d = Math.hypot(dx, dz); if (d > 1.5) { mx = dx / d; mz = dz / d; } } // (to its shooting spot, from the edge)

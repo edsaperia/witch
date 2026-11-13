@@ -432,7 +432,8 @@
       "what": "How many dashes away a lunger's wind-up may begin (the longest kinds)."
     },
     "lunge.through": {
-      "what": "How many dashes a lunge runs along its line, through and past its target (the longest kinds). The one knob to turn down if lunges prove too hard to dodge."
+      "what": "How many dashes a lunge runs along its line, through and past its target (the longest kinds).",
+      "notes": "The one knob to turn down if lunges prove too hard to dodge: at 1.5 every lunge is 17 to 22.5 m."
     },
     "lunge.shortest": {
       "what": "The least share of those two that a short-lunging kind gets."

@@ -159,7 +159,9 @@ describe("in a fight", () => {
     expect(on.met).toBeLessThan(4);
   });
   it("its wind-up's surge in has momentum too (Ed, 2026-10-27): sidestepped as it winds up, it swings round slowly", () => {
-    const on = sidestep(TUNING, true), off = sidestep(OFF, true);
+    // (the surge is the old lunge's, ?lunge=old, and a swipe's: a long lunge's wind-up gathers itself where it is, Ed 2026-11-13)
+    const old = { lunge: { ...TUNING.lunge!, on: false } };
+    const on = sidestep(withTuning(old), true), off = sidestep(withTuning({ ...old, creatureMomentum: { ...M, on: false } }), true);
     expect(on.stepped && off.stepped).toBe(true);
     expect(on.swung).toBeLessThan(off.swung / 2);
   });
