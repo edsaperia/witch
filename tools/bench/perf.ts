@@ -2,7 +2,7 @@
 // the playtest key (as tools/bench/rules.ts) to each wave in turn, then flown along the same fixed path for a while,
 // timing every stepGame. Per wave: p50/p95/p99/worst, hitches (steps over 4 ms and over 16.7 ms: a step is a 60th of a
 // second, and a frame runs one or two), the creatures by state, the simulation's level of detail (game.lod) and the heap.
-// Bundled by tools/bench/run-perf.mjs with esbuild and run in Node: no Three.js, no browser. Report only: it changes
+// Bundled by tools/bench/ts.mjs (`perf`) with esbuild and run in Node: no Three.js, no browser. Report only: it changes
 // nothing in the game.
 import { newGame, stepGame, STEP, type Controls } from "../../src/rules/game";
 import { TUNING } from "../../src/rules/tuning";

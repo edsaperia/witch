@@ -40,7 +40,7 @@ function measure(seed, mix, n, level, move) {
   let hits = 0, last = w.health.hp, ang = 0;
   const dt = 1 / 60;
   for (let f = 0; f < TIME * 60; f++) {
-    // Circle the crowd at RADIUS (💌 range is 22 m), as a player keeping her distance does.
+    // Circle the crowd at RADIUS (inside 💌 range, tuning invites.range: 42 m), as a player keeping her distance does.
     const live = ids.map(i => g.creatures[i]).filter(c => !c.gone);
     const cx = live.length ? mean(live.map(c => c.x)) : site.x, cz = live.length ? mean(live.map(c => c.z)) : site.z;
     ang += (t.groundSpeed * move * dt) / RADIUS;

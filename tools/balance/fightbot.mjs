@@ -1,7 +1,7 @@
 // What playtesters will feel in fights (Ed, 2026-10-05, after #89's 💌s): a bot plays the real rules
 // headless (src/rules/game.ts: the 💌s of rules/invites.ts, combat and every species' movement), no
 // new rules. Each fight: she lands in a real wild area two areas out from home, holding the
-// creatures its kind would have grown to by wave W (the game's own population start and growth),
+// creatures its kind would have grown to by wave W (population's start and growth numbers; in the game growth is off, Ed 2026-10-28),
 // aims at the nearest invitable one and holds fire while it's in range, and moves: circling the
 // crowd at a share of her ground speed (the more she moves, the fewer hits she takes and the fewer
 // letters land), greedily (standing to shoot, closing in when out of range), or kiting (standing to shoot, backing away from any fighter that comes close). It ends when all of them are invited, she's knocked out (sent home), or after a time
