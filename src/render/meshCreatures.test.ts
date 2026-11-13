@@ -21,6 +21,7 @@ describe("mesh creatures", () => {
     expect(hasMesh("hydra", { meshCreatures: 1 })).toBe(false); // (no mesh yet: the last batch's)
     expect(hasMesh("wolf", { meshCreatures: 1 })).toBe(true); // (batch A, 2026-11-13)
     expect(hasMesh("snake", { meshCreatures: 1 })).toBe(true); // (batch E, 2026-11-13: a legless one)
+    expect(hasMesh("crab", { meshCreatures: 1 })).toBe(true); // (batch G, 2026-11-13: one on eight legs, going sideways)
     expect(hasMesh("bee", { meshCreatures: 1 })).toBe(true); // (a kind since 2026-11-12, in the marten's place on home)
     expect(hasMesh("turtle", { meshCreatures: 1 })).toBe(true); // (a kind since 2026-11-12, in the newt's place in the Fen)
     expect(hasMesh("fox", { meshCreatures: 0 })).toBe(false); // (the link's meshCreatures=0: the generated ones, to compare)
@@ -129,6 +130,9 @@ describe("mesh creatures", () => {
   Object.assign(GAITS, { cat: "bound", lynx: "bound", cheetah: "bound", snowleopard: "bound", lion: "trot", tiger: "trot", jaguar: "trot" }); // (batch B, the cats: kit/feline.js)
   Object.assign(GAITS, { bear: "trot", polarbear: "trot", rhino: "trot", elephant: "walk", beaver: "trot", flyingsquirrel: "bound" }); // (batch D, the heavy and the gnawing)
   Object.assign(GAITS, { salamander: "trot", komodo: "trot", crocodile: "trot", armadillo: "trot", toad: "bound", snake: "glide", rattlesnake: "glide" }); // (batch E, the cold-blooded: kit/sprawl.js, kit/serpent.js)
+  Object.assign(GAITS, { beetle: "trot", spider: "trot", scorpion: "trot", crab: "trot", woodlouse: "walk" }); // (batch G, the many-legged: kit/manylegs.js; alternating sets, and the woodlouse's ripple)
+  /** How many legs a kind stands on, where it isn't four (batch G: "six, eight and fourteen legs"; the woodlouse's baby has ten). */
+  const LEGS: Record<string, number[]> = { beetle: [6], spider: [8], scorpion: [8], crab: [8], woodlouse: [10, 14] };
 
   it("every kind says how it goes, and its stride is long enough to read as one (not a shuffle on the spot)", () => {
     for (const [species, levels] of Object.entries(PLANS)) levels.forEach((make, level) => {
@@ -165,7 +169,7 @@ describe("mesh creatures", () => {
     for (const [species, levels] of Object.entries(PLANS)) for (const level of [0, 2]) for (const pace of ["walk", "run"]) {
       const p = levels[level](); if (!p.gait.legs?.length) continue;
       const sh = shape(p, pace) as unknown as Strider, name = `${species} ${level} ${pace}`;
-      expect(sh.feet.length, name).toBe(4); expect(sh.stride, name).toBeGreaterThan(0);
+      expect(LEGS[species] ?? [4], name).toContain(sh.feet.length); expect(sh.stride, name).toBeGreaterThan(0);
       for (const f of sh.feet) { let x0 = 0, y0 = 0, z0 = 0;
         for (let i = 0; i <= 24; i++) { const c = f.duty * 0.999 * i / 24, T = (pose(sh, (((c - f.phase) % 1) + 1) % 1) as { T: Float64Array }).T, x = T[f.paw * 3], y = T[f.paw * 3 + 1], z = T[f.paw * 3 + 2] + sh.stride * c; // (the body has gone that far since it came down)
           if (!i) { x0 = x; y0 = y; z0 = z; continue; }
