@@ -5,7 +5,8 @@
 // next wave, ending as it lands. Sections change only on block lines (style.blockBars, 4 bars), so
 // every change lands on a phrase. Bars are the beat clock's (rules/beat.ts): bar 0 at game time 0,
 // the tempo steady all night but for her knockdowns (Ed, 2026-11-03).
-// Hooks for later: knockedOut plays the knockout section (a breakdown under a filter); siege adds the
+// The cue's hooks (musicCue feeds them all now): knockedOut plays the knockout section (a breakdown under a
+// filter; with the form, silence instead: silentAt, Ed 2026-10-09); siege adds the
 // style's siege parts (rules/musicScore.ts); party, near a woken area that has joined the party,
 // its party parts. Numbers only: the platform plays them.
 import { djIntroEnd } from "./djSet";

@@ -45,8 +45,8 @@ export function earlyQuest(map: ForestMap): EarlyQuest | null {
  *  (the early easy quest, earlyQuest). */
 export function questFor(map: ForestMap, cell: [number, number], own: string, want?: string): Quest | undefined {
   // A gamble (Ed, 2026-10-06: "you don't know how hard the quest will be before you go off to try and find the
-  // creature"); only the truly far go (balance, 2026-10-06: a kind whose nearest area lies over legends.questCap areas
-  // away, about the farthest tenth, could eat a run), unless that leaves none. With legends.questLater (Ed's core design,
+  // creature"); no distance cap by default (Ed, 2026-10-31: "no quest cap", legends.questCap 0); a positive cap drops the
+  // truly far (balance, 2026-10-06: a kind whose nearest area lies over that many areas away), unless that leaves none. With legends.questLater (Ed's core design,
   // relayed 2026-10-07): only a kind living in an area LATER on the route than the legend's own (deeper in, and wilder
   // now the forest is grown before the waves), within the cap; failing that, the kind of the nearest later area; with
   // no later area at all, any kind as before.

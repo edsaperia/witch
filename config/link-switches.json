@@ -548,7 +548,7 @@
     "0",
     "1"
    ],
-   "does": "Creatures that have one are drawn as low-poly meshes on skeletons (art/mesh), on by default: fox, stoat, marten, hare, squirrel, dormouse, badger, mole, hedgehog and snail so far; 0 compares the generated creatures.",
+   "does": "Creatures that have one are drawn as low-poly meshes on skeletons (art/mesh), on by default: every kind with a file in art/mesh/species (ten at first, 2026-11-12; most kinds now); 0 compares the generated creatures.",
    "group": "compare",
    "since": "2026-11-12",
    "readIn": [
@@ -791,7 +791,8 @@
    "group": "debug",
    "since": "2026-10-14",
    "readIn": [
-    "src/app/linkParams.ts"
+    "src/app/linkParams.ts",
+    "src/app/renamedLink.ts"
    ]
   },
   {
@@ -908,6 +909,7 @@
    "since": "2026-10-11",
    "readIn": [
     "src/app/linkParams.ts",
+    "src/app/renamedLink.ts",
     "src/app/sail.ts",
     "src/main.ts",
     "src/platform/online/entry.ts"
@@ -1260,6 +1262,19 @@
    "decision": "Faster, longer letters (Ed, 2026-11-09: \"it feels like animals move faster than invitations so it's hard to land a hit. And ranges feel small\"); the old flight kept to A/B"
   },
   {
+   "name": "legendspot",
+   "values": [
+    "old"
+   ],
+   "does": "Sleeping legends where they lay before, 0.45 of the radius north of their circle's middle, the circles sized for that, in place of the back of their circles (legendClearing.back). Sets tuning legendClearing.back to legendClearing.top.",
+   "group": "compare",
+   "since": "2026-11-12",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Legends sleep at the back of their circles (Ed, 2026-11-12: \"Legends should sleep at the back of their circles, so you can stand in the circle before them\"); the old place kept one switch away to compare"
+  },
+  {
    "name": "music",
    "values": [
     "off",
@@ -1306,7 +1321,7 @@
     "old",
     "chart"
    ],
-   "does": "The first load's start: `old`, the bedroom as the loading cover (the creator); `chart`, the new opening's sea chart (the default since 2026-10-21, the tuning's `opening.chart`). A link naming a seed or island wakes her in her bedroom too (Ed, 2026-10-25); one starting a bot game or the zoo, or with `creator=0`, keeps the old start anyway; the tools that drive the old start (the creator, the start card) put `opening=old` in their links.",
+   "does": "The first load's start: `old`, the bedroom as the loading cover (the creator); `bedroom` (or `chart`, its old name) forces the wake-up in her bedroom, the default since Ed, 2026-10-23 (the tuning's `opening.bedroom`; the sea chart came first from 2026-10-21 till then). A link naming a seed or island wakes her in her bedroom too (Ed, 2026-10-25); one starting a bot game or the zoo, or with `creator=0`, keeps the old start anyway; the tools that drive the old start (the creator, the start card) put `opening=old` in their links.",
    "group": "run",
    "since": "2026-10-20",
    "readIn": [
@@ -1496,6 +1511,19 @@
     "src/app/viewParams.ts",
     "src/platform/online/relayClient.ts"
    ]
+  },
+  {
+   "name": "lunge",
+   "values": [
+    "old"
+   ],
+   "does": "Lunges as before, to compare: wound up close, the creature sprinting in as it winds up, and stopping where it aimed (a few metres long), not wound up from about 1.5 dashes off and carried through and past her for about 2 dashes. Sets tuning lunge.on.",
+   "group": "compare",
+   "since": "2026-11-13",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Ed, 2026-11-13: \"Lunge ranges seem very short; they could be twice as long, around 1.5-2 dashes range.\" Asked how: \"Both\" (wound up from far away, and carried on through and past the spot it aimed at)"
   },
   {
    "name": "ranged",

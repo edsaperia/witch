@@ -5,10 +5,10 @@
 // never under leash.babies.gap; the first the same off her (queueGap);
 // while she's in a fight they scatter, leash.babies.scatter metres or a quarter more off to the side away from the first attacker
 // (Ed, 2026-10-26: "they should scatter further, e.g. outside of my camera view": past the view's edge; on the island's land,
-// rules/leash.ts; pulling on her not at all meanwhile, rules/leashWeight.ts), from the moment
+// rules/leash.ts; never pulling on her: a baby has no chain, rules/chains.ts), from the moment
 // something goes for her or hers (closing in or winding up, not on the hit) until nothing has for leash.babies.calm seconds; and one
 // more than leash.babies.farAt metres from her (about off the screen) moves at leash.babies.farSpeed, so it's always with
-// her in seconds. Berries, evolving and weight: rules/berries.ts and rules/leashWeight.ts. No drawing here.
+// her in seconds. Berries and evolving: rules/berries.ts (the sigil weight is gone: Ed, 2026-11-03). No drawing here.
 import type { Creature } from "./creatures";
 import { drawnRadius } from "./combatSpacing";
 import { hash2 } from "./random";

@@ -74,7 +74,7 @@ export const floorplanKey = (H: HouseConfig, items: LayoutItem[]): string => {
 export function defaultLayout(items: LayoutItem[], floorplan: string): Layout {
   return { version: 2, floorplan, objects: items.map(o => ({ id: o.id, x: o.x, z: o.z, rotation: normalAngle(o.facing.yaw * 180 / Math.PI) })) };
 }
-/** Model yaw and plan rotation have the same clockwise convention (art/model3d.ts toWorld). */
+/** Model yaw and plan rotation have the same clockwise convention (art/model3d.js toWorld). */
 export const cameraYaw = (p: Placement): number => p.rotation * Math.PI / 180;
 /** The room whose floor a placement stands on, by name, for the editor's room list and the export (a label only: no rule reads it
  *  since Ed, 2026-11-03, the house one room). */

@@ -14,7 +14,7 @@ export interface TeamState { seed: number; round: number; phase: Phase; at: numb
    *  should open (an estimate kept up each step): its picks close in to be ready by then (rules/combat.ts movingGoal). */
   next?: { round: number; actions: Record<number, CreatureAction | undefined>; readyBy: number }[];
   /** A team past its ring cap (teamRounds.ring): its members in waiting order, this round's unused attackers first, then the coming
-   *  rounds' picks, then the rest, the hurt last; each `ring` of them shares one waiting ring, the first the inner (waitingPlace). */
+   *  rounds' picks, then the rest, the hurt last; each `ring` of them shares one waiting ring, the first the inner (rules/combat.ts movingGoal). */
   order?: number[] }
 export const rolePreferences = (species: string): RolePreferences => ({ ...SPACING.preferences.default, ...SPACING.preferences.species[species] });
 const damage = (c: Creature): number => c.leashed || c.state === "happy" ? c.drops ?? 0 : c.dazed ? 1 : c.affection ?? 0;

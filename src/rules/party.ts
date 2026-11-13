@@ -1,6 +1,7 @@
-// The party spreads (Ed): at the start only home, the dancefloor's area, is partified. Every
-// `interval` seconds a wave comes and wakes one area (Ed, v149), chosen as soon as the previous one
-// woke (see pickNext), which gets a soundsystem and is partified. Seeded and deterministic; no
+// The party spreads (Ed): at the start only home, the dancefloor's area, is partified. Each time
+// the ley pulse reaches the next stone (Ed, 2026-10-09: "Pure constant speed"; every `interval` seconds
+// before) a wave comes and wakes one area (Ed, v149), chosen as soon as the previous one woke (see
+// pickNext), which gets a soundsystem and is partified. Seeded and deterministic; no
 // drawing here.
 import { bootSeconds, stonesTurned } from "./bootRing";
 import { hash2, rng, vnoise } from "./random";
@@ -61,14 +62,14 @@ export interface PartyState {
   leyDone?: Map<string, number>;
   /** How many areas each wave wakes: one per witch present (Ed, 2026-10-04), read at each wave. */
   areasPerWave: number;
-  /** Game time the home speaker ring finishes booting up (Ed, 2026-10-04; 5 minutes from her first step, 2026-10-05): the first wave's countdown starts then. */
+  /** Game time the home speaker ring finishes booting up (Ed, 2026-10-04; since 2026-10-06 the time its pulse takes down to the ring and round it from her leaving her decks, rules/bootRing.ts bootSeconds; 5 minutes from her first step before): the first wave's countdown starts then. */
   bootUntil: number;
   /** The party spell (Ed, 2026-10-06: the game starts when she casts it, setting off the boot): undefined in a build without
    *  it (the game clock runs from the start of play); null while waiting for it (the clock at 00:00, a prompt to cast it);
    *  the game time she cast it. Set by the boot-up's own rules; read by the HUD (rules/leypulse.ts clockStart). */
   spellAt?: number | null;
   /** When she left her decks (Ed, 2026-10-06), the spell cast (or in a build without it, her first step): the boot's pulse
-   *  sets off from the treehouse then, running down to the home ring and round it at the pulse's speed (rules/bootRing.ts).
+   *  sets off from the treehouse then, running down to the home ring and round it at the boot's own speed (boot.speed, rules/bootRing.ts).
    *  Undefined until then. */
   bootFrom?: number;
   /** The wave's pulse (Ed, 2026-10-09: "Pure constant speed"): metres `d` run along the current stretch (the links from
@@ -354,8 +355,8 @@ export function stepParty(p: PartyState, map: ForestMap, time: number, dt: numbe
   const waiting = p.bootFrom === undefined;
   if (waiting) { P.at += dt; p.bootUntil += dt; p.nextAt = pulseDue(p, time); return []; } // (still at her decks: the boot waits)
   if (p.paused) { if (time < p.bootUntil) { p.bootFrom = (p.bootFrom ?? time) + dt; p.bootUntil += dt; } P.at += dt; p.nextAt = pulseDue(p, time); return []; } // (held where it is, the boot too)
-  // At a constant speed along the route (Ed, 2026-10-09: "Pure constant speed", leyLines.pulseSpeed m/s), times the party's
-  // tempo (rules/beat.ts tempoRate: faster for her knockdowns): reckoned on to now at its speed so far, then at the new one.
+  // At a constant speed along the route (Ed, 2026-10-09: "Pure constant speed"): leyLines.pulseSpeed times the speed the party's
+  // tempo gives (m/s, rules/beat.ts tempoRate: faster for her knockdowns; Ed, 2026-11-03): reckoned on to now at its speed so far, then at the new one.
   if (time >= P.at) { P.d = pulseMetres(p, time); P.at = time; P.v = pulseSpeed(map) * rate; }
   // A wave lands as the pulse reaches the stretch's last stone; it runs straight on along the next stretch.
   let fresh: Partified[] = [];

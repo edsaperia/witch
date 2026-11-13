@@ -3,6 +3,7 @@ import { isInside } from "./mapShape";
 import { Forest, legendGrove } from "./forest";
 import { keepsToCircle, pointInArea, spawnCreatures, stepCreature } from "./creatures";
 import { rng } from "./random";
+import { spotShare } from "./legendFit";
 import { cellKey, soundsystemFor } from "./party";
 import { TUNING, withTuning } from "./tuning";
 import { joinParty, loseSoundsystem, stepGame, STEP, type Controls, type Game } from "./game";
@@ -14,10 +15,10 @@ import { preppedGame, sharedMap } from "../test/preppedGame"; // fresh games; sh
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } }, cast: { ...TUNING.cast, on: false } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // Retain full radius maps: clearing/sliver and grove/rim population ratios, multi-area sieges and >400 m recruits need their extent.
-// Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
+// Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), at its back (Ed, 2026-11-12).
 describe("legend clearings", () => {
   for (const seed of [1, 123, 4242, 90210]) {
-    it(`every area with a legend has one (and only those), inside its own area, clear of trees, bushes, decor and the soundsystem, its legend near the top (seed ${seed})`, () => {
+    it(`every area with a legend has one (and only those), inside its own area, clear of trees, bushes, decor and the soundsystem, its legend at the back (seed ${seed})`, () => {
       const map = sharedMap(seed, TUNING), forest = new Forest(map), creatures = spawnCreatures(map);
       // every area with room for one has one: 4000 m² or more of its ground where she can fly (the rest: slivers at the map's edge, or absorbed by their neighbours)
       const B = map.bounds, ground = new Map<string, number>();
@@ -35,10 +36,13 @@ describe("legend clearings", () => {
         for (const d of forest.decorNear(c.x, c.z, c.r + 2)) expect(Math.hypot(d.x - c.x, d.z - c.z)).toBeGreaterThanOrEqual(c.r);
         const s = soundsystemFor(map, c.cell);
         expect(Math.hypot(s.x - c.x, s.z - c.z)).toBeGreaterThan(c.r + TUNING.soundsystemFootprint);
-        // its legend: in the circle, near its far (north, top of the screen) side, the open floor in front
-        const L = creatures.find(o => o.boss && o.cell[0] === c.cell[0] && o.cell[1] === c.cell[1])!;
-        expect(Math.hypot(L.x - c.x, L.z - c.z)).toBeLessThan(c.r * 0.6);
-        expect(L.z).toBeLessThan(c.z - c.r * 0.3);
+        // its legend: in the circle, at its back (north, top of the screen; Ed, 2026-11-12: "Legends should sleep at the back of
+        // their circles, so you can stand in the circle before them"), the open floor in front: rules/legendFit.ts spotShare
+        const L = creatures.find(o => o.boss && o.cell[0] === c.cell[0] && o.cell[1] === c.cell[1])!, LC = TUNING.legendClearing;
+        expect(L.x).toBeCloseTo(c.x, 6);
+        expect(Math.hypot(L.x - c.x, L.z - c.z)).toBeCloseTo(c.r * spotShare(L.species, c.r, LC), 6); // (back x r, or further for a nap drawn far below its ground line: reachOf)
+        expect(Math.hypot(L.x - c.x, L.z - c.z)).toBeLessThan(c.r);
+        expect(L.z).toBeLessThanOrEqual(c.z - c.r * LC.top + 1e-6);
       }
     });
   }

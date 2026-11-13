@@ -1,4 +1,4 @@
-// The Workshop's pictures as pixels (render/workshopArt.ts): her broom resting on the bay or the lathe, and each part on the pegboard
+// The Workshop's pictures as pixels (render/workshopArt.ts): her broom resting on the bay, the lathe or the lift, and each part on the pegboard
 // (found, in her broom's colours; missing, a dark outline; tonight's, an outline with a glowing rim), lit in the Workshop's light, on
 // whatever canvas `mk` makes. No three.js and no page here, so the art workers draw them (render/artBuild.ts, the "workshopPic" job),
 // not the page's thread: baked there as she came into the house, a frame each, they held it seconds under the cloud's software

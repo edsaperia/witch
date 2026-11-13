@@ -7,8 +7,8 @@ import type { Creature } from "./creatures";
 import type { PartyState } from "./party";
 
 /** A sleeping legend's restlessness, 0 calm to 1 about to wake angry (Ed, #87: restless while its
- *  area has none of its kind). One place to read it from; the rules' own value lands with #87,
- *  till then whatever is set on the creature (0 if nothing is). */
+ *  area has none of its kind). One place to read it from: the rules set it on the creature each step
+ *  (rules/legends.ts); 0 if nothing is set. */
 export const restlessness = (c: Creature): number => Math.max(0, Math.min(1, (c as Creature & { restlessness?: number }).restlessness ?? 0));
 
 /** Whether a legend's quest can still be done, so its dream shows: while it sleeps (Ed, 2026-10-06:

@@ -1,7 +1,8 @@
-// The treehouse's placeholder rooms (Ed, 2026-10-19: "Plain plank boxes and corridors drawn by the game; the Ent's branches are left
-// as they are"; rules/houseRooms.ts, config/house/): plank floors, walls (the front two, towards the camera, cut down to a
-// skirting, as the hub's front is cut away), doorways where the corridors meet, and each object a plain box in its colour (working,
-// the bed, placeholder), the hats' floor a rug with her hats lying on it. Isometric boxes (Ed, 2026-10-21: "more of an isometric
+// The treehouse's rooms (rules/houseRooms.ts, config/house/). They began as placeholders (Ed, 2026-10-19: "Plain plank boxes and
+// corridors drawn by the game; the Ent's branches are left as they are"); since the oak's house (Ed, 2026-10-24: "no planks") the
+// floor is one painted picture and what stands up off it quads traced from its shape (render/houseArt.ts), and each object is drawn
+// as art (render/houseFurniture.ts, Ed 2026-10-23), a plain box in its colour (the hats' floor a rug) only without it
+// (?furniture=0), her hats lying on the hats' floor. Isometric (Ed, 2026-10-21: "more of an isometric
 // view"): the plan's turned 45 degrees (rules/houseRooms.ts fromPlan), so each floor is a diamond, its two far walls standing behind
 // it (the left lit, the right in shade) and each object shows its top and its two near sides; drawn far to near. Laid in the plane the Ent's house is drawn in, as she is
 // (render/view/witch.ts: her place on the house's floor taken into the Ent's art pixels and along the ray from the camera), so she
@@ -239,7 +240,7 @@ export class HouseRoomsView {
   /** A line for over her decks, said at the next frame (sayAtDecks). */
   private decksLine: { at: number; line: string } | null = null;
   private readonly labels: { el: HTMLDivElement; x: number; z: number }[] = [];
-  /** The furniture drawn as art (render/houseFurniture.ts): each piece's picture and its quad, baked a piece a frame as she first comes in. */
+  /** The furniture drawn as art (render/houseFurniture.ts): each piece's picture and its quad, drawn by the art workers ahead (preload, askPieces). */
   private readonly furniture = new THREE.Group();
   /** Named points of the furniture in the world this frame, "<id>.<mark>" (the mic's spot lamp: "microphone.spot"), for the view. */
   readonly marks = new Map<string, V3>();
@@ -697,7 +698,7 @@ export class HouseRoomsView {
     }
     // the Workshop's (render/workshopArt.ts): her broom resting on the bay while she's at it, on the lathe while she's at that (Ed,
     // 2026-10-23: "only while she's at the bay"; rules/stations.ts broomWhere), her parts on the pegboard;
-    // only in or near the Workshop (its pieces baked: they're baked as she nears them)
+    // laid on those pieces' marks once they're in (workshopFrame, below; made ahead under the loading screen: preload)
     const piece = (id: string) => { for (const p of this.pieces.values()) if (p.id === id && p.mesh.visible) return p; return null; };
     // (the hats on top of the hats' floor's own piece, wherever the house puts it)
     // (no hats' floor in Ed's arrangement: after the furniture of the half their spawn points lie in, hatsOrder's own fallback)

@@ -4,7 +4,7 @@
 
 ## `chart.mjs`
 
-The archipelago from above: for each world, the chart's layout today beside the new one, at one true scale: each island's patch outlined, and its land.
+The archipelago from above: for each world, the chart's layout before it beside the archipelago's, the game's now, at one true scale: each island's patch outlined, and its land.
 
 ```
 node tools/islands/chart.mjs [--worlds 0,1,2] [--outlines] [--out previews/islands/chart.png]

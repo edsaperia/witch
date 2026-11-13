@@ -116,8 +116,8 @@ describe("shot marks", () => {
     expect(Object.keys(M.kinds).sort()).toEqual([...ELEMENTS].sort());
     const shots = Object.entries(SPECIES_ATTACKS).filter(([, a]) => ["bolt", "lob", "runner"].includes(a.body?.kind ?? "bolt"));
     const marking = shots.filter(([, a]) => !(a.body?.kind === "lob" ? a.on?.land : a.on?.expire)).map(([k]) => k);
-    expect(shots).toHaveLength(37);
-    expect(marking).toHaveLength(29);
+    expect(shots).toHaveLength(38); // (37 and the moth, benched beside its butterfly since 2026-11-13: a kind kept whole keeps its shot)
+    expect(marking).toHaveLength(30);
     for (const [k, a] of shots) expect(["hurt", "slow", "rough"], k).toContain(markKind(M, k, a.body?.element, a.hit?.effect));
   });
 });

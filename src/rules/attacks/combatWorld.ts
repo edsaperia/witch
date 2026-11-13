@@ -1,5 +1,5 @@
 // The composable attacks' engine (rules/attacks/engine.ts) inside today's fight (rules/combat.ts): a creature given an attack in the
-// grammar (`Creature.spell`: the Fight Arena's, ?attack=; no species has one until Ed says which) winds up as any does, its telegraphs
+// grammar (`Creature.spell`: the Fight Arena's, ?attack=; or its species' own, rules/attacks/species.ts) winds up as any does, its telegraphs
 // shown and its cast queued with the engine as its windup starts, and released by the engine at its end; what it hits lands as any blow
 // does (rules/combat/hits.ts land: counters, knockback, slows, the witch's hits). Everything else fights exactly as before.
 import type { Creature, Level } from "../creatures";
@@ -86,8 +86,8 @@ function shelteredTouch(w: CombatWorld, t: Hittable, from: Creature | null): boo
  *  taking area hits double). */
 const deliveryOf = (body: string | undefined): Delivery => body === "melee" ? "melee" : body === "area" || body === "zone" ? "pulse" : body === "lob" || body === "mine" || body === "seed" ? "lob" : body === "beam" ? "beam" : "shot";
 
-/** The flat record a hit lands with (rules/combat/hits.ts reads its delivery for counters, and its modifier). Stun, pull, root and
- *  burn aren't landed yet (the plan's step 3). */
+/** The flat record a hit lands with (rules/combat/hits.ts reads its delivery for counters, and its modifier). Stun, pull and root
+ *  land after it (effects, below); a burn is the engine's own. */
 function blowOf(effect: Effect | undefined, delivery: Delivery): Attack {
   const A: Attack = { delivery, range: 0, windup: 0, cooldown: 0, modifier: "none" };
   if (effect?.knockback !== undefined) { A.modifier = "knockback"; A.knockback = effect.knockback; }

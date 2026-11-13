@@ -1,8 +1,8 @@
 // The sea chart as a view to mount anywhere (Echo, 2026-10-11: the treehouse's map table, "the world map is in the centre"; and
 // chart.html, chartPage.ts): the world as a disc of night sea in 3D, drawn as the game is (render/chart/seaChart.ts; Ed,
 // 2026-10-11: "show the map screen in the same way you show the island: pixellated, camera seeing it in 3D, your view moves
-// around as you select islands"): home in the middle, every island at its kind's bearing on its phase's ring (chartLayout.ts
-// islandAt) in its real outline (hotel, rules/islandShape.ts islandOutline: the land each grows to; made off the page's thread by
+// around as you select islands"): home in the middle, every island packed round it by the archipelago, roughly at its kind's bearing
+// and its phase's distance (chartLayout.ts islandAt; a ring a phase before Ed, 2026-10-12), in its real outline (hotel, rules/islandShape.ts islandOutline: the land each grows to; made off the page's thread by
 // chartOutlines.worker.ts, in phase order and the nearest the chosen first within a phase, its round coast, islandCoast, shown till it comes), a sigil only on
 // those she can travel to (Ed: "You can always see all the islands - you only see sigils on the ones that you can travel to"),
 // big enough to read (Ed: "large enough that the animal sigils show clearly on the islands"); her voyages as glowing lines on
@@ -59,8 +59,8 @@ export interface ChartViewOptions {
   /** Sail mode: the flight in to the island has begun (the chart over the game fills the screen for it). */
   onFly?: () => void;
   /** Sail mode, a sail in place (Ed, 2026-10-24, the sail's transition: "Never a frozen frame"): the next night made under the chart
-   *  as it flies, from the end of its first leg (the sail committed then: till then its back stops it, app/chartSail.ts), with the night's seed and where the flight will hand over (`at`, for its
-   *  first frames to be drawn there ahead); resolves once it's ready for the dive. The flight slows to wait for it (seaChart.ts
+   *  as it flies, from the end of its first leg (the sail committed then: till then its back stops it, app/chartSail.ts), with the night's seed and where the flight will hand over (`at`: nothing is
+   *  drawn there ahead now, the night only knows it's made under the flight); resolves once it's ready for the dive. The flight slows to wait for it (seaChart.ts
    *  FlyOptions, the tuning's arrive.hold), then `onSail` as ever. */
   onDepart?: (island: string, seed: number, at: FlightEnd["cam"] | null) => Promise<void>;
   onLandingDue?: (dueAt: number) => void;

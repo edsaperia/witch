@@ -1,5 +1,5 @@
 // The treehouse Studio's instruments on the page (Ed, 2026-10-23; rules/studio.ts, config/studio.json, ui/studioPanel.ts): at an
-// instrument (by nearness) every key plays it, and Esc (a gamepad's B) steps her away; the loop is the Studio's own, on the audio
+// instrument (E at it since Ed's playtest, 2026-10-26; by nearness before) every key plays it, and Esc or E (the pad's back, ○) steps her away; the loop is the Studio's own, on the audio
 // clock at its own tempo (the house's slowed time never touches it). Played on the game's own engine: one for the loop, the drum kit
 // and the mic, one for the synth, whose output runs through its live controls (the arrows: the filter, a wobble, grit). Made at the
 // first walk-up. Her notes sound exactly when pressed (Ed: never snapped to the loop).
@@ -176,7 +176,7 @@ export class StudioPlayer {
     this.held.clear(); this.latched = []; this.live.held.clear(); this.harmony = false;
   }
 
-  /** Esc at an instrument (a gamepad's B): she steps away. */
+  /** Esc or E at an instrument (the pad's back, ○): she steps away. */
   leave(): void { leaveInstrument(this.state); this.releaseAll(); this.panel.show(this.state); }
 
   private gamepad(): void {

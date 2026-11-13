@@ -35,7 +35,7 @@ describe("how far a thrown attack reaches", () => {
     expect(bodyReach(reachingFurther(plain, k))).toBeCloseTo(bodyReach(plain) * k, 0);
   });
 
-  for (const sp of ["fennec", "moth", "meerkat", "dormouse"]) { // (each fired from out of its reach before: the fennec 10 shots of 24, up to 6.8 m short)
+  for (const sp of ["fennec", "butterfly", "meerkat", "dormouse"]) { // (each fired from out of its reach before: the fennec 10 shots of 24, up to 6.8 m short)
     it(`a lone ${sp} fires at her only from where its shot reaches her`, () => {
       const g = newGame(5, TUNING);
       g.clock.paused = false; g.party.paused = true;

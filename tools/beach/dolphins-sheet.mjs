@@ -1,5 +1,5 @@
 // The east coast's dolphins (art/dolphins.js; Ed, 2026-10-07): every leap frame and splash frame at scale 8 on a night sea, then
-// a leap's arc laid out at game scale (scale 5, as px 5 shows it): splash, the frames along the arc, splash.
+// a leap's arc laid out at scale 5 (as ?px=5 shows it; the game's own pixel is 3, tuning pixelSize): splash, the frames along the arc, splash.
 //   node tools/beach/dolphins-sheet.mjs <out.png>
 import { openBrowser } from "../../art/headless.mjs";
 import { writeFileSync } from "node:fs";
@@ -15,7 +15,7 @@ const url = await b.page.evaluate(async () => {
   g.fillStyle = "#f4ecd8"; g.font = "14px monospace";
   let x = 10; fr.forEach(({ b }, i) => { g.fillText(`leap ${i}`, x, 18); g.drawImage(b.A, x, 30, b.w * 6, b.h * 6); x += b.w * 6 + 10; });
   x = 10; sx.forEach(({ b }, i) => { g.fillText(`splash ${i}`, x, 300); g.drawImage(b.A, x, 310, b.w * 6, b.h * 6); x += b.w * 6 + 20; });
-  // the arc at game scale (5): 4 m along, 2.5 m up, the water line at y 640
+  // the arc at scale 5 (?px=5): 4 m along, 2.5 m up, the water line at y 640
   const K = 5, ppm = 16 * 2 / 3, water = 640; g.fillStyle = "#2a5470"; g.fillRect(0, water, W, 2);
   const at = t => ({ x: 600 + (t - .5) * 4 * ppm * K, y: water - Math.sin(t * Math.PI) * 2.5 * ppm * K });
   [0, .5, 1].forEach((t, k) => { const s = sx[k === 1 ? 0 : 2]; if (k === 1) return; const p = at(t); g.drawImage(s.b.A, p.x - s.sp.origin.x * K, p.y - s.sp.origin.y * K, s.b.w * K, s.b.h * K); });

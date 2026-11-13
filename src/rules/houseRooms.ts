@@ -47,7 +47,7 @@ export interface HouseConfig {
   rooms: HouseRoom[]; corridors: (Rect & { id: string })[]; shape: HouseShape; terrace: TerraceLayout;
   objects: HouseObject[]; bed: { hold: number };
   layout?: { id: "ed"; baseline: HouseConfig; hatPoints: { id: number; x: number; z: number }[]; decor?: { id: string; x: number; z: number; rotation: number }[] };
-  /** Rooms to come, their floor and their door kept clear on the plan (the guests' bedrooms: Ed, 2026-10-21, docs/backlog/treehouse.md); not walked or drawn yet. */
+  /** Rooms to come, their floor and their door kept clear on the plan; not walked or drawn. None now: it held the guests' bedrooms (Ed, 2026-10-21) till they were built (config/house/rooms/bedroom2.json, bedroom3.json). */
   reserved?: (Rect & { id: string; label: string; door: Rect })[];
 }
 export const HOUSE_ROOMS = HOUSE as unknown as HouseConfig;
@@ -66,7 +66,7 @@ export interface HouseState { bedFrom?: number; lastBed?: string; hats?: string[
 interface At { x: number; z: number }
 
 /** The house's plan turned (Ed, 2026-10-21: "more of an isometric view"): the rooms, corridors and objects are laid out square on
- *  a plan turned `turn` degrees about the hub's centre (house.json; 45: each room's floor a diamond on the screen, two of its walls
+ *  a plan turned `turn` degrees about the hub's centre (config/house/base.json; 45: each room's floor a diamond on the screen, two of its walls
  *  behind it, as the creator's bedroom), while the hub and balcony, and her place and her keys, stay the world's. Plan to world:
  *  the plan's x runs north-east and its z south-east at 45. */
 export function fromPlan(at: At, x: number, z: number, turn = HOUSE_ROOMS.turn ?? 0): { x: number; z: number } {
