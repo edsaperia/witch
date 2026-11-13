@@ -42,6 +42,19 @@
    "decision": "Element colours by default, as a trial (Ed, 2026-11-13: \"Element coloured warning shape on the ground\", \"Let's try element colours and see.\")"
   },
   {
+   "name": "projection",
+   "values": [
+    "old"
+   ],
+   "does": "The placed sigils' projection over the canopy as it was, to compare: its glyph at opacity 0.65 of the ground sigils' dimmed colour, its column of light a faint dot every 1.5 m.",
+   "group": "compare",
+   "since": "2026-11-13",
+   "decision": "Ed, 2026-11-13: \"I'd like them to be more visible at treetop mode\"",
+   "readIn": [
+    "src/render/leash/projection.ts"
+   ]
+  },
+  {
    "name": "dancestones",
    "values": [
     "old"
@@ -75,6 +88,19 @@
    "since": "2026-11-11",
    "readIn": [
     "src/render/drawOrder.ts"
+   ]
+  },
+  {
+   "name": "edgefade",
+   "values": [
+    "old"
+   ],
+   "does": "The fading edges as they were, to compare: the grass's fade at the edge of her light and the scenery's dithered far edge are dithers fixed to the screen (not each tuft's and tree's own), the scenery's radius sets off at full speed when the frame rate drops or recovers (not from rest), and the string lights are cut whole at half the fade (not bulb by bulb).",
+   "group": "compare",
+   "since": "2026-11-13",
+   "decision": "Ed, 2026-11-13: \"6 sounds good; scenery should fade rather than pop\"",
+   "readIn": [
+    "src/render/edgeFade.ts"
    ]
   },
   {

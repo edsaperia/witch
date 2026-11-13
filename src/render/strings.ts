@@ -9,6 +9,7 @@ import { stringsFor, type StringLine } from "../rules/strings";
 import { garlandPoint } from "../rules/crown";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { SPRITE_UNIFORMS } from "./sprites";
+import { EDGE_UNIFORMS } from "./edgeFade";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { areaNeons } from "../rules/partyDressing";
 import { partyZones } from "../rules/party";
@@ -44,14 +45,16 @@ void main() {
 }`;
 
 const BULB_FRAG = /* glsl */ `
-uniform float uTwinkle, uChase;
+uniform float uTwinkle, uChase, uEdgeOld;
 varying vec3 vColour;
 varying vec3 vWorld;
 varying float vOn;
 varying vec2 vB;
 ${LIGHT_GLSL}
 void main() {
-  if (vOn < 0.5 || sceneryFade(vWorld) < 0.5) discard; // scenery: gone past the scenery budget's edge
+  // scenery: gone past the scenery budget's edge, bulb by bulb over its fade (Ed, 2026-11-13: "scenery should fade rather than
+  // pop"; render/edgeFade.ts. ?edgefade=old: the whole string cut at half the fade)
+  if (vOn < 0.5 || sceneryFade(vWorld) < (uEdgeOld > 0.5 ? 0.5 : 0.02 + 0.96 * fract(vB.x * 5.17 + vB.y * 0.61803))) discard;
   if (partyOff(vWorld) > fract(vB.x * 7.31 + vB.y * 0.37)) discard; // the party's over: bulb by bulb out as the front passes
   float b = 1.0 - uTwinkle * 0.5 * (1.0 + sin(uTime * (1.3 + vB.x) + vB.x * 40.0));
   if (fract((vB.y - uTime * uChase) / 60.0) < 0.06) b = 1.4;  // a chase running along now and then
@@ -72,10 +75,13 @@ void main() {
 }`;
 
 const WIRE_FRAG = /* glsl */ `
+uniform float uEdgeOld;
 varying vec3 vWorld;
 ${LIGHT_GLSL}
 void main() {
-  if (sceneryFade(vWorld) < 0.5) discard;
+  // (its wire with them, in half-metre lengths that stay where they are on the ground)
+  vec2 cell = floor(vWorld.xz * 2.0);
+  if (sceneryFade(vWorld) < (uEdgeOld > 0.5 ? 0.5 : 0.02 + 0.96 * fract(sin(dot(cell, vec2(127.1, 311.7))) * 43758.5453))) discard;
   gl_FragColor = vec4(haze(vec3(0.03, 0.025, 0.04), vWorld), 1.0);
 }`;
 
@@ -205,7 +211,7 @@ export class StringLightsView {
   constructor(private scene: THREE.Scene, private game: Game) {
     const L = game.tuning.stringLights;
     this.palette = L.palette.map(h => new THREE.Color(h));
-    const shared = { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uWind: { value: game.tuning.canopyShadow.wind * 1.5 } };
+    const shared = { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...EDGE_UNIFORMS, uWind: { value: game.tuning.canopyShadow.wind * 1.5 } };
     this.bulbMat = new THREE.ShaderMaterial({ vertexShader: BULB_VERT, fragmentShader: BULB_FRAG, uniforms: { ...shared, uRes: SPRITE_UNIFORMS.uRes, uNear: { value: 240 }, uTwinkle: { value: L.twinkle }, uChase: { value: L.chaseSpeed } } });
     this.wireMat = new THREE.ShaderMaterial({ vertexShader: WIRE_VERT, fragmentShader: WIRE_FRAG, uniforms: shared });
     this.moteMat = new THREE.ShaderMaterial({ vertexShader: MOTE_VERT, fragmentShader: MOTE_FRAG, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRise: { value: game.tuning.party.motes.to - game.tuning.party.motes.from } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });

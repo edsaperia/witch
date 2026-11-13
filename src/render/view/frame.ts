@@ -31,6 +31,7 @@ import { hasRune } from "../../rules/creatureStates";
 import { SHADOW_TINT } from "../shadows";
 import { MAX_FIRES, TRUNK_SHADOW_UNIFORMS } from "../trunkShadows";
 import { stepBudget } from "../../rules/budget";
+import { edgeFadeOld } from "../edgeFade";
 import { keepUnderBudget } from "./gpuBudget";
 import { leyDrawnTo, RING_AFTER, shaderPulse } from "../leylines";
 import { routeSeen } from "../../rules/hatSpells";
@@ -93,7 +94,7 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
     // The scenery budget follows the real frame rate (only frames that are drawn count).
     if (draw) {
       const now = performance.now();
-      if (a4ViewHost.lastReal) a4ViewHost.budget = stepBudget(a4ViewHost.budget, (now - a4ViewHost.lastReal) / 1000, t);
+      if (a4ViewHost.lastReal) a4ViewHost.budget = stepBudget(a4ViewHost.budget, (now - a4ViewHost.lastReal) / 1000, t, !edgeFadeOld()); // (its radius eased: render/edgeFade.ts)
       a4ViewHost.lastReal = now;
     }
     if (a4ViewHost.sceneryFixed !== null) a4ViewHost.budget.radius = Math.min(t.haze.far, Math.max(1, a4ViewHost.sceneryFixed));
