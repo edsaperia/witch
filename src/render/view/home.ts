@@ -333,7 +333,7 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
       list.push({ x: p.x - U.x * d, y: -U.y * d, z: p.z - U.z * d, frame: f, flip, sx: 1 - S.thin * c, sy: 1 + S.up * c, glow: c, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp) });
       // its dots' glow (Ed, 2026-10-09: "They should glow"): each dot's middle in the world, stretched with the stone, for the
       // soft halos LeashView draws (drawRingGlows), brighter as it charges
-      for (const q of A.stoneDots?.[sk] ?? []) {
+      for (const q of dance ? [] : A.stoneDots?.[sk] ?? []) { // (the dance stones have no dots: Ed, 2026-11-13, "drop them")
         const a = ((flip ? f.w - q.x : q.x) - f.w / 2) * mpp * (1 - S.thin * c), b = (f.h - q.y) * mpp * (1 + S.up * c);
         glows.push({ x: p.x - U.x * d + R.x * a + U.x * b, y: -U.y * d + R.y * a + U.y * b, z: p.z - U.z * d + R.z * a + U.z * b, k: (1 + c) * (dance ? DANCE_GLOW.k : 1), s: dance ? DANCE_GLOW.size : 1 });
       }

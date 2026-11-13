@@ -2,8 +2,8 @@
 // speakers) look too similar to speakers. They should be more knee height like in this reference image."; his reference a modern
 // stone circle on a lawn). Its traits, not the photo: low (knee to thigh height on her), as wide as tall or wider, rounded egg and
 // dome boulders, smooth and weathered, pale grey to buff, a little lichen-mottled, no two alike (upright eggs, squat domes, a
-// couple low and flat), each sat in a little worn ground. They keep the old ring stones' three glowing dots (Ed, 2026-10-08:
-// "three glowing dots in a vertical stack, hinting at the speaker that will replace it"), a pixel each, up the side we see.
+// couple low and flat), each sat in a little worn ground. Plain: the old ring stones' three glowing dots (Ed, 2026-10-08) are dropped (Ed, 2026-11-13,
+// asked whether to keep them at a pixel each: "drop them").
 // The stones as they were (an area's rune stone at half its width, as tall as a speaker): art/areas.js runeStone, the link's
 // ?dancestones=old.
 import { M, rng, hash2, bake, defaultCanvas } from "./core.js";
@@ -63,14 +63,15 @@ function danceStoneModel(F, px) { // px: a pixel in the model's units (her heigh
 export function danceStone(st, { form = 0, makeCanvas = defaultCanvas } = {}) {
   const F = danceStoneForm(form), s = witchHeight(st), { m, dots } = danceStoneModel(F, 1 / s);
   const R = render(m, { scale: s, yaw: 0 }), sp = R.sp, at = p => (([x, y]) => ({ x: +x.toFixed(1), y: +y.toFixed(1) }))(R.project(p));
-  // its dots: a pixel each, stamped where they land (on the stone's own pixel nearest, never two in a row touching)
+  // where the old ring stones' dots would sit (on the stone's own pixel nearest): no longer drawn (Ed, 2026-11-13: "drop them"),
+  // kept only as the height its speaker springs from (render/view/home.ts)
   const lit = [], isStone = (x, y) => [M.STONE, M.STONED, M.BODY2, M.MOSS].includes(sp.get(x, y));
   for (const q of dots.map(at)) {
     let x = Math.floor(q.x), y = Math.floor(q.y);
     while (lit.length && y >= lit[lit.length - 1].y - 1.5) y--;
     for (let k = 0; k < 4 && !isStone(x, y); k++) y--;
     if (!isStone(x, y)) continue;
-    sp.recolour(x, y, M.RUNE); lit.push({ x: x + .5, y: y + .5 });
+    lit.push({ x: x + .5, y: y + .5 }); // (not drawn: Ed, 2026-11-13, of the three dots, "drop them"; kept as the place its speaker springs from)
   }
   const stone = danceMix(DANCE_GREY, DANCE_BUFF, F.buff);
   const colours = { [M.STONE]: stone, [M.STONED]: stone.map(c => Math.round(c * .78)), [M.BODY2]: danceMix(stone, [196, 200, 168], .6), [M.MOSS]: [96, 124, 70], [M.BARK2]: [84, 72, 52], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: [80, 230, 255] };
