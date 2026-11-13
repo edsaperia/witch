@@ -16,16 +16,16 @@ const home = (found: string[], world = 0): Tuning => ({ ...TUNING, map: { ...TUN
 const allAreas = (map: ReturnType<typeof generateMap>) => new Set([...areas(map).keys(), ...map.specialSites.map(s => s.cell.join(","))]);
 const areas = (map: ReturnType<typeof generateMap>) => new Map(map.cells.filter(([x, y]) => x !== map.centreCell[0] || y !== map.centreCell[1]).map(([x, y]) => [`${x},${y}`, AREA_TYPES[map.typeOf(x, y)].creature]));
 /** Later-phase islands found (none of home's starting kinds): 5 of them grow home to 6, 7 to 8 (one starting kind kept on). */
-const FOUND5 = ["beetle", "otter", "moth", "owl", "toad"], FOUND7 = [...FOUND5, "bear", "lynx"];
+const FOUND5 = ["beetle", "otter", "butterfly", "owl", "toad"], FOUND7 = [...FOUND5, "bear", "lynx"];
 
 describe("home grows with the islands she's found", () => {
   it("knows home's 10, then each kind found with an area type, in the order found, none twice (the zoo's); home is the found ones, at least 5", () => {
     expect(knownKinds()).toEqual(homeKinds());
     expect(knownKinds(["beetle"]).length).toBe(11);
     // (a home kind found is known already; a placeholder is never known)
-    expect(knownKinds(["beetle", "fox", "unknown-01", "otter", "moth", "otter"])).toEqual([...homeKinds(), "beetle", "otter", "moth"]);
-    expect(foundKinds(["beetle", "fox", "unknown-01", "otter", "moth", "otter"])).toEqual(["beetle", "fox", "otter", "moth"]);
-    expect([homeSize([]), homeSize(["beetle", "otter", "moth"]), homeSize(FOUND5), homeSize(FOUND7)]).toEqual([5, 5, 6, 8]);
+    expect(knownKinds(["beetle", "fox", "unknown-01", "otter", "butterfly", "otter"])).toEqual([...homeKinds(), "beetle", "otter", "butterfly"]);
+    expect(foundKinds(["beetle", "fox", "unknown-01", "otter", "butterfly", "otter"])).toEqual(["beetle", "fox", "otter", "butterfly"]);
+    expect([homeSize([]), homeSize(["beetle", "otter", "butterfly"]), homeSize(FOUND5), homeSize(FOUND7)]).toEqual([5, 5, 6, 8]);
   });
 
   it("5 -> 6 -> 8 areas at home: the first ones kept, each new one an area further out, the shape the world's", () => {

@@ -2,10 +2,11 @@
 // call that draws one. Each is built in 3D (creatures3d.js, model3d.js) and seen in
 // three-quarter view from above; it faces right and the game mirrors it.
 import { M, hsv2rgb, rng } from "./core.js";
+import { seedId } from "./creatures/renamed.js"; // (a renamed kind keeps the texture its old id seeded)
 import { GENOMES, GENOME_BY_ID, speciesOf, selectedCreatureGenome } from "./genome/index.js";
 import { textureSprite } from "./genome/texture.js";
 import { napForm } from "./naps.js";
-export const textureSeed = id => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) & 0xffff;
+export const textureSeed = id => [...seedId(id)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) & 0xffff;
 import { withForm, withGear, withTexture, withView, viewKey, height3d, quad3d, owl3d, hedgehog3d, toad3d, troll3d, raven3d, heron3d, HERON_GAIT, bat3d, mole3d, sentinel3d, armadillo3d, beetle3d, scarab3d, snail3d, woodlouse3d, snake3d, hydra3d, moth3d, spider3d, dragonfly3d, crab3d, rattlesnake3d, rattle3d, scorpion3d, penguin3d, quetzal3d } from "./creatures3d.js";
 // Every species is built in 3D (true three-quarter view, Ed 2026-10-03): four-legged ones by
 // quad3d, the others by a builder per body plan.

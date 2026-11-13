@@ -130,7 +130,7 @@ describe("mesh creatures", () => {
   Object.assign(GAITS, { cat: "bound", lynx: "bound", cheetah: "bound", snowleopard: "bound", lion: "trot", tiger: "trot", jaguar: "trot" }); // (batch B, the cats: kit/feline.js)
   Object.assign(GAITS, { bear: "trot", polarbear: "trot", rhino: "trot", elephant: "walk", beaver: "trot", flyingsquirrel: "bound" }); // (batch D, the heavy and the gnawing)
   Object.assign(GAITS, { salamander: "trot", komodo: "trot", crocodile: "trot", armadillo: "trot", toad: "bound", snake: "glide", rattlesnake: "glide" }); // (batch E, the cold-blooded: kit/sprawl.js, kit/serpent.js)
-  Object.assign(GAITS, { heron: "walk", raven: "walk", owl: "bound", penguin: "walk", moth: "fly", bat: "fly", dragonfly: "fly" }); // (batch F, wings: kit/bird.js, on the ground; a bird's fast pace flies, and the insects and the bat fly at any)
+  Object.assign(GAITS, { heron: "walk", raven: "walk", owl: "bound", penguin: "walk", butterfly: "fly", moth: "fly", bat: "fly", dragonfly: "fly" }); // (batch F, wings: kit/bird.js, on the ground; a bird's fast pace flies, and the insects and the bat fly at any)
 
   it("every kind says how it goes, and its stride is long enough to read as one (not a shuffle on the spot)", () => {
     for (const [species, levels] of Object.entries(PLANS)) levels.forEach((make, level) => {

@@ -19,6 +19,7 @@
 // leashing rune, or upright as the floating form in the leash stack over the witch's head.
 // The leash stack: a chain of springs that sways and trails behind her as she flies.
 import { hash2 } from "./core.js";
+import { seedId } from "./creatures/renamed.js"; // (a renamed kind keeps the circle its old id seeded)
 import { SPECIES } from "./creatures.js";
 import { L, A, D, C, E, at, stave, FOOT, mirror, pair, bow, wave, spiral, rays } from "./sigils/strokes.js";
 import { CREATURE_SIGILS, CREATURE_NEONS, CREATURE_BOLD } from "./creatures/index.js";
@@ -134,6 +135,7 @@ export const LEGEND_DETAIL = {
   rattlesnake: [...pair(L([.62, .26], [.6, .2])), D(.4, .6), D(.5, .66)],
   scorpion: [D(.5, .54), D(.5, .62), D(.5, .7)],
   snake: [D(.53, .46), ...[.5, .62, .74, .86].map(t => D(...at(.5, .54, .07 + .24 * t, t * 468)))],
+  butterfly: [...pair(C(.34, .7, .045), L([.45, .4], [.14, .24]))],
   moth: [...pair(C(.34, .7, .045), L([.45, .4], [.14, .24]))],
   marten: [...pair(A(.24, .24, .045, 110, 340), L([.42, .7], [.28, .72]))],
   bee: [...pair(L([.4, .3], [.2, .26], [.11, .29]), L([.4, .41], [.26, .48])), L([.45, .44], [.55, .44])], // a vein down each wing, one more band on its abdomen
@@ -174,7 +176,7 @@ export const LEGEND_DETAIL = {
 };
 // The circle, in a unit box (centre .5, .5), as stroke data like SIGILS, each tagged: "ring" (rings, cells, triangle,
 // octagon, medallions) or "rune" (the script, drawn thinner). tier: 2 full, 1 or 0 without the runes and cells.
-const sHash = id => { let h = 7; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) % 100003; return h; };
+const sHash = id => { let h = 7; for (const ch of String(seedId(id))) h = (h * 31 + ch.charCodeAt(0)) % 100003; return h; };
 const RUNE_ARMS = [[0, 1, .5, .72], [0, 1, -.5, .72], [0, .55, .5, .85], [0, .55, -.5, .25], [0, .3, .5, 0], [-.5, .5, .5, .5], [0, .75, .5, .45], [0, .2, -.5, .45], [-.5, .9, .5, .9]];
 // one made-up rune, n by seed, in local (u across -.5..5, v up 0..1): a stem and one or two arms, now and then a ring
 function runeLocal(n) {

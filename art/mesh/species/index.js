@@ -8,6 +8,7 @@ import { MESH as bear } from "./bear.js";
 import { MESH as beaver } from "./beaver.js";
 import { MESH as bee } from "./bee.js";
 import { MESH as boar } from "./boar.js";
+import { MESH as butterfly } from "./butterfly.js";
 import { MESH as cat } from "./cat.js";
 import { MESH as cheetah } from "./cheetah.js";
 import { MESH as crocodile } from "./crocodile.js";
@@ -53,4 +54,4 @@ import { MESH as toad } from "./toad.js";
 import { MESH as turtle } from "./turtle.js";
 import { MESH as wolf } from "./wolf.js";
 
-export const MESH_SPECIES = { arcticfox, armadillo, badger, bat, bear, beaver, bee, boar, cat, cheetah, crocodile, dormouse, dragonfly, elephant, elk, fennec, flyingsquirrel, fox, hare, hedgehog, heron, ibex, jaguar, komodo, lion, lynx, marten, meerkat, mole, moth, otter, owl, penguin, polarbear, raccoon, ram, rattlesnake, raven, redpanda, rhino, roe, salamander, snail, snake, snowleopard, squirrel, stag, stoat, tiger, toad, turtle, wolf };
+export const MESH_SPECIES = { arcticfox, armadillo, badger, bat, bear, beaver, bee, boar, butterfly, cat, cheetah, crocodile, dormouse, dragonfly, elephant, elk, fennec, flyingsquirrel, fox, hare, hedgehog, heron, ibex, jaguar, komodo, lion, lynx, marten, meerkat, mole, moth, otter, owl, penguin, polarbear, raccoon, ram, rattlesnake, raven, redpanda, rhino, roe, salamander, snail, snake, snowleopard, squirrel, stag, stoat, tiger, toad, turtle, wolf };

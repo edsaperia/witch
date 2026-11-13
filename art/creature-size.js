@@ -1,4 +1,5 @@
 import {witchSprite} from "./witch.js";
+import { seedId } from "./creatures/renamed.js"; // (a renamed kind keeps the motes its old id seeded)
 import {render} from "./model3d.js";
 import {sizeTargetPixels,SIZE_CLASSES,SIZE_CLASS_BY_ID} from "./genome/size-ranks.js";
 import {rng,uni} from "./core.js";
@@ -52,7 +53,7 @@ export function fitOccupiedCreature(model,options,S,level,st,decorate,measureOnl
   if(!(S.id==='snowleopard'&&S.sizes.motes?.[level])){
     const range=sizePixelRange(S.id,level,standingWitchHeight(st),st.creatureSizeCandidate===1);let scale=options.scale,lo=null,hi=null,best=null;
     const probePixels=(W,H)=>{
-      const r=rng(S.plan==='owl'?31:S.id.length*(S.q?7919:131)),points=[];
+      const r=rng(S.plan==='owl'?31:seedId(S.id).length*(S.q?7919:131)),points=[];
       for(let i=0;i<(S.sizes.motes?.[level]??0);i++){
         const x=Math.floor(uni(r,2,W-2)),y=Math.floor(uni(r,2,H*.6));
         for(const[dx,dy]of[[0,0],[1,0],[-1,0],[0,1],[0,-1]])points.push([x+dx,y+dy]);

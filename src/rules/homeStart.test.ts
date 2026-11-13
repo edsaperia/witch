@@ -124,7 +124,7 @@ describe("home on the map (rules/map.ts)", () => {
   }, 120000);
 
   it("grows outward as islands are found: the first areas kept, the found kinds on it, a legend still to an unfound phase-1 island", () => {
-    const m0 = generateMap(11, home()), found = ["beetle", "otter", "hedgehog", "moth", "fox", "owl"], m6 = generateMap(12, home(found));
+    const m0 = generateMap(11, home()), found = ["beetle", "otter", "hedgehog", "butterfly", "fox", "owl"], m6 = generateMap(12, home(found));
     const a0 = areas(m0), a6 = areas(m6);
     expect(a6.size).toBe(7); // (6 found, and one starting kind whose island is unfound)
     for (const k of found) expect([...a6.values()]).toContain(k);
@@ -160,7 +160,7 @@ describe("home on the map (rules/map.ts)", () => {
 
   it("the sea chart draws home at its size for what's found", () => {
     expect(homeShape(0, []).size).toBe(5);
-    expect(homeShape(0, ["beetle", "hedgehog", "fox", "owl", "moth", "otter"]).size).toBe(7);
+    expect(homeShape(0, ["beetle", "hedgehog", "fox", "owl", "butterfly", "otter"]).size).toBe(7);
     expect(homeShape(0, [...REAL_KINDS]).size).toBe(64);
   });
 });

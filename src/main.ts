@@ -141,6 +141,7 @@ import { forgetArrival, type Arrival } from "./app/arrival";
 import { shotParams } from "./app/shot";
 import type { FlightEnd } from "./render/chart/seaChart";
 import { restoreGame } from "./rules/nightSnapshot";
+import { renamedLink } from "./app/renamedLink";
 import { borrowedNightSaves, browserNightStore, clearSlotNights, captureNight, nightHasStarted, NightAutosave, savedNight, savedNightResumeLink, nightLinkConflicts, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
 import { Breadcrumbs, browserCommentStore, CommentBook } from "./app/playtestComments";
 
@@ -392,7 +393,7 @@ performance.mark("witch:main"); // (the load's steps, for timing the arrival: wi
   }
 }
 prewarmArtWorkers(); // (the art workers load their code while the night is made: render/assets.ts)
-const params = new URLSearchParams(location.search);
+const params = renamedLink(new URLSearchParams(location.search)); // (a kind renamed since the link was shared: app/renamedLink.ts)
 // Proof admission belongs to this incoming page, never a saved night's later parameter restoration.
 const phoneEnabled = telephoneEnabled(params), phoneCallsEnabled = telephoneCallsEnabled(params);
 setEdLayoutActive(usesEdLayout(params));
@@ -402,7 +403,7 @@ installTelephone(phoneEnabled);
  *  for its art (nothing in the house waits on it since the oak; with ?artdelay=<s>, slowly), to see the mist roll away. */
 const mistGateOff = params.get("mistgate") === "0";
 /** The link as it came (before the boot puts its own ?seed= in): whether this load opens on the sea chart (app/opening.ts). */
-const bootLink = new URLSearchParams(location.search);
+const bootLink = renamedLink(new URLSearchParams(location.search));
 const restoringComment = params.get("restore") === "comment";
 const bootSlot = browserSaveSlots().active();
 let nightStore: NightStore | null = null, resumeSave: SavedNight | null = null, resumeGame: Game | undefined;
@@ -421,7 +422,7 @@ if (savesEnabled(bootLink, navigator.webdriver)) {
         resumeGame = restored; resumeSave = saved;
         if (restoringComment) await source.clear();
         for (const key of [...params.keys()]) params.delete(key);
-        for (const [key, value] of new URLSearchParams(saved.params)) params.append(key, value);
+        for (const [key, value] of renamedLink(new URLSearchParams(saved.params))) params.append(key, value);
         params.delete("arrive");
         forgetArrival();
         document.getElementById("arrive-still")?.remove();

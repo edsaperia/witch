@@ -22,6 +22,7 @@ export interface KindInfo { phase: number; bearing: number; dir: string; /** the
 export interface KindLine extends KindInfo { kind: string; slot: number }
 
 import { AREA_FOLDER_KINDS } from "../../art/areas/index.js";
+import { RENAMED as RENAMED_KINDS, kindNow as kindNowOf, seedId } from "../../art/creatures/renamed.js";
 
 /** The table by slot (throws on a slot missing or taken twice, or a kind twice: the check names the file). */
 export function assembleKinds(lines: KindLine[]): Record<string, KindInfo> {
@@ -40,12 +41,23 @@ export const KINDS_TABLE: Record<string, KindInfo> = assembleKinds(AREA_FOLDER_K
  *  old pinewood (Ed, 2026-11-11: "keep both, but swap the marten for the bee"; 2026-11-12: "make a new ID, keep the marten
  *  distinct, we may want it back one day", "marten is on the bench"). The newt: the turtle took its place, in the Fen (Ed, 2026-11-12: "newt for turtle"). A save that names the marten is not turned into the bee's: loading drops
  *  a kind the table doesn't know (app/chartSave.ts loadSave), so whoever had found the marten's island finds the bee's afresh.
- *  kinds.test.ts holds this list to the truth. */
-export const BENCH: readonly string[] = ["marten", "newt"];
+ *  kinds.test.ts holds this list to the truth.
+ *  The moth (Ed, 2026-11-13: "Note that the moth was replaced by a butterfly."; "can we actually rename it in the files and put the
+ *  moth on the bench?"): the swallowtail that had worn its id since 2026-10-23 is the kind `butterfly` now, with the moth's island,
+ *  numbers and attacks, and the moth is a moth again, here. Unlike the marten's, a save or link that names the moth IS turned into
+ *  the butterfly's (RENAMED, kindNow: the same creature under a new id, so nothing found is lost). */
+export const BENCH: readonly string[] = ["marten", "newt", "moth"];
+/** Kinds that changed their id, old to new (art/creatures/renamed.js, where the art reads it too): kindNow is what an old save or
+ *  link means by a name; seedName is the name a kind's seeded looks and sounds are drawn from (its island's shape, its voice, its
+ *  melody, its carving), the old one, so a renamed kind is in every way the kind it was. */
+export const RENAMED: Readonly<Record<string, string>> = RENAMED_KINDS;
+export const kindNow = (kind: string): string => kindNowOf(kind);
+export const seedName = (kind: string): string => seedId(kind);
 /** A kind that took another's place stands where the other stood whenever kinds are set in order by name (the deal of an island's
  *  legend areas, rules/map.ts; a legend's quest, rules/quest.ts), so the swap changes who lives there and nothing of the land or
- *  the deals: every seed's map is the map it was. The bee stands where the marten did (it sorts as "marten"). */
-export const PLACE_OF: Readonly<Record<string, string>> = { bee: "marten", turtle: "newt" };
+ *  the deals: every seed's map is the map it was. The bee stands where the marten did (it sorts as "marten"); the butterfly
+ *  where it stood itself, as the moth. */
+export const PLACE_OF: Readonly<Record<string, string>> = { bee: "marten", turtle: "newt", butterfly: "moth" };
 /** Kinds in order by name, each in its place (PLACE_OF): for `.sort(byPlace)` where a plain sort stood. */
 export const byPlace = (a: string, b: string): number => { const x = PLACE_OF[a] ?? a, y = PLACE_OF[b] ?? b; return x < y ? -1 : x > y ? 1 : 0; };
 /** Each kind's slot (the table is assembled in slot order). */

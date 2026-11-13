@@ -35,7 +35,7 @@ const { attackOf } = await load("/src/rules/combat/data.ts");
 const { MOVEMENT } = await load("/src/rules/movement.ts");
 
 const SPECIES = Object.keys(MOVEMENT.profiles);
-const DEFAULT_GROUPS = "wolf*4,boar*4,stag*4,fox*4,hare*4,bear*1,raven*4,owl*4,moth*4,spider*4,snake*4,salamander*2,toad*4,lynx*2,hedgehog*4,wolf*12,fox*12,bat*16,beetle*16,moth*16";
+const DEFAULT_GROUPS = "wolf*4,boar*4,stag*4,fox*4,hare*4,bear*1,raven*4,owl*4,butterfly*4,spider*4,snake*4,salamander*2,toad*4,lynx*2,hedgehog*4,wolf*12,fox*12,bat*16,beetle*16,butterfly*16";
 const GROUPS = (process.argv.includes("--all") ? SPECIES.flatMap(s => [`${s}*1`, `${s}*4`]).concat(["wolf*12", "fox*12", "bat*16", "beetle*16", "moth*16"]) : list(arg("groups", DEFAULT_GROUPS)))
   .map(s => { const [sp, n] = s.split("*"); return { sp, n: +(n ?? 4) }; });
 
