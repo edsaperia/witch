@@ -83,7 +83,11 @@ async function measure(browser, url, sha, candidate) {
       const pin = guide.pin();
       return game.clock.time > 2 && game.wake?.open && game.party.spellAt === null && pin.key.startsWith('dress:') &&
         (pin.key.includes('basin') || pin.key.includes('dressingTable')) /* (her first morning's first pin: the basin since Ed, 2026-11-07, the dressing table in a baseline before) */ && pin.strength > 0 && view.pins.size > 0;
-    }, null, wakeWait);
+      // (15 minutes, as the load's own wait: 2 s of game time in her bedroom is minutes on the software renderer, and about twice as
+      // many since 2026-11-13, when the art workers' canvases went to the CPU (render/artWorker.ts) and the island's trees stopped
+      // waiting behind the game's drawing: all of its art is in and drawn by now, 303 draws a frame where 252 were, so each frame
+      // takes longer here; 300 s timed out on CI at 19c9696)
+    }, null, { ...wakeWait, timeout: 900000 });
     await page.evaluate(tracePixels => {
       const view = window.witch.view, render = view.render.bind(view);
       const probe = window.pauseProbe = { draws: 0, sample: false, pixels: null };
