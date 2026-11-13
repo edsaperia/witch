@@ -13,8 +13,9 @@
    "decision": "Ed, 2026-11-13: \"I'd like them to be more visible at treetop mode\"",
    "readIn": [
     "src/render/leash/projection.ts"
-   },
-   {
+   ]
+  },
+  {
    "name": "dancestones",
    "values": [
     "old"
