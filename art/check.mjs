@@ -310,9 +310,16 @@ const SPRITE_CHECKS = async ({ names, only, candidate }) => {
       if (!(hold.anchors.bar && help.anchors.pair && tw.anchors.pair)) bad.push("twirl/limbo anchors");
       for (let f = 0; f < P.limbo.frames; f++) { const top = G.witchModel({ pose: "limbo", frame: f }).anchors.top; if (!(top && top[1] < G.LIMBO_BAR - .02)) bad.push(`limbo ${f} top ${top && top[1].toFixed(2)} not under the bar ${G.LIMBO_BAR}`); }
     }
-    const counts = Object.fromEntries(Object.entries(P).map(([k, v]) => [k, v.frames])), want = { stand: 3, idle: 3, walk: 6, idleBroom: 3, walkBroom: 6, land: 3, takeoff: 3, talk: 4, placeSigil: 3, liftSigil: 3, sit: 2,
+    // The poses checked are the ones the art defines (WITCH_FOOT_POSES), so a new pose is drawn and checked above without editing this list
+    // (the nightly art check failed from 2026-11-08 to 2026-11-12 because inBed, bedStretch and brush were missing from a fixed list here).
+    // `pinned` holds the frame counts other code and Ed's briefs rely on: each must still be defined with that count; a pose not in it is
+    // still drawn and checked, only its count is free.
+    const pinned = { stand: 3, idle: 3, walk: 6, idleBroom: 3, walkBroom: 6, land: 3, takeoff: 3, talk: 4, placeSigil: 3, liftSigil: 3, sit: 2, inBed: 2, bedStretch: 2, brush: 2,
       twoStep: 4, bounce: 2, shuffle: 4, spin: 4, headbang: 2, jump: 3, dancePair: 4, holdHands: 2, hug: 2, highFive: 2, laugh: 3, drink: 4, run: 4, sitGround: 2, stargaze: 2, conga: 4, twirl: 4, twirled: 4, limboHold: 2, limboHelp: 2, limbo: 4, dj: 20 };
-    res.push({ what: "witch on foot: stand (3), idle (3) and walk (6) with no broom and with it carried (idleBroom, walkBroom), land and takeoff (3 each), talk (4), placeSigil and liftSigil (3 each), sit (2), and the party's 21 (7 dances with the limbo, dance with a partner, hold hands, hug, high-five, laugh, drink, run, sit on the ground, stargaze, conga, twirl and twirled, the broom limbo's two holders), towards and away, at her ordinary scale, standing, no NaN; hand and hat-tip anchors inside, and the pairs' meeting anchors, the limbo dancer under the bar; reaching up above her hat, down to the ground", good: !bad.length && JSON.stringify(counts) === JSON.stringify(want), info: bad.join(", ") || Object.entries(counts).map(([k, n]) => k + " " + n).join(", ") });
+    for (const [pose, n] of Object.entries(pinned)) if (P[pose]?.frames !== n) bad.push(`${pose} ${P[pose] ? P[pose].frames + " frames, not " + n : "missing"}`);
+    for (const [pose, { frames }] of Object.entries(P)) if (!(Number.isInteger(frames) && frames > 0)) bad.push(`${pose} frames ${frames}`);
+    const counts = Object.entries(P).map(([k, v]) => `${k} ${v.frames}`), own = Object.keys(P).filter(k => !P[k].party), party = Object.keys(P).filter(k => P[k].party), free = Object.keys(P).filter(k => !(k in pinned));
+    res.push({ what: `witch on foot: all ${Object.keys(P).length} poses the art defines (${own.length} of hers: ${own.join(", ")}; the party's ${party.length}: ${party.join(", ")}), the pinned ones at their frame counts, towards and away, at her ordinary scale, standing, no NaN; hand and hat-tip anchors inside, and the pairs' meeting anchors, the limbo dancer under the bar; reaching up above her hat, down to the ground`, good: !bad.length, info: bad.join(", ") || counts.join(", ") + (free.length ? `; counts not pinned: ${free.join(", ")}` : "") });
   });
   task("witch-walk", async () => { // on foot indoors (Ed, 2026-10-21: "we can give her standing and walking art"): idle (3) and walk (6), side-on both ways and heading up and down the screen,
     // at her ordinary scale, standing, no broom, no NaN, hand and hat-tip anchors inside, every walk frame different

@@ -1,0 +1,1 @@
+export const LEGEND_TURTLE = { ground: .2, droop: .4, drop: [], over: { moss: .45, lichen: .2, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 3 } }; // drawn into its shell and sunk at the water's edge like a mossed boulder

@@ -130,6 +130,8 @@ uniform vec3 uMoonRoad; // the sky's moon on the screen (its x, a fraction from 
 // uLegendGlow: each one's ring brightening (0 to 1), when she stands in it.
 uniform vec4 uLegendRings[6];
 uniform float uLegendGlow[6];
+uniform float uLegendShow[6]; // how far each is there (1; the challenge circle's fading in or out: render/challenge.ts, Ed 2026-11-12)
+uniform float uChallengeShow; // how far it's there (1; fading in or out: render/challenge.ts, Ed 2026-11-12)
 uniform int uLegendRingCount;
 // Their floors (Ed, 2026-10-06: weathered, mossy stone with the legend's sigil carved into it, covered so you can't see it
 // clearly): uLegendCarve holds each nearby circle's carving mask, side by side (render/legendCarving.ts); uLegendFloor:
@@ -467,6 +469,7 @@ void main() {
     vec4 L = uLegendRings[i];
     float d = length(p - L.xy);
     if (d > L.z + 1.0) continue;
+    vec3 c0 = c; // (the ground under it, for its fade)
     float wob = (vnoise(p / 3.0) - 0.5) * 0.6, band = 1.0 - smoothstep(0.0, L.w * 0.5, abs(d + wob - (L.z - L.w * 0.5)));
     if (d < L.z - L.w) c = mix(c, c * vec3(0.86, 0.95, 0.9), 0.6);
     // Its floor: old flagstones, cracked, a few tilted or gone, the legend's sigil cut into them, and moss, grass and
@@ -526,6 +529,7 @@ void main() {
     float h = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
     if (band > 0.55 && h > 0.84) c = mix(vec3(0.42, 0.44, 0.47), vec3(0.62, 0.64, 0.66), fract(h * 7.0)) * (0.8 + 0.4 * vnoise(px));
     if (uLegendGlow[i] > 0.0) c += vec3(0.35, 0.55, 0.6) * band * uLegendGlow[i] * 0.35;
+    c = mix(c0, c, uLegendShow[i]);
   }
 #endif
   // The challenge circle's carving (uChallengeCarve): the island's sigil cut into its flagstones, the grooves' edges clean (its mask
@@ -533,6 +537,7 @@ void main() {
   // shadow and its far lip catching the light; a soft moonlit glow living in the grooves.
 #if !defined(GROUND_SPECIALIZED) || defined(GROUND_LEGENDS)
   if (uChallengeCarve.z > 0.0) {
+    vec3 c0 = c; // (the ground under it, for its fade)
     // (a little moonlight on its stone floor, so the circle reads as a circle before she steps in: Ed, 2026-11-04, on #1804)
     if (uChallengeLook.w > 0.0) { float fr = length(p - uChallengeCarve.xy) / uChallengeCarve.z; c *= 1.0 + uChallengeLook.w * (1.0 - smoothstep(0.97, 1.0, fr)); }
     vec2 cuv = (p - uChallengeCarve.xy) / (uChallengeCarve.z * 0.92) * 0.5 + 0.5;
@@ -544,6 +549,7 @@ void main() {
       c *= (1.0 - 0.5 * cg) * (1.0 - 0.35 * wall) * (1.0 + 0.45 * lipLit);
       c += uChallengeLook.rgb * cg * (1.0 - 0.5 * wall) * uChallengeCarve.w * 0.34;
     }
+    c = mix(c0, c, uChallengeShow);
   }
 #endif
   // The challenge circle's dancefloor (uFloor2): home's, the same art and tiles, scaled from home's rim to its radius.
@@ -887,6 +893,7 @@ export class Ground {
         ...lakes,
         uLegendRings: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uLegendGlow: { value: new Array(6).fill(0) },
+        uLegendShow: { value: new Array(6).fill(1) },
         uLegendRingCount: { value: 0 },
         uLegendCarve: { value: this.carve },
         uLakeSigil: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uLakeCarve: { value: this.lakeCarve },
@@ -896,7 +903,7 @@ export class Ground {
         uLegendDebris: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uLegendGrowth: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
-        uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles }, uDiscoTiles2: { value: this.discoTiles2 }, uFloor2: { value: new THREE.Vector4() }, uChallengeCarve: { value: new THREE.Vector4() }, uChallengeLook: { value: new THREE.Vector4(0.35, 0.72, 0.8, 0) }, uChallengeCarveMap: { value: this.challengeCarve },
+        uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles }, uDiscoTiles2: { value: this.discoTiles2 }, uFloor2: { value: new THREE.Vector4() }, uChallengeCarve: { value: new THREE.Vector4() }, uChallengeLook: { value: new THREE.Vector4(0.35, 0.72, 0.8, 0) }, uChallengeShow: { value: 1 }, uChallengeCarveMap: { value: this.challengeCarve },
         uDiscoGeom: { value: new THREE.Vector4(disco.tileM, disco.pitch, disco.size, disco.gridOrigin) }, uDiscoRim: { value: disco.rimOuter },
         ...pavement,
         uZooPlaza: { value: new THREE.Vector4(map.zoo?.layout?.home.x ?? 0, map.zoo?.layout?.home.z ?? 0, ZOO_CONFIG.plaza ?? 60, map.zoo?.layout ? 1 : 0) }, uPlazaSigil: { value: this.plazaSigil },
@@ -962,8 +969,9 @@ export class Ground {
 
   /** The challenge circle's carved sigil (render/challenge.ts challengeCarving): its middle, radius (0: none) and grooves' glow, and the
    *  species whose sigil it is (its mask written once a species: render/legendCarving.ts bigCarvingMask). */
-  setChallengeCarving(f: { x: number; z: number; r: number; glow: number; rgb?: readonly number[]; floor?: number; species: string } | null): void {
+  setChallengeCarving(f: { x: number; z: number; r: number; glow: number; rgb?: readonly number[]; floor?: number; species: string; show?: number } | null): void {
     const U = (this.mesh.material as THREE.ShaderMaterial).uniforms, v = U.uChallengeCarve.value as THREE.Vector4;
+    U.uChallengeShow.value = f?.show ?? 1;
     (U.uChallengeLook.value as THREE.Vector4).set(f?.rgb?.[0] ?? 0.35, f?.rgb?.[1] ?? 0.72, f?.rgb?.[2] ?? 0.8, f?.floor ?? 0);
     if (!f) { v.set(0, 0, 0, 0); return; }
     if (this.challengeCarveOf !== f.species) {
@@ -987,9 +995,9 @@ export class Ground {
   }
 
   /** The sleeping legends' clearings nearest her (up to 6): their middles, radii, ring widths, and each ring's brightening (0-1). */
-  setLegendRings(rings: readonly { x: number; z: number; r: number; edge: number; glow?: number }[], count = rings.length): void {
-    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, list = u.uLegendRings.value as THREE.Vector4[], glow = u.uLegendGlow.value as number[], n = Math.min(6, count);
-    for (let i = 0; i < n; i++) { const c = rings[i]; list[i].set(c.x, c.z, c.r, c.edge); glow[i] = c.glow ?? 0; }
+  setLegendRings(rings: readonly { x: number; z: number; r: number; edge: number; glow?: number; show?: number }[], count = rings.length): void {
+    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, list = u.uLegendRings.value as THREE.Vector4[], glow = u.uLegendGlow.value as number[], show = u.uLegendShow.value as number[], n = Math.min(6, count);
+    for (let i = 0; i < n; i++) { const c = rings[i]; list[i].set(c.x, c.z, c.r, c.edge); glow[i] = c.glow ?? 0; show[i] = c.show ?? 1; }
     u.uLegendRingCount.value = n;
   }
 

@@ -88,7 +88,8 @@ describe("stone at their posts (Ed, 2026-11-04: \"grey statues, all facing the c
 
   it("spread well apart on the same line, the youth nearer the middle, both nearer their column than the middle, on every size of circle (Ed, 2026-11-04: \"Further apart, same line\"; on #1827, \"If this doesn't fit, make the circle bigger.\")", () => {
     const S = TUNING.challenge!.statues!, C = TUNING.challenge!;
-    expect(S.gap).toBeGreaterThanOrEqual(18); // (3.5 before: the youth hidden behind its adult)
+    expect([S.first, S.gap]).toEqual([10, 10]); // (Ed, 2026-11-12: "change challenge.statues.first to 10 and challenge.statues.gap to 10", the youth
+    // partly behind its adult accepted: "10/10, overlap OK"; 3.5 and 19 before, 3.5 and 3.5 before that)
     expect(C.radius).toBeGreaterThan(36); // (36 before: grown so the two fit)
     expect(S.first + S.gap).toBeLessThanOrEqual(POST_REACH * C.radius); // (the circle fits them: the youth `gap` past its adult, not squeezed, on the smallest circle)
     for (const n of [3, 6, 10, 26, 64]) {
@@ -113,45 +114,8 @@ describe("stone at their posts (Ed, 2026-11-04: \"grey statues, all facing the c
     }
   });
 
-  it("the youth lifted up the screen past its adult's head from the game's camera, even on the column due south (Ed, 2026-11-04: \"Further apart, same line\")", () => {
-    // The game's camera looks north (rules/camera.ts: it stands south of her, +z), pitched down by the ground camera's angle (its
-    // zoom's range, and the start's zoom). Each statue's sprite is a billboard standing up the screen from its foot: a box `w` wide
-    // and `h` tall on screen, its foot lifted z sin(pitch) up the screen for every metre north. On the columns south of the middle
-    // the youth, nearer the middle, stands north of its adult, behind it: only the spacing lifts it clear. The boxes: frames of the fox
-    // island's statues as drawn (seed 2, measured in the built game, 2026-11-04): the tallest adult drawn (the hare: frames 15.4 and
-    // 10.7 m tall), the next tallest (the badger: 10.6 and 7.7; the fox, 10.4 and 7.4), and the widest (the mole: 17 and 10.7 m wide).
-    const HARE = { adult: { h: 15.4, hw: 5.7 }, youth: { h: 10.7, hw: 4.0 } }, REST = { badger: { adult: { h: 10.6, hw: 8.3 }, youth: { h: 7.7, hw: 5.2 } }, fox: { adult: { h: 10.4, hw: 7.3 }, youth: { h: 7.4, hw: 5.4 } }, mole: { adult: { h: 9.2, hw: 8.5 }, youth: { h: 6.4, hw: 5.3 } } };
-    const CAM = TUNING.camera.ground, Z = TUNING.camera.startZoom / Math.max(1, TUNING.camera.zoomSteps - 1);
-    const start = CAM.angleIn + (CAM.angleOut - CAM.angleIn) * Z, flattest = CAM.angleIn;
-    /** How much of `back`'s box the box of `front` (nearer the camera) leaves clear, as a share. */
-    const clearOf = (back: { x: number; z: number; h: number; hw: number }, front: { x: number; z: number; h: number; hw: number }, pitch: number): number => {
-      const s = Math.sin((pitch * Math.PI) / 180), box = (b: typeof back) => ({ x0: b.x - b.hw, x1: b.x + b.hw, y0: -b.z * s, y1: -b.z * s + b.h });
-      const B = box(back), F = box(front), ox = Math.max(0, Math.min(B.x1, F.x1) - Math.max(B.x0, F.x0)), oy = Math.max(0, Math.min(B.y1, F.y1) - Math.max(B.y0, F.y0));
-      return 1 - (ox * oy) / ((B.x1 - B.x0) * (B.y1 - B.y0));
-    };
-    /** The least share of each youth (behind its adult) and adult (behind its youth) left clear, every column of a 10-kind circle. */
-    const look = (S: { first: number; gap: number }, pairs: Record<string, typeof HARE>, pitch: number, radius = challengeCircle(10, TUNING).radius) => {
-      const n = 10, site = { x: 0, z: 0, radius }, kinds = Array.from({ length: n }, (_, i) => `k${i}`);
-      const posts = statuePosts(site, kinds, kinds.flatMap((k, i) => [{ id: 2 * i, species: k, level: 2 }, { id: 2 * i + 1, species: k, level: 1 }]), S);
-      let youth = 1, adult = 1;
-      for (const P of Object.values(pairs)) for (let i = 0; i < n; i++) {
-        const a = { ...posts.get(2 * i)!, ...P.adult }, y = { ...posts.get(2 * i + 1)!, ...P.youth };
-        if (a.z > y.z + 1e-9) youth = Math.min(youth, clearOf(y, a, pitch)); else adult = Math.min(adult, clearOf(a, y, pitch));
-      }
-      return { youth, adult };
-    };
-    const S = TUNING.challenge!.statues!;
-    // (at the start camera and steeper, every youth whose adult is drawn up to about 10 m tall all but wholly clear of it, every column)
-    for (const pitch of [start, CAM.angleOut]) expect(look(S, REST, pitch).youth, `${pitch} degrees`).toBeGreaterThan(0.9);
-    // (the hare, the tallest adult drawn: half its youth showing at the start camera, a third at the flattest; as far as the circle
-    // can grow for Ed's "make the circle bigger" and the smallest islands still hold it, home's still moving night to night: #1827)
-    expect(look(S, { hare: HARE }, start).youth).toBeGreaterThan(0.5);
-    expect(look(S, { hare: HARE }, flattest).youth).toBeGreaterThan(0.33);
-    // (on the columns north of the middle the youth is in front, lower on the screen: its adult left mostly clear)
-    for (const pitch of [flattest, start]) expect(look(S, { hare: HARE, ...REST }, pitch).adult).toBeGreaterThan(0.85);
-    // And before (3.5 m apart on the 36 m circle): the youth due south hidden behind its adult.
-    expect(look({ first: S.first, gap: 3.5 }, { hare: HARE, ...REST }, start, 36).youth).toBeLessThan(0.05);
-  });
+  // (the youth lifted up the screen past its adult's head from the game's camera, Ed 2026-11-04 "Further apart, same line": retired
+  // by Ed, 2026-11-12, choosing first 10 / gap 10 with "10/10, overlap OK": the youth may stand partly behind its adult)
 
   it("are the same posts for the same pack whatever order it comes in, night to night (deterministic)", () => {
     const g1 = game(), g2 = game();

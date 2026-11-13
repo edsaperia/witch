@@ -1066,9 +1066,32 @@
           "date": "2026-11-04",
           "quote": "youths should be closer to the middle of the circle than the elder. If this doesn't fit, make the circle bigger.",
           "rest": "his ruling on #1827, through the coordinator: column / adult / youth / centre on every column (no swap south of the middle), the youth lifted clear of its adult up the screen by the spacing, the circle grown to fit rather than either rule broken. `gap` 19 m on a 50 m circle (`challenge.radius`), the youth 22.5 m in, at the 0.45 reach: on #1807's 196 m areas the most at which it still moves night to night on home's 10-area island (one area from 54 m) and a 51-area one (from 51 m), every island holding its claim (the stoat island's misses from 58 m). On the column due south, at the start camera, every youth whose adult is drawn up to 10 m tall is all but clear of it (over 90%); the hare's (its adult 15.4 m) about half showing, about a third at the flattest camera."
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-12",
+          "quote": "change challenge.statues.first to 10 and challenge.statues.gap to 10",
+          "rest": "first 3.5 → 10 m, gap 19 → 10 m: the adult and youth posts 10 and 20 m in from their column"
         }
       ],
       "notes": "Posts: column / adult / youth / centre on every column, `first` and `first` + `gap` m in (squeezed evenly to fit with more than two a kind), all facing its middle, always nearer their column than the middle (never past 0.45 of the way in: Ed, 2026-11-04, \"they should be closer to their column than to the centre\"), the middle left open. The wake-up starts on the next bar line; they glow red (up to `red`) and their sigils on the columns glow from grey as it goes, and they wake on the bar `bars` bars on. Leaving the floor (stepping or flying off, or knocked down) before then stops it. Once awake they pursue her as any wild pack, on the ground anywhere, stepped off the floor or knocked out of the circle; only when every witch is knocked down or up in the treetops outside the challenge area do the ones not yet won walk back at `walkBack` times their pace and turn to stone again, reset to full (dazed ones too; ones running off left be), the invited staying won. While the fight's on, the won ones roam its area with their own happy roam out of the fight's way: `keepOut` m off the circle, and clear of the fighters as every area's won ones are (invites.wonAway) (Ed, 2026-11-04: \"they should roam the whole area, and avoid creatures that are fighting. Do this in a simple way - we just want them out of the way of the fight\"). Drawn `tint` of the way to the stone colour `grey`, with the moonlit rim. rules/challengeStatues.ts (the phases, the walk back, the reset, keeping the won out), rules/challenge.ts statuePosts and spawnPack (the posts), render/view/creatures.ts and render/statues.ts (the stone look, the wild watch's red over it while it wakes), render/challenge.ts (the grey sigils), platform/audio/sfxCues.ts (the wild watch's rising warning over the wake-up, its hit as they wake). Off: the pack wild from the start, watching her come down anywhere in its area as any wild area's."
+    },
+    "challenge.hide": {
+      "what": "the challenge circle hidden before the party starts, normal forest on its floor and nothing of it there to step onto, fading in over `fade` s as the party starts (the trees on its floor fading away), and out again, the trees back, once a lost night's party is over if it wasn't won.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-11-12",
+          "quote": "the challenge circle should be hidden before the party starts; there are just normal trees, no sign of it - fades into existence and the trees fade away when the party starts. The same happens in reverse when the party is over if the challenge circle has not been won yet.",
+          "rest": "through the coordinator; ?challengehide=0 for the old behaviour."
+        }
+      ],
+      "links": [
+        "src/rules/challenge.ts",
+        "src/rules/forest.ts",
+        "src/render/challenge.ts"
+      ],
+      "notes": "rules/challenge.ts stepReveal and challengeRevealed (its state: shown or not and since when; nothing can wake its statues or cast at it until it is shown and wholly faded in), revealK (the drawing's 0 to 1). The trees and bushes on its floor are in the forest from the start, marked as its (rules/forest.ts Plant.veil, grown as the woods round it would be) and drawn in batches of their own whose fade is 1 minus it (render/view/scenery.ts); the floor, carving, columns, lights and statues fade by it."
     },
     "challenge.analyser": {
       "what": "the music spell's analyser as she casts at the circle: `bars` bars from its middle out to `fill` of its radius at the music's loudest, `steps` dots a bar, grown with the circle.",

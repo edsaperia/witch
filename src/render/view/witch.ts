@@ -6,6 +6,7 @@ import { potionBlackout, potionFall } from "../potionChoreography";
 import { updatePotionCaption } from "../potionCaption";
 import { youthRising } from "../../rules/chains";
 import { witchRoomPass } from "../witchRoomPass";
+import { houseSlideShare } from "../terraceCut";
 import { depthWhereDrawn, houseWitchOverlay, setHouseWitchPass } from "../houseWitchPass";
 import { broomWhere, stationOf } from "../../rules/stations";
 import type { View } from "../view";
@@ -171,7 +172,8 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     wx += (q.x - wx) * m; wz += (q.z - wz) * m; wyy += (q.y - groundHeight(q.x, q.z) + (wy - deck.h) - wyy) * m; herScale += (q.scale - 1) * m;
     // Off the hub, the camera (render/view/camera.ts, next frame) follows where she's drawn, not her place in the rules: far from the
     // hub the art's floor runs away from the world's. Eased in over the first metres past the hub's wall.
-    const k = deck.house?.rooms ? Math.min(1, Math.max(0, (Math.hypot(w.x - deck.x, dz) - deck.r) / 3)) * m : 0;
+    // (whole wherever she stands on the house's floor, the Terrace too: render/terraceCut.ts; ?terracecut=old, the ramp as before)
+    const k = deck.house?.rooms ? houseSlideShare(Math.hypot(w.x - deck.x, dz) - deck.r, 0, v.seatK) * m : 0;
     if (k > 0) { const q0 = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, 0); v.houseCam.x = (q0.x - w.x) * k; v.houseCam.y = (q0.y - g0 - deck.h) * k; v.houseCam.z = (q0.z - w.z) * k; }
   }
   // A take-off the leashes won't allow (Ed, 2026-10-18: "you try and fly but get pulled down"; the "grounded" leash event,
@@ -417,7 +419,7 @@ export function groundedHop(s: number): number {
 /** How far (the Ent's art pixels, up its plane) the house's drawing is slid this frame (View sets v.houseShift by it before the Ent and
  *  the house are placed): off the Terrace, by her own place on the plane, so the room she's in is drawn at the Terrace's height (the
  *  oak's rooms run 75 m north and 50 south of it, and down the plane the south ones were drawn under the ground, the camera climbing
- *  away); eased in over the first metres past the Terrace, as the camera's following. The house's floors and furniture
+ *  away); on the Terrace too since the house is one room (Ed, 2026-11-12), eased by her rising and leaving her seat (render/terraceCut.ts). The house's floors and furniture
  *  (render/houseRooms.ts), its crown (render/crown.ts) and the Ent's own sprites, the Terrace's art and her decks
  *  (render/view/home.ts placeTreehouse), all slide by it together, so they stay one floor (Ed, 2026-10-26: the Terrace slid against the
  *  rooms as she walked them). */
@@ -425,8 +427,8 @@ export function houseShiftOf(v: View): number {
   const g = v.game, w = g.witch, T = v.assets.treehouse, deck = deckOf(g.map, g.tuning);
   if (!T?.ent || !deck?.house?.rooms || !w.perch) return 0;
   const ky = (T.seat.y - T.ent.deck.y) / Math.max(0.1, deck.seat.z - deck.z), dz = w.z - deck.z;
-  const off = Math.min(1, Math.max(0, (Math.hypot(w.x - deck.x, dz) - deck.r) / 3));
-  return -dz * ky * off;
+  // (whole on the Terrace as in the rooms, eased by her rising and her getting up from the decks' seat: render/terraceCut.ts)
+  return -dz * ky * houseSlideShare(Math.hypot(w.x - deck.x, dz) - deck.r, w.lift, v.seatK);
 }
 
 /** In bed (asleep, or her alarm ringing: `bedPose`) with her look not on her whole yet (View.lookDrawn: her nightie still being

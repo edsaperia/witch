@@ -117,3 +117,11 @@ The Terrace's art and the house's floor locked together.
 ```
 npm run build && node tools/house/terrace-lock.cjs   (SEED=123, ROOMS=terrace,dining,parlour,cloakroom,studio,boudoir, TOL=2, DIST=dist)
 ```
+
+## `terrace-walk.cjs`
+
+Walking from a room onto the Terrace and back, measured frame by frame.
+
+```
+npm run build && node tools/house/terrace-walk.cjs   (SEED=123, FROM=parlour, LINK= extra link switches e.g. "&terracecut=old",
+```
