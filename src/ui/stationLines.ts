@@ -19,7 +19,7 @@ import { TRAIL_PRESETS } from "../render/trailColours";
  *  render her from shoulders to top of her head, without hat"); the shoe rack's her legs ("shoes should show her legs, thighs down");
  *  the cloak pegs' all of her from behind, hat off ("cloak should be shown 3/4 from the back, hat removed"); the wardrobe's top and
  *  the bags alone ("include shoes and bags (though bags also has animations - keep those)"). A shelf not here: her whole. */
-export const CARD_SHOW: Readonly<Record<string, "bust" | "legs" | "back" | "jacket" | "bag">> = { hair: "bust", skin: "bust", face: "bust", earrings: "bust", shoes: "legs", cloak: "back", scarf: "back", jacket: "jacket", bag: "bag" };
+export const CARD_SHOW: Readonly<Record<string, "bust" | "legs" | "hips" | "back" | "jacket" | "top" | "bag">> = { hair: "bust", skin: "bust", face: "bust", earrings: "bust", shoes: "legs", trousers: "hips", cloak: "back", scarf: "back", jacket: "jacket", top: "top", bag: "bag" };
 
 /** Each station's panel's heading, by its home id (a guests' bedroom's piece by its home namesake's: rules/clothesPile.ts homeStation). */
 export const STATION_NAMES: Readonly<Record<string, string>> = { basin: "Basin", mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "Workbench", lathe: "Lathe", broomLift: "Hydraulic lift", pegboard: "Pegboard" };

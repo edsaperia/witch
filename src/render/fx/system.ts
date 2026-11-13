@@ -10,11 +10,26 @@ import { native, NATIVE_ON, type NativeFx } from "./native";
 import layerPolicy from "../../../config/fx/layers.json";
 import { sourcePattern, PATTERN_LOOK, type PatternLook } from "../lightPatternState";
 import { trimLightPatterns, writeLightPattern } from "../lightPatternUniforms";
-import { easeRoom, pickLights, SPELL_GLOW, type GlowLook } from "./spellGlow";
+import { easeRoom, pickLights, HER_LIGHTS, MAGIC_GLOW, magicGlowLook, SPELL_GLOW, type GlowLook, type MagicGlowTuning } from "./spellGlow";
 export const FX_QUALITY = { distortion:true, imprints:true, secondary:true, lightCap:settings.lightCap, particles:1 };
-/** fade: eased with its presence; slot: eased with its holding a light slot; spell: a creature's spell's (attackFx.glow.lights caps those). */
-type Light={x:number;y:number;z:number;reach:number;rgb:THREE.Vector3;strength:number;target:number;seen:number;score:number;fade:number;slot:number;spell:boolean;pattern?:boolean};
-type Burst={element:string;form:FxForm;x:number;y:number;z:number;level:number;size:number;at:number;life:number;seed:number};
+/** fade: eased with its presence; slot: eased with its holding a light slot; spell: a creature's spell's (attackFx.glow.lights caps
+ *  those); hers: her own cast magic's (first claim on the slots: spellGlow.ts HER_LIGHTS). */
+type Light={x:number;y:number;z:number;reach:number;rgb:THREE.Vector3;strength:number;target:number;seen:number;score:number;fade:number;slot:number;spell:boolean;hers:boolean;pattern?:boolean};
+/** hers: her own magic's (it glows as hers: MagicFx.her). */
+type Burst={element:string;form:FxForm;x:number;y:number;z:number;level:number;size:number;at:number;life:number;seed:number;hers:boolean};
+/** A streak of her magic's glow along a line on her clock (her blink's: from where she was to where she lands), fading over `life`. */
+type Streak={element:string;x0:number;z0:number;x1:number;z1:number;y:number;width:number;at:number;life:number};
+/** Whose light: 0 any effect's; 1 her own magic's (its strength attackFx.magicGlow.light's while her glow's on); 2 her cast magic's
+ *  (the same, and first claim on the light slots). */
+export type Mine=0|1|2;
+/** A native adapter's glow (config/fx/native.json `glow`; Ed, 2026-11-13: "extend"): its glowing core and halo `core` strong and
+ *  `size` m across (0: none, where a core would cover her or a sigil's glyph), its pool on the ground `pool` strong and `poolSize` m
+ *  across; `lift`: its core this far over where it's given (m; the ley line's spark burns 1 m over its light); `light`: its real
+ *  light's strength while her glow's on, in place of the adapter's own (the spark earns one: its own lights nothing to speak of);
+ *  `claim`: its light her cast magic's (first claim on the slots). */
+interface NativeGlow{core:number;size:number;pool:number;poolSize:number;lift?:number;light?:number;claim?:boolean}
+/** Past this in a glow instance's intensity: her own magic's (render/fx/batch.ts spellGlow). */
+const HER_DATA=10;
 const SYSTEMS=new WeakMap<THREE.Scene,MagicFx>();
 // The uniforms are shared: another scene's field must not be mistaken for our cached upload.
 let uploadedField:ImprintField|null=null;
@@ -34,6 +49,14 @@ export class MagicFx {
   /** The creatures' spell glow on (render/fx/spellGlow.ts; ?spellglow=0 off), for the captures' before and after on one frame. */
   get spellGlow():boolean {return SPELL_GLOW.on;}
   set spellGlow(on:boolean){SPELL_GLOW.on=on;}
+  /** Her own magic's glow on (spellGlow.ts MAGIC_GLOW; ?magicglow=0 off), flipped live the same way. */
+  get magicGlow():boolean {return MAGIC_GLOW.on;}
+  set magicGlow(on:boolean){MAGIC_GLOW.on=on;}
+  /** This frame's glow for her own magic (hers(), after begin): the tuning's attackFx.magicGlow after ?magicglow and Reduce
+   *  flashing; null, none (her magic as before). Pass it as an effect's `look` to make that effect glow as hers. */
+  her:GlowLook|null=null;
+  private mine=false;
+  private streaks:Streak[]=[];
   galleryPage=0;
   galleryElement:string|null=null;
   galleryTime:number|null=null;
@@ -66,9 +89,14 @@ export class MagicFx {
     this.batches.secondary.value=FX_QUALITY.secondary?1:0;this.batches.distort.value=FX_QUALITY.distortion&&!comfort.reduceFlashing?1:0;
     FX_UNIFORMS.uFxOn.value=this.enabled&&FX_QUALITY.imprints?1:0;
     FX_UNIFORMS.uFxTime.value=time;FX_UNIFORMS.uFxCalm.value=comfort.reduceFlashing?1:0;
-    this.stats.instances=0;this.spellCap=0;
+    this.stats.instances=0;this.spellCap=0;this.her=null;this.mine=false;this.batches.magicGlow.value.set(0,0,0,0);
   }
-  reset():void {this.field.reset();this.lights.clear();this.room=0;this.bursts.length=0;this.screen();this.screenAt=-Infinity;this.screenStrength=0;}
+  /** Her own magic's glow this frame (each frame after begin; without it her magic draws as before): the tuning's attackFx.magicGlow. */
+  hers(t:MagicGlowTuning|undefined):void {
+    const look=this.her=magicGlowLook(t,MAGIC_GLOW.on&&this.enabled,comfort.reduceFlashing);
+    this.batches.magicGlow.value.set(look?.core??0,look?.halo??0,look?.pool??0,0);
+  }
+  reset():void {this.field.reset();this.lights.clear();this.room=0;this.bursts.length=0;this.streaks.length=0;this.screen();this.screenAt=-Infinity;this.screenStrength=0;}
   get screenKick():number {
     if(!this.enabled||comfort.reduceFlashing)return 0;
     const phase=Math.max(0,(this.time-this.screenAt)/this.screenSeconds);
@@ -80,17 +108,18 @@ export class MagicFx {
    *  Never with Reduce flashing (screenKick). */
   kick(amount:number,seconds:number):void {this.screen(Math.max(0,amount),seconds,0.5);}
   /** A light of its own this frame (the party start's), by id, eased in and out as every effect's: `rgb` 0 to 1, `reach` metres,
-   *  `strength` at its brightest. Asked for each frame it's on. */
-  lamp(id:string,x:number,y:number,z:number,rgb:readonly number[],reach:number,strength:number):void {
+   *  `strength` at its brightest. Asked for each frame it's on. mine: her own magic's (Mine). */
+  lamp(id:string,x:number,y:number,z:number,rgb:readonly number[],reach:number,strength:number,mine:Mine=0):void {
     if(!this.enabled||!(strength>0.001)||!(reach>0))return;
     let light=this.lights.get(id);
-    if(!light){if(this.lights.size>=settings.pool)return;light={x,y,z,reach:0,rgb:new THREE.Vector3(),strength:0,target:0,seen:this.time,score:0,fade:0,slot:0,spell:false};this.lights.set(id,light);}
-    light.x=x;light.y=y;light.z=z;light.reach=reach;light.rgb.set(rgb[0],rgb[1],rgb[2]);
-    light.target=strength*(comfort.reduceFlashing?0.5:1);light.seen=this.time;
+    if(!light){if(this.lights.size>=settings.pool)return;light={x,y,z,reach:0,rgb:new THREE.Vector3(),strength:0,target:0,seen:this.time,score:0,fade:0,slot:0,spell:false,hers:false};this.lights.set(id,light);}
+    light.x=x;light.y=y;light.z=z;light.reach=reach;light.rgb.set(rgb[0],rgb[1],rgb[2]);light.hers=mine===2&&!!this.her;
+    light.target=strength*this.calm(mine);light.seen=this.time;
   }
   /** glow: its halo, ground anchor and light times their own (1 but for the creatures' attacks: attackFx.visibility.bloom). look: a
    *  creature's spell's glow (render/fx/spellGlow.ts: its glowing core and dithered halo, its pool on the ground, its light), null for
-   *  none; lit false: no light of its own (a lingering zone's tiles: the zone has one). */
+   *  none; lit false: no light of its own (a lingering zone's tiles: the zone has one). With her own magic's look (`her`): the same
+   *  pieces at her magic's strengths, smaller (a core mustn't cover her), its light hers. */
   draw(element:string,form:FxForm,x:number,y:number,z:number,level:number,size=1,alpha=1,phase=0,seed=0,tint:readonly number[]|null=null,intensity=intensityOf(level),glow=1,look:GlowLook|null=null,lit=true):void {
     if(!this.enabled || !(alpha>0.01) || Math.hypot(x-this.cx,z-this.cz)>140)return;
     const key=fxElement(element),el=elements[key],f=forms[form];
@@ -102,27 +131,38 @@ export class MagicFx {
     this.stats.instances++;
     // An airborne effect has a real ground anchor even when its core is above the canopy.
     if(!f.ground){this.data[0]=forms.zone.id;this.batches.add(x,0,z,Math.min(diameter*0.75,12),this.data,alpha*0.18*glow,true,tint,false);}
+    const mine=look!==null&&look===this.her;
     if(look){
       this.glowLook(look);this.glowData(f.id,key,intensity,phase,tint);
-      const hit=form==="burst"||form==="eruption";
-      if(!f.ground&&look.core+look.halo>0)this.batches.glowAt(x,y,z,diameter*(hit?0.26:0.62),this.data,alpha*(hit?0.8:1),tint);
+      const hit=form==="burst"||form==="eruption",wide=form==="aura"||form==="vortex"||form==="dome"||form==="pillar";
+      // (her own: a wide form's core a small one at its middle, not a ball its whole size over her)
+      if(!f.ground&&look.core+look.halo>0)this.batches.glowAt(x,y,z,diameter*(hit?0.26:mine&&wide?0.4:0.62),this.data,alpha*(hit?0.8:1),tint);
       // its pool under it: smaller and fainter the higher it flies (so the lit spot says how high it is), a hit's wide
-      if(look.pool>0)this.batches.poolAt(x,z,f.ground?diameter*1.15:Math.max(2.4,diameter*(hit?1:1.9)),this.data,alpha*(f.ground?0.6:Math.max(0.35,1-y/14)),tint);
+      if(look.pool>0)this.batches.poolAt(x,z,f.ground?diameter*1.15:Math.max(mine?3.4:2.4,diameter*(hit?1:mine&&wide?1.2:1.9)),this.data,alpha*(f.ground?0.6:Math.max(0.35,1-y/14)),tint);
     }
-    if(lit&&(!look||look.light>0))this.light(`${key}:${form}:${seed}`,x,y,z,key,intensity,alpha,tint,glow,look?look.light:0);
+    if(lit&&(!look||look.light>0))this.light(`${key}:${form}:${seed}`,x,y,z,key,intensity,alpha,tint,glow,look&&!mine?look.light:0,mine?2:0);
     if(FX_QUALITY.imprints && (form==="burst" || form==="zone" || form==="eruption" || form==="beam" || form==="projectile" || form==="vortex" || form==="pillar")) {
       this.field.stamp(x,z,Math.max(2,Math.min(18,diameter*0.6)),el.imprint as Imprint,intensity*alpha*(form==="projectile"?0.25:1));
     }
   }
-  emit(element:string,form:FxForm,x:number,y:number,z:number,level:number,size=1,life=1.2,seed=0):void {
+  /** hers: her own magic's (her blink's, the soundsystem spell's): it glows as hers while her glow's on. */
+  emit(element:string,form:FxForm,x:number,y:number,z:number,level:number,size=1,life=1.2,seed=0,hers=false):void {
     if(this.bursts.length>=settings.pool)this.bursts.shift();
-    this.bursts.push({element,form,x,y,z,level,size,at:this.time,life,seed});
+    this.bursts.push({element,form,x,y,z,level,size,at:this.time,life,seed,hers});
     if(level>=3&&size>=1)this.screen();
   }
   native(feature:NativeFx,x:number,y:number,z:number,amount=1,seed=0,tint:readonly number[]|null=null):void{
     if(!this.enabled||amount<=0.01||Math.hypot(x-this.cx,z-this.cz)>80)return;
-    const d=native[feature],key=fxElement(d.element);
-    if(d.light>0)this.light(`native:${feature}:${seed}`,x,y,z,key,d.intensity,Math.min(1,amount)*d.light,tint);
+    const d=native[feature],key=fxElement(d.element),G=(d as {glow?:NativeGlow}).glow,her=this.her;
+    const lit=her&&G?.light!==undefined?G.light:d.light;
+    if(lit>0)this.light(`native:${feature}:${seed}`,x,y,z,key,d.intensity,Math.min(1,amount)*lit,tint,1,0,G?.claim?2:1);
+    // Her own magic's glow (Ed, 2026-11-13: "extend"): its glowing core and dithered halo, and its pool on the ground under it
+    // (smaller and fainter the higher it is, as a creature's shot's), in its own colour (the tint).
+    if(her&&G){
+      const a=Math.min(1,amount);this.mine=true;this.glowData(forms[d.form as FxForm].id===forms.beam.id?forms.projectile.id:forms[d.form as FxForm].id,key,d.intensity,0,tint);
+      if(G.core>0&&her.core+her.halo>0)this.batches.glowAt(x,y+(G.lift??0),z,G.size,this.data,a*G.core,tint);
+      if(G.pool>0&&her.pool>0){const high=Math.max(0.35,1-y/14);this.batches.poolAt(x,z,G.poolSize*(0.6+0.4*high),this.data,a*G.pool*high,tint);}
+    }
     if(d.anchor>0){
       this.data[0]=forms.zone.id;this.data[1]=ELEMENT_KEYS.indexOf(key);this.data[2]=d.intensity;this.data[3]=0;
       this.batches.add(x,0,z,Math.min(5,forms[d.form as FxForm].size*1.5),this.data,d.anchor*Math.min(1,amount),true,tint,false);
@@ -181,12 +221,39 @@ export class MagicFx {
     if(look.pool>0)this.batches.poolAt(x,z,size*2.4,this.data,alpha,tint);
     if(look.light>0)this.light(`${key}:blow:${seed}`,x,y,z,key,intensity,alpha,tint,1,look.light);
   }
-  /** This frame's spell glow: its strengths to the glow layers, its light cap to the lights. */
-  private glowLook(look:GlowLook):void {this.batches.spellGlow.value.set(look.core,look.halo,look.pool,this.batches.spellGlow.value.w);this.spellCap=Math.max(this.spellCap,look.lights);}
-  /** The glow layers' data: form, element (past 100 when tinted: its colour the tint's), intensity, phase. */
-  private glowData(form:number,key:keyof typeof elements,intensity:number,phase:number,tint:readonly number[]|null):void {this.data[0]=form;this.data[1]=ELEMENT_KEYS.indexOf(key)+(tint?100:0);this.data[2]=intensity;this.data[3]=phase;}
+  /** A streak of her magic's glow from now (her blink's line, on the magic's clock): a glowing line `width` m wide at `y`, its pool
+   *  on the ground under it, fading over `life` s. Nothing without her glow. */
+  streak(element:string,x0:number,z0:number,x1:number,z1:number,y:number,width:number,life:number):void {
+    if(this.streaks.length>=8)this.streaks.shift();
+    this.streaks.push({element,x0,z0,x1,z1,y,width,at:this.time,life});
+  }
+  /** Her own magic's glow at a point, alone (a bar's tip of her decks' ring is drawn by its own layers; this for the rest): its
+   *  glowing core and halo `size` across at y, its pool `pool` m across (0: none). Nothing without her glow. */
+  herGlowAt(element:string,x:number,y:number,z:number,size:number,pool:number,alpha:number,tint:readonly number[]|null=null):void {
+    const her=this.her;if(!her||!(alpha>0.01)||Math.hypot(x-this.cx,z-this.cz)>140)return;
+    this.mine=true;this.glowData(forms.burst.id,fxElement(element),1,0,tint);
+    if(size>0&&her.core+her.halo>0)this.batches.glowAt(x,y,z,size,this.data,alpha,tint);
+    if(pool>0&&her.pool>0)this.batches.poolAt(x,z,pool,this.data,alpha,tint);
+  }
+  /** The glow layers' data for a piece of her own magic's glow drawn by a caller's own layers (FxBatches.extraGlow: her decks'
+   *  ring's): a new array each call (kept by the caller), or null without her glow. */
+  herData(element:string,tinted:boolean):number[]|null {
+    return this.her?[forms.burst.id,ELEMENT_KEYS.indexOf(fxElement(element))+(tinted?100:0),HER_DATA+1,0]:null;
+  }
+  /** This frame's spell glow: its strengths to the glow layers, its light cap to the lights. (Her own magic's: its strengths are
+   *  set once a frame, hers(); its lights aren't the creatures'.) */
+  private glowLook(look:GlowLook):void {
+    this.mine=look===this.her;if(this.mine)return;
+    this.batches.spellGlow.value.set(look.core,look.halo,look.pool,this.batches.spellGlow.value.w);this.spellCap=Math.max(this.spellCap,look.lights);
+  }
+  /** The glow layers' data: form, element (past 100 when tinted: its colour the tint's), intensity (past 10: her own magic's, its
+   *  strengths attackFx.magicGlow's), phase. */
+  private glowData(form:number,key:keyof typeof elements,intensity:number,phase:number,tint:readonly number[]|null):void {this.data[0]=form;this.data[1]=ELEMENT_KEYS.indexOf(key)+(tint?100:0);this.data[2]=intensity+(this.mine?HER_DATA:0);this.data[3]=phase;}
+  /** A light's share kept: an effect's own, half with Reduce flashing; her own magic's, attackFx.magicGlow.light's (the comfort
+   *  setting already in it) while her glow's on. */
+  private calm(mine:Mine):number {return mine&&this.her?this.her.light:comfort.reduceFlashing?0.5:1;}
   /** spell: a creature's spell's light, times this (its glow's light, the comfort setting already in it); 0 for any other. */
-  private light(id:string,x:number,y:number,z:number,element:keyof typeof elements,intensity:number,alpha:number,tint:readonly number[]|null,glow=1,spell=0):void {
+  private light(id:string,x:number,y:number,z:number,element:keyof typeof elements,intensity:number,alpha:number,tint:readonly number[]|null,glow=1,spell=0,mine:Mine=0):void {
     let light=this.lights.get(id);
     if(!light){
       if(this.lights.size>=settings.pool){
@@ -195,13 +262,13 @@ export class MagicFx {
         for(const [key,l] of this.lights){const s=lightScore(l.x,l.z,l.target,this.cx,this.cz);if(s<score){weakest=key;score=s;}}
         if(incoming<=score)return;this.lights.delete(weakest);
       }
-      light={x,y,z,reach:0,rgb:new THREE.Vector3(),strength:0,target:0,seen:this.time,score:0,fade:0,slot:0,spell:spell>0};this.lights.set(id,light);
+      light={x,y,z,reach:0,rgb:new THREE.Vector3(),strength:0,target:0,seen:this.time,score:0,fade:0,slot:0,spell:spell>0,hers:false};this.lights.set(id,light);
     }
-    light.spell=spell>0;
+    light.spell=spell>0;light.hers=mine===2&&!!this.her;
     const n=parseInt(elements[element].ramp[1].slice(1),16);
     light.x=x;light.y=y;light.z=z;light.reach=mixIntensity(settings.lightReach,intensity);
     light.rgb.set(tint?.[0]??(n>>16)/255,tint?.[1]??((n>>8)&255)/255,tint?.[2]??(n&255)/255);
-    light.target=mixIntensity(settings.lightStrength,intensity)*Math.min(1,alpha)*lightGain(glow)*(spell>0?spell:comfort.reduceFlashing?0.5:1);
+    light.target=mixIntensity(settings.lightStrength,intensity)*Math.min(1,alpha)*lightGain(glow)*(spell>0?spell:this.calm(mine));
     light.seen=this.time;
     light.pattern=id.startsWith("moonlight:aura:"); // The existing blink's moonlight aura, not a new spell/light.
   }
@@ -210,9 +277,20 @@ export class MagicFx {
     for(const b of this.bursts){
       const age=this.time-b.at;if(age<0 || age>=b.life)continue;this.bursts[used++]=b;
       const phase=age/b.life,alpha=Math.min(1,age/0.2,(b.life-age)/0.3);
-      this.draw(b.element,b.form,b.x,b.y,b.z,b.level,b.size,alpha,phase,b.seed);
+      this.draw(b.element,b.form,b.x,b.y,b.z,b.level,b.size,alpha,phase,b.seed,null,undefined,1,b.hers?this.her:null);
     }
-    this.bursts.length=used;this.batches.end();
+    this.bursts.length=used;
+    // Her blink's streaks: a glowing line where she went and its pool under it, fading (nothing flickers: one smooth fall).
+    used=0;
+    for(const k of this.streaks){
+      const age=this.time-k.at;if(age<0||age>=k.life)continue;this.streaks[used++]=k;
+      const her=this.her,length=Math.hypot(k.x1-k.x0,k.z1-k.z0);if(!her||length<0.5)continue;
+      const fade=(1-age/k.life)**2,x=(k.x0+k.x1)/2,z=(k.z0+k.z1)/2,heading=Math.atan2(k.z1-k.z0,k.x1-k.x0);
+      this.mine=true;this.glowData(forms.beam.id,fxElement(k.element),0.45,0,null);
+      if(her.core+her.halo>0)this.batches.glowLine(x,k.y,z,length,heading,k.width,this.data,fade*0.9,null,false);
+      if(her.pool>0)this.batches.glowLine(x,0,z,length,heading,k.width*7,this.data,fade*0.8,null,true);
+    }
+    this.streaks.length=used;this.batches.end();
     if(this.field.publish() || uploadedField!==this.field){
       const a=FX_UNIFORMS.uFxField.value.image.data as Uint8Array,b=FX_UNIFORMS.uFxExtra.value.image.data as Uint8Array;
       this.stats.fieldCopyValues+=this.field.data.length;
@@ -241,10 +319,10 @@ export class MagicFx {
     if(!this.enabled)this.selected.length=0;
     const U=LIGHT_UNIFORMS,limit=Math.max(0,Math.min(MAX_LIGHTS,Math.floor(budget))),step=this.dt/settings.lightEase;
     const cap=Math.min(FX_QUALITY.lightCap,settings.lightCap,limit);
-    // The strongest nearby effects (a light that held its slot kept unless clearly beaten; at most attackFx.glow.lights creatures'
-    // spells: render/fx/spellGlow.ts pickLights). They take the budget's last slots; where the world's own lights fill it, its
+    // The strongest nearby effects (her own cast magic's first, at most HER_LIGHTS; a light that held its slot kept unless clearly
+    // beaten; at most attackFx.glow.lights creatures' spells: render/fx/spellGlow.ts pickLights). They take the budget's last slots; where the world's own lights fill it, its
     // farthest make room eased (easeRoom), fading out and back rather than popping.
-    const picked=pickLights(this.selected.map(l=>({score:l.score,spell:l.spell,held:l.slot>0})),cap,this.spellCap);
+    const picked=pickLights(this.selected.map(l=>({score:l.score,spell:l.spell,held:l.slot>0,hers:l.hers})),cap,this.spellCap,HER_LIGHTS);
     const worldAll=Math.min(U.uLightCount.value,limit),free=limit-worldAll;
     this.room=Math.min(worldAll,easeRoom(this.room,Math.max(0,picked.length-free),step));
     const dropped=Math.floor(this.room+1e-6),part=this.room-dropped,world=worldAll-dropped;

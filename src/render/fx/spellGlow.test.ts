@@ -1,7 +1,7 @@
 // The creatures' spell glow's rules (Ed, 2026-11-09: "The animal magic effects need to glow"): the knobs after the link switch and
 // Reduce flashing, which effect lights get a slot, and the world's lights making room without popping.
 import { describe, expect, it } from "vitest";
-import { CALM_GLOW, MAX_SPELL_LIGHTS, NO_GLOW, easeRoom, glowLook, pickLights } from "./spellGlow";
+import { CALM_GLOW, HER_LIGHTS, MAX_SPELL_LIGHTS, NO_GLOW, easeRoom, glowLook, magicGlowLook, pickLights } from "./spellGlow";
 import { TUNING } from "../../rules/tuning";
 import settings from "../../../config/fx/intensity.json";
 
@@ -66,5 +66,43 @@ describe("easeRoom (no light pops)", () => {
   });
   it("holds still when there's nothing to change, and when no time passes", () => {
     expect(easeRoom(2, 2, step)).toBe(2); expect(easeRoom(1.5, 4, 0)).toBe(1.5);
+  });
+});
+
+// Her own magic's glow (Ed, 2026-11-13, asked whether to extend the creatures' glow to her magic: "extend").
+describe("magicGlowLook (her own magic's)", () => {
+  const HERS = TUNING.attackFx.magicGlow;
+  it("is the tuning's knobs, on by default, its lights not counted against the creatures' cap", () => {
+    expect(HERS).toEqual({ core: 1, halo: 1, pool: 1, light: 1 });
+    expect(magicGlowLook(HERS, true, false)).toEqual({ ...HERS, lights: MAX_SPELL_LIGHTS });
+  });
+  it("is none with ?magicglow=0, no knobs, or every knob at 0: her magic as before", () => {
+    expect(magicGlowLook(HERS, false, false)).toBeNull();
+    expect(magicGlowLook(undefined, true, false)).toBeNull();
+    expect(magicGlowLook({ core: 0, halo: 0, pool: 0, light: 0 }, true, false)).toBeNull();
+  });
+  it("is half with Reduce flashing", () => {
+    expect(magicGlowLook(HERS, true, true)).toMatchObject({ core: 0.5, halo: 0.5, pool: 0.5, light: 0.5 });
+  });
+});
+
+describe("pickLights with her own cast magic", () => {
+  const spell = (score: number) => ({ score, spell: true, held: false }), hers = (score: number) => ({ score, spell: false, held: false, hers: true });
+  it("gives hers the first claim, however faint, and the creatures' spells the rest", () => {
+    const asks = [spell(9), spell(8), spell(7), spell(6), spell(5), spell(4), hers(0.1), hers(0.2)];
+    const got = pickLights(asks, 6, 5, HER_LIGHTS);
+    expect(got.slice(0, 2)).toEqual([7, 6]);
+    expect(got.slice(2)).toEqual([0, 1, 2, 3]);
+    expect(got).toHaveLength(6);
+  });
+  it("claims at most HER_LIGHTS first: more of hers compete by strength like any other", () => {
+    expect(HER_LIGHTS).toBe(2);
+    const got = pickLights([hers(0.3), hers(0.2), hers(0.1), spell(9), spell(8), spell(7), spell(6), spell(5)], 6, 5, HER_LIGHTS);
+    expect(got).toEqual([0, 1, 3, 4, 5, 6]); // (her third, the faintest of all, makes way)
+    expect(pickLights([hers(5), hers(4), hers(3)], 6, 5, HER_LIGHTS)).toEqual([0, 1, 2]); // (free slots: all of hers)
+  });
+  it("without a claim (the default) picks as before", () => {
+    const asks = [spell(1), hers(0.1), spell(3)];
+    expect(pickLights(asks, 2, 5)).toEqual([2, 0]);
   });
 });

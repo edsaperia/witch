@@ -1,0 +1,7 @@
+{
+  "reason": "Release 53: #2050 (claude/wardrobe-more): The wardrobe's None options, more trousers and shoes, and bag cards without straps (Ed, 2026-11-13). No quick-bench scene is declared to change: her frames in the outfit she starts in are the same pixel for pixel (1,668 frames compared against claude/prototype), and the bench opens no station panel, where the new cards are.; #2043 (claude/magic-glow): Ed, 2026-11-13 (asked whether to extend the creatures' spell glow to her own magic): \"extend\". Her magic gets glowing cores, dithered halos, ground pools and lights; drawing only, no rules change.",
+  "frames": {
+    "boot": "the home ring booting: the ley line's spark now has its glowing core, dithered halo and pool, the ring's dots their small glow, and the decks' analyser ring's bar tips glow if it is still showing",
+    "wave-fight": "the ley line's spark, the ring's dots and placed sigils' pools where they are in view behind the fight"
+  }
+}

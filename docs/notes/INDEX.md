@@ -350,6 +350,7 @@ glossary; these are the prototype's), by note.
 - Palette-indexed art
 - The telescope's forest under the loading screen
 - Sail take-off freeze
+- Outfit load time
 
 ### [The run](run.md)
 
@@ -472,6 +473,8 @@ glossary; these are the prototype's), by note.
 - Pair poses
 - Witch genome / witch generator
 - Lean cycle
+- Her top, trousers and shoes
+- Bag straps
 
 ### [The world's art](world-art.md)
 
@@ -490,6 +493,7 @@ glossary; these are the prototype's), by note.
 - Attack effects
 - Attack look
 - Spell glow
+- Her magic's glow
 - Colour temperatures
 - Path kinds
 - Path looks
