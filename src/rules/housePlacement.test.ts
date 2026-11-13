@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { HOUSE_CONFIG } from "./houseConfig";
-import { fromObject, hatSlots, objectFront, objectWorld, type HouseConfig } from "./houseRooms";
+import { fromObject, hatSlots, objectFront, objectWorld, toPlan, type HouseConfig } from "./houseRooms";
+import { field } from "../../config/house/shape.js";
 import { applyEdLayout, objectOffset, placementFacing } from "./housePlacement";
 import { kitchenPlacement } from "./kitchenPlacement";
 import { kitchenPlan } from "./mushrooms";
@@ -49,6 +50,19 @@ describe("explicit opt-in house placement", () => {
     for (const id of ["basin", "bedroom2Basin", "bedroom3Basin", "bedroom2ShoeRack", "bedroom3ShoeRack", "broomRack", "broomLift"]) {
       const o = H.objects.find(o => o.id === id)!, from = source.objects.find(o => o.id === id)!;
       expect(o.placement?.sourceRoom).toBe(from.room); expect(o.use).toEqual(from.use);
+    }
+  });
+  it("has every station's use point on the house's floor, and the step back from it where ?shot=object: puts her", () => {
+    // (Ed, 2026-11-13, "fix the others": his 2026-11-12 export had the basin's use point 0.32 m off the floor, facing the wall, and the
+    // workbench's 0.13 m from the edge, so the shot tool, half a metre further back, dropped her into the treetops at both)
+    for (const H of [applyEdLayout(source, true), source]) {
+      for (const o of H.objects) for (const by of [.5, 1]) {
+        const p = objectFront(o, { x: 0, z: 0 }, by, H), q = toPlan({ x: 0, z: 0 }, p.x, p.z, H.turn ?? 0);
+        expect(field(H.shape, q.x, q.z, true), `${H.layout ? "Ed's" : "classic"} ${o.id} at ${by} m`).toBeLessThan(0);
+      }
+      // (and the decks' seat, where she starts the night)
+      const t = H.rooms.find(r => r.id === "terrace")!;
+      expect(field(H.shape, t.x + H.terrace.seat.x, t.z + H.terrace.seat.z, true)).toBeLessThan(0);
     }
   });
   it("provides a potion-owner position hook without changing colour identity, state or default kitchen geometry", () => {

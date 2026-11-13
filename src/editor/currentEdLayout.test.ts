@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import authored from "../../docs/evidence/treehouse-layout-ed-2026-11-12.v2.json";
 import previous from "../../docs/evidence/treehouse-layout-ed-2026-11-01.v2.json";
 import current from "../../config/house/layouts/ed-current.json";
+import fixes from "../../config/house/layouts/ed-current-fixes.json";
 import identities from "../../config/house/layouts/editor-v2-identities.json";
 import { ADDED_OBJECTS, EDITOR_HOUSE, exportLayout, floorplanKey, layoutItems, LayoutHistory, parseLayout } from "./houseLayout";
 import { publishedLayout } from "./publishedLayout";
@@ -12,11 +13,19 @@ import { placedDecorPlan } from "../render/houseDecor";
 
 const sha = (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex");
 
-it("publishes Ed's 2026-11-12 export exactly, all 114 poses/anchors, its 22 removed clutter and the old hats' area", () => {
-  // (Ed, 2026-11-12, "New treehouse layout": archived byte for byte, and published as it is)
+it("publishes Ed's 2026-11-12 export, all 114 poses/anchors but the recorded fixes, its 22 removed clutter and the old hats' area", () => {
+  // (Ed, 2026-11-12, "New treehouse layout": archived byte for byte)
   expect(sha("docs/evidence/treehouse-layout-ed-2026-11-12.v2.json")).toBe("8053ea09fe99ea261bb982ebb9ac5f16465bd3ccc446aabf20774ef2eca1a2a9");
-  expect(sha("config/house/layouts/ed-current.json")).toBe(sha("docs/evidence/treehouse-layout-ed-2026-11-12.v2.json"));
-  expect(current).toEqual(authored);
+  // (but for the few poses in ed-current-fixes.json, each with its reason: Ed, 2026-11-13, "fix the others", after the pictures showed
+  // the basin and the workbench with use points at or past the floor's edge and Bedroom 3's shoe rack with her behind it)
+  const fixed = structuredClone(authored);
+  for (const f of fixes.fixes) {
+    const p = fixed.objects.find(o => o.id === f.id)!;
+    expect({ x: p.x, z: p.z, rotation: p.rotation, useAnchor: p.useAnchor }).toEqual(f.export);
+    Object.assign(p, f.now);
+  }
+  expect(fixes.fixes.map(f => f.id)).toEqual(["basin", "broomBay", "bedroom3ShoeRack"]);
+  expect(current).toEqual(fixed);
   expect(current.floorplan).toBe(identities.canonical);
   // (the same 22 clutter pieces west of plan X=-100 as Ed's 2026-11-01 export; Ed, 2026-11-02: "we should remove the old cloakroom hats area")
   expect(current.removed).toEqual(previous.objects.filter(p => p.x < -100).map(p => p.id));
