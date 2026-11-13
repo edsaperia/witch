@@ -212,6 +212,9 @@ export interface Creature {
    *  of the circle"): stone at its post, or walking back to it to turn to stone; either way out of everything (no roam, fight, 💌 or
    *  hit: rules/game.ts dormant). Unset: itself. */
   statue?: "stone" | "back";
+  /** A wild baby keeping out of a fight (rules/wildBabies.ts; Ed, 2026-11-13: as her leashed ones scatter): where the fight is
+   *  (followed as it moves), the spot of its own area it runs to, and when it's calm again; pickAt: when it picks its spot (again). */
+  shy?: { x: number; z: number; tx: number; tz: number; until: number; pickAt?: number };
   /** A legend's state (DESIGN.md, "Sleeping legends"): asleep (sunk in the ground, scenery) →
    *  its area's wave → waking (wildLegends.wake seconds, untouchable) → awake (angry, guarding its
    *  area) → beaten → slept (asleep for good). Asleep or awake → (later: mollified) → happy (at
@@ -294,7 +297,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
     wanderTo: undefined, circle: undefined, dropped: undefined, healedAt: undefined, healedSmall: undefined, boss: undefined, legendState: undefined,
     stateAt: undefined, quest: undefined, friendly: undefined, asleep: undefined, napUntil: undefined, lulled: undefined,
     wakeUntil: undefined, safeX: undefined, safeZ: undefined, safeR: undefined, watchUntil: undefined, hunting: undefined, taunt: undefined, swoop: undefined, finale: undefined,
-    packGlow: undefined, packHide: undefined, packShell: undefined, packProwl: undefined, feintUntil: undefined, coverBy: undefined, packSync: undefined, packThrow: undefined, mind: undefined, spell: undefined, hop: undefined, hopNext: undefined, homeGuard: undefined, statue: undefined,
+    packGlow: undefined, packHide: undefined, packShell: undefined, packProwl: undefined, feintUntil: undefined, coverBy: undefined, packSync: undefined, packThrow: undefined, mind: undefined, spell: undefined, hop: undefined, hopNext: undefined, homeGuard: undefined, statue: undefined, shy: undefined,
   };
   if (level === LEGEND) { c.boss = true; c.legendState = "asleep"; c.stateAt = 0; }
   return c;
@@ -302,7 +305,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Every optional field of a Creature, in the order makeCreature's literal lists them (one shape for all; creatures.test.ts checks the order). A field added to
  *  Creature and not here fails the typecheck (OptionalMissing). */
-export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "atStone", "loose", "aims", "dazedUntil", "affection", "affectionAt", "fills", "drops", "ranOff", "cheerUntil", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "beach", "beached", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell", "hop", "hopNext", "homeGuard", "statue"] as const satisfies readonly (keyof Creature)[];
+export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "atStone", "loose", "aims", "dazedUntil", "affection", "affectionAt", "fills", "drops", "ranOff", "cheerUntil", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "beach", "beached", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell", "hop", "hopNext", "homeGuard", "statue", "shy"] as const satisfies readonly (keyof Creature)[];
 type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
 type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
 const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;
@@ -331,7 +334,7 @@ const inCell = (map: ForestMap, x: number, z: number, cell: [number, number]) =>
 /** Whether (x, z) is in the creature's own area: asked of the map only once it leaves the disc
  *  last found to be surely inside (map.cellSafe), so a creature ambling about asks every metre
  *  or so, not every step (the area lookup was most of a frame's work with hundreds of them). */
-function inOwnArea(map: ForestMap, c: Creature, x: number, z: number): boolean {
+export function inOwnArea(map: ForestMap, c: Creature, x: number, z: number): boolean {
   if (c.dropped) return Math.hypot(x - c.dropped.x, z - c.dropped.z) <= c.dropped.r; // (let go at her knockout: where it was dropped is its ground)
   if (c.safeR !== undefined && Math.hypot(x - c.safeX!, z - c.safeZ!) < c.safeR) return true;
   const r = map.cellSafe(x, z);
@@ -547,6 +550,7 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
     const ax = Math.abs((c.dropped?.x ?? c.homeX) - wx), az = Math.abs((c.dropped?.z ?? c.homeZ) - wz); // (one let go at a knockout: by where it was dropped)
     if (watchers ? !nearest : ax > radius || az > radius) { if (counts) counts.frozen++; continue; }
     if (heldByCombat(c)) { c.seen = time; continue; } // fighting, fleeing, marching or walking home: moved by combat and knockout
+    if (c.shy) { c.seen = time; continue; } // a wild baby keeping out of a fight: moved by rules/wildBabies.ts
     const full = watchers ? inFull(c, inside, 0, lod.band) : inFull(c, Math.max(Math.abs(c.x - wx), Math.abs(c.z - wz)), lod.full, lod.band);
     if (counts) { if (full) counts.full++; else counts.coarse++; }
     if (!full && !coarseTurn(tick, c.id, lod.every) && time - c.seen <= 3) continue; // (its turn comes well within 3 s: `seen` is kept fresh by it)
@@ -580,7 +584,7 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
 export function stepNotice(list: Iterable<Creature>, witches: { x: number; z: number; onGround: boolean }[], temper: (species: string) => "curious" | "skittish" | null, t: Tuning): void {
   const N = t.notice;
   for (const c of list) {
-    if (c.leashed || c.gone || heldByCombat(c) || c.asleep || c.wakeUntil !== undefined) continue;
+    if (c.leashed || c.gone || c.shy || heldByCombat(c) || c.asleep || c.wakeUntil !== undefined) continue; // (shy: a wild baby keeping out of a fight, rules/wildBabies.ts)
     if (c.boss && c.legendState === "asleep") continue; // (a sleeping legend lies as it was laid, never turning to her: Ed, 2026-10-09)
     let w: { x: number; z: number } | null = null, d = N.radius;
     for (const v of witches) { if (!v.onGround) continue; const k = Math.hypot(v.x - c.x, v.z - c.z); if (k < d) { d = k; w = v; } }
