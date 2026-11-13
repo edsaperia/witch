@@ -344,6 +344,7 @@ glossary; these are the prototype's), by note.
 - The GPU memory budget
 - Quality ladder
 - Palette-indexed art
+- The telescope's forest under the loading screen
 - Sail take-off freeze
 
 ### [The run](run.md)

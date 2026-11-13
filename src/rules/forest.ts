@@ -445,8 +445,10 @@ export class Forest {
   private relics = new Map<string, Relic[]>();
   /** Milliseconds spent making chunks since the view last read (and reset) it. */
   buildMs = 0;
-  /** Chunks kept per kind before the farthest are dropped: well over a treetop view's ~700. */
-  static readonly KEEP = 2500;
+  /** Chunks kept per kind before the farthest are dropped: well over a treetop view's ~700, and (a fifth let go at a time) the
+   *  telescope's whole circle after (its 900 m reach: some 3,600, render/view/scenery.ts telescopeWarmSteps). At 2,500 each of its
+   *  listings made 1,400 of them again, the far forest missing for seconds after each pan (Ed, 2026-11-12). */
+  static readonly KEEP = 5000;
   private centre = { x: 0, z: 0 };
   // The one whole-map pass (which finds go where) runs with the map, not on the first frame that needs it.
   constructor(readonly map: ForestMap) { uniques(map); }
@@ -483,10 +485,11 @@ export class Forest {
   }
   /** The same query and chunk order as gather, yielding between chunks so a view can budget
    *  cold queries too. Eager callers keep gather; generation and the shared caches are unchanged. */
-  private *gatherChunks<T extends { x: number; z: number }>(cache: Map<string, T[]>, make: (ci: number, cj: number) => T[], x: number, z: number, radius: number): Generator<T[], void, void> {
+  private *gatherChunks<T extends { x: number; z: number }>(cache: Map<string, T[]>, make: (ci: number, cj: number) => T[], x: number, z: number, radius: number, only?: (x: number, z: number) => boolean): Generator<T[], void, void> {
     this.centre = { x, z };
     this.evict(cache);
     for (const [ci, cj] of this.chunks(x, z, radius)) {
+      if (only && !only((ci + 0.5) * CHUNK, (cj + 0.5) * CHUNK)) continue;
       const out: T[] = [];
       for (const p of this.chunk(cache, make, ci, cj)) if (Math.abs(p.x - x) <= radius && Math.abs(p.z - z) <= radius) out.push(p);
       yield out;
@@ -537,12 +540,18 @@ export class Forest {
     }
     return todo.length - done + areas.length - made;
   }
+  /** The tree chunks within a square of half-size `radius` round (x, z): each one's middle, and whether its trees are made (none
+   *  made by asking: the telescope's count of what it still lacks, render/view/scenery.ts scopeMissing). */
+  treeChunks(x: number, z: number, radius: number): { x: number; z: number; made: boolean }[] {
+    return this.chunks(x, z, radius).map(([i, j]) => ({ x: (i + 0.5) * CHUNK, z: (j + 0.5) * CHUNK, made: this.trees.has(i + "," + j) }));
+  }
   /** Trees within a square of half-size `radius` round (x, z). */
   treesNear(x: number, z: number, radius: number): Plant[] {
     return this.gather(this.trees, (i, j) => treesInChunk(this.map, i, j), x, z, radius);
   }
-  treesNearChunks(x: number, z: number, radius: number): Generator<Plant[], void, void> {
-    return this.gatherChunks(this.trees, (i, j) => treesInChunk(this.map, i, j), x, z, radius);
+  /** (`only`: of the chunks whose middle it passes, the rest neither made nor read: the telescope's wedge, render/view/scenery.ts) */
+  treesNearChunks(x: number, z: number, radius: number, only?: (x: number, z: number) => boolean): Generator<Plant[], void, void> {
+    return this.gatherChunks(this.trees, (i, j) => treesInChunk(this.map, i, j), x, z, radius, only);
   }
   bushesNear(x: number, z: number, radius: number): Plant[] {
     return this.gather(this.bushes, (i, j) => bushesInChunk(this.map, i, j), x, z, radius);
