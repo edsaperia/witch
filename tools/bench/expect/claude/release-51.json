@@ -1,0 +1,7 @@
+{
+  "reason": "Release 51: #2048 (claude/dance-stones): the dancefloor ring's stones, before they turn into speakers, are low rounded boulders about her knee height, one for each place in the ring, not rune stones as tall as the speakers (Ed, 2026-11-13: \"Dancefloor stones (before they become speakers) look too similar to speakers. They should be more knee height like in this reference image.\"); only their drawing, the rules untouched",
+  "frames": {
+    "boot": "the home ring's stones not yet turned are drawn as the low boulders (smaller, their dots' glow smaller and dimmer), and a charging one rises further",
+    "wave-fight": "any of the ring's stones in view that hasn't turned, the same (it may not differ: the ring is booted by then)"
+  }
+}

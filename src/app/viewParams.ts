@@ -14,6 +14,7 @@ export function styleFromLink(params: URLSearchParams, tuning: Tuning) {
   if (params.get("creatureModels")) style.creatureModels = params.get("creatureModels"); // explicit per-species preview; absent/default stays current, carried to workers in style
   if (["0","1"].includes(params.get("creatureSizeCandidate") ?? "")) style.creatureSizeCandidate = Number(params.get("creatureSizeCandidate")); // Ed adopted revised sizes; =0 compares old sizes
   if (["0", "1"].includes(params.get("meshCreatures") ?? "")) (style as { meshCreatures?: number }).meshCreatures = Number(params.get("meshCreatures")); // the species that have one are drawn as low-poly meshes on skeletons (art/mesh; Ed, 2026-11-12: "meshes are great, we should aim to transition to them for all the creatures"), carried to the art workers in the style; =0 compares the generated creatures
+  if (params.get("dancestones") === "old") style.danceStones = "old"; // ?dancestones=old: the dancefloor ring's stones as they were, an area's rune stone at half its width, as tall as a speaker (not the low rounded stones: Ed, 2026-11-13), to compare; carried to the art worker in the style
   if (params.get("biome")) style.biome = params.get("biome"); // ?biome=<name>|<a|b|w>: every area's trees and props in that biome's look, over the island's own (art/flora/biomes.js)
   if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
   return style;

@@ -1,6 +1,6 @@
-// The ley pulse at a constant speed (Ed, 2026-10-09: "Pure constant speed", 4 m/s, boot included): it runs along the route's
-// own curves (rules/leyroute.ts, the line's base: the drawn line wanders a little about it, render/leylines.ts) at
-// leyLines.pulseSpeed metres a second times the party's tempo (rules/beat.ts tempoRate: a knockdown's BPM speeds it), and a
+// The ley pulse at a constant speed (Ed, 2026-10-09: "Pure constant speed"; the boot has its own, boot.speed): it runs along the route's
+// own curves (rules/leyroute.ts, the line's base: the drawn line wanders a little about it, render/leylines.ts) at the speed the
+// party's tempo gives (rules/beat.ts tempoRate: 1 m/s at 100 bpm to 5 at 200, Ed 2026-11-03) times leyLines.pulseSpeed (1), and a
 // wave lands as it reaches the next stone. So a wave's gap is its link's length over that speed: no clamp, no hurry. Here: each
 // link's length (m), the stretch of links the next wave's pulse runs (from the last stone reached through each of the next
 // wave's stones in turn), and the pulse's speed.
@@ -18,7 +18,7 @@ export function polyLength(line: readonly P2[]): number {
   return L;
 }
 
-/** The pulse's speed (m/s) before the tempo: leyLines.pulseSpeed; 0 or less, no waves (the pause page's Waves slider at 0). */
+/** The pulse's speed before the tempo: leyLines.pulseSpeed, a multiplier on the tempo's m/s (rules/beat.ts tempoRate); 0 or less, no waves (the pause page's Waves slider at 0). */
 export const pulseSpeed = (map: Pick<ForestMap, "tuning">): number => Math.max(0, map.tuning.leyLines?.pulseSpeed ?? 1);
 
 /** A link's own line along the route (from the treehouse: the departure, from where the boot's lap ends, rules/departure.ts), as

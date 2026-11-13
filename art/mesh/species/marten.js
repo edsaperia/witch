@@ -11,7 +11,7 @@ import { weasel } from "../kit/weasel.js";
 
 const NOSE = "#16100e";
 
-// ---- The marten (old pinewood): the long supple body, the cream bib, the climber's reach.
+// ---- The marten (the old pinewood's till the bee took its place; on the bench since Ed, 2026-11-12): the long supple body, the cream bib, the climber's reach.
 const MARTEN = { coat: "#5e3d28", belly: "#f2c98b", nose: NOSE, upper: "#4a2f1f", mid: "#3d261a", sock: "#2a1a13", ear: "#5e3d28", inner: "#f0d9b0" };
 const martenHead = { size: 1.0, muzzle: 0.7, wide: 1.02, eye: 1.4, ear: { shape: "round", tall: 0.85, wide: 1.35, at: [0.012, -0.008, -0.005], back: MARTEN.coat, inner: "#e8cfa0" } };
 const marten = {

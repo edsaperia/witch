@@ -6,9 +6,9 @@ import { type RigGear } from "./rig/rigBuild";
 import { overrideFor, poseName, type Override } from "./overrides";
 import type { Baked, MakeCanvas } from "./artBuild";
 
-/** A kind of creature at each level (baby, young, adult, legend), two walking frames each. */
+/** A kind of creature at each level (baby, young, adult, legend), its walk's frames each (two, or its own cycle's). */
 export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear: unknown = null, onlyLevel?: number): Baked[] {
-  if (hasMesh(species, st)) return meshSprites(species, mk, gear, onlyLevel); // (drawn as a mesh: art/mesh, ?meshCreatures=1)
+  if (hasMesh(species, st)) return meshSprites(species, mk, gear, onlyLevel); // (drawn as a mesh: art/mesh, on by default since 2026-11-12; ?meshCreatures=0 the generated one)
   const out: Baked[] = [];
   const n = (Art.walkGait(species) as { frames: number }).frames; // (its walk's frames: 2, or its own cycle's)
   for (const facing of ["towards", "away"]) for (let level = onlyLevel ?? 0; level < (onlyLevel === undefined ? 4 : onlyLevel + 1); level++) for (let f = 0; f < n; f++) {

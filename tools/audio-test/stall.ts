@@ -1,11 +1,11 @@
 // The music's stall test (Ed, 2026-10-27, with the plan to render the music ahead: "give Ed a test like the audio page: the
 // music's gaps and re-anchors during an artificial 1.5 s main-thread stall, old against new"): the game's own music (as the
-// audio test plays it: the drop at wave 3, the singer loaded) runs for about 40 s while the page's thread is held busy for
-// 1.5 s three times, as a long frame would hold it. Game time runs as the game's does (a frame over the rules' MAX_STEP loses
+// audio test plays it: the drop at wave 3, the singer loaded) runs for about 50 s while the page's thread is held busy for
+// 1.5 s four times, as a long frame would hold it. Game time runs as the game's does (a frame over the rules' MAX_STEP loses
 // the rest), so the music meets the same hitch it meets in a night. What leaves for the speakers is recorded (a MediaRecorder,
 // off the page's thread) and searched for drop-outs: each stall's longest, against the music's own rests elsewhere; with
-// the engine's own counts (re-anchors, late steps, gaps) and how far game time ended up from the audio clock. One mode a run
-// ("live": today's engine; more to come), a summary and "Copy results".
+// the engine's own counts (re-anchors, late steps, gaps) and how far game time ended up from the audio clock. Two modes, one
+// after the other ("live": the music played live; "ahead": rendered ahead), a summary and "Copy results".
 import styleJson from "../../config/music-style.json";
 import { TUNING } from "../../src/rules/tuning";
 import { newBeatClock } from "../../src/rules/beat";

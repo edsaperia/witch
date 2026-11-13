@@ -14,8 +14,9 @@
 //   4. intensity, from the party's level (dancefloor.levels: how many partified areas each level
 //      takes): low, a few tiles, slow, two colours, simple patterns; high, more of everything, up
 //      to a full rave.
-// The floor starts dark and switches on once, when the witch first leaves the treehouse's terrace:
-// the art's boot sequence, then the first pattern on the next bar line.
+// Before the first wave the floor shows only the moon (Ed, 2026-10-06), through the boot the island's
+// sigil (Ed, 2026-10-11); it switches on once, when the first wave comes and she's off the decks
+// (rules/game.ts stepDancefloor): the art's boot sequence, then the first pattern on the next bar line.
 // No drawing here: the view makes the tiles a texture and the floor's light from `average`.
 import { DISCO_GRID, DISCO_MASK, DISCO_RADIUS, DISCO_TRANSITIONS, discoPatterns, discoTransition } from "../../art/dancefloor.js";
 import { NEON, islandSigil, sigilArrival, sigilColour } from "../../art/sigils.js";

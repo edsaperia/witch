@@ -38,7 +38,8 @@ export function applyEdLayout(source: HouseConfig, on = edLayoutRequested()): Ho
     const placedId = publishedGuestFurnitureId(o.id);
     const p = proposal.objects.find(p => p.id === o.id) ?? proposal.objects.find(p => p.id === placedId), original = baseline.items.find(q => q.id === placedId);
     // An object new since Ed's export, with a provisional pose in his arrangement (config/house/layouts/provisional.json: the broom rack
-    // and the hydraulic lift, Ed 2026-11-07), placed so, its front (where she stands) to its rotation's south.
+    // and the hydraulic lift, Ed 2026-11-07), placed so, its front (where she stands) to its rotation's south. (His 2026-11-12
+    // export places both, below, so neither takes this path now: it waits for the next new object.)
     const prov = !p ? provisional.objects.find(q => q.id === o.id) : undefined;
     if (prov) {
       const front = rotatePlacement(0, o.d / 2 + 0.5, prov.rotation);

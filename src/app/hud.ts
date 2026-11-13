@@ -1,5 +1,5 @@
 // The page's own HUD over the game: the clock top centre (with the boot's and a lost soundsystem's pops under it) and the
-// debug overlay (~) and its buttons. Driven by the loop (app/loop.ts in main.ts).
+// debug overlay (~) and its buttons. Driven by the loop (app/pageFrame.ts).
 import { type Game, type WaveEvent } from "../rules/game";
 import { waveCountdown } from "../rules/party";
 import { clockSeconds, clockText } from "../rules/leypulse";
@@ -41,7 +41,7 @@ export class Hud {
     const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
     const left = game.party.paused ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : clock(cd.left);
     clockLabel.textContent = this.debugOn ? `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}` : "";
-    // The boot-up over (Ed, 2026-10-05: five quiet minutes from her first step): a quiet word under the clock.
+    // The boot-up over (five quiet minutes at first, Ed 2026-10-05; now the boot pulse's run, about 45 s: rules/bootRing.ts bootSeconds): a quiet word under the clock.
     if (!this.bootShown && !cd.booting && game.party.bootUntil > 0 && game.clock.time >= game.party.bootUntil && !game.party.paused) {
       this.bootShown = true;
       const pop = document.createElement("div");

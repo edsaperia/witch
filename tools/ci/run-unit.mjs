@@ -82,8 +82,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === fs.realpathSync(proces
   let timings = {};
   try { timings = JSON.parse(fs.readFileSync("tools/ci/unit-timings.json", "utf8")).seconds ?? {}; } catch { /* unbalanced but complete */ }
   // UNIT_BALANCE=1 enables cloud-derived LPT packing. The prior longest-file
-  // objective/local measurements caused contention (#1592); preserve opt-in for
-  // controlled cloud comparison before enabling the revised model in CI.
+  // objective/local measurements caused contention (#1592). CI's unit shards set
+  // it (.github/workflows/ci.yml); a local run without it stays unbalanced.
   const balanced = process.env.UNIT_BALANCE === "1" ? balancedSelection(selection, shard, listFiles, timings) : null;
   if (balanced) { Object.assign(selection, balanced); console.log(`Unit test shard ${shard.text}: ${balanced.balanced.files} of ${balanced.balanced.of} files by measured time, about ${balanced.balanced.estimate} s`); }
   else if (shard) console.log(`Unit test shard ${shard.text}${selection.tests.length && shard.index !== 1 ? ": related selection runs entirely in shard 1" : ""}`);

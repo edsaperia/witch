@@ -7,8 +7,8 @@ import type { Creature } from "./creatures";
 import type { Tuning } from "./tuning";
 import { holdsDown } from "./chains";
 
-/** The old sigil weight's load, retired: always none. Kept, with loadOf, only because the step's call site (rules/game.ts, being
- *  moved by #1609) still hands stepWitch one; remove both once that lands. */
+/** The old sigil weight's load, retired: always none. Kept, with loadOf, only because the step's call site (rules/game.ts
+ *  stepWitchLocomotion) still hands stepWitch one; #1609, which was moving it, has merged, so both can go. */
 export interface LeashLoad { readonly total: 0; readonly over: 0 }
 export const NO_LOAD: LeashLoad = { total: 0, over: 0 };
 /** (retired: no load, whatever its arguments; see NO_LOAD) */

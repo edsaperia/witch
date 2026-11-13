@@ -6,7 +6,9 @@
 // leash.length of it), or picks up a placed sigil she is over, back onto the bottom of the stack.
 // Sigils can't be put down on top of one another. Leashes are elastic: creatures walk or run to
 // their leash point at their own pace and never teleport. Legends can't be invited (for now).
-// No drawing here.
+// The talking runs only with her 💌s off (the tuning's invites.on false: rules/sigilButton.ts): with them, as the game is,
+// a wild one is made happy by 💌s (rules/invites.ts; a chat does the same) and leashed by picking up its rune (states.leash
+// "pickup"). No baby is talked to or invited (Ed, 2026-10-31). No drawing here.
 import { attackerNear, BABIES_DEFAULT, babiesOf, isBaby, queueDistances, queueHalf, scatterSpot, stepBaby, trailPoint, updateTrail } from "./babies";
 import { runeOffset } from "./runeOffset";
 import { LEGEND, heal, speedFactor, type Creature } from "./creatures";
@@ -52,7 +54,8 @@ export interface LeashState {
   /** While she's in a fight with babies following (rules/babies.ts): the way from the first attacker to her when it began,
    *  kept the whole fight, and when it's over (babies.calm seconds after the last thing went for her or hers). */
   scatter?: { x: number; z: number; until: number };
-  /** Relic sigils she carries (rules/legends.ts: ids into the game's relics), in the stack's order, top first. */
+  /** Relic sigils she carries (rules/legends.ts: ids into the game's relics), in the stack's order, top first. None since Ed,
+   *  2026-10-18: a flask is drunk where it lies (rules/sigilButton.ts), and the game no longer calls carryRelic. */
   relics: number[];
   /** Where each carried relic sigil sits in the stack (Ed's playtest, 2026-10-08: "Flasks should behave like other sigils in
    *  this regard; sit in the stack, and cycle when it cycles"): by relic id, how many of the creatures' sigils are above it.
@@ -132,7 +135,7 @@ export function toBottom(s: LeashState, id: number): void {
   setStackOrder(s, [...order, it]);
 }
 
-/** A relic's sigil onto the bottom of her stack (picked up: rules/legends.ts relicButton). */
+/** A relic's sigil onto the bottom of her stack (picked up; the game no longer does: flasks are drunk, Ed 2026-10-18). */
 export function carryRelic(s: LeashState, id: number): void {
   if (!s.relics.includes(id)) s.relics.push(id);
   (s.relicAt ??= {})[id] = s.stack.length;
@@ -195,10 +198,10 @@ export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, 
 export const talkTime = (c: Creature, t: Tuning): number => t.invite.talkTime[Math.min(c.level, t.invite.talkTime.length - 1)];
 /** Seconds per turn of the conversation (hers, then theirs): slower for older creatures. */
 export const talkTurn = (c: Creature, t: Tuning): number => t.invite.turn[Math.min(c.level, t.invite.turn.length - 1)];
-/** Whether she can invite it: wild, alive, not fleeing, not enraged by a wave (Ed's playtest:
- *  mid-siege, an invited one is set on by the rest); legends only when let go on a knockout and
- *  walking home (wild legends can't be invited). Inviting works while it attacks her (Ed, 2026-10-04). */
-export const invitable = (c: Creature) => invitableNow(c); // (#87: a wild one, dazed or not, or a happy one for its second step; never a legend or an enraged one)
+/** Whether she can invite it (rules/creatureStates.ts invitableNow): a wild youth or adult, alive, awake, not fleeing or
+ *  walking home, not enraged by a wave (Ed's playtest: mid-siege, an invited one is set on by the rest); never a baby
+ *  (Ed, 2026-10-31: "No, no baby is invitable") or a legend. Inviting works while it attacks her (Ed, 2026-10-04). */
+export const invitable = (c: Creature) => invitableNow(c); // (#87: a wild one, dazed or not, or, with states.leash "again", a happy one for its second step; never a legend or an enraged one)
 
 /** Where a leashed creature's leash is fixed: the witch, or its placed sigil. */
 export function leashPoint(s: LeashState, id: number, wx: number, wz: number): { x: number; z: number } | null {
@@ -443,8 +446,8 @@ function sigilPress(s: LeashState, creatures: Creature[], c: LeashControls, witc
   }
   if (stackBottom(s)?.kind === "relic") {
     // A relic's sigil at the bottom (Ed, 2026-10-08: "if the flask is in the bottom slot, it's what you put down when you press
-    // e"): by a sleeping legend the sigil button has given it already (rules/legends.ts relicButton); anywhere else it goes
-    // down on the ground where she stands, to pick up again like any sigil.
+    // e"): it goes down on the ground where she stands (none is carried since Ed, 2026-10-18: flasks are drunk where they lie,
+    // rules/sigilButton.ts, and no legend takes one).
     const id = stackBottom(s)!.id;
     if (c.dropRelic) {
       c.dropRelic(id, witch.x, witch.z);

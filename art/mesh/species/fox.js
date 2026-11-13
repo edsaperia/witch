@@ -1,4 +1,4 @@
-// The fox's four levels as plans for tools/creature-mesh/quadruped.js, each its own build and not the last one enlarged (Ed,
+// The fox's four levels as plans for art/mesh/shape.js, each its own build and not the last one enlarged (Ed,
 // 2026-10-05: "the evolved design per stage (not just being larger)"). Its signature is the brush and the pointed mask, pushed
 // further a level: a kit that's all ears with a stub of a tail; a leggy young with a full brush; an adult with five tails fanned
 // and a spiked ruff; and the old shrine fox, the elder of its kind (the genome's brief, art/creatures/fox/genome.js: nine tails

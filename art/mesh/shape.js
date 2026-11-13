@@ -1,4 +1,4 @@
-// A creature as a low-poly mesh on a real skeleton, built from a species' plan (its own file beside this one): hard-edged
+// A creature as a low-poly mesh on a real skeleton, built from a species' plan (its own file, art/mesh/species/<id>.js): hard-edged
 // polygons on bones, drawn in code (Ed, 2026-11-11: "Is there no way that you can draw things yourself, instead of using an image
 // generator?"; 2026-11-12: "I'm happy with these models, let's do the real build"). No three.js here: the game's art workers
 // turn a shape into sprites themselves (art/mesh/raster.js), and tools/creature-mesh/ writes one out as a .glb.
