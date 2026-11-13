@@ -21,7 +21,7 @@ import { speakerBoot } from "../../rules/game";
 import type { ForestLight, View } from "../view";
 import { focusOf, inView, overBulge } from "./culling";
 import { mark } from "./pops";
-import { ringStoneKey, stumpId } from "../artBuild";
+import { danceStoneKey, ringStoneKey, stumpId } from "../artBuild";
 import type { TrunkShadow } from "../trunkShadows";
 import type { RingSpeaker } from "../lasers";
 import { STONE_FACE, stumpNoteSize } from "../leash/stones";
@@ -277,6 +277,10 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
 const TURN = 0.4;
 /** How much the stone stretches up (and thins) as it charges: as tall as the speaker it becomes already, so a little. */
 const STRETCH = { up: 0.15, thin: 0.1 };
+/** The low rounded stones (Ed, 2026-11-13: "They should be more knee height"; art/danceStones.js) rise as they charge, to about the
+ *  height its speaker springs up from (a fifth of its own), so the stone seems to grow into it; and their dots' halos are this share
+ *  of the rune stones' (a stone a tenth as tall). */
+const DANCE_STRETCH = { up: 0.7, thin: 0.1 }, DANCE_GLOW = { size: 0.3, k: 0.25 };
 /** A speaker's facing by its ring place, its frames' keys by angle, state and frame, the boot's light colour, and where one stands:
  *  each made once (a record a speaker a frame before: the churn hunt, 2026-10-13). */
 const FACES = new Map<unknown, { angle: number; flip: boolean }>();
@@ -319,18 +323,19 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
   const speakers = g.map.dancefloor.speakers;
   for (let i = 0; i < speakers.length; i++) {
     const sp = speakers[i], face = faceOf(sp.ring), state = g.speakers[i] ?? "playing", k = speakerBoot(g, i, time), powered = k >= TURN;
-    const sk = ringStoneKey(i, face.angle), si = A.stones?.[sk];
+    const dance = A.dance !== undefined, sk = dance ? danceStoneKey(i, A.dance!) : ringStoneKey(i, face.angle), si = A.stones?.[sk];
     if (!powered && si !== undefined) { // still its runestone (charging once the pulse has reached it), turned as its speaker is
-      const f = A.atlas.frames[si], o = A.stoneOrigin![sk], c = k / TURN, d = (f.pad ?? 0) * mpp, p = standAt(sp, f, o, face.flip);
-      top(i, sp.x, o.y * mpp * (1 + STRETCH.up * c), sp.z, state, false);
+      const S = dance ? DANCE_STRETCH : STRETCH, flip = dance ? false : face.flip; // (a rounded stone: one for each place, not turned or mirrored)
+      const f = A.atlas.frames[si], o = A.stoneOrigin![sk], c = k / TURN, d = (f.pad ?? 0) * mpp, p = standAt(sp, f, o, flip);
+      top(i, sp.x, (dance ? (A.stoneDots?.[sk]?.length ? o.y - A.stoneDots[sk][A.stoneDots[sk].length - 1].y : 0) : o.y) * mpp * (1 + S.up * c), sp.z, state, false);
       if (!inView(v, p.x, p.z, f.w * mpp, f.h * mpp, 6)) continue;
       if (c > 0) lights.push({ x: sp.x, y: 1.5, z: sp.z, reach: 8, rgb: BOOT_RGB, strength: 1.5 * c });
-      list.push({ x: p.x - U.x * d, y: -U.y * d, z: p.z - U.z * d, frame: f, flip: face.flip, sx: 1 - STRETCH.thin * c, sy: 1 + STRETCH.up * c, glow: c, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp) });
+      list.push({ x: p.x - U.x * d, y: -U.y * d, z: p.z - U.z * d, frame: f, flip, sx: 1 - S.thin * c, sy: 1 + S.up * c, glow: c, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp) });
       // its dots' glow (Ed, 2026-10-09: "They should glow"): each dot's middle in the world, stretched with the stone, for the
       // soft halos LeashView draws (drawRingGlows), brighter as it charges
-      for (const q of A.stoneDots?.[sk] ?? []) {
-        const a = ((face.flip ? f.w - q.x : q.x) - f.w / 2) * mpp * (1 - STRETCH.thin * c), b = (f.h - q.y) * mpp * (1 + STRETCH.up * c);
-        glows.push({ x: p.x - U.x * d + R.x * a + U.x * b, y: -U.y * d + R.y * a + U.y * b, z: p.z - U.z * d + R.z * a + U.z * b, k: 1 + c });
+      for (const q of dance ? [] : A.stoneDots?.[sk] ?? []) { // (the dance stones have no dots: Ed, 2026-11-13, "drop them")
+        const a = ((flip ? f.w - q.x : q.x) - f.w / 2) * mpp * (1 - S.thin * c), b = (f.h - q.y) * mpp * (1 + S.up * c);
+        glows.push({ x: p.x - U.x * d + R.x * a + U.x * b, y: -U.y * d + R.y * a + U.y * b, z: p.z - U.z * d + R.z * a + U.z * b, k: (1 + c) * (dance ? DANCE_GLOW.k : 1), s: dance ? DANCE_GLOW.size : 1 });
       }
       continue;
     }
