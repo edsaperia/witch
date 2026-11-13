@@ -1,7 +1,7 @@
 // The music (Ed, 2026-10-04): one shared track, played through the proximity mix from
 // rules/music.ts: a master gain, a low-pass filter that muffles it in the deep forest, and damage
 // (a waveshaper's crunch, a wobbling tremolo, and crackle). The track is generative
-// (platform/musicEngine.ts, from config/music-style.json), its sections following the waves
+// (platform/audio/musicEngine.ts, from config/music-style.json), its sections following the waves
 // (rules/musicPlan.ts), on the game's beat; a recorded track (music.src) can stand in for it.
 import { muffled, type MusicMix } from "../../rules/music";
 import type { Tuning } from "../../rules/tuning";

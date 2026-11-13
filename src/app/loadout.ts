@@ -2,7 +2,7 @@ import { slotStorage } from "./saveSlots";
 // Her hat's spell (Ed, 2026-10-11; rules/spells.ts): chosen in the creator's Hat box and kept on this browser (localStorage
 // witch.loadout) for next time; ?hat= chooses it for one load (tests, links). Unknown or not yet built spells are none. Storage
 // blocked: this run only. Her broom's spell isn't chosen or kept here (the Workshop, Ed 2026-10-23): it's the set her broom's parts
-// complete, fitted at the bay and kept with them in app/broomSave.ts; ?parts= fits any parts for one load (?broom= is gone).
+// complete, fitted at its modding stations and kept with them in app/broomSave.ts; ?parts= fits any parts for one load (?broom= is gone).
 import { hatOf, type HatSpellId } from "../rules/spells";
 import { newWitch } from "./defaultLook";
 

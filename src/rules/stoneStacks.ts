@@ -5,8 +5,8 @@
 // it and holding the sigil button (the cast), or a wave does. Either way (rules/game.ts stepFights) the stone becomes a
 // soundsystem, the babies turn friendly, the leftover wild young and adults besiege it, and every friend sigil falls and
 // scatters round it on the ground (g.loose), for any witch to pick up and leash. A legend's sigil among them, picked up, tethers
-// her to the sleeping legend at the distance it lay from it (her leash's `tether`). With `cast.on` false (the default till the view
-// lands; ?cast=1 turns it on) the game is as it was: areas clear when their wild are gone (rules/clear.ts), no stacks, no scatter.
+// her to the sleeping legend at the distance it lay from it (her leash's `tether`). With `cast.on` false (?cast=0; the tuning has it
+// on since the view landed, #1378) the game is as it was: areas clear when their wild are gone (rules/clear.ts), no stacks, no scatter.
 // No drawing here.
 import type { Creature } from "./creatures";
 import { LEGEND } from "./creatures";
@@ -37,8 +37,8 @@ export interface LooseSigil extends PlacedSigil {
 
 /** The cast's knobs (the tuning's `cast`). */
 export interface CastTuning {
-  /** Off: the game as before the stacks (auto-clearing, runes at the feet). Off by default till the view of them lands (the
-   *  coordinator, 2026-10-28: Rendering's PR turns it on); ?cast=1 turns it on, ?cast=0 off. */
+  /** Off: the game as before the stacks (auto-clearing, runes at the feet). On in the tuning since the view of them landed (#1378;
+   *  off by default till then, the coordinator, 2026-10-28); ?cast=1 turns it on, ?cast=0 off. */
   on: boolean;
   /** Seconds of holding to convert a stone. */
   time: number;

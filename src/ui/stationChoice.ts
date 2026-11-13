@@ -1,6 +1,6 @@
 // A station panel's focus and choices, apart from its drawing (ui/stationPanel.ts draws it), so they're tested without a page.
 // Ed, 2026-10-28: "at the moment she changes every time I move the selector. Instead she should change only when I press the 'choose'
-// button": moving (the d-pad, the right stick, the arrows, WASD, the mouse over it) only moves the focus; choosing (confirm,
+// button": moving (the d-pad, the left stick, the arrows, WASD, the mouse over it) only moves the focus; choosing (confirm,
 // platform/bindings.ts menu.choose, or a click) puts what's in focus on her (an owned item, a colour, the part the colours are for, a broom part
 // at the bay); leaving without choosing leaves her as she was. A fit slider is the one line ◀ ▶ changes: that's the slider itself.
 import { GRID_ROWS, shownItems, unwear, wear, wears, wearsOneColour, type Shelf } from "../rules/wardrobe";

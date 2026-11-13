@@ -4,6 +4,8 @@
 // boundaries, seeded per soundsystem so neighbours aren't in lockstep. The show is a function of
 // time, a seed and the music's energy: today a seeded pattern on the beat clock (tuning beat.bpm)
 // with energy 1; later, real audio analysis can feed `energy` (and the clock). No drawing here.
+// Not in the game since Ed, 2026-10-08: the soundsystems' laser shows were replaced by their sky sigils
+// (render/hologram.ts; see render/lasers.ts), and only tools/behaviour/art-rules.behaviour.ts reads laserShow.
 import { clamp, hash2, smoothstep } from "./random";
 import type { Tuning } from "./tuning";
 

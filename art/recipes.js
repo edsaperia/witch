@@ -1,5 +1,5 @@
 import { AREA_FOLDER_RECIPES } from "./areas/index.js";
-// Area recipes (#119): an area type as data alone, one object each, so a new area type is a recipe and some tuning, no code.
+// Area recipes (#119): an area type as data alone, one object each (its own file, art/areas/<id>/recipe.js), so a new area type is a recipe and some tuning, no code.
 // art/areas.js folds every recipe into the registries the game and the art read, as if it had been written there:
 //   slot                its place among the recipes (0 the first), fixed for good: the map's area type ids are positional (the 30
 //                       table areas, then the recipes in slot order), so a slot never moves and a new recipe takes the next one

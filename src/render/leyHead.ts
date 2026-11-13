@@ -8,6 +8,9 @@
 // - its light: a soft round glow on the ground a few metres across, in the line's colour, kept dim enough that the bloom never
 //   blows it to white.
 // The line itself writes on behind it pixel by pixel (render/leylines.ts).
+// Not drawn since Ed, 2026-10-07 ("I don't think there should be anything much at the leyline tip. It can just be the leyline
+// finishing plainly"): nothing makes a LeyHead now; the line's end is the shader's (render/leylines.ts), the pulse's spark is
+// render/sparkler.ts, and only the LeyTip type here is still used.
 import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { PIXEL_SNAP_GLSL } from "./shaders";

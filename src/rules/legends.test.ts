@@ -219,7 +219,7 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
       if (!inside) {
         // a spot in its area, out of its circle
         let spot: [number, number] | null = null;
-        for (let d = lc.r + 4; d < lc.r + 60 && !spot; d += 4) for (let k = 0; k < 16 && !spot; k++) { const a = (k / 16) * Math.PI * 2, x = lc.x + Math.cos(a) * d, z = lc.z + Math.sin(a) * d, c = g.map.cellSafe(x, z).cell; if (c[0] === L.cell[0] && c[1] === L.cell[1]) spot = [x, z]; }
+        for (let d = lc.r + 4; d < lc.r + 60 && !spot; d += 4) for (let k = 0; k < 16 && !spot; k++) { const a = (k / 16) * Math.PI * 2, x = lc.x + Math.cos(a) * d, z = lc.z + Math.sin(a) * d, c = g.map.cellSafe(x, z).cell; if (c[0] === L.cell[0] && c[1] === L.cell[1] && !g.berries.bushes.some(b => Math.hypot(b.x - x, b.z - z) < 25)) spot = [x, z]; } // (and clear of the berry bushes: beside one, her press feeds her stack instead, rules/sigilButton.ts)
         expect(spot).not.toBeNull();
         g.witch = { ...g.witch, x: spot![0], z: spot![1] };
         expect(inLegendClearing(g.map, L.cell, g.witch.x, g.witch.z, L, LEGENDS.placeRadius)).toBe(false);

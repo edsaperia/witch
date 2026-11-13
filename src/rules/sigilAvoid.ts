@@ -1,6 +1,6 @@
 // Creatures keep off the sigils lying on the floor (Ed, 2026-10-28: "When idling or dancing, creatures should try and avoid standing
 // on floor sigils"): every sigil on the ground (her placed sigils, happy creatures' runes, relics' sigils, her hats lying down, and
-// loose sigils once they come: `g.loose`) gathered once a step into a coarse grid, which a roaming or dancing creature asks when it
+// the loose sigils of a converted stone: `g.loose`, rules/stoneStacks.ts) gathered once a step into a coarse grid, which a roaming or dancing creature asks when it
 // picks where to stand next (rules/creatures.ts pointInArea, rules/leash.ts stepLeashed) and while it rests (on one, it moves on).
 // Only a nudge: a creature that finds nowhere clear stands where it would have, and moving, chasing, fighting and marching never ask.
 // The grid is set only while the rules step (game.ts stepGame), so a call from outside a step (a map's spawning) sees none.
@@ -67,7 +67,7 @@ export function gatherFloorSigils(g: Game): FloorGrid | null {
   }
   for (const r of g.relics) if (r.state === "lying" || r.state === "dropped") out.push({ x: r.sx, z: r.sz, r: (sigilSize(RELIC_LEVEL) * backing) / 2 });
   for (const c of g.creatures) if ((c.state === "happy" || c.partyLegend) && hasRune(c)) out.push({ x: c.x, z: c.z + runeOffset(c, t), r: (sigilSize(c.level, RUNE_SCALE) * backing) / 2, owner: c.id });
-  // (loose sigils, when they come: anything lying with an x and z, a level if it has one)
+  // (loose sigils, rules/stoneStacks.ts: anything lying with an x and z, a level if it has one)
   const loose = (g as { loose?: readonly { x: number; z: number; level?: number }[] }).loose;
   if (loose) for (const s of loose) out.push({ x: s.x, z: s.z, r: (sigilSize(s.level ?? 1) * backing) / 2 });
   return floorGrid(out, A?.pad ?? 0.5);

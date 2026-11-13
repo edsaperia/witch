@@ -97,10 +97,11 @@ export function happy(K: SfxKit, pan = 0, near = 1): void {
   K.osc("triangle", f, at + 0.06, 0.3, g2);
 }
 
-/** A soundsystem lost (the next wave coming sooner): a sad sting, a party gone quiet rather than
+/** A soundsystem lost: a sad sting, a party gone quiet rather than
  *  a death. A record scratch, the party's chord running down like a tape stopping, then a little
- *  clock ticking faster as the countdown jumps forward, and a soft chime. Heard anywhere.
- *  `urgent` (the wave comes at once): the clock runs quicker and longer, the chime a step higher. */
+ *  clock ticking faster, and a soft chime. Heard anywhere. (The clock is from when a loss brought the next wave
+ *  sooner; Ed, 2026-10-08: "Losing a soundsystem no longer touches the wave countdown".)
+ *  `urgent` (then, the wave coming at once; nothing passes it now): the clock runs quicker and longer, the chime a step higher. */
 export function lost(K: SfxKit, urgent = false): void {
   const c = K.ctx, at = c.currentTime + 0.01, vol = K.T.lost.volume, out = K.voice(0, 1, 3);
   // the scratch: band-passed noise swept fast down and up
@@ -305,7 +306,7 @@ export function stir(K: SfxKit): void {
 /** Brushing her teeth at the basin (Ed, 2026-11-07: "a 'brush your teeth' button that plays a short brushing animation with a
  *  little sparkle and a sound, flavour only"): six quick scrubs, crisp bands of noise alternating a little in pitch as the brush
  *  goes side to side, over about a second, then a bright two-note glint for the sparkle as it ends. `len` the brushing's
- *  seconds (the animation's: main.ts BRUSH). */
+ *  seconds (the animation's: ui/brushSparkle.ts BRUSH). */
 export function brushTeeth(K: SfxKit, pan = 0, len = 1.2): void {
   if (!K.ready("brushTeeth", .5)) return;
   const c = K.ctx, at = c.currentTime + 0.01, out = K.voice(pan, 0.25, 0.4), vol = K.T.land.volume, n = 6, step = (len - 0.25) / n;

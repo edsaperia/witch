@@ -1,0 +1,9 @@
+{
+  "reason": "Long lunges (Ed, 2026-11-13: \"Lunge ranges seem very short; they could be twice as long, around 1.5-2 dashes range\"; how: \"Both\"): a lunging creature's wind-up may begin about 1.5 dashes off its target, it gathers itself there instead of sprinting in, and its lunge runs 1.5 to 2 dashes (22.5 to 30 m) along its line, through and past its target, its blow landing as it passes. At her, at her party and her party's at wild ones; ?lunge=old the lunges as before.",
+  "rules": {
+    "*": "wherever a creature lunges: where it winds up from, where its lunge ends, when and whether its blow lands, and what follows (who's hit, the fight's course, her health)"
+  },
+  "frames": {
+    "*": "wherever a creature lunges in view: its red lunge warning is 22.5 to 30 m long and begins further off, and the creature ends its lunge well past its target"
+  }
+}

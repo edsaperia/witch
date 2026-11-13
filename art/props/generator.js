@@ -246,7 +246,7 @@ export function propPiece(kind, o = {}, def = null, st = {}, ppm = 16) {
   const { r, ...variant } = v;
   return { sp, colours: prColours(kind, v, def, o, st), metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1) }, variant };
 }
-// Which generated kind (and fixed numbers) stands in for one of the areas' hand-made props under ?props=gen, or null.
+// Which generated kind (and fixed numbers) stands in for one of the areas' hand-made props under style.propGen (always on in the game), or null.
 export function propFor(kind, o = {}) {
   // big: the stone shrine's tree-equivalents (Ed, 2026-10-06: "the tree equivalents should just be large standing stones, perhaps quite
   // similar to the runestones"): great plain monoliths, taller and broader than any runestone, no sigil, each its own height, width and lean

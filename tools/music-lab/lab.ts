@@ -2,7 +2,7 @@
 // game's own mix (src/platform/audio/music.ts) from a style (config/music-style.json), with a pretend run
 // (the boot, waves every so often, jump to any wave), any one section on a loop, the proximity mix,
 // damage and the hooks (knocked out, siege), and knobs for the style. Built into one page by
-// tools/music-lab/build.mjs; window.musicLabCheck() renders every section offline (tools/music-lab/check.mjs).
+// tools/music-lab/build.mjs; window.musicLabCheck() renders every section offline (tools/music-lab/check.cjs).
 import styleJson from "../../config/music-style.json";
 import { Music } from "../../src/platform/audio/music";
 import { Sfx } from "../../src/platform/audio/sfx";
@@ -285,7 +285,7 @@ async function musicLabSail(fresh = true, aSec = 12, gapSec = 5, bSec = 14) {
   const split = oc.createChannelSplitter(2), merge = oc.createChannelMerger(4);
   split.connect(merge, 0, 2); split.connect(merge, 1, 3); merge.connect(oc.destination);
   const sfx = new Sfx(oc, 0.5, TUNING.sfx, style.root + 24, split);
-  // night A: two waves in, its tempo wave 2's; night B: the home speakers booting, one turning every half bar
+  // night A: two waves in, at the style's tempo (the same every wave: Ed, 2026-11-03); night B: the home speakers booting, one turning every half bar
   const clockA = newBeatClock(style.bpm), barA = (t: number) => barAt(clockA, t);
   const cueA: MusicCue = { waves: [barA(100), barA(200)], nextAt: barA(400), bootUntil: barA(30), knockedOut: false, siege: 0 };
   const styleB: MusicStyle = { ...style, arc: [...style.arc.slice(1), style.arc[0]] };

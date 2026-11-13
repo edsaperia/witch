@@ -1,6 +1,6 @@
 // The moonpool glade (Ed, 2026-10-13: magical creatures for the last outer islands; the unicorn's, unknown-31, the cold
 // rainforest): old cedars, spruces and alders round a still, moonlit pool, a ring of white stones in the clearing; the unicorn its
-// creature. Not the Mistwood, the Mossy creek, the Misty terraces or the Mossy dell: pale bark, dark yew and bright water.
+// creature. Not the Mistwood, the Mossy creek, the Misty terraces or the Mossy dell: dark cedar and bright water.
 export const MOONPOOL = {
   slot: 23, id: "moonpool-glade", name: "Moonpool glade", creature: "unicorn", by: "recipe", leaf: .28, floor: ["grass", .3, .3, .58],
   text: { floor: "short pale grass and moss", wall: "a still pool", small: "ferns and white flowers", big: "old cedars, spruces and alders", set: "a ring of white stones by the pool" },

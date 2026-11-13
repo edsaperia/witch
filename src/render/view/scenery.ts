@@ -454,7 +454,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   for (const [k, b] of v.decorBatches) if (k.startsWith(VEIL_KEY) && !veiled.has(Number(k.slice(VEIL_KEY.length)))) b.set([]);
   for (const [type, list] of veiled) { list.sort((a, b) => b.z - a.z); veilBatch(v, type)?.set(list); v.typeUsed.set(type, performance.now()); }
   { const now = performance.now(); for (const t of per.keys()) v.typeUsed.set(t, now); } // (listed: kept by the GPU budget, view/gpuBudget.ts)
-  if (t.shadows.trunks) { // (always set, so ?trunks or the pause page's switch can turn them on live; hidden while off: render/view.ts)
+  if (t.shadows.trunks) { // (always set, so ?trunks or the pause page's switch can turn them on live; hidden while off: render/view/frame.ts)
     for (const [type, b] of v.trunkShadowBatches) if (typeof type === "number" ? !trunks.has(type) : SCENERY_CASTS.has(type) && !casts.has(type)) b.set([]);
     for (const [type, list] of trunks) {
       let b = v.trunkShadowBatches.get(type);

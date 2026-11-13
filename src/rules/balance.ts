@@ -1,7 +1,7 @@
 // The balance simulator (Ed, 2026-10-04: "how powerful we think a player can get, and how
 // quickly"; what matters more is whether a late-reacting player can still catch up). A headless
-// model of only what decides a run: the real map, its creatures (each area's start, and what it
-// grew while wild, by the game's own growthLevel) and the real wave order (the
+// model of only what decides a run: the real map, its creatures (each area's start, and, only with
+// population.growth.on, off since Ed's 2026-10-28, what it grew while wild) and the real wave order (the
 // party's own picker, ruined areas dropping out as in the game); each wave's soundsystem with its
 // health; its area's young and up marching on it in straight lines at their march speed
 // (combat.marchShare of their top speed, as combat.ts moves them: marchSpeedOf) and, once in reach, hitting it at their
@@ -187,8 +187,8 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
           lastSound = { x: at.x, z: at.z, at: time };
         }
         for (const f of by.get(key) ?? []) if (!f.gone && (!o.areaLegends || f.level < 3)) { f.siege = key; live.push(f); }
-        // What it grew while wild (rules/growth.ts): waves 1 to this one, as many as the game grows
-        // (its count scale: 1 / its strength) at the game's own levels, at its strength.
+        // What it grew while wild (rules/growth.ts; growth is off in the game since Ed, 2026-10-28): waves 1 to this
+        // one, as many as growth makes (its count scale: 1 / its strength) at its own levels, at its strength.
         const G = t.population.growth, site = map.siteOf(a.cell[0], a.cell[1]), species = AREA_TYPES[map.typeOf(a.cell[0], a.cell[1])].creature;
         const m = strengthOf(species), k = countScale(species);
         if (G.on) for (let w = 1; w <= party.wave; w++) for (let n = 0; n < grownAt(w, G.perWave, k); n++) {
