@@ -349,7 +349,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
     // tightening as a real one's would; in its shell (the snail), a steel ring.
     if (c.packGlow !== undefined && time < c.packGlow) { const top = lv.tops.get(c.id) ?? 1.2; for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2 + time * 3, ph = (time * 2 + i / 8) % 1; lv.standing.add(c.x + Math.cos(a) * 0.7, 0.2 + ph * top, c.z + Math.sin(a) * 0.5, 0.25, dot, 1, 1, 1, 0.9 * (1 - ph)); } }
     const wildC = !c.leashed && c.legendState !== "happy", danger = lookOn && wildC, top = lv.tops.get(c.id) ?? 1.4;
-    if (danger) lv.look.danger(dressOf(c.species, c.level, null)); // (its warning shapes in its element's colour: Ed, 2026-11-13)
+    lv.look.danger(danger ? dressOf(c.species, c.level, null) : null); // (a wild one's warning shapes in its element's colour: Ed, 2026-11-13; no other's colour left over for one that isn't)
     if (c.feintUntil !== undefined && time < c.feintUntil && danger) lv.look.tell(c.x, c.z, top, 1.2, Math.max(0, Math.min(1, 1 - (c.feintUntil - time) / 0.45)), time);
     else if (c.feintUntil !== undefined && time < c.feintUntil) { const k = 1 - (c.feintUntil - time) / 0.45, R = 1.8 - 0.9 * Math.max(0, Math.min(1, k)); for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; lv.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.35, dot, 1, 0.3, 0.3, 0.4 + 0.5 * k); } }
     if (c.packShell !== undefined) for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; lv.flat.add(c.x + Math.cos(a) * 1.2, 0, c.z + Math.sin(a) * 0.9, 0.4, dot, 0.75, 0.8, 0.9, 0.8); }

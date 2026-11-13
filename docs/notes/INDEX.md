@@ -493,6 +493,7 @@ glossary; these are the prototype's), by note.
 - Party objects
 - Attack effects
 - Attack look
+- Telegraph colours and the effects on her
 - Spell glow
 - Her magic's glow
 - Colour temperatures
