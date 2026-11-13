@@ -179,15 +179,15 @@ describe("babies on her leash", () => {
 
   it("a full stack's line doesn't trail absurdly far: no more than half again as long as by the old drawings' lengths", () => {
     const B = babiesOf(TUNING), OLD = withTuning({ leash: { ...TUNING.leash, babies: { ...B, mesh: false } } }), last = (kinds: string[], t: typeof TUNING) => queueDistances(kinds.map(baby), t)[kinds.length - 1];
-    // (a dozen of the longest and the smallest, mixed; then every meshed kind once, in one line: under 9 m a baby on average)
+    // (a dozen of the longest and the smallest, mixed; then every meshed kind once, in one line, the wonders and their 25 m wyrm among them: under 10 m a baby on average)
     const dozen = ["fox", "snake", "heron", "elephant", "squirrel", "crocodile", "owl", "bear", "hare", "toad", "komodo", "wolf"], all = Object.keys(MESH_LENGTHS.lengths);
     for (const kinds of [dozen, all]) expect(last(kinds, TUNING)).toBeLessThan(1.5 * last(kinds, OLD));
-    expect(last(all, TUNING) / all.length).toBeLessThan(9);
+    expect(last(all, TUNING) / all.length).toBeLessThan(10);
     expect(queueDistances(dozen.map(baby), TUNING)[2]).toBeLessThan(B.farAt); // (the first three still in view with her)
   });
 
   it("keep small babies at least babies.gap apart, and off her", () => {
-    const B = babiesOf(TUNING), small = ["penguin", "fennec", "owl", "bee", "scorpion"];
+    const B = babiesOf(TUNING), small = ["penguin", "fennec", "owl", "moth", "scorpion"];
     for (const k of small) expect(2 * queueHalf(baby(k), TUNING) + B.margin!).toBeLessThan(B.gap); // (small enough to be at the minimum)
     const back = queueDistances(small.map(baby), TUNING);
     expect(back).toEqual(small.map((_, k) => (k + 1) * B.gap));
