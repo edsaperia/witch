@@ -208,6 +208,11 @@ export interface Creature {
   boss?: boolean;
   /** The island-kind friendly home defender, never a dealt/quest/party legend (Ed, 2026-10-31). */
   homeGuard?: boolean;
+  /** A friendly route legend's journey (Ed, 2026-11-13: "once it gets to the end of the route, it should turn around and walk back.
+   *  Once it gets back to the dancefloor, it starts guarding the home area like the home legend"; rules/combat/legend.ts
+   *  friendlyIdle). Unset: walking out to the route's far end. "back": walking the route home. "guard": home for good, standing
+   *  at its post (x, z) in the home area. Kept with the night (a saved night restores the stage). */
+  journey?: { stage: "back" | "guard"; x?: number; z?: number };
   /** One of the challenge circle's pack as a statue (rules/challengeStatues.ts; Ed, 2026-11-04: "grey statues, all facing the centre
    *  of the circle"): stone at its post, or walking back to it to turn to stone; either way out of everything (no roam, fight, 💌 or
    *  hit: rules/game.ts dormant). Unset: itself. */
@@ -294,7 +299,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
     wanderTo: undefined, circle: undefined, dropped: undefined, healedAt: undefined, healedSmall: undefined, boss: undefined, legendState: undefined,
     stateAt: undefined, quest: undefined, friendly: undefined, asleep: undefined, napUntil: undefined, lulled: undefined,
     wakeUntil: undefined, safeX: undefined, safeZ: undefined, safeR: undefined, watchUntil: undefined, hunting: undefined, taunt: undefined, swoop: undefined, finale: undefined,
-    packGlow: undefined, packHide: undefined, packShell: undefined, packProwl: undefined, feintUntil: undefined, coverBy: undefined, packSync: undefined, packThrow: undefined, mind: undefined, spell: undefined, hop: undefined, hopNext: undefined, homeGuard: undefined, statue: undefined,
+    packGlow: undefined, packHide: undefined, packShell: undefined, packProwl: undefined, feintUntil: undefined, coverBy: undefined, packSync: undefined, packThrow: undefined, mind: undefined, spell: undefined, hop: undefined, hopNext: undefined, homeGuard: undefined, statue: undefined, journey: undefined,
   };
   if (level === LEGEND) { c.boss = true; c.legendState = "asleep"; c.stateAt = 0; }
   return c;
@@ -302,7 +307,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Every optional field of a Creature, in the order makeCreature's literal lists them (one shape for all; creatures.test.ts checks the order). A field added to
  *  Creature and not here fails the typecheck (OptionalMissing). */
-export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "atStone", "loose", "aims", "dazedUntil", "affection", "affectionAt", "fills", "drops", "ranOff", "cheerUntil", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "beach", "beached", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell", "hop", "hopNext", "homeGuard", "statue"] as const satisfies readonly (keyof Creature)[];
+export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "atStone", "loose", "aims", "dazedUntil", "affection", "affectionAt", "fills", "drops", "ranOff", "cheerUntil", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "beach", "beached", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell", "hop", "hopNext", "homeGuard", "statue", "journey"] as const satisfies readonly (keyof Creature)[];
 type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
 type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
 const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;
@@ -505,6 +510,9 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap, time?: num
 
 /** A creature moved by combat (rules/combat.ts) or a knockout (rules/knockout.ts) this step,
  *  not by its roam or its leash. */
+/** Guards the home area and never leaves it: the island's own home legend, or a friendly route legend back from its walk
+ *  (Ed, 2026-11-13). Not one that has since joined her party or the win's dance. */
+export const guardsHome = (c: Creature): boolean => !!c.homeGuard || (c.journey?.stage === "guard" && c.legendState === "happy" && !c.leashed && !c.partyLegend && c.finale === undefined && !c.gone);
 export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wanderTo || c.fight?.target || c.retreat || (c.siege && !c.leashed) || c.hunting !== undefined || (c.level === LEGEND && c.legendState === "happy" && !c.leashed && !c.partyLegend)); // Friendly route legends, like hunters, are moved by combat wherever they are.
 
 /** Wild idlers' naps (Ed, 2026-10-06: "I think animals in wild areas which are idling can sleep. They awake when you are

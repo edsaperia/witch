@@ -1,6 +1,6 @@
 // Combat's legends (split from rules/combat.ts, no change in behaviour): an angry or happy area legend's long-range
 // throw or beam and its long charge, and a wild legend's pattern of big moves.
-import { LEGEND, type Creature } from "../creatures";
+import { guardsHome, LEGEND, type Creature } from "../creatures";
 import { foes, stateOf, type State } from "../creatureStates";
 import { LEGENDS } from "../legends";
 import { bodyRadius } from "../spacing";
@@ -81,10 +81,11 @@ export function friendlyLegendRoute(g: Game): { line: readonly RoutePoint[]; tip
   return { line: cached.line, tip: dryMetres(cached, tip) };
 }
 const friendRoutes = new WeakMap<Creature, { line: readonly RoutePoint[]; at: number; x: number; z: number }>();
-/** Join the nearest point on tonight's route, then walk along its curves towards the growing front, stopping at it.
+/** Join the nearest point on tonight's route, then walk along its curves towards `tip` metres along it (clamped to the route:
+ * Infinity is its far end, 0 its start at home), stopping there. True once it stands there.
  * The transient progress hint disambiguates crossings; after displacement or a changed route the legend rejoins. */
-export function walkFriendlyRoute(c: Creature, line: readonly RoutePoint[], tip: number, dt: number, speed = c.speed, round?: CombatWorld["round"]): void {
-  if (line.length < 2) return;
+export function walkFriendlyRoute(c: Creature, line: readonly RoutePoint[], tip: number, dt: number, speed = c.speed, round?: CombatWorld["round"]): boolean {
+  if (line.length < 2) return false;
   const lengths = [0];
   for (let i = 1; i < line.length; i++) lengths.push(lengths[i - 1] + Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]));
   const point = (at: number): RoutePoint => {
@@ -117,8 +118,8 @@ export function walkFriendlyRoute(c: Creature, line: readonly RoutePoint[], tip:
       left = 0;
     } else { const step = Math.min(left, distance); c.x += (join[0] - c.x) / distance * step; c.z += (join[1] - c.z) / distance * step; left -= step; }
   }
+  const end = Math.max(0, Math.min(tip, lengths[lengths.length - 1]));
   if (left > 0) {
-    const end = Math.max(0, Math.min(tip, lengths[lengths.length - 1]));
     state.at += Math.sign(end - state.at) * Math.min(left, Math.abs(end - state.at));
     const p = point(state.at); c.x = p[0]; c.z = p[1];
   }
@@ -126,6 +127,55 @@ export function walkFriendlyRoute(c: Creature, line: readonly RoutePoint[], tip:
   c.vx = dt > 0 ? dx / dt : 0; c.vz = dt > 0 ? dz / dt : 0;
   c.moving = Math.hypot(dx, dz) > 0; if (c.moving) { c.walk += dt * 5; if (dx) c.facing = dx > 0 ? 1 : -1; c.away = dz < -Math.abs(dx); }
   state.x = c.x; state.z = c.z;
+  const goal = point(end);
+  return state.at === end && Math.hypot(goal[0] - c.x, goal[1] - c.z) < 1e-6;
+}
+
+/** Where returned route legends stand guard (Ed, 2026-11-13): rings round the home area's middle, the first `ring` metres out
+ *  (past the dancefloor's speakers), each `step` further; no post within `gap` metres of another guard's. */
+export const GUARD_POSTS = { ring: 36, step: 12, gap: 18, rings: 6 };
+/** A free post in the home area for a legend back from the route: the nearest slot to where it came in, on the first ring with
+ *  one inside home and `gap` clear of the home legend and of every other returned legend's post. (No home known, or none free: where it stands.) */
+export function guardPost(w: Pick<CombatWorld, "home" | "creatures">, c: Creature): { x: number; z: number } {
+  const H = w.home, P = GUARD_POSTS;
+  if (!H) return { x: c.x, z: c.z };
+  const taken: { x: number; z: number }[] = [];
+  for (const o of w.creatures) {
+    if (o === c || o.gone) continue;
+    if (o.homeGuard) taken.push({ x: o.lairX ?? o.x, z: o.lairZ ?? o.z });
+    else if (o.journey?.stage === "guard" && o.journey.x !== undefined) taken.push({ x: o.journey.x, z: o.journey.z ?? o.z });
+  }
+  const from = Math.atan2(c.z - H.z, c.x - H.x);
+  for (let k = 0; k < P.rings; k++) {
+    const r = P.ring + P.step * k, n = Math.max(6, Math.floor((2 * Math.PI * r) / P.gap));
+    for (let i = 0; i < n; i++) {
+      // (slots fanning out either side of the way it came in: 0, +1, -1, +2...)
+      const a = from + ((i % 2 ? 1 : -1) * Math.ceil(i / 2) * 2 * Math.PI) / n, x = H.x + Math.cos(a) * r, z = H.z + Math.sin(a) * r;
+      if (H.inside(x, z) && taken.every(t => Math.hypot(t.x - x, t.z - z) >= P.gap)) return { x, z };
+    }
+  }
+  return { x: c.x, z: c.z };
+}
+/** A friendly route legend with nothing to fight (Ed, 2026-11-13: "once it gets to the end of the route, it should turn around
+ *  and walk back. Once it gets back to the dancefloor, it starts guarding the home area like the home legend"; "I mean the very
+ *  end of the route, not where the pulse is"): out along tonight's whole route to its far end, drawn that far or not; back
+ *  along it to its start at home; then to a post in the home area (guardPost), where it stays. Its stage is c.journey, so a
+ *  fight in between picks up where it left off. */
+function friendlyIdle(w: CombatWorld, c: Creature): void {
+  const j = c.journey, speed = w.t.combat.legendRun;
+  if (j?.stage === "guard") {
+    const px = j.x ?? c.x, pz = j.z ?? c.z, d = Math.hypot(px - c.x, pz - c.z);
+    if (d < 0.05) return;
+    // (back to its post after a charge or a shove, round any lake in the way)
+    const via = (d > 1 ? w.round?.(c.x, c.z, px, pz) : null) ?? { x: px, z: pz }, dx = via.x - c.x, dz = via.z - c.z, dv = Math.hypot(dx, dz) || 1, step = Math.min(dv, speed * FIGHT.speed * w.dt);
+    if (step >= dv) { c.x = via.x; c.z = via.z; } else { c.x += (dx / dv) * step; c.z += (dz / dv) * step; } // (onto it exactly)
+    c.vx = (dx / dv) * speed; c.vz = (dz / dv) * speed;
+    c.moving = true; c.walk += w.dt * 5; if (dx) c.facing = dx > 0 ? 1 : -1; c.away = dz < -Math.abs(dx);
+    return;
+  }
+  if (!w.friendlyRoute) return;
+  if (!walkFriendlyRoute(c, w.friendlyRoute().line, j ? 0 : Infinity, w.dt, speed, w.round)) return;
+  c.journey = j ? { stage: "guard", ...guardPost(w, c) } : { stage: "back" };
 }
 
 /** An angry or happy legend's turn (Ed, 2026-10-05; #87; config/legends.json attack): it never
@@ -140,6 +190,7 @@ export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, da
   const f = (c.fight ??= { target: null, readyAt: time + A.interval * 0.5, windupUntil: 0, aimX: 0, aimZ: 0 });
   if (c.lairX === undefined) { c.lairX = c.x; c.lairZ = c.z; }
   const charger = LEGENDS.charge.species.includes(c.species);
+  const guard = !angry && guardsHome(c); // (the home legend, or a route legend back home for good: Ed, 2026-11-13)
   if (charger && (c.run || (angry && Math.hypot(c.x - c.lairX, c.z - c.lairZ!) > 2))) { stepLongCharge(w, s, c, f, grid, angry); return; }
   c.moving = false; c.vx = 0; c.vz = 0; // (it stands where it lay, in its area)
   if (f.windupUntil > 0) {
@@ -161,7 +212,7 @@ export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, da
   if (angry) for (const v of w.witches) { if (!v.onGround || v.down || unseen(v, c)) continue; const d = Math.hypot(v.x - c.x, v.z - c.z); if (d <= R) found.push({ d, x: v.x, z: v.z, target: { kind: "witch", id: v.id } }); }
   for (const o of grid.near(c.x, c.z, R)) {
     if (o === c || !targetable(o) || truce(c, o) || w.asleep(o)) continue;
-    if (c.homeGuard && charger && !w.home?.inside(o.x, o.z)) continue; // A charging guard can reach only targets inside home.
+    if (guard && charger && !w.home?.inside(o.x, o.z)) continue; // A charging guard can reach only targets inside home.
     const st = stateOf(o);
     if (angry ? st !== "leashed" : !friendlyEnemy(o)) continue;
     const d = Math.hypot(o.x - c.x, o.z - c.z);
@@ -171,7 +222,7 @@ export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, da
   if (!angry && !c.homeGuard) {
     // Defend a witch in range before engaging other enemies. Attackers may be beyond the range themselves.
     const defended = w.witches.filter(v => !v.down && Math.hypot(v.x - c.x, v.z - c.z) <= R);
-    const attackers = w.creatures.filter(o => o !== c && targetable(o) && !truce(c, o) && !w.asleep(o) && friendlyEnemy(o) && defended.some(v => attacksWitch(o, v.id)))
+    const attackers = w.creatures.filter(o => o !== c && targetable(o) && !truce(c, o) && !w.asleep(o) && friendlyEnemy(o) && defended.some(v => attacksWitch(o, v.id)) && !(guard && charger && !w.home?.inside(o.x, o.z)))
       .map(o => ({ d: Math.hypot(o.x - c.x, o.z - c.z), x: o.x, z: o.z, target: { kind: "creature" as const, id: o.id } })).sort((a, b) => a.d - b.d);
     if (attackers.length) found.splice(0, found.length, ...attackers);
   }
@@ -186,10 +237,7 @@ export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, da
   }
   if (!found.length) {
     f.target = null; f.readyAt = time + A.recheck;
-    if (!angry && !c.homeGuard && w.friendlyRoute) {
-      const route = w.friendlyRoute();
-      walkFriendlyRoute(c, route.line, route.tip, w.dt, w.t.combat.legendRun, w.round);
-    }
+    if (!angry && !c.homeGuard) friendlyIdle(w, c);
     return;
   }
   if (time < f.readyAt) return;
@@ -252,7 +300,7 @@ export function stepLongCharge(w: CombatWorld, s: CombatState, c: Creature, f: F
       if (run.speed < 0.5) { run.phase = "home"; run.at = time; c.moving = false; }
     }
     const vx = Math.cos(run.angle) * run.speed, vz = Math.sin(run.angle) * run.speed;
-    if (c.homeGuard && !w.home?.inside(c.x + vx * dt, c.z + vz * dt)) {
+    if (!angry && guardsHome(c) && !w.home?.inside(c.x + vx * dt, c.z + vz * dt)) {
       c.run = undefined; c.moving = false; c.vx = 0; c.vz = 0; f.target = null; f.readyAt = time + K.rest; return;
     }
     c.x += vx * dt; c.z += vz * dt; c.vx = vx; c.vz = vz; run.ran += run.speed * dt;
