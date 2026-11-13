@@ -1,10 +1,10 @@
-// The bee, four levels, as plans for tools/creature-mesh/quadruped.js (it builds any plan of bones, lofts and cones): a
+// The bee, four levels, as plans for art/mesh/shape.js (it builds any plan of bones, lofts and cones): first drawn as a
 // candidate to stand in for the marten or the stoat (Ed, 2026-11-11: "Martens and Stoats are pretty similar, maybe we should
-// have a different animal. Bees? Turtles?"). It hovers: a furred thorax between a round head with great dark eyes and a banded
+// have a different animal. Bees? Turtles?"), a kind of its own since 2026-11-12. It hovers: a furred thorax between a round head with great dark eyes and a banded
 // abdomen ending in its sting, two pairs of wings beating, six legs hanging. Its ladder is a proposal: a bee-let, all fluff,
 // its wings too small to lift it far; a slim worker; a great bumble of an adult with pollen on its legs; and the old queen,
 // long in the body, plated in purple enamel cut with honey-lit marks, crowned in comb, her wings ragged fans of dark blades set with light. On home
-// island in the marten's place (Ed, 2026-11-11: "keep both, but swap the marten for the bee"). Metres; y up; its head along
+// island in the marten's place (Ed, 2026-11-11: "keep both, but swap the marten for the bee"; the marten on the bench). Metres; y up; its head along
 // +z; it hangs `fly` off the ground.
 import { ball } from "../kit/ball.js";
 import { tufts } from "../kit/tufts.js";

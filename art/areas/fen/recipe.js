@@ -1,5 +1,5 @@
 // The fen (#119): the first area type written as a recipe, data alone (art/recipes.js says what each field is). Ed's columns as
-// for the 30: open peaty water and sedge under alder and willow carr, the turtle its creature (the newt till 2026-11-12: Ed, "newt for turtle").
+// for the 30: open peaty water and sedge under aspen, alder and willow carr, the turtle its creature (the newt till 2026-11-12: Ed, "newt for turtle").
 export const FEN = {
   slot: 0, id: "fen", name: "Fen", creature: "turtle", by: "recipe", leaf: .23, floor: ["moss", .2, .5, .32],
   text: { floor: "peat moss and sedge", wall: "black pools", small: "sedge and reeds", big: "aspen and alder carr", set: "a punt sunk among the sedge" },

@@ -1,6 +1,6 @@
 // Creature sigils (Ed: "a magical symbol for each type of creature"; then, 2026-10-06: "The animal sigils are too abstract",
 // with a reference set): each is the animal itself as a monoline icon, one thick round-capped stroke, no fills, reduced to its two
-// or three defining features (see SIGILS). One family: the same stroke weight, smooth curves, a few strokes each.
+// or three defining features (SIGILS; each one's strokes in art/creatures/<id>/sigil.js). One family: the same stroke weight, smooth curves, a few strokes each.
 //
 // Main use (Ed): the leashing rune, written on the ground under a creature, seen from the game's
 // camera 30-40° down, so squashed to about half its height. So: strong verticals, open curves,

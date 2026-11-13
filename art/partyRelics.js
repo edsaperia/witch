@@ -1,4 +1,4 @@
-// Party relics (Ed, #87, 2026-10-05): bottles half-buried in the forest floor (built legend-sized, drawn at a third: PARTY_RELIC_SIZE), 3 or 4 to a map, waiting to be
+// Party relics (Ed, #87, 2026-10-05): bottles half-buried in the forest floor (built legend-sized, drawn at a third: PARTY_RELIC_SIZE), one to every ten areas the waves reach (Ed, 2026-10-11: config/legends.json relics.perAreas), waiting to be
 // found. The witch digs one up; it becomes a sigil in her stack, and placed by a sleeping legend it wakes the legend happy. Ed: "The
 // legend relics should be various kinds of bottle ... the liquid inside should glow so it's clear that it's a magical item and not
 // just scenery" and "They should all look like colourful transparent bottles of different shapes. Round, square, hexagonal, etc."

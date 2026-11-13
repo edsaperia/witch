@@ -20,7 +20,8 @@ import { elderQuad, grizzle, notch, surfaceFrom, ring, fitRing, frontPts, closed
 // Youths, and come up with something larger for Adults"): 1.65 times their young, heavier in build
 // (thicker body, legs and neck, a bigger head, bigger horns, antlers and tusks) with a few glowing
 // motes; legends about 4.5 times their young and never less than 2.2 times their adult. They keep
-// their size on screen as pixels grow.
+// their size on screen as pixels grow. (The model before Ed adopted the revised sizes, 2026-10-31:
+// art/creature-size.js fits each kind's final size now; ?creatureSizeCandidate=0 compares this one.)
 export const ADULT_SCALE = 1.65, LEGEND_OVER_ADULT = 2.2;
 const LEVEL_SCALE = st => [1, Math.sqrt(st.growth), Math.sqrt(st.growth) * ADULT_SCALE, st.growth];
 export const height3d = (level, st, hgt = 1) => Math.round(st.size * LEVEL_SCALE(st)[Math.max(0, Math.min(3, level))] * (2 / (st.pixel || 2)) * 1.9 * hgt);

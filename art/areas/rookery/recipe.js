@@ -1,6 +1,6 @@
 // The penguin rookery (the penguin's area, unknown-14's cold island; Ed, 2026-10-12: more animals for later islands): a cold, rocky
 // shore, written as a recipe (art/recipes.js says what each field is). Snow lying over dark wet shingle, the rocks showing through
-// it, tussock grass in the lee of boulders, a few wind-stunted pines and birches bent flat by the gales, and in the clearing the
+// it, tussock grass in the lee of boulders, a few wind-stunted spruces, birches and pines bent flat by the gales, and in the clearing the
 // rookery's ring of pebble nests, the penguin its creature. (Not the arctic fox's tundra nor the polar bear's pack ice: a shore.)
 export const ROOKERY = {
   slot: 22, id: "rookery", name: "Penguin rookery", creature: "penguin", by: "recipe", leaf: .36, floor: ["snow", .58, .06, .86],
