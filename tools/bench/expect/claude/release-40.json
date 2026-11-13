@@ -1,0 +1,6 @@
+{
+  "reason": "Release 40: #2012 (claude/mesh-batch-a): creature meshes, batch A (Ed, 2026-11-12: \"meshes are great, we should aim to transition to them for all the creatures\"; 2026-11-13: \"The mesh builders work is good enough, please merge it when submitted\"): seven more kinds are drawn as their meshes; no kind's id, island or numbers change",
+  "frames": {
+    "*": "the wolf, arctic fox, fennec, raccoon, red panda, otter and meerkat drawn as meshes instead of the generated creatures"
+  }
+}
