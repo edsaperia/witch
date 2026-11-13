@@ -52,6 +52,19 @@
    ]
   },
   {
+   "name": "edgefade",
+   "values": [
+    "old"
+   ],
+   "does": "The fading edges as they were, to compare: the grass's fade at the edge of her light and the scenery's dithered far edge are dithers fixed to the screen (not each tuft's and tree's own), the scenery's radius sets off at full speed when the frame rate drops or recovers (not from rest), and the string lights are cut whole at half the fade (not bulb by bulb).",
+   "group": "compare",
+   "since": "2026-11-13",
+   "decision": "Ed, 2026-11-13: \"6 sounds good; scenery should fade rather than pop\"",
+   "readIn": [
+    "src/render/edgeFade.ts"
+   ]
+  },
+  {
    "name": "terracecut",
    "values": [
     "old"

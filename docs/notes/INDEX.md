@@ -448,6 +448,7 @@ glossary; these are the prototype's), by note.
 - The dive's look
 - Pop
 - Crawl
+- Edge fade
 - Path network
 - Decor
 - Rolling ground
