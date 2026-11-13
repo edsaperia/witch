@@ -3,6 +3,7 @@
 // by default (the tuning's sail.inPlace): ?sail=reload the old way, ?sail=inplace forces it on. Here, the pure parts main.ts uses:
 // which way, the night's link, the knobs that link sets itself (kept from the carry), the other ways' links and nights, Back
 // opening the pause menu, and the quiet fallback.
+import { renamedLink } from "./renamedLink";
 import { parseSeed } from "../rules/map";
 import { playableIsland } from "../rules/rosters";
 import { newForestHref } from "./newForest";
@@ -59,7 +60,7 @@ export function nightHref(how: NightWay, href: string, random: () => number = Ma
 /** The night a way's link starts, as a fresh load of it would: its island, seed and world, and the link's switches whole (nothing
  *  flies in, the chart's hand-off read once). */
 export function nightFromHref(how: NightWay, href: string): { how: NightWay; island: string; seed: number; world?: number; params: URLSearchParams } {
-  const params = new URL(href).searchParams, seed = parseSeed(params.get("seed"));
+  const params = renamedLink(new URL(href).searchParams), seed = parseSeed(params.get("seed"));
   if (seed === null) throw new Error(`a new night in place: no seed in ${href}`); // (the boot always puts one in the link: loaded anew instead)
   return { how, island: params.get("island") ?? "", seed, world: params.has("world") ? Number(params.get("world")) : undefined, params };
 }

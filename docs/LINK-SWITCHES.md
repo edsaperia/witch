@@ -22,7 +22,7 @@ What the night is: its seed, island, world, opening, sail and her kit.
 | `fightSpeed=<k>` | The fight's speed for this load (the debug overlay's slider; never remembered). | 2026-10-07 | app/knobs.ts |
 | `hat=<id>` / `hat=none` | She wears this hat for one load (and owns it for that load). | 2026-10-11 | app/debugUnlock.ts, app/hatSave.ts, app/loadout.ts |
 | `hats=all` / `hats=<id>,…` | These hats are hers for one load, instead of her save. | 2026-10-23 | app/hatSave.ts |
-| `island=<kind>` / `island=home` / `island=<n>` | Play this kind's island, home, or a random island of n areas. | 2026-10-11 | app/linkParams.ts, app/sail.ts, main.ts, platform/online/entry.ts |
+| `island=<kind>` / `island=home` / `island=<n>` | Play this kind's island, home, or a random island of n areas. | 2026-10-11 | app/linkParams.ts, app/renamedLink.ts, app/sail.ts, main.ts, platform/online/entry.ts |
 | `mapAreas=<n>` | How many areas the map has, for this load only (never remembered). | 2026-10-07 | app/linkParams.ts |
 | `opening=old` / `opening=chart` | The first load's start: `old`, the bedroom as the loading cover (the creator); `bedroom` (or `chart`, its old name) forces the wake-up in her bedroom, the default since Ed, 2026-10-23 (the tuning's `opening.bedroom`; the sea chart came first from 2026-10-21 till then). A link naming a seed or island wakes her in her bedroom too (Ed, 2026-10-25); one starting a bot game or the zoo, or with `creator=0`, keeps the old start anyway; the tools that drive the old start (the creator, the start card) put `opening=old` in their links. *Decision: The sea chart opening is the default (2026-10-21).* | 2026-10-20 | app/opening.ts |
 | `phase=0` / `phase=1` / `phase=2` / `phase=3` / `phase=4` / `phase=5` | An island of that phase's shape, of random area types. | 2026-10-11 | app/linkParams.ts |
@@ -113,7 +113,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `decor=0` | The treehouse rooms without their decoration. | 2026-10-23 | render/houseDecor.ts |
 | `dream=won:<kind>:<item>` / `dream=lost:<kind>:<item>` | Her dream of a loaned find over the night, at once, for a look at it. | 2026-10-24 | main.ts |
 | `fight` / `fight=<seed>` | The Fight Arena: straight into a fight with a seeded pack (a new seed when blank). | 2026-10-27 | app/fightArena.ts, app/gameParams.ts |
-| `found=<kind>,…` | These islands count as found for this load, whatever the browser's save says (the repro link). | 2026-10-14 | app/linkParams.ts |
+| `found=<kind>,…` | These islands count as found for this load, whatever the browser's save says (the repro link). | 2026-10-14 | app/linkParams.ts, app/renamedLink.ts |
 | `furniture=0` | The treehouse rooms without their furniture. | 2026-10-23 | render/houseFurniture.ts |
 | `kit=full` | Her kit stays full while the party spell waits (otherwise she starts with a fresh kit). | 2026-10-26 | app/gameParams.ts |
 | `latency=<category>` / `latency=<seconds>` | The audio output buffer for one load: a latency category or seconds. | 2026-10-07 | app/sound.ts |

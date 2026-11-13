@@ -4,6 +4,7 @@ import { slotStorage } from "./saveSlots";
 import { TUNING } from "../rules/tuning";
 import { OLD_HEX } from "../render/leash/ranks";
 import { playableIsland } from "../rules/rosters";
+import { renamedLink } from "./renamedLink";
 import { loadSave, worldSeed } from "./chartSave";
 import { zooCoastsHeld } from "./zooCoasts";
 import { applySet } from "./repro";
@@ -55,6 +56,7 @@ export function worldFromLink(params: URLSearchParams, defaults = { areaSize: TU
 }
 
 export function tuningFromLink(params: URLSearchParams) {
+  renamedLink(params); // (?island=moth, ?found=moth: the butterfly, as when the link was shared)
   // Variants as switches in the link: ?tilt=off, ?bloom=off, ?shadows=off,
   // ?canopy=off (the canopy shadow layer), ?mist=off.
   // A whole copy of the tuning file (2026-10-19): what this load's knobs, settings and sliders change is this load's alone, never

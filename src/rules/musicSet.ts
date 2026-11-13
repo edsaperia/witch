@@ -18,6 +18,7 @@
 // Deterministic: the same seed, island and waves give the same set. Numbers only: the conductor (musicPlan.ts) plays the
 // night's arc as it played the style's.
 import styleJson from "../../config/music-style.json";
+import { seedName } from "./kinds"; // (a renamed kind keeps its night's set)
 import { hash2 } from "./random";
 import type { ForestMap } from "./map";
 import { routeOf } from "./party";
@@ -174,7 +175,7 @@ export function planNight(style: MusicStyle, o: NightOptions): NightSet {
     })) };
   }
   const energy = at.map((u, i) => i === n - 1 ? 1 : energyAt(u, cycles)), roles = rolesOf(at, energy, cycles); // (the climax, the last wave: all in)
-  const salt = (o.seed >>> 0) ^ Math.imul([...o.island].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7), 2654435761);
+  const salt = (o.seed >>> 0) ^ Math.imul([...seedName(o.island)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7), 2654435761);
   const rnd = (i: number, what: number) => hash2(salt, 4001 + what, i * 7919 + N);
   const steps: NightStep[] = [], names = Object.keys(F);
   for (let i = 0; i < n; i++) {

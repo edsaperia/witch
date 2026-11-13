@@ -2,7 +2,7 @@
 // overlapping species share ranks; fantastical placements are design choices.
 // These ordinal starter classes are art direction, not measured mass estimates.
 export const SIZE_CLASSES = [
-  ["woodlouse", "snail", "moth", "dragonfly", "beetle", "scorpion"],
+  ["woodlouse", "snail", "butterfly", "moth", "dragonfly", "beetle", "scorpion"],
   ["newt", "salamander", "dormouse", "toad", "crab", "spider"],
   ["mole", "stoat", "squirrel", "flyingsquirrel"],
   // (the bee: a giant one, the size of the marten whose place on home it took: Ed, 2026-11-12, a design placement)
