@@ -2,7 +2,7 @@
 import * as Art from "./worldArt.primitives";
 import { biomeColours, biomeLook } from "../../art/flora/biomes.js";
 import type { Style } from "./style";
-import { CYCLONE_FRAMES, CYCLONE_TINT, HARVEST_SPROUTS, RING_STONE_CARVING, RING_STONE_CARVINGS, SPEAKER_STONE_WIDTH, carvingKey } from "./artMetadata";
+import { CYCLONE_FRAMES, CYCLONE_TINT, HARVEST_SPROUTS, RING_STONE_CARVING, RING_STONE_CARVINGS, SPEAKER_STONE_WIDTH, carvingKey, danceStoneKey } from "./artMetadata";
 import { witchLookOf } from "./artLook";
 import type { Baked, BeachArt, BeachEdgeArt, Carving, DecorPiece, LakeShoreArt, MakeCanvas, PartyArt, PartyWitchArt, PathPieceArt, RelicArt, RelicLayouts, SceneArt, SpeakerArt } from "./artBuild";
 
@@ -47,6 +47,18 @@ export function speakerSprites(st: Style, mk: MakeCanvas, stoneScale: number): {
   type Stone = Baked & { origin: { x: number; y: number }; dots?: { x: number; y: number }[] };
   const runeStone = Art.runeStone as unknown as (st: Style, o: { glow: string; scale: number; width: number; yaw: number; rune?: number; sigil?: string; dots?: boolean; makeCanvas: MakeCanvas }) => Stone;
   speakers.stones = {}; speakers.stoneOrigin = {}; speakers.stoneDots = {};
+  // Ed (2026-11-13): "Dancefloor stones (before they become speakers) look too similar to speakers. They should be more knee height
+  // like in this reference image.": low rounded boulders, one for each place in the ring (art/danceStones.js), drawn at her scale;
+  // the rune stones below only with the link's ?dancestones=old (the style's danceStones), to compare.
+  if (st.danceStones !== "old") {
+    const danceStone = Art.danceStone as unknown as (st: Style, o: { form: number; makeCanvas: MakeCanvas }) => Stone, forms = Art.DANCE_STONE_FORMS as number;
+    for (let n = 0; n < forms; n++) {
+      const stone = danceStone(st, { form: n, makeCanvas: mk }), key = danceStoneKey(n, forms);
+      speakers.stones[key] = sprites.push(stone) - 1; speakers.stoneOrigin[key] = stone.origin; if (stone.dots) speakers.stoneDots[key] = stone.dots;
+    }
+    speakers.dance = forms;
+    return { sprites, speakers };
+  }
   const carvings = new Map<string, Carving>([["", RING_STONE_CARVING], ...Object.values(RING_STONE_CARVINGS).map(c => [carvingKey(c), c] as const)]);
   for (const angle of Art.DANCEFLOOR_SPEAKER_ANGLES as number[])
     for (const [key, c] of carvings) {

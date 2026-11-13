@@ -313,7 +313,7 @@ export class LeashView {
    *  spiralling up through the bar, a flash on the bar line as it becomes its next level, a burst
    *  of party sparkles. */
   /** The ring stones' glowing dots this frame (render/view/home.ts drawSpeakers): each one's middle in the world and how bright. */
-  ringGlows: { x: number; y: number; z: number; k: number }[] = [];
+  ringGlows: { x: number; y: number; z: number; k: number; /** its halo's size, as a share of a rune stone's dot's (the low rounded stones': smaller) */ s?: number }[] = [];
   /** Their glow (Ed, 2026-10-09: "They should glow"): a soft cyan halo round each dot, smooth as the berries' (docs/STYLE.md §1
    *  rule 3: light may be smooth), and a core bright enough for the bloom; the dot's own pixels stay on the grid in the sprite. */
   drawRingGlows(time: number): void {
@@ -321,8 +321,9 @@ export class LeashView {
     for (const [i, q] of this.ringGlows.entries()) {
       this.look.magic.native("ringDot",q.x,q.y,q.z,q.k,930000+i,[0.3,0.9,1]);
       const tw = 0.9 + 0.1 * Math.sin(time * 1.7 + i * 0.9);
-      this.standing.add(q.x, q.y, q.z + 0.15, 1.6, dot, 0.3 * 1.5, 0.9 * 1.5, 1.5, 0.8 * q.k * tw); // the soft halo
-      this.standing.add(q.x, q.y, q.z + 0.16, 0.32, dot, 0.6 * 1.8, 1.8, 1.8, 0.75 * q.k); // its bright core, for the bloom
+      const s = q.s ?? 1;
+      this.standing.add(q.x, q.y, q.z + 0.15, 1.6 * s, dot, 0.3 * 1.5, 0.9 * 1.5, 1.5, 0.8 * q.k * tw); // the soft halo
+      this.standing.add(q.x, q.y, q.z + 0.16, 0.32 * s, dot, 0.6 * 1.8, 1.8, 1.8, 0.75 * q.k); // its bright core, for the bloom
     }
   }
 

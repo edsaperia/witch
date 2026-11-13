@@ -7,7 +7,7 @@ import { creatureSprites, headPoint, meshNapSprites, meshSleepSprites, meshSpeci
 export { typeSprites } from "./areaArt";
 import { typeSprites } from "./areaArt";
 import { sceneSprites, speakerSprites, beachSprites, relicSprites, pathPieceSprites, beachEdgeSprites, lakeShoreSprites, decorSprites, partyObjectSprites, partyWitchSprites } from "./worldArt";
-export { SPEAKER_STONE_WIDTH, RING_STONE_CARVING, RING_STONE_CARVINGS, ringStoneKey, stumpId, HARVEST_SPROUTS, CYCLONE_FRAMES, CYCLONE_TINT } from "./artMetadata";
+export { SPEAKER_STONE_WIDTH, RING_STONE_CARVING, RING_STONE_CARVINGS, ringStoneKey, danceStoneKey, stumpId, HARVEST_SPROUTS, CYCLONE_FRAMES, CYCLONE_TINT } from "./artMetadata";
 // Drawing the sprite sets with the art's modules (art/, each family's own *.primitives.ts) and packing them into atlas pixels. No Three.js
 // and no page needed, so it runs in a Web Worker (with OffscreenCanvas) as well as on the page.
 import * as Art from "./artBuild.primitives";
@@ -143,7 +143,7 @@ export interface ScenePlace { ref: string; dx: number; dz: number; left: boolean
  *  not listed carves RING_STONE_CARVING, Ed's pick (2026-10-08): "three glowing dots in a vertical stack, hinting at the speaker
  *  that will replace it" (its bass, mid and tweeter). */
 export type Carving = { rune?: number; sigil?: string; dots?: boolean };
-export interface SpeakerArt { frames: Record<string, number>; origin: Record<number, { x: number; y: number }>; /** The runestone each home speaker starts as (Ed, 2026-10-06), turned like the speakers (Ed, 2026-10-08: "face inwards, like the ring speakers do"): by ringStoneKey, its frame and its ground point. */ stones?: Record<string, number>; stoneOrigin?: Record<string, { x: number; y: number }>; /** And where its glowing dots' middles are in its frame (art pixels), by the same key: the game's glow round them (Ed, 2026-10-09). */ stoneDots?: Record<string, { x: number; y: number }[]> }
+export interface SpeakerArt { frames: Record<string, number>; origin: Record<number, { x: number; y: number }>; /** The runestone each home speaker starts as (Ed, 2026-10-06), turned like the speakers (Ed, 2026-10-08: "face inwards, like the ring speakers do"): by ringStoneKey, its frame and its ground point. */ stones?: Record<string, number>; stoneOrigin?: Record<string, { x: number; y: number }>; /** And where its glowing dots' middles are in its frame (art pixels), by the same key: the game's glow round them (Ed, 2026-10-09). */ stoneDots?: Record<string, { x: number; y: number }[]>; /** Set when the stones are the low rounded ones (Ed, 2026-11-13; art/danceStones.js), not turned or mirrored: how many different ones, keyed by danceStoneKey. Unset: the rune stones as they were (the link's ?dancestones=old), by ringStoneKey. */ dance?: number }
 
 /** The beach's edge of the woods in its atlas (render/beach.ts): palms as crown and trunk frames, shrubs and grass clumps whole. */
 export interface BeachEdgeArt { palms: { top: number; bot: number }[]; shrubs: number[]; grass: number[] }
