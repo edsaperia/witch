@@ -18,7 +18,7 @@ export const WITCH_GENOME = {
   broom: { kind: "classic", length: 1, bend: 0, bristles: 1, thickness: 1 },
   accessories: { phones: true, shades: false, glowsticks: false, scarf: false, satchel: false, pendant: false, earrings: false,
     lantern: false, vial: false, book: false, patches: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, clutch: false, messenger: false, wristband: false, chunky: false,
-    lipstick: false, eyeshadow: false, blush: false }, // (the basin's makeup, Ed 2026-11-07: off till she puts it on)
+    lipstick: false, eyeshadow: false, blush: false }, // (the basin's makeup, Ed 2026-11-07: off till she puts it on; blush always off since 2026-11-12, kept so older saves and messages still read)
   cloakLength: 1, scarfLength: 1, bagSize: 1, backpackSize: 0,
   palette: null, // null: hers (DEFAULT_OUTFIT, the style's hues on top)
 };
@@ -89,11 +89,22 @@ export function witchGenome(seed = 0, { party = false } = {}) {
   return { hat, hair, top, cloak, cloakLength, scarfLength, bagSize, backpackSize, broom, accessories, palette };
 }
 // A genome saved before round 2 (or missing anything since): every field it lacks taken from hers, so old saves still load. A
-// save with a familiar (before 2026-10-08) loads without it, and without its colours.
+// save with a familiar (before 2026-10-08) loads without it, and without its colours. Her makeup as one colour (Ed, 2026-11-12):
+// oneMakeup.
 export function upgradeGenome(g) {
   const W = WITCH_GENOME, o = g && typeof g === "object" ? g : {};
   const { familiar: _f, ...acc } = o.accessories ?? {}, pal = o.palette && Object.fromEntries(Object.entries(o.palette).filter(([k]) => k !== "familiar" && k !== "familiar2"));
-  return { ...W, ...o, hat: { ...W.hat, ...o.hat }, broom: { ...W.broom, ...o.broom }, accessories: { ...W.accessories, ...acc }, palette: pal ?? null };
+  return oneMakeup({ ...W, ...o, hat: { ...W.hat, ...o.hat }, broom: { ...W.broom, ...o.broom }, accessories: { ...W.accessories, ...acc }, palette: pal ?? null });
+}
+// The basin's makeup is one colour for her lips and eyes together (Ed, 2026-11-12: "have only one option which is both the lips and
+// eyes together, the same colour"; "Drop blush"). A look from before (a fresh copy, `g` itself untouched): her blush off; her lipstick
+// and eyeshadow both on if either was, else both off; and both in one colour, her lips' (her eyeshadow's if only her eyes were made
+// up, so she keeps the colour she was showing). A palette naming neither keeps naming neither (the default's the same for both).
+export function oneMakeup(g) {
+  const a = g.accessories ?? {}, on = !!a.lipstick || !!a.eyeshadow, eyesOnly = !!a.eyeshadow && !a.lipstick;
+  const out = { ...g, accessories: { ...a, lipstick: on, eyeshadow: on, blush: false } }, p = g.palette;
+  if (p && (p.lips || p.eyeshadow)) { const c = (eyesOnly ? p.eyeshadow ?? p.lips : p.lips ?? p.eyeshadow) ?? DEFAULT_OUTFIT.lips; out.palette = { ...p, lips: [...c], eyeshadow: [...c] }; }
+  return out;
 }
 // The look and outfit witch.js draws a genome with.
 export function genomeLook(g = WITCH_GENOME) {
