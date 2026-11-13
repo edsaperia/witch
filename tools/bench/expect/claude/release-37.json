@@ -1,0 +1,9 @@
+{
+  "reason": "Release 37: #1982 (claude/taut-chain): The taut chain (Ed, 2026-11-12; rules/tautChain.ts, leash.chain.taut): a lighter drag on foot with taut creatures pulled at her pace and hurrying; pulling past a chain in the treetops lowers her and brings her down; on foot a sustained pull puts that sigil down; a legend's chain yanks her back; chains bigger by rank and drawn in one magic-chain colour with flashes.",
+  "rules": {
+    "*": "wherever a chain of hers goes taut: her speed and position (lighter ground drag, a yank), the creatures' pace (hurrying, pulled along), her lift and mode (tugged down), her stack and placed sigils (a pop) and what follows from them"
+  },
+  "frames": {
+    "*": "every chain drawn in the new colour, link sizes and flashes; and wherever one goes taut, her height, a sigil sliding out of her stack, a pop or a yank"
+  }
+}

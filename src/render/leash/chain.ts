@@ -134,19 +134,33 @@ export function linkSlots(lv: LeashView): { face: number[][]; edge: number[][] }
   return { face, edge };
 }
 
+/** A flash running along a chain (the taut chain's look, Ed 2026-11-12: "the sigil colour as a occasional flash along it", "flash runs
+ *  from the creature to her stack"): its colour, where its middle is (0 at the chain's first point, 1 at its last) and its half-width,
+ *  as shares of the chain's length. */
+export interface ChainFlash { r: number; g: number; b: number; at: number; width: number }
+
 /** Draw a chain: a link on each span between its points, alternately face on and edge on, each turned along its span as the screen
- *  shows it (the sprites' right and up: render/sprites.ts), crisp (the solid batch), each with a faint glow of its colour. */
-export function drawChain(lv: LeashView, ch: { links: readonly PosePoint[] }, link: number, r: number, g: number, b: number, a: number, dot: number[], glow = 0.12, batch = lv.solid): void {
+ *  shows it (the sprites' right and up: render/sprites.ts), crisp (the solid batch), each with a faint glow of its colour. A `flash`:
+ *  the links under it in its colour, brighter and more opaque, by a smooth bump. */
+export function drawChain(lv: LeashView, ch: { links: readonly PosePoint[] }, link: number, r: number, g: number, b: number, a: number, dot: number[], glow = 0.12, batch = lv.solid, flash?: ChainFlash): void {
   if (a <= 0.004) return; // (faded out: nothing drawn)
   const S = linkSlots(lv), P = ch.links, R = SPRITE_UNIFORMS.uRight.value, U = SPRITE_UNIFORMS.uUp.value;
+  let total = 0;
+  if (flash) for (let i = 0; i + 1 < P.length; i++) total += Math.hypot(P[i + 1].x - P[i].x, P[i + 1].y - P[i].y, P[i + 1].z - P[i].z);
   // (each span as many links as fit along it, a link a link's length: a span between the physics' points may be several links long)
-  for (let i = 0, j = 0; i + 1 < P.length; i++) {
-    const p = P[i], q = P[i + 1], dx = q.x - p.x, dy = q.y - p.y, dz = q.z - p.z, m = Math.max(1, Math.round(Math.hypot(dx, dy, dz) / link));
+  for (let i = 0, j = 0, run = 0; i + 1 < P.length; i++) {
+    const p = P[i], q = P[i + 1], dx = q.x - p.x, dy = q.y - p.y, dz = q.z - p.z, span = Math.hypot(dx, dy, dz), m = Math.max(1, Math.round(span / link));
     const k = linkAngle(dx * R.x + dy * R.y + dz * R.z, dx * U.x + dy * U.y + dz * U.z);
     for (let h = 0; h < m; h++, j++) {
       const f = (h + 0.5) / m, x = p.x + dx * f, y = p.y + dy * f, z = p.z + dz * f, face = j % 2 === 1;
-      batch.add(x, y, z, link * (face ? 1.25 : 1.1), face ? S.face[k] : S.edge[k], r, g, b, a);
-      if (glow > 0) lv.over.add(x, y, z, link * 1.6, dot, r, g, b, glow * a, 1, true);
+      let lr = r, lg = g, lb = b, la = a;
+      if (flash && total > 0) {
+        const u = Math.abs((run + span * f) / total - flash.at) / Math.max(1e-3, flash.width), bump = u < 1 ? (1 - u * u) * (1 - u * u) : 0;
+        if (bump > 0) { lr += (flash.r - lr) * bump; lg += (flash.g - lg) * bump; lb += (flash.b - lb) * bump; la = Math.min(1, la + (1 - la) * bump * 0.8); }
+      }
+      batch.add(x, y, z, link * (face ? 1.25 : 1.1), face ? S.face[k] : S.edge[k], lr, lg, lb, la);
+      if (glow > 0) lv.over.add(x, y, z, link * 1.6, dot, lr, lg, lb, glow * la, 1, true);
     }
+    run += span;
   }
 }

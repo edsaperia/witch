@@ -147,6 +147,7 @@ glossary; these are the prototype's), by note.
 - Loose sigil
 - Legend tether
 - Chain drag
+- Taut chain
 - Commanded feeding
 - Won ones out of the way
 - Follower buffs
@@ -165,6 +166,7 @@ glossary; these are the prototype's), by note.
 - Party animal
 - Combat
 - Attack grammar
+- Ranged aim
 - Siege
 - Wild watch / chase
 - Enraged
@@ -189,6 +191,7 @@ glossary; these are the prototype's), by note.
 ### [The treehouse and its house](house.md)
 
 - The house one room
+- No edge at the Terrace
 - Telephone
 - Landing cooldown
 - Current brewing authority (Ed, 2026-10-31):
@@ -204,6 +207,7 @@ glossary; these are the prototype's), by note.
 - Furniture: size, freestanding, mess and layout
 - The stations regrouped
 - Station menus
+- No ∅ cards
 - Starting bags
 - Found bags
 - Bag names

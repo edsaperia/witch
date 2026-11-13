@@ -8,7 +8,7 @@
 // FLOWER brass, STONED soot and old iron, ACCENT rust and red paint, WOOD and BARKD wood, HAIR leather and rope, BELLY bone and canvas,
 // CRYSTAL glass, LEAF a sprouting leaf, LINE an eye; MAGIC and MAGIC2 the nozzles' pilot flame, WOKEN the fairing's headlamp.
 // `drawBroom` assembles her broom from its three parts (the bare broom: a plain handle and her own straw bristles); `partSprite` and
-// `restingBroomSprite` (art/workshop.js) draw them.
+// `restingBroomSprite` (art/workshop.js) draw them, and `bareSlotSprite` an empty slot's piece of the bare broom (`BARE_ART`).
 import { M } from "./core.js";
 import { v3 } from "./model3d.js";
 
@@ -155,11 +155,23 @@ export function drawPart(m, id) { const P = PART_ART[id]; if (!P) throw new Erro
  *  socket (else a rounded end), its exhaust on the back one (else her straw bristles). Along x, its nose +x, about its seat. */
 export function drawBroom(m, { tip = null, chassis = null, exhaust = null } = {}) {
   const C = chassis ? PART_ART[chassis] : null, front = C ? C.front : .5, back = C ? C.back : -.5;
-  if (C) C.draw(m); else { m.seg([back, 0, 0], [front, 0, 0], HANDLE, HANDLE * .85, M.BROOM, { group: 9 }); m.ell([front, 0, 0], [.02, .02, .02], M.BROOM, { group: 9 }); }
+  if (C) C.draw(m); else plainHandle(m, back, front, HANDLE, HANDLE * .85);
   const at = (x, draw) => { const n = m.parts.length, l = (m.lights ??= []).length; draw(); for (const q of m.parts.slice(n)) shift(q, x); for (const L of m.lights.slice(l)) L.c = [L.c[0] + x, L.c[1], L.c[2]]; };
   if (tip) at(front, () => PART_ART[tip].draw(m));
   if (exhaust) at(back, () => PART_ART[exhaust].draw(m)); else strawTail(m, back);
 }
+/** The bare broom's plain handle from x0 to x1, radius r0 to r1, its front end (x1) rounded off. */
+function plainHandle(m, x0, x1, r0, r1) { m.seg([x0, 0, 0], [x1, 0, 0], r0, r1, M.BROOM, { group: 9 }); m.ell([x1, 0, 0], [.02, .02, .02], M.BROOM, { group: 9 }); }
+/** What an empty slot looks like on her broom, drawn as a part is but about its own middle, with its length along x (m): the bare
+ *  broom's own piece there, as drawBroom draws it (Ed, 2026-11-12: "Dressing stations that have "∅" options should show what those
+ *  options are ... rather than have a ∅ symbol"; the bay's empty-slot cards, art/workshop.js bareSlotSprite): no tip, the plain
+ *  handle running out to its rounded end; no chassis, the plain handle; no exhaust, her own straw bristles. */
+export const BARE_ART = {
+  tip: { len: .45, draw(m) { plainHandle(m, -.225, .225, HANDLE * .9, HANDLE * .85); } }, // (the handle's front half, as long as a tip)
+  chassis: { len: 1, draw(m) { plainHandle(m, -.5, .5, HANDLE, HANDLE * .85); } },
+  // (her bristles, strawTail from x0 back .42, on a stub of the handle going forward, so the bundle reads as a broom's end; about its middle)
+  exhaust: { len: .6, draw(m) { strawTail(m, .12); m.seg([.1, 0, 0], [.3, 0, 0], HANDLE, HANDLE, M.BROOM, { group: 9 }); } },
+};
 /** A part moved dx along x (its paint with it). */
 function shift(q, dx) {
   const mv = c => [c[0] + dx, c[1], c[2]];

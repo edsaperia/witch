@@ -705,7 +705,10 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
     g.witch = { ...g.witch, x: spot!.x, z: spot!.z, mode: "ground", lift: 0, seated: false };
     const d0 = Math.hypot(wolf.x - g.witch.x, wolf.z - g.witch.z);
     let t = 0;
-    for (; t < 10 && Math.hypot(wolf.x - g.witch.x, wolf.z - g.witch.z) > 18; t += STEP) stepGame(g, { ...idle, autoTalk: false }, STEP);
+    // (onto her: within 18 m, or its first strike at her begun; an adult wolf's pack bolt reaches about 20 m, and since Ed's ruling of
+    // 2026-11-12 it holds still from its aim's lock to the release, rules/attacks/aim.ts, so it no longer glides inside 18 m as it fires)
+    const onto = () => Math.hypot(wolf.x - g.witch.x, wolf.z - g.witch.z) <= 18 || (!!wolf.fight?.windupUntil && wolf.fight.target?.kind === "witch");
+    for (; t < 10 && !onto(); t += STEP) stepGame(g, { ...idle, autoTalk: false }, STEP);
     expect(d0).toBeGreaterThan(20);
     expect(t).toBeLessThan(0.5 + (g.tuning.wildWatch?.on ? g.tuning.wildWatch.time : 0) + d0 / 15); // (a moment's reaction after its area's watched her come down, rules/wildWatch.ts, then about 20 m/s)
   }, 60000);

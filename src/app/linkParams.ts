@@ -170,6 +170,9 @@ export function tuningFromLink(params: URLSearchParams) {
   if (params.get("knock") === "0") tuning.witch = { ...tuning.witch, knock: { ...tuning.witch.knock, on: false } };
   // ?attacks=old: every species fights with its old attacks (config/combat.json), not its own in the grammar (rules/attacks/species.ts).
   if (params.get("attacks") === "old") tuning.attacks = { reactionFloor: tuning.attacks?.reactionFloor ?? 0.45, species: false };
+  // ?ranged=old: creatures' ranged attacks aimed as before Ed's 2026-11-12 ruling (tuning ranged, rules/attacks/aim.ts): at her place as
+  // the wind-up starts (the old pack bolts leading her at their release), no speed floor, fans and walls as laid out before, for comparison.
+  if (params.get("ranged") === "old" && tuning.ranged) tuning.ranged = { ...tuning.ranged, on: false };
   // ?dodge=a,b,c: which of the dodge changes are on (Ed, 2026-10-08; tuning dodge: a committed strikes, b predictive aim,
   // c packs cutting off her retreat), the rest off; ?dodge=0 none of them.
   const dodgeParam = params.get("dodge");
@@ -265,6 +268,12 @@ export function tuningFromLink(params: URLSearchParams) {
   // floor<=>head transition more 'magical'"): a run starting on the press itself (leash.runAfter 0) and the sigil snapping between the
   // ground and her stack (leash.sigilFeel off), to A/B; ?sigilfeel=new, the default.
   if (params.get("sigilfeel") === "old") tuning.leash = { ...tuning.leash, runAfter: 0, ...(tuning.leash.sigilFeel ? { sigilFeel: { ...tuning.leash.sigilFeel, on: false } } : {}) };
+  // ?tautchain=0: the chains as before Ed's 2026-11-12 asks (leash.chain.taut off: "when the chain gets taut you should be pulled back
+  // to ground mode"; "pop-out should also be gradual"; "legend chains yank you back"; "adult chains should look larger"; "'magic chain'
+  // coloured, with the sigil colour as a occasional flash"): no tug, pop or yank, the one drag and pull everywhere, the old links and
+  // colours, to A/B; ?tautchain=1, the default.
+  { const v = params.get("tautchain"), C = tuning.leash.chain;
+    if (C?.taut && (v === "0" || v === "1")) tuning.leash = { ...tuning.leash, chain: { ...C, taut: { ...C.taut, on: v === "1" } } }; }
   applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
   // The sea chart's save (app/chartSave.ts): the islands she's found, so the night's legends favour the others (rules/rosters.ts).
   // and the campaign's world seed (every island's shape), unless ?world= names one for this load

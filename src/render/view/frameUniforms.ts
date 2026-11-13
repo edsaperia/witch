@@ -16,6 +16,8 @@ import { groundHeight, placed } from "../height";
 import { focusOf } from "./culling";
 import { LIGHT_UNIFORMS } from "../lighting";
 import { hsvInto, moodOf, wildAt } from "../mood";
+import { houseMoodArea } from "../terraceCut";
+import { deckOf } from "../../rules/treehouse";
 import { cellKey, partifiedKey } from "../../rules/party";
 import { biomeJitter } from "../../../art/flora/biomes.js";
 import { FADE_MATERIALS, FADE_MESHES, SPRITE_UNIFORMS, treeNormalsUniform } from "../sprites";
@@ -164,7 +166,8 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
     if (!(time < v.moodAt) || time < v.moodAt - 1) {
       v.moodAt = time + 0.25;
       const d = g.map.dancefloor;
-      v.moodArea = Math.hypot(w.x - d.x, w.z - d.z) < g.map.homeRadius ? "home" : AREA_TYPES[g.map.typeOf(...g.map.cellSafe(w.x, w.z).cell)]?.id ?? "";
+      // (in the house, home's on the Terrace and in every room alike: render/terraceCut.ts, Ed 2026-11-12; ?terracecut=old as before)
+      v.moodArea = houseMoodArea(!!w.perch && !!deckOf(g.map, t)?.house?.rooms, Math.hypot(w.x - d.x, w.z - d.z) < g.map.homeRadius ? "home" : AREA_TYPES[g.map.typeOf(...g.map.cellSafe(w.x, w.z).cell)]?.id ?? "");
       // (wild as her light reckons it, render/combatLight.ts: an area the party hasn't reached; home never)
       v.moodWild = wildAt(g, w.x, w.z, v.moodArea);
     }
