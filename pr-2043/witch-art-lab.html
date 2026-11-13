@@ -332,7 +332,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 // overlap). The light is baked into the albedo from the sprite's own normals (one light, from the upper left and in front),
 // and the normals come out flat, so the game's lighting tints the sprite without banding it again. The sprite keeps its
 // size: the outline goes only where there is room. "now" (or nothing) leaves the bake as it was.
-// The game's ?style=now|bold|ref (and ?px=3|4|5 for the art pixel) choose one per load; the stylisation ladder
+// The game bakes bold (Ed, 2026-10-06: "I think I prefer bold style") or, with ?style=ref, ref (?px= sets the art pixel); the stylisation ladder
 // (tools/art-iterations/ladder.mjs) shows the same treatments side by side.
 
 const STYLE_LIGHT = (() => { const l = [-.45, -.75, .5], n = Math.hypot(...l); return l.map(v => v / n); })();
@@ -4083,7 +4083,9 @@ function bakeMushroom(st = {}, options = {}, makeCanvas = defaultCanvas) {
 // ---- inlined from art/treehouse.js ----
 // The witch's treehouse (Ed, second go: "mostly wood, but with modern elements. It can be larger than it is now;
 // the top of the treehouse should be tall, standing above the treeline ... the inside - this is where we should have
-// her sitting at the start"). The home landmark, a tall timber tower of storeys stacked up a giant living tree:
+// her sitting at the start"). The old treehouse: the game now draws the Ent's deck (Ed, 2026-10-11) and the oak house on it
+// (Ed, 2026-10-24; art/ent.js, docs/notes/house.md) in its place, and this tower only with the tuning's treehouse.deck off;
+// its DJ table (djTable) and candles are still the game's. A tall timber tower of storeys stacked up a giant living tree:
 //   - the tree: a huge trunk running up through every storey, roots spilling over the ground, branches curling up
 //     round the studio's deck, and a leafy crown round the third storey;
 //   - the porch storey: a round board-clad room on a braced deck on posts, big multi-pane windows, the front door,
@@ -4784,9 +4786,31 @@ function entSprite(st = {}, { facing = "towards", ppm = 16, deckY = ENT.deckY, d
 // The Ent is grown that much shorter (entSprite's deckY: render/homeArt.ts) so its deck stays where the rules have it.
 
 // ---- inlined from art/creatures.js ----
-// Witch creatures: the bestiary (30 species, one per area type), their colours, and the
+// Witch creatures: the bestiary (a species per area type, and the bench's), their colours, and the
 // call that draws one. Each is built in 3D (creatures3d.js, model3d.js) and seen in
 // three-quarter view from above; it faces right and the game mirrors it.
+
+// (a renamed kind keeps the texture its old id seeded)
+// ---- inlined from art/creatures/renamed.js ----
+// Kinds that changed their id, old to new (Ed, 2026-11-13, of the swallowtail that had kept the moth's id since 2026-10-23: "can we
+// actually rename it in the files and put the moth on the bench?"). Hand-written; tools/creatures.mjs never touches it.
+//   - kindNow: what an old save or link means by a name (src/app/chartSave.ts loadSave, src/app/linkParams.ts ?island=): the
+//     moth's island, found or won, is the butterfly's.
+//   - seedId: the id a kind's seeded looks and sounds are drawn from (its island's shape, its voice and melody, its coat's
+//     texture, its sigil's detail: each a hash of the id's letters): the butterfly's are still the moth's letters, so nothing of
+//     it changed with its id. The moth on the bench shares them, and meets no one.
+const RENAMED = { moth: "butterfly" };
+/** The name each kind's seeded looks and sounds are drawn from, where it isn't its own id: the butterfly's are the moth's, the
+ *  letters they were settled under. The moth on the bench takes a name of its own, since two kinds drawing from one name would
+ *  share a magic circle (art/check.mjs, "runes alike"); it is a hash's input and nothing else, never shown, so what it says
+ *  doesn't matter, only that it is the moth's alone. Its generated drawing's fur and motes are therefore not grain for grain the
+ *  moth's of before 2026-10-23, though its genome is. */
+const SEED_OF = { butterfly: "moth", moth: "moth-bench" };
+/** @param {string} id */
+const kindNow = id => (Object.hasOwn(RENAMED, id) ? RENAMED[id] : id);
+/** @param {string} id */
+const seedId = id => (Object.hasOwn(SEED_OF, id) ? SEED_OF[id] : id);
+
 
 // ---- inlined from art/genome/index.js ----
 // Witch creature genomes (#79): the species records (species.js) and their templates
@@ -4883,6 +4907,15 @@ const GENOME_BOAR = { id: "boar", name: "Boar", template: "quadruped", builder: 
       { kind: "scars", count: 3, from: .35 },
     ] },
     ] };
+
+
+// ---- inlined from art/creatures/butterfly/genome.js ----
+// the temperate meadow's butterfly (the biome roster, 2026-10-23: the moth turned a swallowtail, then under the moth's id; its own
+// id since Ed, 2026-11-13: "can we actually rename it in the files and put the moth on the bench?"; a save or link naming the moth
+// still means it: art/creatures/renamed.js): yellow wings veined and bordered black, tails, blue crescents; its legend's hind
+// wings two great eyes. `builder` is the flyers' shared one (art/creatures3d.js moth3d, which hands a `look.butterfly` to
+// butterfly3d); what is drawn from an id's letters is drawn from its old id's (renamed.js seedId), so it looks as it did.
+const GENOME_BUTTERFLY = { id: "butterfly", name: "Swallowtail", template: "flyer", builder: "moth", palette: { hue: .13, sat: .72, val: .95, accent: [.6, .7, .9] }, look: { butterfly: true }, legend: ["eyespots"] };
 
 
 // ---- inlined from art/creatures/cat/genome.js ----
@@ -5190,13 +5223,14 @@ const GENOME_MOLE = { id: "mole", name: "Mole", template: "squat", builder: "mol
 
 
 // ---- inlined from art/creatures/moth/genome.js ----
-// the temperate meadow's butterfly (the biome roster, 2026-10-23: the moth turned a swallowtail; its id kept, so saves are
-// untouched): yellow wings veined and bordered black, tails, blue crescents; its legend's hind wings two great eyes
-const GENOME_MOTH = { id: "moth", name: "Swallowtail", template: "flyer", builder: "moth", palette: { hue: .13, sat: .72, val: .95, accent: [.6, .7, .9] }, look: { butterfly: true }, legend: ["eyespots"] };
+// the moth, as it was before it turned a swallowtail (2026-10-23; this record is that day's, from git): dusty brown and furry, its
+// legend's hind wings two great eyes. On the bench (src/rules/kinds.ts BENCH; Ed, 2026-11-13: "put the moth on the bench"): kept
+// whole, with no island. The butterfly (art/creatures/butterfly/) has its island and everything it had.
+const GENOME_MOTH = { id: "moth", name: "Moth", template: "flyer", builder: "moth", palette: { hue: .1, sat: .3, val: .7 }, legend: ["eyespots"] , texture: { kind: "fur", size: 3, stretch: 1.6 } };
 
 
 // ---- inlined from art/creatures/newt/genome.js ----
-// the fen's newt (an area recipe's, #119; art builder 2's record): a slimmer, lower salamander with a crest along its back
+// the newt (the fen's till 2026-11-12, now on the bench: Ed, "newt for turtle"; src/rules/kinds.ts BENCH; an area recipe's, #119; art builder 2's record): a slimmer, lower salamander with a crest along its back
 const GENOME_NEWT = { id: "newt", name: "Newt", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .55, val: .35, belly: "yellow" }, body: { stance: "sprawl", hgt: .4, len: 1.1, chest: .1, tuck: .1, neck: .14, neckAng: .1, neckW: .45, hr: .28, legW: .6, bw: .22 }, head: { snout: .42, snoutD: .5 }, parts: { ears: { kind: "none" }, tail: "newt", feet: "paw" }, coat: { spots: true, spotMat: "belly", ridge: 2.4 }, legend: [], texture: { kind: "smooth" },
   levels: [{ coat: { ridge: false }, body: { tailK: .45 } }, { coat: { ridge: 1 }, body: { tailK: .7 } }, { coat: { ridge: 3 }, body: { tailK: 1.35 } }, { coat: { ridge: false }, head: { eyeGlow: true, frost: true }, features: [{ kind: "sail", height: .5 }] }] };
 
@@ -5248,7 +5282,7 @@ const GENOME_POLARBEAR = { id: "polarbear", name: "Polar bear", template: "quadr
 
 // ---- inlined from art/creatures/raccoon/genome.js ----
 // the cold rainforest's raccoon (Ed, 2026-10-12, unknown-30): grey and hunched, a black bandit mask between white brows and muzzle,
-// dark legs and hands, a thick ringed tail (not Delta's red panda: grey, not russet); its legend to come (Ed's elder brief, docs/ART-GUIDE.md 0c)
+// dark legs and hands, a thick ringed tail (not Delta's red panda: grey, not russet); its legend the elder of its kind, the thief-king (art/elders.js; Ed's elder brief, docs/ART-GUIDE.md 0c)
 const GENOME_RACCOON = { id: "raccoon", name: "Raccoon", template: "quadruped", builder: "quad", palette: { hue: .62, sat: .07, val: .55, flower: [196, 58, 44] }, body: { hgt: .62, len: .6, chest: .36, tuck: .4, neck: .2, neckAng: .45, neckW: .45, hr: .28, legW: .95, back: "arch" }, head: { snout: .7, snoutD: .55, snoutTaper: .5, face: "raccoon", whiskers: true }, parts: { ears: { kind: "round", size: .95 }, tail: "ringed", feet: "paw" }, coat: { legMat: "BODY3", shaggy: true }, legend: [], elder: { kind: "raccoon", eye: "EYE" }, texture: { kind: "fur", size: 3, lumps: 0 }, levels: [null, { body: { len: 0.504, legW: 0.684, neckW: 0.383, hr: 0.258, chest: 0.44, tuck: 0.46, profile: { shoulder: { w: .86, d: .86 }, ribcage: { w: .9 }, waist: { w: .76, d: .8 }, loin: { w: .85, d: .9 }, hip: { w: .9 } } } }, { body: { chest: 0.31, tuck: 0.38, profile: { shoulder: { w: 1.24, d: 1.16 }, ribcage: { w: 1.1 }, waist: { w: .82, d: .9 }, loin: { w: .9 }, hip: { w: 1.0 } } } }, null] };
 
 
@@ -5448,7 +5482,7 @@ const GENOME_TOAD = { id: "toad", name: "Toad", template: "squat", builder: "toa
 
 // ---- inlined from art/creatures/turtle/genome.js ----
 // the turtle (Ed, 2026-11-11: "Martens and Stoats are pretty similar, maybe we should have a different animal. Bees? Turtles?";
-// "keep both": kept for an island of its own, which it does not have yet): a pond turtle, a flat body slung between four splayed
+// "keep both"; in the Fen, in the newt's place, since 2026-11-12: Ed, "newt for turtle"): a pond turtle, a flat body slung between four splayed
 // legs under a domed shell. It is drawn as a mesh (art/mesh/species/turtle.js: a hatchling in half its egg, a smooth young, a keeled
 // adult, and the oracle whose whole shell is rune-cut plate); this record is what the generated art makes of it when the meshes
 // are off (the link's meshCreatures=0): the shelled squat body the armadillo has, in a turtle's greens.
@@ -5582,10 +5616,17 @@ const SIGIL_BEETLE = { neon: "violet", strokes: [E(.5, .64, .2, .26), L([.5, .4]
 const SIGIL_BOAR = { neon: "cyan", strokes: [...pair(L([.5, .2], [.3, .22], [.2, .42], [.28, .62], [.36, .7]), L([.3, .22], [.12, .08], [.2, .34]), bow([.38, .84], [.24, .62], .4), D(.45, .76), D(.36, .44), L([.42, .2], [.4, .11])), E(.5, .76, .15, .1), L([.5, .2], [.5, .08])] };
 
 
+// ---- inlined from art/creatures/butterfly/sigil.js ----
+
+// the butterfly (the moth turned a swallowtail, 2026-10-23; its own kind since 2026-11-13): wings spread, the forewings broad, the hindwings rounded with a tail
+// each, a slender body and long antennae ending in clubs
+const SIGIL_BUTTERFLY = { neon: "orange", strokes: [E(.5, .54, .04, .24), ...pair(L([.46, .34], [.2, .14], [.06, .3], [.2, .5], [.46, .5]), L([.46, .52], [.26, .62], [.22, .78], [.3, .84], [.26, .96]), L([.3, .84], [.4, .82], [.46, .66]), L([.48, .31], [.38, .1]), D(.38, .09), C(.21, .32, .05))] };
+
+
 // ---- inlined from art/creatures/cat/sigil.js ----
 
-// a segmented grub arching round to its glowing lantern tail, rays shining out
-// the wildcat: a round face under two pointed ears, slit eyes, whiskers, tabby bars on its brow
+// the wildcat (in the glow-worm's place since 2026-10-13): a round face under two pointed ears, slit eyes, whiskers,
+// tabby bars on its brow
 const SIGIL_CAT = { neon: "mint", strokes: [A(.5, .58, .28, -40, 220), ...pair(L(at(.5, .58, .28, 220), [.24, .16], [.42, .33]), L([.36, .55], [.44, .53]), L([.34, .7], [.12, .66]), L([.34, .74], [.14, .79]), L([.44, .37], [.45, .45])), L([.42, .33], [.58, .33]), L([.5, .37], [.5, .47]), D(.5, .66)] };
 
 
@@ -5709,9 +5750,9 @@ const SIGIL_JAGUAR = { neon: "mint", strokes: [C(.5, .53, .32), ...pair(A(.25, .
 
 // ---- inlined from art/creatures/komodo/sigil.js ----
 
-// the heron side on: the dagger bill, a plume behind its head, an S-neck, long legs
-// the dragon scrub's Komodo dragon: a big lizard from above, its forked tongue out, a blunt wedge of a head, four splayed legs,
-// a long heavy tail sweeping off to one side, a row of dots down its back
+// the dragon scrub's Komodo dragon: a big lizard from above, its forked tongue out, a blunt wedge
+// of a head, four splayed legs, a long heavy tail sweeping off to one side, a row of dots down
+// its back
 const SIGIL_KOMODO = { neon: "orange", strokes: [L([.46, .1], [.5, .15], [.54, .1]), L([.5, .15], [.5, .18]), L([.42, .33], [.44, .21], [.5, .18], [.56, .21], [.58, .33]), E(.5, .47, .12, .155), ...pair(L([.4, .39], [.25, .34], [.21, .26]), L([.4, .56], [.25, .61], [.2, .69])), L([.5, .62], [.52, .75], [.61, .84], [.77, .85]), D(.5, .4), D(.5, .47), D(.5, .54)] };
 
 
@@ -5746,9 +5787,8 @@ const SIGIL_MOLE = { neon: "cyan", strokes: [C(.5, .4, .24), L([.4, .6], [.5, .8
 
 // ---- inlined from art/creatures/moth/sigil.js ----
 
-// the butterfly (the moth turned a swallowtail, 2026-10-23): wings spread, the forewings broad, the hindwings rounded with a tail
-// each, a slender body and long antennae ending in clubs
-const SIGIL_MOTH = { neon: "orange", strokes: [E(.5, .54, .04, .24), ...pair(L([.46, .34], [.2, .14], [.06, .3], [.2, .5], [.46, .5]), L([.46, .52], [.26, .62], [.22, .78], [.3, .84], [.26, .96]), L([.3, .84], [.4, .82], [.46, .66]), L([.48, .31], [.38, .1]), D(.38, .09), C(.21, .32, .05))] };
+// wings spread, the forewings broad and the hindwings rounded, a furry body and feathery antennae
+const SIGIL_MOTH = { neon: "orange", strokes: [E(.5, .54, .05, .24), ...pair(L([.46, .34], [.2, .14], [.06, .3], [.2, .5], [.46, .5]), L([.46, .52], [.26, .62], [.22, .82], [.4, .84], [.46, .66]), bow([.47, .31], [.34, .07], .3), C(.21, .32, .05))] };
 
 
 // ---- inlined from art/creatures/newt/sigil.js ----
@@ -5770,9 +5810,9 @@ const SIGIL_OWL = { neon: "violet", strokes: [...pair(L([.5, .3], [.3, .25], [.1
 
 // ---- inlined from art/creatures/penguin/sigil.js ----
 
-// the meerkat sat up as a sentinel, front-on: a small round head, dark rings round its eyes, a tall body, forepaws tucked to
-// its chest, its tail curling out at its foot
-// the penguin front-on: a round head, its beak pointing down, a tall body round a white shirt-front, flippers held out,
+// the penguin front-on: a round head,
+// its beak pointing down, a tall body
+// round a white shirt-front, flippers held out,
 // its two flat feet
 const SIGIL_PENGUIN = { neon: "blue", strokes: [C(.5, .17, .1), ...pair(D(.46, .15)), L([.47, .21], [.5, .28], [.53, .21]), E(.5, .56, .17, .27), E(.5, .62, .09, .18), ...pair(L([.34, .42], [.22, .64])), ...pair(L([.45, .84], [.38, .92]))] };
 
@@ -5797,8 +5837,8 @@ const SIGIL_RAM = { neon: "orange", strokes: [...pair(L([.4, .34], [.41, .74], [
 
 // ---- inlined from art/creatures/rattlesnake/sigil.js ----
 
-// coiled round in a ring, its head raised in the middle, a forked tongue
-// the rattlesnake: a coil, its head raised over it, the rattle held up in three buttons behind
+// the rattlesnake: a coil, its head raised over it,
+// the rattle held up in three buttons behind
 const SIGIL_RATTLESNAKE = { neon: "lemon", strokes: [spiral(.46, .62, .14, .32, 1.1, 0), L([.6, .56], [.64, .36]), E(.66, .28, .07, .045), D(.68, .27), L([.3, .7], [.22, .58]), E(.2, .52, .035, .03), E(.18, .45, .03, .025), E(.17, .39, .025, .02)] };
 
 
@@ -5822,8 +5862,8 @@ const SIGIL_RHINO = { neon: "violet", strokes: [...pair(L([.5, .93], [.35, .9], 
 
 // ---- inlined from art/creatures/roe/sigil.js ----
 
-// side on: a long low body, a wavy crest running along its back and tail, small bent legs
-// the mossy dell's roe deer, face on: a narrow face to a black nose, big round ears out to the sides, short three-tined antlers
+// the mossy dell's roe deer, face on: a narrow face to a black nose, big round ears out to the sides,
+// short three-tined antlers
 const SIGIL_ROE = { neon: "orange", strokes: [...pair(L([.42, .42], [.42, .66], [.5, .86]), E(.27, .42, .11, .055), L([.44, .4], [.42, .22], [.38, .1]), L([.425, .28], [.33, .24]), L([.42, .22], [.47, .12]), D(.44, .55)), L([.42, .42], [.58, .42]), D(.5, .82)] };
 
 
@@ -5913,8 +5953,8 @@ const SIGIL_TURTLE = { neon: "mint", strokes: [E(.5, .56, .26, .3), E(.5, .56, .
 
 // ---- inlined from art/creatures/unicorn/sigil.js ----
 
-// the fennec: ears bigger than its face, flaring out wide, a small pointed face under them
-// the moonpool glade's unicorn, in profile: a long horse's head on an arched neck, one long horn, an ear, a flowing mane
+// the moonpool glade's unicorn, in profile: a long horse's head on an arched neck, one long horn,
+// an ear, a flowing mane
 const SIGIL_UNICORN = { neon: "violet", strokes: [L([.3, .9], [.34, .6], [.44, .42], [.56, .35], [.7, .44], [.8, .58], [.76, .64], [.62, .58], [.54, .62], [.52, .9]), L([.6, .36], [.82, .1]), L([.52, .37], [.49, .24], [.58, .34]), D(.63, .46), L([.42, .44], [.32, .5], [.4, .54], [.3, .62], [.36, .68])] };
 
 
@@ -5964,6 +6004,10 @@ const LEGEND_BEETLE = { ground: .2, droop: .4, drop: [], wood: [8], over: { moss
 
 // ---- inlined from art/creatures/boar/legend.js ----
 const LEGEND_BOAR = { sink: .45, droop: .8, drop: [78], over: { moss: .4, lichen: .04, ferns: 6, grass: 2, mushrooms: 2, roots: 3, stones: 1 } };
+
+
+// ---- inlined from art/creatures/butterfly/legend.js ----
+const LEGEND_BUTTERFLY = { ground: .4, droop: 0, drop: [0, 10, 11, 12, 13], cloak: { c: [-.1, .42, 0], r: [.6, .3, .45] }, over: { moss: .35, lichen: .16, ferns: 0, grass: 4, mushrooms: 1, roots: 1, stones: 2, flowers: 4 } };
 
 
 // ---- inlined from art/creatures/cat/legend.js ----
@@ -6233,6 +6277,10 @@ const NAP_BEETLE = { kind: "flat", ground: .32, droop: .4 };
 const NAP_BOAR = { kind: "lie", sink: .05, droop: .8 };
 
 
+// ---- inlined from art/creatures/butterfly/nap.js ----
+const NAP_BUTTERFLY = { kind: "flat", ground: .12, drop: [0, 10, 11, 12, 13], cloak: { c: [-.1, .3, 0], r: [.55, .24, .4] } };
+
+
 // ---- inlined from art/creatures/cat/nap.js ----
 const NAP_CAT = { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 };
 
@@ -6461,11 +6509,11 @@ const NAP_WOLF = { kind: "curl", sink: .04, droop: 1, curl: 3, tailDown: .25 };
 const NAP_WOODLOUSE = { kind: "flat", ground: .14, drop: [9] };
 
 
-const CREATURE_GENOMES = [GENOME_ARCTICFOX, GENOME_ARMADILLO, GENOME_BADGER, GENOME_BAT, GENOME_BEAR, GENOME_BEAVER, GENOME_BEE, GENOME_BEETLE, GENOME_BOAR, GENOME_CAT, GENOME_CHEETAH, GENOME_CRAB, GENOME_CROCODILE, GENOME_DORMOUSE, GENOME_DRAGONFLY, GENOME_ELEPHANT, GENOME_ELK, GENOME_FEATHEREDSERPENT, GENOME_FENNEC, GENOME_FLYINGSQUIRREL, GENOME_FOX, GENOME_FROSTTROLL, GENOME_FROSTWYRM, GENOME_GRIFFIN, GENOME_HARE, GENOME_HEDGEHOG, GENOME_HERON, GENOME_HYDRA, GENOME_IBEX, GENOME_JAGUAR, GENOME_KOMODO, GENOME_LION, GENOME_LYNX, GENOME_MARTEN, GENOME_MEERKAT, GENOME_MOLE, GENOME_MOTH, GENOME_NEWT, GENOME_OTTER, GENOME_OWL, GENOME_PENGUIN, GENOME_POLARBEAR, GENOME_RACCOON, GENOME_RAM, GENOME_RATTLESNAKE, GENOME_RAVEN, GENOME_REDPANDA, GENOME_RHINO, GENOME_ROE, GENOME_SALAMANDER, GENOME_SCORPION, GENOME_SNAIL, GENOME_SNAKE, GENOME_SNOWLEOPARD, GENOME_SPHINX, GENOME_SPIDER, GENOME_SQUIRREL, GENOME_STAG, GENOME_STEGOSAURUS, GENOME_STOAT, GENOME_TIGER, GENOME_TOAD, GENOME_TURTLE, GENOME_UNICORN, GENOME_WOLF, GENOME_WOODLOUSE];
-const CREATURE_SIGILS = { arcticfox: SIGIL_ARCTICFOX.strokes, armadillo: SIGIL_ARMADILLO.strokes, badger: SIGIL_BADGER.strokes, bat: SIGIL_BAT.strokes, bear: SIGIL_BEAR.strokes, beaver: SIGIL_BEAVER.strokes, bee: SIGIL_BEE.strokes, beetle: SIGIL_BEETLE.strokes, boar: SIGIL_BOAR.strokes, cat: SIGIL_CAT.strokes, cheetah: SIGIL_CHEETAH.strokes, crab: SIGIL_CRAB.strokes, crocodile: SIGIL_CROCODILE.strokes, dormouse: SIGIL_DORMOUSE.strokes, dragonfly: SIGIL_DRAGONFLY.strokes, elephant: SIGIL_ELEPHANT.strokes, elk: SIGIL_ELK.strokes, featheredserpent: SIGIL_FEATHEREDSERPENT.strokes, fennec: SIGIL_FENNEC.strokes, flyingsquirrel: SIGIL_FLYINGSQUIRREL.strokes, fox: SIGIL_FOX.strokes, frosttroll: SIGIL_FROSTTROLL.strokes, frostwyrm: SIGIL_FROSTWYRM.strokes, griffin: SIGIL_GRIFFIN.strokes, hare: SIGIL_HARE.strokes, hedgehog: SIGIL_HEDGEHOG.strokes, heron: SIGIL_HERON.strokes, hydra: SIGIL_HYDRA.strokes, ibex: SIGIL_IBEX.strokes, jaguar: SIGIL_JAGUAR.strokes, komodo: SIGIL_KOMODO.strokes, lion: SIGIL_LION.strokes, lynx: SIGIL_LYNX.strokes, marten: SIGIL_MARTEN.strokes, meerkat: SIGIL_MEERKAT.strokes, mole: SIGIL_MOLE.strokes, moth: SIGIL_MOTH.strokes, newt: SIGIL_NEWT.strokes, otter: SIGIL_OTTER.strokes, owl: SIGIL_OWL.strokes, penguin: SIGIL_PENGUIN.strokes, polarbear: SIGIL_POLARBEAR.strokes, raccoon: SIGIL_RACCOON.strokes, ram: SIGIL_RAM.strokes, rattlesnake: SIGIL_RATTLESNAKE.strokes, raven: SIGIL_RAVEN.strokes, redpanda: SIGIL_REDPANDA.strokes, rhino: SIGIL_RHINO.strokes, roe: SIGIL_ROE.strokes, salamander: SIGIL_SALAMANDER.strokes, scorpion: SIGIL_SCORPION.strokes, snail: SIGIL_SNAIL.strokes, snake: SIGIL_SNAKE.strokes, snowleopard: SIGIL_SNOWLEOPARD.strokes, sphinx: SIGIL_SPHINX.strokes, spider: SIGIL_SPIDER.strokes, squirrel: SIGIL_SQUIRREL.strokes, stag: SIGIL_STAG.strokes, stegosaurus: SIGIL_STEGOSAURUS.strokes, stoat: SIGIL_STOAT.strokes, tiger: SIGIL_TIGER.strokes, toad: SIGIL_TOAD.strokes, turtle: SIGIL_TURTLE.strokes, unicorn: SIGIL_UNICORN.strokes, wolf: SIGIL_WOLF.strokes, woodlouse: SIGIL_WOODLOUSE.strokes };
-const CREATURE_LEGENDS = { arcticfox: LEGEND_ARCTICFOX, armadillo: LEGEND_ARMADILLO, badger: LEGEND_BADGER, bat: LEGEND_BAT, bear: LEGEND_BEAR, beaver: LEGEND_BEAVER, bee: LEGEND_BEE, beetle: LEGEND_BEETLE, boar: LEGEND_BOAR, cat: LEGEND_CAT, cheetah: LEGEND_CHEETAH, crab: LEGEND_CRAB, crocodile: LEGEND_CROCODILE, dormouse: LEGEND_DORMOUSE, dragonfly: LEGEND_DRAGONFLY, elephant: LEGEND_ELEPHANT, elk: LEGEND_ELK, featheredserpent: LEGEND_FEATHEREDSERPENT, fennec: LEGEND_FENNEC, flyingsquirrel: LEGEND_FLYINGSQUIRREL, fox: LEGEND_FOX, frosttroll: LEGEND_FROSTTROLL, frostwyrm: LEGEND_FROSTWYRM, griffin: LEGEND_GRIFFIN, hare: LEGEND_HARE, hedgehog: LEGEND_HEDGEHOG, heron: LEGEND_HERON, hydra: LEGEND_HYDRA, ibex: LEGEND_IBEX, jaguar: LEGEND_JAGUAR, komodo: LEGEND_KOMODO, lion: LEGEND_LION, lynx: LEGEND_LYNX, marten: LEGEND_MARTEN, meerkat: LEGEND_MEERKAT, mole: LEGEND_MOLE, moth: LEGEND_MOTH, newt: LEGEND_NEWT, otter: LEGEND_OTTER, owl: LEGEND_OWL, penguin: LEGEND_PENGUIN, polarbear: LEGEND_POLARBEAR, raccoon: LEGEND_RACCOON, ram: LEGEND_RAM, rattlesnake: LEGEND_RATTLESNAKE, raven: LEGEND_RAVEN, redpanda: LEGEND_REDPANDA, rhino: LEGEND_RHINO, roe: LEGEND_ROE, salamander: LEGEND_SALAMANDER, scorpion: LEGEND_SCORPION, snail: LEGEND_SNAIL, snake: LEGEND_SNAKE, snowleopard: LEGEND_SNOWLEOPARD, sphinx: LEGEND_SPHINX, spider: LEGEND_SPIDER, squirrel: LEGEND_SQUIRREL, stag: LEGEND_STAG, stegosaurus: LEGEND_STEGOSAURUS, stoat: LEGEND_STOAT, tiger: LEGEND_TIGER, toad: LEGEND_TOAD, turtle: LEGEND_TURTLE, unicorn: LEGEND_UNICORN, wolf: LEGEND_WOLF, woodlouse: LEGEND_WOODLOUSE };
-const CREATURE_NAPS = { arcticfox: NAP_ARCTICFOX, armadillo: NAP_ARMADILLO, badger: NAP_BADGER, bat: NAP_BAT, bear: NAP_BEAR, beaver: NAP_BEAVER, bee: NAP_BEE, beetle: NAP_BEETLE, boar: NAP_BOAR, cat: NAP_CAT, cheetah: NAP_CHEETAH, crab: NAP_CRAB, crocodile: NAP_CROCODILE, dormouse: NAP_DORMOUSE, dragonfly: NAP_DRAGONFLY, elephant: NAP_ELEPHANT, elk: NAP_ELK, featheredserpent: NAP_FEATHEREDSERPENT, fennec: NAP_FENNEC, flyingsquirrel: NAP_FLYINGSQUIRREL, fox: NAP_FOX, frosttroll: NAP_FROSTTROLL, frostwyrm: NAP_FROSTWYRM, griffin: NAP_GRIFFIN, hare: NAP_HARE, hedgehog: NAP_HEDGEHOG, heron: NAP_HERON, hydra: NAP_HYDRA, jaguar: NAP_JAGUAR, komodo: NAP_KOMODO, lion: NAP_LION, lynx: NAP_LYNX, marten: NAP_MARTEN, meerkat: NAP_MEERKAT, mole: NAP_MOLE, moth: NAP_MOTH, newt: NAP_NEWT, otter: NAP_OTTER, owl: NAP_OWL, penguin: NAP_PENGUIN, polarbear: NAP_POLARBEAR, raccoon: NAP_RACCOON, ram: NAP_RAM, rattlesnake: NAP_RATTLESNAKE, raven: NAP_RAVEN, redpanda: NAP_REDPANDA, rhino: NAP_RHINO, roe: NAP_ROE, salamander: NAP_SALAMANDER, scorpion: NAP_SCORPION, snail: NAP_SNAIL, snake: NAP_SNAKE, snowleopard: NAP_SNOWLEOPARD, sphinx: NAP_SPHINX, spider: NAP_SPIDER, squirrel: NAP_SQUIRREL, stag: NAP_STAG, stegosaurus: NAP_STEGOSAURUS, stoat: NAP_STOAT, tiger: NAP_TIGER, toad: NAP_TOAD, turtle: NAP_TURTLE, unicorn: NAP_UNICORN, wolf: NAP_WOLF, woodlouse: NAP_WOODLOUSE };
-const CREATURE_NEONS = { arcticfox: SIGIL_ARCTICFOX.neon, armadillo: SIGIL_ARMADILLO.neon, badger: SIGIL_BADGER.neon, bat: SIGIL_BAT.neon, bear: SIGIL_BEAR.neon, beaver: SIGIL_BEAVER.neon, bee: SIGIL_BEE.neon, beetle: SIGIL_BEETLE.neon, boar: SIGIL_BOAR.neon, cat: SIGIL_CAT.neon, cheetah: SIGIL_CHEETAH.neon, crab: SIGIL_CRAB.neon, crocodile: SIGIL_CROCODILE.neon, dormouse: SIGIL_DORMOUSE.neon, dragonfly: SIGIL_DRAGONFLY.neon, elephant: SIGIL_ELEPHANT.neon, elk: SIGIL_ELK.neon, featheredserpent: SIGIL_FEATHEREDSERPENT.neon, fennec: SIGIL_FENNEC.neon, flyingsquirrel: SIGIL_FLYINGSQUIRREL.neon, fox: SIGIL_FOX.neon, frosttroll: SIGIL_FROSTTROLL.neon, frostwyrm: SIGIL_FROSTWYRM.neon, griffin: SIGIL_GRIFFIN.neon, hare: SIGIL_HARE.neon, hedgehog: SIGIL_HEDGEHOG.neon, heron: SIGIL_HERON.neon, hydra: SIGIL_HYDRA.neon, ibex: SIGIL_IBEX.neon, jaguar: SIGIL_JAGUAR.neon, komodo: SIGIL_KOMODO.neon, lion: SIGIL_LION.neon, lynx: SIGIL_LYNX.neon, marten: SIGIL_MARTEN.neon, meerkat: SIGIL_MEERKAT.neon, mole: SIGIL_MOLE.neon, moth: SIGIL_MOTH.neon, newt: SIGIL_NEWT.neon, otter: SIGIL_OTTER.neon, owl: SIGIL_OWL.neon, penguin: SIGIL_PENGUIN.neon, polarbear: SIGIL_POLARBEAR.neon, raccoon: SIGIL_RACCOON.neon, ram: SIGIL_RAM.neon, rattlesnake: SIGIL_RATTLESNAKE.neon, raven: SIGIL_RAVEN.neon, redpanda: SIGIL_REDPANDA.neon, rhino: SIGIL_RHINO.neon, roe: SIGIL_ROE.neon, salamander: SIGIL_SALAMANDER.neon, scorpion: SIGIL_SCORPION.neon, snail: SIGIL_SNAIL.neon, snake: SIGIL_SNAKE.neon, snowleopard: SIGIL_SNOWLEOPARD.neon, sphinx: SIGIL_SPHINX.neon, spider: SIGIL_SPIDER.neon, squirrel: SIGIL_SQUIRREL.neon, stag: SIGIL_STAG.neon, stegosaurus: SIGIL_STEGOSAURUS.neon, stoat: SIGIL_STOAT.neon, tiger: SIGIL_TIGER.neon, toad: SIGIL_TOAD.neon, turtle: SIGIL_TURTLE.neon, unicorn: SIGIL_UNICORN.neon, wolf: SIGIL_WOLF.neon, woodlouse: SIGIL_WOODLOUSE.neon };
+const CREATURE_GENOMES = [GENOME_ARCTICFOX, GENOME_ARMADILLO, GENOME_BADGER, GENOME_BAT, GENOME_BEAR, GENOME_BEAVER, GENOME_BEE, GENOME_BEETLE, GENOME_BOAR, GENOME_BUTTERFLY, GENOME_CAT, GENOME_CHEETAH, GENOME_CRAB, GENOME_CROCODILE, GENOME_DORMOUSE, GENOME_DRAGONFLY, GENOME_ELEPHANT, GENOME_ELK, GENOME_FEATHEREDSERPENT, GENOME_FENNEC, GENOME_FLYINGSQUIRREL, GENOME_FOX, GENOME_FROSTTROLL, GENOME_FROSTWYRM, GENOME_GRIFFIN, GENOME_HARE, GENOME_HEDGEHOG, GENOME_HERON, GENOME_HYDRA, GENOME_IBEX, GENOME_JAGUAR, GENOME_KOMODO, GENOME_LION, GENOME_LYNX, GENOME_MARTEN, GENOME_MEERKAT, GENOME_MOLE, GENOME_MOTH, GENOME_NEWT, GENOME_OTTER, GENOME_OWL, GENOME_PENGUIN, GENOME_POLARBEAR, GENOME_RACCOON, GENOME_RAM, GENOME_RATTLESNAKE, GENOME_RAVEN, GENOME_REDPANDA, GENOME_RHINO, GENOME_ROE, GENOME_SALAMANDER, GENOME_SCORPION, GENOME_SNAIL, GENOME_SNAKE, GENOME_SNOWLEOPARD, GENOME_SPHINX, GENOME_SPIDER, GENOME_SQUIRREL, GENOME_STAG, GENOME_STEGOSAURUS, GENOME_STOAT, GENOME_TIGER, GENOME_TOAD, GENOME_TURTLE, GENOME_UNICORN, GENOME_WOLF, GENOME_WOODLOUSE];
+const CREATURE_SIGILS = { arcticfox: SIGIL_ARCTICFOX.strokes, armadillo: SIGIL_ARMADILLO.strokes, badger: SIGIL_BADGER.strokes, bat: SIGIL_BAT.strokes, bear: SIGIL_BEAR.strokes, beaver: SIGIL_BEAVER.strokes, bee: SIGIL_BEE.strokes, beetle: SIGIL_BEETLE.strokes, boar: SIGIL_BOAR.strokes, butterfly: SIGIL_BUTTERFLY.strokes, cat: SIGIL_CAT.strokes, cheetah: SIGIL_CHEETAH.strokes, crab: SIGIL_CRAB.strokes, crocodile: SIGIL_CROCODILE.strokes, dormouse: SIGIL_DORMOUSE.strokes, dragonfly: SIGIL_DRAGONFLY.strokes, elephant: SIGIL_ELEPHANT.strokes, elk: SIGIL_ELK.strokes, featheredserpent: SIGIL_FEATHEREDSERPENT.strokes, fennec: SIGIL_FENNEC.strokes, flyingsquirrel: SIGIL_FLYINGSQUIRREL.strokes, fox: SIGIL_FOX.strokes, frosttroll: SIGIL_FROSTTROLL.strokes, frostwyrm: SIGIL_FROSTWYRM.strokes, griffin: SIGIL_GRIFFIN.strokes, hare: SIGIL_HARE.strokes, hedgehog: SIGIL_HEDGEHOG.strokes, heron: SIGIL_HERON.strokes, hydra: SIGIL_HYDRA.strokes, ibex: SIGIL_IBEX.strokes, jaguar: SIGIL_JAGUAR.strokes, komodo: SIGIL_KOMODO.strokes, lion: SIGIL_LION.strokes, lynx: SIGIL_LYNX.strokes, marten: SIGIL_MARTEN.strokes, meerkat: SIGIL_MEERKAT.strokes, mole: SIGIL_MOLE.strokes, moth: SIGIL_MOTH.strokes, newt: SIGIL_NEWT.strokes, otter: SIGIL_OTTER.strokes, owl: SIGIL_OWL.strokes, penguin: SIGIL_PENGUIN.strokes, polarbear: SIGIL_POLARBEAR.strokes, raccoon: SIGIL_RACCOON.strokes, ram: SIGIL_RAM.strokes, rattlesnake: SIGIL_RATTLESNAKE.strokes, raven: SIGIL_RAVEN.strokes, redpanda: SIGIL_REDPANDA.strokes, rhino: SIGIL_RHINO.strokes, roe: SIGIL_ROE.strokes, salamander: SIGIL_SALAMANDER.strokes, scorpion: SIGIL_SCORPION.strokes, snail: SIGIL_SNAIL.strokes, snake: SIGIL_SNAKE.strokes, snowleopard: SIGIL_SNOWLEOPARD.strokes, sphinx: SIGIL_SPHINX.strokes, spider: SIGIL_SPIDER.strokes, squirrel: SIGIL_SQUIRREL.strokes, stag: SIGIL_STAG.strokes, stegosaurus: SIGIL_STEGOSAURUS.strokes, stoat: SIGIL_STOAT.strokes, tiger: SIGIL_TIGER.strokes, toad: SIGIL_TOAD.strokes, turtle: SIGIL_TURTLE.strokes, unicorn: SIGIL_UNICORN.strokes, wolf: SIGIL_WOLF.strokes, woodlouse: SIGIL_WOODLOUSE.strokes };
+const CREATURE_LEGENDS = { arcticfox: LEGEND_ARCTICFOX, armadillo: LEGEND_ARMADILLO, badger: LEGEND_BADGER, bat: LEGEND_BAT, bear: LEGEND_BEAR, beaver: LEGEND_BEAVER, bee: LEGEND_BEE, beetle: LEGEND_BEETLE, boar: LEGEND_BOAR, butterfly: LEGEND_BUTTERFLY, cat: LEGEND_CAT, cheetah: LEGEND_CHEETAH, crab: LEGEND_CRAB, crocodile: LEGEND_CROCODILE, dormouse: LEGEND_DORMOUSE, dragonfly: LEGEND_DRAGONFLY, elephant: LEGEND_ELEPHANT, elk: LEGEND_ELK, featheredserpent: LEGEND_FEATHEREDSERPENT, fennec: LEGEND_FENNEC, flyingsquirrel: LEGEND_FLYINGSQUIRREL, fox: LEGEND_FOX, frosttroll: LEGEND_FROSTTROLL, frostwyrm: LEGEND_FROSTWYRM, griffin: LEGEND_GRIFFIN, hare: LEGEND_HARE, hedgehog: LEGEND_HEDGEHOG, heron: LEGEND_HERON, hydra: LEGEND_HYDRA, ibex: LEGEND_IBEX, jaguar: LEGEND_JAGUAR, komodo: LEGEND_KOMODO, lion: LEGEND_LION, lynx: LEGEND_LYNX, marten: LEGEND_MARTEN, meerkat: LEGEND_MEERKAT, mole: LEGEND_MOLE, moth: LEGEND_MOTH, newt: LEGEND_NEWT, otter: LEGEND_OTTER, owl: LEGEND_OWL, penguin: LEGEND_PENGUIN, polarbear: LEGEND_POLARBEAR, raccoon: LEGEND_RACCOON, ram: LEGEND_RAM, rattlesnake: LEGEND_RATTLESNAKE, raven: LEGEND_RAVEN, redpanda: LEGEND_REDPANDA, rhino: LEGEND_RHINO, roe: LEGEND_ROE, salamander: LEGEND_SALAMANDER, scorpion: LEGEND_SCORPION, snail: LEGEND_SNAIL, snake: LEGEND_SNAKE, snowleopard: LEGEND_SNOWLEOPARD, sphinx: LEGEND_SPHINX, spider: LEGEND_SPIDER, squirrel: LEGEND_SQUIRREL, stag: LEGEND_STAG, stegosaurus: LEGEND_STEGOSAURUS, stoat: LEGEND_STOAT, tiger: LEGEND_TIGER, toad: LEGEND_TOAD, turtle: LEGEND_TURTLE, unicorn: LEGEND_UNICORN, wolf: LEGEND_WOLF, woodlouse: LEGEND_WOODLOUSE };
+const CREATURE_NAPS = { arcticfox: NAP_ARCTICFOX, armadillo: NAP_ARMADILLO, badger: NAP_BADGER, bat: NAP_BAT, bear: NAP_BEAR, beaver: NAP_BEAVER, bee: NAP_BEE, beetle: NAP_BEETLE, boar: NAP_BOAR, butterfly: NAP_BUTTERFLY, cat: NAP_CAT, cheetah: NAP_CHEETAH, crab: NAP_CRAB, crocodile: NAP_CROCODILE, dormouse: NAP_DORMOUSE, dragonfly: NAP_DRAGONFLY, elephant: NAP_ELEPHANT, elk: NAP_ELK, featheredserpent: NAP_FEATHEREDSERPENT, fennec: NAP_FENNEC, flyingsquirrel: NAP_FLYINGSQUIRREL, fox: NAP_FOX, frosttroll: NAP_FROSTTROLL, frostwyrm: NAP_FROSTWYRM, griffin: NAP_GRIFFIN, hare: NAP_HARE, hedgehog: NAP_HEDGEHOG, heron: NAP_HERON, hydra: NAP_HYDRA, jaguar: NAP_JAGUAR, komodo: NAP_KOMODO, lion: NAP_LION, lynx: NAP_LYNX, marten: NAP_MARTEN, meerkat: NAP_MEERKAT, mole: NAP_MOLE, moth: NAP_MOTH, newt: NAP_NEWT, otter: NAP_OTTER, owl: NAP_OWL, penguin: NAP_PENGUIN, polarbear: NAP_POLARBEAR, raccoon: NAP_RACCOON, ram: NAP_RAM, rattlesnake: NAP_RATTLESNAKE, raven: NAP_RAVEN, redpanda: NAP_REDPANDA, rhino: NAP_RHINO, roe: NAP_ROE, salamander: NAP_SALAMANDER, scorpion: NAP_SCORPION, snail: NAP_SNAIL, snake: NAP_SNAKE, snowleopard: NAP_SNOWLEOPARD, sphinx: NAP_SPHINX, spider: NAP_SPIDER, squirrel: NAP_SQUIRREL, stag: NAP_STAG, stegosaurus: NAP_STEGOSAURUS, stoat: NAP_STOAT, tiger: NAP_TIGER, toad: NAP_TOAD, turtle: NAP_TURTLE, unicorn: NAP_UNICORN, wolf: NAP_WOLF, woodlouse: NAP_WOODLOUSE };
+const CREATURE_NEONS = { arcticfox: SIGIL_ARCTICFOX.neon, armadillo: SIGIL_ARMADILLO.neon, badger: SIGIL_BADGER.neon, bat: SIGIL_BAT.neon, bear: SIGIL_BEAR.neon, beaver: SIGIL_BEAVER.neon, bee: SIGIL_BEE.neon, beetle: SIGIL_BEETLE.neon, boar: SIGIL_BOAR.neon, butterfly: SIGIL_BUTTERFLY.neon, cat: SIGIL_CAT.neon, cheetah: SIGIL_CHEETAH.neon, crab: SIGIL_CRAB.neon, crocodile: SIGIL_CROCODILE.neon, dormouse: SIGIL_DORMOUSE.neon, dragonfly: SIGIL_DRAGONFLY.neon, elephant: SIGIL_ELEPHANT.neon, elk: SIGIL_ELK.neon, featheredserpent: SIGIL_FEATHEREDSERPENT.neon, fennec: SIGIL_FENNEC.neon, flyingsquirrel: SIGIL_FLYINGSQUIRREL.neon, fox: SIGIL_FOX.neon, frosttroll: SIGIL_FROSTTROLL.neon, frostwyrm: SIGIL_FROSTWYRM.neon, griffin: SIGIL_GRIFFIN.neon, hare: SIGIL_HARE.neon, hedgehog: SIGIL_HEDGEHOG.neon, heron: SIGIL_HERON.neon, hydra: SIGIL_HYDRA.neon, ibex: SIGIL_IBEX.neon, jaguar: SIGIL_JAGUAR.neon, komodo: SIGIL_KOMODO.neon, lion: SIGIL_LION.neon, lynx: SIGIL_LYNX.neon, marten: SIGIL_MARTEN.neon, meerkat: SIGIL_MEERKAT.neon, mole: SIGIL_MOLE.neon, moth: SIGIL_MOTH.neon, newt: SIGIL_NEWT.neon, otter: SIGIL_OTTER.neon, owl: SIGIL_OWL.neon, penguin: SIGIL_PENGUIN.neon, polarbear: SIGIL_POLARBEAR.neon, raccoon: SIGIL_RACCOON.neon, ram: SIGIL_RAM.neon, rattlesnake: SIGIL_RATTLESNAKE.neon, raven: SIGIL_RAVEN.neon, redpanda: SIGIL_REDPANDA.neon, rhino: SIGIL_RHINO.neon, roe: SIGIL_ROE.neon, salamander: SIGIL_SALAMANDER.neon, scorpion: SIGIL_SCORPION.neon, snail: SIGIL_SNAIL.neon, snake: SIGIL_SNAKE.neon, snowleopard: SIGIL_SNOWLEOPARD.neon, sphinx: SIGIL_SPHINX.neon, spider: SIGIL_SPIDER.neon, squirrel: SIGIL_SQUIRREL.neon, stag: SIGIL_STAG.neon, stegosaurus: SIGIL_STEGOSAURUS.neon, stoat: SIGIL_STOAT.neon, tiger: SIGIL_TIGER.neon, toad: SIGIL_TOAD.neon, turtle: SIGIL_TURTLE.neon, unicorn: SIGIL_UNICORN.neon, wolf: SIGIL_WOLF.neon, woodlouse: SIGIL_WOODLOUSE.neon };
 // ---- inlined from art/creatures/arcticfox/bold.js ----
 
 // bold (stacks, runes, pointers: art/sigils.js BOLD): small round ears on a round fluffy face, its ruff in tufts
@@ -6518,6 +6566,12 @@ const BOLD_BEETLE = { strokes: [...pair(L([.42, .38], [.3, .26], [.22, .04]), L(
 
 // bold (stacks, runes, pointers: art/sigils.js BOLD): the great tusks curving up out of its snout
 const BOLD_BOAR = { strokes: [...pair(L([.32, .86], [.16, .82], [.06, .66], [.06, .46], [.14, .32]), L([.3, .2], [.26, .02], [.42, .14]), D(.34, .34)), E(.5, .66, .24, .16), ...pair(D(.41, .66)), L([.36, .16], [.64, .16])] };
+
+
+// ---- inlined from art/creatures/butterfly/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the swallowtail: broad forewings and the long tails on its hind wings
+const BOLD_BUTTERFLY = { strokes: [...pair(L([.46, .3], [.04, .06], [.06, .36], [.46, .42]), L([.46, .56], [.16, .62], [.18, .8], [.3, .82], [.46, .7]), L([.3, .82], [.26, .98]), L([.46, .2], [.36, .04])), L([.5, .2], [.5, .76])] };
 
 
 // ---- inlined from art/creatures/cat/bold.js ----
@@ -6684,8 +6738,8 @@ const BOLD_MOLE = { strokes: [...pair(L([.36, .5], [.2, .56], [.08, .5]), L([.12
 
 // ---- inlined from art/creatures/moth/bold.js ----
 
-// bold (stacks, runes, pointers: art/sigils.js BOLD): the swallowtail: broad forewings and the long tails on its hind wings
-const BOLD_MOTH = { strokes: [...pair(L([.46, .3], [.04, .06], [.06, .36], [.46, .42]), L([.46, .56], [.16, .62], [.18, .8], [.3, .82], [.46, .7]), L([.3, .82], [.26, .98]), L([.46, .2], [.36, .04])), L([.5, .2], [.5, .76])] };
+// bold (stacks, runes, pointers: art/sigils.js BOLD): from above: broad wings with eye spots, feathery antennae
+const BOLD_MOTH = { strokes: [...pair(L([.46, .36], [.18, .14], [.04, .3], [.2, .52], [.04, .74], [.2, .92], [.46, .66]), C(.24, .34, .06), L([.46, .2], [.3, .04]), L([.38, .12], [.38, .04])), L([.5, .2], [.5, .8])] };
 
 
 // ---- inlined from art/creatures/newt/bold.js ----
@@ -6862,7 +6916,7 @@ const BOLD_WOLF = { strokes: [...pair(L([.5,.92],[.28,.74],[.1,.6],[.16,.38],[.2
 const BOLD_WOODLOUSE = { strokes: [E(.5, .54, .32, .42), L([.22, .38], [.78, .38]), L([.2, .54], [.8, .54]), L([.22, .7], [.78, .7]), ...pair(L([.42, .14], [.3, .02]))] };
 
 
-const CREATURE_BOLD = { arcticfox: BOLD_ARCTICFOX.strokes, armadillo: BOLD_ARMADILLO.strokes, badger: BOLD_BADGER.strokes, bat: BOLD_BAT.strokes, bear: BOLD_BEAR.strokes, beaver: BOLD_BEAVER.strokes, bee: BOLD_BEE.strokes, beetle: BOLD_BEETLE.strokes, boar: BOLD_BOAR.strokes, cat: BOLD_CAT.strokes, cheetah: BOLD_CHEETAH.strokes, crab: BOLD_CRAB.strokes, crocodile: BOLD_CROCODILE.strokes, dormouse: BOLD_DORMOUSE.strokes, dragonfly: BOLD_DRAGONFLY.strokes, elephant: BOLD_ELEPHANT.strokes, elk: BOLD_ELK.strokes, featheredserpent: BOLD_FEATHEREDSERPENT.strokes, fennec: BOLD_FENNEC.strokes, flyingsquirrel: BOLD_FLYINGSQUIRREL.strokes, fox: BOLD_FOX.strokes, frosttroll: BOLD_FROSTTROLL.strokes, frostwyrm: BOLD_FROSTWYRM.strokes, griffin: BOLD_GRIFFIN.strokes, hare: BOLD_HARE.strokes, hedgehog: BOLD_HEDGEHOG.strokes, heron: BOLD_HERON.strokes, hydra: BOLD_HYDRA.strokes, ibex: BOLD_IBEX.strokes, jaguar: BOLD_JAGUAR.strokes, komodo: BOLD_KOMODO.strokes, lion: BOLD_LION.strokes, lynx: BOLD_LYNX.strokes, marten: BOLD_MARTEN.strokes, meerkat: BOLD_MEERKAT.strokes, mole: BOLD_MOLE.strokes, moth: BOLD_MOTH.strokes, newt: BOLD_NEWT.strokes, otter: BOLD_OTTER.strokes, owl: BOLD_OWL.strokes, penguin: BOLD_PENGUIN.strokes, polarbear: BOLD_POLARBEAR.strokes, raccoon: BOLD_RACCOON.strokes, ram: BOLD_RAM.strokes, rattlesnake: BOLD_RATTLESNAKE.strokes, raven: BOLD_RAVEN.strokes, redpanda: BOLD_REDPANDA.strokes, rhino: BOLD_RHINO.strokes, roe: BOLD_ROE.strokes, salamander: BOLD_SALAMANDER.strokes, scorpion: BOLD_SCORPION.strokes, snail: BOLD_SNAIL.strokes, snake: BOLD_SNAKE.strokes, snowleopard: BOLD_SNOWLEOPARD.strokes, sphinx: BOLD_SPHINX.strokes, spider: BOLD_SPIDER.strokes, squirrel: BOLD_SQUIRREL.strokes, stag: BOLD_STAG.strokes, stegosaurus: BOLD_STEGOSAURUS.strokes, stoat: BOLD_STOAT.strokes, tiger: BOLD_TIGER.strokes, toad: BOLD_TOAD.strokes, turtle: BOLD_TURTLE.strokes, unicorn: BOLD_UNICORN.strokes, wolf: BOLD_WOLF.strokes, woodlouse: BOLD_WOODLOUSE.strokes };
+const CREATURE_BOLD = { arcticfox: BOLD_ARCTICFOX.strokes, armadillo: BOLD_ARMADILLO.strokes, badger: BOLD_BADGER.strokes, bat: BOLD_BAT.strokes, bear: BOLD_BEAR.strokes, beaver: BOLD_BEAVER.strokes, bee: BOLD_BEE.strokes, beetle: BOLD_BEETLE.strokes, boar: BOLD_BOAR.strokes, butterfly: BOLD_BUTTERFLY.strokes, cat: BOLD_CAT.strokes, cheetah: BOLD_CHEETAH.strokes, crab: BOLD_CRAB.strokes, crocodile: BOLD_CROCODILE.strokes, dormouse: BOLD_DORMOUSE.strokes, dragonfly: BOLD_DRAGONFLY.strokes, elephant: BOLD_ELEPHANT.strokes, elk: BOLD_ELK.strokes, featheredserpent: BOLD_FEATHEREDSERPENT.strokes, fennec: BOLD_FENNEC.strokes, flyingsquirrel: BOLD_FLYINGSQUIRREL.strokes, fox: BOLD_FOX.strokes, frosttroll: BOLD_FROSTTROLL.strokes, frostwyrm: BOLD_FROSTWYRM.strokes, griffin: BOLD_GRIFFIN.strokes, hare: BOLD_HARE.strokes, hedgehog: BOLD_HEDGEHOG.strokes, heron: BOLD_HERON.strokes, hydra: BOLD_HYDRA.strokes, ibex: BOLD_IBEX.strokes, jaguar: BOLD_JAGUAR.strokes, komodo: BOLD_KOMODO.strokes, lion: BOLD_LION.strokes, lynx: BOLD_LYNX.strokes, marten: BOLD_MARTEN.strokes, meerkat: BOLD_MEERKAT.strokes, mole: BOLD_MOLE.strokes, moth: BOLD_MOTH.strokes, newt: BOLD_NEWT.strokes, otter: BOLD_OTTER.strokes, owl: BOLD_OWL.strokes, penguin: BOLD_PENGUIN.strokes, polarbear: BOLD_POLARBEAR.strokes, raccoon: BOLD_RACCOON.strokes, ram: BOLD_RAM.strokes, rattlesnake: BOLD_RATTLESNAKE.strokes, raven: BOLD_RAVEN.strokes, redpanda: BOLD_REDPANDA.strokes, rhino: BOLD_RHINO.strokes, roe: BOLD_ROE.strokes, salamander: BOLD_SALAMANDER.strokes, scorpion: BOLD_SCORPION.strokes, snail: BOLD_SNAIL.strokes, snake: BOLD_SNAKE.strokes, snowleopard: BOLD_SNOWLEOPARD.strokes, sphinx: BOLD_SPHINX.strokes, spider: BOLD_SPIDER.strokes, squirrel: BOLD_SQUIRREL.strokes, stag: BOLD_STAG.strokes, stegosaurus: BOLD_STEGOSAURUS.strokes, stoat: BOLD_STOAT.strokes, tiger: BOLD_TIGER.strokes, toad: BOLD_TOAD.strokes, turtle: BOLD_TURTLE.strokes, unicorn: BOLD_UNICORN.strokes, wolf: BOLD_WOLF.strokes, woodlouse: BOLD_WOODLOUSE.strokes };
 // ---- inlined from art/creatures/arcticfox/creature.js ----
 // arcticfox: what the game's rules and sounds know about it, section by section (the config files' per-species entries, 2026-10-13;
 // its genome, sigil, sleeping form and nap are its other files). The schema: config/schema/creature.schema.json.
@@ -7162,6 +7216,42 @@ const CREATURE_BOAR = {
     pressure: 1,
     call: "heads down",
     tells: { melee: "head down", special: "heads down" }
+  }
+};
+
+
+// ---- inlined from art/creatures/butterfly/creature.js ----
+// butterfly: what the game's rules and sounds know about it, section by section (the config files' per-species entries, 2026-10-13;
+// its genome, sigil, sleeping form and nap are its other files). The schema: config/schema/creature.schema.json.
+const CREATURE_BUTTERFLY = {
+  movement: {
+    speed: 15,
+    accel: 90,
+    fight: [
+      { kind: "orbit", w: 1, radius: 0.9 },
+      { kind: "wander", w: 0.8 },
+      { kind: "light", w: 1.4, radius: 40 },
+      { kind: "dodge", w: 0.6, radius: 14 },
+      { kind: "separation", w: 0.6, radius: 7 }
+    ],
+    tactics: [{ kind: "swarm", w: 1 }]
+  },
+  radius: 0.45,
+  ranged: true,
+  temperament: "skittish",
+  traits: ["flier", "swarm"],
+  voice: { family: "bug", pitch: 1.2, am: [120, 0.7], noise: 0.3, volume: 1.2 },
+  character: { sprite: "shiver", every: [2, 5], for: 0.6 },
+  pack: {
+    melee: null,
+    ranged: { name: "dust bolt", range: 10, shots: [0, 1, 3], spread: 20, tint: "red" },
+    special: "cloud",
+    specialWith: { flash: true, radius: 5 },
+    retreat: "swirl",
+    rhythm: "tight",
+    pressure: 3,
+    call: "the flash",
+    tells: { ranged: "wings fan", special: "the flash" }
   }
 };
 
@@ -9099,14 +9189,15 @@ const CREATURE_WOODLOUSE = {
 };
 
 
-const CREATURE_CONFIGS = { arcticfox: CREATURE_ARCTICFOX, armadillo: CREATURE_ARMADILLO, badger: CREATURE_BADGER, bat: CREATURE_BAT, bear: CREATURE_BEAR, beaver: CREATURE_BEAVER, bee: CREATURE_BEE, beetle: CREATURE_BEETLE, boar: CREATURE_BOAR, cat: CREATURE_CAT, cheetah: CREATURE_CHEETAH, crab: CREATURE_CRAB, crocodile: CREATURE_CROCODILE, dormouse: CREATURE_DORMOUSE, dragonfly: CREATURE_DRAGONFLY, elephant: CREATURE_ELEPHANT, elk: CREATURE_ELK, featheredserpent: CREATURE_FEATHEREDSERPENT, fennec: CREATURE_FENNEC, flyingsquirrel: CREATURE_FLYINGSQUIRREL, fox: CREATURE_FOX, frosttroll: CREATURE_FROSTTROLL, frostwyrm: CREATURE_FROSTWYRM, griffin: CREATURE_GRIFFIN, hare: CREATURE_HARE, hedgehog: CREATURE_HEDGEHOG, heron: CREATURE_HERON, hydra: CREATURE_HYDRA, ibex: CREATURE_IBEX, jaguar: CREATURE_JAGUAR, komodo: CREATURE_KOMODO, lion: CREATURE_LION, lynx: CREATURE_LYNX, marten: CREATURE_MARTEN, meerkat: CREATURE_MEERKAT, mole: CREATURE_MOLE, moth: CREATURE_MOTH, newt: CREATURE_NEWT, otter: CREATURE_OTTER, owl: CREATURE_OWL, penguin: CREATURE_PENGUIN, polarbear: CREATURE_POLARBEAR, raccoon: CREATURE_RACCOON, ram: CREATURE_RAM, rattlesnake: CREATURE_RATTLESNAKE, raven: CREATURE_RAVEN, redpanda: CREATURE_REDPANDA, rhino: CREATURE_RHINO, roe: CREATURE_ROE, salamander: CREATURE_SALAMANDER, scorpion: CREATURE_SCORPION, snail: CREATURE_SNAIL, snake: CREATURE_SNAKE, snowleopard: CREATURE_SNOWLEOPARD, sphinx: CREATURE_SPHINX, spider: CREATURE_SPIDER, squirrel: CREATURE_SQUIRREL, stag: CREATURE_STAG, stegosaurus: CREATURE_STEGOSAURUS, stoat: CREATURE_STOAT, tiger: CREATURE_TIGER, toad: CREATURE_TOAD, turtle: CREATURE_TURTLE, unicorn: CREATURE_UNICORN, wolf: CREATURE_WOLF, woodlouse: CREATURE_WOODLOUSE };
+const CREATURE_CONFIGS = { arcticfox: CREATURE_ARCTICFOX, armadillo: CREATURE_ARMADILLO, badger: CREATURE_BADGER, bat: CREATURE_BAT, bear: CREATURE_BEAR, beaver: CREATURE_BEAVER, bee: CREATURE_BEE, beetle: CREATURE_BEETLE, boar: CREATURE_BOAR, butterfly: CREATURE_BUTTERFLY, cat: CREATURE_CAT, cheetah: CREATURE_CHEETAH, crab: CREATURE_CRAB, crocodile: CREATURE_CROCODILE, dormouse: CREATURE_DORMOUSE, dragonfly: CREATURE_DRAGONFLY, elephant: CREATURE_ELEPHANT, elk: CREATURE_ELK, featheredserpent: CREATURE_FEATHEREDSERPENT, fennec: CREATURE_FENNEC, flyingsquirrel: CREATURE_FLYINGSQUIRREL, fox: CREATURE_FOX, frosttroll: CREATURE_FROSTTROLL, frostwyrm: CREATURE_FROSTWYRM, griffin: CREATURE_GRIFFIN, hare: CREATURE_HARE, hedgehog: CREATURE_HEDGEHOG, heron: CREATURE_HERON, hydra: CREATURE_HYDRA, ibex: CREATURE_IBEX, jaguar: CREATURE_JAGUAR, komodo: CREATURE_KOMODO, lion: CREATURE_LION, lynx: CREATURE_LYNX, marten: CREATURE_MARTEN, meerkat: CREATURE_MEERKAT, mole: CREATURE_MOLE, moth: CREATURE_MOTH, newt: CREATURE_NEWT, otter: CREATURE_OTTER, owl: CREATURE_OWL, penguin: CREATURE_PENGUIN, polarbear: CREATURE_POLARBEAR, raccoon: CREATURE_RACCOON, ram: CREATURE_RAM, rattlesnake: CREATURE_RATTLESNAKE, raven: CREATURE_RAVEN, redpanda: CREATURE_REDPANDA, rhino: CREATURE_RHINO, roe: CREATURE_ROE, salamander: CREATURE_SALAMANDER, scorpion: CREATURE_SCORPION, snail: CREATURE_SNAIL, snake: CREATURE_SNAKE, snowleopard: CREATURE_SNOWLEOPARD, sphinx: CREATURE_SPHINX, spider: CREATURE_SPIDER, squirrel: CREATURE_SQUIRREL, stag: CREATURE_STAG, stegosaurus: CREATURE_STEGOSAURUS, stoat: CREATURE_STOAT, tiger: CREATURE_TIGER, toad: CREATURE_TOAD, turtle: CREATURE_TURTLE, unicorn: CREATURE_UNICORN, wolf: CREATURE_WOLF, woodlouse: CREATURE_WOODLOUSE };
 
 
 // Witch creature genomes (#79, stage 1): every species as data, not code. A record names its
 // template (the body plan: which skeleton and which sockets it has), its builder (the 3D model
 // code that draws that template, art/creatures3d.js), its palette, its proportions and its parts;
 // its size levels come from its template's curves (templates.js). creatures.js reads SPECIES from
-// these records (speciesOf in index.js), so editing a record changes the creature.
+// these records (speciesOf in index.js), so editing a record changes the creature. Since 2026-10-13
+// a record is its species' own file, art/creatures/<id>/genome.js (art/creatures/index.js gathers them).
 //   palette: hue, sat, val (its coat), belly ("white", "yellow" or its own lighter coat).
 //   body (four-legged): hgt (height on screen, 1 = ordinary), len (body length, shoulder = 1),
 //     chest and tuck (belly heights at the shoulder and the waist), neck, neckAng, neckW, hr (head
@@ -9179,7 +9270,7 @@ const TEMPLATE_IDS = Object.keys(TEMPLATES);
 // ---- inlined from art/genome/expressions.js ----
 // Witch creature expressions (Ed, 2026-10-05: "the eyebrows should be with the creature generator"):
 // a creature's face as part of its model, not marks drawn over it. Four expressions, every species
-// at every level:
+// at every level (off in the game since Ed, 2026-11-05: "Scrap animal expressions for now."; tuning looks.expressions):
 //   neutral: as it is (nothing added; the sprite is the plain one, pixel for pixel);
 //   angry:   brows down to the middle over narrowed eyes (with the woken look's red eyes, enraged);
 //   happy:   eyes closed up into smiling arcs, brows lifted;
@@ -9416,7 +9507,7 @@ function textureProblems(id, t) {
 // ---- inlined from art/roster/presets.js ----
 // Roster review, Ed 2026-10-30: real-animal likeness before distinctness.
 // Isolated data for the existing speciesOf/quad3d interface, not a second engine.
-// No production import. Each species requires an explicit opt-in; defaults are off.
+// Read by art/genome/selection.js: its DEFAULT_ROSTER_IDS (Ed's release set) are on by default; any other needs an explicit opt-in.
 const ROSTER_SNOW_REGIONS = {
   torso: { kind: "rosettes", outerPx: 8, density: .55, inner: .22, outer: .43, sizeVariation: .15, closedFraction: .25, filledFraction: .2, gapRange: [0, .65], densityFalloff: [{ axis: "x", from: .2, to: 1, min: .2 }, { axis: "y", from: 0, to: -1, min: 0 }], xRange: [-1.2, .9], flankMin: .2, mat: "BODY3", centreMat: "BODYL" },
   head: { kind: "spots", k: 14, density: .5, radius: .43, mat: "BODY3" },
@@ -9827,6 +9918,8 @@ function genomeHash(g, context = {}, level = null) {
 //   flat:  bugs and the low (beetle, woodlouse, spider, moth, snail, toad, mole, hedgehog):
 //          pressed to the ground, legs hidden; the bat and the moth wrap their wings round themselves.
 // napForm(S) is a form for withForm (creatures3d.js): critter(..., { nap: true }) draws a creature with it.
+// (Since 2026-11-12 a kind with a mesh naps as its mesh instead, art/mesh/index.js meshNap; this draws the kinds
+// without one, and every kind under ?meshCreatures=0. Each species' pose is in art/creatures/<id>/nap.js.)
 
 
 
@@ -9967,16 +10060,18 @@ function crop(sp) {
 }
 
 
-const textureSeed = id => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) & 0xffff;
+const textureSeed = id => [...seedId(id)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) & 0xffff;
 // ---- inlined from art/creatures3d.js ----
 // Witch creatures built in 3D (see model3d.js), so they stand in true three-quarter view.
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
+
+// (a renamed kind keeps the motes its old id seeded)
 
 
 
 
 // ---- inlined from art/body-graph/graph.js ----
-// Experimental model-space graph. No production imports: migration requires visual review.
+// Model-space graph, opt-in: art/creatures3d.js compiles it only for a quadruped record with body.graph.
 // x forward, y up, z across, matching model3d. Socket offsets use model axes;
 // rotating spine frames and attaching sockets to other sockets are future work.
 
@@ -10358,13 +10453,15 @@ function paintTailParts(parts, definition, pixelsPerUnit = () => null) {
 // Keep original names: the single-page Art Lab flattens modules without alias bindings.
 // ---- inlined from art/creature-size.js ----
 
+// (a renamed kind keeps the motes its old id seeded)
+
 
 // ---- inlined from art/genome/size-ranks.js ----
 // Coordinator 6520208158 (2026-10-30): broad adult body-mass classes,
 // overlapping species share ranks; fantastical placements are design choices.
 // These ordinal starter classes are art direction, not measured mass estimates.
 const SIZE_CLASSES = [
-  ["woodlouse", "snail", "moth", "dragonfly", "beetle", "scorpion"],
+  ["woodlouse", "snail", "butterfly", "moth", "dragonfly", "beetle", "scorpion"],
   ["newt", "salamander", "dormouse", "toad", "crab", "spider"],
   ["mole", "stoat", "squirrel", "flyingsquirrel"],
   // (the bee: a giant one, the size of the marten whose place on home it took: Ed, 2026-11-12, a design placement)
@@ -10462,7 +10559,7 @@ function fitOccupiedCreature(model,options,S,level,st,decorate,measureOnly=false
   if(!(S.id==='snowleopard'&&S.sizes.motes?.[level])){
     const range=sizePixelRange(S.id,level,standingWitchHeight(st),st.creatureSizeCandidate===1);let scale=options.scale,lo=null,hi=null,best=null;
     const probePixels=(W,H)=>{
-      const r=rng(S.plan==='owl'?31:S.id.length*(S.q?7919:131)),points=[];
+      const r=rng(S.plan==='owl'?31:seedId(S.id).length*(S.q?7919:131)),points=[];
       for(let i=0;i<(S.sizes.motes?.[level]??0);i++){
         const x=Math.floor(uni(r,2,W-2)),y=Math.floor(uni(r,2,H*.6));
         for(const[dx,dy]of[[0,0],[1,0],[-1,0],[0,1],[0,-1]])points.push([x+dx,y+dy]);
@@ -10741,7 +10838,8 @@ function sentinelHeap(m, dy) {
 // Youths, and come up with something larger for Adults"): 1.65 times their young, heavier in build
 // (thicker body, legs and neck, a bigger head, bigger horns, antlers and tusks) with a few glowing
 // motes; legends about 4.5 times their young and never less than 2.2 times their adult. They keep
-// their size on screen as pixels grow.
+// their size on screen as pixels grow. (The model before Ed adopted the revised sizes, 2026-10-31:
+// art/creature-size.js fits each kind's final size now; ?creatureSizeCandidate=0 compares this one.)
 const ADULT_SCALE = 1.65, LEGEND_OVER_ADULT = 2.2;
 const LEVEL_SCALE = st => [1, Math.sqrt(st.growth), Math.sqrt(st.growth) * ADULT_SCALE, st.growth];
 const height3d = (level, st, hgt = 1) => Math.round(st.size * LEVEL_SCALE(st)[Math.max(0, Math.min(3, level))] * (2 / (st.pixel || 2)) * 1.9 * hgt);
@@ -10829,7 +10927,7 @@ const drawForm = (m, o, S, level, st) => {
   if (dressed) { m.parts = m.sizeBody.parts.slice(); m.flats = m.sizeBody.flats.slice(); }
   if (candidate) { m.parts=m.parts.filter(p=>!p.extra);m.flats=m.flats.filter(p=>!p.extra); }
   o = creatureSizeOptions(m, o, S, level, st);
-  const decorate = sp => { const n = S.sizes.motes?.[level]; if (!candidate && n) glowMotes(sp, S.plan === "owl" ? 31 : S.id.length * (S.q ? 7919 : 131), n, S.q && S.id === "snowleopard"); };
+  const decorate = sp => { const n = S.sizes.motes?.[level]; if (!candidate && n) glowMotes(sp, S.plan === "owl" ? 31 : seedId(S.id).length * (S.q ? 7919 : 131), n, S.q && S.id === "snowleopard"); };
   const fitted = fitOccupiedCreature(m, o, S, level, st, decorate,candidate&&FORM?.rig===true);
   if (candidate) { fitted.stats.bodyTarget=o.sizeTarget;fitted.stats.bodyHeight=fitted.sprite ? occupiedHeight(fitted.sprite) : fitted.stats.bodyHeight; }
   if (dressed) {
@@ -10847,7 +10945,7 @@ const drawForm = (m, o, S, level, st) => {
   }
   if (fitted.sprite && !VIEW) { fitted.sprite.sizeFit = fitted.stats; return fitted.sprite; }
   const sp = render(m, o).sp; decorate(sp);
-  if(candidate){const n=S.sizes.motes?.[level];if(n)glowMotes(sp,S.plan === "owl" ? 31 : S.id.length * (S.q ? 7919 : 131),n,S.q&&S.id==='snowleopard');}
+  if(candidate){const n=S.sizes.motes?.[level];if(n)glowMotes(sp,S.plan === "owl" ? 31 : seedId(S.id).length * (S.q ? 7919 : 131),n,S.q&&S.id==='snowleopard');}
   sp.sizeFit = { ...fitted.stats, rasters: fitted.stats.rasters + 1 }; return sp;
 };
 function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }
@@ -12921,7 +13019,7 @@ const IDLE_BUILDERS = { sentinel: sentinel3d, rattle: rattle3d };
 // Builds one creature's sprite (uncached): its body plan's builder.
 const buildCreature = (S, level, frame, st, facing = "towards") => S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing);
 
-// ================= the bestiary: 30 species, each a genome record (art/genome/species.js) =================
+// ================= the bestiary: each species a genome record (art/creatures/<id>/genome.js) =================
 // The records hold each species' template, palette, proportions and parts as data (#79 stage 1);
 // speciesOf turns one into the object the builders draw from (plan, hue/sat/val, belly, legend,
 // and for the four-legged q, their proportions, and sizes, their template's size curves).
@@ -12992,6 +13090,7 @@ function baseColours(s, st) {
 // A creature's height in art pixels at each level: 0 baby (about 30), 1 young (about 45 at the
 // default style, what was the adult model), 2 adult (1.65 times young, a heavier build), 3 legend
 // (about 4.5 times young, at least 2.2 times its adult). They keep their size on screen as pixels grow.
+// (The model before Ed adopted the revised sizes, 2026-10-31: art/creature-size.js fits each kind's final size now.)
 const LEVELS = ["baby", "young", "adult", "legend"];
 const levelHeight = (level, st) => height3d(level, st);
 
@@ -13001,7 +13100,7 @@ const levelHeight = (level, st) => height3d(level, st);
 const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "fur", "texture", "creatureScale", "creatureSizeCandidate"], cache = new Map();
 // gear (optional): party gear, the woken look and the expression, { collar, hat, glasses, shoes, woken, face }:
 //   collar: a colour [r, g, b] (the creature's sigil neon) or true; hat: a colourway 0..2;
-//   glasses: "bar" | "star" | "heart"; shoes: "sneakers" | "glitter" | "platform"; woken: true;
+//   glasses: "bar" | "star" | "heart"; shoes: a SHOE_STYLES key ("sneakers", "glitter", "platform"...); woken: true;
 //   face: "neutral" | "angry" | "happy" | "dazed" (genome/expressions.js, drawn as part of the face).
 // Give the same gear to speciesColours for its colours. Shapes are cached per gear combination.
 /** A species' walk as baked (render/artBuild.ts, render/view/creatures.ts): frames in its cycle (2 unless it has its own), and
@@ -13181,7 +13280,7 @@ const RIM_GENOMES = {
     colour: { wood: [.07, .3, .36], dark: [.06, .35, .2], light: [.08, .22, .52], pale: [.1, .14, .62], moss: [.24, .45, .36], fungus: [.08, .45, .62], spread: .05 } }, // weathered grey-brown wood
 };
 
-// The party's generated decorations (art/party.js "gen-*" pieces, behind ?props=gen): bunting, balloon bunches and paper lanterns,
+// The party's generated decorations (art/party.js "gen-*" pieces, always on in the game): bunting, balloon bunches and paper lanterns,
 // each a few seeded variants, in the witch model's units like the other party pieces. Their colours are the party's (neon or
 // balloon palettes at bake), so the genomes hold shapes only.
 const PARTY_PROP_GENOMES = {
@@ -13274,7 +13373,7 @@ const GROUND_GENOMES = {
   bluebells: grG({}, [grD("flower", 60, ["LEAF3", "LEAF", "FLOWER"]), grD("tuft", 20, GR_GRASS)]),
   sand: grG({ scale: [14, 4], cuts: [.36, .7] }, [grD("ripple", 34, GR_EARTH), grD("pebble", 5, GR_STONES), grD("blade", 6, GR_GRASS)]), // dunes and desert: long low swells, wind ripples, a few stones and blades
   clover: grG({}, [grD("clover", 46, GR_GRASS), grD("flower", 8, ["LEAF3", "LEAF", "FLOWER"])]),
-  // the north's floors (Ed, 2026-10-11; no area uses them yet): snow with needles and grass poking through, lichen heath, glacier ice
+  // the north's floors (Ed, 2026-10-11; the snowfield, the crags, the icefall and others use them): snow with needles and grass poking through, lichen heath, glacier ice
   snow: grG({ scale: [12, 6], cuts: [.3, .62] }, [grD("needle", 14, ["BODY2", "ACCENT", "ACCENT"]), grD("blade", 12, GR_GRASS), grD("pebble", 5, GR_STONES)], { patches: [{ mat: "STONE", n: 2, r: [2, 4] }] }),
   lichen: grG({ scale: [6, 5] }, [grD("moss", 40, ["BODY2", "BODY", "BELLY"]), grD("sprig", 22, ["LEAF3", "LEAF", "FLOWER"]), grD("pebble", 10, GR_STONES)], { patches: [{ mat: "STONE", n: 3, r: [3, 5] }, { mat: "MOSS", n: 2, r: [3, 6] }] }),
   basalt: grG({ scale: [8, 5], cuts: [.42, .7] }, [grD("crack", 9, ["ACCENT", "GLOW", "FLOWER"]), grD("slab", 10, GR_STONES), grD("pebble", 30, GR_STONES), grD("sprig", 6, GR_GRASS)], { patches: [{ mat: "STONED", n: 3, r: [4, 8] }] }), // a volcano's flanks: black basalt and ash, lava glowing in its cracks, a few hardy sprigs
@@ -13586,7 +13685,7 @@ function propPiece(kind, o = {}, def = null, st = {}, ppm = 16) {
   const { r, ...variant } = v;
   return { sp, colours: prColours(kind, v, def, o, st), metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1) }, variant };
 }
-// Which generated kind (and fixed numbers) stands in for one of the areas' hand-made props under ?props=gen, or null.
+// Which generated kind (and fixed numbers) stands in for one of the areas' hand-made props under style.propGen (always on in the game), or null.
 function propFor(kind, o = {}) {
   // big: the stone shrine's tree-equivalents (Ed, 2026-10-06: "the tree equivalents should just be large standing stones, perhaps quite
   // similar to the runestones"): great plain monoliths, taller and broader than any runestone, no sigil, each its own height, width and lean
@@ -13662,12 +13761,12 @@ function rimPieceOnce(o, def, st, ppm) {
 // crossings (art/paths.js footbridge, rope-bridge and root-bridge, where a path crosses a stream) as seeded variants, so the
 // crossings along a stream differ instead of repeating one sprite. Built like the path pieces (model units, spanning along x, a
 // stream's water under the middle), drawn in the path pieces' colours (pathColours), so a variant changes shape only. Under
-// ?props=gen (style.propGen) the art build bakes BRIDGE_VARIANTS of each as "<id>~<k>", and the view picks one by the crossing's place.
+// style.propGen (the game always has it on) the art build bakes BRIDGE_VARIANTS of each as "<id>~<k>", and the view picks one by the crossing's place.
 //   footbridge:  planks over a low arch on two stringers, rails on both sides, one or none (rails, posts only, or X-braced),
 //                a plank or two missing, moss on the old ones
 //   rope-bridge: planks hung between two pairs of posts, sagging, handropes (one pair or two), a few planks gone
 //   root-bridge: gnarled roots arching over the stream, twisted together, mossed, ferns at its ends, a crown at one end or both
-// And the fingerposts where a footpath comes into an area's clearing (rules/paths.ts, under ?props=gen: paths.fingerposts):
+// And the fingerposts where a footpath comes into an area's clearing (rules/paths.ts, paths.fingerposts: on in the game):
 //   fingerpost:  an old wooden post, 1 to 4 blank arms pointing different ways (pointed, swallowtailed or square-ended; no words),
 //                a cap, a ball or a plain top, leaning a little, an arm sometimes snapped or hanging, moss up its foot, ivy now and then
 
@@ -13754,7 +13853,7 @@ function buildBridge(m, id, seed) { const v = bridgeVariant(id, seed); BR_BUILD[
 // ---- inlined from art/props/sets.js ----
 // Small set pieces from genomes (art builder 1's ask on #119: "a generated small set piece, a ring, a heap, a jetty or a punt from a
 // genome, would let new areas have their own"): an area's landmark built from its genome and a seed, like the props (art/props/
-// generator.js), so an area recipe (art/recipes/) can name one as its `setPiece` ([kind, text, size, { seed, ...numbers }]) and get
+// generator.js), so an area recipe (art/areas/<id>/recipe.js) can name one as its `setPiece` ([kind, text, size, { seed, ...numbers }]) and get
 // a set piece of its own instead of reusing another area's builder. Each is 6 to 12 m across, at the witch's scale, standing on its
 // bottom row, its origin the ground under its middle (as art/setpieces.js gives the hand-made ones). Most are unlit; a jetty's lantern
 // and a ring's embers are their one warm touch.
@@ -14035,7 +14134,7 @@ function genSetPiece(kind, o = {}, def = null, st = {}, size = 1, ppm = 16) {
 // node tools/data.mjs areas index (and adopt), the recipes and flora sorted by id, the kinds by slot: don't edit it, run that.
 // ---- inlined from art/areas/fen/recipe.js ----
 // The fen (#119): the first area type written as a recipe, data alone (art/recipes.js says what each field is). Ed's columns as
-// for the 30: open peaty water and sedge under alder and willow carr, the turtle its creature (the newt till 2026-11-12: Ed, "newt for turtle").
+// for the 30: open peaty water and sedge under aspen, alder and willow carr, the turtle its creature (the newt till 2026-11-12: Ed, "newt for turtle").
 const FEN = {
   slot: 0, id: "fen", name: "Fen", creature: "turtle", by: "recipe", leaf: .23, floor: ["moss", .2, .5, .32],
   text: { floor: "peat moss and sedge", wall: "black pools", small: "sedge and reeds", big: "aspen and alder carr", set: "a punt sunk among the sedge" },
@@ -14249,8 +14348,8 @@ const EYRIE = {
 
 // ---- inlined from art/areas/mossy-dell/recipe.js ----
 // The mossy dell (Ed, 2026-10-12: "Why don't we make a few more animals": a roe deer, its area for the later islands), the third
-// area type written as a recipe (art/recipes.js says what each field is): a damp, mossy hollow under rowan, birch and oak,
-// ferny glades where the roe browse at dusk; the roe deer its creature. Its island lies to the north-west (config/kinds.json).
+// area type written as a recipe (art/recipes.js says what each field is): a damp, mossy hollow under rowan, birch and yew,
+// ferny glades where the roe browse at dusk; the roe deer its creature. Its island lies to the north-west (its folder's kind.json).
 const DELL = {
   slot: 10, id: "mossy-dell", name: "Mossy dell", creature: "roe", by: "recipe", leaf: .27, floor: ["moss", .27, .45, .36],
   text: { floor: "deep moss and leaf litter", small: "ferns and foxgloves", big: "rowan, birch and yew", set: "an old ring in a glade, where the roe gather at dusk" },
@@ -14380,7 +14479,7 @@ const BUSHVELD = {
 
 // ---- inlined from art/areas/packice/recipe.js ----
 // The pack ice (a journey kind: unknown-32's, phase 4, the cold north-north-west; Ed approved the mock, 2026-10-12): the polar bear's. Broken sea ice and drifted snow with dark leads of open
-// water between the floes; stunted, wind-bent firs and birch hug the shore. Unlike the arctic fox's snowfield (inland,
+// water between the floes; stunted, wind-bent larches, firs and birch hug the shore. Unlike the arctic fox's snowfield (inland,
 // soft and white), this is the frozen sea: ice slabs, black water, pressure ridges.
 const PACKICE = {
   slot: 16, id: "packice", name: "Pack ice", creature: "polarbear", by: "recipe", leaf: .45, floor: ["ice", .6, .38, .86],
@@ -14513,7 +14612,7 @@ const RIVER_JUNGLE = {
 // ---- inlined from art/areas/rookery/recipe.js ----
 // The penguin rookery (the penguin's area, unknown-14's cold island; Ed, 2026-10-12: more animals for later islands): a cold, rocky
 // shore, written as a recipe (art/recipes.js says what each field is). Snow lying over dark wet shingle, the rocks showing through
-// it, tussock grass in the lee of boulders, a few wind-stunted pines and birches bent flat by the gales, and in the clearing the
+// it, tussock grass in the lee of boulders, a few wind-stunted spruces, birches and pines bent flat by the gales, and in the clearing the
 // rookery's ring of pebble nests, the penguin its creature. (Not the arctic fox's tundra nor the polar bear's pack ice: a shore.)
 const ROOKERY = {
   slot: 22, id: "rookery", name: "Penguin rookery", creature: "penguin", by: "recipe", leaf: .36, floor: ["snow", .58, .06, .86],
@@ -14537,7 +14636,7 @@ const ROOKERY = {
 // ---- inlined from art/areas/moonpool-glade/recipe.js ----
 // The moonpool glade (Ed, 2026-10-13: magical creatures for the last outer islands; the unicorn's, unknown-31, the cold
 // rainforest): old cedars, spruces and alders round a still, moonlit pool, a ring of white stones in the clearing; the unicorn its
-// creature. Not the Mistwood, the Mossy creek, the Misty terraces or the Mossy dell: pale bark, dark yew and bright water.
+// creature. Not the Mistwood, the Mossy creek, the Misty terraces or the Mossy dell: dark cedar and bright water.
 const MOONPOOL = {
   slot: 23, id: "moonpool-glade", name: "Moonpool glade", creature: "unicorn", by: "recipe", leaf: .28, floor: ["grass", .3, .3, .58],
   text: { floor: "short pale grass and moss", wall: "a still pool", small: "ferns and white flowers", big: "old cedars, spruces and alders", set: "a ring of white stones by the pool" },
@@ -14580,7 +14679,7 @@ const DRAGON_SCRUB = {
 
 // ---- inlined from art/areas/snowfield/recipe.js ----
 // The snowfield (the north's cold island, phase 3): an area type as a recipe (art/recipes.js says what each field is). Deep snow
-// with grass and needles poking through, lone snow-laden firs and dwarf birch, a ring of old stones half buried in a
+// with grass and needles poking through, lone snow-laden junipers, firs and dwarf birch, a ring of old stones half buried in a
 // drift; the arctic fox its creature.
 const SNOWFIELD = {
   slot: 25, id: "snowfield", name: "Snowfield", creature: "arcticfox", by: "recipe", leaf: .36, floor: ["snow", .58, .06, .86], snow: 1,
@@ -14602,9 +14701,9 @@ const SNOWFIELD = {
 
 // ---- inlined from art/areas/crags/recipe.js ----
 // The crags (the north-east's island of mountains and glaciers, phase 3): an area type as a recipe (art/recipes.js says what each
-// field is). Lichened rock and glacier ice, scree, rock spires standing over it, wind-bent larch with snow on them and gnarled wild
-// olives in the lee of the rocks, hardy scrub (broom, juniper, heather) among the stones (Ed, 2026-10-12: "even crags should have
-// shrubs and maybe olive trees"), a heap of glacier rubble with a slab on top; the ibex its creature.
+// field is). Lichened rock and glacier ice, scree, rock spires standing over it, wind-bent larch with snow on them and junipers and
+// pines in the lee of the rocks, hardy scrub (broom, juniper, heather) among the stones (Ed, 2026-10-12: "even crags should have
+// shrubs and maybe olive trees"; juniper for the olive since 2026-10-23, below), a heap of glacier rubble with a slab on top; the ibex its creature.
 const CRAGS = {
   slot: 26, id: "crags", name: "Crags", creature: "ibex", by: "recipe", leaf: .3, floor: ["lichen", .3, .22, .44], snow: .45,
   text: { floor: "lichen, scree and glacier ice", wall: "rock walls", small: "scree, broom and juniper scrub", big: "rock spires, wind-bent larch and juniper krummholz", set: "a heap of glacier rubble with a slab on top" },
@@ -14739,7 +14838,7 @@ const DROWNED_WOOD = {
 
 // ---- inlined from art/areas/desert-ruin/recipe.js ----
 // The desert ruin (Ed, 2026-10-23: the hot south's fantastic kind, unknown-19's slot, ring 5; "a desert ruin"): a city the sand took,
-// its streets still laid out in lines under the dunes, broken columns and fallen drums along them, date palms, acacias and old olives
+// its streets still laid out in lines under the dunes, broken columns and fallen drums along them, date palms, acacias and baobabs
 // growing in its squares; the sphinx its creature. Ed's columns as for the 30.
 const DESERT_RUIN = {
   slot: 32, id: "desert-ruin", name: "Desert ruin", creature: "sphinx", by: "recipe", leaf: .2, floor: ["sand", .1, .36, .7],
@@ -14943,7 +15042,7 @@ const AREA_FOLDER_KINDS = [
   {"kind":"heron","slot":13,"phase":2,"bearing":213.75,"dir":"SW","biome":"mangrove swamp"},
   {"kind":"turtle","slot":14,"phase":1,"bearing":195,"dir":"SSW","biome":"temperate"},
   {"kind":"woodlouse","slot":15,"phase":3,"bearing":101.25,"dir":"ESE","biome":"volcanic"},
-  {"kind":"moth","slot":16,"phase":1,"bearing":135,"dir":"SE","biome":"temperate"},
+  {"kind":"butterfly","slot":16,"phase":1,"bearing":135,"dir":"SE","biome":"temperate"},
   {"kind":"bat","slot":17,"phase":2,"bearing":281.25,"dir":"WNW","biome":"jungle"},
   {"kind":"toad","slot":18,"phase":1,"bearing":15,"dir":"NNE","biome":"temperate"},
   {"kind":"raven","slot":19,"phase":2,"bearing":56.25,"dir":"ENE","biome":"mountains and glaciers"},
@@ -15870,7 +15969,7 @@ function bedroomSprite(st = {}, { S } = {}) {
 
 
 // ---- inlined from art/partyRelics.js ----
-// Party relics (Ed, #87, 2026-10-05): bottles half-buried in the forest floor (built legend-sized, drawn at a third: PARTY_RELIC_SIZE), 3 or 4 to a map, waiting to be
+// Party relics (Ed, #87, 2026-10-05): bottles half-buried in the forest floor (built legend-sized, drawn at a third: PARTY_RELIC_SIZE), one to every ten areas the waves reach (Ed, 2026-10-11: config/legends.json relics.perAreas), waiting to be
 // found. The witch digs one up; it becomes a sigil in her stack, and placed by a sleeping legend it wakes the legend happy. Ed: "The
 // legend relics should be various kinds of bottle ... the liquid inside should glow so it's clear that it's a magical item and not
 // just scenery" and "They should all look like colourful transparent bottles of different shapes. Round, square, hexagonal, etc."
@@ -15890,7 +15989,7 @@ function bedroomSprite(st = {}, { S } = {}) {
 // ---- inlined from art/sigils.js ----
 // Creature sigils (Ed: "a magical symbol for each type of creature"; then, 2026-10-06: "The animal sigils are too abstract",
 // with a reference set): each is the animal itself as a monoline icon, one thick round-capped stroke, no fills, reduced to its two
-// or three defining features (see SIGILS). One family: the same stroke weight, smooth curves, a few strokes each.
+// or three defining features (SIGILS; each one's strokes in art/creatures/<id>/sigil.js). One family: the same stroke weight, smooth curves, a few strokes each.
 //
 // Main use (Ed): the leashing rune, written on the ground under a creature, seen from the game's
 // camera 30-40° down, so squashed to about half its height. So: strong verticals, open curves,
@@ -15908,6 +16007,8 @@ function bedroomSprite(st = {}, { S } = {}) {
 // carving), and a neon pixel field: on the ground (foreshortened by the camera's pitch) as the
 // leashing rune, or upright as the floating form in the leash stack over the witch's head.
 // The leash stack: a chain of springs that sways and trails behind her as she flies.
+
+// (a renamed kind keeps the circle its old id seeded)
 
 
 
@@ -16023,6 +16124,7 @@ const LEGEND_DETAIL = {
   rattlesnake: [...pair(L([.62, .26], [.6, .2])), D(.4, .6), D(.5, .66)],
   scorpion: [D(.5, .54), D(.5, .62), D(.5, .7)],
   snake: [D(.53, .46), ...[.5, .62, .74, .86].map(t => D(...at(.5, .54, .07 + .24 * t, t * 468)))],
+  butterfly: [...pair(C(.34, .7, .045), L([.45, .4], [.14, .24]))],
   moth: [...pair(C(.34, .7, .045), L([.45, .4], [.14, .24]))],
   marten: [...pair(A(.24, .24, .045, 110, 340), L([.42, .7], [.28, .72]))],
   bee: [...pair(L([.4, .3], [.2, .26], [.11, .29]), L([.4, .41], [.26, .48])), L([.45, .44], [.55, .44])], // a vein down each wing, one more band on its abdomen
@@ -16063,7 +16165,7 @@ const LEGEND_DETAIL = {
 };
 // The circle, in a unit box (centre .5, .5), as stroke data like SIGILS, each tagged: "ring" (rings, cells, triangle,
 // octagon, medallions) or "rune" (the script, drawn thinner). tier: 2 full, 1 or 0 without the runes and cells.
-const sHash = id => { let h = 7; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) % 100003; return h; };
+const sHash = id => { let h = 7; for (const ch of String(seedId(id))) h = (h * 31 + ch.charCodeAt(0)) % 100003; return h; };
 const RUNE_ARMS = [[0, 1, .5, .72], [0, 1, -.5, .72], [0, .55, .5, .85], [0, .55, -.5, .25], [0, .3, .5, 0], [-.5, .5, .5, .5], [0, .75, .5, .45], [0, .2, -.5, .45], [-.5, .9, .5, .9]];
 // one made-up rune, n by seed, in local (u across -.5..5, v up 0..1): a stem and one or two arms, now and then a ring
 function runeLocal(n) {
@@ -17220,7 +17322,7 @@ function tallPiece(kind, o, def, st, r, ppm = 16) {
 
 // ---- inlined from art/recipes.js ----
 
-// Area recipes (#119): an area type as data alone, one object each, so a new area type is a recipe and some tuning, no code.
+// Area recipes (#119): an area type as data alone, one object each (its own file, art/areas/<id>/recipe.js), so a new area type is a recipe and some tuning, no code.
 // art/areas.js folds every recipe into the registries the game and the art read, as if it had been written there:
 //   slot                its place among the recipes (0 the first), fixed for good: the map's area type ids are positional (the 30
 //                       table areas, then the recipes in slot order), so a slot never moves and a new recipe takes the next one
@@ -17323,7 +17425,7 @@ const AREAS = [
     wall: [P("water", { w: 2 })], small: [P("stump", { gnawed: true })], big: [tree("weepingBirch"), tree("alder", { minor: true, scale: .8 }), tree("aspen", { minor: true, scale: .9, lean: .45 })], set: P("dam") }, // (aspens leaning where the beavers have gnawed them: Ed, 2026-10-13)
   { id: "log-pile", name: "Log pile", creature: "beetle", by: "draft", leaf: .22, floor: ["leaves", .06, .5, .3], text: { floor: "rotting leaves", small: "fungi", big: "rotting logs", set: "a fallen giant" },
     small: [P("fungi")], big: [P("log", { rot: true }), P("snag", { sparse: .12 }), P("snag", { sparse: .1, hollow: true, lean: .12 }), tree("elder", { scale: .8 }), tree("aspen", { minor: true, scale: .8 })], set: P("log", { rot: true, giant: true }) }, // (young trees taking over between the logs: Ed, 2026-10-13)
-  { id: "heath", name: "Heath", creature: "moth", by: "draft", leaf: .27, floor: ["heather", .85, .35, .4], text: { floor: "heather", small: "gorse", big: "wind-bent birches" },
+  { id: "heath", name: "Heath", creature: "butterfly", by: "draft", leaf: .27, floor: ["heather", .85, .35, .4], text: { floor: "heather", small: "gorse", big: "wind-bent birches" },
     small: [P("shrub", { flower: [250, 205, 40], spiky: true })], big: [tree("birch", { lean: .45, scale: .75 }), tree("hawthorn", { minor: true, scale: .7, lean: .45 })] },
   { id: "old-pinewood", name: "Old pinewood", creature: "bee", by: "draft", leaf: .35, floor: ["needles", .07, .4, .3], text: { floor: "pine needles", small: "pine cones", big: "tall old pines with knotholes" },
     small: [P("cones")], big: [tree("pine", { scale: 1.35 }), tree("rowan", { minor: true, scale: .8 })] },
@@ -17492,7 +17594,8 @@ function layoutProblems(a) {
 
 // Placement rules (Ed, 2026-10-03, via the coordinator): wall objects are drawn only, they do
 // not block movement for now; a set piece is rare scenery, shown in only some of an area
-// type's areas, for variety. The chance is a starting value for playtesting.
+// type's areas, for variety. The chance is a starting value for playtesting (the game's own is
+// tuning's setPieceChance: 0, no set pieces in normal play, since Ed, 2026-10-29).
 const WALLS_BLOCK = false;
 const SET_PIECE_CHANCE = .25;
 
@@ -18182,7 +18285,7 @@ const TRAIT_TINTS = { flier: [150, 210, 255], armoured: [190, 190, 205], swarm: 
 // each effect's attacks, kept in step with ATTACK_EFFECTS
 for (const [atk, fx] of Object.entries(ATTACK_EFFECTS)) for (const id of Object.values(fx).flat()) if (!EFFECT_BY_ID[id].attacks.includes(atk)) EFFECT_BY_ID[id].attacks.push(atk);
 // Species whose shots aren't the plain glob: the glowing ones throw motes, the raven feathers (its long shots, by level).
-const SPECIES_PROJECTILE = { moth: "mote", bat: "mote", raven: "feather", woodlouse: "barb", owl: "lobSeed" };
+const SPECIES_PROJECTILE = { butterfly: "mote", moth: "mote", bat: "mote", raven: "feather", woodlouse: "barb", owl: "lobSeed" };
 
 // The colours: greys (the game multiplies the tinted pixels by the tint) or tinted here (tint: [r, g, b] 0-255).
 function effectColours(tint) {
@@ -20487,7 +20590,7 @@ const CAMPFIRES = {
 
 // ---------------- the home stretch (Ed's playtest: decorate the home area between the dancefloor and the home soundsystem) ----------------
 // A small set, class "home", for the prototype to place along that stretch, never on the dancefloor itself: a path edge of stepping stones,
-// a glowing mushroom ring, warm lantern posts and little path lights, a speaker stack, a crate stack, flower pots, a signpost (blank arrows
+// a glowing mushroom ring, warm lantern posts and little path lights, a crate stack, flower pots, a signpost (blank arrows
 // and a glowing note, no words) and a fairy-lit branch arch to walk under. Same conventions as the rest: glow and light (neon or warm),
 // pointLight on the lantern posts.
 const HOME = {
@@ -20550,9 +20653,9 @@ const PICNIC = Object.fromEntries([
 
 // ---------------- the table ----------------
 const SIZE = { litter: 1.5, balloon: 1.2, small: 1.2, furniture: 1, set: 1, home: 1, picnic: 1 }; // litter a touch larger than life, to read at all
-// ---------------- generated (the prop generator, #119; behind ?props=gen): a few seeded variants each of the bunting, the balloon bunches
+// ---------------- generated (the prop generator, #119; always on in the game since 2026-10-07): a few seeded variants each of the bunting, the balloon bunches
 // and the paper lanterns, so they vary in shape (their genomes: PARTY_PROP_GENOMES, art/props/genomes.js). Each variant is a piece of
-// its own ("gen-<kind>-<n>") that `replaces` the hand-made ones: the game swaps them in with partyObjects.generated (?props=gen). ----------------
+// its own ("gen-<kind>-<n>") that `replaces` the hand-made ones: the game swaps them in with partyObjects.generated (set at load). ----------------
 const pgVar = (kind, k) => propVariant(kind, k * 7 + 3, {}, PARTY_PROP_GENOMES);
 const PG_FLAG = { triangle: (s, t) => Math.abs(s) < (t + 1) / 2, square: (s, t) => t > -.8, round: (s, t) => s * s + (t - .2) ** 2 < .7, pennant: (s, t) => t > -1 + Math.abs(s) * 1.6 && (t < .6 || Math.abs(s) < .9) };
 function pgBunting(m, v) {
@@ -20667,7 +20770,7 @@ function partyPatch(seed, layout, { w = 420, h = 250, clusters = 5, loose = 46 }
 // variant swaps the coat for one of the curated PALETTE_VARIANTS (or any hue, sat, val).
 
 
-const PALETTE_SIZE = 64, PALETTE_ROW = PALETTE_SIZE * 2; // materials 0..63 (M goes to 51); a row is their colours, then their outline colours
+const PALETTE_SIZE = 64, PALETTE_ROW = PALETTE_SIZE * 2; // materials 0..63 (M goes to 59); a row is their colours, then their outline colours
 const OUTLINE_DARK = [22, 18, 30];
 
 // A sprite's material mask: mat (its material, or for an outline pixel the material it outlines)
@@ -20769,6 +20872,8 @@ function variantColours(id, st, variant, gear = null, level = null) {
 // between its joints. Each piece keeps its pivot: the pixel where the joint it hangs from lands.
 // Headings: 0 walking right, a quarter turn walking down the screen (towards us), minus a quarter up
 // it (away); RIG_HEADINGS are the baked ones, and heading h > a quarter turn is the mirror of pi - h.
+// (Since 2026-11-12 a kind drawn as a mesh, art/mesh/, walks on its own frames and the rig leaves it be:
+// src/render/assets.ts; this serves the kinds without a mesh, and every kind under ?meshCreatures=0.)
 
 
 
@@ -21046,6 +21151,8 @@ function silhouettePairs(shapes) {
 // colours: a boulder, a log or a mound until you know. No waking sequence or awake redraw yet
 // (Ed, 2026-10-04: "just the sleeping form"); awake it is the ordinary legend (critter level 3).
 // legendForm(id, st, { frame, facing }) -> { sp, colours }; legendSprites bakes the lot.
+// (Since 2026-11-12 a kind with a mesh is drawn asleep from it instead, art/mesh/index.js meshSleep; this draws the kinds
+// without one, and every kind under ?meshCreatures=0.)
 
 
 
@@ -21067,6 +21174,7 @@ const LEGEND_FRAMES = { asleep: 2 };
 // Batch 1 (the bug hunter's first slice): bat, marten, elk, stoat, owl, snail. Batch 2: wolf, fox,
 // badger, boar, stag, hare, bear. Batch 3: lynx, otter, beaver, ram, squirrel, dormouse, salamander.
 // Batch 4: toad, raven, mole, hedgehog, woodlouse. Batch 5: snake, moth, spider, stag beetle.
+// (Since 2026-10-13 each species' pose is in its own folder, art/creatures/<id>/legend.js; every species since has one.)
 const LEGEND_POSES = {
   ...CREATURE_LEGENDS,
 };
@@ -21817,7 +21925,7 @@ function pathColours(st = {}) {
   };
 }
 // One 3D piece at the game's view, cropped to what is drawn: { sp, origin, metres }.
-// "<bridge>~<k>": the bridge's generated variant k (art/props/bridges.js, under ?props=gen).
+// "<bridge>~<k>": the bridge's generated variant k (art/props/bridges.js; style.propGen, always on in the game).
 function pathPieceSprite(id, st = {}, ppm = 16) {
   const [base, k] = id.split("~"), d = PATH_PIECE_BY_ID[base]; if (k !== undefined ? !BRIDGE_GENOMES[base] : !d) throw new Error(`no path piece "${id}"`); // (the fingerpost has only generated variants)
   const m = new Model({ blend: .04 }); if (k !== undefined) buildBridge(m, base, +k); else d.build(m); m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 });
