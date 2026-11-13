@@ -344,6 +344,7 @@ export type SchemaTuning = {
     "radius": number;
     "edge": number;
     "top": number;
+    "back": number;
     "minFromStone": number;
     "minFromOtherStones": number;
     "floor": {
@@ -1283,6 +1284,14 @@ export type SchemaTuning = {
       "sprint": number;
     };
   };
+  "lunge": {
+    "on": boolean;
+    "from": number;
+    "through": number;
+    "shortest": number;
+    "full": number;
+    "least": number;
+  };
   "ranged": {
     "on": boolean;
     "lead": number;
@@ -1295,6 +1304,20 @@ export type SchemaTuning = {
     "speedFloor": number;
     "areaLock": number;
     "rollerLead": number;
+  };
+  "shotMarks": {
+    "on": boolean;
+    "time": number;
+    "radius": number;
+    "stand": number;
+    "damage": number;
+    "slow": number;
+    "rough": number;
+    "max": number;
+    "merge": number;
+    "kinds": {
+      [key: string]: "hurt" | "slow" | "rough" | "none";
+    };
   };
   "stoneIdle": {
     "on": boolean;

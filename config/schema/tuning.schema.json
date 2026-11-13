@@ -1780,6 +1780,11 @@
           "type": "number",
           "minimum": 0
         },
+        "back": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How far back in its circle a sleeping legend lies: its middle this share of the radius north of the circle's middle (the side furthest from the camera), so the front of the circle is open for her to stand in, facing it."
+        },
         "minFromStone": {
           "type": "number",
           "minimum": 0,
@@ -1933,6 +1938,7 @@
         "radius",
         "edge",
         "top",
+        "back",
         "minFromStone",
         "minFromOtherStones",
         "floor",
@@ -6616,6 +6622,50 @@
       "additionalProperties": false,
       "description": "Dodging matters: creatures commit to their strikes, so she can dodge them by moving or blinking away."
     },
+    "lunge": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean",
+          "description": "Long lunges on; off, lunges as they were (?lunge=old)."
+        },
+        "from": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How many dashes away a lunger's wind-up may begin (the longest kinds)."
+        },
+        "through": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How many dashes a lunge runs along its line, through and past its target (the longest kinds)."
+        },
+        "shortest": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The least share of those two that a short-lunging kind gets."
+        },
+        "full": {
+          "type": "number",
+          "minimum": 0,
+          "description": "A kind's own lunge, in metres, at which it gets the whole of from and through."
+        },
+        "least": {
+          "type": "number",
+          "minimum": 0,
+          "description": "An attack lunging under this many metres is a swipe, left as it was."
+        }
+      },
+      "required": [
+        "on",
+        "from",
+        "through",
+        "shortest",
+        "full",
+        "least"
+      ],
+      "additionalProperties": false,
+      "description": "Long lunges: a lunging creature winds up from about a dash and a half away, then lunges about two dashes along its line, through and past where she was."
+    },
     "ranged": {
       "type": "object",
       "properties": {
@@ -6684,6 +6734,82 @@
       ],
       "additionalProperties": false,
       "description": "Creatures' shots aim where she's going: each follows her through its wind-up and locks a moment before it can reach her, so a steady walk gets hit and a change of direction dodges."
+    },
+    "shotMarks": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean",
+          "description": "on: wild shots mark the ground where they end; off, as ?shotmarks=0: they leave nothing, as before."
+        },
+        "time": {
+          "type": "number",
+          "minimum": 0,
+          "description": "seconds a mark lasts (a shot ending on a mark of its own side renews it instead of adding one)."
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0,
+          "description": "a mark's radius in metres (about her own width to twice it across)."
+        },
+        "stand": {
+          "type": "number",
+          "minimum": 0,
+          "description": "seconds running a foe must stand in a hurting mark before it bites, once a mark each."
+        },
+        "damage": {
+          "type": "number",
+          "minimum": 0,
+          "description": "a hurting mark's bite on an animal, times what the shot's hit would have done (her: one hit whatever this is, unless it is 0)."
+        },
+        "slow": {
+          "type": "number",
+          "minimum": 0,
+          "description": "times her own speed while she stands in a slowing mark (frost, a puddle, a dark pool; an animal is slowed as by any slow)."
+        },
+        "rough": {
+          "type": "number",
+          "minimum": 0,
+          "description": "times her own speed on rough ground (earth, sand, wood, wind and bloom marks)."
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0,
+          "description": "at most this many marks at once: a shot ending while there are this many leaves none (a big pack's volleys can't fill the zones)."
+        },
+        "merge": {
+          "type": "number",
+          "minimum": 0,
+          "description": "a shot ending within this many metres of a mark of its own side renews that mark rather than laying another."
+        },
+        "kinds": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "hurt",
+              "slow",
+              "rough",
+              "none"
+            ]
+          },
+          "description": "what each element's mark does: hurt (stood in, it bites once), slow, rough (a milder slow) or none; a shot whose own hit slows or burns leaves a slowing or a hurting mark whatever its element."
+        }
+      },
+      "required": [
+        "on",
+        "time",
+        "radius",
+        "stand",
+        "damage",
+        "slow",
+        "rough",
+        "max",
+        "merge",
+        "kinds"
+      ],
+      "additionalProperties": false,
+      "description": "Where a wild creature's shot ends without hitting (a bolt or roller that runs out, a lob landing), it leaves a small brief mark on the ground in its element that hurts or slows whoever of its foes stands in it."
     },
     "stoneIdle": {
       "type": "object",
@@ -6844,7 +6970,7 @@
             "reach"
           ],
           "additionalProperties": false,
-          "description": "a legend circle's baby naps at each pause with its own chance, for its own length (seconds), and is woken only by a witch on the ground within reach metres of its circle's edge (so she can still invite it), not anywhere in its area."
+          "description": "a legend circle's baby naps at each pause with its own chance, for its own length (seconds), and is woken only by a witch on the ground within reach metres of its circle's edge, not anywhere in its area (never invited: Ed, 2026-10-31, \"No, no baby is invitable\")."
         }
       },
       "required": [
@@ -15461,7 +15587,9 @@
     "combat",
     "notice",
     "dodge",
+    "lunge",
     "ranged",
+    "shotMarks",
     "stoneIdle",
     "sigilAvoid",
     "wildWatch",

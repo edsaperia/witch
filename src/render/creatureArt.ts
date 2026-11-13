@@ -6,9 +6,9 @@ import { type RigGear } from "./rig/rigBuild";
 import { overrideFor, poseName, type Override } from "./overrides";
 import type { Baked, MakeCanvas } from "./artBuild";
 
-/** A kind of creature at each level (baby, young, adult, legend), two walking frames each. */
+/** A kind of creature at each level (baby, young, adult, legend), its walk's frames each (two, or its own cycle's). */
 export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear: unknown = null, onlyLevel?: number): Baked[] {
-  if (hasMesh(species, st)) return meshSprites(species, mk, gear, onlyLevel); // (drawn as a mesh: art/mesh, ?meshCreatures=1)
+  if (hasMesh(species, st)) return meshSprites(species, mk, gear, onlyLevel); // (drawn as a mesh: art/mesh, on by default since 2026-11-12; ?meshCreatures=0 the generated one)
   const out: Baked[] = [];
   const n = (Art.walkGait(species) as { frames: number }).frames; // (its walk's frames: 2, or its own cycle's)
   for (const facing of ["towards", "away"]) for (let level = onlyLevel ?? 0; level < (onlyLevel === undefined ? 4 : onlyLevel + 1); level++) for (let f = 0; f < n; f++) {
@@ -114,7 +114,7 @@ export const creatureFrame = (level: number, f: number, away = false, n = 2) => 
 
 /** A species' walk: its frames, and how far it moves between them (a share of its sprite's width); a mesh creature's says more
  *  (art/mesh/index.js meshGait: its cycle, its standing frame, each level's step, how it goes). */
-export interface WalkGait { frames: number; step: number; steps?: number[]; cycle?: number; stand?: number; rate?: number; type?: string; /** The slow pace's frames with every foot down (what it stops on), and its fast pace: its first frame and each level's step. */ rests?: number[]; run?: { from: number; steps: number[] } }
+export interface WalkGait { frames: number; step: number; steps?: number[]; cycle?: number; stand?: number; rate?: number; type?: string; /** The slow pace's frames with every foot down (what it stops on), and its fast pace: its first frame and each level's step. */ rests?: number[]; run?: { from: number; steps: number[] }; /** A kind whose heads strike in turn (the hydra): where those frames start, how many heads, and frames a head (drawn back, drawn back again, struck). */ strike?: { from: number; heads: number; each: number } }
 export const walkGait = (species: string, st?: Style): WalkGait => (st && hasMesh(species, st) ? meshGait(species) : Art.walkGait(species)) as WalkGait;
 
 /** A party animal's gear (seeded by its id). Leashed: its seeded gear and the glowing collar in

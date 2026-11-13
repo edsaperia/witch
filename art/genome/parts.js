@@ -5,6 +5,8 @@
 // between its joints. Each piece keeps its pivot: the pixel where the joint it hangs from lands.
 // Headings: 0 walking right, a quarter turn walking down the screen (towards us), minus a quarter up
 // it (away); RIG_HEADINGS are the baked ones, and heading h > a quarter turn is the mirror of pi - h.
+// (Since 2026-11-12 a kind drawn as a mesh, art/mesh/, walks on its own frames and the rig leaves it be:
+// src/render/assets.ts; this serves the kinds without a mesh, and every kind under ?meshCreatures=0.)
 import { M, Sprite } from "../core.js";
 import { Model, render, spotty, PITCH } from "../model3d.js";
 import { withForm, withGear, withTexture, shoe3d } from "../creatures3d.js";

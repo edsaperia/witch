@@ -1,5 +1,5 @@
 // The composable attacks' engine (rules/attacks/engine.ts) inside today's fight (rules/combat.ts): a creature given an attack in the
-// grammar (`Creature.spell`: the Fight Arena's, ?attack=; no species has one until Ed says which) winds up as any does, its telegraphs
+// grammar (`Creature.spell`: the Fight Arena's, ?attack=; or its species' own, rules/attacks/species.ts) winds up as any does, its telegraphs
 // shown and its cast queued with the engine as its windup starts, and released by the engine at its end; what it hits lands as any blow
 // does (rules/combat/hits.ts land: counters, knockback, slows, the witch's hits). Everything else fights exactly as before.
 import type { Creature, Level } from "../creatures";
@@ -11,7 +11,8 @@ import { sheltered, sideOf, targetable, type Grid } from "../combat/targeting";
 import { adultMult, strengthOf } from "../combat/data";
 import { withBase, type Library } from "./parse";
 import { speciesAttack } from "./species";
-import { lifeRange, lifeTime, speedAt, type Hittable, type SpellWorld } from "./engine";
+import { leaveMark } from "./marks";
+import { lifeRange, lifeTime, newSpells, speedAt, type Hittable, type SpellWorld } from "./engine";
 import type { AttackSpec, Effect } from "./types";
 
 /** The flat record the fight's movement reads for an attack in the grammar (how near it wants to be, its windup and cooldown, how
@@ -85,8 +86,8 @@ function shelteredTouch(w: CombatWorld, t: Hittable, from: Creature | null): boo
  *  taking area hits double). */
 const deliveryOf = (body: string | undefined): Delivery => body === "melee" ? "melee" : body === "area" || body === "zone" ? "pulse" : body === "lob" || body === "mine" || body === "seed" ? "lob" : body === "beam" ? "beam" : "shot";
 
-/** The flat record a hit lands with (rules/combat/hits.ts reads its delivery for counters, and its modifier). Stun, pull, root and
- *  burn aren't landed yet (the plan's step 3). */
+/** The flat record a hit lands with (rules/combat/hits.ts reads its delivery for counters, and its modifier). Stun, pull and root
+ *  land after it (effects, below); a burn is the engine's own. */
 function blowOf(effect: Effect | undefined, delivery: Delivery): Attack {
   const A: Attack = { delivery, range: 0, windup: 0, cooldown: 0, modifier: "none" };
   if (effect?.knockback !== undefined) { A.modifier = "knockback"; A.knockback = effect.knockback; }
@@ -172,7 +173,18 @@ export function spellWorld(w: CombatWorld, s: CombatState, grid: Grid, seed: num
     },
     stillCasting(source, cast) { const c = w.creatures[source]; return !!c && !c.gone && !(c.stunUntil !== undefined && w.time < c.stunUntil) && (c.fight?.spellCast === cast || !!c.fight?.spellCasts?.includes(cast)) && !!c.fight?.target && !c.charge && !c.leap && !c.burrow && !(c.swoop && (c.swoop.phase === "tele" || c.swoop.phase === "dive")); }, // (off on its own move instead: dropped)
     beat: 60 / w.t.beat.bpm,
+    // (a wild shot run out or landed with nothing of its own to leave: its mark on the ground, rules/attacks/marks.ts; her party's
+    // shots leave none)
+    shotEnded(S, b, time) { if (huntsWitch(b.side as never)) leaveMark(S, w.t.shotMarks, { x: b.x, z: b.z, species: b.species, side: b.side, source: b.source, element: b.element || undefined, damage: b.damage * (b.attack.hit?.damage ?? 1), effect: b.attack.hit?.effect, cast: b.cast }, time); },
   };
+}
+
+/** An old pack bolt or lob of the wild's (rules/combat.ts s.shots) ran out or landed with nothing of its own to leave: its mark on
+ *  the ground at (x, z), as the grammar's shots' (rules/attacks/marks.ts), in its species' element. */
+export function oldShotMark(w: CombatWorld, s: CombatState, sh: { from: number; side: string; species: string; damage: number; attack: string }, x: number, z: number, data: CombatData): void {
+  if (!w.t.shotMarks?.on || !huntsWitch(sh.side as never)) return;
+  const a = attackNamed(sh.attack, data) as Attack | undefined;
+  leaveMark((s.spells ??= newSpells()), w.t.shotMarks, { x, z, species: sh.species, side: sh.side, source: sh.from, damage: sh.damage, effect: a?.modifier === "slow" ? { slow: { mult: a.slowMult ?? 1, time: a.slowTime ?? 0 } } : undefined }, w.time);
 }
 
 /** What a creature's cast aims at: its fight's target, as the engine sees it. */

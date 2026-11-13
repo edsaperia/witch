@@ -1,6 +1,6 @@
 // The archipelago from above (Ed, 2026-10-12, the journey's tessellation: rules/archipelago.ts): for each world, the chart's
-// layout today (every island on its phase's ring at its bearing) beside the new one (packed over the whole disc, each in its
-// patch), at one true scale (CHART_METRES): each island's patch outlined, and its land (a disc of its true area, or with
+// layout before it (every island on its phase's ring at its bearing) beside the archipelago's, the game's now (packed over the
+// whole disc, each in its patch: app/chartLayout.ts), at one true scale (CHART_METRES): each island's patch outlined, and its land (a disc of its true area, or with
 // --outlines its real coast, grown in its patch: slow, about a minute a world). Phases coloured, home pink.
 //   node tools/islands/chart.mjs [--worlds 0,1,2] [--outlines] [--out previews/islands/chart.png]
 import fs from "node:fs";
@@ -19,11 +19,11 @@ for (const world of worlds) {
   const t0 = performance.now(), arch = Ro.worldOf(world), ms = performance.now() - t0, M = arch.metres;
   const disc = (x, y, r, fill, extra = "") => `<circle cx="${(C + x * k).toFixed(1)}" cy="${(C + y * k).toFixed(1)}" r="${(r * k).toFixed(1)}" fill="${fill}" ${extra}/>`;
   const landR = p => Math.sqrt(A.LAND_KM2[p] * 1e6 / Math.PI) / M;
-  // before: today's rings (app/chartLayout.ts), land at the same true scale
+  // before: the old rings (app/chartLayout.ts ringAt), land at the same true scale
   let before = `<rect width="${W}" height="${W}" fill="#0c1a33"/>` + disc(0, 0, 1, "none", `stroke="#345"`);
   const isleOf = id => id === "home" ? Ro.homeIsland(world, Ro.REAL_KINDS.slice(0, 64), 64) : Ro.islandOf(id, world);
   const coast = (o, x, y) => o.loops.map(l => { const q = []; for (let i = 0; i < l.pts.length; i += 2) q.push(`${(C + (x + l.pts[i] / M) * k).toFixed(1)},${(C + (y + l.pts[i + 1] / M) * k).toFixed(1)}`); return `<polygon points="${q.join(" ")}" fill="${l.sea ? "COL" : "#3f86c2"}" stroke="#e8d9a8" stroke-width="0.6"/>`; }).join("");
-  // (today: its phase's ring at its bearing, grown with no patch)
+  // (before: its phase's ring at its bearing, grown with no patch)
   for (const id of ["home", ...kinds.map(kd => kd.id)]) {
     const at = L.ringAt ? L.ringAt(id, world) : L.islandAt(id, world), isl = isleOf(id), ph = id === "home" ? 0 : isl.phase;
     if (!at) continue;

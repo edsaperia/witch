@@ -1,4 +1,4 @@
-// The creator's new sliders on our witch: scarf length (0 to 3), bag size, backpack size, cloak length and the hat's height and brim
+// The creator's new sliders on our witch: scarf length (drawn to 3; the slider's 0 to 7), bag size, backpack size, cloak length and the hat's height and brim
 // at the sliders' ends; flying and standing, at the game's size and close up.
 //   node tools/witch/sliders-sheet.mjs <out.png>
 import { openBrowser } from "../../art/headless.mjs";

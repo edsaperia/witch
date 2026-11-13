@@ -49,7 +49,7 @@ it("reports original circle baby return, following and150s siege-to-rage samples
     g.witches[0].health.hp = 1e6;
     const B = g.creatures.find(o => o.circle)!, k = B.circle!, dist = () => Math.hypot(B.x - k.x, B.z - k.z);
     for (const o of g.creatures) if (o !== B && !o.boss && o.level > 0 && Math.hypot(o.x - k.x, o.z - k.z) < 150) o.gone = true; // (the wild young and adults round about out of the way: she lands by the next area's swarm)
-    // invited (happy), not leashed (Ed, 2026-10-06: "happy creatures don't follow you - only leashed creatures do")
+    // made happy (set so here: a baby can't be invited, Ed, 2026-10-31: "No, no baby is invitable"), not leashed (Ed, 2026-10-06: "happy creatures don't follow you - only leashed creatures do")
     befriend(B, g.clock.time);
     void [B.leashed,false];
     // she flies off over the treetops, still near enough that it's stepped: it keeps to its circle

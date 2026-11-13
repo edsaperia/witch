@@ -3,6 +3,7 @@
 // coast (rules/mapShape.ts makeCoast, the map's own `map.coast` knobs) at each angle, seeded by the island, sized by its phase.
 // Drawn by art/islands.js (islandPixels for a dream bubble, islandPath for the sea chart).
 import { makeCoast, type CoastKnobs } from "./mapShape";
+import { seedName } from "./kinds";
 import { islandLand } from "./map";
 import { sizeOfPhase, type Island } from "./rosters";
 import type { Tuning } from "./tuning";
@@ -13,13 +14,13 @@ export interface IslandSpec { kind: string; phase?: number; seed?: number; areas
 
 /** A kind's own seed for its island: a hash of its name (FNV-1a), the same on every run. */
 export function islandSeed(kind: string): number {
-  let h = 2166136261;
+  let h = 2166136261; kind = seedName(kind); // (a renamed kind keeps its island's shape: rules/kinds.ts)
   for (let i = 0; i < kind.length; i++) h = Math.imul(h ^ kind.charCodeAt(i), 16777619);
   return (h >>> 0) % 1000003;
 }
 
 /** An island's size in areas by its phase (rules/rosters.ts sizeOfPhase; Ed, 2026-11-04: 10 / 15 / 20 / 25 / 30 areas, 10 / 20 / 30 /
- *  40 / 50 till then; a kind of phase p, rosters' config/kinds.json, has its island in phase p + 1; home about 64 at the end). */
+ *  40 / 50 till then; a kind of phase p, the kinds table's (rules/kinds.ts), has its island in phase p + 1; home about 64 at the end). */
 export const islandAreas = (phase: number): number => sizeOfPhase(Math.max(1, Math.min(5, Math.round(phase) + 1)));
 export const HOME_AREAS = 64;
 

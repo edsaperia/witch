@@ -509,7 +509,7 @@ describe("the find sets (by island stage and biome)", () => {
   it("reads an island's stage from its phase among its biome's islands", () => {
     expect([biomeOf("home"), bandOf("temperate", 0)]).toEqual(["temperate", "early"]);
     expect(islandSet({ kind: "fox", phase: 1 })).toMatchObject({ biome: "temperate", band: "mid" });
-    expect(islandSet({ kind: "moth", phase: 2 })).toMatchObject({ biome: "temperate", band: "late" });
+    expect(islandSet({ kind: "butterfly", phase: 2 })).toMatchObject({ biome: "temperate", band: "late" });
     expect(islandSet({ kind: "meerkat", phase: 3 })).toMatchObject({ biome: "badlands", band: "early" });
     expect(islandSet({ kind: "rattlesnake", phase: 4 })).toMatchObject({ biome: "badlands", band: "mid" });
     expect(islandSet({ kind: "griffin", phase: 5 })).toMatchObject({ biome: "badlands", band: "late" });

@@ -485,6 +485,7 @@
     "radius": 9,
     "edge": 2.5,
     "top": 0.45,
+    "back": 0.7,
     "minFromStone": 45,
     "minFromOtherStones": 15,
     "floor": {
@@ -1497,6 +1498,14 @@
       "sprint": 23
     }
   },
+  "lunge": {
+    "on": true,
+    "from": 1.5,
+    "through": 2,
+    "shortest": 0.75,
+    "full": 16,
+    "least": 8
+  },
   "ranged": {
     "on": true,
     "lead": 1,
@@ -1509,6 +1518,31 @@
     "speedFloor": 2,
     "areaLock": 0.7,
     "rollerLead": 0.5
+  },
+  "shotMarks": {
+    "on": true,
+    "time": 2.5,
+    "radius": 1.5,
+    "stand": 1,
+    "damage": 0.25,
+    "slow": 0.6,
+    "rough": 0.8,
+    "max": 24,
+    "merge": 1.5,
+    "kinds": {
+      "fire": "hurt",
+      "storm": "hurt",
+      "venom": "hurt",
+      "moonlight": "hurt",
+      "frost": "slow",
+      "water": "slow",
+      "shadow": "slow",
+      "earth": "rough",
+      "sand": "rough",
+      "wood": "rough",
+      "wind": "rough",
+      "bloom": "rough"
+    }
   },
   "stoneIdle": {
     "on": true,
@@ -1610,6 +1644,7 @@
             "snail",
             "salamander",
             "bat",
+            "butterfly",
             "moth",
             "beetle",
             "spider",

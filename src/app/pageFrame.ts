@@ -181,7 +181,7 @@ export function frameBody(pageHost: PageHost, now: number): void {
   if (!pageHost.N().spec.borrowed && !pageHost.phone.visiting && game.trunk && game.trunk.item === null) pageHost.mutate("finds: fill trunk", () => fillNightTrunk(game, pageHost.phone.active ? "host" : "solo", () => foundAll(pageHost.findsCtx()), () => pageHost.phone.changed()));
   for (const e of game.leashEvents) if (!pageHost.phone.active && !pageHost.N().spec.borrowed && e.kind === "found" && e.obj && e.find) {
     pageHost.mutate("finds: loan", () => pageHost.lendFind(e.find!, e.obj!));
-    if (e.find === "part") hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj} · at the Workshop`); // (not fitted: the bay fits it)
+    if (e.find === "part") hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj} · at the Workshop`); // (not fitted: its slot's modding station fits it)
     else if (e.find === "hat") hud.found(`found: the ${hatSpell(e.obj)?.name.toLowerCase() ?? e.obj} hat · on the hats' floor`); // (the rules laid it there: rules/houseRooms.ts addFloorHat)
     else { const it = itemById(e.obj), at = stationsShowing(shelfOf(e.obj)?.id ?? "")[0], where = HOUSE_ROOMS.objects.find(q => q.id === at)?.label.toLowerCase(); hud.found(`found: ${it?.name.toLowerCase() ?? e.obj}${where ? ` · at the ${where}` : ""}`); }
   }

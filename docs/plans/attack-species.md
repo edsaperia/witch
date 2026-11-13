@@ -48,7 +48,7 @@ Each species' attack, made from `config/species-attacks.json` and its kind's `ar
 | 0 | temperate | stoat | the fastest, longest lunge at home |
 | 1 | temperate | beaver | three logs rolled at her side by side |
 | 1 | temperate | boar | a goring sweep in an arc in front |
-| 1 | temperate | moth | a fluttering puff of dust that slows |
+| 1 | temperate | butterfly | a fluttering puff of dust that slows |
 | 1 | temperate | stag | stamps marching out in a line toward her |
 | 1 | temperate | toad | a hop-splash lob that bounces once |
 | 1 | temperate | turtle | a jet of pond water that passes through and slows |
@@ -95,7 +95,7 @@ Each species' attack, made from `config/species-attacks.json` and its kind's `ar
 | 4 | jungle | elephant | two great stomp rings that throw |
 | 4 | jungle | featheredserpent | six feathers spiralling out |
 | 4 | mangrove swamp | crab | three crabs mark a triangle and the water inside erupts |
-| 4 | mangrove swamp | hydra | three heads spit homing venom that leaves pools |
+| 4 | mangrove swamp | hydra | three heads spit homing venom in turn, left, middle, right, each leaving a pool |
 | 4 | mountains and glaciers | frostwyrm | a frost breath sweeping wide after a charge |
 | 4 | mountains and glaciers | snowleopard | frost bursts in a cross round where she stood |
 | 4 | volcanic | komodo | a weaving venom bolt that burns and leaves a pool |

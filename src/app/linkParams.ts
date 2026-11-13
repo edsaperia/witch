@@ -4,6 +4,7 @@ import { slotStorage } from "./saveSlots";
 import { TUNING } from "../rules/tuning";
 import { OLD_HEX } from "../render/leash/ranks";
 import { playableIsland } from "../rules/rosters";
+import { renamedLink } from "./renamedLink";
 import { loadSave, worldSeed } from "./chartSave";
 import { zooCoastsHeld } from "./zooCoasts";
 import { applySet } from "./repro";
@@ -55,6 +56,7 @@ export function worldFromLink(params: URLSearchParams, defaults = { areaSize: TU
 }
 
 export function tuningFromLink(params: URLSearchParams) {
+  renamedLink(params); // (?island=moth, ?found=moth: the butterfly, as when the link was shared)
   // Variants as switches in the link: ?tilt=off, ?bloom=off, ?shadows=off,
   // ?canopy=off (the canopy shadow layer), ?mist=off.
   // A whole copy of the tuning file (2026-10-19): what this load's knobs, settings and sliders change is this load's alone, never
@@ -132,6 +134,10 @@ export function tuningFromLink(params: URLSearchParams) {
   // 2026-11-09: "it feels like animals move faster than invitations so it's hard to land a hit. And ranges feel small"); the
   // animals' waiting distance is the same either way (combatWaiting.inviteReach). rules/invites.ts OLD_LETTERS
   if (params.get("invites") === "old") tuning.invites = withOldLetters(tuning.invites);
+  // ?legendspot=old: a sleeping legend where it lay before, `top` x r north of its circle's middle, its circle sized for that, to
+  // compare with the back of its circle (Ed, 2026-11-12: "Legends should sleep at the back of their circles, so you can stand in
+  // the circle before them"; rules/legendFit.ts spotShare)
+  if (params.get("legendspot") === "old") tuning.legendClearing = { ...tuning.legendClearing, back: tuning.legendClearing.top };
   if (musicParam === "off") tuning.music = { ...tuning.music, on: false };
   let musicCueNow: MusicCue | undefined;
   {
@@ -173,6 +179,12 @@ export function tuningFromLink(params: URLSearchParams) {
   // ?ranged=old: creatures' ranged attacks aimed as before Ed's 2026-11-12 ruling (tuning ranged, rules/attacks/aim.ts): at her place as
   // the wind-up starts (the old pack bolts leading her at their release), no speed floor, fans and walls as laid out before, for comparison.
   if (params.get("ranged") === "old" && tuning.ranged) tuning.ranged = { ...tuning.ranged, on: false };
+  // ?lunge=old: lunges as before Ed's 2026-11-13 change (tuning lunge, rules/combat.ts longLunge): wound up close, sprinting in, and
+  // stopping where they aimed, to compare with the long ones (wound up from about 1.5 dashes off, carrying through to about 2).
+  if (params.get("lunge") === "old" && tuning.lunge) tuning.lunge = { ...tuning.lunge, on: false };
+  // ?shotmarks=0: wild shots leave no mark where they end, as before Ed's 2026-11-13 choice ("Mark the ground": tuning shotMarks,
+  // rules/attacks/marks.ts), to compare.
+  if (params.get("shotmarks") === "0" && tuning.shotMarks) tuning.shotMarks = { ...tuning.shotMarks, on: false };
   // ?dodge=a,b,c: which of the dodge changes are on (Ed, 2026-10-08; tuning dodge: a committed strikes, b predictive aim,
   // c packs cutting off her retreat), the rest off; ?dodge=0 none of them.
   const dodgeParam = params.get("dodge");
@@ -207,8 +219,8 @@ export function tuningFromLink(params: URLSearchParams) {
   // The map's shape (Ed, 2026-10-06: circular, with a buffer ring): ?shape=square brings back the old square map to compare.
   const shapeParam = params.get("shape");
   if ((shapeParam === "square" || shapeParam === "circle") && tuning.map) tuning.map = { ...tuning.map, shape: shapeParam };
-  // The runestone stacks and the soundsystem spell (Ed, 2026-10-28; rules/stoneStacks.ts): off by default till their view lands
-  // (areas clearing by themselves once their wild are gone); ?cast=1 turns them on, ?cast=0 off.
+  // The runestone stacks and the soundsystem spell (Ed, 2026-10-28; rules/stoneStacks.ts): on by default since their view landed
+  // (#1378); ?cast=0 turns them off (areas clearing by themselves once their wild are gone, as before), ?cast=1 on.
   { const v = params.get("cast"); if ((v === "1" || v === "0") && tuning.cast) tuning.cast = { ...tuning.cast, on: v === "1" }; }
   // Legend circles slow time (Ed, 2026-10-06; rules/slowTime.ts): ?slow=0 turns it off, ?slow=<scale> tries another speed.
   { const v = params.get("slow"); if (v !== null && tuning.legendCircle) { const k = Number(v); tuning.legendCircle = { slow: { ...tuning.legendCircle.slow, on: k > 0 && k < 1, scale: k > 0 && k < 1 ? k : tuning.legendCircle.slow.scale } }; } }
@@ -286,7 +298,7 @@ export function tuningFromLink(params: URLSearchParams) {
   // Her hat's spell (app/loadout.ts): the creator's, kept on this browser, or ?hat=; her hats (app/hatSave.ts; Ed, 2026-10-23: the
   // plain hat hers, the rest found): a saved hat she doesn't own is the plain one.
   { const L = loadoutFrom(params), hats = unlockAll() ? "*" : hatsFrom(params, L.hat), hat = hats === "*" || L.hat === "none" || hats.split(",").includes(L.hat) ? L.hat : "none"; tuning.spells = { ...tuning.spells, hat, hats }; }
-  // Her broom's parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): those fitted at the bay on this browser, or
+  // Her broom's parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): those fitted at its stations on this browser, or
   // ?parts=missile,ladder,nozzles for one load (any parts, found or not: for testing). Her broom's spell is the set they complete.
   { const P = params.get("parts"); tuning.spells = { ...tuning.spells, parts: P !== null ? P : fittedParts(loadBroom().fitted).map(p => p.id).join(",") }; }
   // Her bag (rules/bags.ts; Ed, 2026-10-29: a Bumbag and a Far bag to choose from): the one her saved look wears (localStorage

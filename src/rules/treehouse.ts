@@ -11,7 +11,7 @@
 // circle on its floor a few metres behind the decks; and the balcony, a half-round floor hung off the hub's south side, open at its
 // rim either side of the decks' desk: at treetop height she flies straight onto it and lands (no button), walks it and the hub as
 // one floor (the hub's wall and the balcony's sides keep her in), and walks off its open rim to fly again, or, with no broom
-// (house.fall, for the brooms to come: hats and brooms as objects, step 3), falls, hits the ground off camera and comes back at
+// (house.fall, set by the game while she has none tonight: rules/kit.ts, rules/game.ts), falls, hits the ground off camera and comes back at
 // the circle. A knockout brings her back at the circle too (rules/knockout.ts). `Deck` describes either: the house carries its
 // Terrace's take-off, desk and circle in `house`.
 // The oak (Ed, 2026-10-24, the layout v4): the house is one floor of the old oak (config/house/shape.js), the Terrace one of its

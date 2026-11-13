@@ -43,7 +43,7 @@ export const ARENA_PRESETS: Record<string, string> = {
   dig: "wolf*4@2,badger*2@2", block: "raven*3@2,beaver*3@2", flank: "wolf*3@2,fox*3@2", pounce: "wolf*3@2,lynx*2@2",
   weave: "raven*3@2,stoat*3@2", packflank: "wolf*3@2,marten*4@2", otter: "raven*3@2,otter*3@2", squirrel: "beetle*2@2,squirrel*4@2",
   dart: "beetle*2@2,dormouse*5@2", roll: "wolf*3@2,hedgehog*3@2", slime: "wolf*3@2,snail*3@2", woodlouse: "wolf*3@2,woodlouse*3@2",
-  strike: "wolf*3@2,snake*3@2", moth: "moth*6@2", cat: "cat*4@2",
+  strike: "wolf*3@2,snake*3@2", butterfly: "butterfly*6@2", cat: "cat*4@2",
 };
 // Pack combat (rules/combat/packs.ts; combat.packs.on, on by default since Ed, 2026-10-20; off on the pause page): ?arena=pack-fox, a wild pack of the kind, three
 // young and two adults, coming for her (hers a baby of the same kind, which no fox fights); ?arena=hers-fox, four adults of hers

@@ -1,6 +1,6 @@
 // The mossy dell (Ed, 2026-10-12: "Why don't we make a few more animals": a roe deer, its area for the later islands), the third
-// area type written as a recipe (art/recipes.js says what each field is): a damp, mossy hollow under rowan, birch and oak,
-// ferny glades where the roe browse at dusk; the roe deer its creature. Its island lies to the north-west (config/kinds.json).
+// area type written as a recipe (art/recipes.js says what each field is): a damp, mossy hollow under rowan, birch and yew,
+// ferny glades where the roe browse at dusk; the roe deer its creature. Its island lies to the north-west (its folder's kind.json).
 export const DELL = {
   slot: 10, id: "mossy-dell", name: "Mossy dell", creature: "roe", by: "recipe", leaf: .27, floor: ["moss", .27, .45, .36],
   text: { floor: "deep moss and leaf litter", small: "ferns and foxgloves", big: "rowan, birch and yew", set: "an old ring in a glade, where the roe gather at dusk" },

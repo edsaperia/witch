@@ -1,4 +1,4 @@
-// Her bags on her (Ed, 2026-10-29: the Bumbag, the purse and the Far bag, config/wardrobe.json's bag shelf): each standing and
+// Her bags on her (Ed, 2026-10-29; every bag on config/wardrobe.json's bag shelf, the Satchel to the Backpack): each standing and
 // hovering, towards and away, at the game's size (scale 2), then standing close up (scale 5), labelled.
 //   node tools/witch/bags-sheet.mjs <out.png>
 import { openBrowser } from "../../art/headless.mjs";

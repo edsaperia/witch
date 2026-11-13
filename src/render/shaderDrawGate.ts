@@ -11,7 +11,7 @@ export function materialProgramsReady(value: unknown): boolean {
 
 export interface ShaderDrawStatus { active: boolean; skipped: Record<string, number>; fallback: Record<string, number>; submitted?: Record<string, number> }
 /** `drawn`: told of every draw that goes through with its own material (a linked program, or the gate off), not a stand-in's: what
- *  the loading mist waits for (render/view.ts mistReady; Ed, 2026-11-06: "Make sure things load and render before the mist
+ *  the loading mist waits for (render/view/mistReady.ts; Ed, 2026-11-06: "Make sure things load and render before the mist
  *  disappears"). */
 export function installShaderDrawGate(renderer: THREE.WebGLRenderer, status: ShaderDrawStatus, fallbackFor: (object: THREE.Object3D) => THREE.Material | null, drawn?: (object: THREE.Object3D, material: THREE.Material, geometry: THREE.BufferGeometry) => void): void {
   const draw = renderer.renderBufferDirect.bind(renderer);

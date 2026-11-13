@@ -5,7 +5,7 @@
 // overlap). The light is baked into the albedo from the sprite's own normals (one light, from the upper left and in front),
 // and the normals come out flat, so the game's lighting tints the sprite without banding it again. The sprite keeps its
 // size: the outline goes only where there is room. "now" (or nothing) leaves the bake as it was.
-// The game's ?style=now|bold|ref (and ?px=3|4|5 for the art pixel) choose one per load; the stylisation ladder
+// The game bakes bold (Ed, 2026-10-06: "I think I prefer bold style") or, with ?style=ref, ref (?px= sets the art pixel); the stylisation ladder
 // (tools/art-iterations/ladder.mjs) shows the same treatments side by side.
 import { hsv2rgb } from "./core.js";
 

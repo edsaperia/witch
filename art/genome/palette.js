@@ -10,7 +10,7 @@
 import { M, EMISSIVE } from "../core.js";
 import { speciesFor, speciesColours } from "../creatures.js";
 
-export const PALETTE_SIZE = 64, PALETTE_ROW = PALETTE_SIZE * 2; // materials 0..63 (M goes to 51); a row is their colours, then their outline colours
+export const PALETTE_SIZE = 64, PALETTE_ROW = PALETTE_SIZE * 2; // materials 0..63 (M goes to 59); a row is their colours, then their outline colours
 const OUTLINE_DARK = [22, 18, 30];
 
 // A sprite's material mask: mat (its material, or for an outline pixel the material it outlines)

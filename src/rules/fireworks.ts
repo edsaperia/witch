@@ -1,7 +1,7 @@
 // The wave's celebration at an area already cleared (Ed, 2026-10-07: when the wave reaches an area whose soundsystem is
 // already up, "celebrate" it: fireworks over that soundsystem, and its lasers on for good). The rules emit `waveCelebrate`
 // (game.ts); this is the show's schedule: which shells go up when, how high, what burst and what colour, a function of the
-// event alone (its place and time), so the picture (render/fireworks.ts) and the sound (platform/sfxCues.ts) agree on every
+// event alone (its place and time), so the picture (render/fireworks.ts) and the sound (platform/audio/sfxCues.ts) agree on every
 // launch and burst without either telling the other. No drawing here.
 import { hash2 } from "./random";
 import type { Tuning } from "./tuning";

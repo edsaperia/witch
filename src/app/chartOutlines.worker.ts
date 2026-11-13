@@ -58,7 +58,7 @@ function hsv(h: number, s: number, v: number): [number, number, number] {
 type RGB = [number, number, number];
 /** A biome's land colours, as a map's terrain is painted (Ed, 2026-10-12: "natural land colours", "colour it themed by its
  *  biome"): its lowlands, uplands, rock and heights, its beach, and its forest (how the ground darkens where trees stand thick).
- *  By the kind's biome (config/kinds.json, by its island's direction: north cold, south hot, east volcanic, west jungle, the
+ *  By the kind's biome (rules/lakeLooks.ts islandBiome, by its island's direction: north cold, south hot, east volcanic, west jungle, the
  *  diagonals between; 16 temperate). */
 interface Palette { low: RGB; up: RGB; rock: RGB; peak: RGB; sand: RGB; forest: RGB }
 const PALETTES: Record<string, Palette> = {

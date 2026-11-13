@@ -1,6 +1,8 @@
 // Witch creatures built in 3D (see model3d.js), so they stand in true three-quarter view.
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
 import { M, Sprite, rng, uni, hash2 } from "./core.js";
+// (a renamed kind keeps the motes its old id seeded)
+import { seedId } from "./creatures/renamed.js";
 import { Model, render, v3, spotty, masks } from "./model3d.js";
 import { faceUp, JAW_FACES } from "./genome/expressions.js";
 import { textureLumps } from "./genome/texture.js";
@@ -20,7 +22,8 @@ import { elderQuad, grizzle, notch, surfaceFrom, ring, fitRing, frontPts, closed
 // Youths, and come up with something larger for Adults"): 1.65 times their young, heavier in build
 // (thicker body, legs and neck, a bigger head, bigger horns, antlers and tusks) with a few glowing
 // motes; legends about 4.5 times their young and never less than 2.2 times their adult. They keep
-// their size on screen as pixels grow.
+// their size on screen as pixels grow. (The model before Ed adopted the revised sizes, 2026-10-31:
+// art/creature-size.js fits each kind's final size now; ?creatureSizeCandidate=0 compares this one.)
 export const ADULT_SCALE = 1.65, LEGEND_OVER_ADULT = 2.2;
 const LEVEL_SCALE = st => [1, Math.sqrt(st.growth), Math.sqrt(st.growth) * ADULT_SCALE, st.growth];
 export const height3d = (level, st, hgt = 1) => Math.round(st.size * LEVEL_SCALE(st)[Math.max(0, Math.min(3, level))] * (2 / (st.pixel || 2)) * 1.9 * hgt);
@@ -108,7 +111,7 @@ const drawForm = (m, o, S, level, st) => {
   if (dressed) { m.parts = m.sizeBody.parts.slice(); m.flats = m.sizeBody.flats.slice(); }
   if (candidate) { m.parts=m.parts.filter(p=>!p.extra);m.flats=m.flats.filter(p=>!p.extra); }
   o = creatureSizeOptions(m, o, S, level, st);
-  const decorate = sp => { const n = S.sizes.motes?.[level]; if (!candidate && n) glowMotes(sp, S.plan === "owl" ? 31 : S.id.length * (S.q ? 7919 : 131), n, S.q && S.id === "snowleopard"); };
+  const decorate = sp => { const n = S.sizes.motes?.[level]; if (!candidate && n) glowMotes(sp, S.plan === "owl" ? 31 : seedId(S.id).length * (S.q ? 7919 : 131), n, S.q && S.id === "snowleopard"); };
   const fitted = fitOccupiedCreature(m, o, S, level, st, decorate,candidate&&FORM?.rig===true);
   if (candidate) { fitted.stats.bodyTarget=o.sizeTarget;fitted.stats.bodyHeight=fitted.sprite ? occupiedHeight(fitted.sprite) : fitted.stats.bodyHeight; }
   if (dressed) {
@@ -126,7 +129,7 @@ const drawForm = (m, o, S, level, st) => {
   }
   if (fitted.sprite && !VIEW) { fitted.sprite.sizeFit = fitted.stats; return fitted.sprite; }
   const sp = render(m, o).sp; decorate(sp);
-  if(candidate){const n=S.sizes.motes?.[level];if(n)glowMotes(sp,S.plan === "owl" ? 31 : S.id.length * (S.q ? 7919 : 131),n,S.q&&S.id==='snowleopard');}
+  if(candidate){const n=S.sizes.motes?.[level];if(n)glowMotes(sp,S.plan === "owl" ? 31 : seedId(S.id).length * (S.q ? 7919 : 131),n,S.q&&S.id==='snowleopard');}
   sp.sizeFit = { ...fitted.stats, rasters: fitted.stats.rasters + 1 }; return sp;
 };
 export function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }

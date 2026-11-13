@@ -92,7 +92,7 @@ export const AREAS = [
     wall: [P("water", { w: 2 })], small: [P("stump", { gnawed: true })], big: [tree("weepingBirch"), tree("alder", { minor: true, scale: .8 }), tree("aspen", { minor: true, scale: .9, lean: .45 })], set: P("dam") }, // (aspens leaning where the beavers have gnawed them: Ed, 2026-10-13)
   { id: "log-pile", name: "Log pile", creature: "beetle", by: "draft", leaf: .22, floor: ["leaves", .06, .5, .3], text: { floor: "rotting leaves", small: "fungi", big: "rotting logs", set: "a fallen giant" },
     small: [P("fungi")], big: [P("log", { rot: true }), P("snag", { sparse: .12 }), P("snag", { sparse: .1, hollow: true, lean: .12 }), tree("elder", { scale: .8 }), tree("aspen", { minor: true, scale: .8 })], set: P("log", { rot: true, giant: true }) }, // (young trees taking over between the logs: Ed, 2026-10-13)
-  { id: "heath", name: "Heath", creature: "moth", by: "draft", leaf: .27, floor: ["heather", .85, .35, .4], text: { floor: "heather", small: "gorse", big: "wind-bent birches" },
+  { id: "heath", name: "Heath", creature: "butterfly", by: "draft", leaf: .27, floor: ["heather", .85, .35, .4], text: { floor: "heather", small: "gorse", big: "wind-bent birches" },
     small: [P("shrub", { flower: [250, 205, 40], spiky: true })], big: [tree("birch", { lean: .45, scale: .75 }), tree("hawthorn", { minor: true, scale: .7, lean: .45 })] },
   { id: "old-pinewood", name: "Old pinewood", creature: "bee", by: "draft", leaf: .35, floor: ["needles", .07, .4, .3], text: { floor: "pine needles", small: "pine cones", big: "tall old pines with knotholes" },
     small: [P("cones")], big: [tree("pine", { scale: 1.35 }), tree("rowan", { minor: true, scale: .8 })] },
@@ -261,7 +261,8 @@ export function layoutProblems(a) {
 export { LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR };
 // Placement rules (Ed, 2026-10-03, via the coordinator): wall objects are drawn only, they do
 // not block movement for now; a set piece is rare scenery, shown in only some of an area
-// type's areas, for variety. The chance is a starting value for playtesting.
+// type's areas, for variety. The chance is a starting value for playtesting (the game's own is
+// tuning's setPieceChance: 0, no set pieces in normal play, since Ed, 2026-10-29).
 export const WALLS_BLOCK = false;
 export const SET_PIECE_CHANCE = .25;
 

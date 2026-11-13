@@ -30,7 +30,8 @@ const nearest = (cs, r, g, b) => { let best = 0, bd = Infinity; for (let i = 0; 
  *  animal lying down drawn at the scale it walks at), texture (its coat's: { size (art pixels across a tuft), long (how many
  *  times longer along its body), tilt (how far a tuft tips the light, 0..1), tone (how much lighter or darker one is) }), frames (in its walk's
  *  cycle), stand (one more frame after them, standing still), run (the same animal's shape at its fast pace: its cycle's frames
- *  go on after those, in the same picture, palette and scale), colours (the palette's size), ss, cover. Returns { w, h, ppu (art
+ *  go on after those, in the same picture, palette and scale), more (the same animal's shapes in other still poses, a frame each
+ *  after those again), colours (the palette's size), ss, cover. Returns { w, h, ppu (art
  *  pixels a metre), step (how far it walks between frames, a share of w; runStep: its fast pace's), palette, towards, away }: each a list of frames { albedo, normal, flipped (the normals for drawing it
  *  mirrored), eyes (1 where a pixel is an eye, or undefined if none show), head ([x, y], where its head's joint is) }, every
  *  frame w by h, its feet's lowest pixel on the bottom row. */
@@ -41,7 +42,9 @@ export function bakeMesh(sh, o = {}) {
   // every frame's corners, in the model's own space
   // (o.stand: one more frame after the walk's, standing still on all its feet: what the view shows when it stops)
   const clip = frames + (o.stand ? 1 : 0);
-  const world = Array.from({ length: clip + (o.run ? frames : 0) }, (_, i) => { const { R, T } = i < clip ? pose(sh, i < frames ? i / frames : null) : pose(o.run, (i - clip) / frames), out = new Float32Array(nv * 3);
+  // (o.more: the same animal's shape in other still poses, one more frame each after all those: a hydra's heads striking)
+  const run = o.run ? frames : 0, more = o.more ?? [];
+  const world = Array.from({ length: clip + run + more.length }, (_, i) => { const { R, T } = i < clip ? pose(sh, i < frames ? i / frames : null) : i < clip + run ? pose(o.run, (i - clip) / frames) : pose(more[i - clip - run], 0), out = new Float32Array(nv * 3);
     for (let v = 0; v < nv; v++) { const b = bone[v], a = sh.bones[b].at, x = pos0[v * 3] - a[0], y = pos0[v * 3 + 1] - a[1], z = pos0[v * 3 + 2] - a[2];
       out[v * 3] = R[b * 9] * x + R[b * 9 + 1] * y + R[b * 9 + 2] * z + T[b * 3]; out[v * 3 + 1] = R[b * 9 + 3] * x + R[b * 9 + 4] * y + R[b * 9 + 5] * z + T[b * 3 + 1]; out[v * 3 + 2] = R[b * 9 + 6] * x + R[b * 9 + 7] * y + R[b * 9 + 8] * z + T[b * 3 + 2]; }
     return { out, head: headBone < 0 ? null : [T[headBone * 3], T[headBone * 3 + 1], T[headBone * 3 + 2]] }; });

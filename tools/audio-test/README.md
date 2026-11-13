@@ -24,7 +24,7 @@ node tools/audio-test/run.cjs [dist] [out.json] [page: "" the capacity test, sta
 
 ## `stall.ts`
 
-The music's stall test: the game's own music runs for about 40 s while the page's thread is held busy for 1.5 s three times, as a long frame would hold it.
+The music's stall test: the game's own music runs for about 50 s while the page's thread is held busy for 1.5 s four times, as a long frame would hold it.
 
 ## Also here
 

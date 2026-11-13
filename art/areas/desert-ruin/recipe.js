@@ -1,5 +1,5 @@
 // The desert ruin (Ed, 2026-10-23: the hot south's fantastic kind, unknown-19's slot, ring 5; "a desert ruin"): a city the sand took,
-// its streets still laid out in lines under the dunes, broken columns and fallen drums along them, date palms, acacias and old olives
+// its streets still laid out in lines under the dunes, broken columns and fallen drums along them, date palms, acacias and baobabs
 // growing in its squares; the sphinx its creature. Ed's columns as for the 30.
 export const DESERT_RUIN = {
   slot: 32, id: "desert-ruin", name: "Desert ruin", creature: "sphinx", by: "recipe", leaf: .2, floor: ["sand", .1, .36, .7],

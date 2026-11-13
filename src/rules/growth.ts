@@ -1,5 +1,9 @@
-// Wild areas grow (Ed, 2026-10-04: "every wave, each still-wild area spawns one extra non-legend
-// creature at a random level"): every wave, each area the party hasn't reached gains
+// Wild areas grew (Ed, 2026-10-04: "every wave, each still-wild area spawns one extra non-legend
+// creature at a random level"). Off now: the game calls none of it (Ed, 2026-10-07: "pre-populate
+// every area by its route position", no growth on a clock; 2026-10-28: "during a night, no creatures
+// are created and none are destroyed"; population.growth.on is false); what the game still uses here
+// is the starting population (countScale, routePopulation, below). When on (the tests, the balance
+// simulator's growthLevel and grownAt): every wave, each area the party hasn't reached gains
 // population.growth.perWave creatures, each at a level by growth.weights (baby, young, adult).
 // Areas already partified (or ruined) don't grow. Performance (Ed: never simulate or draw thousands
 // of idle creatures): a new creature waits as a count, its level and wave only, until a witch comes

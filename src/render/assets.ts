@@ -31,7 +31,7 @@ export interface TypeArt {
 export interface CreatureArt { key?: string }
 export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
 export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]>; /** the island biome it was drawn in (none: temperate) */ biome?: string }
-export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** Its walk (art/creatures.js walkGait): frames in the cycle, and how far it moves between them (a share of its width). */ walk?: { frames: number; step: number; /** A mesh creature's (art/mesh/index.js meshGait): each level's step, how many of its frames are its walk's cycle, the frame it stands still in, the most frames shown a second, and how it goes. */ steps?: number[]; cycle?: number; stand?: number; rate?: number; type?: string; rests?: number[]; run?: { from: number; steps: number[] } }; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[]; /** And how far its body's middle lies right of the frame's middle in each frame (pixels): drawn with its middle on its place. */ centre?: number[] }
+export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** Its walk (art/creatures.js walkGait): frames in the cycle, and how far it moves between them (a share of its width). */ walk?: { frames: number; step: number; /** A mesh creature's (art/mesh/index.js meshGait): each level's step, how many of its frames are its walk's cycle, the frame it stands still in, the most frames shown a second, and how it goes. */ steps?: number[]; cycle?: number; stand?: number; rate?: number; type?: string; rests?: number[]; run?: { from: number; steps: number[] }; strike?: { from: number; heads: number; each: number } }; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[]; /** And how far its body's middle lies right of the frame's middle in each frame (pixels): drawn with its middle on its place. */ centre?: number[] }
 /** A creature asleep's frame: its level's two breaths (render/artBuild.ts "nap"). */
 export const napFrame = (level: number, f: number) => level * 2 + (f % 2);
 /** A species' live-rig parts at one level (#79): its atlas page and what the rig needs. */
@@ -165,7 +165,8 @@ export class AssetLibrary {
 
   /** The night's seed (its own trees, tonight); a new night's by reseat. */
   seed: number;
-  /** Which treehouse is drawn (the old one, "home", or the Ent holding the deck: "ent:<height>:<radius>..."). */
+  /** Which treehouse is drawn (the old one, "home"; the Ent holding the deck, "ent:<height>:<radius>"; or the oak house,
+   *  "house:<height>:<radius>": render/view.ts). */
   private treehouseId: string;
   /** The island the sets are for, by number: bumped by reseat, so an island's set asked before lands to nothing (receive). */
   gen = 0;
@@ -198,7 +199,7 @@ export class AssetLibrary {
     // or not, so her frames never wait behind the area types the first frame asks for; the first-load hunt, 2026-10-20: hers came
     // last, 30 s in on the cloud, and play waited for them)
     for (const job of first) this.early(job);
-    this.ask({ kind: "treehouse", id: treehouse, style }, true, true); // (the old treehouse, or the Ent holding the deck: "ent:<height>:<radius>")
+    this.ask({ kind: "treehouse", id: treehouse, style }, true, true); // (the old treehouse, the Ent holding the deck, "ent:<height>:<radius>", or the oak house, "house:<height>:<radius>")
     this.ask(this.witchJob(witchGenome, false), true, true);
     this.ask({ kind: "soundsystems", id: "home", style }, true, true);
     this.ask({ kind: "props", id: "home", style }, true, true);

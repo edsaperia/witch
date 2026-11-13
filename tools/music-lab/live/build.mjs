@@ -1,5 +1,5 @@
 // Builds the live Music Lab beside the game (Ed, 2026-10-11: "a music lab with sliders that lets me copy and paste my
-// choices"), the last step of `npm run build`: dist/music-lab.html (tools/music-lab/live/page.html), its script and the
+// choices"), a step of `npm run build`: dist/music-lab.html (tools/music-lab/live/page.html), its script and the
 // Pink Trombone worker bundled by esbuild into dist/music-lab/ (on their own, so the game's own bundle is exactly as it
 // was), and the samples (samples/**, with their manifest and credits) copied to dist/music-lab/samples/. Served at
 // /witch/music-lab.html and on each pull request's build.

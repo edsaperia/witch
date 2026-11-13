@@ -3,7 +3,7 @@
 // Creature.cheerUntil) and the view moves it by its body (art/genome/species.js `template`, as the conga reads it):
 //   hop    (the hoppers: the toad, the hare, the penguin): a happy jump with a spin;
 //   roll   (the four-legged): a roll-over, onto its back and up again;
-//   loop   (the flyers, bats and moths and the birds that fly): a loop, up and over, upside down at its top;
+//   loop   (the flyers, the bat and the swallowtail among them, and the birds that fly): a loop, up and over, upside down at its top;
 //   wiggle (the rest: the squat, the insects, the snakes): a wiggle-dance.
 // With it its ring bursts into hearts (render/invites.ts), the happy sting plays (platform/audio/sfxCues.ts), and its sigil in its
 // stone's stack flips to the friends' colour with a pop (render/leash/stones.ts). A function of its clock alone: nothing kept.

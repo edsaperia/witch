@@ -1,9 +1,9 @@
 // The Workshop in the world (Ed, 2026-10-22/23; docs/backlog/workshop.md): her broom resting on the bay's trestles while she's at the
-// bay (on the lathe while she's at the lathe; elsewhere it's in her hand on the Terrace, or not drawn: rules/stations.ts broomWhere),
+// bay (on the lathe while she's at the lathe, up on the lift at the lift: Ed, 2026-11-07; elsewhere it's in her hand on the Terrace, or not drawn: rules/stations.ts broomWhere),
 // drawn from her fitted parts, and the parts found hanging on the pegboard's 3 × 3 biome board (rules/broomParts.ts
 // BOARD), each in its cell: a found one in her broom's colours, a missing one a dark outline, tonight's (the night's find, when it's a
 // part: g.trunk) glowing in its cell (the board says one is out there, never where). Laid on Alpha's furniture by its marks
-// (art/furniture.js: broomBay.rest, lathe.rest, pegboard.cell0 to cell8; render/houseRooms.ts places them), drawn by the art
+// (art/furniture.js: broomBay.rest, lathe.rest, broomLift.rest, pegboard.cell0 to cell8; render/houseRooms.ts places them), drawn by the art
 // workers once per look (render/workshopPieces.ts, in the house's pixel and light; without workers, here a frame each). Its pictures are also the bay's and the pegboard's cards
 // (ui/stationPanel.ts: partCanvas). First versions: an art pass should draw each part's own sprite and her broom from its parts.
 import * as THREE from "three";

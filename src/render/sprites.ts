@@ -21,8 +21,8 @@ export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: num
 }
 
 /** The Tree normal maps choice from the tuning (treeNormals; Ed, 2026-11-07: "Make the normal maps switch.", then "Normal maps do
- *  improve things, can we try a low number (16? 32? 64?)"): 0 the full normal maps (the default, and when the knob is absent or
- *  unknown), N their directions cut to a palette of N per tree atlas (render/treeNormalDirs.ts), -1 off, lit flat ("0", or false
+ *  improve things, can we try a low number (16? 32? 64?)"): 0 the full normal maps ("full", and when the knob is absent or
+ *  unknown), N their directions cut to a palette of N per tree atlas (render/treeNormalDirs.ts; the tuning's default, "32"), -1 off, lit flat ("0", or false
  *  as the switch was). */
 export function treeNormalDirections(t: { treeNormals?: unknown }): number {
   const v = t.treeNormals;
@@ -938,7 +938,7 @@ export class SpriteBatch {
     this.capacity = cap;
   }
 
-  /** The witch under a load (render/load.ts): shear, tilt, bow; zero for everything else. */
+  /** The witch under a load (render/view/witch.ts: zero since the sigil weight went, Ed 2026-11-03): shear, tilt, bow; zero for everything else. */
   readonly leanU = { value: new THREE.Vector4() };
 
   /** Replace every instance. */

@@ -149,6 +149,7 @@ glossary; these are the prototype's), by note.
 - Letters' reach
 - Bubble sight
 - Babies on her leash
+- Wild babies keep out of fights
 - Followers in the treehouse
 - Runestone stack
 - Soundsystem spell / cast
@@ -173,6 +174,7 @@ glossary; these are the prototype's), by note.
 - Chains
 - Party animal
 - Combat
+- Long lunges
 - Attack grammar
 - Ranged aim
 - Siege
@@ -192,6 +194,7 @@ glossary; these are the prototype's), by note.
 - Posse / travelling
 - Conga dancer
 - Wild / happy / leashed / enraged
+- Shot mark
 - Runaway
 - Restless / angry legend, relic
 - The challenge circle hidden till the party

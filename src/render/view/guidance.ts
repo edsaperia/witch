@@ -115,7 +115,7 @@ const TOPS: Record<string, number> = { hats: 1 };
 /** Over her seat at the decks, the pin's tip just over the tempo shown there (2.5 m up). */
 const DECKS_TOP = 3;
 
-/** A guidance pin's size this moment (`seconds`): the morning's breathe, 1 to 1 + pins.pulse and back pinsRate times a second, half
+/** A guidance pin's size this moment (`seconds`): the morning's breathe, 1 to 1 + pins.pulse and back pins.pulseRate times a second, half
  *  as much with reduce flashing; the night's end's 🧭 and 💤 (and none) still at 1. */
 export function guidePulse(guide: Guide | null, seconds: number, T: { pulse?: number; pulseRate?: number } | undefined, reduceFlashing = false): number {
   const amt = (T?.pulse ?? 0) * (reduceFlashing ? 0.5 : 1);
