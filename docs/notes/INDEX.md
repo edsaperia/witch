@@ -77,6 +77,7 @@ glossary; these are the prototype's), by note.
 - Creature momentum
 - Berry cost
 - Pacing variants
+- Soundsystem health
 - Power meter
 - Playtest log
 - Balance simulator

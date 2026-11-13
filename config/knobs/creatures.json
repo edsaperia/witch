@@ -274,13 +274,25 @@
           "date": "2026-10-08",
           "quote": "home as 12 speakers at 500 hp each",
           "rest": "rules/speakers.ts"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-13",
+          "quote": "soundsystem health should be reduced substantially. I think ttk for soundsystems should be relatively short, otherwise if you're marginally losing it can take a very long time to fully lose.",
+          "rest": "he chose 150, from 500"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-11-13",
+          "quote": "Home speakers should change to 150 as well",
+          "rest": "from 500 each: home's 12 speakers 1,800 in all, from 6,000"
         }
       ],
       "links": [
         "config/combat.json",
         "rules/speakers.ts"
       ],
-      "notes": "Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range [1], and follow her anywhere on the ground until she takes off (Ed's 31 Oct playtest; rules/combat/targeting.ts); only a besieger still lets her go once she's out of its area, out of its range and at least witchLose metres away. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party; parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. Marching on a soundsystem, its own area's or marching on after a fall, a creature moves at marchShare of its top (fight) speed: its movement profile's, else fightRun, a legend legendRun [2]. Against a soundsystem or speaker, charging kinds don't charge and swoopers don't swoop: they land and use their ordinary attack [3]. A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good [4]; a party animal is lost for the run. A soundsystem has soundsystemHealth, passive, and is hit within soundsystemRadius metres: sieges should outlast the wave gap. A soundsystem has 500 [5]. Home is its ring of speakers [6], each a soundsystem of speakerHealth, hit within speakerRadius metres, the besiegers going for the nearest standing one; home falls when every one has (its old homeHealth 8000 and homeRadius 9 gone)."
+      "notes": "Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range [1], and follow her anywhere on the ground until she takes off (Ed's 31 Oct playtest; rules/combat/targeting.ts); only a besieger still lets her go once she's out of its area, out of its range and at least witchLose metres away. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party; parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. Marching on a soundsystem, its own area's or marching on after a fall, a creature moves at marchShare of its top (fight) speed: its movement profile's, else fightRun, a legend legendRun [2]. Against a soundsystem or speaker, charging kinds don't charge and swoopers don't swoop: they land and use their ordinary attack [3]. A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good [4]; a party animal is lost for the run. A soundsystem has soundsystemHealth, passive, and is hit within soundsystemRadius metres: sieges should outlast the wave gap. A soundsystem has 150 [7] (500 from 2026-10-08 [5]): a short time to kill, so a siege she is marginally losing is over soon. Home is its ring of speakers [6], each a soundsystem of speakerHealth (150 too [8], from 500), hit within speakerRadius metres, the besiegers going for the nearest standing one; home falls when every one has (its old homeHealth 8000 and homeRadius 9 gone)."
     },
     "combat.packs.shadow": {
       "what": "A pack member hiding in its lull (in the trees, underground, under water, in the branches, or scattered) is drawn as a shadow of itself, not left out.",
