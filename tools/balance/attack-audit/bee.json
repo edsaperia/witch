@@ -1,0 +1,214 @@
+[
+ {
+  "kind": "bee",
+  "level": 1,
+  "n": 1,
+  "bot": "still",
+  "blows": 10,
+  "paths": {
+   "grammar shot": 24,
+   "pack melee": 6
+  },
+  "slow": 0,
+  "stagger": 2.8166666666666615,
+  "confused": 0,
+  "knock": 25,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 48
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 30
+  },
+  "stillShare": 0.11029165269862555,
+  "medWindow": 0.5333333333333333,
+  "windowsPerMin": 12
+ },
+ {
+  "kind": "bee",
+  "level": 1,
+  "n": 1,
+  "bot": "strafe",
+  "blows": 1,
+  "paths": {
+   "pack melee": 3
+  },
+  "slow": 0,
+  "stagger": 0.2833333333333333,
+  "confused": 0,
+  "knock": 2.5,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 24
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 15
+  },
+  "stillShare": 0.04723680148193887,
+  "medWindow": 0.44999999999999996,
+  "windowsPerMin": 5
+ },
+ {
+  "kind": "bee",
+  "level": 1,
+  "n": 1,
+  "bot": "dodger",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 2,
+  "telegraphs": {
+   "lane": 24
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 15
+  },
+  "stillShare": 0.048417760333619525,
+  "medWindow": 0.44999999999999996,
+  "windowsPerMin": 5
+ },
+ {
+  "kind": "bee",
+  "level": 1,
+  "n": 1,
+  "bot": "chase",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 6
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 3
+  },
+  "stillShare": 0.34630931299120893,
+  "sent": 9,
+  "landed": 9,
+  "firstStun": 3.7161666666666586,
+  "hitSpeed": 4.262282961182439,
+  "medSpeed": 8.16171080114599,
+  "medWindow": 0.3333333333333333,
+  "windowsPerMin": 3.3333333333333335
+ },
+ {
+  "kind": "bee",
+  "level": 1,
+  "n": 3,
+  "bot": "still",
+  "blows": 24.333333333333332,
+  "paths": {
+   "grammar shot": 51,
+   "pack melee": 22
+  },
+  "slow": 0,
+  "stagger": 5.80555555555554,
+  "confused": 0,
+  "knock": 60.83333333333333,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 104
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 71,
+   "pack windup (melee)": 4
+  },
+  "stillShare": 0.10081490946615734,
+  "medWindow": 0.39999999999999997,
+  "windowsPerMin": 13.666666666666666
+ },
+ {
+  "kind": "bee",
+  "level": 1,
+  "n": 3,
+  "bot": "strafe",
+  "blows": 6.333333333333333,
+  "paths": {
+   "pack melee": 15,
+   "grammar shot": 4
+  },
+  "slow": 0,
+  "stagger": 1.7944444444444432,
+  "confused": 0,
+  "knock": 15.833333333333334,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 94
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 63,
+   "pack windup (melee)": 3
+  },
+  "stillShare": 0.06426831553307101,
+  "medWindow": 0.31666666666666665,
+  "windowsPerMin": 9.333333333333334
+ },
+ {
+  "kind": "bee",
+  "level": 1,
+  "n": 3,
+  "bot": "dodger",
+  "blows": 1.3333333333333335,
+  "paths": {
+   "grammar shot": 4
+  },
+  "slow": 0,
+  "stagger": 0.37777777777777805,
+  "confused": 0,
+  "knock": 3.333333333333333,
+  "blinks": 17.333333333333332,
+  "telegraphs": {
+   "lane": 88
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 57,
+   "pack windup (melee)": 12
+  },
+  "stillShare": 0.07002105700016999,
+  "medWindow": 0.31666666666666665,
+  "windowsPerMin": 10.333333333333334
+ },
+ {
+  "kind": "bee",
+  "level": 1,
+  "n": 3,
+  "bot": "chase",
+  "blows": 1,
+  "paths": {
+   "grammar shot": 3
+  },
+  "slow": 0,
+  "stagger": 0.27222222222222225,
+  "confused": 0,
+  "knock": 2.5,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 22
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 12
+  },
+  "stillShare": 0.1816462313818532,
+  "sent": 29.333333333333332,
+  "landed": 28.666666666666668,
+  "firstStun": 6.899499999999981,
+  "hitSpeed": 7.037999999999997,
+  "medSpeed": 13.85606889426172,
+  "medWindow": 0.3333333333333333,
+  "windowsPerMin": 6
+ }
+]

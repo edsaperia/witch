@@ -1,0 +1,202 @@
+[
+ {
+  "kind": "hare",
+  "level": 1,
+  "n": 1,
+  "bot": "still",
+  "blows": 6.333333333333333,
+  "paths": {
+   "pack shot": 19
+  },
+  "slow": 0,
+  "stagger": 1.7777777777777761,
+  "confused": 0,
+  "knock": 15.833333333333334,
+  "blinks": 0,
+  "telegraphs": {},
+  "poses": {},
+  "actions": {
+   "pack windup (ranged)": 19
+  },
+  "stillShare": 0.4054553935888898,
+  "medWindow": 0.55,
+  "windowsPerMin": 18.333333333333332
+ },
+ {
+  "kind": "hare",
+  "level": 1,
+  "n": 1,
+  "bot": "strafe",
+  "blows": 2,
+  "paths": {
+   "pack shot": 6
+  },
+  "slow": 0,
+  "stagger": 0.55,
+  "confused": 0,
+  "knock": 5,
+  "blinks": 0,
+  "telegraphs": {},
+  "poses": {},
+  "actions": {
+   "pack windup (ranged)": 21
+  },
+  "stillShare": 0.38723108952116586,
+  "medWindow": 0.55,
+  "windowsPerMin": 18
+ },
+ {
+  "kind": "hare",
+  "level": 1,
+  "n": 1,
+  "bot": "dodger",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 3,
+  "telegraphs": {},
+  "poses": {},
+  "actions": {
+   "pack windup (ranged)": 18
+  },
+  "stillShare": 0.37614185921547555,
+  "medWindow": 0.55,
+  "windowsPerMin": 21
+ },
+ {
+  "kind": "hare",
+  "level": 1,
+  "n": 1,
+  "bot": "chase",
+  "blows": 2,
+  "paths": {
+   "pack shot": 6
+  },
+  "slow": 0,
+  "stagger": 0.55,
+  "confused": 0,
+  "knock": 5,
+  "blinks": 0,
+  "telegraphs": {},
+  "poses": {},
+  "actions": {
+   "pack windup (ranged)": 9
+  },
+  "stillShare": 0.3767313019390582,
+  "sent": 38,
+  "landed": 9,
+  "firstStun": 20.632833333333444,
+  "hitSpeed": 47.586206896551765,
+  "medSpeed": 47.586206896551715,
+  "medWindow": 0.55,
+  "windowsPerMin": 4
+ },
+ {
+  "kind": "hare",
+  "level": 1,
+  "n": 3,
+  "bot": "still",
+  "blows": 19.666666666666668,
+  "paths": {
+   "pack shot": 59
+  },
+  "slow": 0,
+  "stagger": 3.644444444444436,
+  "confused": 0,
+  "knock": 49.166666666666664,
+  "blinks": 0,
+  "telegraphs": {},
+  "poses": {},
+  "actions": {
+   "pack windup (ranged)": 62
+  },
+  "stillShare": 0.36035613922959087,
+  "medWindow": 0.5166666666666666,
+  "windowsPerMin": 33.666666666666664
+ },
+ {
+  "kind": "hare",
+  "level": 1,
+  "n": 3,
+  "bot": "strafe",
+  "blows": 2.666666666666667,
+  "paths": {
+   "pack shot": 8
+  },
+  "slow": 0,
+  "stagger": 0.7388888888888895,
+  "confused": 0,
+  "knock": 6.666666666666666,
+  "blinks": 0,
+  "telegraphs": {
+   "ring": 4
+  },
+  "poses": {
+   "stamp": 4
+  },
+  "actions": {
+   "pack windup (ranged)": 53,
+   "grammar windup": 16
+  },
+  "stillShare": 0.35635556602331575,
+  "medWindow": 0.5333333333333333,
+  "windowsPerMin": 37
+ },
+ {
+  "kind": "hare",
+  "level": 1,
+  "n": 3,
+  "bot": "dodger",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 7,
+  "telegraphs": {
+   "ring": 2
+  },
+  "poses": {
+   "stamp": 2
+  },
+  "actions": {
+   "pack windup (ranged)": 53,
+   "grammar windup": 6
+  },
+  "stillShare": 0.3955750328319676,
+  "medWindow": 0.55,
+  "windowsPerMin": 39
+ },
+ {
+  "kind": "hare",
+  "level": 1,
+  "n": 3,
+  "bot": "chase",
+  "blows": 2,
+  "paths": {
+   "pack shot": 6
+  },
+  "slow": 0,
+  "stagger": 0.55,
+  "confused": 0,
+  "knock": 5,
+  "blinks": 0,
+  "telegraphs": {},
+  "poses": {},
+  "actions": {
+   "pack windup (ranged)": 12
+  },
+  "stillShare": 0.38769804287045667,
+  "sent": 47,
+  "landed": 29,
+  "firstStun": 17.76616666666694,
+  "hitSpeed": 0,
+  "medSpeed": 47.58620689655164,
+  "medWindow": 0.49999999999999994,
+  "windowsPerMin": 16
+ }
+]

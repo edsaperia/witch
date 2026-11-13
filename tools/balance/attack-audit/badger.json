@@ -1,0 +1,224 @@
+[
+ {
+  "kind": "badger",
+  "level": 1,
+  "n": 1,
+  "bot": "still",
+  "blows": 7,
+  "paths": {
+   "pack shot": 6,
+   "pack melee (badger)": 15
+  },
+  "slow": 0,
+  "stagger": 3.3166666666666598,
+  "confused": 0,
+  "knock": 36.75000000000001,
+  "blinks": 0,
+  "telegraphs": {
+   "flash": 15
+  },
+  "poses": {
+   "crouch": 15
+  },
+  "actions": {
+   "pack windup (ranged)": 3,
+   "grammar windup": 18
+  },
+  "stillShare": 0.37786259541984735,
+  "medWindow": 3.599999999999992,
+  "windowsPerMin": 8
+ },
+ {
+  "kind": "badger",
+  "level": 1,
+  "n": 1,
+  "bot": "strafe",
+  "blows": 4.666666666666667,
+  "paths": {
+   "pack melee (badger)": 14
+  },
+  "slow": 0,
+  "stagger": 2.5666666666666624,
+  "confused": 0,
+  "knock": 29.633333333333336,
+  "blinks": 0,
+  "telegraphs": {
+   "flash": 15
+  },
+  "poses": {
+   "crouch": 15
+  },
+  "actions": {
+   "pack windup (ranged)": 3,
+   "grammar windup": 18
+  },
+  "stillShare": 0.04593169592497487,
+  "medWindow": 0.2833333333333333,
+  "windowsPerMin": 8
+ },
+ {
+  "kind": "badger",
+  "level": 1,
+  "n": 1,
+  "bot": "dodger",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 1,
+  "telegraphs": {},
+  "poses": {},
+  "actions": {
+   "pack windup (ranged)": 3
+  },
+  "stillShare": 0.010872675250357655,
+  "medWindow": 0.35,
+  "windowsPerMin": 2
+ },
+ {
+  "kind": "badger",
+  "level": 1,
+  "n": 1,
+  "bot": "chase",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 0,
+  "telegraphs": {},
+  "poses": {},
+  "actions": {
+   "pack windup (ranged)": 3
+  },
+  "stillShare": 0.24279835390946503,
+  "sent": 9,
+  "landed": 9,
+  "firstStun": 3.832833333333325,
+  "hitSpeed": 7.994815195763427,
+  "medSpeed": 13.297239031310259,
+  "medWindow": 0.41666666666666663,
+  "windowsPerMin": 2
+ },
+ {
+  "kind": "badger",
+  "level": 1,
+  "n": 3,
+  "bot": "still",
+  "blows": 13.333333333333332,
+  "paths": {
+   "pack shot": 4,
+   "pack melee (badger)": 33,
+   "pack melee": 3
+  },
+  "slow": 0,
+  "stagger": 5.261111111111098,
+  "confused": 0,
+  "knock": 79.53333333333333,
+  "blinks": 0,
+  "telegraphs": {
+   "flash": 36
+  },
+  "poses": {
+   "crouch": 36
+  },
+  "actions": {
+   "pack windup (ranged)": 3,
+   "grammar windup": 39
+  },
+  "stillShare": 0.37186723897640434,
+  "medWindow": 0.9500000000000013,
+  "windowsPerMin": 14.666666666666666
+ },
+ {
+  "kind": "badger",
+  "level": 1,
+  "n": 3,
+  "bot": "strafe",
+  "blows": 12.333333333333332,
+  "paths": {
+   "pack melee (badger)": 37
+  },
+  "slow": 0,
+  "stagger": 5.6833333333333185,
+  "confused": 0,
+  "knock": 78.31666666666666,
+  "blinks": 0,
+  "telegraphs": {
+   "flash": 41
+  },
+  "poses": {
+   "crouch": 41
+  },
+  "actions": {
+   "pack windup (ranged)": 3,
+   "grammar windup": 41
+  },
+  "stillShare": 0.24365448875348747,
+  "medWindow": 0.55,
+  "windowsPerMin": 21.666666666666668
+ },
+ {
+  "kind": "badger",
+  "level": 1,
+  "n": 3,
+  "bot": "dodger",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 18.333333333333336,
+  "telegraphs": {
+   "flash": 33
+  },
+  "poses": {
+   "crouch": 33
+  },
+  "actions": {
+   "pack windup (ranged)": 3,
+   "grammar windup": 34
+  },
+  "stillShare": 0.11899891033029915,
+  "medWindow": 0.35,
+  "windowsPerMin": 12
+ },
+ {
+  "kind": "badger",
+  "level": 1,
+  "n": 3,
+  "bot": "chase",
+  "blows": 2,
+  "paths": {
+   "pack shot": 3,
+   "pack melee (badger)": 3
+  },
+  "slow": 0,
+  "stagger": 0.8333333333333343,
+  "confused": 0,
+  "knock": 8.850000000000001,
+  "blinks": 0,
+  "telegraphs": {
+   "flash": 3
+  },
+  "poses": {
+   "crouch": 3
+  },
+  "actions": {
+   "pack windup (ranged)": 3,
+   "grammar windup": 3
+  },
+  "stillShare": 0.25113132460228504,
+  "sent": 28,
+  "landed": 27,
+  "firstStun": 3.5161666666666593,
+  "hitSpeed": 4.967999999999999,
+  "medSpeed": 11.302962559999846,
+  "medWindow": 0.36666666666666664,
+  "windowsPerMin": 5
+ }
+]

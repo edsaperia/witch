@@ -1,0 +1,231 @@
+[
+ {
+  "kind": "stoat",
+  "level": 1,
+  "n": 1,
+  "bot": "still",
+  "blows": 10,
+  "paths": {
+   "pack shot": 24,
+   "pack melee (stoat)": 6
+  },
+  "slow": 0,
+  "stagger": 2.8166666666666615,
+  "confused": 1.766666666666665,
+  "knock": 25,
+  "blinks": 0,
+  "telegraphs": {
+   "flash": 6
+  },
+  "poses": {
+   "coil": 6
+  },
+  "actions": {
+   "pack windup (ranged)": 12,
+   "grammar windup": 18
+  },
+  "stillShare": 0.1439175257731959,
+  "medWindow": 0.6166666666666669,
+  "windowsPerMin": 11
+ },
+ {
+  "kind": "stoat",
+  "level": 1,
+  "n": 1,
+  "bot": "strafe",
+  "blows": 2,
+  "paths": {
+   "pack melee (stoat)": 6
+  },
+  "slow": 0,
+  "stagger": 0.5666666666666668,
+  "confused": 0,
+  "knock": 5,
+  "blinks": 0,
+  "telegraphs": {
+   "flash": 6
+  },
+  "poses": {
+   "coil": 6
+  },
+  "actions": {
+   "pack windup (ranged)": 12,
+   "grammar windup": 21
+  },
+  "stillShare": 0.07637715444406894,
+  "medWindow": 0.3333333333333333,
+  "windowsPerMin": 10
+ },
+ {
+  "kind": "stoat",
+  "level": 1,
+  "n": 1,
+  "bot": "dodger",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 4.333333333333333,
+  "telegraphs": {
+   "flash": 6
+  },
+  "poses": {
+   "coil": 6
+  },
+  "actions": {
+   "pack windup (ranged)": 12,
+   "grammar windup": 21
+  },
+  "stillShare": 0.07638986526359147,
+  "medWindow": 0.3333333333333333,
+  "windowsPerMin": 10
+ },
+ {
+  "kind": "stoat",
+  "level": 1,
+  "n": 1,
+  "bot": "chase",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 0,
+  "telegraphs": {},
+  "poses": {},
+  "actions": {
+   "pack windup (ranged)": 3
+  },
+  "stillShare": 0.26765540754686784,
+  "sent": 9.333333333333334,
+  "landed": 9,
+  "firstStun": 3.666166666666659,
+  "hitSpeed": 13.41682798303969,
+  "medSpeed": 14.373858516795972,
+  "medWindow": 0.3833333333333333,
+  "windowsPerMin": 2.6666666666666665
+ },
+ {
+  "kind": "stoat",
+  "level": 1,
+  "n": 3,
+  "bot": "still",
+  "blows": 31.333333333333336,
+  "paths": {
+   "pack shot": 61,
+   "pack melee (stoat)": 33
+  },
+  "slow": 0,
+  "stagger": 5.50555555555554,
+  "confused": 5.2999999999999865,
+  "knock": 78.33333333333333,
+  "blinks": 0,
+  "telegraphs": {
+   "flash": 33
+  },
+  "poses": {
+   "coil": 33
+  },
+  "actions": {
+   "pack windup (ranged)": 27,
+   "grammar windup": 68
+  },
+  "stillShare": 0.1509880965629151,
+  "medWindow": 0.35,
+  "windowsPerMin": 20.666666666666668
+ },
+ {
+  "kind": "stoat",
+  "level": 1,
+  "n": 3,
+  "bot": "strafe",
+  "blows": 10,
+  "paths": {
+   "pack melee (stoat)": 27,
+   "pack shot": 3
+  },
+  "slow": 0.28888888888888886,
+  "stagger": 2.372222222222219,
+  "confused": 1.766666666666665,
+  "knock": 25,
+  "blinks": 0,
+  "telegraphs": {
+   "flash": 31
+  },
+  "poses": {
+   "coil": 31
+  },
+  "actions": {
+   "pack windup (ranged)": 27,
+   "grammar windup": 71
+  },
+  "stillShare": 0.09195186421814135,
+  "medWindow": 0.3,
+  "windowsPerMin": 16.666666666666668
+ },
+ {
+  "kind": "stoat",
+  "level": 1,
+  "n": 3,
+  "bot": "dodger",
+  "blows": 0.6666666666666667,
+  "paths": {
+   "pack melee (stoat)": 2
+  },
+  "slow": 0,
+  "stagger": 0.18888888888888888,
+  "confused": 1.177777777777777,
+  "knock": 1.6666666666666665,
+  "blinks": 23.666666666666664,
+  "telegraphs": {
+   "flash": 28
+  },
+  "poses": {
+   "coil": 28
+  },
+  "actions": {
+   "pack windup (ranged)": 27,
+   "grammar windup": 66
+  },
+  "stillShare": 0.0756630081525479,
+  "medWindow": 0.31666666666666665,
+  "windowsPerMin": 14.666666666666666
+ },
+ {
+  "kind": "stoat",
+  "level": 1,
+  "n": 3,
+  "bot": "chase",
+  "blows": 1,
+  "paths": {
+   "pack shot": 2,
+   "pack melee (stoat)": 1
+  },
+  "slow": 0,
+  "stagger": 0.2777777777777778,
+  "confused": 0,
+  "knock": 2.5,
+  "blinks": 0,
+  "telegraphs": {
+   "flash": 1
+  },
+  "poses": {
+   "coil": 1
+  },
+  "actions": {
+   "pack windup (ranged)": 10,
+   "grammar windup": 1
+  },
+  "stillShare": 0.17167379129800842,
+  "sent": 29,
+  "landed": 28.666666666666668,
+  "firstStun": 7.2661666666666465,
+  "hitSpeed": 13.229132547568488,
+  "medSpeed": 18.288128884677484,
+  "medWindow": 0.3833333333333333,
+  "windowsPerMin": 6
+ }
+]
