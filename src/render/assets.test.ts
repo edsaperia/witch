@@ -49,26 +49,27 @@ describe("shared party sheets", () => {
 // (asked of the hydra, in the meshes' last batch: the fox, then the wolf, are drawn as meshes now, art/mesh, and have no rig page
 // to ask for; Ed, 2026-11-12)
 describe("creatures' faces off (looks.expressions)", () => {
+// (the newt: a kind with no mesh, so it still has a rig and faces to ask for; the hydra, which stood here, has a mesh since batch H)
   it("asks for no face set, no rig expression heads and no smiling party sheet while off", () => {
     const a = new AssetLibrary(loadStyle(), 11, 4);
     expect(a.expressions).toBe(false);
-    for (const face of ["angry", "happy", "dazed", "bite", "yawn"]) expect(a.faceArt("hydra", face)).toBeUndefined();
+    for (const face of ["angry", "happy", "dazed", "bite", "yawn"]) expect(a.faceArt("newt", face)).toBeUndefined();
     expect(inner(a).queue.some(j => j.kind === "face")).toBe(false);
-    a.rigArt("hydra", 2); a.partyArt("hydra", 7, [1, 0, 1], 2); a.happyArt("hydra", 7, 2); a.wokenArt("hydra");
+    a.rigArt("newt", 2); a.partyArt("newt", 7, [1, 0, 1], 2); a.happyArt("newt", 7, 2); a.wokenArt("newt");
     const rig = inner(a).queue.find(j => j.kind === "rig"), party = inner(a).queue.filter(j => j.kind === "party"), woken = inner(a).queue.find(j => j.kind === "woken");
     expect(rig && "faces" in rig).toBe(false);
-    expect(woken?.id).toBe("woken-hydra"); expect(woken && "faces" in woken).toBe(false);
+    expect(woken?.id).toBe("woken-newt"); expect(woken && "faces" in woken).toBe(false);
     expect(party).toHaveLength(2); expect(party.some(j => "faces" in j)).toBe(false);
   });
   it("asks for them, under keys of their own, while on", () => {
     const a = new AssetLibrary(loadStyle(), 11, 4); a.expressions = true;
-    expect(a.faceArt("hydra", "dazed")).toBeUndefined();
-    expect(inner(a).queue.filter(j => j.kind === "face").map(j => j.id)).toEqual(["face-dazed-hydra"]);
-    a.rigArt("hydra", 2); a.partyArt("hydra", 7, [1, 0, 1], 2); a.wokenArt("hydra");
+    expect(a.faceArt("newt", "dazed")).toBeUndefined();
+    expect(inner(a).queue.filter(j => j.kind === "face").map(j => j.id)).toEqual(["face-dazed-newt"]);
+    a.rigArt("newt", 2); a.partyArt("newt", 7, [1, 0, 1], 2); a.wokenArt("newt");
     const rig = inner(a).queue.find(j => j.kind === "rig")!, party = inner(a).queue.find(j => j.kind === "party")!, woken = inner(a).queue.find(j => j.kind === "woken")!;
-    expect(woken.id).toBe("woken-hydra-faces"); expect(woken.kind === "woken" && woken.faces).toBe(true);
+    expect(woken.id).toBe("woken-newt-faces"); expect(woken.kind === "woken" && woken.faces).toBe(true);
     expect(rig.kind === "rig" && rig.faces).toBe(true); expect(rig.id.endsWith("-faces")).toBe(true);
-    expect(party.kind === "party" && party.faces).toBe(true); expect(party.id).toBe(partySheetKey("hydra", 2, partyGearOf(7, [1, 0, 1]), true));
+    expect(party.kind === "party" && party.faces).toBe(true); expect(party.id).toBe(partySheetKey("newt", 2, partyGearOf(7, [1, 0, 1]), true));
   });
 });
 

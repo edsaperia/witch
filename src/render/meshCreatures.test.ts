@@ -18,7 +18,7 @@ describe("mesh creatures", () => {
   it("are only drawn when the style asks", () => {
     expect(hasMesh("fox", {})).toBe(false);
     expect(hasMesh("fox", { meshCreatures: 1 })).toBe(true);
-    expect(hasMesh("hydra", { meshCreatures: 1 })).toBe(false); // (no mesh yet: the last batch's)
+    expect(hasMesh("newt", { meshCreatures: 1 })).toBe(false); // (no mesh of its own: the generated creature; the hydra, which stood here, has one since batch H)
     expect(hasMesh("wolf", { meshCreatures: 1 })).toBe(true); // (batch A, 2026-11-13)
     expect(hasMesh("snake", { meshCreatures: 1 })).toBe(true); // (batch E, 2026-11-13: a legless one)
     expect(hasMesh("heron", { meshCreatures: 1 })).toBe(true); // (batch F, 2026-11-13: two legs and wings)
@@ -133,6 +133,7 @@ describe("mesh creatures", () => {
   Object.assign(GAITS, { salamander: "trot", komodo: "trot", crocodile: "trot", armadillo: "trot", toad: "bound", snake: "glide", rattlesnake: "glide" }); // (batch E, the cold-blooded: kit/sprawl.js, kit/serpent.js)
   Object.assign(GAITS, { heron: "walk", raven: "walk", owl: "bound", penguin: "walk", moth: "fly", bat: "fly", dragonfly: "fly" }); // (batch F, wings: kit/bird.js, on the ground; a bird's fast pace flies, and the insects and the bat fly at any)
   Object.assign(GAITS, { beetle: "trot", spider: "trot", scorpion: "trot", crab: "trot", woodlouse: "walk" }); // (batch G, the many-legged: kit/manylegs.js; alternating sets, and the woodlouse's ripple)
+  Object.assign(GAITS, { griffin: "trot", sphinx: "trot", unicorn: "trot", frosttroll: "trot", stegosaurus: "trot", frostwyrm: "glide", featheredserpent: "glide", hydra: "glide" }); // (batch H, the wonders: the cats' prowl and trot, the heavy kinds' trundle, kit/serpent.js)
   /** How many legs a kind stands on, where it isn't four (batch G: "six, eight and fourteen legs"; the woodlouse's baby has ten). */
   const LEGS: Record<string, number[]> = { beetle: [6], spider: [8], scorpion: [8], crab: [8], woodlouse: [10, 14] };
 

@@ -50,7 +50,7 @@ export function attackSchema(): Schema {
     base: { type: "string" }, note: { type: "string" },
     cast: obj({ range: num(0, "m"), windup: num(0, "s"), cooldown: num(0, "s"), casts: int(1, 99), rest: num(0, "s"), tell: obj({ pose: oneOf(TELL_POSES), glow: num(0, "s") }) }),
     telegraph: obj({ kind: oneOf(TELEGRAPH_KINDS), lead: num(0, "s"), size: num(0, "m") }),
-    emit: obj({ pattern: oneOf(PATTERNS), n: int(1, 64), gap: num(0, "s"), angle: angle(), rate: angle(), spacing: num(0, "m"), holes: { type: "array", items: int(0, 63), maxItems: 64 }, time: num(0, "s"), offset: angle(), aim: oneOf(AIMS) }),
+    emit: obj({ pattern: oneOf(PATTERNS), n: int(1, 64), gap: num(0, "s"), angle: angle(), rate: angle(), spacing: num(0, "m"), holes: { type: "array", items: int(0, 63), maxItems: 64 }, time: num(0, "s"), offset: angle(), heads: obj({ n: int(1, 8), apart: num(0, "m"), ahead: num(0, "m") }), aim: oneOf(AIMS) }),
     body: obj({ kind: oneOf(BODY_KINDS), radius: num(0, "m"), element: { type: "string" }, look: { type: "string" }, lunge: num(0, "m"), charge: obj({ speed: num(0, "m/s"), time: num(0, "s") }, ["speed", "time"]), flight: num(0, "s"), arm: num(0, "s"), trigger: num(0, "m"), pull: num(0, "m/s"), reach: num(0, "m") }),
     path: { type: "array", items: PATH_TERM, maxItems: 8 },
     speed: obj({ profile: oneOf(SPEED_PROFILES), v: num(0, "m/s"), to: num(0, "m/s"), time: num(0, "s"), go: num(0, "s"), pause: num(0, "s"), n: int(1, 16) }),
