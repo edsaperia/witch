@@ -95,7 +95,7 @@ Each species' attack, made from `config/species-attacks.json` and its kind's `ar
 | 4 | jungle | elephant | two great stomp rings that throw |
 | 4 | jungle | featheredserpent | six feathers spiralling out |
 | 4 | mangrove swamp | crab | three crabs mark a triangle and the water inside erupts |
-| 4 | mangrove swamp | hydra | three heads spit homing venom that leaves pools |
+| 4 | mangrove swamp | hydra | three heads spit homing venom in turn, left, middle, right, each leaving a pool |
 | 4 | mountains and glaciers | frostwyrm | a frost breath sweeping wide after a charge |
 | 4 | mountains and glaciers | snowleopard | frost bursts in a cross round where she stood |
 | 4 | volcanic | komodo | a weaving venom bolt that burns and leaves a pool |
