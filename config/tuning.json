@@ -2752,9 +2752,11 @@
   "viewMargin": 12,
   "sigilProjection": {
     "height": 3,
-    "opacity": 0.65,
-    "beam": 0.25,
+    "opacity": 1,
+    "beam": 0.6,
     "size": 2.5,
+    "glyph": 1,
+    "beamStep": 0.6,
     "creatures": {
       "range": 140,
       "max": 24,

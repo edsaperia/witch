@@ -5,11 +5,22 @@ import { runeOffset } from "../../rules/runeOffset";
 import type { LeashView } from "../leash";
 import { legendShine, rankOf } from "./ranks";
 
+/** The link asks for the placed sigils' projection as it was (`?projection=old`, to compare): its glyph at 0.65 of the ground sigils'
+ *  dimmed colour (leash.sigilGlyph), its column a faint dot every 1.5 m at 0.25. */
+export const PROJECTION_OLD = typeof location !== "undefined" && new URLSearchParams(location.search).get("projection") === "old";
+const OLD = { opacity: 0.65, beam: 0.25, beamStep: 1.5 };
+
 const STACKED = new Set<number>(), PLACED = new Set<number>(); // (filled each frame, never kept)
 
 /** From the treetops, each placed sigil is projected up above the canopy over its spot, flat and glowing, joined to its rune by
  *  a faint pulsing column of light (Ed, 2026-10-03), fading in as she rises; and over every leashed or happy creature near her,
- *  its own sigil at the same height, moving with it. */
+ *  its own sigil at the same height, moving with it.
+ *  The placed ones clearly visible (Ed, 2026-11-13: "you can see it projected above the trees, but only faintly ... I'd like them
+ *  to be more visible at treetop mode"; his pick of the stills, look A: "A, but also take a look at the light column"). Measured
+ *  from the treetops over the glyph's pixels (canopy 20 of 255): it added +7, drawn at opacity 0.65 times the ground sigils'
+ *  dimmer (leash.sigilGlyph 0.5, there so they don't bloom on lit ground), a third of its colour; now at `opacity` 1 times its
+ *  own `glyph` 1, its full colour, +33. Its column was one art pixel every 1.5 m at 0.25 or less, too sparse and faint to see: now
+ *  a dot every `beamStep` m at `beam`. Its pulse as it was (Ed: "pulse is fine"). The creatures' own sigils are unchanged. */
 export function drawProjection(lv: LeashView, time: number, dot: number[]): void {
   const g = lv.game, s = g.leash, t = g.tuning, w = g.witch;
   const P = t.sigilProjection, up = w.lift * w.lift * (3 - 2 * w.lift);
@@ -17,8 +28,10 @@ export function drawProjection(lv: LeashView, time: number, dot: number[]): void
     const c = g.creatures[p.id], col = lv.colOf(c), top = t.treetopHeight - 4 + P.height;
     const pulse = 0.85 + 0.15 * Math.sin(time * 1.3 + p.id);
     const sg = lv.sigilOf(c);
-    lv.flat.add(p.x, top, p.z, (3 + c.level * 0.8) * P.size * sg.scale, sg.uv, col.r, col.g, col.b, P.opacity * up * pulse, 1, false, legendShine(rankOf(c), time, c.id));
-    for (let y = 1; y < top; y += 1.5) lv.standing.add(p.x, y, p.z, 0.3, dot, col.r, col.g, col.b, P.beam * up * pulse * (0.6 + 0.4 * Math.sin(y * 0.8 - time * 3)));
+    // (its glyph at its own gain, not the ground sigils': the layer multiplies every glyph by leash.sigilGlyph, taken back out here)
+    const K = PROJECTION_OLD ? OLD : P, gain = PROJECTION_OLD ? 1 : (P.glyph ?? 1) / (lv.flat.glyphGain || 1), step = Math.max(0.2, K.beamStep ?? OLD.beamStep);
+    lv.flat.add(p.x, top, p.z, (3 + c.level * 0.8) * P.size * sg.scale, sg.uv, col.r * gain, col.g * gain, col.b * gain, K.opacity * up * pulse, 1, false, legendShine(rankOf(c), time, c.id));
+    for (let y = 1; y < top; y += step) lv.standing.add(p.x, y, p.z, 0.3, dot, col.r, col.g, col.b, K.beam * up * pulse * (0.6 + 0.4 * Math.sin(y * 0.8 - time * 3)));
   }
   // And over every leashed or happy creature near her, its own sigil at the same height, moving with it (Ed's playtest,
   // 2026-10-06: "I should be able to see sigils of leashed creatures and happy creatures from treetop mode"): smaller and

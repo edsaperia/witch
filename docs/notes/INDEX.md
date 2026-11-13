@@ -167,6 +167,7 @@ glossary; these are the prototype's), by note.
 - Rank sigils
 - Sides and sizes
 - Colour grammar
+- Treetop projection
 - Stone stack
 - Spell spot
 - Sigil motes
@@ -449,6 +450,7 @@ glossary; these are the prototype's), by note.
 - The dive's look
 - Pop
 - Crawl
+- Edge fade
 - Path network
 - Decor
 - Rolling ground

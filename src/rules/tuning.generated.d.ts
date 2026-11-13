@@ -2430,6 +2430,8 @@ export type SchemaTuning = {
     "opacity": number;
     "beam": number;
     "size": number;
+    "glyph": number;
+    "beamStep": number;
     "creatures": {
       "range": number;
       "max": number;

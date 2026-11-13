@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { newBudget, stepBudget, type SceneryBudget } from "./budget";
+import { newBudget, RADIUS_EASE, stepBudget, type SceneryBudget } from "./budget";
 import { TUNING } from "./tuning";
 
-const run = (b: SceneryBudget, fps: number, secs: number, t = TUNING) => {
-  for (let i = 0; i < secs * fps; i++) b = stepBudget(b, 1 / fps, t);
+const run = (b: SceneryBudget, fps: number, secs: number, t = TUNING, eased = true) => {
+  for (let i = 0; i < secs * fps; i++) b = stepBudget(b, 1 / fps, t, eased);
   return b;
 };
 
@@ -32,5 +32,23 @@ describe("scenery budget", () => {
     expect(stepBudget(newBudget(t), 2, t).radius).toBe(far);
     const fixed = { ...t, scenery: { ...t.scenery, adaptive: false } };
     expect(run(newBudget(fixed), 10, 30, fixed).radius).toBe(far);
+  });
+  // Ed, 2026-11-13: "scenery should fade rather than pop" (render/edgeFade.ts)
+  it("starts each move from rest: a slow moment barely moves it, a slow machine still gets the whole speed", () => {
+    const S = t.scenery, b = newBudget(t);
+    const moment = far - run(b, 30, S.sustain + 1.5).radius, before = far - run(b, 30, S.sustain + 1.5, t, false).radius;
+    expect(before).toBeGreaterThan(S.shrink); // (as it was, ?edgefade=old: some 50 m in that moment)
+    expect(moment).toBeGreaterThan(0);
+    expect(moment).toBeLessThan(before / 4);
+    // no step of it is ever more than the old one, and it never turns back while frames stay slow
+    let c = b, last = far;
+    for (let i = 0; i < 30 * (S.sustain + RADIUS_EASE + 2); i++) { c = stepBudget(c, 1 / 30, t); expect(last - c.radius).toBeGreaterThanOrEqual(0); expect(last - c.radius).toBeLessThanOrEqual(S.shrink / 30 + 1e-9); last = c.radius; }
+    // once up to speed it comes in as fast as before (the frame rate's protection kept)
+    const d = run(c, 30, 1);
+    expect(c.radius - d.radius).toBeCloseTo(Math.min(S.shrink, c.radius - S.minRadius), 0);
+    // and out again from rest too
+    const low = run(newBudget(t), 20, 30), up = run(low, 60, S.sustain + 1.5), upBefore = run(low, 60, S.sustain + 1.5, t, false);
+    expect(up.radius - low.radius).toBeGreaterThan(0);
+    expect(up.radius - low.radius).toBeLessThan((upBefore.radius - low.radius) / 4);
   });
 });
