@@ -262,6 +262,15 @@ Full runs: a bot plays the real rules headless for the first --time seconds of a
 node tools/balance/runbot.mjs [--seeds 3 (seeds 0 to N-1; --skip K starts at K)] [--bots skilled,crude] [--time 1800] [--happy N (the N legends nearest home happy from the start)] [--calm (no legend ever turns angry)] [--quests (the skilled bot fetches what sleeping legends dream of)] [--relics (and picks up relics for them)] [--relic-policy nearest|home|front|far (which sleeping legend gets each relic)] [--quest-max N (at most N quests, then she plays on as usual)] [--relic-max N (at most N relics brought)] [--strategy invite|feed|quest|sigil|mixed (the skilled bot's strategies: rules/bot.ts STRATEGIES)] [--feed (the skilled bot leads her babies and young to berry patches)] [--guards 3 --keep 2 (the skilled bot parks up to G at the next soundsystem, keeping K)] [--island 10|20|...|off (map.islandAreas)] [--game (each bot with the bot game's own options, rules/bot.ts BOT_GAME, in place of the flags)] [--set path=value;...] [--combat path=value;... (config/combat.json's)] [--json out.json] | --report a.json,b.json
 ```
 
+## `siege.mjs`
+
+How long does a real siege take?
+
+```
+node tools/balance/siege.mjs [--kinds stoat,hare,…] [--packs 1y,2y,1a,1a1y,2a,2a2y] [--mixed "fox@2+badger@1;…"] [--seeds 1,2,3] [--dist 50] [--max 1800]
+node tools/balance/siege.mjs --survey [--seeds 1,2,…]   (how far an area's creatures start from its soundsystem's spot)
+```
+
 ## `sim.mjs`
 
 The balance simulator's runner: many seeds, wave gaps of 60 s and 300 s.
