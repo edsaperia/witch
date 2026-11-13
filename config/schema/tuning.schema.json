@@ -1780,6 +1780,11 @@
           "type": "number",
           "minimum": 0
         },
+        "back": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How far back in its circle a sleeping legend lies: its middle this share of the radius north of the circle's middle (the side furthest from the camera), so the front of the circle is open for her to stand in, facing it."
+        },
         "minFromStone": {
           "type": "number",
           "minimum": 0,
@@ -1933,6 +1938,7 @@
         "radius",
         "edge",
         "top",
+        "back",
         "minFromStone",
         "minFromOtherStones",
         "floor",

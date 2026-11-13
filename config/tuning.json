@@ -485,6 +485,7 @@
     "radius": 9,
     "edge": 2.5,
     "top": 0.45,
+    "back": 0.7,
     "minFromStone": 45,
     "minFromOtherStones": 15,
     "floor": {

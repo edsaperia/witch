@@ -134,6 +134,10 @@ export function tuningFromLink(params: URLSearchParams) {
   // 2026-11-09: "it feels like animals move faster than invitations so it's hard to land a hit. And ranges feel small"); the
   // animals' waiting distance is the same either way (combatWaiting.inviteReach). rules/invites.ts OLD_LETTERS
   if (params.get("invites") === "old") tuning.invites = withOldLetters(tuning.invites);
+  // ?legendspot=old: a sleeping legend where it lay before, `top` x r north of its circle's middle, its circle sized for that, to
+  // compare with the back of its circle (Ed, 2026-11-12: "Legends should sleep at the back of their circles, so you can stand in
+  // the circle before them"; rules/legendFit.ts spotShare)
+  if (params.get("legendspot") === "old") tuning.legendClearing = { ...tuning.legendClearing, back: tuning.legendClearing.top };
   if (musicParam === "off") tuning.music = { ...tuning.music, on: false };
   let musicCueNow: MusicCue | undefined;
   {

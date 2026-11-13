@@ -17,16 +17,18 @@ describe("a sleeping legend's clearing in the music (Ed, 2026-10-06)", () => {
 
   it("is heard on the ground inside the circle only: not in the treetops, not outside, not by an angry legend", () => {
     const { g, L } = setup(), R = g.tuning.music.circle.radius;
-    const at = (dx: number, mode: string) => ({ x: L.x + dx, z: L.z, mode });
-    expect(legendCircleAt(g, at(R * 0.5, "ground"))).toBe(L);
-    expect(circleCue(g, at(R * 0.5, "ground"))).toEqual({ species: L.species, level: g.tuning.music.circle.level });
-    expect(legendCircleAt(g, at(R * 0.5, "treetop"))).toBeNull();
-    expect(circleCue(g, at(R * 0.5, "treetop"))).toBeUndefined();
-    expect(legendCircleAt(g, at(R * 1.5, "ground"))).toBeNull();
+    // (inside: R/2 in front of it, south, where she stands before it; it sleeps at the back of its circle since Ed, 2026-11-12, so
+    // R/2 to one side of it can be past the ring)
+    const at = (dx: number, dz: number, mode: string) => ({ x: L.x + dx, z: L.z + dz, mode });
+    expect(legendCircleAt(g, at(0, R * 0.5, "ground"))).toBe(L);
+    expect(circleCue(g, at(0, R * 0.5, "ground"))).toEqual({ species: L.species, level: g.tuning.music.circle.level });
+    expect(legendCircleAt(g, at(0, R * 0.5, "treetop"))).toBeNull();
+    expect(circleCue(g, at(0, R * 0.5, "treetop"))).toBeUndefined();
+    expect(legendCircleAt(g, at(R * 1.5, 0, "ground"))).toBeNull();
     L.legendState = "restless";
-    expect(legendCircleAt(g, at(R * 0.5, "ground"))).toBe(L); // (restless still sleeps there)
+    expect(legendCircleAt(g, at(0, R * 0.5, "ground"))).toBe(L); // (restless still sleeps there)
     L.legendState = "angry";
-    expect(legendCircleAt(g, at(R * 0.5, "ground"))).toBeNull();
+    expect(legendCircleAt(g, at(0, R * 0.5, "ground"))).toBeNull();
   });
 
   it("uses the map's clearing where it has one (#235), its middle and radius rather than the legend's own", () => {
