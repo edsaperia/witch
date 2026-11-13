@@ -50,7 +50,7 @@ export function startDream(pageHost: PageHost, s: { loan: Loan; won: boolean }, 
   pageHost.dream = new DreamView(of, dreamArt(of, pageHost.view.assets.style), veil, pageHost.herHead).play(veil && pageHost.params.has("shot"));
   pageHost.dreamAsleep = !veil; // (asleep: its end rings the next night's alarm; shown over a night, ?dream= or the dev panel, nothing)
   pageHost.dream.onOver = () => { const n = pageHost.page.night; if (!pageHost.phone.active && !n?.spec.borrowed && pageHost.dreamAsleep && n?.game.wake) pageHost.mutate("wake: dream dismissed", () => endDream(n.game, n.game.herTime)); };
-  (window as unknown as { __dream?: DreamView }).__dream = pageHost.dream; // (the shot tools draw it at a time: tools/loan/dream-shots.cjs)
+  (window as unknown as { __dream?: DreamView }).__dream = pageHost.dream; // (the shot tools draw it at a time: tools/loan/shots.cjs)
 }
 
 export function herHead(pageHost: PageHost): { x: number; y: number } | null {

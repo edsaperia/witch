@@ -27,7 +27,7 @@ function setFight({ tuning, playtest }: KnobNight, scale: number, speed: number,
   tuning.fight.scale = clamp(scale); tuning.fight.speed = clamp(speed); tuning.fight.momentum = clamp(momentum); // (live mid-fight)
   if (log) playtest.fight(tuning.fight.scale, tuning.fight.speed, tuning.fight.momentum);
 }
-// Treetop speed, live (the world's knobs: see WORLD_DEFAULT in main.ts); area size and the map's are the link's (a new map).
+// Treetop speed, live (the world's knobs: see WORLD_DEFAULT in app/linkParams.ts); area size and the map's are the link's (a new map).
 function setTreetop({ tuning, world, playtest }: KnobNight, speed: number, log = true): void {
   world.treetopSpeed = Math.round(Math.min(300, Math.max(8, speed)));
   tuning.treetopSpeed = world.treetopSpeed;

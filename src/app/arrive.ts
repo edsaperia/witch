@@ -42,8 +42,8 @@ export class ArrivalFlight {
     return { tx: p.tx, ty: p.ty + groundHeight(p.tx, p.tz), tz: p.tz, angle: p.angle, distance: p.distance, fov: g.tuning.camera.fov };
   }
 
-  /** The start's art is ready: the camera takes over at the chart's behind the still (from the next frame). `warmed`: its first frames
-   *  drawn there ahead already (a night made under the chart's flight, main.ts warmAt): no wait behind the still, it fades at once. */
+  /** The start's art is ready: the camera takes over at the chart's behind the still (from the next frame). `warmed`: a night
+   *  made under the chart's flight (main.ts departFromChart): no wait behind the still, it fades at once. */
   begin(g: Game, warmed = false): void {
     if (this.plan || this.done) return;
     if (warmed) this.warmT = { ...this.A, warm: { ...this.A.warm, frames: 0 } };

@@ -63,7 +63,7 @@ export function clearSave(storage?: Store | null): void {
   try { storeOf(storage)?.removeItem(SAVE_KEY); } catch { /* storage blocked */ }
 }
 
-/** Start a new campaign in the world `world` (Start over on the sea chart): nothing found, nothing won. */
+/** Start a new campaign in the world `world` (the sea chart's Start over, gone since Ed, 2026-10-23: only the tests call it now): nothing found, nothing won. */
 export function newCampaign(world: number, storage?: Store | null): ChartSave {
   const save = emptySave(world);
   storeSave(save, storage);

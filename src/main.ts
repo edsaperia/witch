@@ -401,7 +401,7 @@ installTelephone(phoneEnabled);
 /** ?mistgate=0 (a builder's, the loading mist: render/loadingMist.ts): the island counted ready (g.islandReady) without waiting
  *  for its art (nothing in the house waits on it since the oak; with ?artdelay=<s>, slowly), to see the mist roll away. */
 const mistGateOff = params.get("mistgate") === "0";
-/** The link as it came (before the boot puts its own ?seed= in): whether this load opens on the sea chart (app/opening.ts). */
+/** The link as it came (before the boot puts its own ?seed= in): whether this load wakes in her bedroom (app/opening.ts opensInBedroom). */
 const bootLink = new URLSearchParams(location.search);
 const restoringComment = params.get("restore") === "comment";
 const bootSlot = browserSaveSlots().active();
@@ -462,7 +462,7 @@ if (bootSeed === null) {
 }
 
 // The boot's own map, made in a worker from here on (app/mapPrep.ts; Ed, 2026-10-20): the page's thread free while it's made (the
-// opening's chart, the bedroom); a sail's arrival (&arrive=1) takes the chart's instead.
+// loading screen, the bedroom); a sail's arrival (&arrive=1) takes the chart's instead.
 // (the zoo: its islands' real coasts read back from the chart's cache first, a moment at most, for its map: app/zooCoasts.ts)
 if (params.has("zoo")) { const w = params.get("world"), t0 = performance.now(), r = await readZooCoasts(w ? worldSeed(w) : loadSave().world); console.info(`zoo: ${Object.keys(r.coasts).length} islands in their real shapes (${Math.round(performance.now() - t0)} ms)${r.missing.length ? `, ${r.missing.length} round till the chart makes them` : ""}`); }
 const bootMap = resumeGame || params.get("arrive") ? null : startBootMapPrep(bootSeed, params);
@@ -613,8 +613,8 @@ const fit = () => { view.resize(window.innerWidth, window.innerHeight); viewRevi
 window.addEventListener("resize", fit);
 fit();
 
-// Make the art and ground round the start before the first frame, behind the start screen (the night's flags.ready).
-// The start screen's progress bar: the sets of sprites drawn so far. Play can start once what the
+// Make the art and ground round the start before the first frame, behind the loading screen or the bedroom (the night's flags.ready).
+// The retired start card's progress bar (hidden with it since Ed, 2026-10-30, still filled): the sets of sprites drawn so far. Play can start once what the
 // start needs is ready; the rest is drawn in the background (nearest areas first).
 const progressEl = document.getElementById("progress")!, progressFill = progressEl.querySelector<HTMLElement>(".fill")!, progressLabel = progressEl.querySelector<HTMLElement>(".label")!;
 const showProgress = setInterval(() => {
@@ -640,7 +640,7 @@ requestAnimationFrame(() => setTimeout(async () => {
   else if (inBedroom) view.asleepInBed = mutate("wake: first bed", () => tuckIn(night.game)); // (in her bed, the camera on her, before the start's made round her, as the bed's next night: nightInPlace; drawn there under the loading screen, never at her decks first)
   await view.prepare();
   night.flags.ready = true;
-  // The sea chart's renderer and shaders made ahead, while the start screen shows (ui/chartOverlay.ts prepareChart): E at the map
+  // The sea chart's renderer and shaders made ahead, once the start is ready (ui/chartOverlay.ts prepareChart): E at the map
   // table then opens it without seconds of waiting. Not under automation (the smoke and bench runs), unless ?prepChart=1.
   if (params.get("prepChart") === "1" || (params.get("prepChart") !== "0" && !navigator.webdriver)) setTimeout(() => void prepareChart().catch(e => console.warn("sea chart: not made ahead", e)), 300);
   loadTimes.ready = performance.now();
@@ -654,7 +654,7 @@ requestAnimationFrame(() => setTimeout(async () => {
   night.arrival?.begin(night.game); // (the camera takes over from the chart's still)
 }, 0));
 
-// The sound: the volume slider in the corner, then the context, music and sound effects at the first press (app/sound.ts).
+// The sound: the context, music and sound effects at the first press (app/sound.ts; the corner's volume slider went, Ed 2026-10-10).
 const sound = page.sound = new Sound(bootTuning, N().musicStyle, N().seed);
 sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where the line is drawn)
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
@@ -806,10 +806,10 @@ function arrivedNow(): void { return a4_arrivedNow(pageHost); }
 function wakeArrival(): void { return a4_wakeArrival(pageHost); }
 function wakeArrivalNow(): void { return a4_wakeArrivalNow(pageHost); }
 
-// The character creator (Ed, 2026-10-05; "dressing up" to the player, the house's Bedroom being the room with the bed): at every
-// load but a sail's arrival (&arrive=1 lands in her bed), from the hidden start card's button, and mid-night from the treehouse's
-// stations (below); ?creator=0 skips it (tests, the smoke run), and loading is the start screen's as before.
-// It's also the loading screen (Ed, 2026-10-05): it opens at once and the forest grows behind it;
+// The character creator (Ed, 2026-10-05; "dressing up" to the player, the house's Bedroom being the room with the bed): mid-night from
+// the treehouse's stations (below), and at a load only where it neither wakes in her bedroom (the default since Ed, 2026-10-23), arrives
+// by a sail nor resumes a night (app/opening.ts opensWithCreator: ?opening=old); ?creator=0 skips it (tests, the smoke run).
+// There it's also the loading screen (Ed, 2026-10-05): it opens at once and the forest grows behind it;
 // Start waits ("getting ready") until play can begin.
 const creator = new Creator(style, savedLook, bootTuning.pixelSize);
 creator.version = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev"; // (its version, top left: Ed, 2026-10-13)
@@ -859,7 +859,7 @@ a4_installStations9(pageHost);
 a4_installStations10(pageHost);
 const sparkle = new BrushSparkle(() => herHead());
 a4_installStations11(pageHost); // (Ed, 2026-10-26: she twirls while her new look draws)
-// The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
+// The Workshop's modding stations (Ed, 2026-10-23, one bay then; three since 2026-11-07; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
 // and its set's spell with it: rules/spells.ts setParts), and is kept on this browser for the nights after (app/broomSave.ts).
 a4_installStations12(pageHost); // Solo keeps fitted parts without any loan; online choices wait for host approval.
 // Her trail's colours (Ed, 2026-11-03: "set the colour set of your trail in the broom station and there are a few presets"; the Broom
@@ -899,9 +899,9 @@ const zoo = new ZooOverlay(domZooHost(on => mutate("house: zoo pause", () => { c
 // the night running on at the house's tenth while she stands still, WASD and the left stick looking round too (Ed, 2026-10-26:
 // "walking away shouldn't work"); E (the pad's ○) leaves, and E there looks again; Esc pauses over it. Its picture is drawn at telescope.resolution, on an integrated GPU
 // (Ed's Intel UHD) telescope.lowGpuResolution (?telescopeRes= sets it: 0.25 to 3, 1 the game's pixels, 2 twice as fine).
-// The treehouse Studio's instruments (Ed, 2026-10-23; app/studio.ts, rules/studio.ts, ui/studioPanel.ts): walking up to the drum
-// kit, the modular synth or the microphone she's at it, its menu in and every key playing it (she stands still: her keys are its),
-// till Esc (the pad's B) steps her away; the first Esc is the instrument's, the next the pause's. The Studio's loop is its own.
+// The treehouse Studio's instruments (Ed, 2026-10-23; app/studio.ts, rules/studio.ts, ui/studioPanel.ts): E at the drum
+// kit, the modular synth or the microphone and she's at it, its menu in and every key playing it (she stands still: her keys are its),
+// till Esc or E (the pad's back, ○) steps her away; the first Esc is the instrument's, the next the pause's. The Studio's loop is its own.
 const studioPanel = new StudioPanel();
 const studio = new StudioPlayer(N().musicStyle, () => sound.audio, () => N().tuning.music.volume * sound.level, studioPanel);
 /** What takes the keys now (the frame loop: input.release() as it changes). */
@@ -915,8 +915,8 @@ a4_installStations15(pageHost); // (a new night in place: not till it's made)
 a4_installStations16(pageHost);
 a4_installStations17(pageHost); // (the scroll's burst: play, and the spell cast)
 a4_installStations18(pageHost);
-// The bot game (Ed, 2026-10-06: "start the game and watch the skilled bot play"; ?bot=skilled|crude, or the start
-// screen's Bot game): rules/bot.ts plays in place of her controls, a seeded witch, no character creation. The bot's code loads
+// The bot game (Ed, 2026-10-06: "start the game and watch the skilled bot play"; ?bot=skilled|crude; the start
+// card's Bot game button is hidden with the card since Ed, 2026-10-30): rules/bot.ts plays in place of her controls, a seeded witch, no character creation. The bot's code loads
 // only for a bot game (overnight phase 2: out of the game's bundle); it starts as soon as both it and the forest are ready.
 const botParam = params.get("bot") as BotKind | null;
 let bot: Bot | null = null, botTag: BotTag | null = null, botKind: BotKind | null = null;
@@ -1168,7 +1168,7 @@ const findsPanel = new FindsPanel(() => { view.partsFound = partsNow(); return f
 });
 findsPanel.mutate = action => { if (!phone.active) mutate("debug: finds changes", action); };
 // ?dream=won:hat:sentry (or lost:wearable:top-cape, ...): her dream of such a loan over the night, at once, its own dark under it
-// (for a look at it; under ?shot= it's drawn only when asked, window.__dream.draw(seconds): tools/loan/dream-shots.cjs).
+// (for a look at it; under ?shot= it's drawn only when asked, window.__dream.draw(seconds): tools/loan/shots.cjs).
 { const [v, k, ...r] = (params.get("dream") ?? "").split(":"), id = r.join(":");
   if ((v === "won" || v === "lost") && FIND_KINDS.some(q => q.id === k && q.items.includes(id))) startDream({ loan: lend(k as FindKindId, id, { look: null, hat: "none", parts: N().game.witches[0].spells.parts }), won: v === "won" }, true); }
 a4_installDebug3(pageHost);
@@ -1256,8 +1256,8 @@ function sailFromChart(href: string, to: Sailed): Promise<boolean> { return a4_s
 /** The night she's leaving recorded on the chart, unwon if it's still on (in the campaign's world only, as nightOver). */
 function recordSail(): void { return a4_recordSail(pageHost); }
 /** The next night made under the sea chart as it flies (Ed, 2026-10-24, the sail's transition: "Start the dive as soon as what it
- *  really needs is ready", "Never a frozen frame"): from the moment she sails (the chart's onDepart), the night she's leaving
- *  recorded and ended and the next made as a sail's is (makeSailNight), its first frames drawn ahead at the chart's hand-off; the
+ *  really needs is ready", "Never a frozen frame"): from the end of the flight's first leg (the chart's onDepart, the sail committed), the night she's leaving
+ *  recorded and ended and the next made as a sail's is (makeSailNight), the rest of its build going on under the dive; the
  *  chart's flight slows to wait for it (app/chartView.ts), then hands over (sailFromChart, with this night). Resolves once it's ready,
  *  or has gone wrong (the hand-off then loads the island's page, as ever). */
 let departing: { island: string; seed: number; night: Promise<Night> } | null = null;
