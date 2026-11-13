@@ -224,7 +224,7 @@ export function render(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
       // (hers: glowing where she left and where she lands, a streak of its light and its pool along the way; render/fx/spellGlow.ts)
       a4ViewHost.magic.emit("moonlight", "aura", blink.fromX, 1.5, blink.fromZ, 1, 0.7, 0.5, 910001, true);
       a4ViewHost.magic.emit("moonlight", "burst", blink.toX, 0.8, blink.toZ, 1, 0.7, 0.6, 910002, true);
-      a4ViewHost.magic.streak("moonlight", blink.fromX, blink.fromZ, blink.toX, blink.toZ, 0.9, 0.22, 0.45);
+      a4ViewHost.magic.streak("moonlight", blink.fromX, blink.fromZ, blink.toX, blink.toZ, 0.9, 0.4, 0.6);
     }
     {
       // her trail: behind her broom, as long as she's fast, in the colour of the area under her (its creature's neon, as the

@@ -486,6 +486,7 @@ glossary; these are the prototype's), by note.
 - Attack effects
 - Attack look
 - Spell glow
+- Her magic's glow
 - Colour temperatures
 - Path kinds
 - Path looks

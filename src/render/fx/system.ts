@@ -24,8 +24,10 @@ type Streak={element:string;x0:number;z0:number;x1:number;z1:number;y:number;wid
 export type Mine=0|1|2;
 /** A native adapter's glow (config/fx/native.json `glow`; Ed, 2026-11-13: "extend"): its glowing core and halo `core` strong and
  *  `size` m across (0: none, where a core would cover her or a sigil's glyph), its pool on the ground `pool` strong and `poolSize` m
- *  across; `claim`: its light her cast magic's (first claim on the slots). */
-interface NativeGlow{core:number;size:number;pool:number;poolSize:number;claim?:boolean}
+ *  across; `lift`: its core this far over where it's given (m; the ley line's spark burns 1 m over its light); `light`: its real
+ *  light's strength while her glow's on, in place of the adapter's own (the spark earns one: its own lights nothing to speak of);
+ *  `claim`: its light her cast magic's (first claim on the slots). */
+interface NativeGlow{core:number;size:number;pool:number;poolSize:number;lift?:number;light?:number;claim?:boolean}
 /** Past this in a glow instance's intensity: her own magic's (render/fx/batch.ts spellGlow). */
 const HER_DATA=10;
 const SYSTEMS=new WeakMap<THREE.Scene,MagicFx>();
@@ -134,9 +136,9 @@ export class MagicFx {
       this.glowLook(look);this.glowData(f.id,key,intensity,phase,tint);
       const hit=form==="burst"||form==="eruption",wide=form==="aura"||form==="vortex"||form==="dome"||form==="pillar";
       // (her own: a wide form's core a small one at its middle, not a ball its whole size over her)
-      if(!f.ground&&look.core+look.halo>0)this.batches.glowAt(x,y,z,diameter*(hit?0.26:mine&&wide?0.2:0.62),this.data,alpha*(hit?0.8:1),tint);
+      if(!f.ground&&look.core+look.halo>0)this.batches.glowAt(x,y,z,diameter*(hit?0.26:mine&&wide?0.4:0.62),this.data,alpha*(hit?0.8:1),tint);
       // its pool under it: smaller and fainter the higher it flies (so the lit spot says how high it is), a hit's wide
-      if(look.pool>0)this.batches.poolAt(x,z,f.ground?diameter*1.15:Math.max(2.4,diameter*(hit?1:mine&&wide?1.2:1.9)),this.data,alpha*(f.ground?0.6:Math.max(0.35,1-y/14)),tint);
+      if(look.pool>0)this.batches.poolAt(x,z,f.ground?diameter*1.15:Math.max(mine?3.4:2.4,diameter*(hit?1:mine&&wide?1.2:1.9)),this.data,alpha*(f.ground?0.6:Math.max(0.35,1-y/14)),tint);
     }
     if(lit&&(!look||look.light>0))this.light(`${key}:${form}:${seed}`,x,y,z,key,intensity,alpha,tint,glow,look&&!mine?look.light:0,mine?2:0);
     if(FX_QUALITY.imprints && (form==="burst" || form==="zone" || form==="eruption" || form==="beam" || form==="projectile" || form==="vortex" || form==="pillar")) {
@@ -152,12 +154,13 @@ export class MagicFx {
   native(feature:NativeFx,x:number,y:number,z:number,amount=1,seed=0,tint:readonly number[]|null=null):void{
     if(!this.enabled||amount<=0.01||Math.hypot(x-this.cx,z-this.cz)>80)return;
     const d=native[feature],key=fxElement(d.element),G=(d as {glow?:NativeGlow}).glow,her=this.her;
-    if(d.light>0)this.light(`native:${feature}:${seed}`,x,y,z,key,d.intensity,Math.min(1,amount)*d.light,tint,1,0,G?.claim?2:1);
+    const lit=her&&G?.light!==undefined?G.light:d.light;
+    if(lit>0)this.light(`native:${feature}:${seed}`,x,y,z,key,d.intensity,Math.min(1,amount)*lit,tint,1,0,G?.claim?2:1);
     // Her own magic's glow (Ed, 2026-11-13: "extend"): its glowing core and dithered halo, and its pool on the ground under it
     // (smaller and fainter the higher it is, as a creature's shot's), in its own colour (the tint).
     if(her&&G){
       const a=Math.min(1,amount);this.mine=true;this.glowData(forms[d.form as FxForm].id===forms.beam.id?forms.projectile.id:forms[d.form as FxForm].id,key,d.intensity,0,tint);
-      if(G.core>0&&her.core+her.halo>0)this.batches.glowAt(x,y,z,G.size,this.data,a*G.core,tint);
+      if(G.core>0&&her.core+her.halo>0)this.batches.glowAt(x,y+(G.lift??0),z,G.size,this.data,a*G.core,tint);
       if(G.pool>0&&her.pool>0){const high=Math.max(0.35,1-y/14);this.batches.poolAt(x,z,G.poolSize*(0.6+0.4*high),this.data,a*G.pool*high,tint);}
     }
     if(d.anchor>0){
@@ -284,8 +287,8 @@ export class MagicFx {
       const her=this.her,length=Math.hypot(k.x1-k.x0,k.z1-k.z0);if(!her||length<0.5)continue;
       const fade=(1-age/k.life)**2,x=(k.x0+k.x1)/2,z=(k.z0+k.z1)/2,heading=Math.atan2(k.z1-k.z0,k.x1-k.x0);
       this.mine=true;this.glowData(forms.beam.id,fxElement(k.element),0.45,0,null);
-      if(her.core+her.halo>0)this.batches.glowLine(x,k.y,z,length,heading,k.width,this.data,fade*0.6,null,false);
-      if(her.pool>0)this.batches.glowLine(x,0,z,length,heading,k.width*5,this.data,fade*0.55,null,true);
+      if(her.core+her.halo>0)this.batches.glowLine(x,k.y,z,length,heading,k.width,this.data,fade*0.9,null,false);
+      if(her.pool>0)this.batches.glowLine(x,0,z,length,heading,k.width*7,this.data,fade*0.8,null,true);
     }
     this.streaks.length=used;this.batches.end();
     if(this.field.publish() || uploadedField!==this.field){
