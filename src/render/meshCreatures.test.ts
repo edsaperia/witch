@@ -18,7 +18,8 @@ describe("mesh creatures", () => {
   it("are only drawn when the style asks", () => {
     expect(hasMesh("fox", {})).toBe(false);
     expect(hasMesh("fox", { meshCreatures: 1 })).toBe(true);
-    expect(hasMesh("wolf", { meshCreatures: 1 })).toBe(false); // (no mesh yet)
+    expect(hasMesh("hydra", { meshCreatures: 1 })).toBe(false); // (no mesh yet: the last batch's)
+    expect(hasMesh("wolf", { meshCreatures: 1 })).toBe(true); // (batch A, 2026-11-13)
     expect(hasMesh("bee", { meshCreatures: 1 })).toBe(true); // (a kind since 2026-11-12, in the marten's place on home)
     expect(hasMesh("turtle", { meshCreatures: 1 })).toBe(true); // (a kind since 2026-11-12, in the newt's place in the Fen)
     expect(hasMesh("fox", { meshCreatures: 0 })).toBe(false); // (the link's meshCreatures=0: the generated ones, to compare)
@@ -123,6 +124,7 @@ describe("mesh creatures", () => {
   const gap = (f: Frame, w: number, h: number): number => { for (let y = h - 1; y >= 0; y--) for (let x = 0; x < w; x++) if (f.albedo[(y * w + x) * 4 + 3]) return h - 1 - y; return h; };
   /** How each kind gets about (Ed, 2026-11-12: "many small creatures bound rather than trot"). A new kind's goes here with its mesh. */
   const GAITS: Record<string, string> = { fox: "trot", stoat: "bound", marten: "bound", hare: "bound", squirrel: "bound", dormouse: "bound", badger: "trot", mole: "trot", hedgehog: "trot", turtle: "walk", snail: "glide", bee: "fly", stag: "trot", elk: "trot", roe: "bound", ram: "trot", ibex: "bound", boar: "trot" };
+  Object.assign(GAITS, { wolf: "trot", arcticfox: "trot", raccoon: "trot", redpanda: "trot", fennec: "bound", otter: "bound", meerkat: "bound" }); // (batch A, 2026-11-13)
 
   it("every kind says how it goes, and its stride is long enough to read as one (not a shuffle on the spot)", () => {
     for (const [species, levels] of Object.entries(PLANS)) levels.forEach((make, level) => {
