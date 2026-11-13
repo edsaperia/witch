@@ -6226,7 +6226,7 @@
             "light"
           ],
           "additionalProperties": false,
-          "description": "How her own magic glows, with the same pieces as the creatures' spells: a bright core the bloom picks up, a dithered pixel halo round it, a pool of its light on the ground under it, and a real light where it earns one (all four at 0 draw her magic as before 13 November; ?magicglow=0 does too, to compare)."
+          "description": "How her own magic glows, as the creatures' spells do: a bright core, a dithered pixel halo, a pool of its light on the ground and a real light where it earns one (all four at 0 draw her magic as before 13 November; ?magicglow=0 does too, to compare)."
         }
       },
       "required": [

@@ -222,7 +222,7 @@
       "notes": "core: how bright the glowing core added over each spell's own is, in its element's bright colour (a party animal's: its neon), enough to cross the bloom's threshold, so the bloom gives it a small smooth glow (0 none). halo: the dithered halo round bolts, hits and beams, in three art-pixel steps fading out (0 none). pool: its light's pool on the ground under every spell in flight (smaller and fainter the higher it flies, so the lit spot shows its height), at its hits and across lingering zones and quakes (0 none). lights: at most this many spells light the world around them at once (the strongest nearest her first, sharing the effects' six slots, config/fx/intensity.json lightCap, within the light budget; easing in and out, the world's farthest lights making room the same way, so none pops); 0 none. light: those lights' strength (1 as the magic layers' own). Reduce flashing (the Settings page) halves core, halo, pool and light; nothing in the glow flickers."
     },
     "attackFx.magicGlow": {
-      "what": "How her own magic glows, with the same pieces as the creatures' spells: a bright core the bloom picks up, a dithered pixel halo round it, a pool of its light on the ground under it, and a real light where it earns one (all four at 0 draw her magic as before 13 November; ?magicglow=0 does too, to compare).",
+      "what": "How her own magic glows, as the creatures' spells do: a bright core, a dithered pixel halo, a pool of its light on the ground and a real light where it earns one (all four at 0 draw her magic as before 13 November; ?magicglow=0 does too, to compare).",
       "decisions": [
         {
           "by": "Ed",
