@@ -42,10 +42,11 @@ const BEARINGS = [["N", 0], ["NE", 45], ["E", 90], ["SE", 135], ["S", 180], ["SW
       for (let k = 1; k <= 900; k++) {
         const f = await frame(k <= 2 && !!shot && !!shots); ms += f.ms;
         if (k === 1) { r.first = f.missing; r.firstMs = Math.round(f.ms); if (shot && shots) await page.screenshot({ path: path.join(shots, `${name}.png`), timeout: 300000 }); }
-        if (k === 2 && shot && shots && !out.looks.length) await page.screenshot({ path: path.join(shots, `${name}-2.png`), timeout: 300000 }); // (the night's first look, a frame on)
+        // (the night's very first frame is odd whatever is listed, its depth coming from the house's view: its second one too, for the sheet)
+        if (k === 2 && shot && shots && name === "N") await page.screenshot({ path: path.join(shots, "N-2.png"), timeout: 300000 });
         if (f.mist) r.mist++; else if (r.mistOff === null) r.mistOff = k; // (frames its mist was on, and the first with it off)
         if (r.frames === null && f.missing === 0) { r.frames = k; r.ms = Math.round(ms); }
-        if (r.frames !== null && !f.listing && !f.mist) { r.settled = k; r.settledMs = Math.round(ms); break; }
+        if (r.frames !== null && !f.listing && !f.mist && !(shot && shots && name === "N" && k < 2)) { r.settled = k; r.settledMs = Math.round(ms); break; }
       }
       console.error(JSON.stringify(r));
       return r;
