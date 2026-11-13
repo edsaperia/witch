@@ -14,12 +14,15 @@ export interface WardrobeItem { id: string; name: string; set: Record<string, st
   /** a bag's 💌 stats: multipliers on the tuning's invites numbers (cooldown, range, homing...) while she wears it (rules/bags.ts) */ invites?: Record<string, number>;
   /** a bag's 💌 stats the tuning has at 0 (inaccuracy, bloom...): added on, not multiplied (rules/bags.ts) */ invitesAdd?: Record<string, number>;
   /** the words under its name on a panel's card ("faster throws, shorter reach") */ stat?: string;
-  /** a toggle's short label, on its card in place of a picture (the basin's makeup: "Lips", "Eyes", "Blush") */ short?: string;
-  /** a toggle's colour part (its shelf's colour grid's): choosing a colour for that part puts it on (lipstick and its lips) */ colour?: string }
+  /** a toggle's short label, on its card in place of a picture (the basin's makeup's "Lips", "Eyes", "Blush" till Ed, 2026-11-12) */ short?: string;
+  /** a toggle's colour part (its shelf's colour grid's): choosing a colour for that part puts it on (lipstick and its lips, till 2026-11-12) */ colour?: string }
 /** A row of a station's panel: its items, its colour grid's parts and kind, its fit sliders (WITCH_AXES); or the Workshop's (Ed,
  *  2026-10-23; docs/backlog/workshop.md): a slot's broom-part cards, the sets' chips, the pegboard's 3 × 3 board. */
 export interface Shelf { id: string; label: string; items: WardrobeItem[]; /** its items' live pictures (the bags firing: Ed, 2026-10-29), shown with the stat line for the one in focus only (Ed, 2026-11-07: "Show the stats line and firing preview only for the bag in focus") */ preview?: boolean;
-  /** its items each on or off by itself, choosing a worn one taking it off (the basin's makeup: Ed, 2026-11-07, "lipstick colour, eyeshadow colour, blush on/off") */ toggle?: boolean;
+  /** its items each on or off by itself, choosing a worn one taking it off (the basin's makeup from Ed, 2026-11-07, "lipstick colour, eyeshadow colour, blush on/off", till 2026-11-12) */ toggle?: boolean;
+  /** one colour grid for all its colour parts, and no item cards (the basin's makeup: Ed, 2026-11-12, "have only one option which is
+   *  both the lips and eyes together, the same colour. So the makeup box just has a colour picker, no sub-options"): a colour chosen
+   *  puts it on every part and puts on the items she owns; the colour she has on chosen again takes them off ("Pick again to remove"). */ oneColour?: boolean;
   /** a button, not a choice: chosen, the panel plays it (the basin's "teeth": Ed, 2026-11-07, "a 'brush your teeth' button ... flavour only, no gameplay effect") */ action?: string; colour?: string[]; grid?: "cloth" | "skin"; fit?: string[]; always?: boolean; /** the part of her the camera zooms in on while it's chosen (camera.station.parts) */ frame?: string;
   /** the Workshop's bay: a row of part cards for this slot of her broom (rules/broomParts.ts), the empty slot first */ slot?: Slot;
   /** the bay: the sets' progress, a chip each */ sets?: boolean;
@@ -69,7 +72,7 @@ export const shownItems = (s: Shelf): WardrobeItem[] => s.items;
 /** Whether a shelf's items row shows: two or more of them hers (Ed, 2026-10-23: "Don't show options where there's nothing to choose
  *  yet"), or any of them not found yet, shown as grey silhouettes (Ed, 2026-11-07: "they're good foreshadowing", so the unfound shoes
  *  and sunglasses show even while she has only one of that shelf); a toggle's with one (on or off is a choice). */
-export const itemsToChoose = (s: Shelf, owned: ReadonlySet<string>): boolean => { const items = shownItems(s), mine = items.filter(i => owned.has(i.id)).length; return mine >= (s.toggle ? 1 : 2) || (mine < items.length && items.length >= 2); };
+export const itemsToChoose = (s: Shelf, owned: ReadonlySet<string>): boolean => { if (s.oneColour) return false; /* (its colour grid is the choice) */ const items = shownItems(s), mine = items.filter(i => owned.has(i.id)).length; return mine >= (s.toggle ? 1 : 2) || (mine < items.length && items.length >= 2); };
 /** Whether she's drawn without her hat while `station`'s panel is open (its choices are on her head or face: Ed, 2026-10-23). */
 export const bareHeadAt = (station: string): boolean => !!RAW.bareHead?.includes(homeStation(station));
 
@@ -90,6 +93,10 @@ export function wear(g: Genome, item: WardrobeItem): Genome {
   }
   return out;
 }
+
+/** Whether she has on every item of a one-colour shelf's she owns (the basin's makeup: her lipstick and eyeshadow both), so its colour
+ *  shows as chosen; none owned, not on. */
+export const wearsOneColour = (g: Genome, s: Shelf, owned: ReadonlySet<string>): boolean => { const mine = s.items.filter(i => owned.has(i.id)); return mine.length > 0 && mine.every(i => wears(g, i)); };
 
 /** Her genome with a toggle `item` taken off (a copy): each value it sets back to off (false, 0, "none"). */
 export function unwear(g: Genome, item: WardrobeItem): Genome {

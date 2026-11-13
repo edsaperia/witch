@@ -983,7 +983,8 @@ export type SchemaTuning = {
         "tug": {
           "perMetre": number;
           "rise": number;
-          "commit": number;
+          "hold": number;
+          "ease": number;
         };
         "pop": {
           "fill": number;
@@ -2214,6 +2215,11 @@ export type SchemaTuning = {
       "snooze": number;
       "stretch": number;
       "alarmMin": number;
+    };
+    "eyes": {
+      "shut": number;
+      "open": number;
+      "reopen": number;
     };
   };
   "arrive": {
