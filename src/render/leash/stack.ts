@@ -1,5 +1,6 @@
 // The leash itself (render/leash.ts): the sigil stack over her hat, the bond to each leashed creature (its glow, sparks, travel
-// route and the thread under strain), and her broom straining under the sigils' weight (render/load.ts).
+// route and its chain, or the old thread under strain). (Her broom's strain under the sigils' weight went with the weight
+// system: Ed, 2026-11-03, "the weight system goes"; rules/leashWeight.ts.)
 import * as THREE from "three";
 import { leashPoint, stackOrder } from "../../rules/leash";
 import { AT_END, chainLength, chainShown, weighingChains } from "../../rules/chains";
@@ -146,7 +147,7 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
 }
 
 /** The bond: each leashed creature's glow at its feet, its sparks flowing back to its leash point, its travel route as
- *  grounded chain links, and the thread under strain (and under a load, sooner, taut and brighter: render/load.ts). */
+ *  grounded chain links, and its chain (rank sigils on) or the old thread under strain (no load any more: Ed, 2026-11-03). */
 /** A pulled-down take-off's flash (Ed's playtest, v3893: "Indication that your leashed animals are stopping you from taking
  *  off should be the leashes of the (non-baby) animals flashing to complete lines (not dotted lines)"): the spans, in seconds
  *  after the "grounded" leash event, while the leashes of the followers that weigh her down are drawn whole, two flashes

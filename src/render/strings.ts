@@ -335,7 +335,7 @@ export class StringLightsView {
     this.scene.add(wireL, bulbs);
     this.crown = { view, bulbs, wire: wireL };
   }
-  /** The crown's lights' meshes (for the house's layer indoors: render/view.ts). */
+  /** The crown's lights' meshes (for the house's layer indoors: render/view/houseFrame.ts). */
   get crownMeshes(): THREE.Object3D[] { return this.crown ? [this.crown.wire, this.crown.bulbs] : []; }
   /** A frame of the crown's lights: lit from the party spell's time (before it, off; a game without the spell, from the start),
    *  drawn as the crown is, in the world or over the floors. */

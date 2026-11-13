@@ -679,7 +679,7 @@ export class View {
   get treehouseBatch(): SpriteBatch { return this.island.treehouseBatch; }
   /** Where the Ent's deck middle is drawn this frame (render/view/home.ts entDeckDrawn; tools/house/terrace-lock.cjs). */
   entDeckDrawn(): { x: number; y: number; z: number } | null { return entDeckDrawn(this); }
-  /** The treehouse's placeholder rooms (render/houseRooms.ts), with the house's rooms on. */
+  /** The treehouse's rooms (render/houseRooms.ts: placeholders at first), with the house's rooms on. */
   houseRooms: HouseRoomsView | null = null;
   private cauldronLook: CauldronView | null = null;
   /** The zoo's little treehouse's "exit" prompt (render/zooExit.ts), made in the zoo. */
@@ -802,7 +802,7 @@ export class View {
   /** Her light dimmer in the wild, back up in a fight (render/combatLight.ts). */
   readonly combatLight = new CombatLight();
   shadows!: ShadowBatch;
-  /** The live rig (#79 stage 5, ?rig=1): creatures put together from parts each frame. */
+  /** The live rig (#79 stage 5; on unless ?rig=0): creatures put together from parts each frame. */
   rig!: RigView | null;
   /** The camera's snap this frame, in the picture's pixels (x right, y down): what main.ts shifts the canvas by. */
   readonly subpixel = { x: 0, y: 0 };
@@ -1004,7 +1004,7 @@ export class View {
   /** `o.dive` (a sail's, Ed 2026-10-24: "Don't wait for the trees"; "we only really need the scenery south of the treehouse for the
    *  dive"; "the treehouse doesn't have to be ready at the start of the dive - only once it's in view"): metres from the dive's view
    *  (rules/arrive.ts diveReach): the area types drawn in that order, nearest first, under the loading mist; and the start waits only
-   *  for the shaders (the hand-off's own ground is drawn by its first frames, main.ts warmAt): the house's art, the ground and the
+   *  for the shaders (and the ground where the dive first sees the island, `track`: render/view/lifecycle.ts): the house's art, the ground and the
    *  forest round it are made from the start, alongside them, and on through the dive if they're not done by its hand-off (`homeDone`;
    *  app/arrive.ts eases the dive if they're due in view before then). */
   /** `underDive` (with `dive`): the chart hands over at once, this going on under the dive (compileAll's `underDive`). */
@@ -1048,7 +1048,7 @@ export class View {
    *  loading screen."): its area types' trees, every look its creatures can wear and the coast's and lakes' dressing (render/
    *  islandNeeds.ts); resolves once they've landed. Not under ?quick=1 (only what's needed, as it's needed) or in the zoo (askIsland's). */
   private islandAhead(near: Map<number, number>, dive = false): Promise<void> { return a4_islandAhead(this, this.a4Internals, a4Shared, near, dive); }
-  /** Every area's great stump (render/markers.ts stumpDeal; none with the rune stones), each baked once: its areas' types' in `near`'s
+  /** Every area's great stump (rules/stumps.ts stumpDeal; none with the rune stones), each baked once: its areas' types' in `near`'s
    *  order, the nearest first. */
   private stumpSpecs(near: ReadonlyMap<number, number>): StumpSpec[] { return a4_stumpSpecs(this, this.a4Internals, a4Shared, near); }
   /** The island's creatures' faces asked for in the background, not waited for (Ed, 2026-11-05: "Skip the animal faces"; render/
