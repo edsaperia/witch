@@ -114,7 +114,7 @@ export const creatureFrame = (level: number, f: number, away = false, n = 2) => 
 
 /** A species' walk: its frames, and how far it moves between them (a share of its sprite's width); a mesh creature's says more
  *  (art/mesh/index.js meshGait: its cycle, its standing frame, each level's step, how it goes). */
-export interface WalkGait { frames: number; step: number; steps?: number[]; cycle?: number; stand?: number; rate?: number; type?: string; /** The slow pace's frames with every foot down (what it stops on), and its fast pace: its first frame and each level's step. */ rests?: number[]; run?: { from: number; steps: number[] }; /** A kind whose heads strike in turn (the hydra): where those frames start, how many heads, and frames a head (drawn back, drawn back again, struck). */ strike?: { from: number; heads: number; each: number } }
+export interface WalkGait { frames: number; step: number; steps?: number[]; cycle?: number; stand?: number; rate?: number; type?: string; /** The slow pace's frames with every foot down (what it stops on), and its fast pace: its first frame and each level's step. */ rests?: number[]; run?: { from: number; steps: number[] }; /** A kind whose heads strike in turn (the hydra): where those frames start, how many heads, and frames a head (drawn back, drawn back again, struck). */ strike?: { from: number; heads: number; each: number }; /** The frame it sits in after its attack (the hare: art/mesh/index.js meshGait). */ sit?: number }
 export const walkGait = (species: string, st?: Style): WalkGait => (st && hasMesh(species, st) ? meshGait(species) : Art.walkGait(species)) as WalkGait;
 
 /** A party animal's gear (seeded by its id). Leashed: its seeded gear and the glowing collar in
