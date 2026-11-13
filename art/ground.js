@@ -59,7 +59,7 @@ export const GROUND_GENOMES = {
   bluebells: grG({}, [grD("flower", 60, ["LEAF3", "LEAF", "FLOWER"]), grD("tuft", 20, GR_GRASS)]),
   sand: grG({ scale: [14, 4], cuts: [.36, .7] }, [grD("ripple", 34, GR_EARTH), grD("pebble", 5, GR_STONES), grD("blade", 6, GR_GRASS)]), // dunes and desert: long low swells, wind ripples, a few stones and blades
   clover: grG({}, [grD("clover", 46, GR_GRASS), grD("flower", 8, ["LEAF3", "LEAF", "FLOWER"])]),
-  // the north's floors (Ed, 2026-10-11; no area uses them yet): snow with needles and grass poking through, lichen heath, glacier ice
+  // the north's floors (Ed, 2026-10-11; the snowfield, the crags, the icefall and others use them): snow with needles and grass poking through, lichen heath, glacier ice
   snow: grG({ scale: [12, 6], cuts: [.3, .62] }, [grD("needle", 14, ["BODY2", "ACCENT", "ACCENT"]), grD("blade", 12, GR_GRASS), grD("pebble", 5, GR_STONES)], { patches: [{ mat: "STONE", n: 2, r: [2, 4] }] }),
   lichen: grG({ scale: [6, 5] }, [grD("moss", 40, ["BODY2", "BODY", "BELLY"]), grD("sprig", 22, ["LEAF3", "LEAF", "FLOWER"]), grD("pebble", 10, GR_STONES)], { patches: [{ mat: "STONE", n: 3, r: [3, 5] }, { mat: "MOSS", n: 2, r: [3, 6] }] }),
   basalt: grG({ scale: [8, 5], cuts: [.42, .7] }, [grD("crack", 9, ["ACCENT", "GLOW", "FLOWER"]), grD("slab", 10, GR_STONES), grD("pebble", 30, GR_STONES), grD("sprig", 6, GR_GRASS)], { patches: [{ mat: "STONED", n: 3, r: [4, 8] }] }), // a volcano's flanks: black basalt and ash, lava glowing in its cracks, a few hardy sprigs

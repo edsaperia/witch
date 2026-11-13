@@ -3,7 +3,8 @@ import { CREATURE_GENOMES } from "../creatures/index.js";
 // template (the body plan: which skeleton and which sockets it has), its builder (the 3D model
 // code that draws that template, art/creatures3d.js), its palette, its proportions and its parts;
 // its size levels come from its template's curves (templates.js). creatures.js reads SPECIES from
-// these records (speciesOf in index.js), so editing a record changes the creature.
+// these records (speciesOf in index.js), so editing a record changes the creature. Since 2026-10-13
+// a record is its species' own file, art/creatures/<id>/genome.js (art/creatures/index.js gathers them).
 //   palette: hue, sat, val (its coat), belly ("white", "yellow" or its own lighter coat).
 //   body (four-legged): hgt (height on screen, 1 = ordinary), len (body length, shoulder = 1),
 //     chest and tuck (belly heights at the shoulder and the waist), neck, neckAng, neckW, hr (head

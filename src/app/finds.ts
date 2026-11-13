@@ -56,7 +56,7 @@ export const KEEPERS: Record<FindKindId, Keeper> = {
   part: {
     label: id => partById(id)?.name ?? id,
     has: () => new Set(loadBroom().found),
-    keep: (_c, id) => { partFound(id); }, // (hers, not fitted: the Workshop's bay fits it)
+    keep: (_c, id) => { partFound(id); }, // (hers, not fitted: its slot's modding station fits it, rules/kit.ts SLOT_STATION)
     drop: (c, id) => {
       const b = loadBroom(), slot = partById(id)?.slot;
       b.found = b.found.filter(p => p !== id);
@@ -108,7 +108,7 @@ export function ownWanted(spec: string): { none: boolean; grants: { kind: FindKi
 }
 
 /** ?own= at load, before the night reads the saves (app/linkParams.ts): written to this browser's saves, as the dev control
- *  writes them (none first: "none,part:x" leaves only that). A part given is found, not fitted (the Workshop's bay fits it). */
+ *  writes them (none first: "none,part:x" leaves only that). A part given is found, not fitted (its slot's modding station fits it). */
 export function applyOwn(spec: string): void {
   const { none, grants } = ownWanted(spec);
   const b = loadBroom(), spells = { parts: b.fitted, broom: spellOfParts(b.fitted), activeUntil: -Infinity, readyAt: 0, castAt: -Infinity };

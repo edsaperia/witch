@@ -1,6 +1,7 @@
 import { slotStorage } from "./saveSlots";
 // Screen shake when she's hit (Ed, 2026-10-05; render/shake.ts), laid on the canvas as a transform with the camera's sub-pixel
-// glide. For comfort it can be turned off: ?shake=0, or the start screen's toggle (remembered here).
+// glide. For comfort it can be turned off: ?shake=0, or its on/off toggle (the retired start card's, shown
+// from the pause page's Options since Ed, 2026-10-30, no start screen; remembered here).
 import { Shake } from "../render/shake";
 import type { View } from "../render/view";
 import type { Game } from "../rules/game";
@@ -8,7 +9,7 @@ import type { Tuning } from "../rules/tuning";
 
 export class ScreenShake {
   readonly shake: Shake;
-  /** The start screen's on/off toggle (null when the page has none). */
+  /** The on/off toggle (the retired start card's, borrowed by the pause page's Options; null when the page has none). */
   readonly option: HTMLElement | null;
   private shaken = false;
 

@@ -38,7 +38,7 @@ export const BASELINE_VISUALS = {
   marten: "Long brown mustelid, pale chest bib and large bushy tail read; much of ordinary face is tiny.",
   meerkat: "Slim sandy banded body, eye mask and narrow tail read; this walking sheet does not show sentinel idle.",
   mole: "Dark low oval, pink muzzle and broad pale forefeet read; limbs/head are tiny beside body at ordinary scale.",
-  moth: "Yellow/black swallowtail wing form and aerial shadow read; legacy moth ID should not drive a furry-moth redesign.",
+  butterfly: "Yellow/black swallowtail wing form and aerial shadow read (its own id since 2026-11-13; the furry moth is a separate kind, on the bench).",
   newt: "Long dark/yellow-spotted amphibian form reads; conspicuous ordinary dorsal ridge needs intended crested-newt species/season context.",
   otter: "Long low brown body and thick tapered tail read; rounded head/muzzle and feet are very small, so aquatic identity relies heavily on body/tail.",
   owl: "Face disc and patterned body read; tall ear tufts are visible on ordinary stages despite the Spotted owl name.",

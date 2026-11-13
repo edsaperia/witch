@@ -231,7 +231,7 @@ async function main() {
     results.push(`area under the witch: ${s.area}`);
   });
 
-  // The pop check again in a Heath (gorse: small bright details), where Ed saw bushes blink. On the moth's island: the home
+  // The pop check again in a Heath (gorse: small bright details), where Ed saw bushes blink. On the butterfly's island (the moth's till 2026-11-13): the home
   // island's roster is the ten home kinds, so no seed puts a heath on it (India's full run on #928, 2026-10-14), and the old
   // radius map (?island=off, 98 areas of every classic type) bakes so much art ahead that its assets never settle here within
   // the wait; the moth's (20 areas, 7 kinds since #1024's compass biomes, the heath plentiful) carries three heaths.
@@ -263,7 +263,7 @@ async function main() {
     const pops = await page.evaluate(() => window.witch.view.pops.slice(0, 12));
     const popCount = await page.evaluate(() => window.witch.view.pops.length);
     check(popCount === 0, `nothing pops in or out in clear view in the Heath, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`, "pops");
-  }, "&debug&island=moth");
+  }, "&debug&island=butterfly");
 
   // Four areas: local touch movement/rise does not need distant scenery or area diversity.
   await run("phone", { width: 390, height: 844, hasTouch: true }, async page => {

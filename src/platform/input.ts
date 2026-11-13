@@ -28,9 +28,9 @@ export class Input {
   /** The 💌's aim from the cursor: the world direction from her to the ground under (clientX, clientY). */
   aimFrom: ((clientX: number, clientY: number) => { x: number; z: number } | null) | null = null;
   private pointer: { x: number; y: number } | null = null;
-  /** At a dressing station: the d-pad moves through its panel (ui/stationPanel.ts), not her; the left stick still walks her. */
+  /** At a dressing station: the d-pad and the left stick move through its panel (ui/stationPanel.ts), not her (Ed, 2026-10-28). */
   dpadMenu = false;
-  /** What she last played with: the keyboard (or mouse), a gamepad or a touch screen; the use prompts show its button (as bound: E, ✕ or a
+  /** What she last played with: the keyboard (or mouse), a gamepad or a touch screen; the use prompts show its button (as bound: E, □ or a
    *  tap: render/houseRooms.ts). A coarse-pointer-only screen starts on touch. */
   device: "keys" | "pad" | "touch" = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches && !matchMedia("(any-pointer: fine)").matches ? "touch" : "keys";
   /** Where the mouse is (client pixels), or null before it has moved: for the aim reticle. */

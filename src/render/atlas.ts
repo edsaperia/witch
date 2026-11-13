@@ -10,7 +10,7 @@ export type { Baked, Frame, FrameGround };
 export { groundOf };
 /** An atlas's textures: its albedo and normal planes, each either one byte a pixel (R8, an index) with its palette (256 by 1,
  *  RGBA) or RGBA as drawn with no palette (render/palette.ts); `indexed` says which (x the albedo, y the normal), as the shaders'
- *  uIndexed takes it (render/sprites.ts ATLAS_GLSL). */
+ *  uIndexed takes it (atlasGlsl, below). */
 export interface Atlas { albedo: THREE.DataTexture; normal: THREE.DataTexture; albedoPal: THREE.DataTexture; normalPal: THREE.DataTexture; indexed: THREE.Vector2; frames: Frame[]; /** each frame's ground (witches' atlases), or null */ grounds?: (FrameGround | null)[] }
 
 /** Whether the atlases keep their pixels on the page after the GPU has them (`?pixels=keep`: the full smoke test reads them for its

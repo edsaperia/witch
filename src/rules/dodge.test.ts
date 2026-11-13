@@ -11,6 +11,8 @@ import { speedFactor, wanderRange } from "./creatures";
 
 // Keep the radius map: the arena is two cells east and recruits up to twelve creatures more than 300 m away before testing bounded retreat.
 const D = TUNING.dodge!;
+/** `t` with the lunges of before 2026-11-13 (tuning lunge off, ?lunge=old). */
+const oldLunge = (t: Tuning): Tuning => withTuning({ ...t, lunge: { ...TUNING.lunge!, on: false } });
 const only = (on: string): Tuning => withTuning({ witchHealth: { ...TUNING.witchHealth, hits: 1e6 }, dodge: { a: { ...D.a, on: on.includes("a") }, b: { ...D.b, on: on.includes("b") }, c: { ...D.c, on: on.includes("c") } } });
 
 /** A fight two areas out from home: n of `sp` (adults) 25 to 33 m off her, the area's own taken out. */
@@ -68,7 +70,10 @@ describe("dodging matters (Ed, 2026-10-08)", () => {
 
   it("with all three, a pack catches her walking away, where before she was all but untouched", () => {
     // (45 s: 30 before areas grew to 196 m, 2026-11-04, the area a sixth wider to back away in: 1 hit either way in 30 s; 1 and 3 in 45)
-    const before = backingOff(only(""), "wolf", 4, 45), after = backingOff(only("abc"), "wolf", 4, 45);
+    // (both with the lunges of then, so this holds the three dodge rules' own gain: with the long lunges of 2026-11-13 one seed's
+    // count here is 4 before and 2 after, inside its noise; over 12 groups and 3 seeds, tools/balance/dodgebot.mjs, backing away
+    // takes 7.4 hits a minute with the old lunges and 7.4 with the long ones)
+    const before = backingOff(oldLunge(only("")), "wolf", 4, 45), after = backingOff(oldLunge(only("abc")), "wolf", 4, 45);
     expect(before).toBeLessThanOrEqual(3);
     expect(after).toBeGreaterThan(before); // Improved interception, independent of the chosen pack tempo/hit quota.
   }, 120000);

@@ -6,7 +6,7 @@
 // speed is the tuning's `speed`; what it hasn't reached `cap` seconds after it set off goes all the same (never the mist hanging on
 // long after the trees are there). Since Ed, 2026-11-06 ("Make sure things load and render before the mist disappears, and mist
 // should fade away smoothly over a few seconds not vanish"), it sets off only once its areas' trees, stumps, campfires and
-// creatures are drawn (render/view.ts mistReady), and where it passes the mist thins away over `fade` seconds (mistLeft).
+// creatures are drawn (render/view/mistReady.ts areaReady), and where it passes the mist thins away over `fade` seconds (mistLeft).
 
 import type { Tuning } from "../rules/tuning";
 export type LoadingMistTuning = NonNullable<Tuning["loadingMist"]>;

@@ -4,7 +4,7 @@
 // plan.js joins them. The shapes start from a red fox's, measured; a species bends them to its own animal.
 
 /** A plan from its parts: the torso's rings and the head's joined into one skin, every part's bones, lofts and cones, the gait.
- *  extra: { cones, armour }: armour is a list of plates laid on the skin (quadruped.js `armour`: from and to count the skin's
+ *  extra: { cones, armour }: armour is a list of plates laid on the skin (art/mesh/shape.js `armour`: from and to count the skin's
  *  rings, 0 rump tip, 1 hips, 2 loin, 3 ribs, 4 shoulders, 5 neck, 6 throat; round [a0, a1] the angle from the spine they cover). */
 export function plan(name, body, skull, parts, gait, extra = {}) {
   return { name,

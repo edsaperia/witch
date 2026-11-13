@@ -128,11 +128,15 @@ export function walkFriendlyRoute(c: Creature, line: readonly RoutePoint[], tip:
   state.x = c.x; state.z = c.z;
 }
 
-/** An angry or happy legend's turn (Ed, 2026-10-05; #87; config/legends.json attack): it never
- *  leaves its area (it stands where it lay), but reaches attack.range metres. Every interval seconds it
+/** An angry or happy legend's turn (Ed, 2026-10-05; #87; config/legends.json attack): an angry one never
+ *  leaves its area (it stands where it lay), but reaches attack.range metres; a happy one reaches the tuning's
+ *  legends.friendRange and, with nothing to shoot, walks tonight's ley route (walkFriendlyRoute; docs/notes/gameplay.md). A
+ *  charging kind charges instead (stepLongCharge). Every interval seconds it
  *  picks the nearest it may shoot (angry: the witch on the ground and her posse, never happy creatures, and with no
- *  witch in reach the nearest standing soundsystem first: bombarding, below; happy: the enraged), winds up for windup seconds, then lobs (a bomb landing after
- *  lobFlight seconds) or beams (by its species), each hit attack.damage times its level's power for
+ *  witch in reach the nearest standing soundsystem first: bombarding, below; happy: what's attacking a witch in its range first,
+ *  else the enraged and the wild going for her), winds up for windup seconds, then casts its kind's own attack, exaggerated
+ *  (rules/attacks/species.ts legendAttack; Ed, 2026-10-27); the old lob (a bomb landing after
+ *  lobFlight seconds) or beam (by its species) only at a soundsystem, or with ?attacks=old, each hit attack.damage times its level's power for
  *  interval seconds. (Its shots are the wild's when angry, the happy's when happy: foes() does the rest.) */
 export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, data: CombatData, grid: Grid): void {
   // Its attacks share the posse's allegiance so blows can land on wild witch-attackers as well as the enraged.

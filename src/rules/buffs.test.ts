@@ -21,7 +21,7 @@ const stacks = (over: Partial<BuffStacks>): BuffStacks => ({ ...noBuffs(), ...ov
 describe("groups, by retreat", () => {
   it("each kind's group comes from its creature.js retreat and the table", () => {
     const want: Record<string, string> = {
-      cat: "climbers", owl: "climbers", moth: "climbers", griffin: "climbers",
+      cat: "climbers", owl: "climbers", butterfly: "climbers", griffin: "climbers",
       bat: "darters", ibex: "darters", toad: "darters",
       lynx: "stalkers", frostwyrm: "stalkers",
       bear: "heavies", badger: "heavies", hydra: "heavies", sphinx: "heavies", frosttroll: "heavies", stegosaurus: "heavies",

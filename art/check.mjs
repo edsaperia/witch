@@ -1,4 +1,4 @@
-// The art's checks, run before every push (there is no CI yet):
+// The art's checks (the Art check workflow runs them nightly and, narrowed, on pull requests that touch art: docs/notes/art-checks.md):
 //   node art/check.mjs
 // 1. builds the lab (tools/art-lab/build.mjs);
 // 2. opens the source lab page and the built one in headless Chromium: no script errors,
@@ -507,7 +507,7 @@ const SPRITE_CHECKS = async ({ names, only, candidate }) => {
     } });
   task("dancefloor", async () => { // the hero dancefloor (Ed: a magic disco floor whose squares draw magical shapes to the music; a system to light squares): every pattern fits the circle,
     // uses only its palette (2 to 4 of the party's neon), runs a whole number of beats (frames = beats x frames a beat) and lights something; levels 1 to 4 all in use;
-    // 20+ general patterns, the switch-on sequence, and one shape for each of the 30 areas from its creature's sigil in its neon; the transitions run from all old to all new;
+    // 20+ general patterns, the switch-on sequence, and one shape for each area from its creature's sigil in its neon; the transitions run from all old to all new;
     // the looks: the unlit tile, the lit tile brighter at each intensity, grout, the rim strip repeating exactly every period, the whole floor
     const L = G.discoPatterns(), bad = [], kinds = {}, levels = new Set();
     for (const p of L) {

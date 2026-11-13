@@ -1,6 +1,6 @@
 // Combat's hits (split from rules/combat.ts, no change in behaviour): a blow, shot or area landing on the witch, a
 // soundsystem or a creature (its traits, guard, knockback, stun and slow), and what follows a knockdown: a legend lulled
-// to sleep, a wild one dazed, anything else running off the map.
+// to sleep, a wild one dazed, anything else running off to sleep on the beach (rules/runaway.ts).
 import { LEGEND, type Creature } from "../creatures";
 import { foes, huntsWitch, type State } from "../creatureStates";
 import { addDrops, addHearts, drainOf, friendly, hostile, runAway, stun } from "../orbit";

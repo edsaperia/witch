@@ -77,7 +77,7 @@ export const CHALLENGE_DEFAULT: ChallengeTuning = { hide: { on: false, fade: 3 }
 export const challengeOf = (t: Tuning): ChallengeTuning => ({ ...CHALLENGE_DEFAULT, ...t.challenge, fireworks: { ...CHALLENGE_DEFAULT.fireworks, ...t.challenge?.fireworks }, statues: { ...CHALLENGE_DEFAULT.statues, ...t.challenge?.statues }, analyser: { ...CHALLENGE_DEFAULT.analyser, ...t.challenge?.analyser }, carving: { ...CHALLENGE_DEFAULT.carving, ...t.challenge?.carving }, hide: { ...CHALLENGE_DEFAULT.hide, ...t.challenge?.hide } });
 
 /** What the page says of it (under the clock: main.ts): the pack all won over or gone (ready to cast), cleared (and its reward),
- *  closed (the final wave coming, or the night over). This frame's, emptied each frame as the waves' are. */
+ *  closed (the night won or lost: Ed, 2026-11-03, on #1725, not at last call). This frame's, emptied each frame as the waves' are. */
 export interface ChallengeEvent { kind: "ready" | "cleared" | "closed"; at: number; x: number; z: number; reward?: "find" | "flask" }
 
 /** The night's challenge: its area (key, cell), its circle's middle and radius, its pack (creature ids), and when it was ready, cleared
@@ -147,10 +147,10 @@ export const castReachOf = (ch: { radius: number }, t: Tuning): number => { cons
  *  middle of the circle than the elder. If this doesn't fit, make the circle bigger."): each on its kind's column's radius, in from
  *  the column toward the middle, its kind's adults then its youths, each by id, on every column, the first `first` m in and each next
  *  `gap` m further, squeezed to fit when more than two must stand by `POST_REACH` of the way to the middle (so always nearer its
- *  column than the middle). The gap (19 m) lifts the youth up the screen past its adult's head on the column due south, where the
- *  line runs straight away from the game's camera: clear of every adult up to 10 m tall at the start camera (32 degrees: 19 sin 32
- *  = 10.1 m), the tallest (the hare's 15.4 m) still showing about half its youth; the circle's `radius` (50 m) is what fits the youth
- *  that far in, 22.5 m, at the 0.45 reach: the most at which, on #1807's 196 m areas, the challenge area still moves night to night
+ *  column than the middle). Now `first` 10 and `gap` 10 (Ed, 2026-11-12: "change challenge.statues.first to 10 and
+ *  challenge.statues.gap to 10"). Till then 3.5 and 19: that gap lifted the youth up the screen past its adult's head on the column due
+ *  south (clear of every adult up to 10 m tall at the start camera: 32 degrees, 19 sin 32 = 10.1 m), and the circle's `radius` (50 m)
+ *  is what fitted the youth that far in, 22.5 m, at the 0.45 reach: the most at which, on #1807's 196 m areas, the challenge area still moves night to night
  *  on home's 10-area island and a 51-area one. By
  *  creature id. */
 /** The furthest in a statue's post goes, a share of the way from its column to the middle: under half, so nearer its column. */

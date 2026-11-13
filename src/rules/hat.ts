@@ -6,7 +6,7 @@
 // never enters the stack. Knocked out again while it's still down, the old one stays where it lies and
 // nothing new drops (DECISION FOR ED). A witch with no hat (the character creator's "none": Ed, "If she
 // chooses no hat in character creation, then she simply doesn't have this mechanic") drops nothing.
-// The rules don't know her look: main.ts says whether she has one (`has`).
+// The rules don't know her look: the page says whether she has one (`has`: app/night.ts wearHat).
 // Her other hats (Ed, 2026-10-12: "if her hat is placed in the world, she can go back to her room to pick up a new one and the
 // previous one(s) stay in the world. if she tries to pick up a hat while she's wearing one, she cannot"): a hat lying somewhere
 // when she takes a new one in her room stays where it lies, keeping its spell (`left`); any number can lie about at once. She

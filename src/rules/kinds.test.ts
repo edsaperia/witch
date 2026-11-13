@@ -2,7 +2,8 @@
 // docs/backlog/journey.md "Rosters"): every kind of today's area types, each with the phase it's introduced in and its island's
 // bearing on the sea chart.
 import { describe, expect, it } from "vitest";
-import { BENCH, CLASSIC_SLOTS, KIND_SLOTS, KINDS_TABLE as kinds } from "./kinds";
+import { BENCH, byPlace, CLASSIC_SLOTS, KIND_SLOTS, KINDS_TABLE as kinds, kindNow, PLACE_OF, RENAMED, seedName } from "./kinds";
+import { islandSeed } from "./islandShape";
 import { CREATURE_IDS } from "./creatureConfig";
 import { AREA_TYPES, CLASSIC_TYPES } from "./map";
 
@@ -11,9 +12,19 @@ const real = Object.fromEntries(Object.entries(kinds).filter(([, k]) => !k.place
 describe("the kind table", () => {
   it("gives every creature an island but those on the bench (Ed, 2026-11-12: \"marten is on the bench\"), and the bee the marten's place", () => {
     expect(CREATURE_IDS.filter(id => !kinds[id]).sort()).toEqual([...BENCH].sort());
-    expect(BENCH).toEqual(["marten", "newt"]);
+    expect(BENCH).toEqual(["marten", "newt", "moth"]);
     expect(kinds.turtle).toMatchObject({ phase: 1, biome: "temperate" }); expect(KIND_SLOTS.turtle).toBe(14); // (the newt's place, in the Fen: Ed, 2026-11-12, "newt for turtle")
     expect(kinds.bee).toMatchObject({ phase: 0, biome: "temperate" }); expect(KIND_SLOTS.bee).toBe(4);
+  });
+  it("has the butterfly where it stood as the moth, and reads the moth's name as the butterfly's (Ed, 2026-11-13: \"can we actually rename it in the files and put the moth on the bench?\")", () => {
+    expect(kinds.butterfly).toEqual({ phase: 1, bearing: 135, dir: "SE", biome: "temperate" }); expect(KIND_SLOTS.butterfly).toBe(16); // (the moth's line, as it was)
+    expect(kinds.moth).toBeUndefined();
+    expect([kindNow("moth"), kindNow("butterfly"), kindNow("fox"), kindNow("constructor")]).toEqual(["butterfly", "butterfly", "fox", "constructor"]);
+    expect([seedName("butterfly"), seedName("fox")]).toEqual(["moth", "fox"]); // (what is drawn from its name is drawn from the old one)
+    expect(seedName("moth")).not.toBe(seedName("butterfly")); // (the benched moth draws from a name of its own: art/creatures/renamed.js)
+    expect(islandSeed("butterfly")).toBe(830014); // (the hash of "moth": its island is the shape it always was)
+    expect(["mole", "butterfly", "newt", "boar", "cat"].sort(byPlace)).toEqual(["boar", "cat", "mole", "butterfly", "newt"]); // (it sorts where "moth" did, so the deals by name are as they were)
+    for (const [old, now] of Object.entries(RENAMED)) { expect(BENCH.includes(old) || !CREATURE_IDS.includes(old), old).toBe(true); expect(kinds[now], now).toBeDefined(); expect(PLACE_OF[now]).toBe(old); }
   });
   it("has every area type's species once, and no other", () => {
     const species = AREA_TYPES.map(a => a.creature).sort();

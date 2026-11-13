@@ -14,8 +14,8 @@
 //    a legend winding up, one long building swell of its whale song; a lob landing, a thud (a legend's, a boom).
 //  - A soundsystem lost; the boot-up over (things stirring); the witch hurt and knocked down (the sad trumpet as her hat
 //    drops, cut off by a rewind as she's whisked to her decks).
-//  - Features still open, each read loosely until it lands: the witch knocked back and stunned
-//    (#108), a legend's long charge (#114), a relic bottle found (#99).
+//  - The witch knocked back and stunned (#108, rules/knock.ts), a legend's long charge (#114,
+//    a creature's `run`), a relic bottle found (#99, rules/partyOver.ts relicsOut).
 //  - Home's meadow; each other area's own ambience (night.ts, quiet near the party).
 import { affectionOf, type Game } from "../../rules/game";
 import { nightEase, relicsOut } from "../../rules/partyOver";
@@ -296,8 +296,8 @@ export class SfxCues {
   }
 
   /** Knocked back and stunned (#108): her knock as it begins (a thump and a whoosh by how far it
-   *  throws her), then a soft dizzy twinkle round and round while she's staggered; read loosely
-   *  until #108 lands (knock: kx, kz m/s easing off at witch.knock.ease; at; stunUntil). */
+   *  throws her), then a soft dizzy twinkle round and round while she's staggered; her knock is
+   *  rules/knock.ts's (knock: kx, kz m/s easing off at witch.knock.ease; at; stunUntil). */
   private knocked({ g }: Here): void {
     const kn = (g.witches[0] as unknown as { knock?: { kx: number; kz: number; at: number; stunUntil: number } } | undefined)?.knock;
     if (kn && Number.isFinite(kn.at) && kn.at !== this.knockAt) {
@@ -330,7 +330,7 @@ export class SfxCues {
 
   /** A relic bottle found (#99): the first time she spots one lying (on the ground within
    *  relic.spot, from the treetops only near overhead, as its glint shows through a gap) or
-   *  reaches it; read loosely until the relics land (g.relics: id, x, z, state). */
+   *  reaches it (the relics out: rules/partyOver.ts relicsOut; id, x, z, state). */
   private relics({ g, pan }: Here): void {
     const w = g.witch, R = g.tuning.sfx.relic, treetop = w.mode !== "ground" || w.lift > 0.5;
     for (const r of relicsOut(g)) { // (none before the party: rules/partyOver.ts)

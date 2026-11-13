@@ -179,7 +179,7 @@ export function curved(map: ForestMap, r: LeyRoute): LeyRoute {
 export const CURVE_WORK = 1.4e9;
 /** Every order of four (but the one they're in). */
 const PERMS4 = ((): number[][] => { const out: number[][] = [], go = (p: number[], rest: number[]) => { if (!rest.length) { if (p.join() !== "0,1,2,3") out.push(p); return; } rest.forEach((r, k) => go([...p, r], [...rest.slice(0, k), ...rest.slice(k + 1)])); }; go([], [0, 1, 2, 3]); return out; })();
-/** The tightest the ley line turns (metres; leyLines.minRadius, 30 by default). */
+/** The tightest the ley line turns (metres; leyLines.minRadius: 25 in the tuning, 30 without one). */
 export const leyRadius = (map: ForestMap) => map.tuning.leyLines.minRadius ?? 30;
 
 /** Ed's limits on crossings. At most `max` a map (Ed, 2026-10-06: "A map can have at most four crossings").

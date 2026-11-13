@@ -1,7 +1,8 @@
 // The opening (Ed, 2026-10-05, round 11: "start each area with just one baby and have a boot up
 // period of 5 minutes", then "actually ... one baby and one youth, otherwise you can't avoid
 // enraging lots of legends"). A bot plays the real rules headless (src/rules/game.ts) from her first
-// step to the first wave (the 5-minute boot and the 5-minute countdown): it flies to the areas
+// step to the first wave (then the 5-minute boot and the 5-minute countdown, hence --time 600; since Ed, 2026-10-09, "Pure
+// constant speed", the boot and each gap are the ley pulse's path over its speed, rules/bootRing.ts): it flies to the areas
 // nearest home in turn, over the treetops, lands, and invites with 💌s (kiting any fighter that
 // comes close), then moves on. A sleeping legend grows restless once its area holds none of its own
 // kind and is angry angryAfter seconds later (rules/legends.ts), so how it recruits decides how many

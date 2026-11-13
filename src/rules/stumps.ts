@@ -3,6 +3,7 @@
 // which I can cast the soundsystem spell should be the whole trunk. (cut part, not the roots)"): the stump's own model's outline under
 // its saw cut (art/props/stumps.js stumpCut), built from its spec, not drawn. No drawing here.
 import { stumpCut, stumpForArea, CUT_ANGLES } from "../../art/props/stumps.js";
+import { seedName } from "./kinds"; // (a renamed kind keeps its stumps' art)
 import { AREA_BY_ID } from "../../art/areas.js";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { biomeKey } from "./lakeLooks";
@@ -17,7 +18,7 @@ export interface StumpSpec { species: string; seed: number; yaw: number; area?: 
 /** An island's own art seed (render/artCache.ts uses it for the island's trees; here, its stumps'). */
 export function islandArtSeed(world: number, island: string): number {
   let h = 2166136261;
-  for (const c of `art|${world}|${island}`) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
+  for (const c of `art|${world}|${seedName(island)}`) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
   return (h >>> 0) % 1000000;
 }
 

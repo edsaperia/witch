@@ -6,8 +6,8 @@
 //     smears of them along the blink's line at her feet, body and hat; a loose ring falling in where she was; and a
 //     burst flying out where she lands (the moonlight's colour: the rim on every character, #199);
 //   - flying, a few small amber sparks drop from her broom's bristles, more the faster she goes.
-// Every mote is in one fixed pool (typed arrays, a ring of MAX): nothing is made per frame. (Their recharge shows on the
-// action bar: render/actionbar.ts.)
+// Every mote is in one fixed pool (typed arrays, a ring of MAX): nothing is made per frame. (Their recharge shows on her
+// cooldown trail: render/trail.ts.)
 import * as THREE from "three";
 import { spellActive } from "../rules/spells";
 import { rng } from "../rules/random";

@@ -104,7 +104,7 @@ export function* build(a4ViewHost: View, a4PrivateHost: ViewInternals, a4SharedH
       // (Placed each frame by placeTreehouse: where it stands depends on the camera's angle.)
       // With the deck's map table (rules/treehouse.ts): the sea chart's live miniature on its top (render/mapTable.ts).
       a4ViewHost.island.buildTreehouse();
-      // The house's placeholder rooms off the hub (render/houseRooms.ts; Ed, 2026-10-19).
+      // The house's rooms off the hub (render/houseRooms.ts; placeholders at first, Ed 2026-10-19).
       if (deckOn?.house?.rooms) { a4ViewHost.houseRooms = new HouseRoomsView(); a4ViewHost.scene.add(...a4ViewHost.houseRooms.meshes); }
       a4PrivateHost.ensureCrown(game); // (the great oak's crown over it: render/crown.ts)
     }
