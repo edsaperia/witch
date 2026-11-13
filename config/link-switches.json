@@ -1092,6 +1092,19 @@
    "decision": "Glowing by default (Ed, 2026-11-09: \"The animal magic effects need to glow.\")"
   },
   {
+   "name": "decksfx",
+   "values": [
+    "old"
+   ],
+   "does": "The party start at her decks as it was, to compare: the sparkles, the pillar of light, the dome, the light, the shake, the floor glow and the heat ripple (their knobs: the pause page's Party start), and no analyser ring round the decks.",
+   "group": "compare",
+   "since": "2026-11-12",
+   "readIn": [
+    "src/render/leash/decksRing.ts"
+   ],
+   "decision": "The soundsystem spell's analyser ring round the decks by default (Ed, 2026-11-12: \"At the decks, when the party starts, there is a visual effect - I want to remove this. ... Instead I want something like the soundsystem spell (audio analyser ring)\")"
+  },
+  {
    "name": "fxmock",
    "values": [
     "1",

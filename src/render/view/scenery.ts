@@ -28,11 +28,13 @@ export function leafJitterOf(p: { x: number; z: number }): [number, number] {
 import { poseOf, type Game } from "../../rules/game";
 import type { View } from "../view";
 import type { Steps } from "../slices";
-import { focusOf, inView, viewRect } from "./culling";
+import { focusOf, inView, telescopeHalfWidth, viewRect } from "./culling";
 import { checkPops, mark } from "./pops";
 import { BarkFaces } from "../barkFaces";
 import { relicsOut } from "../../rules/partyOver";
 import { advanceScenery, type SceneryJob } from "./scenerySchedule";
+import { deckOf } from "../../rules/treehouse";
+import { HOUSE_ROOMS, objectWorld } from "../../rules/houseRooms";
 import { veilBatch, veilState, VEIL_KEY } from "../challenge";
 
 /** The scenery's own trunk-shadow batches, by the key they're kept under in View.trunkShadowBatches (the area types' by number). */
@@ -53,6 +55,36 @@ function pickWeighted(w: number[], seed: number): number {
 
 /** A rebuild under way, for each view: the rest of it, a part each frame. */
 const jobs = new WeakMap<View, SceneryJob>();
+
+/** What the scenery drawn now covers through the telescope (the last rebuild finished; null: not a telescope's, so from the crow's
+ *  nest next to nothing): round where she stood, out to its crowns' reach (m), and the wedge it listed (its bearing and half width,
+ *  degrees, render/view/culling.ts inWedge). Past it the telescope's picture has no trees yet: the scope's mist covers it
+ *  (render/loadingMist.ts scope; Ed, 2026-11-12: missing trees "should be loaded during the loading screen, or if not, be covered
+ *  in mist"). */
+export interface ScopeCover { x: number; z: number; reach: number; heading: number; half: number }
+const covers = new WeakMap<View, ScopeCover | null>();
+export const scopeCover = (v: View): ScopeCover | null => covers.get(v) ?? null;
+/** How many of the forest's tree chunks in the telescope's picture now have no trees drawn yet (0 with the telescope down): the
+ *  chunks whose middle lies within its reach round her and its view's width, either not made (rules/forest.ts) or outside what the scenery
+ *  drawn now lists (scopeCover: its reach, a chunk's slack on it, and its wedge). The count the telescope's mist stands for, for
+ *  the tools (window.witch.telescope.missing, tools/telescope/ready.cjs) and the tests (Ed, 2026-11-13: "fix the others"). */
+export function scopeMissing(v: View): number {
+  const T = v.telescope, W = v.game.tuning.telescope;
+  if (!T || !W) return 0;
+  const e = v.camera.position, c = scopeCover(v), half = telescopeHalfWidth(T.fov, v.width / v.height);
+  const off = (x: number, z: number, heading: number) => Math.abs((((Math.atan2(x - e.x, -(z - e.z)) * 180) / Math.PI - heading + 540) % 360) - 180);
+  // (its reach is round her, a step off it, as the listing's is; its bearings from its eye, over the deck)
+  const f = focusOf(v);
+  let n = 0;
+  for (const k of v.game.forest.treeChunks(f.x, f.z, W.reach)) {
+    const d = Math.hypot(k.x - e.x, k.z - e.z);
+    if (Math.hypot(k.x - f.x, k.z - f.z) > W.reach || (d >= 30 && off(k.x, k.z, T.heading) > half)) continue;
+    if (!k.made || !c || Math.hypot(k.x - c.x, k.z - c.z) > c.reach + 23 || (d >= 30 && off(k.x, k.z, c.heading) > c.half)) n++;
+  }
+  return n;
+}
+/** Whether a listing of the scenery is under way (a part of it a frame), for the tools. */
+export const sceneryListing = (v: View): boolean => jobs.has(v);
 /** Another night in the view (View.setGame): a rebuild under way dropped (it lists the last night's island). */
 export function cancelRefresh(v: View): void { jobs.delete(v); }
 
@@ -69,11 +101,33 @@ const rimCache = new WeakMap<TypeArt["layout"], Piece[]>();
 const rimPieces = (l: TypeArt["layout"]): Piece[] => { let r = rimCache.get(l); if (!r) rimCache.set(l, (r = (l.rim ?? []).map(k => ({ bot: k.frame, top: null })))); return r; };
 
 export function refresh(v: View, force = false): void {
-  const job = advanceScenery(jobs.get(v), () => {
+  const make = () => {
     const d = due(v, force);
     return d ? rebuild(v, d, force) : null;
-  }, force);
+  };
+  let job = advanceScenery(jobs.get(v), make, force);
+  // Through the telescope with its picture not listed (it has just opened, or turned at once to where nothing is listed): the
+  // listing finished in this frame, not a slice a frame (Ed, 2026-11-12, v7872: "Just after waking, I look through the telescope and I
+  // see missing trees"; 2026-11-13: "fix the others"), the listing under way first, then the one due. Its trees are made already
+  // (telescopeWarmSteps) and it reads only its wedge's chunks, so it's one frame's hitch as it opens; given SCOPE_NOW_MS at most,
+  // then a slice a frame again, the rest under the scope's mist meanwhile (a slow machine: render/view/frame.ts scopeMist). A pan
+  // lists ahead of itself a slice a frame as before (due: each half of its wedge), its picture's middle always listed.
+  if (!force && v.telescope && scopeUnlisted(v)) {
+    const t0 = performance.now();
+    for (let idle = 0; idle < 2 && scopeUnlisted(v) && performance.now() - t0 < SCOPE_NOW_MS;) { job = advanceScenery(job ?? undefined, make); idle = job ? 0 : idle + 1; }
+  }
   if (job) jobs.set(v, job); else jobs.delete(v);
+}
+/** The most (ms) one frame gives the telescope's listing when its picture isn't listed (refresh): the measured frame it opens in
+ *  is 30 to 190 ms on the cloud's software renderer under load (tools/telescope/ready.cjs), so a machine of Ed's finishes well
+ *  inside it; past it the mist covers the rest and it goes on a slice a frame. */
+export const SCOPE_NOW_MS = 250;
+/** Whether the telescope's picture isn't listed in the scenery drawn now (scopeCover): none listed for it yet, or listed short of
+ *  its reach, or its view's middle turned out of the wedge listed. */
+function scopeUnlisted(v: View): boolean {
+  const T = v.telescope, W = v.game.tuning.telescope, c = scopeCover(v);
+  if (!T || !W) return false;
+  return !c || c.reach < W.reach - 1 || Math.abs(((T.heading - c.heading + 540) % 360) - 180) > c.half;
 }
 
 /** refresh(v, true) in steps (render/slices.ts: the start's, View.prepare): the rebuild under way finished, then a whole one, a
@@ -83,6 +137,21 @@ export function* refreshSteps(v: View): Steps {
   if (job) { while (!job.next().done) yield; jobs.delete(v); }
   const run = rebuild(v, due(v) ?? due(v, true)!, true);
   while (!run.next().done) yield;
+}
+
+/** The telescope's forest made ahead, under the loading screen (Ed, 2026-11-12, v7872: "Just after waking, I look through the
+ *  telescope and I see missing trees - I think these should be loaded during the loading screen"): every chunk of trees its first
+ *  look lists (the whole circle out to telescope.reach round where she stands at it, render/view/scenery.ts rebuild's `round`),
+ *  made a chunk a step. Left to the first look, making them was most of its listing (about 2.7 s of the page's thread for the
+ *  island's 3,400 chunks, at 2.5 ms a frame), the far forest a hole till it was done. Forest.KEEP holds them all after. */
+export function* telescopeWarmSteps(v: View): Steps {
+  const g = v.game, T = g.tuning.telescope;
+  if (!T || v.quick || !g.forest || g.map.zoo?.layout) return;
+  const d = deckOf(g.map, g.tuning);
+  if (!d) return;
+  const o = HOUSE_ROOMS.objects.find(o => o.use.kind === "telescope"), at = o ? objectWorld(o, d) : d;
+  // (she stands within reach of it: a chunk's slack round it; the rebuild's square is the reach and the view's margin round her)
+  for (const _ of g.forest.treesNearChunks(at.x, at.z, T.reach + g.tuning.viewMargin + 32)) yield;
 }
 
 const SLICE_MS = 2.5;
@@ -170,6 +239,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   const stand = (x: number, z: number, frame: Frame, m: number) => { const d = (frame.pad ?? 0) * m; return { x: x - U.x * d, y: -U.y * d, z: z - U.z * d }; };
   let nt = 0, nb = 0;
   const TS = t.telescope, eye = focusOf(v);
+  const cover: ScopeCover | null = tele && v.telescope && TS ? { x: eye.x, z: eye.z, reach: Math.max(reach, canopy), heading: v.telescope.heading, half: telescopeHalfWidth(v.telescope.fov, v.width / v.height) + TS.wedge } : null;
   const rc = canopy > reach ? (tele ? round(canopy) : viewRect(v, canopy, margin)) : r, ccx = (rc.minX + rc.maxX) / 2, ccz = (rc.minZ + rc.maxZ) / 2, chalf = Math.max(rc.maxX - rc.minX, rc.maxZ - rc.minZ) / 2;
   const collect = function* (chunks: Iterable<Plant[]>): Generator<void, Plant[], void> {
     const out: Plant[] = [];
@@ -179,7 +249,13 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
     }
     return out;
   };
-  const trees = yield* collect(g.forest.treesNearChunks(ccx, ccz, chalf));
+  // (through the telescope, only the chunks its wedge touches: a chunk's half width, how far a tree strays from its chunk and the
+  // widest tree's slack on inWedge's own test, render/view/culling.ts; the rest of its circle, two thirds of it, isn't read)
+  const wedged = cover && ((x: number, z: number): boolean => {
+    const e = v.camera.position, dx = x - e.x, dz = z - e.z, d = Math.hypot(dx, dz), slack = 40 + TREE_MAX.w;
+    return d < 30 + slack || Math.abs((((Math.atan2(dx, -dz) * 180) / Math.PI - cover.heading + 540) % 360) - 180) <= cover.half + (Math.atan2(slack, d) * 180) / Math.PI;
+  });
+  const trees = yield* collect(g.forest.treesNearChunks(ccx, ccz, chalf, wedged || undefined));
   for (const p of trees) {
     // Rejected/off-screen trees count towards the slice too: checking only after an accepted
     // sprite lets a whole forest with missing art run straight through without yielding.
@@ -409,4 +485,5 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   v.sources = g.forest.lightsNear(fo.x, fo.z, t.haze.far + margin);
   v.stats.trees = nt; v.stats.bushes = nb;
   v.shadowList = shadows;
+  covers.set(v, cover);
 }

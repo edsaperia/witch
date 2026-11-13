@@ -53,7 +53,7 @@ import { SPRITE_UNIFORMS, SpriteBatch } from "../sprites";
 import { nextFrame, runSliced, type Steps } from "../slices";
 import { Fireworks } from "../fireworks";
 import { viewRect } from "./culling";
-import { cancelRefresh, refreshSteps } from "./scenery";
+import { cancelRefresh, refreshSteps, telescopeWarmSteps } from "./scenery";
 import { drawCreatures, resetCreatureCaches } from "./creatures";
 import { forgetCandles } from "./home";
 
@@ -284,9 +284,15 @@ export async function prepare(a4ViewHost: View, a4PrivateHost: ViewInternals, a4
     // art, and coast and lakes, during the loading screen."; but "Skip the animal faces": islandFaces, below): waited for here, so
     // nothing on the island pops in after the screen fades (a sail's asked for, not waited for: below).
     const island = a4PrivateHost.islandAhead(near);
+    // And the forest the telescope sees from the crow's nest (Ed, 2026-11-12: "Just after waking, I look through the telescope and I
+    // see missing trees - I think these should be loaded during the loading screen"): its trees' chunks made on the page's thread a
+    // slice a frame while the art workers draw the island, so it mostly costs no extra time (render/view/scenery.ts).
+    const scope = o.sail ? null : runSliced(telescopeWarmSteps(a4ViewHost), "scope");
     await a4ViewHost.assets.whenIdle(true); // (what the view asked for as needed now)
     if (!o.sail) await island;
     performance.mark("witch:prep-idle");
+    await scope;
+    performance.mark("witch:prep-scope");
     await house;
     await tufts;
     performance.mark("witch:prep-rooms");

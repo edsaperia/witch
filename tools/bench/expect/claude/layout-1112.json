@@ -1,0 +1,10 @@
+{
+  "reason": "Ed, 2026-11-12, \"New treehouse layout\": his export from the treehouse editor is the house's arrangement; among what moved, the DJ decks and their seat (1.29 m east, 1.01 m north), where she starts, and the basin, telescope, broom rack, hydraulic lift and workbench.",
+  "frames": {
+    "boot": "she starts at the decks' seat, moved with the decks, so the whole frame shifts and she ends 1.29 m east, 1.01 m north of where she did; the moved stations wherever they show"
+  },
+  "start": {
+    "boot": "she starts seated at the DJ decks, which Ed moved 1.29 m east and 1.01 m north (2026-11-12)",
+    "bedroom": "she starts seated at the DJ decks, which Ed moved 1.29 m east and 1.01 m north (2026-11-12)"
+  }
+}

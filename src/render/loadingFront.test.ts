@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleared, frontAt, FRONT_CLEAR, FRONT_FULL, goneAt, mistLeft, typeReaches } from "./loadingFront";
+import { cleared, frontAt, FRONT_CLEAR, FRONT_FULL, goneAt, mistLeft, scopeEdge, typeReaches } from "./loadingFront";
 import tuning from "../../config/tuning.json";
 
 const T = tuning.loadingMist; // (as built: the tuning's numbers)
@@ -68,3 +68,21 @@ describe("the loading mist's front (render/loadingFront.ts)", () => {
     expect(frontAt(undefined, 0, T)).toBe(FRONT_CLEAR);
   });
 });
+
+describe("the telescope's mist's edge (Ed, 2026-11-12: missing trees through it \"covered in mist\")", () => {
+  it("starts round the crow's nest, rolls out to where the trees reach at the front's speed, and never past them", () => {
+    let at = scopeEdge(NaN, 900, 1 / 60, T.speed);
+    expect(at).toBe(30); // (the telescope just up: all of it under the mist)
+    for (let f = 0; f < 60; f++) at = scopeEdge(at, 900, 1 / 60, T.speed);
+    expect(at).toBeCloseTo(30 + T.speed, 6); // (a second on)
+    for (let f = 0; f < 600; f++) at = scopeEdge(at, 900, 1 / 60, T.speed);
+    expect(at).toBe(900);
+  });
+  it("comes in at once where the trees drawn end (a new look's not listed yet: never a hole), and a long frame counts a tenth", () => {
+    expect(scopeEdge(900, 0, 1 / 60, T.speed)).toBe(30);
+    expect(scopeEdge(500, 300, 1 / 60, T.speed)).toBe(300);
+    expect(scopeEdge(100, 900, 5, T.speed)).toBeCloseTo(100 + T.speed * 0.1, 6);
+    expect(scopeEdge(100, 900, 0, T.speed)).toBe(100);
+  });
+});
+

@@ -84,3 +84,23 @@ describe("an area's contents: loaded is not enough, they must be drawn", () => {
     expect(areaParts(source({ ...all, creature: false }), t).creatures).toBe(false);
   });
 });
+
+describe("the telescope's mist (Ed, 2026-11-12: missing trees through it \"covered in mist\")", () => {
+  it("shows over the telescope's unbuilt view after the loading's mist has gone, and goes with the telescope", () => {
+    const m = mist();
+    for (let f = 0; f < 600; f++) m.update(f / 10, () => true, () => true, () => true); // (a load's: clear from the start)
+    expect(m.mesh.visible).toBe(false);
+    m.scope({ x: 10, z: 20, reach: 300, heading: 90, half: 45 });
+    const u = (m.mesh.material as THREE.ShaderMaterial).uniforms;
+    expect(m.mesh.visible).toBe(true);
+    expect((u.uScope.value as THREE.Vector4).toArray()).toEqual([10, 20, 300, 1]);
+    const W = u.uScopeWedge.value as THREE.Vector3;
+    expect(W.x).toBeCloseTo(1, 6); expect(W.y).toBeCloseTo(0, 6); expect(W.z).toBeCloseTo(Math.SQRT1_2, 6); // (east, ±45°)
+    m.scope({ x: 0, z: 0, reach: 30, heading: 0, half: 180 });
+    expect(W.z).toBe(-2); // (all round: nothing listed for it yet)
+    m.scope(null);
+    expect(m.mesh.visible).toBe(false);
+    expect((u.uScope.value as THREE.Vector4).w).toBe(0);
+  });
+});
+

@@ -11,6 +11,7 @@ import { depthWhereDrawn, houseWitchOverlay, setHouseWitchPass } from "../houseW
 import { broomWhere, stationOf } from "../../rules/stations";
 import type { View } from "../view";
 import { captureRefractionCast } from "./refraction";
+import { DECKS_FX, decksMiddle, decksRingAt } from "../leash/decksRing";
 import { captureDodgeEchoes } from "./dodgeEchoes";
 import { PARTY_CAST } from "../../rules/party";
 import { STEP } from "../../rules/game";
@@ -161,6 +162,14 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // pixels; eased off as she rises (her lift) into the world's own place.
   const inRoom = !!T.ent && witchRoomPass(g, g.witches[0]);
   v.houseCam.x = v.houseCam.y = v.houseCam.z = 0;
+  // (the house's floor as drawn, for what lies on it: the decks' analyser ring, render/leash/decksRing.ts; the art's view of the
+  // floor, in the plane through the deck's middle, as her feet below)
+  v.leashView.floorAt = T.ent && deck?.house ? (x: number, z: number) => {
+    const ky = (T.seat.y - T.ent!.deck.y) / Math.max(0.1, deck.seat.z - deck.z), p = onTreehouse(T.ent!.deck.x + (x - deck.x) / v.mpp, T.ent!.deck.y + (z - deck.z) * ky + v.houseShift);
+    return { x: p.x, y: p.y + groundHeight(deck.x, deck.z) - groundHeight(p.x, p.z), z: p.z };
+  } : null;
+  // (and where on that floor the art draws her at her decks: her seat's pixel, T.seat, is the plan's seat's z by `ky`, but its own x)
+  v.leashView.decksOnFloor = T.ent && deck?.house ? { x: deck.x + (T.seat.x - T.ent.deck.x) * v.mpp, z: deck.seat.z } : null;
   if (T.ent && deck && w.perch) {
     const m = (1 - w.lift) * v.landingHouseShare, ky = (T.seat.y - T.ent.deck.y) / Math.max(0.1, deck.seat.z - deck.z), dz = w.z - deck.z;
     // (the house's drawing slid up the Ent's plane by her own place on it: v.houseShift, houseShiftOf, set before the Ent is placed)
@@ -219,9 +228,15 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
         wf = Dj.full[j]; djUpper = Dj.upper[j];
       }
       // The party start (render/partyStart.ts, its pieces' knobs partyStart; Ed, 2026-11-03): at the cast, at her feet as drawn here;
-      // kept as she's drawn seated, so the decks' replay (View.replayPartyStart) plays it there again.
+      // kept as she's drawn seated, so the decks' replay (View.replayPartyStart) plays it there again. Since Ed, 2026-11-12 ("I want to
+      // remove this ... Instead I want something like the soundsystem spell (audio analyser ring)"), the decks' analyser ring in place
+      // of its pieces (render/leash/decksRing.ts), kept on the decks as she's drawn there; ?decksfx=old the pieces as before.
       const A = (v.partyStart.anchor ??= { x: 0, y: 0, z: 0 }); A.x = wx; A.y = wyy; A.z = wz;
-      if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.partyStart.start(g.tuning, wx, wyy, wz, sp + (ht - time)); captureRefractionCast(v, sp, wx, wyy, wz); }
+      if (typeof sp === "number" && sp !== v.castSeen) {
+        v.castSeen = sp; v.partyStart.start(g.tuning, wx, wyy, wz, sp + (ht - time));
+        if (DECKS_FX.old) captureRefractionCast(v, sp, wx, wyy, wz); else v.leashView.decksRing = decksRingAt(g, A, sp, false);
+      }
+      const DR = v.leashView.decksRing; if (DR) Object.assign(DR, decksMiddle(g, A));
     }
   }
   { const H = (v.partyStart.here ??= { x: 0, y: 0, z: 0 }); H.x = wx; H.y = wyy; H.z = wz; } // (where she's drawn: the replay's place on a night resumed after its cast)

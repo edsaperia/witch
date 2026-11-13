@@ -202,6 +202,7 @@ glossary; these are the prototype's), by note.
 - No edge at the Terrace
 - Telephone
 - Landing cooldown
+- The current layout
 - Current brewing authority (Ed, 2026-10-31):
 - Mushrooms and brewing
 - Mushroom kitchen artwork
@@ -343,6 +344,7 @@ glossary; these are the prototype's), by note.
 - The GPU memory budget
 - Quality ladder
 - Palette-indexed art
+- The telescope's forest under the loading screen
 - Sail take-off freeze
 
 ### [The run](run.md)
@@ -365,6 +367,7 @@ glossary; these are the prototype's), by note.
 - Game clock
 - The opening
 - Party spell
+- Decks' analyser ring
 - Nightie / clothes pile
 - Partified
 - Wave

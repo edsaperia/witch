@@ -32,6 +32,7 @@ import { observePlaytestErrors } from "../platform/playtestLog";
 import { recordedStep, recordingFor } from "./recordingHooks";
 import { replayRecording } from "../platform/inputRecording";
 import { snapshotGame } from "../rules/nightSnapshot";
+import { sceneryListing, scopeMissing } from "../render/view/scenery";
 
 export function botGame(pageHost: PageHost, kind: BotKind): void {
   if (pageHost.phone.active || pageHost.N().spec.borrowed) return;
@@ -279,6 +280,10 @@ export function installDebug31(pageHost: PageHost): void {
   close: () => { pageHost.telescope.close(); pageHost.view.telescope = null; },
   get on() { return pageHost.telescope.on; },
   get aim() { return pageHost.telescope.aiming; },
+  // (what its picture still lacks, for tools/telescope/ready.cjs: tree chunks with no trees drawn, a listing under way, its mist on)
+  get missing() { return scopeMissing(pageHost.view); },
+  get listing() { return sceneryListing(pageHost.view); },
+  get mist() { return !!pageHost.view.loadingMist?.scoped; },
 };
 }
 
