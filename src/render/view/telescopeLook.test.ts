@@ -42,6 +42,10 @@ async function wake() {
 
 it("has nothing left to make or list after the first frame of a look in any direction", async () => {
   const { S, v, g, look } = await wake();
+  // (a clock of its own, a microsecond a reading: a machine quick enough for the frame's allowance, SCOPE_NOW_MS, however loaded
+  // the one the tests run on; on CI's shared runner the real clock ran past it and the look fell back to slices)
+  let now = 0;
+  vi.spyOn(performance, "now").mockImplementation(() => (now += 0.001));
   // (each look 135° on from the last: turned at once right out of the wedge that one listed)
   const T = TUNING.telescope!, e = v.camera.position, trees = () => g.forest.treeChunks(e.x, e.z, T.reach + 200).filter(k => k.made).length;
   for (const heading of [0, 135, 270, 45, 180, 315, 90, 225]) {
