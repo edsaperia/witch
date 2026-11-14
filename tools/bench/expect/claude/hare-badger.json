@@ -1,0 +1,9 @@
+{
+  "reason": "The hare stamps, then sits; the badger's barge throws her 20 m (Ed, 2026-11-13: \"Stamp, then sit 0.8 s\"; \"20m\"; \"let's start with big numbers and dial it down, at least we can then perceive the effects!\"; after the attack legibility audit, docs/plans/attack-legibility-audit.md). The hare's pack bolt is gone from its actions (config/creature-actions.json: its strike is its stamp), its bound in on its turn lands it in the stamp's reach (rules/combat.ts), and it sits tuning hareStamp.sit seconds after each stamp (a new optional creature field, sitUntil; a new still frame, its sitting pose, after its walk's and run's frames in the hare's mesh sprites). The badger's own lunge's blow at her throws her tuning badgerBarge.throw metres, past witch.knock.max, and staggers her badgerBarge.stagger seconds (rules/combat/hits.ts, rules/knock.ts). New knobs: hareStamp.sit, badgerBarge.throw, badgerBarge.stagger.",
+  "rules": {
+    "*": "wherever a hare or a badger fights: the hare's actions drawn (no bolt), where it bounds, its stamps and sits, and what follows from them; where a badger's barge leaves her (20 m off, not 6.4) and for how long she's staggered; a throw that would cross the treehouse; and the new sitUntil field wherever a creature's fields are listed"
+  },
+  "frames": {
+    "*": "wherever a hare or a badger is in a fight in view: the hare beside her, its stamp's ring and its sitting pose, no moon-dust bolts; her thrown far by a badger's barge; and the hare's sprite sheet one frame longer wherever its atlas is drawn"
+  }
+}

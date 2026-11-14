@@ -45,7 +45,7 @@ export function touch(w: CombatWorld, s: CombatState, c: Creature, damage: numbe
 }
 
 export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target, damage: number, a: Attack, fx: number, fz: number, context?: AttackContext): void {
-  if (!observingAttacks(s)) { landUnobserved(w, s, from, tg, damage, a, fx, fz); return; }
+  if (!observingAttacks(s)) { landUnobserved(w, s, from, tg, damage, a, fx, fz, context); return; } // (its context kept, watched or not: the badger's barge is known by it, below)
   // A stale legacy shot can have no named attack; land's shelter return must still happen first.
   let observation: AttackContext = context ?? { source: from?.id ?? null, attack: null, delivery: a?.delivery ?? "unknown", phase: "damage" };
   if (a && !observation.attack && observation.definition === undefined)
@@ -63,7 +63,12 @@ export function landUnobserved(w: CombatWorld, s: CombatState, from: Creature | 
     const ox = from && a.delivery !== "shot" && a.delivery !== "lob" ? from.x : fx, oz = from && a.delivery !== "shot" && a.delivery !== "lob" ? from.z : fz;
     const thrown = from?.packThrow && time < from.packThrow.until ? from.packThrow.metres : undefined; // (a pack's knockback ram: rules/combat/packs.ts)
     if (thrown !== undefined) from!.packThrow = undefined;
-    w.hitWitch(tg.id, time, { x: ox, z: oz, knockback: a.modifier === "knockback" ? a.knockback ?? 0 : 0, rams: !!from && (!!from.charge || !!from.leap || !!from.run), ...(thrown !== undefined ? { metres: thrown } : {}) }); // (a legend's long charge rams too)
+    // The badger's shoulder-barge (its own lunge's blow: species:badger, config/species-attacks.json; Ed, 2026-11-13: "20m", "let's
+    // start with big numbers and dial it down, at least we can then perceive the effects!"; the audit measured 6.4 m against every
+    // blow's 2.5, "barely felt"): it throws her tuning badgerBarge.throw metres, past the cap on other throws, and staggers her
+    // badgerBarge.stagger seconds (rules/knock.ts). Its dug-in bite and its pack's stone shard throw her as any blow does.
+    const barge = from?.species === "badger" && context?.attack === "species:badger" && context.delivery === "melee" && thrown === undefined ? w.t?.badgerBarge : undefined;
+    w.hitWitch(tg.id, time, { x: ox, z: oz, knockback: a.modifier === "knockback" ? a.knockback ?? 0 : 0, rams: !!from && (!!from.charge || !!from.leap || !!from.run), ...(thrown !== undefined ? { metres: thrown } : {}), ...(barge && barge.throw > 0 ? { metres: barge.throw, far: true, stagger: barge.stagger } : {}) }); // (a legend's long charge rams too)
     const v = w.witches[tg.id]; s.events.push({ kind: "witchHit", x: v.x, z: v.z, at: time, id: tg.id }); return;
   }
   if (tg.kind === "sound") {

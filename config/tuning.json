@@ -1350,6 +1350,13 @@
     "ring": 20,
     "window": 1
   },
+  "hareStamp": {
+    "sit": 0.8
+  },
+  "badgerBarge": {
+    "throw": 20,
+    "stagger": 0.5
+  },
   "creatureMomentum": {
     "on": true,
     "turn": 1,

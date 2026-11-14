@@ -135,7 +135,7 @@ function backToStone(g: Game, ch: ChallengeState): void {
       hp: undefined, hurtAt: undefined, drops: undefined, affection: undefined, affectionAt: undefined, fills: undefined, dazed: undefined, dazedUntil: undefined,
       fleeUntil: undefined, fleeX: undefined, fleeZ: undefined, stunUntil: undefined, slowUntil: undefined, kx: undefined, kz: undefined, vx: undefined, vz: undefined,
       charge: undefined, leap: undefined, hop: undefined, hopNext: undefined, burrow: undefined, dug: undefined, swoop: undefined, brace: undefined,
-      packGlow: undefined, packHide: undefined, packShell: undefined, packProwl: undefined, feintUntil: undefined, coverBy: undefined, packSync: undefined, packThrow: undefined,
+      packGlow: undefined, packHide: undefined, packShell: undefined, packProwl: undefined, feintUntil: undefined, coverBy: undefined, packSync: undefined, packThrow: undefined, sitUntil: undefined,
       mind: undefined, taunt: undefined, engagedUntil: undefined, moveReadyAt: undefined, sprung: undefined, cheerUntil: undefined, holdT: undefined, holdAt: undefined,
       asleep: undefined, napUntil: undefined, wakeUntil: undefined, lulled: undefined, moving: false,
     });

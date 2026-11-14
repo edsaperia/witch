@@ -1,0 +1,212 @@
+[
+ {
+  "kind": "squirrel",
+  "level": 1,
+  "n": 1,
+  "bot": "still",
+  "blows": 9,
+  "paths": {
+   "grammar lob": 24,
+   "pack melee": 3
+  },
+  "slow": 0.6444444444444438,
+  "stagger": 2.516666666666663,
+  "confused": 0,
+  "knock": 22.5,
+  "blinks": 0,
+  "telegraphs": {
+   "landing": 25
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 28
+  },
+  "stillShare": 0.5024740039817077,
+  "medWindow": 0.41666666666666663,
+  "windowsPerMin": 21
+ },
+ {
+  "kind": "squirrel",
+  "level": 1,
+  "n": 1,
+  "bot": "strafe",
+  "blows": 1.6666666666666665,
+  "paths": {
+   "grammar lob": 2,
+   "pack melee": 3
+  },
+  "slow": 0,
+  "stagger": 0.47222222222222227,
+  "confused": 0,
+  "knock": 4.166666666666667,
+  "blinks": 0,
+  "telegraphs": {
+   "landing": 24
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 27
+  },
+  "stillShare": 0.5126064483618497,
+  "medWindow": 0.4333333333333333,
+  "windowsPerMin": 18.666666666666668
+ },
+ {
+  "kind": "squirrel",
+  "level": 1,
+  "n": 1,
+  "bot": "dodger",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 2.3333333333333335,
+  "telegraphs": {
+   "landing": 27
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 30
+  },
+  "stillShare": 0.49134559382381715,
+  "medWindow": 0.41666666666666663,
+  "windowsPerMin": 25
+ },
+ {
+  "kind": "squirrel",
+  "level": 1,
+  "n": 1,
+  "bot": "chase",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 0,
+  "telegraphs": {
+   "landing": 3
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 3
+  },
+  "stillShare": 0.46594005449591286,
+  "sent": 13,
+  "landed": 9,
+  "firstStun": 5.732833333333319,
+  "hitSpeed": 0,
+  "medSpeed": 8.499065999236413,
+  "medWindow": 0.31666666666666665,
+  "windowsPerMin": 6.666666666666667
+ },
+ {
+  "kind": "squirrel",
+  "level": 1,
+  "n": 3,
+  "bot": "still",
+  "blows": 25.666666666666664,
+  "paths": {
+   "grammar lob": 71,
+   "pack melee": 6
+  },
+  "slow": 0,
+  "stagger": 7.211111111111091,
+  "confused": 0,
+  "knock": 64.16666666666667,
+  "blinks": 0,
+  "telegraphs": {
+   "landing": 72
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 79
+  },
+  "stillShare": 0.5184957606847933,
+  "medWindow": 0.41666666666666663,
+  "windowsPerMin": 49.666666666666664
+ },
+ {
+  "kind": "squirrel",
+  "level": 1,
+  "n": 3,
+  "bot": "strafe",
+  "blows": 3.6666666666666665,
+  "paths": {
+   "pack melee": 9,
+   "grammar lob": 2
+  },
+  "slow": 0.14444444444444443,
+  "stagger": 1.0055555555555566,
+  "confused": 0,
+  "knock": 9.166666666666668,
+  "blinks": 0,
+  "telegraphs": {
+   "landing": 67
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 74,
+   "pack windup (melee)": 3
+  },
+  "stillShare": 0.3698762069013326,
+  "medWindow": 0.41666666666666663,
+  "windowsPerMin": 45.333333333333336
+ },
+ {
+  "kind": "squirrel",
+  "level": 1,
+  "n": 3,
+  "bot": "dodger",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 7.666666666666666,
+  "telegraphs": {
+   "landing": 65
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 75,
+   "pack windup (melee)": 3
+  },
+  "stillShare": 0.42538608427135394,
+  "medWindow": 0.41666666666666663,
+  "windowsPerMin": 47
+ },
+ {
+  "kind": "squirrel",
+  "level": 1,
+  "n": 3,
+  "bot": "chase",
+  "blows": 0.6666666666666667,
+  "paths": {
+   "grammar lob": 2
+  },
+  "slow": 0.5777777777777784,
+  "stagger": 0.18888888888888888,
+  "confused": 0,
+  "knock": 1.6666666666666665,
+  "blinks": 0,
+  "telegraphs": {
+   "landing": 21
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 21
+  },
+  "stillShare": 0.49383035587885793,
+  "sent": 56.333333333333336,
+  "landed": 30,
+  "firstStun": 22.232833333333353,
+  "hitSpeed": 0,
+  "medSpeed": 5.665910229850087,
+  "medWindow": 0.41666666666666663,
+  "windowsPerMin": 26.333333333333332
+ }
+]

@@ -1,0 +1,211 @@
+[
+ {
+  "kind": "hedgehog",
+  "level": 1,
+  "n": 1,
+  "bot": "still",
+  "blows": 6,
+  "paths": {
+   "pack melee": 18
+  },
+  "slow": 0,
+  "stagger": 5.5999999999999845,
+  "confused": 0,
+  "knock": 72,
+  "blinks": 0,
+  "telegraphs": {},
+  "poses": {},
+  "actions": {},
+  "stillShare": 0.14453602734972723,
+  "medWindow": 0.4333333333333333,
+  "windowsPerMin": 8
+ },
+ {
+  "kind": "hedgehog",
+  "level": 1,
+  "n": 1,
+  "bot": "strafe",
+  "blows": 1,
+  "paths": {
+   "grammar shot": 3
+  },
+  "slow": 0,
+  "stagger": 0.2833333333333333,
+  "confused": 0,
+  "knock": 2.5,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 18
+  },
+  "poses": {
+   "spread": 3
+  },
+  "actions": {
+   "grammar windup": 3
+  },
+  "stillShare": 0.1848101265822785,
+  "medWindow": 0.5833333333333335,
+  "windowsPerMin": 10
+ },
+ {
+  "kind": "hedgehog",
+  "level": 1,
+  "n": 1,
+  "bot": "dodger",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 4,
+  "telegraphs": {
+   "lane": 18
+  },
+  "poses": {
+   "spread": 3
+  },
+  "actions": {
+   "grammar windup": 3
+  },
+  "stillShare": 0.18293180890159247,
+  "medWindow": 0.4666666666666666,
+  "windowsPerMin": 13
+ },
+ {
+  "kind": "hedgehog",
+  "level": 1,
+  "n": 1,
+  "bot": "chase",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 0,
+  "telegraphs": {},
+  "poses": {},
+  "actions": {},
+  "stillShare": 0.4820717131474104,
+  "sent": 9,
+  "landed": 9,
+  "firstStun": 3.6328333333333256,
+  "hitSpeed": 1,
+  "medSpeed": 2.5,
+  "medWindow": 0.49999999999999994,
+  "windowsPerMin": 2
+ },
+ {
+  "kind": "hedgehog",
+  "level": 1,
+  "n": 3,
+  "bot": "still",
+  "blows": 11.666666666666666,
+  "paths": {
+   "pack melee": 32,
+   "grammar shot": 3
+  },
+  "slow": 0,
+  "stagger": 9.92777777777785,
+  "confused": 0,
+  "knock": 130.5,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 18
+  },
+  "poses": {
+   "spread": 3
+  },
+  "actions": {
+   "grammar windup": 3
+  },
+  "stillShare": 0.08367014517435233,
+  "medWindow": 0.4333333333333333,
+  "windowsPerMin": 8.666666666666666
+ },
+ {
+  "kind": "hedgehog",
+  "level": 1,
+  "n": 3,
+  "bot": "strafe",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 54
+  },
+  "poses": {
+   "spread": 9
+  },
+  "actions": {
+   "grammar windup": 9
+  },
+  "stillShare": 0.13880132131599393,
+  "medWindow": 0.5166666666666666,
+  "windowsPerMin": 13.666666666666666
+ },
+ {
+  "kind": "hedgehog",
+  "level": 1,
+  "n": 3,
+  "bot": "dodger",
+  "blows": 1,
+  "paths": {
+   "grammar shot": 3
+  },
+  "slow": 0,
+  "stagger": 0.2833333333333333,
+  "confused": 0,
+  "knock": 2.5,
+  "blinks": 6.333333333333333,
+  "telegraphs": {
+   "lane": 54
+  },
+  "poses": {
+   "spread": 9
+  },
+  "actions": {
+   "grammar windup": 9
+  },
+  "stillShare": 0.13326362314120666,
+  "medWindow": 0.5166666666666666,
+  "windowsPerMin": 12.333333333333334
+ },
+ {
+  "kind": "hedgehog",
+  "level": 1,
+  "n": 3,
+  "bot": "chase",
+  "blows": 1,
+  "paths": {
+   "grammar shot": 3
+  },
+  "slow": 0,
+  "stagger": 0.26666666666666666,
+  "confused": 0,
+  "knock": 2.5,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 36
+  },
+  "poses": {
+   "spread": 6
+  },
+  "actions": {
+   "grammar windup": 6
+  },
+  "stillShare": 0.23216092132907942,
+  "sent": 29,
+  "landed": 28,
+  "firstStun": 9.499500000000051,
+  "hitSpeed": 3.442514686391779,
+  "medSpeed": 12.473963071898519,
+  "medWindow": 0.4833333333333333,
+  "windowsPerMin": 5.333333333333333
+ }
+]

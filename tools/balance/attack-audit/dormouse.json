@@ -1,0 +1,214 @@
+[
+ {
+  "kind": "dormouse",
+  "level": 1,
+  "n": 1,
+  "bot": "still",
+  "blows": 10,
+  "paths": {
+   "grammar shot": 27,
+   "pack melee": 3
+  },
+  "slow": 0,
+  "stagger": 2.7999999999999945,
+  "confused": 0,
+  "knock": 25,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 27
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 30
+  },
+  "stillShare": 0.16530278232405893,
+  "medWindow": 0.55,
+  "windowsPerMin": 12
+ },
+ {
+  "kind": "dormouse",
+  "level": 1,
+  "n": 1,
+  "bot": "strafe",
+  "blows": 4.666666666666667,
+  "paths": {
+   "grammar shot": 11,
+   "pack melee": 3
+  },
+  "slow": 0,
+  "stagger": 1.3055555555555558,
+  "confused": 0,
+  "knock": 11.666666666666666,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 27
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 30
+  },
+  "stillShare": 0.13481805462099608,
+  "medWindow": 0.5666666666666668,
+  "windowsPerMin": 11
+ },
+ {
+  "kind": "dormouse",
+  "level": 1,
+  "n": 1,
+  "bot": "dodger",
+  "blows": 4.333333333333333,
+  "paths": {
+   "grammar shot": 13
+  },
+  "slow": 0,
+  "stagger": 1.2111111111111117,
+  "confused": 0,
+  "knock": 10.833333333333334,
+  "blinks": 2,
+  "telegraphs": {
+   "lane": 27
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 30
+  },
+  "stillShare": 0.13328124795690208,
+  "medWindow": 0.4666666666666666,
+  "windowsPerMin": 11
+ },
+ {
+  "kind": "dormouse",
+  "level": 1,
+  "n": 1,
+  "bot": "chase",
+  "blows": 0,
+  "paths": {},
+  "slow": 0,
+  "stagger": 0,
+  "confused": 0,
+  "knock": 0,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 3
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 3
+  },
+  "stillShare": 0.30638191765017814,
+  "sent": 10,
+  "landed": 9,
+  "firstStun": 4.149499999999991,
+  "hitSpeed": 9.32258928407639,
+  "medSpeed": 18.892814668385338,
+  "medWindow": 0.4833333333333333,
+  "windowsPerMin": 2
+ },
+ {
+  "kind": "dormouse",
+  "level": 1,
+  "n": 3,
+  "bot": "still",
+  "blows": 24.333333333333332,
+  "paths": {
+   "grammar shot": 70,
+   "pack melee": 3
+  },
+  "slow": 0,
+  "stagger": 6.461111111111094,
+  "confused": 0,
+  "knock": 60.83333333333333,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 70
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 73
+  },
+  "stillShare": 0.11788332862124211,
+  "medWindow": 0.39999999999999997,
+  "windowsPerMin": 14.666666666666666
+ },
+ {
+  "kind": "dormouse",
+  "level": 1,
+  "n": 3,
+  "bot": "strafe",
+  "blows": 3.333333333333333,
+  "paths": {
+   "grammar shot": 6,
+   "pack melee": 4
+  },
+  "slow": 1.0222222222222226,
+  "stagger": 0.8333333333333333,
+  "confused": 0,
+  "knock": 8.333333333333334,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 68
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 72
+  },
+  "stillShare": 0.08952185028453037,
+  "medWindow": 0.2833333333333333,
+  "windowsPerMin": 14.333333333333334
+ },
+ {
+  "kind": "dormouse",
+  "level": 1,
+  "n": 3,
+  "bot": "dodger",
+  "blows": 3.6666666666666665,
+  "paths": {
+   "grammar shot": 11
+  },
+  "slow": 0.14444444444444443,
+  "stagger": 1.0222222222222226,
+  "confused": 0,
+  "knock": 9.166666666666668,
+  "blinks": 3.6666666666666665,
+  "telegraphs": {
+   "lane": 68
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 71
+  },
+  "stillShare": 0.10115551622027451,
+  "medWindow": 0.3333333333333333,
+  "windowsPerMin": 13.666666666666666
+ },
+ {
+  "kind": "dormouse",
+  "level": 1,
+  "n": 3,
+  "bot": "chase",
+  "blows": 2.3333333333333335,
+  "paths": {
+   "grammar shot": 7
+  },
+  "slow": 0,
+  "stagger": 0.6388888888888892,
+  "confused": 0,
+  "knock": 5.833333333333333,
+  "blinks": 0,
+  "telegraphs": {
+   "lane": 15
+  },
+  "poses": {},
+  "actions": {
+   "grammar windup": 15
+  },
+  "stillShare": 0.1559591593419693,
+  "sent": 35,
+  "landed": 28.333333333333332,
+  "firstStun": 11.982833333333508,
+  "hitSpeed": 15.487137297274904,
+  "medSpeed": 20.7216540158766,
+  "medWindow": 0.31666666666666665,
+  "windowsPerMin": 5.666666666666667
+ }
+]

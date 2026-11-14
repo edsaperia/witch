@@ -889,7 +889,7 @@ function stepSpacing(g: Game, dt: number): void {
   }
   // (one walking home to bed in the afterparty, rules/partyOver.ts, keeps its line too: the sleepers hold their ground, so one whose
   // bed lay in a sleeper's room was eased back as fast as it walked, awake for good, walking on the spot while she watched)
-  spaceOut(list, dt, c => guardsHome(c) || !!c.partyLegend || dormant(g, c) || !!c.asleep || !!c.bed || (c.stunUntil !== undefined && g.clock.time < c.stunUntil), MOVEMENT,
+  spaceOut(list, dt, c => guardsHome(c) || !!c.partyLegend || dormant(g, c) || !!c.asleep || !!c.bed || (c.stunUntil !== undefined && g.clock.time < c.stunUntil) || (c.sitUntil !== undefined && g.clock.time < c.sitUntil), MOVEMENT,
     spacingOn(g.tuning) && list.some(c => c.level >= 1 && c.level <= 2 && c.fight?.target)
       ? { radius: c => spaceRadius(c), steered: c => c.level >= 1 && c.level <= 2 && !!c.fight?.target } : undefined);
   list.length = 0; // (let them go)
