@@ -504,9 +504,19 @@ export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tun
   if (blow) knockWitch((w.knock ??= newKnock()), w.body, blow, at, t);
 }
 
-/** Where a blink may land: not in a tree's trunk, a rock or ruin, a soundsystem, a dancefloor
- *  speaker or the treehouse's tree (tuning dash.clear: each one's clearance in metres). */
+/** Where her blink, ley jump or a throw may leave her: anywhere but a lake on foot (rules/lakes.ts) or over the zoo's fence. Nothing
+ *  else stops her or nudges her (Ed, 2026-11-13: "There's nothing to collide with apart from lakes"; of trunks and rocks, "We can do
+ *  without them"; then "Drop all of them": trees, rocks, soundsystems, speakers and the treehouse). */
 export function blinkClear(g: Game, x: number, z: number, body: WitchState = g.witch): boolean {
+  if (body.mode !== "ground") return true;
+  if (onLake(g.map.bounds, x, z, lakeKnobs(g.tuning).pad)) return false; // (on foot, never onto a lake)
+  return !g.map.bounds.fence?.stop(body.x, body.z, x, z); // (on foot, never over the zoo's fence)
+}
+
+/** Clear of scenery: not in a tree's trunk, a rock or ruin, a soundsystem, a dancefloor speaker or the treehouse's tree (tuning
+ *  dash.clear: each one's clearance in metres). The party witches round the floor keep to it (Ed, 2026-10-06); she no longer does
+ *  (blinkClear). */
+export function clearOfScenery(g: Game, x: number, z: number, body: WitchState = g.witch): boolean {
   const C = g.tuning.dash.clear, near = (px: number, pz: number, r: number) => (px - x) ** 2 + (pz - z) ** 2 < r * r;
   if (g.forest.treesNear(x, z, C.tree).some(p => near(p.x, p.z, C.tree))) return false;
   if (g.forest.decorNear(x, z, C.decor).some(p => near(p.x, p.z, C.decor))) return false;
@@ -1127,7 +1137,7 @@ function stepWitchParty(g: Game, controls: readonly Controls[], dt: number): voi
     return { x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated && !w.perch && !potionPhase(g, W), moving, treetop: w.mode === "treetop" };
   });
   // Round the floor they keep clear of trees, rocks, the speakers and the treehouse and its clearing (Ed, 2026-10-06).
-  const th = g.map.treehouse, clear = (x: number, z: number) => blinkClear(g, x, z) && Math.hypot(x - th.x, z - th.z) > t.treehouse.clear;
+  const th = g.map.treehouse, clear = (x: number, z: number) => clearOfScenery(g, x, z) && Math.hypot(x - th.x, z - th.z) > t.treehouse.clear;
   // Her soundsystem ruined, or the party over, she lies down to stargaze out past the speakers (Ed, 2026-10-11). Up in the treehouse
   // (perched: its rooms, rules/houseRooms.ts) she's not by the floor, so never idles into the party from there.
   stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius, clear, ring: speakerRadius(t) + t.dancefloor.speakers.footprint }, players, g.clock.time, dt, t,

@@ -1692,7 +1692,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
     expect(d2.toX).toBeLessThan(6); expect(d2.toX).toBeGreaterThan(5);
   });
 
-  it("never lands in a tree trunk", () => {
+  it("blinks its whole way, even onto a tree trunk (Ed, 2026-11-13: \"There's nothing to collide with apart from lakes\")", () => {
     // Retain extent: searches the seeded forest beyond home's meadow for twelve collision candidates.
     const g = ready();
     const out = g.map.homeRadius + 60, trees = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([sx, sz]) => g.forest.treesNear(g.witch.x + sx * out, g.witch.z + sz * out, 40)).find(t => t.length > 0) ?? []; // (beyond home's meadow, where trees grow: the first way off it with some)
@@ -1705,7 +1705,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
       const x0 = g.witch.x;
       run(g, 1, { dash: true, moveX: 1, moveZ: 0 });
       if (Math.abs(g.witch.x - x0) < 1) continue; // (no blink: nowhere clear along the line, or her charges spent on the cooldown, so she only walked a step)
-      for (const p of g.forest.treesNear(g.witch.x, g.witch.z, 3)) expect(Math.hypot(p.x - g.witch.x, p.z - g.witch.z)).toBeGreaterThanOrEqual(TUNING.dash.clear.tree - 1e-6);
+      expect(g.witch.x).toBeGreaterThanOrEqual(tr.x - 0.5); expect(Math.abs(g.witch.z - tr.z)).toBeLessThan(1e-6); // (her whole blink and on along the line, through the trunk's spot: never nudged aside)
       tried++;
     }
     expect(tried).toBeGreaterThan(0);
