@@ -59,7 +59,7 @@
     },
     "badgerBarge": {
       "what": "The badger's shoulder-barge throws her `throw` metres and staggers her `stagger` seconds.",
-      "notes": "Only its own lunge's blow at her (config/species-attacks.json badger); its dug-in bite and its stone shard throw her as any blow does (witch.knock). The throw is not held to witch.knock.max, which caps every other throw at 14 m. It eases off as every throw does (witch.knock.ease: nine tenths of it in a quarter of a second); she is kept on the island and ashore of lakes, stops at the treehouse instead of passing through it, and is nudged clear if she'd rest in a trunk, a rock or a speaker (rules/knock.ts, rules/game.ts treehouseWall). stagger 0.5 is about the throw's own length, so she can move again as she lands; it was 0.52 s with the old 6.4 m throw. Measure with node tools/balance/attackaudit.mjs --kinds badger (median throw m).",
+      "notes": "Only its own lunge's blow at her (config/species-attacks.json badger); its dug-in bite and its stone shard throw her as any blow does (witch.knock). The throw is not held to witch.knock.max, which caps every other throw at 14 m. It eases off as every throw does (witch.knock.ease: nine tenths of it in a quarter of a second); she is kept on the island and ashore of lakes, passes through scenery and the treehouse like any throw (Ed, 2026-11-13: \"There's nothing to collide with apart from lakes\"), and is nudged clear if she'd rest in a trunk, a rock, a speaker or the treehouse (rules/knock.ts). stagger 0.5 is about the throw's own length, so she can move again as she lands; it was 0.52 s with the old 6.4 m throw. Measure with node tools/balance/attackaudit.mjs --kinds badger (median throw m).",
       "decisions": [
         {
           "by": "Ed",

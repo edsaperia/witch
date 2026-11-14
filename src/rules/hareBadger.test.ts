@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { setupArena } from "./arena";
 import { actionsOf } from "./combat/actions";
-import { STEP, stepGame, treehouseWall, type Controls } from "./game";
+import { STEP, stepGame, type Controls } from "./game";
 import { knockOf, knockWitch, newKnock, stepWitchKnock, stunned } from "./knock";
 import { TUNING } from "./tuning";
 import { newWitch } from "./witch";
@@ -87,35 +87,24 @@ describe("the badger's barge throws her far (Ed, 2026-11-13: \"20m\")", () => {
     expect(stunned(k, BB.stagger - 0.01)).toBe(true); expect(stunned(k, BB.stagger + 0.01)).toBe(false);
   });
 
-  it("lands clear of what's solid, and stops at a wall in her way", () => {
+  it("lands clear of what's solid", () => {
     // (a trunk where she'd come to rest: nudged clear of it)
     const k = newKnock(), solid = (x: number, z: number) => Math.hypot(x - BB.throw, z) >= 1.2;
     let body = newWitch(0, 0);
     knockWitch(k, body, barge, 0, TUNING);
     for (let i = 0; i < 3 / STEP; i++) body = stepWitchKnock(k, body, STEP, TUNING, B, solid);
     expect(solid(body.x, body.z)).toBe(true); expect(Math.hypot(body.x - BB.throw, body.z)).toBeLessThan(3);
-    // (a wall across her way at x = 8: she stops there, her throw over)
-    const k2 = newKnock(), wall = (x0: number, z0: number, x1: number, z1: number) => (x0 < 8 && x1 >= 8 ? { x: 8, z: z0 + ((z1 - z0) * (8 - x0)) / (x1 - x0) } : null);
-    let b2 = newWitch(0, 0);
-    knockWitch(k2, b2, barge, 0, TUNING);
-    for (let i = 0; i < 3 / STEP; i++) b2 = stepWitchKnock(k2, b2, STEP, TUNING, B, () => true, wall);
-    expect(b2.x).toBeCloseTo(8, 6); expect(k2.kx).toBe(0);
   });
 
-  it("never throws her through the treehouse, or off the island", () => {
+  it("passes through the treehouse as through any scenery, never rests inside it, and stays on the island", () => {
+    // (Ed, 2026-11-13: "There's nothing to collide with apart from lakes")
     const g = preppedGame(5, TUNING), T = g.map.treehouse, R = TUNING.dash.clear.treehouse;
-    // (the wall: a throw across the treehouse stops at its near side; one past it, or from inside it, isn't stopped)
-    const met = treehouseWall(g, T.x - 12, T.z, T.x + 8, T.z);
-    expect(met).not.toBeNull(); expect(met!.x).toBeLessThan(T.x - R); expect(met!.x).toBeGreaterThan(T.x - R - 0.2);
-    expect(treehouseWall(g, T.x - 12, T.z + R + 1, T.x + 8, T.z + R + 1)).toBeNull();
-    expect(treehouseWall(g, T.x, T.z, T.x + 8, T.z)).toBeNull();
-    // (the whole throw, in the game: from 6 m short of it, thrown at it, she ends on its near side and clear of it)
     const w = g.witches[0], k = (w.knock = newKnock());
     w.body = { ...w.body, seated: false, mode: "ground", lift: 0, x: T.x - R - 6, z: T.z };
     g.clock.paused = false; g.party.paused = true;
     knockWitch(k, w.body, { ...barge, x: w.body.x - 1, z: w.body.z }, g.herTime, TUNING);
     for (let i = 0; i < 2 / STEP; i++) stepGame(g, STILL, STEP);
-    expect(w.body.x).toBeLessThan(T.x); expect(Math.hypot(w.body.x - T.x, w.body.z - T.z)).toBeGreaterThanOrEqual(R - 1e-6);
+    expect(w.body.x).toBeGreaterThan(T.x); expect(Math.hypot(w.body.x - T.x, w.body.z - T.z)).toBeGreaterThanOrEqual(R - 1e-6);
     // (off the island: thrown outward from near its edge, she is kept on it)
     const bounds = g.map.bounds, edge = { ...newWitch(bounds.maxX - 3, (bounds.minZ + bounds.maxZ) / 2) }, k3 = newKnock();
     let b3 = edge;
