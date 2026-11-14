@@ -51,6 +51,24 @@ describe("the badger's barge throws her far (Ed, 2026-11-13: \"20m\")", () => {
   const B = { minX: -1e4, maxX: 1e4, minZ: -1e4, maxZ: 1e4 }, BB = TUNING.badgerBarge!;
   const barge = { x: -1, z: 0, knockback: 7, rams: false, metres: BB.throw, far: true, stagger: BB.stagger };
 
+  it("in the game, nobody watching its attacks: a badger's barge on her standing still throws her badgerBarge.throw metres", () => {
+    // (the first build threw her 20 m only while a tool observed the attacks, rules/attackObservation.ts: unobserved, land dropped the
+    // blow's context, which is how the barge is known; the clip of the real game showed 6.3 m)
+    for (const level of [1, 2]) {
+      const g = preppedGame(5, TUNING), w = g.witches[0], throws: number[] = [];
+      g.clock.paused = false; g.party.paused = true;
+      setupArena(g, `badger*1@${level}`, { wildOnly: true });
+      let at = -Infinity;
+      for (let i = 0; i < 40 / STEP && throws.length < 3; i++) {
+        w.health.hp = 1e6;
+        stepGame(g, STILL, STEP);
+        const k = w.knock;
+        if (k && k.at !== at && Number.isFinite(k.at)) { at = k.at; throws.push(Math.hypot(k.kx, k.kz) / TUNING.witch.knock.ease); } // (its speed as it begins is its metres times the ease: rules/knock.ts)
+      }
+      expect(throws.some(m => Math.abs(m - BB.throw) < 0.5), `level ${level}: ${throws.map(m => m.toFixed(1))}`).toBe(true);
+    }
+  }, 240000);
+
   it("its throw is past the cap on the others, and its stagger its own", () => {
     const k = knockOf(barge, TUNING);
     expect(k.metres).toBe(BB.throw); expect(k.metres).toBeGreaterThan(TUNING.witch.knock.max);

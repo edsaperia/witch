@@ -45,7 +45,7 @@ export function touch(w: CombatWorld, s: CombatState, c: Creature, damage: numbe
 }
 
 export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target, damage: number, a: Attack, fx: number, fz: number, context?: AttackContext): void {
-  if (!observingAttacks(s)) { landUnobserved(w, s, from, tg, damage, a, fx, fz); return; }
+  if (!observingAttacks(s)) { landUnobserved(w, s, from, tg, damage, a, fx, fz, context); return; } // (its context kept, watched or not: the badger's barge is known by it, below)
   // A stale legacy shot can have no named attack; land's shelter return must still happen first.
   let observation: AttackContext = context ?? { source: from?.id ?? null, attack: null, delivery: a?.delivery ?? "unknown", phase: "damage" };
   if (a && !observation.attack && observation.definition === undefined)
