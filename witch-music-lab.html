@@ -1012,6 +1012,21 @@ label.check input { accent-color: var(--accent); }
     return { pass, at: at2, extra, shift: at2 - pass * L2 + (k - at2 >= L2 ? extra : 0) };
   }
 
+  // src/rules/ownedMemo.ts
+  function ownedMemo(cap) {
+    const by = /* @__PURE__ */ new WeakMap();
+    return (owner, key, make) => {
+      let m = by.get(owner);
+      if (!m) by.set(owner, m = /* @__PURE__ */ new Map());
+      let v = m.get(key);
+      if (v === void 0) {
+        if (m.size > cap) m.clear();
+        m.set(key, v = make());
+      }
+      return v;
+    };
+  }
+
   // art/areas/index.js
   var AREA_FOLDER_KINDS = [
     { "kind": "hedgehog", "slot": 0, "phase": 0, "bearing": 170, "dir": "S", "biome": "temperate" },
@@ -4219,15 +4234,10 @@ label.check input { accent-color: var(--accent); }
     return list?.length ? pick(list, hash2(seed2, 503, 19)) : void 0;
   }
   var clearingOstinato = (D2, seed2, arc) => !!D2 && hash2(seed2, arc, 497) < D2.dance.ostinato;
-  var riffCache = /* @__PURE__ */ new Map();
+  var riffCache = ownedMemo(128);
   function riffFor(C2, kind, seed2, cellSeed = seed2) {
     const k = `${kind}|${seed2}|${cellSeed}|${C2.sevenths ? 1 : 0}`;
-    let R = riffCache.get(k);
-    if (!R) {
-      if (riffCache.size > 128) riffCache.clear();
-      riffCache.set(k, R = makeRiff(C2, kind, pitchCell(C2, (i) => hash2(cellSeed + i * 7919, 493, 11)), (i) => hash2(seed2 + i * 7919, 495, kind.length)));
-    }
-    return R;
+    return riffCache(C2, k, () => makeRiff(C2, kind, pitchCell(C2, (i) => hash2(cellSeed + i * 7919, 493, 11)), (i) => hash2(seed2 + i * 7919, 495, kind.length)));
   }
   var use = (u) => typeof u === "string" ? { p: u, level: 1, from: 0, energy: 0 } : { p: u.p, level: u.level ?? 1, from: u.from ?? 0, energy: u.energy ?? 0 };
   function degreeToMidi(style2, scale, degree2, octave, transpose) {
@@ -4256,16 +4266,11 @@ label.check input { accent-color: var(--accent); }
     for (let i = 0; i < part.length; i++) salt = salt * 31 + part.charCodeAt(i) | 0;
     return beatMotif(C2, (k) => hash2(seed2 + k * 7919, arc, salt + 3));
   }
-  var motifCache = /* @__PURE__ */ new Map();
+  var motifCache = ownedMemo(256);
   function motifFor(style2, seed2, arc, part, own = false) {
     const C2 = composeOn(style2), ost = own && clearingOstinato(danceOn(style2), seed2, arc);
     const k = `${seed2}|${arc}|${part}|${C2 ? "c" : ""}${ost ? "o" : ""}`;
-    let m = motifCache.get(k);
-    if (!m) {
-      if (motifCache.size > 256) motifCache.clear();
-      motifCache.set(k, m = ost ? ostinatoMotif((x) => hash2(seed2 + x * 7919, arc, 499)) : C2 ? composedMotif(C2, seed2, arc, part) : motif(seed2, arc, part));
-    }
-    return m;
+    return motifCache(style2, k, () => ost ? ostinatoMotif((x) => hash2(seed2 + x * 7919, arc, 499)) : C2 ? composedMotif(C2, seed2, arc, part) : motif(seed2, arc, part));
   }
   function chordAt(style2, sec, step2, barIn) {
     const prog = style2.progressions[sec.progression || step2.progression || ""] ?? style2.progressions[Object.keys(style2.progressions)[0]];
@@ -4557,15 +4562,10 @@ label.check input { accent-color: var(--accent); }
     });
     return out;
   }
-  var phraseCache = /* @__PURE__ */ new Map();
+  var phraseCache = ownedMemo(64);
   function phraseFor(style2, seed2, letter, hookSeed, haunted = false, cell) {
     const k = `${seed2}|${letter}|${hookSeed ?? ""}|${haunted ? "h" : ""}|${composeOn(style2) ? "c" : ""}|${cell?.join() ?? ""}`;
-    let p = phraseCache.get(k);
-    if (!p) {
-      if (phraseCache.size > 64) phraseCache.clear();
-      phraseCache.set(k, p = haunted ? hauntedPhrase(style2, seed2, letter, hookSeed, cell) : formPhrase(style2, seed2, letter, hookSeed));
-    }
-    return p;
+    return phraseCache(style2, k, () => haunted ? hauntedPhrase(style2, seed2, letter, hookSeed, cell) : formPhrase(style2, seed2, letter, hookSeed));
   }
   function riffPhrase(style2, seed2, letter, kind, cellSeed = seed2, haunted = false) {
     const F = style2.form, C2 = composeOn(style2) ?? style2.compose, at2 = F.order.indexOf(letter) * F.phraseBars, R = riffFor(C2, kind, seed2, cellSeed);
@@ -4578,15 +4578,7 @@ label.check input { accent-color: var(--accent); }
     const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : formChord(style2, seed2, at2 + F.phraseBars - 1).tones.map((t) => mod(t, 7)).filter((t) => t !== 0);
     return hookLine(wlo, hi, F.phraseBars, (b) => formChord(style2, seed2, at2 + b, !!C2.sevenths).tones.map((t) => mod(t, 7)), ends, (i) => hash2(ms + i * 7919, 489, salt));
   }
-  var danceCache = /* @__PURE__ */ new Map();
-  function dancePhraseFor(key, make) {
-    let p = danceCache.get(key);
-    if (!p) {
-      if (danceCache.size > 64) danceCache.clear();
-      danceCache.set(key, p = make());
-    }
-    return p;
-  }
+  var dancePhraseFor = ownedMemo(64);
   var lastPhrase = null;
   var musicSeed = (base, n) => n <= 0 ? base : Math.floor(hash2(base, 433 + n, n * 7919) * 2147483647);
   function formNoteAt(style2, seed2, formStep, transpose = 0, step2, opts) {
@@ -4597,7 +4589,7 @@ label.check input { accent-color: var(--accent); }
     let L2 = lastPhrase;
     if (!L2 || L2.style !== style2 || L2.seed !== seed2 || L2.letter !== letter || L2.hook !== hook || L2.haunted !== haunted || L2.riff !== riff || L2.sung !== sung) {
       const D2 = danceOn(style2), cellSeed = haunted && hook !== void 0 ? hook : seed2;
-      const notes = D2 && riff && !sung ? dancePhraseFor(`r|${seed2}|${letter}|${riff}|${cellSeed}|${haunted}|${D2.sevenths ? 1 : 0}`, () => riffPhrase(style2, seed2, letter, riff, cellSeed, haunted)) : D2 && sung && !haunted && hash2(seed2, 487, 3) < D2.dance.hook ? dancePhraseFor(`h|${seed2}|${letter}|${hook ?? ""}|${D2.sevenths ? 1 : 0}`, () => hookPhrase(style2, seed2, letter, hook)) : phraseFor(style2, seed2, letter, hook, haunted, D2 && haunted && riff ? riffFor(D2, riff, seed2, cellSeed).cell : void 0);
+      const notes = D2 && riff && !sung ? dancePhraseFor(style2, `r|${seed2}|${letter}|${riff}|${cellSeed}|${haunted}|${D2.sevenths ? 1 : 0}`, () => riffPhrase(style2, seed2, letter, riff, cellSeed, haunted)) : D2 && sung && !haunted && hash2(seed2, 487, 3) < D2.dance.hook ? dancePhraseFor(style2, `h|${seed2}|${letter}|${hook ?? ""}|${D2.sevenths ? 1 : 0}`, () => hookPhrase(style2, seed2, letter, hook)) : phraseFor(style2, seed2, letter, hook, haunted, D2 && haunted && riff ? riffFor(D2, riff, seed2, cellSeed).cell : void 0);
       lastPhrase = L2 = { style: style2, seed: seed2, letter, hook, haunted, riff, sung, notes };
     }
     const n = L2.notes[i];
@@ -4635,7 +4627,7 @@ label.check input { accent-color: var(--accent); }
     const e = energy + (/Drop$/.test(section) ? 0.2 : 0), sec = P.sections?.[section], pool = sec ?? (e < 0.4 ? P.low : e < 0.7 ? P.mid : P.high);
     return pick(pool.includes(own) || !sec && e < 0.4 ? pool : [...pool, own], hash2(seed2 + Math.floor(bar2 / 4) * 7919, 511, part.length));
   }
-  var rootCache = /* @__PURE__ */ new Map();
+  var rootCache = ownedMemo(64);
   function bassRoot(style2, scale, transpose, R, seed2, formBar, haunt, root) {
     const lo = R[0], hi = Math.min(R[1], R[0] + 15), mid = (lo + hi) / 2;
     const place = (pc, near) => {
@@ -4650,13 +4642,11 @@ label.check input { accent-color: var(--accent); }
     const F = style2.form;
     if (formBar === null || !F) return place(pcOf(root), mid);
     const n = formBars(F), key = `${seed2}|${transpose}|${scale.join()}|${lo},${hi}|${haunt ? 1 : 0}`;
-    let seq = rootCache.get(key);
-    if (!seq) {
-      if (rootCache.size > 64) rootCache.clear();
-      seq = [];
-      for (let b = 0; b < n; b++) seq.push(place(pcOf(formChord(style2, seed2, haunt ? hauntedBar(F, b) : b).root), b ? seq[b - 1] : mid));
-      rootCache.set(key, seq);
-    }
+    const seq = rootCache(style2, key, () => {
+      const out = [];
+      for (let b = 0; b < n; b++) out.push(place(pcOf(formChord(style2, seed2, haunt ? hauntedBar(F, b) : b).root), b ? out[b - 1] : mid));
+      return out;
+    });
     return seq[mod(formBar, n)];
   }
   var VOICE_FAMILIES = { ...creature_voices_default.species, ...sectionOf("voice") };
@@ -12928,6 +12918,7 @@ registerProcessor("witch-fof", WitchFof);
         max: 25,
         areaMax: 55
       },
+      sigilSide: true,
       species: {
         elk: 22,
         stag: 18,
