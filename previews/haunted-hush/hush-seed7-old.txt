@@ -1,0 +1,5 @@
+hush-seed7-old: seed 7, wave 3, from its breakbeats, 4 quiet bars before the drop (0:51.0)
+ 0:00.0  deepBreaks
+ 0:16.0  the haunted breakdown (breakdown, 8 bars): 4 quiet bars
+ 0:24.0  the drum & bass drop (4 bars)
+ 0:32.0  the next pass round the form: drop
