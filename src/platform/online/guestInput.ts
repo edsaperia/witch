@@ -1,7 +1,7 @@
 import type { Controls } from "../../rules/game";
 import { ONLINE_TIMING } from "./inputLease";
 
-const edges = ["toggleMode", "sigil", "place", "hat", "cycle", "cycleBack", "spell", "castParty", "dash"] as const;
+const edges = ["toggleMode", "sigil", "place", "hat", "cycle", "cycleBack", "command", "spell", "castParty", "dash"] as const;
 export const INPUT_EDGES = edges;
 const held = ["fire", "sigilHeld", "hatHold", "held", "autoTalk", "talkHeld", "pausePage"] as const;
 const axes = ["moveX", "moveZ"] as const;

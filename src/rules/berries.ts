@@ -19,6 +19,7 @@ import { rng } from "./random";
 import type { Tuning } from "./tuning";
 import { addPip, pipCount, pipFuel, wantsPip } from "./buffs";
 import { chainLength } from "./chains";
+import { chargeRoom, feedCharges } from "./commands/charges";
 
 /** A berry bush: where it stands, and its area's type (it's one of that area's own bushes). */
 export interface BerryBush { x: number; z: number; type: number; variant: number; flip: boolean; /** a spot of the Harvest hat's ring (rules/spells.ts): no bush drawn, and never a regrown berry's */ harvest?: boolean }
@@ -57,6 +58,8 @@ export interface BerryState {
   evolving: Map<number, Evolving>;
   /** Follower buffs (rules/buffs.ts): each adult's berry pips, as seconds of buff left (none kept yet: buffs.pips.start). */
   pips?: Map<number, number>;
+  /** Command charges (?commands=1; rules/commands/charges.ts): each creature's, in place of its pips and a youth's growth count. */
+  charges?: Map<number, number>;
   /** Game time each creature last ate (for the view's progress ring). */
   ateAt: Map<number, number>;
   events: BerryEvent[];
@@ -94,7 +97,8 @@ export const feedKnobs = (t: Tuning): { reach: number; speed: number; hold: numb
  *  none for a legend, one evolving, or one not hers. */
 export function feedRoom(c: Creature, s: BerryState, t: Tuning): number {
   if (!c || c.gone || !c.leashed || c.boss || c.partyLegend || c.level >= LEGEND || s.evolving.has(c.id)) return 0;
-  const hurt = hurtNow(c) ? 1 : 0;
+  const hurt = hurtNow(c) ? 1 : 0, cr = chargeRoom(s, c, t); // (with commands on, its charges decide: rules/commands/charges.ts)
+  if (cr !== null) return hurt + cr;
   if (c.level < TOP_LEVEL) return hurt + Math.max(0, Math.ceil(toEvolve(c.level, t, c.species) - (s.fed.get(c.id) ?? 0)));
   const P = t.buffs?.pips;
   return hurt + (P && wantsPip(c, s, t) ? Math.max(0, P.max - pipCount(pipFuel(s, c.id, t), t)) : 0);
@@ -280,9 +284,11 @@ export function feed(s: BerryState, c: Creature, time: number, t: Tuning, clock?
   // A berry heals a party animal to full (Ed, 2026-10-04), as well as counting toward evolving.
   // (Ed, 2026-10-28: one berry takes all its 💧s, and counts toward growing up only when it had none)
   if (c.leashed && hurtNow(c)) { heal(c, time); return; }
+  const fc = feedCharges(s, c, t); // (with commands on: charges, or a full youth evolving: rules/commands/charges.ts)
+  if (fc === "charged") { s.ateAt.set(c.id, time); return; }
   if (c.level === TOP_LEVEL && !c.boss) { addPip(s, c.id, t); s.ateAt.set(c.id, time); return; } // (an adult's berry: a buff pip, rules/buffs.ts)
   if (c.level >= TOP_LEVEL || s.evolving.has(c.id)) return;
-  const n = (s.fed.get(c.id) ?? 0) + 1;
+  const n = fc === "evolve" ? Infinity : (s.fed.get(c.id) ?? 0) + 1;
   s.ateAt.set(c.id, time);
   if (n >= toEvolve(c.level, t, c.species)) {
     s.fed.set(c.id, 0);

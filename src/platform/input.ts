@@ -4,7 +4,7 @@
 // `touch`. The 💌 (issue #87) is aimed twin-stick: the cursor (a click fires) or the right stick (a trigger fires); 1 fires toward
 // the cursor; on touch, its button fires the way she's going.
 import type { Controls } from "../rules/game";
-import { bindings, type ActionId, type Bindings } from "./bindings";
+import { commandControls, bindings, type ActionId, type Bindings } from "./bindings";
 
 /** The keys the game takes from the page (no scrolling, no browser shortcut): every game action's (Esc is the pause's, platform/freeze.ts). */
 let gameKeys = new Set<string>(), gameKeysAt = -1;
@@ -14,7 +14,7 @@ function isGameKey(code: string): boolean {
 }
 const MOUSE_NAMES = ["left", "middle", "right"] as const;
 
-export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; sigil?: boolean; spell?: boolean; dash?: boolean; /** The action bar's auto-talk slot was clicked. */ autoTalk?: boolean; /** The 💌 button is down. */ invite?: boolean; /** The sigil button is down (held: her hat, rules/hat.ts putHat). */ sigilHeld?: boolean }
+export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; sigil?: boolean; spell?: boolean; dash?: boolean; /** The action bar's auto-talk slot was clicked. */ autoTalk?: boolean; /** The 💌 button is down. */ invite?: boolean; /** The sigil button is down (held: her hat, rules/hat.ts putHat). */ sigilHeld?: boolean; /** The act button (?commands=1) was pressed. */ command?: boolean }
 
 export class Input {
   private keys = new Set<string>();
@@ -49,6 +49,8 @@ export class Input {
   private talkOn = false;
 
   constructor(target: Window = window) {
+    // ?commands=1 (rules/commands/press.ts): the pad's square commands and circle uses (Ed, 2026-11-17), a layer under the player's own.
+    try { if (new URLSearchParams(target.location?.search ?? "").get("commands") === "1") commandControls(true); } catch { /* (no location: a test's window) */ }
     target.addEventListener("keydown", e => {
       if (e.repeat) { if (isGameKey(e.code)) e.preventDefault(); return; }
       this.device = "keys";
@@ -127,6 +129,7 @@ export class Input {
     const place = p("game.use"); let cycle = p("game.cycleNext"), cycleBack = p("game.cyclePrev"), hat = p("game.hat");
     // Use held: a run (rules/leash.ts), and, with nothing to do, her hat (rules/hat.ts putHat); the pad's use only the run (its hat is its own button).
     let hatHold = k("game.use") > 0, sigilHeld = hatHold;
+    let command = p("game.command"); // (?commands=1: the bottom of her stack acts, rules/commands/press.ts)
     let inviteNearest = p("game.inviteNearest"), feedNearest = p("game.feedNearest"), happyNearest = p("game.happyNearest");
     // The 💌: fire with the mouse button or 1 (held, or a click since the last read); aim at the cursor.
     let fire = k("game.invite") > 0 || p("game.invite");
@@ -154,6 +157,7 @@ export class Input {
       if (P.cycle) cycle = true;
       if (P.cycleBack) cycleBack = true;
       if (P.dash) dash = true;
+      if (P.command) command = true;
       if (P.aim) { aimX = P.aim.x; aimZ = P.aim.z; }
       if (P.fire) fire = true;
       talkPressed ||= P.talkPressed; talkDown ||= P.talkHeld; toggleAutoTalk ||= P.toggleAutoTalk;
@@ -172,8 +176,9 @@ export class Input {
     if (t.sigilHeld) { sigilHeld = true; hatHold = true; }
     if (t.spell) spell = true;
     if (t.dash) dash = true;
+    if (t.command) command = true;
     if (t.invite) { fire = true; if (!cursorAim) { aimX = 0; aimZ = 0; } }
-    t.toggle = false; t.zoom = 0; t.debug = false; t.sigil = false; t.spell = false; t.dash = false;
+    t.toggle = false; t.zoom = 0; t.debug = false; t.sigil = false; t.spell = false; t.dash = false; t.command = false;
 
     const len = Math.hypot(moveX, moveZ);
     if (len > 1) { moveX /= len; moveZ /= len; }
@@ -182,7 +187,7 @@ export class Input {
     // Every action must read the same edges before any are consumed (including Talk and Auto-talk).
     this.pressed.clear(); this.mousePressed.clear();
     this.touch.autoTalk = false;
-    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), place, cycle, cycleBack, debug, nextWave, pauseWaves, cycleSpeakers, sigil, sigilHeld, hatHold, hat, inviteNearest, happyNearest, spell, feedNearest, dash, toggleAutoTalk, talkHeld, fire, aimX, aimZ };
+    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), place, cycle, cycleBack, debug, nextWave, pauseWaves, cycleSpeakers, sigil, sigilHeld, hatHold, hat, inviteNearest, happyNearest, spell, feedNearest, dash, command, toggleAutoTalk, talkHeld, fire, aimX, aimZ };
   }
 }
 
@@ -194,7 +199,7 @@ export class Input {
  *  (ui/stationLines.ts panelPad, the telescope's look), she standing still (main.ts stillControls). */
 export function padControls(buttons: readonly boolean[], axes: readonly number[], prev: readonly boolean[], consumed: boolean, menu: boolean, prevAxes: readonly number[] = [], B: Bindings = bindings) {
   const pressed = (id: ActionId) => !consumed && B.padPressed(id, buttons, axes, prev, prevAxes), v = (id: ActionId) => B.padValue(id, buttons, axes);
-  const out = { moveX: 0, moveZ: 0, zoom: 0, toggleMode: false, debug: false, sigil: false, sigilHeld: false, hat: false, spell: false, cycle: false, cycleBack: false, dash: false, fire: false, aim: null as { x: number; z: number } | null,
+  const out = { moveX: 0, moveZ: 0, zoom: 0, toggleMode: false, debug: false, sigil: false, sigilHeld: false, hat: false, spell: false, cycle: false, cycleBack: false, dash: false, command: false, fire: false, aim: null as { x: number; z: number } | null,
     talkHeld: false, talkPressed: false, toggleAutoTalk: false, nextWave: false, pauseWaves: false, cycleSpeakers: false, inviteNearest: false, feedNearest: false, happyNearest: false };
   if (menu) {
     out.sigil = pressed("menu.back");
@@ -207,7 +212,7 @@ export function padControls(buttons: readonly boolean[], axes: readonly number[]
   out.debug = pressed("game.debug");
   out.sigil = pressed("game.use");
   out.sigilHeld = B.padHeld("game.use", buttons, axes);
-  out.hat = pressed("game.hat"); out.spell = pressed("game.boost"); out.cycle = pressed("game.cycleNext"); out.cycleBack = pressed("game.cyclePrev"); out.dash = pressed("game.dodge");
+  out.hat = pressed("game.hat"); out.spell = pressed("game.boost"); out.cycle = pressed("game.cycleNext"); out.cycleBack = pressed("game.cyclePrev"); out.dash = pressed("game.dodge"); out.command = pressed("game.command");
   // Twin-stick: the aim stick aims (screen right is east, down is south), the invite's buttons fire.
   const rx = v("game.aimRight") - v("game.aimLeft"), rz = v("game.aimDown") - v("game.aimUp"), l = Math.hypot(rx, rz);
   if (l > 0.15) { const s = Math.min(1, l) / l; out.aim = { x: rx * s * 20, z: rz * s * 20 }; } // (as a point 20 m out that way: the dash reads a cursor's ground point)

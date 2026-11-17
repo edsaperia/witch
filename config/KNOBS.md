@@ -541,8 +541,8 @@ Code: `rules/treehouse.ts`, `art/ent.js`, `docs/backlog/treehouse.md`, `config/h
 | `treehouse.clear` | number | 0 to … |
 | `treehouse.lightReach` | number | 0 to … |
 | `treehouse.lightStrength` | number | 0 to … |
-| `treehouse.freeTakeOff` | boolean |  |
 | `treehouse.landCooldown` | number | 0 to … |
+| `treehouse.freeTakeOff` | boolean |  |
 | `treehouse.deck.on` | boolean |  |
 | `treehouse.deck.radius` | number | 0 to … |
 | `treehouse.deck.height` | number | 0 to … |
@@ -2225,6 +2225,29 @@ Only its own lunge's blow at her (config/species-attacks.json badger); its dug-i
 |---|---|---|
 | `badgerBarge.throw` | number | 0 to 60 |
 | `badgerBarge.stagger` | number | 0 to 3 |
+
+### `skill`
+
+Openings in fights: on, the home island's wild creatures sit still after attacking, have poise that letters wear down, and stagger and are dazed when it breaks (?skill=1).
+
+1. Ed, 2026-11-17: "I don't think one letter should ever count for more than one hit. A hit is a letter. But e.g. a buff could make you shoot twice as fast, or slow or daze a creature down so that it's easier to hit."
+A letter is still one hit; openings only make creatures easier to hit. Every number is per species in config/combat-skill.json (rules/skill/openings.ts). Design: docs/plans/combat-skill-and-commands.md.
+
+| knob | type | range |
+|---|---|---|
+| `skill.on` | boolean |  |
+
+### `commands`
+
+Creature commands: on, the bottom of her stack acts when she presses Command (pad square, F, the middle mouse button, touch's act button), spending one of its berry pips as a charge (?commands=1).
+
+1. Ed, 2026-11-17: "For the controller, we can have square as command, and circle as pickup/place. When you're near a berry, square becomes eat."
+2. Ed, 2026-11-17: "cycling between animals and using abilities during fights is the skill"
+The pad's circle becomes use (pick up and place) and loses dodge (L2 still dodges); square eats when a berry is in reach and the bottom creature has room. Each species' command, charges, charges per berry and cooldown are in config/combat-skill.json (rules/commands/). Design: docs/plans/combat-skill-and-commands.md.
+
+| knob | type | range |
+|---|---|---|
+| `commands.on` | boolean |  |
 
 ### `creatureMomentum`
 

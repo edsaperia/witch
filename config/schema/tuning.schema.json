@@ -1354,14 +1354,14 @@
           "type": "number",
           "minimum": 0
         },
-        "freeTakeOff": {
-          "type": "boolean",
-          "description": "Adults and legends in her stack never stop her taking off while she is at the treehouse (its floors, rooms and balcony: her followers count as placed there); false (?treehousetakeoff=old): they ground her there as everywhere else, as before."
-        },
         "landCooldown": {
           "type": "number",
           "minimum": 0,
           "description": "Seconds after she leaves a treehouse floor (rising or stepping off) before she can land on one, and after she lands before she can leave: meanwhile she flies on over its floors, and its open edges keep her in."
+        },
+        "freeTakeOff": {
+          "type": "boolean",
+          "description": "Adults and legends in her stack never stop her taking off while she is at the treehouse (its floors, rooms and balcony: her followers count as placed there); false (?treehousetakeoff=old): they ground her there as everywhere else, as before."
         },
         "deck": {
           "type": "object",
@@ -1655,6 +1655,7 @@
         "lightReach",
         "lightStrength",
         "landCooldown",
+        "freeTakeOff",
         "deck",
         "house"
       ],
@@ -1953,6 +1954,7 @@
         "rim",
         "grove",
         "fit",
+        "sigilSide",
         "species"
       ],
       "additionalProperties": false,
@@ -6017,6 +6019,32 @@
       "additionalProperties": false,
       "description": "The badger's shoulder-barge throws her `throw` metres and staggers her `stagger` seconds."
     },
+    "skill": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "on"
+      ],
+      "additionalProperties": false,
+      "description": "Openings in fights: on, the home island's wild creatures sit still after attacking, have poise that letters wear down, and stagger and are dazed when it breaks (?skill=1)."
+    },
+    "commands": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "on"
+      ],
+      "additionalProperties": false,
+      "description": "Creature commands: on, the bottom of her stack acts when she presses Command (pad square, F, the middle mouse button, touch's act button), spending one of its berry pips as a charge (?commands=1)."
+    },
     "creatureMomentum": {
       "type": "object",
       "properties": {
@@ -7696,7 +7724,9 @@
         "partyEgg",
         "partyHits",
         "partyDrain",
-        "partyReach"
+        "partyReach",
+        "homeAlike",
+        "hardHits"
       ],
       "additionalProperties": false,
       "description": "Which areas have a legend (a happy one's reach is legends.friendRange)."
@@ -15861,6 +15891,8 @@
     "teamRounds",
     "hareStamp",
     "badgerBarge",
+    "skill",
+    "commands",
     "creatureMomentum",
     "attackFx",
     "effectMarks",

@@ -16,6 +16,9 @@ import type { Tuning } from "./tuning";
 import type { BerryState } from "./berries";
 import { speedMultiplier, type SpellState } from "./spells";
 import { stepInvites, type Affection, type InviteControls, type Invites } from "./invites";
+import { commandNow } from "./commands/charges";
+import type { CommandState } from "./commands/state";
+export { shieldTakes } from "./commands/shield"; // (for rules/game.ts hitWitch, which may not grow: guardrails size)
 
 export const BUFF_GROUPS = ["climbers", "darters", "stalkers", "heavies", "packHunters", "shells"] as const;
 export type BuffGroup = (typeof BUFF_GROUPS)[number];
@@ -73,7 +76,7 @@ export function drainPips(s: Pick<BerryState, "pips">, stack: readonly number[],
   if (!buffKnobs(t)) return;
   for (const id of stack) {
     const c = creatures[id];
-    if (!c || c.gone || c.level !== ADULT) continue;
+    if (!c || c.gone || c.level !== ADULT || commandNow(c, t)) continue; // (a commanding one's pips are charges: they never drain, Ed 2026-11-17)
     const f = pipFuel(s, id, t);
     if (f > 0) (s.pips ??= new Map()).set(id, Math.max(0, f - dt));
   }
@@ -106,7 +109,7 @@ export interface Buffs {
 /** Her buffs from her stack (`stack`: creature ids, oldest first): each adult with pips gives its group one stack for its kind, a legend
  *  buffs.legend (3) with no berries needed; per kind only its active one counts (a legend first, else the first fed adult), so two of a
  *  kind, or a legend and an adult of its kind, count once; each group's count the sum over its kinds. */
-export function buffsOf(stack: readonly number[], creatures: readonly Creature[], berries: Pick<BerryState, "pips">, t: Tuning): Buffs {
+export function buffsOf(stack: readonly number[], creatures: readonly Creature[], berries: Pick<BerryState, "pips">, t: Tuning, cmd?: CommandState | null, time = 0): Buffs {
   const B = buffKnobs(t), stacks = noBuffs(), givers = new Map<number, BuffGroup>(), icons = new Set<number>(), iconCount = new Map<number, number>(), iconState = new Map<number, IconState>(), iconGroup = new Map<number, BuffGroup>();
   const out = { stacks, givers, icons, iconCount, iconState, iconGroup };
   if (!B) return out;
@@ -115,7 +118,7 @@ export function buffsOf(stack: readonly number[], creatures: readonly Creature[]
     const c = creatures[id];
     if (!c || c.gone || (c.level !== ADULT && c.level !== LEGEND)) continue;
     const group = groupOf(c.species, t);
-    if (!group) continue;
+    if (!group || commandNow(c, t)) continue; // (with commands on, a commanding kind buffs only when its command does: Ed, 2026-11-17, below)
     const legend = c.level === LEGEND, n = legend ? B.legend : pipFuel(berries, id, t) > 0 ? 1 : 0;
     icons.add(id); iconGroup.set(id, group); iconCount.set(id, legend ? Math.max(1, Math.round(B.legend)) : 1);
     iconState.set(id, n > 0 ? "redundant" : "unfed");
@@ -125,6 +128,9 @@ export function buffsOf(stack: readonly number[], creatures: readonly Creature[]
     if (!had || n > had.n) kinds.set(c.species, { group, n, id });
   }
   for (const k of kinds.values()) { stacks[k.group] += k.n; iconState.set(k.id, "active"); }
+  // Buffs her commands gave her, each for a while (?commands=1; Ed, 2026-11-17: "not all adults give buffs; of the ones that do, using a
+  // charge gives you that buff for a period": rules/commands/press.ts).
+  for (const b of cmd?.buffs ?? []) if (time < b.until && (BUFF_GROUPS as readonly string[]).includes(b.group)) stacks[b.group as BuffGroup] += b.stacks;
   return out;
 }
 

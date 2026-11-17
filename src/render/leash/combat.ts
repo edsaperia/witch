@@ -11,6 +11,7 @@ import { LEGENDS } from "../../rules/legends";
 import { SPRITE_UNIFORMS, metresPerArtPixel } from "../sprites";
 import { SQ } from "./glyphs";
 import type { LeashView } from "../leash";
+export { drawSkillFx } from "./skillFx"; // (render/leash.ts, which may not grow, takes it from here)
 import type { Creature } from "../../rules/creatures";
 import { drawSlashes } from "./bubbles";
 import { PACKS, clouded, packKindOf, packMoveOf } from "../../rules/combat/packs";

@@ -61,7 +61,7 @@ import { newGrowth, type GrowthState } from "./growth";
 import { pinWitch, type Pinned } from "./partyLegend";
 import type { PopMeter } from "./tautChain";
 // (her follower buffs on her speed and her 💌s: rules/buffs.ts, in place of spells.ts speedMultiplier and invites.ts stepInvites)
-import { buffsOf, dashBuff, drainPips, setBuffs, speedMultiplierBuffed as speedMultiplier, stepInvitesBuffed as stepInvites } from "./buffs";
+import { buffsOf, dashBuff, drainPips, setBuffs, shieldTakes, speedMultiplierBuffed as speedMultiplier, stepInvitesBuffed as stepInvites } from "./buffs";
 import { castOf, castOn, circleSpot, friendSigils, looseAt, scatterSpots, stoneOpen, tetherWitch, type LooseSigil } from "./stoneStacks";
 import { liveRainbows, sendRainbow, stoneMetres, type RainbowWave } from "./rainbow";
 import { runeOffset } from "./runeOffset";
@@ -370,7 +370,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPr
 }
 
 /** The presses that happen once (not held): kept for the next step if a frame runs none. */
-const ONE_SHOT = ["toggleMode", "sigil", "place", "hat", "cycle", "cycleBack", "spell", "castParty", "dash", "nextWave", "pauseWaves", "feedNearest", "inviteNearest", "happyNearest"] as const;
+const ONE_SHOT = ["toggleMode", "sigil", "place", "hat", "cycle", "cycleBack", "command", "spell", "castParty", "dash", "nextWave", "pauseWaves", "feedNearest", "inviteNearest", "happyNearest"] as const;
 const NO_INPUT: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
 /** Her local pause page. Station panels never stop a multiplayer night. */
@@ -448,7 +448,7 @@ export const affectionOf = (g: Game, W: Witch = g.witches[0], acceptedGuestHit =
       // (the creature's meter on the world's clock; her letters' events on hers: rules/slowTime.ts)
       if (napper(c)) Object.assign(c, { asleep: false, napUntil: undefined, lulled: undefined, wakeUntil: undefined, rest: 0 }); // (roused by it: up at once, as rules/inviteWakes.ts wakes its area)
       const was = stateOf(c), time = g.clock.time, party = !!c.partyLegend;
-      hitAffection({ time, leash: k => inviteCreature(W.leash, k, k.x, k.z, time), stunFor: t.combat.daze, cheerFor: t.invites.cheer?.secs }, c, amount, time, data);
+      hitAffection({ time, leash: k => inviteCreature(W.leash, k, k.x, k.z, time), stunFor: t.combat.daze, cheerFor: t.invites.cheer?.secs, skill: t.skill, hits: meterHits(t) }, c, amount, time, data); // (skill, hits: its poise, ?skill=1, rules/skill/openings.ts)
       if (was !== "happy" && castOn(t)) markAtStone(g, c); // (its sigil friend-coloured in its stone's stack: rules/stoneStacks.ts)
       if (stateOf(c) !== was || (c.partyLegend && !party)) s.events.push({ kind: "happy", x: c.x, z: c.z, at, id: c.id }); // (happy, or leashed; or a party legend)
     },
@@ -481,7 +481,7 @@ export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tun
   const w = g.witches[id];
   const at = (w ? witchTime(g, w) : g.herTime) + (worldAt - g.clock.time);
   if (!w || w.ko || potionPhase(g, w) || dashing(w.dash, at) || worldAsleep(g) || won(g)) return; // (the afterparty, the world before the party, or the night won: nothing hurts her)
-  if (at < w.health.hurtAt + t.witchHealth.grace) return; // (just hit: a moment's grace, so a pack can't take all her hits at once)
+  if (at < w.health.hurtAt + t.witchHealth.grace || shieldTakes(g, w, at, g.clock.time)) return; // (just hit: a moment's grace, so a pack can't take all her hits at once; or a Guard's shield took it, rules/commands/shield.ts)
   // The Helmet (rules/spells.ts; Ed, 2026-10-11: "The helmet gives you an extra hit and it's knocked off when hit"): worn, it
   // takes the blow, knocked off to lie beside her (her hat down: picked up and put back on as ever, rules/hat.ts).
   if (w.spells.hat === "helmet" && dropHat(w.hat, w.body.x + (w.body.facing ?? 1) * (t.spells.helmet?.drop ?? 1.2), w.body.z, at)) {
@@ -546,7 +546,7 @@ export function clearOfScenery(g: Game, x: number, z: number, body: WitchState =
 export const witchTuning = (g: Game, W: Witch): Tuning => bagTuning(broomTuning(g.tuning, W.spells.parts), W.spells.bag); // (and her bag's 💌 stats: rules/bags.ts)
 
 /** Her blinks in hand before the cooldown: the tuning's two (Ed, 2026-10-08), Hare's Dash bursts' more, the Twig bristles' one more. */
-export const blinkCharges = (g: Game, W: Witch): number => (broomTuning(g.tuning, W.spells.parts).dash.charges ?? 1) + dashBuff(buffsOf(W.leash.stack, g.creatures, g.berries, g.tuning).stacks, g.tuning); // (and the Climbers buff: rules/buffs.ts)
+export const blinkCharges = (g: Game, W: Witch): number => (broomTuning(g.tuning, W.spells.parts).dash.charges ?? 1) + dashBuff(buffsOf(W.leash.stack, g.creatures, g.berries, g.tuning, W.leash.cmd, g.clock.time).stacks, g.tuning); // (and the Climbers buff: rules/buffs.ts)
 
 /** Note where everything was before a step, for drawing between steps. */
 function remember(g: Game): void {
@@ -848,7 +848,7 @@ function fixedStep(g: Game, controls: readonly Controls[], guestCatchUp: readonl
   if (!g.cauldron) stepMushrooms(g);
   const wave = g.party.wave;
   const anchorFrom = g.witches.map(W => ({ x: W.body.x, z: W.body.z })); // (where each stood before her step: the chains, below)
-  for (const W of g.witches) { drainPips(g.berries, W.leash.stack, g.creatures, dt, g.tuning); setBuffs(W, buffsOf(W.leash.stack, g.creatures, g.berries, g.tuning).stacks); } // (her follower buffs this step: rules/buffs.ts)
+  for (const W of g.witches) { drainPips(g.berries, W.leash.stack, g.creatures, dt, g.tuning); setBuffs(W, buffsOf(W.leash.stack, g.creatures, g.berries, g.tuning, W.leash.cmd, g.clock.time).stacks); } // (her follower buffs this step: rules/buffs.ts)
   const legends = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id));
   const t = g.tuning;
   const motions = witchMotions(g, controls, hdt, guestCatchUp, guestWas, guestTurn);

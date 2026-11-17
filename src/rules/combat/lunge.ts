@@ -10,6 +10,7 @@ import { advanceMotion } from "../locomotion";
 import { lungeAdvance } from "../lungeMotion";
 import { widthOf } from "./strikes";
 import type { Turn } from "./fighter";
+import { sitAfter } from "../skill/openings"; // (?skill=1: it sits after its lunge)
 
 /** Its lunge under way: bounded course correction, with the original travel budget. */
 export function stepLunge(T: Turn): void {
@@ -26,7 +27,7 @@ export function stepLunge(T: Turn): void {
   // through it then, and it has missed), and it carries on past to the end of its line.
   const meets = L.through ? !L.landed : L.left <= 1e-6;
   if (meets && Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(k, f.target) + p.r) { L.landed = true; const observation = { source: c.id, attack: spell?.name ?? null, delivery: "melee", phase: "damage" as const }; land(w, s, c, f.target, atk.damage, A, c.x, c.z, observation); if (spell) meleeExtras(w, s, f.target, spell.spec, c.x, c.z, c, observation); }
-  if (L.left <= 1e-6) { f.lunge = undefined; if (c.taunt && time < c.taunt.until && w.creatures[c.taunt.by]) f.target = { kind: "creature", id: c.taunt.by }; } // (taunted mid-lunge: its lunge done, it turns on the taunter)
+  if (L.left <= 1e-6) { f.lunge = undefined; sitAfter(c, true, time, w.t); if (c.taunt && time < c.taunt.until && w.creatures[c.taunt.by]) f.target = { kind: "creature", id: c.taunt.by }; } // (taunted mid-lunge: its lunge done, it turns on the taunter)
 }
 
 /** Just noticed: it turns to look a moment before it goes (combat.reaction). True if it's looking this step. */

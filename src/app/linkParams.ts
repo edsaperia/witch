@@ -202,7 +202,7 @@ export function tuningFromLink(params: URLSearchParams) {
   compareFights(params, tuning); // (?attacks=old, ?ranged=old, ?homelegends=old, ?legendhits=old, ?treehousetakeoff=old, ?lunge=old: below)
   // ?shotmarks=0: wild shots leave no mark where they end, as before Ed's 2026-11-13 choice ("Mark the ground": tuning shotMarks,
   // rules/attacks/marks.ts), to compare.
-  if (params.get("shotmarks") === "0" && tuning.shotMarks) tuning.shotMarks = { ...tuning.shotMarks, on: false };
+  if (params.get("shotmarks") === "0" && tuning.shotMarks) tuning.shotMarks = { ...tuning.shotMarks, on: false }; skillSwitches(params, tuning); // (and ?skill=1, ?commands=1: below)
   // ?dodge=a,b,c: which of the dodge changes are on (Ed, 2026-10-08; tuning dodge: a committed strikes, b predictive aim,
   // c packs cutting off her retreat), the rest off; ?dodge=0 none of them.
   const dodgeParam = params.get("dodge");
@@ -331,4 +331,13 @@ export function tuningFromLink(params: URLSearchParams) {
   // ?set=path=value;path=value (the repro link's: every setting changed from the build's, app/repro.ts), last, over the rest.
   applySet(tuning, params.get("set"));
   return { tuning, musicStyle, musicCue: musicCueNow, world, WORLD_DEFAULT };
+}
+
+/** ?skill=1: openings in fights (wild home creatures sit after attacking, have poise, stagger and are dazed); ?commands=1: the bottom
+ *  of her stack acts on the Command button, its berry pips its charges, the pad's square commanding and circle using (Ed, 2026-11-17;
+ *  docs/plans/combat-skill-and-commands.md, config/combat-skill.json). The first slice, for the home island's kinds. The pad's buttons
+ *  for commands are set by platform/input.ts from the same switch. */
+function skillSwitches(params: URLSearchParams, tuning: typeof TUNING): void {
+  if (params.get("skill") === "1") tuning.skill = { ...tuning.skill, on: true };
+  if (params.get("commands") === "1") tuning.commands = { ...tuning.commands, on: true };
 }

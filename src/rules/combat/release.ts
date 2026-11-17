@@ -14,6 +14,7 @@ import { advanceMotion } from "../locomotion";
 import { lungeOf } from "./reach";
 import { widthOf } from "./strikes";
 import { lead, oldIntercept, oldShotSpeed, type Turn } from "./fighter";
+import { sitAfter } from "../skill/openings";
 
 /** Winding up: it telegraphs (gliding to a stop, with momentum), then the blow lands, the shot flies, or the ground quakes.
  *  Null while it's still winding up (its step); once its wind-up is over, its aim at her as followed (`aimed`). */
@@ -53,7 +54,8 @@ export function release(T: Turn, aimed: AimTrack | undefined): void {
   const { k, c, f, pd, p, A, spell, atk, mo, long } = T, { s, w, t, time, grid, DA, DB, RG } = k;
   f.windupUntil = 0; f.readyAt = time + A.cooldown;
   // (the hare's own stamp let go: it sits, tuning hareStamp.sit, as above)
-  if (spell && A.delivery === "pulse" && c.species === "hare" && spell.name === "species:hare" && (t.hareStamp?.sit ?? 0) > 0) { c.sitUntil = time + t.hareStamp!.sit; c.vx = 0; c.vz = 0; c.moving = false; }
+  if (A.delivery !== "melee" && sitAfter(c, false, time, t)) { /* (?skill=1: it sits after its attack, by its profile: rules/skill/openings.ts) */ }
+  else if (spell && A.delivery === "pulse" && c.species === "hare" && spell.name === "species:hare" && (t.hareStamp?.sit ?? 0) > 0) { c.sitUntil = time + t.hareStamp!.sit; c.vx = 0; c.vz = 0; c.moving = false; }
   if (spell && A.delivery !== "melee") return; // (released by the engine as its windup ends: rules/attacks/engine.ts; a melee one is the lunge below)
   const dmg = atk.damage;
   if (A.delivery === "melee") {

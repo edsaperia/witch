@@ -1,0 +1,66 @@
+{
+  "_": "Skill in fights and creature commands (docs/plans/combat-skill-and-commands.md; Ed, 2026-11-17: \"We should aim for a lot of distinct parameters and maximum expressiveness, and then we can have 'what creatures have what settings' as design and balancing\"). The first slice: the home island's ten kinds. `global` holds every parameter's default; a species may set any of them, and its `command` may set any command parameter at the species level or under `youth`, `adult` or `legend` (a level's value wins). Switched on by the link: ?skill=1 (openings) and ?commands=1 (commands). Numbers are first guesses for play.",
+  "global": {
+    "sit": { "time": 0.5, "after": "all" },
+    "poise": { "share": 0.4, "windup": 2, "regenDelay": 1, "regenTime": 2 },
+    "stagger": { "time": 1, "cancels": true, "immune": 3 },
+    "daze": { "time": 2 },
+    "command": {
+      "reach": 24, "power": 1.5, "cone": 20, "lastHit": 4, "start": 1, "legendCooldown": 3,
+      "youth": { "max": 6, "perBerry": 3, "cooldown": 5 },
+      "adult": { "max": 8, "perBerry": 4, "cooldown": 5 }
+    }
+  },
+  "species": {
+    "hedgehog": {
+      "sit": { "time": 1 }, "poise": { "share": 0.6 },
+      "command": { "verb": "guard", "name": "Bristle", "shield": 1, "shieldTime": 6, "quills": 6,
+        "youth": { "max": 3, "perBerry": 3, "cooldown": 12 }, "adult": { "max": 4, "perBerry": 3, "cooldown": 10, "shield": 2 } }
+    },
+    "squirrel": {
+      "sit": { "time": 0.3 }, "poise": { "share": 0.3 },
+      "command": { "verb": "snare", "name": "Bonk", "shape": "lob", "radius": 2, "stun": 0.6, "power": 0.5,
+        "youth": { "max": 6, "perBerry": 4, "cooldown": 1.2 }, "adult": { "max": 12, "perBerry": 6, "cooldown": 0.8, "stun": 0.8 } }
+    },
+    "hare": {
+      "sit": { "time": 0.8 }, "poise": { "share": 0.3 },
+      "command": { "verb": "snare", "name": "Stamp", "shape": "lob", "radius": 4, "slow": 2.5, "power": 0.8,
+        "youth": { "max": 6, "perBerry": 3, "cooldown": 5 }, "adult": { "max": 8, "perBerry": 4, "cooldown": 5, "radius": 6 } }
+    },
+    "fox": {
+      "sit": { "time": 0.5 }, "poise": { "share": 0.4 },
+      "command": { "verb": "strike", "name": "Foxfire", "shape": "shot", "count": 3, "speed": 30, "power": 1.5,
+        "youth": { "max": 6, "perBerry": 3, "cooldown": 5 }, "adult": { "max": 8, "perBerry": 4, "cooldown": 4, "count": 4 } }
+    },
+    "bee": {
+      "sit": { "time": 0.3 }, "poise": { "share": 0.2 },
+      "command": { "verb": "surge", "name": "Buzz", "buff": "darters", "buffStacks": 3, "buffTime": 3,
+        "youth": { "max": 6, "perBerry": 4, "cooldown": 1.5 }, "adult": { "max": 12, "perBerry": 6, "cooldown": 1, "buffTime": 4 } }
+    },
+    "stoat": {
+      "sit": { "time": 1 }, "poise": { "share": 0.4 },
+      "command": { "verb": "daze", "name": "Pounce", "shape": "shot", "count": 1, "speed": 45, "power": 2, "daze": 3,
+        "youth": { "max": 6, "perBerry": 3, "cooldown": 6 }, "adult": { "max": 6, "perBerry": 3, "cooldown": 4, "power": 3 } }
+    },
+    "mole": {
+      "sit": { "time": 0.8 }, "poise": { "share": 0.5 },
+      "command": { "verb": "snare", "name": "Heave", "shape": "lob", "radius": 3, "stun": 1, "power": 0.8,
+        "youth": { "max": 6, "perBerry": 3, "cooldown": 6 }, "adult": { "max": 8, "perBerry": 4, "cooldown": 6, "radius": 4, "stun": 1.4 } }
+    },
+    "snail": {
+      "sit": { "time": 0 }, "poise": { "share": 0.8 },
+      "command": { "verb": "snare", "name": "Slick", "shape": "patch", "radius": 6, "slowMult": 0.5, "slowTime": 6,
+        "youth": { "max": 3, "perBerry": 3, "cooldown": 15 }, "adult": { "max": 4, "perBerry": 3, "cooldown": 12, "radius": 8 } }
+    },
+    "dormouse": {
+      "sit": { "time": 0.2 }, "poise": { "share": 0.25 },
+      "command": { "verb": "daze", "name": "Snipe", "shape": "shot", "count": 1, "speed": 55, "power": 0.6, "daze": 1.5,
+        "youth": { "max": 6, "perBerry": 4, "cooldown": 1 }, "adult": { "max": 16, "perBerry": 6, "cooldown": 0.7 } }
+    },
+    "badger": {
+      "sit": { "time": 0.9 }, "poise": { "share": 0.6, "windup": 3 },
+      "command": { "verb": "guard", "name": "Barge", "taunt": 3, "tauntRadius": 10, "knock": 10, "power": 1,
+        "youth": { "max": 3, "perBerry": 3, "cooldown": 15 }, "adult": { "max": 3, "perBerry": 3, "cooldown": 20, "knock": 16, "taunt": 5 } }
+    }
+  }
+}

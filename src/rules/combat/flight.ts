@@ -10,6 +10,7 @@ import { ATTACK_LIB } from "../attacks/index";
 import { stepSpells } from "../attacks/engine";
 import { oldShotMark, spellWorld } from "../attacks/combatWorld";
 import type { StepBase } from "./step";
+import { commandLanded, homeShot } from "../commands/act";
 
 /** Shots fly; each hits the first enemy (not its own kind) it reaches, or fizzles at its range. A lob lands where it was aimed. */
 export function stepShots(b: StepBase): void {
@@ -17,23 +18,24 @@ export function stepShots(b: StepBase): void {
   s.shots = s.shots.filter(sh => {
     // A lob flies over everything and lands where it was aimed, hitting all of the other side there.
     if (sh.lob) {
-      const L = sh.lob, k = Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at));
+      const L = sh.lob, k = Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at)), ho = sh.home !== undefined ? w.creatures[sh.home] : undefined; if (ho && !ho.gone) { L.tx = ho.x; L.tz = ho.z; } // (a command's lob follows its target: rules/commands/act.ts)
       sh.x = L.fx + (L.tx - L.fx) * k; sh.z = L.fz + (L.tz - L.fz) * k;
       if (time < L.lands) return true;
       const from = w.creatures[sh.from] ?? null, a = attackNamed(sh.attack, data);
       s.events.push({ kind: "landed", x: L.tx, z: L.tz, at: time, id: sh.from });
-      area(w, s, from, sh.side, sh.species, L.tx, L.tz, sh.radius, sh.damage, a, grid);
+      area(w, s, from, sh.side, sh.species, L.tx, L.tz, sh.radius, sh.damage, a, grid); if (sh.cmd) for (const o of grid.near(L.tx, L.tz, sh.radius + 1)) if (targetable(o) && foes(sideOf(o), sh.side) && Math.hypot(o.x - L.tx, o.z - L.tz) <= sh.radius + 0.3) commandLanded(s, o, sh.cmd, time); // (a command's lob: its stun or slow, rules/commands/act.ts)
       if (sh.patch) s.trails.push({ x: L.tx, z: L.tz, r: sh.patch.r, until: time + sh.patch.time, side: sh.side, slow: sh.patch.slow, from: sh.from }); // (the toad's spores: a slow patch where it lands)
       else oldShotMark(w, s, sh, L.tx, L.tz, data); // (any other: its mark, Ed 2026-11-13, rules/attacks/marks.ts)
       if (sh.sound) { const h = s.sounds.get(sh.sound.key); if (h && h.hp > 0 && Math.hypot(h.x - L.tx, h.z - L.tz) <= sh.radius + h.radius) land(w, s, from, { kind: "sound", key: sh.sound.key }, sh.sound.damage, a, L.tx, L.tz); }
       return false;
     }
+    if (sh.home !== undefined) homeShot(sh, w.creatures[sh.home], dt); // (a command's shot homes: rules/commands/act.ts)
     sh.x += sh.vx * dt; sh.z += sh.vz * dt;
     if (time >= sh.until) { oldShotMark(w, s, sh, sh.x, sh.z, data); return false; } // (a miss: its mark where it ran out)
     const from = w.creatures[sh.from], a = attackNamed(sh.attack, data);
     for (const o of grid.near(sh.x, sh.z, sh.radius + 2)) {
       if (!targetable(o) || !foes(sideOf(o), sh.side) || o.species === sh.species || w.asleep(o)) continue;
-      if (Math.hypot(o.x - sh.x, o.z - sh.z) <= sh.radius + 0.4 + o.level * 0.2) { land(w, s, from ?? null, { kind: "creature", id: o.id }, sh.damage, a, sh.x - sh.vx, sh.z - sh.vz); return false; }
+      if (Math.hypot(o.x - sh.x, o.z - sh.z) <= sh.radius + 0.4 + o.level * 0.2) { land(w, s, from ?? null, { kind: "creature", id: o.id }, sh.damage, a, sh.x - sh.vx, sh.z - sh.vz); if (sh.cmd) commandLanded(s, o, sh.cmd, time); return false; }
     }
     if (huntsWitch(sh.side)) for (const v of w.witches) {
       if (!v.onGround || v.down) continue;

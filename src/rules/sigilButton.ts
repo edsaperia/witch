@@ -36,6 +36,8 @@ import { castOn, castingStone, looseAt, looseNear, stepCast, stoneNear } from ".
 import { chainLength } from "./chains";
 import { atDecks } from "./wakeUp";
 import { challengeCastAt, clearChallenge, lockedFind } from "./challenge";
+import { stepCommands } from "./commands/press";
+import { commandsOn } from "./commands/charges";
 
 /** A legend's circle flashing: a sigil or relic put down outside its clearing (the leash's outsideCircle event). */
 /** How far in from the coast (m) a scattering baby stays (rules/leash.ts land). */
@@ -164,7 +166,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     else if (!held) { delete W.leash.feedHold; feedBottom(g, W, t, ht, relicEvents); }
     else if (ht - W.leash.feedHold >= F.hold - 1e-9) { heldSince = W.leash.feedHold; delete W.leash.feedHold; placeOnly = true; } // (a run's leash.runAfter counts from the press)
     if (!placeOnly) { sigil = false; place = false; } else { sigil = false; place = true; }
-  } else if ((sigil || place) && onFoot && !run && feedOffer(g, W, t)) {
+  } else if ((sigil || place) && onFoot && !run && !commandsOn(t) && feedOffer(g, W, t)) { // (with commands on, the command button eats: below)
     if (held && F.hold > 0) W.leash.feedHold = ht; else feedBottom(g, W, t, ht, relicEvents);
     sigil = false; place = false;
   }
@@ -180,6 +182,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     pop.undo(); W.leash.events = W.leash.events.filter(e => !(e.kind === "fizzled" && e.id === pop.id));
   }
   W.leash.events.push(...relicEvents);
+  stepCommands(g, c, W, t, { offer: () => !!feedOffer(g, W, t), feed: () => feedBottom(g, W, t, ht, W.leash.events) }); // (the command button, ?commands=1: rules/commands/press.ts)
   // Held with nothing to do (no sigil, relic, rune or hat picked up or put down, nothing refused), on the ground: her hat goes
   // down at her feet (rules/hat.ts putHat).
   // Use at an unready stump still belongs to the stump. Entering its ground also cancels an idle hold begun outside.

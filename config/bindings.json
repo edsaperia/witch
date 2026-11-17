@@ -14,6 +14,7 @@
     "game.invite": { "context": "game", "name": "Invite 💌", "about": "Throw 💌 invites where she aims (held: keep throwing).", "keys": ["Digit1"], "mouse": ["left"], "pad": ["R2"] },
     "game.dodge": { "context": "game", "name": "Dodge", "about": "Blink the way she's going.", "keys": [], "mouse": ["right"], "pad": ["L2", "circle"] },
     "game.cycleNext": { "context": "game", "name": "Next sigil", "about": "Cycle the stack: the bottom sigil (the next put down) to the top.", "keys": ["KeyQ"], "mouse": [], "pad": ["R1"] },
+    "game.command": { "context": "game", "name": "Command", "about": "The bottom of her stack acts (its charges are its berry pips); near a berry it can eat, it eats. Only with ?commands=1 (on the pad, square then commands and circle uses).", "keys": ["KeyF"], "mouse": ["middle"], "pad": [] },
     "game.cyclePrev": { "context": "game", "name": "Previous sigil", "about": "Cycle the stack back: the top sigil to the bottom.", "keys": [], "mouse": [], "pad": ["L1"] },
     "game.hat": { "context": "game", "name": "Hat", "about": "Put her hat down, or pick one up (on the keyboard: hold Use with nothing to do).", "keys": [], "mouse": [], "pad": ["triangle"] },
     "game.boost": { "context": "game", "name": "Broom spell", "about": "Her broom's spell, if it has one (the boost, the ley jump, the ground pound).", "keys": ["KeyR"], "mouse": [], "pad": ["L3"] },

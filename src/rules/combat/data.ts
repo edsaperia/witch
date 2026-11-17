@@ -157,6 +157,9 @@ export interface Shot {
   sound?: { key: string; damage: number };
   /** A pack lob that leaves a patch where it lands (the toad's spores: rules/combat/packs.ts), slowing the other side to `slow` for `time` s. */
   patch?: { r: number; slow: number; time: number };
+  /** A command's shot (rules/commands/act.ts, ?commands=1): it homes on creature `home`, and what it hits is stunned or slowed so long. */
+  home?: number;
+  cmd?: { stun?: number; slow?: number };
 }
 
 /** A beam burning (Stage 5): from its creature toward an angle, sweeping toward its target. */

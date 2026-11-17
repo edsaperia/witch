@@ -40,6 +40,8 @@ const clean = (b: Partial<Binding>): Partial<Binding> => {
 
 export class Bindings {
   private own: Partial<Record<ActionId, Partial<Binding>>> = {};
+  /** A layer over the defaults, never saved (a link switch's: commandControls): the player's own still win over it. */
+  private layer: Partial<Record<ActionId, Partial<Binding>>> = {};
   private live = new Map<ActionId, Binding>();
   private listeners = new Set<() => void>();
   /** Bumped at each change, for readers that cache what they built from the bindings. */
@@ -71,6 +73,8 @@ export class Bindings {
     this.changed();
     return this.conflicts();
   }
+  /** The layer over the defaults (unsaved): what the link's switches change. */
+  setLayer(layer: Partial<Record<ActionId, Partial<Binding>>>): void { if (JSON.stringify(layer) === JSON.stringify(this.layer)) return; this.layer = layer; this.build(); this.version++; for (const f of this.listeners) f(); }
   /** An action back to its default. */
   reset(id: ActionId): void { delete this.own[id]; this.changed(); }
   /** Every action back to its default. */
@@ -110,7 +114,7 @@ export class Bindings {
 
   private build(): void {
     this.live.clear();
-    for (const a of DEFAULTS) { const o = this.own[a.id] ?? {}; this.live.set(a.id, { keys: [...(o.keys ?? a.keys)], mouse: [...(o.mouse ?? a.mouse)], pad: [...(o.pad ?? a.pad)] }); }
+    for (const a of DEFAULTS) { const o = this.own[a.id] ?? {}, l = this.layer[a.id] ?? {}; this.live.set(a.id, { keys: [...(o.keys ?? l.keys ?? a.keys)], mouse: [...(o.mouse ?? l.mouse ?? a.mouse)], pad: [...(o.pad ?? l.pad ?? a.pad)] }); }
   }
   private changed(): void {
     this.build(); this.version++;
@@ -153,3 +157,8 @@ export function keysName(id: ActionId, B: Bindings = bindings): string {
 const store = slotStorage;
 /** The game's bindings: the defaults, the player's over them. */
 export const bindings = new Bindings(store);
+
+/** The pad with commands on (?commands=1; Ed, 2026-11-17: "For the controller, we can have square as command, and circle as
+ *  pickup/place"): square commands, circle uses (no longer dodging: L2 still dodges); off, the pad as it was. */
+export const COMMAND_PAD: Partial<Record<ActionId, Partial<Binding>>> = { "game.command": { pad: ["square"] }, "game.use": { pad: ["circle"] }, "game.dodge": { pad: ["L2"] } };
+export function commandControls(on: boolean, B: Bindings = bindings): void { B.setLayer(on ? COMMAND_PAD : {}); }

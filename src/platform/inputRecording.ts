@@ -9,7 +9,7 @@ const MAX_BYTES = 16 * 1024 * 1024, MAX_EVENTS = 120_000;
 const bytes = (v: unknown) => new TextEncoder().encode(JSON.stringify(v)).byteLength;
 export const simulationStep = (game: Game): number => Math.round(game.herTime / STEP);
 const numbers = new Set(["moveX", "moveZ", "zoom", "aimX", "aimZ"]);
-const booleans = new Set(["toggleMode", "sigil", "place", "cycle", "cycleBack", "held", "inviteNearest", "talk", "fire", "pausePage", "framing", "happyNearest", "castParty", "autoTalk", "talkHeld", "nextWave", "pauseWaves", "feedNearest", "cycleSpeakers", "spell", "sigilHeld", "hatHold", "hat", "dash", "debug", "toggleAutoTalk"]);
+const booleans = new Set(["toggleMode", "sigil", "place", "cycle", "cycleBack", "command", "held", "inviteNearest", "talk", "fire", "pausePage", "framing", "happyNearest", "castParty", "autoTalk", "talkHeld", "nextWave", "pauseWaves", "feedNearest", "cycleSpeakers", "spell", "sigilHeld", "hatHold", "hat", "dash", "debug", "toggleAutoTalk"]);
 
 /** Flat local controls only: preserve aim/zoom/framing exactly, without accepting executable callbacks or object graphs. */
 export function localControls(value: unknown): Controls | null {

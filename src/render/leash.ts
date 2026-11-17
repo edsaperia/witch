@@ -36,7 +36,7 @@ import { letterAt, lobHeight, type HerOffset } from "./invites";
 import { LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS } from "./height";
 import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, DISC, writeOn, LEGEND_LEVEL, LEGEND_ROW, Instances, VERT, FRAG, legendarySigil, maskOf } from "./leash/glyphs";
-import { drawCombat } from "./leash/combat";
+import { drawCombat, drawSkillFx } from "./leash/combat";
 import { drawFalling, feelBurn, newSigilFeel, resetSigilFeel, sigilFeelOn } from "./leash/sigilFeel";
 import { AttackLook } from "./leash/attackLook";
 import { BLOOD_PULL, BloodPool, bloodKnobs } from "./leash/blood";
@@ -652,7 +652,7 @@ export class LeashView {
     this.drawRingGlows(time);
     this.drawBosses(time);
     this.drawLetters(time);
-    drawCombat(this, time, camera, width, height, hatTop);
+    drawCombat(this, time, camera, width, height, hatTop); drawSkillFx(this, time); // (openings and a shield, ?skill=1/?commands=1: render/leash/skillFx.ts)
     const PM = { count: 16, size: 0.7, bright: 1, rise: 1, life: 1, ...t.leash.placeMotes }; // (a sigil put down or picked up: its burst of motes)
     const feelOn = sigilFeelOn(t); // (?sigilfeel=old: the transition as before)
     for (const e of g.leashEvents) { // (the whole frame's, not only its last step's)

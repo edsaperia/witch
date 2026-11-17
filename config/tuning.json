@@ -1364,6 +1364,12 @@
     "throw": 20,
     "stagger": 0.5
   },
+  "skill": {
+    "on": false
+  },
+  "commands": {
+    "on": false
+  },
   "creatureMomentum": {
     "on": true,
     "turn": 1,

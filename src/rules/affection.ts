@@ -7,10 +7,11 @@
 import { LEGEND, type Creature } from "./creatures";
 import { befriend, invitableNow, makePartyLegend, stateOf, STATES, type StatesData } from "./creatureStates";
 import { addLetters, fillOf, stun } from "./orbit";
+import { poiseHit } from "./skill/openings";
 
 /** What the meter needs of the game: the time, leashing a happy creature to her, and how long a full meter stuns (s: the tuning's
  *  combat.daze). */
-export interface AffectionWorld { time: number; leash: (c: Creature) => void; stunFor?: number; /** Seconds one won over celebrates, out of every fight (invites.cheer.secs). */ cheerFor?: number }
+export interface AffectionWorld { time: number; leash: (c: Creature) => void; stunFor?: number; /** Seconds one won over celebrates, out of every fight (invites.cheer.secs). */ cheerFor?: number; /** Openings (?skill=1: tuning skill) and the meter's letters by level: a letter wears its poise (rules/skill/openings.ts). */ skill?: { on: boolean }; hits?: readonly number[] }
 
 /** A 💌 landed on creature c (amount 1 per letter). Returns whether it counted. */
 export function hit(g: AffectionWorld, c: Creature, amount: number, time: number = g.time, data: StatesData = STATES): boolean {
@@ -26,6 +27,7 @@ export function hit(g: AffectionWorld, c: Creature, amount: number, time: number
     else stun(c, time, time + (g.stunFor ?? 20)); // (the last slot only stuns: her next 💌 converts)
     return true;
   }
+  if (g.skill?.on) poiseHit(c, time, g.hits?.[Math.min(c.level, (g.hits?.length ?? 1) - 1)] ?? 7, { skill: g.skill }); // (still one hit: it wears its poise, ?skill=1)
   return true;
 }
 

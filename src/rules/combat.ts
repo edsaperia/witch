@@ -14,6 +14,7 @@ import { COMBAT, type CombatData, type CombatState, type CombatWorld } from "./c
 import { beginStep, combatStep } from "./combat/step";
 import { layTrails, stepBeams, stepShots, stepSpellsInFlight, stepTrails } from "./combat/flight";
 import { creatureTurn } from "./combat/turn";
+import { stepCommandActs } from "./commands/act";
 
 export { COMBAT, traitsOf, counterOf, newCombat, strengthOf, combatProfile, attackOf, scaled, attackNamed, maxHp, creatureMaxHp, stunWorth } from "./combat/data";
 export type { Delivery, Modifier, Attack, CombatData, Trait, Target, Fight, Shot, Beam, CombatEventKind, CombatEvent, SoundHealth, CombatState, Trail, CombatWorld } from "./combat/data";
@@ -28,6 +29,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   stepSpellsInFlight(b); // attacks in the grammar in flight
   stepBeams(b); // beams burn and sweep
   stepTrails(b); // slime and spores dry, slowing the other side on them
+  stepCommandActs(b); // her commands carried out (?commands=1: rules/commands/act.ts)
   const k = combatStep(b); // her party, the packs and their plans, the claims, the dodge's tokens
   for (const c of w.active) creatureTurn(k, c); // each creature's turn (rules/combat/turn.ts)
   layTrails(b); // a trail-layer on the move lays its trail

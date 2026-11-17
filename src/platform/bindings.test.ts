@@ -59,13 +59,13 @@ describe("a player's own bindings", () => {
   it("override what the action reads, are saved, and come back on the next page", () => {
     const s = memory(), B = new Bindings(s);
     let told = 0; B.onChange(() => told++);
-    expect(B.set("game.rise", { keys: ["KeyF"] })).toEqual([]);
-    expect(B.keys("game.rise")).toEqual(["KeyF"]);
+    expect(B.set("game.rise", { keys: ["KeyJ"] })).toEqual([]);
+    expect(B.keys("game.rise")).toEqual(["KeyJ"]);
     expect(B.pad("game.rise")).toEqual(["cross"]); // (what wasn't set kept)
     expect(told).toBe(1);
-    expect(JSON.parse(s.data.get("witch.bindings")!)).toEqual({ "game.rise": { keys: ["KeyF"] } }); // (only what differs)
-    expect(new Bindings(s).keys("game.rise")).toEqual(["KeyF"]);
-    expect(B.list().find(a => a.id === "game.rise")).toMatchObject({ keys: ["KeyF"], isDefault: false, name: "Rise / land" });
+    expect(JSON.parse(s.data.get("witch.bindings")!)).toEqual({ "game.rise": { keys: ["KeyJ"] } }); // (only what differs)
+    expect(new Bindings(s).keys("game.rise")).toEqual(["KeyJ"]);
+    expect(B.list().find(a => a.id === "game.rise")).toMatchObject({ keys: ["KeyJ"], isDefault: false, name: "Rise / land" });
   });
   it("move what the pad does: rise on cross reads as rise", () => {
     const B = new Bindings(null);
@@ -75,7 +75,7 @@ describe("a player's own bindings", () => {
   });
   it("reset: one, or all, back to the defaults (and out of storage)", () => {
     const s = memory(), B = new Bindings(s);
-    B.set("game.rise", { keys: ["KeyF"] }); B.set("game.dodge", { pad: ["R3"] });
+    B.set("game.rise", { keys: ["KeyJ"] }); B.set("game.dodge", { pad: ["R3"] });
     B.reset("game.rise");
     expect(B.keys("game.rise")).toEqual(["Space"]);
     expect(B.pad("game.dodge")).toEqual(["R3"]);
@@ -86,7 +86,7 @@ describe("a player's own bindings", () => {
   });
   it("setting one back to its default is the default (nothing kept)", () => {
     const s = memory(), B = new Bindings(s);
-    B.set("game.rise", { keys: ["KeyF"] }); B.set("game.rise", { keys: ["Space"] });
+    B.set("game.rise", { keys: ["KeyJ"] }); B.set("game.rise", { keys: ["Space"] });
     expect(s.data.has("witch.bindings")).toBe(false);
   });
   it("report conflicts: two actions on one input in one context (global counts in both); a game and a menu action may share", () => {
@@ -101,7 +101,7 @@ describe("a player's own bindings", () => {
   });
   it("refuse unknown actions and inputs; a spoilt store reads as the defaults", () => {
     const B = new Bindings(null);
-    expect(() => B.set("game.fly" as never, { keys: ["KeyF"] })).toThrow();
+    expect(() => B.set("game.fly" as never, { keys: ["KeyJ"] })).toThrow();
     expect(() => B.set("game.rise", { pad: ["X"] })).toThrow();
     expect(() => B.set("game.rise", { mouse: ["thumb"] })).toThrow();
     const s = memory(); s.setItem("witch.bindings", "{ not json");
@@ -111,8 +111,8 @@ describe("a player's own bindings", () => {
     const thrower = { getItem: () => { throw new Error("blocked"); }, setItem: () => { throw new Error("blocked"); }, removeItem: () => { throw new Error("blocked"); } };
     const u = new Bindings(thrower);
     expect(u.keys("game.rise")).toEqual(["Space"]);
-    expect(() => u.set("game.rise", { keys: ["KeyF"] })).not.toThrow();
-    expect(u.keys("game.rise")).toEqual(["KeyF"]);
+    expect(() => u.set("game.rise", { keys: ["KeyJ"] })).not.toThrow();
+    expect(u.keys("game.rise")).toEqual(["KeyJ"]);
   });
 });
 
