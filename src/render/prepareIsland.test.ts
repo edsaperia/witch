@@ -22,7 +22,7 @@ import type { ArtJob, ArtResult } from "./artBuild";
 vi.mock("./view/creatures", async orig => ({ ...(await orig<typeof import("./view/creatures")>()), drawCreatures: () => {} }));
 vi.mock("./view/culling", async orig => ({ ...(await orig<typeof import("./view/culling")>()), viewRect: () => ({ minX: 0, maxX: 0, minZ: 0, maxZ: 0 }) }));
 vi.mock("./view/scenery", async orig => ({ ...(await orig<typeof import("./view/scenery")>()), refreshSteps: function* () { /* nothing */ } }));
-afterEach(() => { vi.restoreAllMocks(); });
+afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 
 const fox = () => newGame(123, tuningFromLink(new URLSearchParams({ island: "fox" })).tuning);
 /** prepare's `near`: each area type by its nearest area to the house. */
@@ -81,9 +81,11 @@ describe("the island made under the loading screen", () => {
     V.makeLoadingMist = () => {}; V.render = () => {}; V.warmSteps = function* () { /* nothing */ };
     V.askIsland = () => {};
     V.compileAll = () => { log.push("shaders compiled"); return Promise.resolve(); };
+    // whenAsked waits on a 30 ms timer, so the test moves the clock itself (test honesty, 2026-11-18: this slept 700 ms of real time).
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] }); // (only the timers: prepare reads the real performance clock)
     let done = false;
     const prepared = v.prepare().then(() => { done = true; });
-    for (let i = 0; i < 40; i++) await new Promise(r => setTimeout(r, 0));
+    await vi.advanceTimersByTimeAsync(100); // (prepare runs up to its wait for the island's art: whenAsked looks every 30 ms)
     const near = nearOf(g), n = islandNeeds(g.map, near);
     const island = inner(assets).queue.filter(j => j.kind !== "treehouse" && j.kind !== "witch" && j.kind !== "soundsystems" && j.kind !== "props");
     expect(new Set(island.filter(j => j.kind === "type").map(j => j.id))).toEqual(new Set(n.types));
@@ -97,9 +99,10 @@ describe("the island made under the loading screen", () => {
     // All but one landed: still waiting.
     const [last, ...rest] = island;
     for (const job of rest) inner(assets).receive({ job, result: pixel() });
-    for (let i = 0; i < 20; i++) await new Promise(r => setTimeout(r, 35));
+    await vi.advanceTimersByTimeAsync(700); // (23 more looks, on the test's clock)
     expect(done).toBe(false); expect(log).toEqual(["coast program made"]);
     inner(assets).receive({ job: last, result: pixel() });
+    await vi.advanceTimersByTimeAsync(30); // (the next look sees it)
     await prepared;
     expect(log).toEqual(["coast program made", "shaders compiled"]);
     // The faces off (tuning looks.expressions; Ed, 2026-11-05: "Scrap animal expressions for now."): nothing more asked for as it ends.

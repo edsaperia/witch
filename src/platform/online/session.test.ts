@@ -28,7 +28,9 @@ import { continueSharedNight } from "../../app/sharedNight";
 const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
 const input = (moveX = 0): Controls => ({ moveX, moveZ: 0, zoom: 0, toggleMode: false, autoTalk: false });
-const turn = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+// No fixed sleeps (test honesty, Ed's go 2026-11-18: "do it"): a test waits for what it is about to check, never for a turn of the
+// event loop that the work may or may not fit in. `seen` polls a check every millisecond until it holds (it fails after a second).
+const seen = (check: () => void) => vi.waitFor(check, { interval: 1 });
 it.each([60, 20])("advances two awake sessions at real time at %s fps with fake clocks and no network delay", async fps => {
   const f = fixture(), { joined } = await f.start();
   // Controlled clock-rate contract: authored treehouse/legend slow time is intentional,
@@ -494,7 +496,7 @@ function fixture() {
     guest.message(first); return { joined, first };
   };
   const sync = async () => {
-    await turn(); expect(guestMessages.some(m => m.type === "ready")).toBe(true);
+    await seen(() => expect(guestMessages.some(m => m.type === "ready")).toBe(true)); // (the guest's preparation done: its "ready" sent)
     host.message({ type: "guest-ready", player: 1 }); guest.message(hostMessages.at(-1)!);
   };
   return { host, guest, guestConnection, hostGame, hostOptions, guestOptions, hostMessages, guestMessages, hostAbort, guestAbort, start, sync, advanceTime: (ms: number) => { time += ms; } };
@@ -565,10 +567,11 @@ it("does not accept an unassigned player's input and expires a guest's held cont
 });
 it("cancels late guest preparation without sending ready or adopting a returned night", async () => {
   const f = fixture(); let finish!: () => void, signal!: AbortSignal;
-  f.guestOptions.prepareGuest = async (_g, s) => { signal = s; await new Promise<void>(resolve => { finish = resolve; }); };
+  let preparing!: Promise<void>;
+  f.guestOptions.prepareGuest = (_g, s) => { signal = s; return preparing = new Promise<void>(resolve => { finish = resolve; }); };
   const { joined } = await f.start(); const cancelled = expect(joined).rejects.toThrow("ended");
-  await turn(); f.guestAbort.abort(); await cancelled; expect(signal.aborted).toBe(true);
-  finish(); await turn();
+  await seen(() => expect(signal).toBeDefined()); f.guestAbort.abort(); await cancelled; expect(signal.aborted).toBe(true); // (aborted once the preparation is under way)
+  finish(); await preparing; // (the late preparation itself: the session awaited it first, so it has decided by here)
   expect(f.guestMessages.some(m => m.type === "ready")).toBe(false);
   expect(f.guestOptions.synchronized).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
   expect(f.guestOptions.ended).toHaveBeenCalledTimes(1);
@@ -590,7 +593,8 @@ it("rejects an incompatible build before preparing a guest View or sending contr
 it("attributes a preparation refusal before art instead of reporting a loading stall", async () => {
   const f = fixture(), trace = vi.fn(); f.guestOptions.trace = trace;
   f.guestOptions.prepareGuest = vi.fn(async () => { throw new Error("Save boundary unavailable"); });
-  const { joined } = await f.start(); await expect(joined).rejects.toThrow("ended"); await turn();
+  const { joined } = await f.start(); await expect(joined).rejects.toThrow("ended");
+  await seen(() => expect(trace).toHaveBeenCalledWith("view-preparation:failed", expect.anything())); // (the refusal traced)
   expect(trace.mock.calls.map(call => call[0])).toEqual(["replay-restore:start", "replay-restore:done", "prepare:invoke", "view-preparation:failed"]);
   expect(trace).toHaveBeenLastCalledWith("view-preparation:failed", expect.objectContaining({ message: "Save boundary unavailable" }));
   expect(f.guestMessages.some(m => m.type === "ready" || m.type === "active")).toBe(false);

@@ -10,7 +10,8 @@ vi.mock("./view/culling", async importOriginal => ({ ...(await importOriginal<ob
 
 import { View } from "./view";
 
-function standIn(log: string[], houseAfterMs: number) {
+/** `house`: when the house is made (a promise the test resolves), or a number of ms after it is asked for. */
+function standIn(log: string[], house: number | Promise<void>) {
   const v = Object.create(View.prototype) as Record<string, unknown>;
   const own = {
     game: { map: { first: 0, n: 1, centreCell: [0, 0], treehouse: { x: 0, z: 0 }, typeOf: () => 0, siteOf: () => ({ x: 0, z: 0 }), bounds: {}, legendKinds: [], specialSites: [] }, witch: { x: 0, z: 0 }, tuning: { haze: { near: 10 }, wildLegends: {} } },
@@ -18,7 +19,7 @@ function standIn(log: string[], houseAfterMs: number) {
     ground: { fill: () => 0 },
     assets: { tonight: () => {}, homeArt: async () => { log.push("home art"); }, whenIdle: async () => { log.push("idle"); }, whenAsked: async () => { log.push("island's own asked"); } }, // (render/prepareIsland.test.ts has what it asks)
     compileAll: async () => { log.push("compile"); },
-    houseRooms: { preload: () => { log.push("house asked"); return new Promise<void>(res => setTimeout(() => { log.push("house made"); res(); }, houseAfterMs)); } },
+    houseRooms: { preload: () => { log.push("house asked"); return typeof house === "number" ? new Promise<void>(res => setTimeout(() => { log.push("house made"); res(); }, house)) : house.then(() => { log.push("house made"); }); } },
   };
   for (const [k, value] of Object.entries(own)) Object.defineProperty(v, k, { value, writable: true }); // (over the View's getters too: its ground)
   return v as unknown as View;
@@ -34,9 +35,13 @@ describe("the night's preparation and the house", () => {
   it("ends only once the house is made, however long it takes", async () => {
     const log: string[] = [];
     let done = false;
-    const p = standIn(log, 120).prepare().then(() => { done = true; });
-    await new Promise(r => setTimeout(r, 60));
-    expect(done).toBe(false);
+    // The house is made when the test says so (test honesty, 2026-11-18: this slept a real 60 ms of a 120 ms house): it waits for
+    // everything else prepare does first (the art idle), sees prepare still out, then makes the house.
+    let make!: () => void;
+    const p = standIn(log, new Promise<void>(res => { make = res; })).prepare().then(() => { done = true; });
+    await vi.waitFor(() => expect(log).toContain("idle"), { interval: 1 });
+    expect(done).toBe(false); expect(log).not.toContain("compile");
+    make();
     await p;
     expect(log.indexOf("house made")).toBeLessThan(log.indexOf("compile"));
   });

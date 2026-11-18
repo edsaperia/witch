@@ -390,6 +390,11 @@ jobs:
       - name: No new module state in the rules
         if: needs.build.outputs.reuse != 'true' && github.event_name == 'pull_request'
         run: node tools/checks/moduleState.mjs --base HEAD^1
+      # Test honesty (Ed's go, 2026-11-18; docs/notes/guardrails.md): no test file has more raised time limits or retries,
+      # module mocks or fixed sleeps than at the PR's base, and the global limits aren't raised. About two seconds.
+      - name: Test honesty
+        if: needs.build.outputs.reuse != 'true' && github.event_name == 'pull_request'
+        run: node tools/checks/testHonesty.mjs --base HEAD^1
       - name: Lint
         if: needs.build.outputs.reuse != 'true'
         run: npm run lint

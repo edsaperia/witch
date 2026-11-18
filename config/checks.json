@@ -66,6 +66,16 @@
       "note": "docs/notes/module-state.md"
     },
     {
+      "id": "test-honesty",
+      "command": "node tools/checks/testHonesty.mjs",
+      "what": "No test file has more raised time limits or retries, module mocks (vi.mock, vi.doMock) or fixed sleeps than at the merge base, and the global limits (60 s, no retries) aren't raised; two seconds.",
+      "paths": ["**/*.test.{ts,tsx,mts,cts,js,mjs,cjs}", "vite.config.ts", "package.json", "server/package.json", "tools/ci/run-unit.mjs", "tools/checks/testHonesty.mjs"],
+      "runner": "builder",
+      "ci": "every PR (check-work, against the PR's base)",
+      "from": "Ed's go, 2026-11-18 (\"do it\", on borrowing from interfere-inc/landmines)",
+      "note": "docs/notes/guardrails.md"
+    },
+    {
       "id": "related-tests",
       "command": "npx vitest related --run --passWithNoTests {files}",
       "what": "The unit tests that import what you changed: the tests near what you touched.",

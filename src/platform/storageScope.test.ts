@@ -3,7 +3,7 @@
 // every storage use in the game routed through the scope.
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { FRESH_PREFIX, freshHref, freshLink, makeStorageScope, MemoryStorage, type ScopeEnv } from "./storageScope";
 import { SaveSlots, SLOT_INDEX, SLOT_KEYS, slotKey } from "../app/saveSlots";
 import { fallbackStorage } from "../app/storageFallback";
@@ -109,8 +109,8 @@ describe("a fresh game (?fresh=1)", () => {
     const idb = spyIdb(), fresh = makeStorageScope(env("?fresh=1", spyStorage().store, spyStorage().store, idb.idb));
     void browserNightStore("/witch/", fresh.idb()!).read().catch(() => undefined);
     void clearSlotNights(null, fresh.idb()!).catch(() => undefined);
-    await new Promise(r => setTimeout(r, 0));
-    expect(idb.opened).toEqual([`${FRESH_PREFIX}abcd1234.witch.nights`, `${FRESH_PREFIX}abcd1234.witch.nights`]);
+    // (waits for the two opens themselves, not a turn of the event loop: test honesty, 2026-11-18)
+    await vi.waitFor(() => expect(idb.opened).toEqual([`${FRESH_PREFIX}abcd1234.witch.nights`, `${FRESH_PREFIX}abcd1234.witch.nights`]), { interval: 1 });
   });
 
   it("gives the telephone a throwaway identity of its own (multiplayer: a fresh host or guest)", async () => {
@@ -125,9 +125,8 @@ describe("a fresh game (?fresh=1)", () => {
     const idb = spyIdb(["witch.nights", "witch.fresh.old00000.witch.nights", "witch.art-cache"]);
     const before = local.snapshot();
     makeStorageScope(env("?fresh=1", local.store, spyStorage().store, idb.idb));
-    await new Promise(r => setTimeout(r, 0));
+    await vi.waitFor(() => expect(idb.deleted).toEqual(["witch.fresh.old00000.witch.nights"]), { interval: 1 }); // (the wipe's own delete, once it has listed the databases)
     expect(local.removes.sort()).toEqual(["witch.fresh.old00000.witch.saves.v1", "witch.fresh.old00000.witch.woken"]);
-    expect(idb.deleted).toEqual(["witch.fresh.old00000.witch.nights"]);
     expect(local.snapshot()).toEqual(before);
     // Carried on (?fresh=<token>: a reload, a sail): its things are there, nothing wiped, the link left as it is.
     const again = spyStorage({ "witch.fresh.k3j2h1g0.witch.woken": "1" }), relinked: string[] = [];
